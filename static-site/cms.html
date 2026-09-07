@@ -1338,14 +1338,23 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <div class="cms-card" style="margin-top:18px">
       <div class="cms-card-header" style="background:#b45309!important">&#129360; B&auml;ckerei-Bestellung</div>
       <div class="cms-card-body" style="display:flex;flex-direction:column;gap:12px">
-        <p style="font-size:12px;color:#6b7280;margin:0">Steuert den Tab &bdquo;B&auml;cker&ldquo; im Kiosk: an welchen Tagen bestellt wird, bis wann und an wen die Bestellung geht.</p>
+        <p style="font-size:12px;color:#6b7280;margin:0">Steuert den Tab &bdquo;B&auml;cker&ldquo; im Kiosk: an welchen Tagen wer liefert, bis wann bestellt wird und an wen die Bestellung geht.</p>
+
+        <div id="bkcfg-auswahl" style="display:none;gap:8px;flex-wrap:wrap"></div>
 
         <div id="bkcfg-status" style="display:none;padding:10px 14px;border-radius:8px;font-size:.85rem"></div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Name der B&auml;ckerei</label>
+          <input type="text" id="bkcfg-name" class="cms-input" placeholder="B&auml;ckerei Freundl">
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Erscheint im Kiosk und auf dem Formular.</div>
+        </div>
 
         <div>
           <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:4px">Bestelltage &ndash; an diesen Wochentagen wird geliefert</label>
           <div id="bkcfg-tage" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           <div style="font-size:11px;color:#6b7280;margin-top:4px">Die Bestellung wird jeweils am Vortag verschickt.</div>
+          <div id="bkcfg-doppelt" style="display:none;margin-top:8px;padding:9px 12px;border-radius:8px;font-size:.82rem;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe"></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1369,7 +1378,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <div>
             <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Tour-Nr. (Samstag)</label>
             <input type="text" id="bkcfg-tour-sa" class="cms-input" placeholder="8">
-            <div style="font-size:11px;color:#6b7280;margin-top:2px">Samstags f&auml;hrt eine andere Tour.</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px">Samstags f&auml;hrt oft eine andere Tour. Leer lassen, wenn die B&auml;ckerei keine Tour-Nummern nutzt.</div>
           </div>
         </div>
 
@@ -1389,6 +1398,25 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Adresse der B&auml;ckerei</label>
           <input type="text" id="bkcfg-baeckerei" class="cms-input" placeholder="info@baeckerei-freundl.de">
           <div style="font-size:11px;color:#6b7280;margin-top:2px">Nur zum Abgleich: Weicht der Empf&auml;nger davon ab, l&auml;uft der Testbetrieb.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Formular</label>
+            <select id="bkcfg-format" class="cms-input">
+              <option value="docx">Word-Dokument (.docx)</option>
+              <option value="pdf">PDF</option>
+            </select>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px">Das Format des Anhangs an die B&auml;ckerei.</div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:2px">Papierausdruck</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:.85rem;background:#fff">
+              <input type="checkbox" id="bkcfg-druck" style="width:16px;height:16px;accent-color:#b45309;cursor:pointer">
+              Nach dem Senden ausdrucken
+            </label>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px">Der Tag gilt erst nach dem Druck als erledigt.</div>
+          </div>
         </div>
 
         <div id="bkcfg-testhinweis" style="display:none;padding:10px 14px;border-radius:8px;font-size:.85rem;background:#fffbeb;color:#92400e;border:1px solid #fde68a">

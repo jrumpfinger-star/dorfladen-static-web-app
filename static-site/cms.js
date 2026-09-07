@@ -9313,9 +9313,15 @@
   }
 
   // --- Baeckerei-Bestellung (baecker_config) ---
-  var _bkcfgLoaded=false, _bkcfg={};
+  var _bkcfgLoaded=false, _bkcfg={}, _bkAktiv='freundl';
   var BK_TAGE=['Mo','Di','Mi','Do','Fr','Sa','So'];
   var BK_TAGE_LANG=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+  var BK_FARBE={freundl:{rand:'#b45309',bg:'#fffbeb',text:'#92400e'},
+                martins:{rand:'#0f766e',bg:'#f0fdfa',text:'#134e4a'}};
+
+  function bkFarbe(){ return BK_FARBE[_bkAktiv]||BK_FARBE.freundl; }
+  function bkAlle(){ return (_bkcfg&&_bkcfg.baeckereien)||{}; }
+  function bkAktuell(){ return bkAlle()[_bkAktiv]||{}; }
 
   function bkcfgStatus(text,art){
     var el=document.getElementById('bkcfg-status');
@@ -9327,25 +9333,59 @@
     el.textContent=text;
   }
 
+  // Auswahl der Baeckerei oben in der Karte. Erscheint nur, wenn es mehr als
+  // eine gibt - sonst waere sie ueberfluessige Bedienlast.
+  function bkcfgAuswahlZeichnen(){
+    var wrap=document.getElementById('bkcfg-auswahl');
+    if(!wrap) return;
+    var namen=Object.keys(bkAlle());
+    if(namen.length<2){wrap.style.display='none';return;}
+    wrap.style.display='flex';
+    wrap.innerHTML='';
+    namen.forEach(function(bk){
+      var an=bk===_bkAktiv;
+      var f=BK_FARBE[bk]||BK_FARBE.freundl;
+      var b=document.createElement('button');
+      b.type='button';
+      b.textContent=(bkAlle()[bk]||{}).name||bk;
+      b.style.cssText='padding:9px 16px;border-radius:9px;cursor:pointer;font-size:.88rem;'
+        +'font-weight:700;border:2px solid '+(an?f.rand:'#e5e7eb')
+        +';background:'+(an?f.bg:'#fff')+';color:'+(an?f.text:'#6b7280');
+      b.addEventListener('click',function(){
+        if(bk===_bkAktiv) return;
+        bkcfgFelderLesen();          // Eingaben der bisherigen Baeckerei merken
+        _bkAktiv=bk;
+        bkcfgAuswahlZeichnen();
+        bkcfgFelderFuellen();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
   function bkcfgTageZeichnen(tage){
     var wrap=document.getElementById('bkcfg-tage');
     if(!wrap) return;
+    var f=bkFarbe();
     wrap.innerHTML='';
     BK_TAGE.forEach(function(kurz,i){
       var an=tage.indexOf(i)!==-1;
       var l=document.createElement('label');
       l.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;cursor:pointer;'
-        +'font-size:.85rem;font-weight:600;border:1px solid '+(an?'#b45309':'#e5e7eb')
-        +';background:'+(an?'#fffbeb':'#fff')+';color:'+(an?'#92400e':'#6b7280');
+        +'font-size:.85rem;font-weight:600;border:1px solid '+(an?f.rand:'#e5e7eb')
+        +';background:'+(an?f.bg:'#fff')+';color:'+(an?f.text:'#6b7280');
       l.title=BK_TAGE_LANG[i];
       var cb=document.createElement('input');
       cb.type='checkbox';cb.className='bkcfg-tag';cb.value=String(i);cb.checked=an;
-      cb.style.cssText='width:16px;height:16px;accent-color:#b45309;cursor:pointer';
-      cb.addEventListener('change',function(){bkcfgTageZeichnen(bkcfgTageLesen());});
+      cb.style.cssText='width:16px;height:16px;accent-color:'+f.rand+';cursor:pointer';
+      cb.addEventListener('change',function(){
+        bkcfgTageZeichnen(bkcfgTageLesen());
+        bkcfgUeberschneidung();
+      });
       l.appendChild(cb);
       l.appendChild(document.createTextNode(kurz));
       wrap.appendChild(l);
     });
+    bkcfgUeberschneidung();
   }
 
   function bkcfgTageLesen(){
@@ -9356,11 +9396,33 @@
     return out.sort(function(a,b){return a-b;});
   }
 
+  // Ueberschneidende Bestelltage sind ausdruecklich erlaubt (Samstag liefern
+  // beide). Der Hinweis soll nur verhindern, dass es fuer einen Fehler
+  // gehalten wird.
+  function bkcfgUeberschneidung(){
+    var el=document.getElementById('bkcfg-doppelt');
+    if(!el) return;
+    var meine=bkcfgTageLesen();
+    var treffer=[];
+    Object.keys(bkAlle()).forEach(function(bk){
+      if(bk===_bkAktiv) return;
+      var andere=(bkAlle()[bk]||{}).bestelltage||[];
+      meine.forEach(function(t){
+        if(andere.indexOf(t)!==-1) treffer.push(BK_TAGE_LANG[t]);
+      });
+    });
+    if(!treffer.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML='<b>Doppelte Liefertage:</b> '+treffer.join(', ')
+      +' \u2013 an diesen Tagen liefern beide B\u00e4ckereien. Das ist so gewollt; '
+      +'im Kiosk erscheint dann eine Auswahl.';
+  }
+
   function bkcfgHinweis(){
     var el=document.getElementById('bkcfg-empfaenger');
     var bk=document.getElementById('bkcfg-baeckerei');
     var mail=el?el.value:'';
-    var echt=(bk?bk.value:(_bkcfg.baeckerei_mail||'')).trim().toLowerCase();
+    var echt=(bk?bk.value:'').trim().toLowerCase();
     var test=document.getElementById('bkcfg-testhinweis');
     var scharf=document.getElementById('bkcfg-echthinweis');
     if(!test||!scharf) return;
@@ -9373,12 +9435,56 @@
     var el=document.getElementById('bkcfg-empfaenger');
     var bk=document.getElementById('bkcfg-baeckerei');
     var name=document.getElementById('bkcfg-empfaenger-name');
-    var ziel=(bk&&bk.value.trim())||_bkcfg.baeckerei_mail||'';
+    var ziel=(bk&&bk.value.trim())||'';
     if(!ziel){toast('Bitte zuerst die Adresse der B\u00e4ckerei eintragen.','error');return;}
     if(el) el.value=ziel;
-    if(name&&!(name.value||'').trim()) name.value='B\u00e4ckerei Freundl';
+    if(name&&!(name.value||'').trim()) name.value=bkAktuell().name||'B\u00e4ckerei';
     bkcfgHinweis();
     toast('Adresse eingetragen \u2013 jetzt noch speichern.');
+  }
+
+  // Felder aus dem Speicher fuellen (beim Umschalten und nach dem Laden)
+  function bkcfgFelderFuellen(){
+    var c=bkAktuell();
+    var v=function(id,wert){var e=document.getElementById(id);if(e)e.value=wert||'';};
+    bkcfgTageZeichnen(c.bestelltage||[]);
+    v('bkcfg-name',c.name);
+    v('bkcfg-schluss',c.bestellschluss);
+    v('bkcfg-kdnr',c.kd_nr);
+    var tour=c.tour_nr;
+    if(typeof tour==='string'){v('bkcfg-tour',tour);v('bkcfg-tour-sa',tour);}
+    else{v('bkcfg-tour',(tour||{})['default']);v('bkcfg-tour-sa',(tour||{})['5']);}
+    v('bkcfg-empfaenger',c.empfaenger);
+    v('bkcfg-empfaenger-name',c.empfaenger_name);
+    v('bkcfg-baeckerei',c.baeckerei_mail);
+    var f=document.getElementById('bkcfg-format');
+    if(f) f.value=c.format||'docx';
+    var d=document.getElementById('bkcfg-druck');
+    if(d) d.checked=!!c.papierausdruck;
+    bkcfgHinweis();
+  }
+
+  // Eingaben in den Speicher zuruecklesen – damit beim Umschalten nichts
+  // verlorengeht und beim Speichern beide Baeckereien stimmen.
+  function bkcfgFelderLesen(){
+    var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+    var alle=bkAlle();
+    var c=alle[_bkAktiv]||(alle[_bkAktiv]={});
+    var tour={'default':g('bkcfg-tour')};
+    if(g('bkcfg-tour-sa')) tour['5']=g('bkcfg-tour-sa');
+    c.bestelltage=bkcfgTageLesen();
+    c.name=g('bkcfg-name')||c.name||_bkAktiv;
+    c.bestellschluss=g('bkcfg-schluss');
+    c.kd_nr=g('bkcfg-kdnr');
+    c.tour_nr=tour;
+    c.empfaenger=g('bkcfg-empfaenger');
+    c.empfaenger_name=g('bkcfg-empfaenger-name')||'B\u00e4ckerei';
+    c.baeckerei_mail=g('bkcfg-baeckerei');
+    var f=document.getElementById('bkcfg-format');
+    c.format=f?f.value:'docx';
+    var d=document.getElementById('bkcfg-druck');
+    c.papierausdruck=!!(d&&d.checked);
+    return c;
   }
 
   function loadBaeckerConfig(){
@@ -9388,18 +9494,12 @@
     fetch(API+'/baecker-order?mode=config').then(function(r){return r.json();}).then(function(res){
       if(!res||!res.success||!res.config) throw new Error('config');
       _bkcfg=res.config;
-      bkcfgTageZeichnen(_bkcfg.bestelltage||[]);
-      var v=function(id,wert){var e=document.getElementById(id);if(e)e.value=wert||'';};
-      v('bkcfg-schluss',_bkcfg.bestellschluss);
-      v('bkcfg-kdnr',_bkcfg.kd_nr);
-      var tour=_bkcfg.tour_nr;
-      if(typeof tour==='string'){v('bkcfg-tour',tour);v('bkcfg-tour-sa',tour);}
-      else{v('bkcfg-tour',(tour||{})['default']);v('bkcfg-tour-sa',(tour||{})['5']);}
-      v('bkcfg-empfaenger',_bkcfg.empfaenger);
-      v('bkcfg-empfaenger-name',_bkcfg.empfaenger_name);
-      v('bkcfg-baeckerei',_bkcfg.baeckerei_mail);
+      if(!_bkcfg.baeckereien) _bkcfg.baeckereien={};
+      var namen=Object.keys(_bkcfg.baeckereien);
+      if(namen.indexOf(_bkAktiv)<0) _bkAktiv=namen[0]||'freundl';
+      bkcfgAuswahlZeichnen();
+      bkcfgFelderFuellen();
       bkcfgStatus('');
-      bkcfgHinweis();
       ['bkcfg-empfaenger','bkcfg-baeckerei'].forEach(function(id){
         var e=document.getElementById(id);
         if(e) e.addEventListener('input',bkcfgHinweis);
@@ -9411,47 +9511,42 @@
   }
 
   function saveBaeckerConfig(){
-    var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
-    var tage=bkcfgTageLesen();
-    if(!tage.length){bkcfgStatus('Bitte mindestens einen Bestelltag ausw\u00e4hlen.','fehler');return;}
-    var mail=g('bkcfg-empfaenger');
+    var c=bkcfgFelderLesen();
+    if(!c.bestelltage.length){
+      bkcfgStatus('Bitte mindestens einen Bestelltag ausw\u00e4hlen.','fehler');return;
+    }
+    var mail=c.empfaenger;
     if(mail.indexOf('@')<0||mail.split('@').pop().indexOf('.')<0){
       bkcfgStatus('Bitte eine g\u00fcltige E-Mail-Adresse angeben.','fehler');return;
     }
-    var bkMail=g('bkcfg-baeckerei');
-    if(bkMail&&(bkMail.indexOf('@')<0||bkMail.split('@').pop().indexOf('.')<0)){
+    if(c.baeckerei_mail&&(c.baeckerei_mail.indexOf('@')<0
+        ||c.baeckerei_mail.split('@').pop().indexOf('.')<0)){
       bkcfgStatus('Die Adresse der B\u00e4ckerei ist keine g\u00fcltige E-Mail-Adresse.','fehler');return;
     }
-    if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(g('bkcfg-schluss'))){
+    if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(c.bestellschluss)){
       bkcfgStatus('Bestellschluss bitte als Uhrzeit angeben, z.\u202fB. 12:00.','fehler');return;
     }
-    if(!g('bkcfg-kdnr')||!g('bkcfg-tour')){
-      bkcfgStatus('Kunden-Nr. und Tour-Nr. werden im Formularkopf gebraucht.','fehler');return;
+    if(!c.kd_nr){
+      bkcfgStatus('Die Kunden-Nr. wird im Formularkopf gebraucht.','fehler');return;
     }
-    var tour={'default':g('bkcfg-tour')};
-    if(g('bkcfg-tour-sa')) tour['5']=g('bkcfg-tour-sa');
-    var cfg={
-      bestelltage:tage,
-      bestellschluss:g('bkcfg-schluss'),
-      kd_nr:g('bkcfg-kdnr'),
-      tour_nr:tour,
-      empfaenger:mail,
-      empfaenger_name:g('bkcfg-empfaenger-name')||'B\u00e4ckerei'
-    };
-    if(bkMail) cfg.baeckerei_mail=bkMail;
+    // Tour-Nr. ist bewusst NICHT Pflicht: Martin's hat keine.
     var btn=document.getElementById('bkcfg-save');
     var hint=document.getElementById('bkcfg-saved-hint');
     if(btn){btn.disabled=true;btn.textContent='\u23F3 Speichern\u2026';}
     fetch(API+'/baecker-order',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({aktion:'config',config:cfg})
+      // Nur die gewaehlte Baeckerei senden - die andere darf sich nicht
+      // aendern, nur weil hier gespeichert wurde.
+      body:JSON.stringify({aktion:'config',baeckerei:_bkAktiv,config:c})
     }).then(function(r){return r.json();}).then(function(res){
       if(res&&res.success){
-        _bkcfg=res.config||cfg;
+        if(res.config&&res.config.baeckereien) _bkcfg=res.config;
         bkcfgStatus('');
+        bkcfgAuswahlZeichnen();
         bkcfgHinweis();
-        toast('B\u00e4cker-Einstellungen gespeichert!');
+        bkcfgUeberschneidung();
+        toast('Einstellungen f\u00fcr '+(c.name||_bkAktiv)+' gespeichert!');
         if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
       }else{
         bkcfgStatus((res&&res.error)||'Speichern fehlgeschlagen.','fehler');
