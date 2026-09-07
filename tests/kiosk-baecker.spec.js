@@ -51,6 +51,18 @@ function tagesleiste(gesendet = []) {
       wochentag: TAGE[d.getDay()],
       bestelltag: ist,
       status: !ist ? 'kein_tag' : (gesendet.includes(datum) ? 'gesendet' : 'offen'),
+      // Seit der zweiten Bäckerei liefert die Übersicht je Tag eine Liste der
+      // Lieferanten. Hier nur Freundl – die Freundl-Tests bleiben damit
+      // unverändert gültig, und die Reiterzeile erscheint bewusst nicht.
+      lieferanten: !ist ? [] : [{
+        baeckerei: 'freundl',
+        name: 'Bäckerei Freundl',
+        status: gesendet.includes(datum) ? 'gesendet' : 'offen',
+        gedruckt: gesendet.includes(datum),
+        druck_offen: false,
+      }],
+      fertig: !ist ? 0 : (gesendet.includes(datum) ? 1 : 0),
+      gesamt: ist ? 1 : 0,
     });
   }
   return out;
@@ -92,6 +104,13 @@ function bestellung(opts = {}) {
     positionen: opts.positionen || positionen(),
     tour_nr: opts.tour_nr || '87',
     kd_nr: '1190',
+    baeckerei: 'freundl',
+    baeckerei_name: 'Bäckerei Freundl',
+    // Der Papierausdruck ist eine Einstellung je Bäckerei; in den
+    // Freundl-Bestandstests bewusst aus, damit ihr Ablauf unverändert bleibt.
+    papierausdruck: !!opts.papierausdruck,
+    gedruckt_am: opts.gedrucktAm || '',
+    druck_offen: !!opts.druckOffen,
     empfaenger: opts.empfaenger || 'jrumpfinger@t-online.de',
     testbetrieb: opts.testbetrieb !== false,
   };
@@ -149,16 +168,26 @@ async function mockApi(page, opts = {}) {
           meldung: 'Bestellung gesendet. 7 Positionen, 59 Stück.' });
       }
       if (/mode=uebersicht/.test(url)) {
-        return json({ success: true, tage: tagesleiste(opts.gesendetTage || []),
+        const tage = tagesleiste(opts.gesendetTage || []);
+        const erinnerung = opts.erinnerung
+          || { offen: false, blinkt: false, datum: '', wochentag: '', bestellschluss: '12:00' };
+        return json({ success: true, tage,
           naechster: (opts.tag || ersterBestelltag()).datum,
-          erinnerung: opts.erinnerung
-            || { offen: false, blinkt: false, datum: '', wochentag: '', bestellschluss: '12:00' } });
+          // Der Zähler nennt die anstehende Arbeit: morgen fällige Bestellungen
+          // plus offene Ausdrucke – nicht jeden offenen Tag der Woche.
+          offen_gesamt: (erinnerung.offen ? 1 : 0)
+            + tage.reduce((s, t) => s + (t.lieferanten || []).filter((x) => x.druck_offen).length, 0),
+          erinnerung });
       }
       if (/mode=verlauf/.test(url)) {
         return json({ success: true, verlauf: [
           { datum: '2026-09-04', datum_de: '04.09.2026', wochentag: 'Freitag', status: 1,
+            baeckerei: 'freundl', baeckerei_name: 'Bäckerei Freundl',
+            papierausdruck: false, druck_offen: false, gedruckt_am: '',
             positionen: 28, stueck: 134, protokoll: [{ zeit: '2026-09-03T12:05:00', wer: 'Lidia' }] },
           { datum: '2026-08-29', datum_de: '29.08.2026', wochentag: 'Samstag', status: 2,
+            baeckerei: 'freundl', baeckerei_name: 'Bäckerei Freundl',
+            papierausdruck: false, druck_offen: false, gedruckt_am: '',
             positionen: 21, stueck: 48, protokoll: [{ zeit: '2026-08-28T11:02:00', wer: 'Lidia' }] },
         ] });
       }
@@ -198,7 +227,9 @@ test.describe('Bäcker – Bestelltag (F1)', () => {
     await openBaecker(page);
     const gesperrt = page.locator('#panel-baecker .bk-day.off');
     await expect(gesperrt.first()).toBeDisabled();
-    await expect(gesperrt.first()).toContainText('kein Tag');
+    // Wortlaut seit der zweiten Bäckerei: „keine Lieferung" statt „kein Tag" –
+    // mit zwei Lieferanten ist „kein Tag" missverständlich (siehe F18).
+    await expect(gesperrt.first()).toContainText('keine Lieferung');
   });
 
   test('TC-F1-03: gesendeter Tag ist gekennzeichnet', async ({ page }) => {

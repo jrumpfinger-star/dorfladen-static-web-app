@@ -199,7 +199,9 @@ wählen, erfassen, senden. Die Bäckerei wird nirgends ausgewählt.
   vorausgewählt (nächster offener Tag).
 - Die Tagesleiste zeigt je Tag **farbige Punkte** für die liefernden Bäckereien;
   ein gesendeter Auftrag ist am Punkt erkennbar.
-- Sonntag bleibt gesperrt („keine Lieferung").
+- Sonntag bleibt gesperrt („keine Lieferung"). Dieser Wortlaut ersetzt das
+  bisherige „kein Tag" aus F1 der Basis-Spec: Mit zwei Lieferanten ist „kein
+  Tag" missverständlich.
 - Die Statuskarte nennt **immer** die Bäckerei im Klartext, auch an
   Ein-Bäckerei-Tagen.
 - Wechselt die Verkäuferin auf einen Tag, an dem die aktuell gewählte Bäckerei

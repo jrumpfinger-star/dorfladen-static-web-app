@@ -219,7 +219,7 @@ def _uebersicht(url, hdrs, cfg):
     """
     heute = date.today()
     tage = []
-    offen_gesamt = 0
+    druck_offen_gesamt = 0
     for i in range(7):
         d = heute + timedelta(days=i)
         iso = d.isoformat()
@@ -240,11 +240,9 @@ def _uebersicht(url, hdrs, cfg):
                 "gedruckt": gedruckt,
                 "druck_offen": druck_offen,
             })
-            # Der Zaehler am Tab zaehlt offene Bestellungen UND offene Ausdrucke.
-            if not gesendet:
-                offen_gesamt += 1
-            elif druck_offen:
-                offen_gesamt += 1
+            # Ein fehlender Ausdruck ist offene Arbeit, egal an welchem Tag.
+            if druck_offen:
+                druck_offen_gesamt += 1
         fertig = sum(1 for x in lieferanten
                      if x["status"] != "offen" and not x["druck_offen"])
         tage.append({
@@ -283,12 +281,18 @@ def _uebersicht(url, hdrs, cfg):
         except Exception:
             pass
 
+    # Der Zaehler am Tab nennt die ANSTEHENDE Arbeit: die morgen faelligen
+    # Bestellungen plus alle offenen Ausdrucke. Bewusst NICHT jeder offene Tag
+    # der Woche – sonst stuende dort dauerhaft eine Zahl und niemand schaute
+    # noch hin.
     return {
         "tage": tage,
-        "offen_gesamt": offen_gesamt,
+        "offen_gesamt": len(wer_offen) + druck_offen_gesamt,
         "erinnerung": {
             "offen": offen, "blinkt": blinkt, "datum": morgen if offen else "",
             "wochentag": store.wochentag(morgen) if offen else "",
+            "bestellschluss": (store.cfg_von(cfg, store.liefert_am(cfg, morgen)[0])
+                               .get("bestellschluss") if store.liefert_am(cfg, morgen) else ""),
             "baeckereien": wer_offen,
         },
     }
