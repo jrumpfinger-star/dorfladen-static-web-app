@@ -2701,6 +2701,7 @@ Inline-Stilen aus – daraus entstanden drei Fehler:
 |---|---|---|---|
 | 07.09.2026 | TC-SL-01..06 | 18/18 | Lokal gegen 127.0.0.1:8897, alle drei Viewports |
 | 07.09.2026 | TC-KC (Regression) | 16/16 | Seriell; mit 4 Arbeitern flackert die Startseite |
+| 07.09.2026 | TC-SL-01..06 | 18/18 | Live gegen kind-pebble, alle drei Viewports |
 
 
 
