@@ -407,7 +407,8 @@
        mit einem Tipp gesetzt sein, ohne dass sich erst ein Menü öffnet. */
     .mb-einh{display:flex;flex-wrap:wrap;gap:3px}
     .mb-einh button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;color:#6b7280;
-      border-radius:8px;padding:0 9px;min-width:34px;min-height:36px;font-size:12px;font-weight:600;
+      border-radius:8px;padding:0 9px;min-width:34px;min-height:36px;font-size:12px;
+font-weight:600;
       cursor:pointer;white-space:nowrap}
     .mb-einh button.on{border-color:#2d5016;background:#2d5016;color:#fff}
     .mb-quick{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
@@ -682,7 +683,7 @@
     /* Auf breiten Schirmen mehrspaltig: das halbiert bzw. drittelt die
        Scrolllaenge und rueckt die Eingabefelder wieder an den Artikelnamen. */
     .bk-grid{display:grid;grid-template-columns:1fr;gap:0 14px}
-    .bk-row{display:grid;grid-template-columns:46px minmax(0,1fr) auto auto auto;align-items:center;gap:9px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #e5e7eb;border-radius:9px;padding:4px 10px;margin-bottom:5px}
+    .bk-row{display:grid;grid-template-columns:46px minmax(0,1fr) auto auto;align-items:center;gap:9px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #e5e7eb;border-radius:9px;padding:4px 10px;margin-bottom:5px}
     .bk-row.has{border-left-color:var(--bk)}
     .bk-row.changed{border-left-color:#2563eb;background:#f8faff}
     .bk-row.extra{border-left-color:#6366f1;background:#f8f9ff}
@@ -703,10 +704,6 @@
     .bk-row .step input::-webkit-outer-spin-button,.bk-row .step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     .bk-row.has .step input{border-color:var(--bk);color:var(--bk-dark);background:var(--bk-bg)}
     .bk-row.changed .step input{border-color:#2563eb;color:#1d4ed8;background:#eff6ff}
-    .bk-row .ret{display:flex;align-items:center;gap:4px;justify-self:end}
-    .bk-row .ret .rl{font-size:11px;font-weight:600;color:#9ca3af}
-    .bk-row .ret input{width:46px;height:44px;text-align:center;border:1px dashed #d1d5db;border-radius:9px;font-size:14px;font-weight:600;color:#6b7280;-moz-appearance:textfield}
-    .bk-row .ret input::-webkit-outer-spin-button,.bk-row .ret input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     .bk-del{width:40px;height:44px;border:1px solid #fecaca;background:#fff;color:#dc2626;border-radius:9px;cursor:pointer;font-size:14px}
     .bk-addrow{width:100%;border:1.5px dashed #c7d2fe;color:#4338ca;background:#f8f9ff;border-radius:10px;min-height:48px;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin:10px 0 2px}
     .bk-foot{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--c-border);padding:11px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
@@ -827,11 +824,10 @@
       .bk-foot{position:static;margin-top:16px;padding-bottom:4px}
       .bk-foot .bk-send{flex:1 1 100%;justify-content:center}
       .bk-sub .k-filter-label{display:inline}
-      .bk-row{grid-template-columns:52px 1fr;grid-template-areas:"nr nm" "hist hist" "step ret";row-gap:8px}
+      .bk-row{grid-template-columns:52px 1fr;grid-template-areas:"nr nm" "hist step";row-gap:8px}
       .bk-row .nr{grid-area:nr}.bk-row .nm{grid-area:nm}
       .bk-row .hist{grid-area:hist}
-      .bk-row .step{grid-area:step;justify-self:start}
-      .bk-row .ret{grid-area:ret;justify-self:end}
+      .bk-row .step{grid-area:step;justify-self:end}
       .bk-del{position:absolute;right:10px;top:8px}
       .bk-row.extra{position:relative}
       .bk-art{grid-template-columns:52px 1fr 34px 46px;grid-template-areas:"nr nm ed sw" "use use use use";row-gap:5px}

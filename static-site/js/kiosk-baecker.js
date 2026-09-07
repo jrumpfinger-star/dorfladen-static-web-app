@@ -646,14 +646,10 @@
     h += '<button type="button" tabindex="-1" onclick="KBaecker.plus(\'' + esc(key) + '\',1)"' + (gesperrt ? ' disabled' : '') + '>+</button>';
     h += '</div>';
 
-    h += '<div class="ret"><span class="rl">Ret.</span>'
-      + '<input type="number" inputmode="numeric" min="0" placeholder="–" value="'
-      + ((p.retoure || 0) ? p.retoure : '') + '"'
-      + ' data-feld="retoure" data-key="' + esc(key) + '"'
-      + (gesperrt ? ' readonly' : '')
-      + ' onfocus="this.select()"'
-      + ' oninput="KBaecker.setzRet(\'' + esc(key) + '\',this.value)"'
-      + ' onchange="KBaecker.normiereRet(this,\'' + esc(key) + '\')"></div>';
+    // Retouren werden nicht mehr erfasst: Was zurückgeht, weiß die Bäckerei
+    // beim Abholen selbst, und im Laden hat es niemand eingetragen. Das Feld
+    // stahl nur Platz und Aufmerksamkeit neben der Bestellmenge. Bestehende
+    // Werte bleiben in den Daten und auf dem Blatt stehen.
 
     if (p.zusatz && !gesperrt) {
       h += '<button class="bk-del" type="button" tabindex="-1" title="Position entfernen" onclick="KBaecker.zusatzWeg(\'' + esc(key) + '\')">✕</button>';
@@ -739,27 +735,12 @@
     autoSichern();
   }
 
-  function setzRet(key, wert) {
-    var p = finde(key);
-    if (!p || (_b.gesperrt && !_korrektur)) return;
-    var n = parseInt(wert, 10);
-    p.retoure = (isNaN(n) || n < 0) ? 0 : n;
-    frischeFuss();
-    autoSichern();
-  }
-
   /* Beim Verlassen des Feldes den angezeigten Wert bereinigen. Waehrend des
      Tippens wird bewusst nicht eingegriffen, damit der Cursor stehen bleibt. */
   function normiere(el, key) {
     setz(key, el.value);
     var p = finde(key);
     if (p) el.value = p.menge || 0;
-  }
-
-  function normiereRet(el, key) {
-    setzRet(key, el.value);
-    var p = finde(key);
-    if (p) el.value = (p.retoure || 0) ? p.retoure : '';
   }
 
   /* Enter springt ins naechste Mengenfeld – so lassen sich alle Mengen
@@ -1623,8 +1604,8 @@
   window.KBaecker = {
     onShow: onShow, start: start, sub: sub, tag: tag,
     baeckerei: baeckerei,
-    plus: plus, setz: setz, setzRet: setzRet, taste: taste,
-    normiere: normiere, normiereRet: normiereRet,
+    plus: plus, setz: setz, taste: taste,
+    normiere: normiere,
     reset: reset, umfang: umfang,
     speichern: speichern, vorschau: vorschau, senden: senden,
     korrektur: korrektur, verwerfen: verwerfen,

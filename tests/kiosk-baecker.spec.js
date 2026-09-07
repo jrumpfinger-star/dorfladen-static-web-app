@@ -319,12 +319,14 @@ test.describe('Bäcker – Erfassung (F3)', () => {
     await expect(row(page, 'Urige').locator('.step input')).toHaveValue('0');
   });
 
-  test('TC-F3-04: Retouren sind erfassbar', async ({ page }) => {
+  test('TC-F3-04: Retouren werden nicht mehr erfasst', async ({ page }) => {
+    // Aus dem Laden gemeldet: Die Erfassung ergab keinen Sinn – was zurück
+    // geht, weiß die Bäckerei beim Abholen selbst. Das Feld stahl nur Platz
+    // neben der Bestellmenge.
     await openBaecker(page);
-    await row(page, 'Kaisersemmel').locator('.ret input').fill('3');
-    await row(page, 'Kaisersemmel').locator('.ret input').blur();
-    await expect(row(page, 'Kaisersemmel').locator('.ret input')).toHaveValue('3');
-    // Bestellmenge bleibt unberührt
+    await expect(row(page, 'Kaisersemmel').locator('.ret')).toHaveCount(0);
+    await expect(page.locator('#panel-baecker [data-feld="retoure"]')).toHaveCount(0);
+    // Die Bestellmenge bleibt selbstverständlich bedienbar.
     await expect(row(page, 'Kaisersemmel').locator('.step input')).toHaveValue('48');
   });
 
@@ -349,10 +351,8 @@ test.describe('Bäcker – Erfassung (F3)', () => {
     await openBaecker(page);
     await row(page, 'Kaisersemmel').locator('.step input').focus();
 
-    // Erst das Retourenfeld derselben Zeile, dann die nächste Menge –
-    // die Plus/Minus-Knöpfe dürfen nicht dazwischen liegen.
-    await page.keyboard.press('Tab');
-    await expect(page.locator(':focus')).toHaveAttribute('data-feld', 'retoure');
+    // Ohne das Retourenfeld geht es direkt zur nächsten Menge – die
+    // Plus/Minus-Knöpfe dürfen nicht dazwischen liegen.
     await page.keyboard.press('Tab');
     const fokus = page.locator(':focus');
     await expect(fokus).toHaveAttribute('data-feld', 'menge');
