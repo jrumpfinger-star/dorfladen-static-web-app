@@ -6174,6 +6174,12 @@ var K = (function(){
   var updatePending = false;
 
   function isBusy(){
+    // Bäcker- und Metzger-Bestellung haben keine Push-Benachrichtigungen. Ein
+    // Voll-Reload mitten in der Erfassung wäre reine Störung: die Verkäuferin
+    // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
+    // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
+    var aktiv = document.querySelector('.k-panel.active');
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen
