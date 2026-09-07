@@ -2537,4 +2537,13 @@ Wettlauf sicher verliert – ohne diese Verzögerung schlummert der Fehler.
 |---|---|---|---|
 | 07.09.2026 | TC-F17-01..04 | 4/4 | Lokal gegen 127.0.0.1:8891 nach der Korrektur |
 | 07.09.2026 | TC-F17-01..04 | 2 Fehlschläge | Gegen alten Live-Stand – Tests fangen den Fehler nachweislich |
+| 07.09.2026 | TC-F17-01..04 | 4/4 | Live gegen kind-pebble nach dem Ausrollen |
+
+> **Vorbelastung, nicht durch diese Änderung verursacht:** `T-MT-06/07/08`
+> (Tagesinfo-Modal) schlagen mit „Target crashed" fehl – auch auf
+> `witty-island`, wo die Korrektur gar nicht ausgerollt ist, und auch auf
+> Desktop, wo `js/mobile.js` wegen `innerWidth>768` sofort aussteigt. Die
+> Startseite lädt Google Maps und quagga; der Absturz ist umgebungsbedingt.
+> `T-MT-01..05` sind grün.
+
 
