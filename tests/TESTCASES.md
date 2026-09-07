@@ -2577,6 +2577,9 @@ nur an Randfarbe und Knöpfen.
 | Datum | Tests | Ergebnis | Anmerkung |
 |---|---|---|---|
 | 07.09.2026 | TC-F1 bis TC-F5 | 30/30 | Lokal gegen 127.0.0.1:8893, alle drei Viewports |
+| 07.09.2026 | TC-F1 bis TC-F5 | 30/30 | Live gegen kind-pebble, alle drei Viewports |
+| 07.09.2026 | T-SW (Regression) | 23/23 | Sonderwünsche live gegen den neuen Stand |
+| 07.09.2026 | T-BK (Regression) | 52/52 | Bäcker-Tests lokal, Desktop |
 
 > **Stolperstein:** `tests/kiosk-sonderwuensche.spec.js` setzt die Kiosk-Adresse
 > fest auf `${BASE}/kiosk` – **ohne** `.html`. Gegen einen einfachen lokalen
