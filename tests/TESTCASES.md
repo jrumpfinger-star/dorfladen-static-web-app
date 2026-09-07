@@ -2546,4 +2546,36 @@ Wettlauf sicher verliert – ohne diese Verzögerung schlummert der Fehler.
 > Startseite lädt Google Maps und quagga; der Absturz ist umgebungsbedingt.
 > `T-MT-01..05` sind grün.
 
+---
+
+## T-B2 – Zweite Bäckerei (Martin's Backstube)
+
+Spec: `specs/baecker-zwei-baeckereien/spec.md` (F17–F26)
+Geplant für `tests/kiosk-baecker-zwei.spec.js` (mobile / ipad-mini / desktop)
+sowie Parser- und Umzugstests ohne Azure.
+
+**Status:** Spec geschrieben, noch nicht geplant/umgesetzt.
+
+> **Namenskollision beachtet:** Die Testfälle tragen bewusst das Kürzel
+> `TC-B2-…`. Ein schlichtes `TC-F17-01` wäre mit T-F17 (Mittagstisch-
+> Bestellschluss) kollidiert – dieselbe Kennung für zwei verschiedene Prüfungen.
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-B2-F17-01..04 | Getrennte Kataloge/Bestellungen je Bäckerei; gleiche Nummer, verschiedene Artikel; fehlende Bäckerei wird abgelehnt |
+| TC-B2-F18-01..03 | Liefertag bestimmt die Bäckerei; Tageswechsel schaltet mit; Lieferanten-Punkte in der Tagesleiste |
+| TC-B2-F19-01..05 | Samstag: Reiter nur bei zwei Lieferanten, Stand je Reiter, „1 von 2", Erinnerung bis beide raus sind |
+| TC-B2-F20-01..05 | Martin's PDF nur für den gewählten Tag, Kopfdaten, Sortierung; Freundl bleibt Word |
+| TC-B2-F21-01..04 | Startkatalog 48 Artikel, nie bestellte ausgeblendet, Warengruppen, Dublettenschutz je Bäckerei |
+| TC-B2-F22-01..06 | Rechnungs-Import: neue Nummern, mehrzeilige Position, keine Mengen/Preise, wiederholbar, unlesbares PDF, Retouren-Quote |
+| TC-B2-F23-01..06 | Papierausdruck als Pflichtschritt bei Freundl, nachdruckbar, „Später drucken" ändert den Stand nicht |
+| TC-B2-F24-01..04 | Bestandsübernahme nach Freundl verlustfrei, wiederholbar, Testlauf meldet Abweichungen |
+| TC-B2-F25-01..04 | CMS je Bäckerei; Speichern trifft nur die gewählte; Überschneidung am Samstag erlaubt |
+| TC-B2-F26-01..04 | Kein horizontales Scrollen, Tap-Targets, Reiterzeile klebt mit, keine nativen Dialoge |
+
+### Testlauf-Tabelle (Zweite Bäckerei)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| — | — | — | Noch kein Lauf – Umsetzung steht aus |
+
 
