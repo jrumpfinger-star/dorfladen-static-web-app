@@ -322,8 +322,11 @@ if(window!==window.parent){
   var _bsCfg=window._dlBestellschluss||10.5;
   var BESTELLSCHLUSS_H = Math.floor(_bsCfg), BESTELLSCHLUSS_M = Math.round((_bsCfg-Math.floor(_bsCfg))*60);
 
-  // Lade CMS-Config um Bestellschluss zu ermitteln (app.js ist auf dieser Seite nicht geladen)
-  fetch('/api/cms-config').then(function(r){return r.json();}).then(function(p){
+  // Lade CMS-Config um Bestellschluss zu ermitteln (app.js ist auf dieser Seite nicht geladen).
+  // Als Zusage gemerkt: die Gerichteliste darf erst rendern, wenn der echte
+  // Bestellschluss bekannt ist - sonst wird "heute" faelschlich als geschlossen
+  // markiert, weil noch der Notfallwert 10:30 gilt.
+  var _bsReady=fetch('/api/cms-config').then(function(r){return r.json();}).then(function(p){
     var cfg=(p&&p.data)?p.data:p;
     var bsRaw=cfg&&cfg['bestellschluss_uhr'];
     if(bsRaw){
@@ -396,9 +399,12 @@ if(window!==window.parent){
 
   // ── Load Wochenplan ──
   function loadMenu(){
-    fetch(API+'/wochenplan')
-      .then(function(r){return r.json();})
-      .then(function(data){
+    Promise.all([
+      fetch(API+'/wochenplan').then(function(r){return r.json();}),
+      _bsReady
+    ])
+      .then(function(erg){
+        var data = erg[0];
         var items = (data.data || []).filter(function(m){return m.dl_gericht && m.dl_preis;});
 
         // Filter to today only if ?heute=1

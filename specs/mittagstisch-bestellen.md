@@ -33,6 +33,22 @@ für zukünftige Tage.
 - Fallback: 10.5 (= 10:30 Uhr)
 - Die Bestellseite zeigt den dynamischen Wert im Countdown und in Fehlermeldungen
 
+### AK-MT-04b: Der konfigurierte Wert gilt immer (Reihenfolge egal)
+- `window._dlBestellschluss` wird **asynchron** aus `/api/cms-config` geladen.
+  Jede Ansicht, die Bestellknöpfe oder „Bestellschluss erreicht" berechnet, muss
+  **auf diesen Wert warten**, bevor sie rendert.
+- Andernfalls entscheidet der Zufall: Trifft `/api/wochenplan` zuerst ein, gilt
+  der Notfallwert 10:30 und der Bestellknopf fehlt, obwohl laut CMS (z. B. 11:00)
+  noch bestellt werden darf. Der Wert steht danach zwar korrekt im Speicher,
+  aber es wird nicht neu gezeichnet.
+- Abgesichert in:
+  - `js/app.js` – Desktop-Wochenplan wartet über `_dlFlagsReady`
+  - `js/mobile.js` – mobiler Wochenplan wartet über `_dlFlagsReady`
+  - `index.html` – Tagesinfo-Modal wartet über `Promise.all([_flagsP,_tpP])`
+  - `tagesinfo.html` – wartet über `_bsP`
+  - `mittagstisch-bestellen.html` – wartet über `_bsReady`
+- Test Cases: TC-F17-01 bis TC-F17-04 (`tests/bestellschluss.spec.js`)
+
 ### AK-MT-05: TagesInfo Bestell-Button
 - Im TagesInfo-Modal auf der Startseite wird beim Mittagessen immer ein Bestell-Button angezeigt
 - Vor Bestellschluss: Direktlink zum Bestellen für heute mit vorausgewähltem Gericht

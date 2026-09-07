@@ -2511,3 +2511,30 @@ Die API wird komplett per `page.route` abgefangen – kein echter Versand.
 | 06.09.2026 | TC-F16-01..06 | 6/6 | Lokal gegen 127.0.0.1:8887, alle drei Viewports |
 | 06.09.2026 | T-CS-01..13 (Regression) | 39/39 | Bestehende CMS-Social-Tests unverändert grün |
 | 06.09.2026 | TC-F16-01..06 | 6/6 | Live gegen kind-pebble, alle drei Viewports |
+
+---
+
+## T-F17 – Mittagstisch-Bestellschluss aus dem CMS
+
+Spec: `specs/mittagstisch-bestellen.md` (AK-MT-04b)
+Automatisiert in `tests/bestellschluss.spec.js`.
+Alle API-Aufrufe sind abgefangen – es wird keine Bestellung ausgelöst.
+
+Hintergrund: `window._dlBestellschluss` kommt asynchron aus `/api/cms-config`.
+Wer rendert, bevor der Wert da ist, benutzt den Notfallwert 10:30. Die Tests
+**verzögern `/api/cms-config` bewusst um 2,5 s**, damit die Konfiguration den
+Wettlauf sicher verliert – ohne diese Verzögerung schlummert der Fehler.
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F17-01 | Bestellschluss 11:00 gilt auch, wenn die Konfiguration verspätet eintrifft |
+| TC-F17-02 | Bestellschluss 11:00 gilt auch ohne Verzögerung |
+| TC-F17-03 | Gegenprobe: Bestellschluss 10:00 sperrt „heute" um 10:45 weiterhin |
+| TC-F17-04 | Bestellseite markiert „heute" nicht fälschlich als „Bestellschluss erreicht" |
+
+### Testlauf-Tabelle (Bestellschluss)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 07.09.2026 | TC-F17-01..04 | 4/4 | Lokal gegen 127.0.0.1:8891 nach der Korrektur |
+| 07.09.2026 | TC-F17-01..04 | 2 Fehlschläge | Gegen alten Live-Stand – Tests fangen den Fehler nachweislich |
+

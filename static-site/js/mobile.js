@@ -347,7 +347,15 @@
   // dayMap: supports both string labels and Dataverse choice integers
   var wpDayMap={montag:1,dienstag:2,mittwoch:3,donnerstag:4,freitag:5,samstag:6,
     101000:1,101001:2,101002:3,101003:4,101004:5,101005:6};
-  fetch(API_BASE+'/wochenplan').then(function(r){return r.json();}).then(function(data){
+  // Der Bestellschluss kommt aus der CMS-Konfiguration und wird von app.js
+  // asynchron nachgeladen. Frueher wurde der Wochenplan gerendert, sobald die
+  // Wochenplan-Daten da waren - war die Konfiguration dann noch unterwegs,
+  // griff der Notfallwert 10:30 und der Bestellknopf fuer heute fehlte,
+  // obwohl noch bestellt werden durfte. Darum auf beides warten.
+  var _wpFlagsReady=window._dlFlagsReady||Promise.resolve();
+  var _wpDataP=fetch(API_BASE+'/wochenplan').then(function(r){return r.json();}).catch(function(){return null;});
+  Promise.all([_wpDataP,_wpFlagsReady]).then(function(erg){
+    var data=erg[0];
     if(data&&data.success&&data.data&&data.data.length>0){
       // API already filters by target week date range (ab Samstag: nächste Woche)
       var menu={1:[],2:[],3:[],4:[],5:[],6:[]};
