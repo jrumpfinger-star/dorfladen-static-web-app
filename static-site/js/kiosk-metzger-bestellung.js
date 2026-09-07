@@ -332,7 +332,10 @@ window.KMetzgerBest = (function () {
   }
 
   function tagesleiste() {
-    var h = '<div class="mb-days">';
+    // Beschriftung, damit unmissverständlich ist, wofür die Plättchen stehen:
+    // Es sind LIEFERtage, nicht die Tage, an denen bestellt wird.
+    var h = '<div class="mb-days-lbl">Liefertag wählen</div>';
+    h += '<div class="mb-days">';
     (_tage || []).forEach(function (t) {
       // Heute ist die Ware schon da - bestellt wird spätestens am Vortag.
       var waehlbar = t.bestellbar !== undefined ? t.bestellbar : t.bestelltag;
@@ -359,7 +362,7 @@ window.KMetzgerBest = (function () {
     var letzte = prot.length ? prot[prot.length - 1] : null;
     var h = '<div class="mb-status' + (s ? ' gesendet' : '') + '">';
     if (s === 0) {
-      h += '<b>Entwurf</b> f\u00fcr ' + esc(wochentagVon(_datum)) + ', den '
+      h += '<b>Entwurf</b> \u2014 Lieferung am ' + esc(wochentagVon(_datum)) + ', den '
         + esc(datumDe(_datum));
       if (_vorbelegtAus) {
         h += ' <span class="mb-quelle">vorbelegt aus der Bestellung vom '
@@ -627,6 +630,7 @@ window.KMetzgerBest = (function () {
           + (s.offen > 1 ? 'en' : '') + ' nicht bewertbar)</span>' : '') + '</span>';
     }
     if (!gesperrt()) {
+      h += '<span class="mb-autosave"></span>';
       h += '<button class="mb-btn" onclick="KMetzgerBest.speichern()">Speichern</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.senden()">Bestellung senden</button>';
     }
@@ -684,7 +688,7 @@ window.KMetzgerBest = (function () {
                          einheit: b.einheit, vakuum: !!b.vakuum });
     });
     p.pruef = false;
-    _dirty = true;
+    markiereGeaendert();
     render();
   }
 
@@ -814,7 +818,7 @@ window.KMetzgerBest = (function () {
       _entwurf.menge = null;
     }
     p.pruef = false;
-    _dirty = true;
+    markiereGeaendert();
     render();
     inSicht();
   }
@@ -839,7 +843,7 @@ window.KMetzgerBest = (function () {
       });
     }
     p.pruef = false;
-    _dirty = true;
+    markiereGeaendert();
     render();
     inSicht();
   }
@@ -865,7 +869,7 @@ window.KMetzgerBest = (function () {
     p.portionen = r.bloecke;
     p.hinweis = r.hinweis;
     p.pruef = !r.bloecke.length && !!r.hinweis;
-    _dirty = true;
+    markiereGeaendert();
     _offen = null; _entwurf = null;
     render();
   }
@@ -874,7 +878,7 @@ window.KMetzgerBest = (function () {
     var p = finde(key);
     if (!p || gesperrt()) return;
     p.portionen.splice(i, 1);
-    _dirty = true;
+    markiereGeaendert();
     if (_offen === key) { _offen = null; _entwurf = null; }
     render();
   }
@@ -885,7 +889,7 @@ window.KMetzgerBest = (function () {
     p.portionen = [];
     p.pruef = false;
     _entwurf = { i: -1, anzahl: 1, menge: null, einheit: _entwurf.einheit, vakuum: false };
-    _dirty = true;
+    markiereGeaendert();
     render();
   }
 
@@ -894,13 +898,13 @@ window.KMetzgerBest = (function () {
     if (!p) return;
     if (_entwurf.i >= 0) p.portionen.splice(_entwurf.i, 1);
     _entwurf = { i: -1, anzahl: 1, menge: null, einheit: _entwurf.einheit, vakuum: false };
-    _dirty = true;
+    markiereGeaendert();
     render();
   }
 
   function hinweis(key, v) {
     var p = finde(key);
-    if (p) { p.hinweis = v; _dirty = true; }
+    if (p) { p.hinweis = v; markiereGeaendert(); }
   }
 
   function hinweisWeg(key) {
@@ -908,7 +912,7 @@ window.KMetzgerBest = (function () {
     if (!p || gesperrt()) return;
     p.hinweis = '';
     p.pruef = false;
-    _dirty = true;
+    markiereGeaendert();
     if (_offen === key) { _offen = null; _entwurf = null; }
     render();
   }
@@ -954,7 +958,7 @@ window.KMetzgerBest = (function () {
         nummer: isFinite(nr) ? nr : null, name: name,
         portionen: [], hinweis: '', zusatz: true
       });
-      _dirty = true;
+      markiereGeaendert();
       render();
       return true;
     });
@@ -964,7 +968,7 @@ window.KMetzgerBest = (function () {
     _b.positionen = (_b.positionen || []).filter(function (p) {
       return posKey(p) !== key;
     });
-    _dirty = true;
+    markiereGeaendert();
     render();
   }
 
@@ -979,6 +983,34 @@ window.KMetzgerBest = (function () {
     });
   }
 
+  /* ── Stille Sicherung ────────────────────────────────────────────────
+     Erfasste Mengen lagen bisher nur im Speicher des Browsers. Ein Neuladen
+     - etwa durch die Versionspruefung nach einem Update oder ein
+     versehentliches F5 - warf alles weg. Deshalb wird jede Aenderung nach
+     kurzer Ruhe automatisch als Entwurf abgelegt. */
+  var _autoTimer = null;
+  var _autoLaeuft = false;
+  function markiereGeaendert() {
+    _dirty = true;
+    if (!_b || !_datum || gesperrt()) return;
+    if (_autoTimer) clearTimeout(_autoTimer);
+    _autoTimer = setTimeout(function () {
+      _autoTimer = null;
+      if (_autoLaeuft) { markiereGeaendert(); return; }   // spaeter erneut
+      _autoLaeuft = true;
+      speichern(true).then(function (ok) {
+        _autoLaeuft = false;
+        var el = document.querySelector('#panel-metzgerbest .mb-autosave');
+        if (el) {
+          el.textContent = ok ? 'automatisch gesichert' : 'Sicherung fehlgeschlagen';
+          el.className = 'mb-autosave' + (ok ? ' ok' : ' fehl');
+        }
+      });
+    }, 1500);
+  }
+
+  function istGeaendert() { return !!_dirty; }
+
   function speichern(still) {
     return fetch(API + '/metzger-order/' + encodeURIComponent(_datum) + '/speichern', {
       method: 'POST', headers: authHeaders(),
@@ -991,7 +1023,9 @@ window.KMetzgerBest = (function () {
         return true;
       })
       .catch(function (e) {
-        toast(e.message || 'Der Entwurf konnte nicht gespeichert werden.');
+        // Die stille Sicherung meldet sich in der Fusszeile, nicht per Toast –
+        // sonst blinkt bei jedem Verbindungsaussetzer eine Meldung auf.
+        if (!still) toast(e.message || 'Der Entwurf konnte nicht gespeichert werden.');
         return false;
       });
   }
@@ -1213,6 +1247,7 @@ window.KMetzgerBest = (function () {
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
     speichern: speichern, senden: senden, korrektur: korrektur,
     aktiv: aktiv, cfgSpeichern: cfgSpeichern,
+    istGeaendert: istGeaendert,
     badge: badge
   };
 })();

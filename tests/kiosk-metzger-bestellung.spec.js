@@ -481,3 +481,61 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await expect(page.locator('.k-tab[data-tab="metzgerbest"]')).toHaveCount(1);
   });
 });
+
+
+// ── F30: Liefertag klar benennen, Eingaben still sichern ────────────────
+//
+// Dieselben zwei Meldungen wie beim Bäcker – der Metzger-Tab hatte sie auch:
+//  1. Unklar, wofür die Tagesplättchen stehen. Es sind LIEFERtage.
+//  2. Ein Neuladen warf alle Eingaben weg. Der Merker `_dirty` war zwar da,
+//     aber nichts sicherte automatisch.
+
+test.describe('Metzger-Bestellung – Liefertag und stille Sicherung (F30)', () => {
+
+  test('TC-M-F30-01: Tagesleiste ist als Liefertag beschriftet', async ({ page }) => {
+    await oeffneTab(page);
+    await expect(page.locator('#panel-metzgerbest .mb-days-lbl')).toContainText('Liefertag wählen');
+  });
+
+  test('TC-M-F30-02: Statuszeile sagt „Lieferung am"', async ({ page }) => {
+    await oeffneTab(page);
+    await expect(page.locator('#panel-metzgerbest .mb-status')).toContainText('Lieferung am');
+  });
+
+  test('TC-M-F30-03: Eine Portion wird ohne Zutun gesichert', async ({ page }) => {
+    const posts = [];
+    await page.route('**/api/metzger-order/**/speichern', (r) => r.fallback());
+    await oeffneTab(page);
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /\/speichern$/.test(r.url())) posts.push(r.url());
+    });
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    // 1,5 s Ruhe, dann geht der Entwurf raus – niemand muss etwas drücken.
+    await page.waitForTimeout(2600);
+    expect(posts.length).toBeGreaterThan(0);
+    await expect(page.locator('#panel-metzgerbest .mb-autosave')).toContainText('gesichert');
+  });
+
+  test('TC-M-F30-04: Schnelle Eingaben lösen nur eine Sicherung aus', async ({ page }) => {
+    const posts = [];
+    await oeffneTab(page);
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /\/speichern$/.test(r.url())) posts.push(r.url());
+    });
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('.mb-quick button', { hasText: '½' }).first().click();
+    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.waitForTimeout(2600);
+    expect(posts.length).toBe(1);
+  });
+
+  test('TC-M-F30-05: Der Kiosk erkennt ungesicherte Eingaben', async ({ page }) => {
+    // Davon haengt ab, ob nach einem Update neu geladen werden darf.
+    await oeffneTab(page);
+    expect(await page.evaluate(() => window.KMetzgerBest.istGeaendert())).toBe(false);
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    expect(await page.evaluate(() => window.KMetzgerBest.istGeaendert())).toBe(true);
+  });
+});

@@ -284,7 +284,10 @@
 
   function tagesleiste() {
     if (!_uebersicht || !_uebersicht.tage) return '';
-    var h = '<div class="bk-days">';
+    // Beschriftung, damit unmissverständlich ist, wofür die Plättchen stehen:
+    // Es sind LIEFERtage, nicht die Tage, an denen bestellt wird.
+    var h = '<div class="bk-days-lbl">' + luc('truck', 13) + ' Liefertag wählen</div>';
+    h += '<div class="bk-days">';
     _uebersicht.tage.forEach(function (t) {
       var cls = 'bk-day';
       var druckOffen = (t.lieferanten || []).some(function (x) { return x.druck_offen; });
@@ -373,7 +376,7 @@
         + (druckOffen ? ' · <b>Papierausdruck steht noch aus</b>'
            : _b.gedruckt_am ? ' · gedruckt' : '') + '</div>';
     } else {
-      h += '<div class="t1">Bestellung für ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
+      h += '<div class="t1">Lieferung am ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
       var herkunft = _b.vorlage_datum_de
         ? (_b.hat_entwurf
             ? ' · gespeicherter Entwurf, vorbelegt vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')'
@@ -388,7 +391,7 @@
                 : ' · keine Vorlage vorhanden, alle Mengen starten bei 0'));
       h += '<div class="t2">' + (ueberfaellig
         ? '<b>Bestellschluss war um ' + esc(e.bestellschluss || '') + ' Uhr</b> – bitte zeitnah senden'
-        : 'Noch nicht gesendet') + herkunft + '</div>';
+        : 'Noch nicht gesendet') + bestellschlussText() + herkunft + '</div>';
     }
     h += '</div>';
     if (druckOffen) {
@@ -413,6 +416,19 @@
         + (_korrektur ? 'Korrektur senden' : 'An Bäckerei senden') + '</button>';
     }
     return h + '</div>';
+  }
+
+  /* Wann muss diese Lieferung spaetestens bestellt sein? Nur anschreiben, wenn
+     der Bestelltag nicht heute ist - sonst ist es nur Rauschen. */
+  function bestellschlussText() {
+    var d = _b && _b.bestellschluss_datum;
+    if (!d) return '';
+    var n = new Date();
+    var iso = n.getFullYear() + '-'
+      + ('0' + (n.getMonth() + 1)).slice(-2) + '-' + ('0' + n.getDate()).slice(-2);
+    if (d === iso) return ' · <b>heute bestellen</b>';
+    return ' · zu bestellen bis ' + esc(_b.bestellschluss_wochentag || '')
+      + ', ' + esc(_b.bestellschluss_datum_de || '');
   }
 
   function zeitKurz(iso) {
@@ -527,7 +543,7 @@
       + (gesperrt ? 'Gesendet: ' : _b.bestellbar === false ? 'Geliefert: ' : 'Bestellung: ')
       + '<b>' + pos + ' Positionen</b> · <b>' + stk + ' Stück</b>'
       + (geaendert ? ' · ' + geaendert + ' Änderung' + (geaendert === 1 ? '' : 'en') : '')
-      + '</div><span class="sp"></span>';
+      + '</div><span class="bk-autosave"></span><span class="sp"></span>';
     if (!nurAnsehen) {
       h += '<button class="bk-btn" onclick="KBaecker.speichern()">Entwurf speichern</button>';
       h += '<button class="bk-send" onclick="KBaecker.vorschau()">' + luc('mail', 16) + ' '
@@ -561,12 +577,6 @@
       for (var i = 0; i < 3; i++) {
         h += '<span class="v' + (i === 0 ? ' last' : '') + '">' + (v[i] != null ? v[i] : '–') + '</span>';
       }
-    } else if (p.je_woche > 0) {
-      // Ohne eigene Bestellhistorie: der Wochenschnitt aus den Rechnungen.
-      // Für Brote ist er die einzig brauchbare Angabe – ihr Tagesdurchschnitt
-      // rundet auf 0, obwohl sie regelmäßig bestellt werden.
-      h += '<span class="lbl" title="Durchschnitt aus den Rechnungen">Ø Wo:</span>';
-      h += '<span class="v last">' + esc(String(p.je_woche).replace('.', ',')) + '</span>';
     }
     h += '</div>';
 
@@ -664,6 +674,7 @@
     var feld = document.querySelector('#panel-baecker .bk-row[data-key="' + key.replace(/"/g, '\\"') + '"] .step input');
     if (feld) feld.value = p.menge;
     frischeZeile(key);
+    autoSichern();
   }
 
   function setz(key, wert) {
@@ -673,6 +684,7 @@
     p.menge = (isNaN(n) || n < 0) ? 0 : n;
     markiere(p);
     frischeZeile(key);
+    autoSichern();
   }
 
   function setzRet(key, wert) {
@@ -681,6 +693,7 @@
     var n = parseInt(wert, 10);
     p.retoure = (isNaN(n) || n < 0) ? 0 : n;
     frischeFuss();
+    autoSichern();
   }
 
   /* Beim Verlassen des Feldes den angezeigten Wert bereinigen. Waehrend des
@@ -881,6 +894,14 @@
   }
 
   function speichern() {
+    return _sendeEntwurf().then(function (ok) {
+      toast(ok ? 'Entwurf gespeichert.' : 'Der Entwurf konnte nicht gespeichert werden.');
+    });
+  }
+
+  /* Entwurf zum Server schicken. Gemeinsame Grundlage fuer den Knopf und die
+     stille Sicherung im Hintergrund. */
+  function _sendeEntwurf() {
     return fetch(API + '/baecker-order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -890,11 +911,35 @@
         korrekturmodus: _korrektur
       })
     }).then(function (r) { return r.json(); })
-      .then(function (res) {
-        toast(res && res.success ? 'Entwurf gespeichert.'
-          : (res && res.error) || 'Der Entwurf konnte nicht gespeichert werden.');
-      })
-      .catch(function () { toast('Keine Verbindung – der Entwurf wurde nicht gespeichert.'); });
+      .then(function (res) { return !!(res && res.success); })
+      .catch(function () { return false; });
+  }
+
+  /* ── Stille Sicherung ────────────────────────────────────────────────
+     Erfasste Mengen lebten bisher NUR im Speicher des Browsers. Ein Neuladen
+     - etwa durch die Versionspruefung nach einem Update oder ein
+     versehentliches F5 - warf alles weg, und die Verkaeuferin fing von vorne
+     an. Deshalb wird jede Aenderung nach kurzer Ruhe automatisch als Entwurf
+     abgelegt. Beim naechsten Aufruf steht sie wieder da. */
+  var _autoTimer = null;
+  var _autoLaeuft = false;
+  function autoSichern() {
+    if (!_b || !_datum || !_bk) return;
+    if (_b.gesperrt && !_korrektur) return;   // Gesendetes nicht ueberschreiben
+    if (_autoTimer) clearTimeout(_autoTimer);
+    _autoTimer = setTimeout(function () {
+      _autoTimer = null;
+      if (_autoLaeuft) { autoSichern(); return; }   // spaeter erneut versuchen
+      _autoLaeuft = true;
+      _sendeEntwurf().then(function (ok) {
+        _autoLaeuft = false;
+        var el = document.querySelector('#panel-baecker .bk-autosave');
+        if (el) {
+          el.textContent = ok ? 'automatisch gesichert' : 'Sicherung fehlgeschlagen';
+          el.className = 'bk-autosave' + (ok ? ' ok' : ' fehl');
+        }
+      });
+    }, 1500);
   }
 
   // ── Vorschau vor dem Versand (Spec F7) ──
@@ -1086,6 +1131,7 @@
     }
     dlgZu();
     render();
+    autoSichern();
     toast('„' + a.name + '" hinzugefügt – gilt nur für diesen Tag.');
   }
 
@@ -1103,6 +1149,7 @@
     });
     dlgZu();
     render();
+    autoSichern();
 
     if (dauerhaft) {
       fetch(API + '/baecker-artikel', {
@@ -1123,6 +1170,7 @@
       return !(p.zusatz && posKey(p) === key);
     });
     render();
+    autoSichern();
   }
 
   // ══════════════════════════════════════════════════

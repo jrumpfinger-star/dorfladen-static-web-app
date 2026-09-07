@@ -53,6 +53,19 @@ function tagNurFuer(bk) {
   throw new Error('kein Tag gefunden für ' + bk);
 }
 
+/**
+ * Wie `tagNurFuer`, aber garantiert in der Zukunft. Heute ist die Ware längst
+ * da – die Felder sind dann gesperrt und lassen sich nicht bedienen.
+ */
+function tagBestellbarFuer(bk) {
+  for (let i = 1; i < 7; i++) {
+    const d = plusTage(i);
+    const wer = liefertAm(d);
+    if (wer.length === 1 && wer[0] === bk) return { datum: iso(d), wochentag: TAGE[d.getDay()] };
+  }
+  throw new Error('kein bestellbarer Tag gefunden für ' + bk);
+}
+
 /** Erster Tag ab heute, an dem BEIDE liefern (Samstag). */
 function tagFuerBeide() {
   for (let i = 0; i < 14; i++) {
@@ -99,10 +112,18 @@ function bestellung(bk, datum, opts) {
   const d = new Date(datum + 'T12:00:00');
   // Startwerte aus den Rechnungen: greifen nur ohne echte Vorlage (F29).
   const startwerte = !!opts.startwerte && bk === 'martins';
+  // Bestellschluss: in der Regel der Vortag. Der Kiosk schreibt ihn an, damit
+  // Liefertag und Bestelltag nicht verwechselt werden (F30).
+  const bsD = new Date(datum + 'T12:00:00');
+  bsD.setDate(bsD.getDate() - 1);
+  const bsIso = bsD.toISOString().slice(0, 10);
   return {
     datum, baeckerei: bk, baeckerei_name: NAME[bk],
     wochentag: TAGE[d.getDay()],
     datum_de: datum.split('-').reverse().join('.'),
+    bestellschluss_datum: bsIso,
+    bestellschluss_datum_de: bsIso.split('-').reverse().join('.'),
+    bestellschluss_wochentag: TAGE[bsD.getDay()],
     status: gesendet || druckOffen ? 1 : 0,
     gesperrt: gesendet || druckOffen,
     bestellbar: new Date(datum + 'T12:00:00') > new Date(new Date().setHours(23, 59, 59, 0)),
@@ -115,15 +136,15 @@ function bestellung(bk, datum, opts) {
     protokoll: (gesendet || druckOffen)
       ? [{ zeit: datum + 'T10:42:00', art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }] : [],
     positionen: KATALOG[bk].map(([nummer, name], i) => (startwerte
-      // Erste Position bekommt einen Tageswert, die zweite nur einen
-      // Wochenschnitt – so wie Semmeln und Brote in den echten Daten.
+      // Erste Position bekommt einen Tageswert, die zweite keinen – so wie
+      // Semmeln und Brote in den echten Daten.
       ? {
         nummer, name, aktiv: true, menge: i === 0 ? 28 : 0, retoure: 0,
-        vorbelegt: i === 0 ? 28 : 0, verlauf: [], je_woche: i === 0 ? 165 : 2.2,
+        vorbelegt: i === 0 ? 28 : 0, verlauf: [],
       }
       : {
         nummer, name, aktiv: true, menge: (i + 1) * 10, retoure: 0,
-        vorbelegt: (i + 1) * 10, verlauf: [(i + 1) * 10], je_woche: 0,
+        vorbelegt: (i + 1) * 10, verlauf: [(i + 1) * 10],
       })),
     tour_nr: bk === 'freundl' ? '87' : '',
     kd_nr: bk === 'freundl' ? '1190' : '1015',
@@ -590,14 +611,15 @@ test.describe('Bäcker – Startwerte aus Rechnungen (F29)', () => {
     await expect(zeile).not.toContainText('keine Vorlage vorhanden');
   });
 
-  test('TC-F29-02: Artikel ohne Tageswert zeigt den Wochenschnitt', async ({ page }) => {
+  test('TC-F29-02: Kein Wochenschnitt mehr in der Zeile', async ({ page }) => {
+    // Der Wochenschnitt war irreführend: Er stand neben einem Tagesfeld und
+    // sah aus wie eine Tagesmenge. Angezeigt gehören nur die tatsächlichen
+    // Mengen der letzten Lieferungen an genau diesem Wochentag.
     await openBaecker(page, { startwerte: true });
     await tagWaehlen(page, tagNurFuer('martins').datum);
     await expect(page.locator('#panel-baecker .bk-row').first()).toBeVisible();
-    // Zweite Zeile steht für ein Brot: Tageswert 0, aber Ø 2,2 je Woche
-    const hist = await page.locator('#panel-baecker .bk-row .hist').nth(1).innerText();
-    expect(hist).toContain('Ø Wo');
-    expect(hist).toContain('2,2');
+    const panel = await page.locator('#panel-baecker').innerText();
+    expect(panel).not.toContain('Ø Wo');
   });
 
   test('TC-F29-03: Freundl bleibt bei der echten Vorlage', async ({ page }) => {
@@ -608,3 +630,78 @@ test.describe('Bäcker – Startwerte aus Rechnungen (F29)', () => {
     await expect(zeile).not.toContainText('Startwerte aus');
   });
 });
+
+// ── F30: Liefertag klar benennen, Eingaben still sichern ────────────────
+//
+// Zwei gemeldete Probleme aus dem Laden:
+//  1. Unklar, wofür die Tagesplättchen stehen – es sind LIEFERtage, bestellt
+//     wird am Tag davor. „Warum muss ich samstags auswählen, um für Samstag
+//     zu erfassen?“
+//  2. Ein Neuladen der Seite warf alle erfassten Mengen weg. Sie lagen nur im
+//     Speicher des Browsers, bis jemand „Entwurf speichern“ drückte.
+
+test.describe('Bäcker – Liefertag und stille Sicherung (F30)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  test('TC-F30-01: Tagesleiste ist als Liefertag beschriftet', async ({ page }) => {
+    await openBaecker(page);
+    await expect(page.locator('#panel-baecker .bk-days-lbl')).toContainText('Liefertag wählen');
+  });
+
+  test('TC-F30-02: Statuszeile sagt „Lieferung am", nicht „Bestellung für"', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagNurFuer('martins').datum);
+    const t1 = page.locator('#panel-baecker .bk-stat .t1');
+    await expect(t1).toContainText('Lieferung am');
+    await expect(t1).not.toContainText('Bestellung für');
+  });
+
+  test('TC-F30-03: Statuszeile nennt den Bestelltag', async ({ page }) => {
+    await openBaecker(page);
+    const tag = tagNurFuer('martins');
+    await tagWaehlen(page, tag.datum);
+    const bs = new Date(tag.datum + 'T12:00:00');
+    bs.setDate(bs.getDate() - 1);
+    const bsDe = bs.toISOString().slice(0, 10).split('-').reverse().join('.');
+    const t2 = await page.locator('#panel-baecker .bk-stat .t2').innerText();
+    // Entweder der Vortag steht da oder – wenn er heute ist – „heute bestellen“
+    expect(t2.includes(bsDe) || t2.includes('heute bestellen')).toBeTruthy();
+  });
+
+  test('TC-F30-04: Eine geänderte Menge wird ohne Zutun gesichert', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagBestellbarFuer('martins').datum);
+    const vorher = page.__calls.filter((c) => c.method === 'POST').length;
+    await page.locator('#panel-baecker .bk-row .step button').nth(1).click();
+    // 1,5 s Ruhe, dann geht der Entwurf raus – niemand muss etwas drücken.
+    await page.waitForTimeout(2600);
+    const nachher = page.__calls.filter((c) => c.method === 'POST');
+    expect(nachher.length).toBeGreaterThan(vorher);
+    expect(nachher[nachher.length - 1].body.positionen).toBeTruthy();
+    await expect(page.locator('#panel-baecker .bk-autosave')).toContainText('gesichert');
+  });
+
+  test('TC-F30-05: Schnelle Klicks lösen nur eine Sicherung aus', async ({ page }) => {
+    await openBaecker(page);
+    await tagWaehlen(page, tagBestellbarFuer('martins').datum);
+    const vorher = page.__calls.filter((c) => c.method === 'POST').length;
+    const plus = page.locator('#panel-baecker .bk-row .step button').nth(1);
+    for (let i = 0; i < 5; i++) await plus.click();
+    await page.waitForTimeout(2600);
+    const neu = page.__calls.filter((c) => c.method === 'POST').length - vorher;
+    expect(neu).toBe(1);
+  });
+
+  test('TC-F30-06: Die gesicherten Mengen enthalten die Eingabe', async ({ page }) => {
+    // Der eigentliche Schaden: Nach einem Reload fing die Verkäuferin von
+    // vorne an. Was still gesichert wird, muss die erfassten Mengen tragen.
+    await openBaecker(page);
+    await tagWaehlen(page, tagBestellbarFuer('martins').datum);
+    await page.locator('#panel-baecker .bk-row .step button').nth(1).click();
+    await page.waitForTimeout(2600);
+    const posts = page.__calls.filter((c) => c.method === 'POST');
+    const entwurf = posts[posts.length - 1].body.positionen;
+    expect(entwurf.some((p) => (p.menge || 0) > 0)).toBeTruthy();
+  });
+});
+

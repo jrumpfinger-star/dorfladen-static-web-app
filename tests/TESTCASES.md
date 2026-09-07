@@ -2779,3 +2779,59 @@ sowie in vier Werkzeugtests ohne Azure:
 > Systemdialog und blockierte den Lauf.
 
 
+---
+
+## T-F30 – Liefertag benennen und Eingaben still sichern
+
+Zwei Rückmeldungen aus dem Laden, beide betreffen Bäcker **und** Metzger:
+
+1. *„Warum muss ich samstags auswählen, um die Lieferung für Samstag zu
+   erfassen?"* — Die Tagesplättchen waren unbeschriftet. Sie stehen für den
+   **Liefertag**; bestellt wird am letzten Arbeitstag davor.
+2. *„Refresh startet die Seite wieder neu und man muss von vorne anfangen."* —
+   Die erfassten Mengen lagen ausschließlich im Speicher des Browsers, bis
+   jemand „Entwurf speichern" drückte. Es gab **keine automatische Sicherung**.
+
+Ebenfalls hier erledigt: Der Wochenschnitt („Ø Wo") ist entfernt. Er stand
+neben einem Tagesfeld und sah aus wie eine Tagesmenge.
+
+Automatisiert in `tests/kiosk-baecker-zwei.spec.js` und
+`tests/kiosk-metzger-bestellung.spec.js` (mobile / ipad-mini / desktop).
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F29-02 | Kein „Ø Wo" mehr in der Zeile (ersetzt den alten Wochenschnitt-Test) |
+| TC-F30-01 | Bäcker: Tagesleiste trägt „Liefertag wählen" |
+| TC-F30-02 | Bäcker: Statuszeile sagt „Lieferung am", nicht „Bestellung für" |
+| TC-F30-03 | Bäcker: Statuszeile nennt den Bestelltag bzw. „heute bestellen" |
+| TC-F30-04 | Bäcker: geänderte Menge geht nach 1,5 s ohne Zutun als Entwurf raus |
+| TC-F30-05 | Bäcker: fünf schnelle Klicks lösen genau **eine** Sicherung aus |
+| TC-F30-06 | Bäcker: der gesicherte Entwurf trägt die erfassten Mengen |
+| TC-M-F30-01 | Metzger: Tagesleiste trägt „Liefertag wählen" |
+| TC-M-F30-02 | Metzger: Statuszeile sagt „Lieferung am" |
+| TC-M-F30-03 | Metzger: angelegte Portion wird still gesichert |
+| TC-M-F30-04 | Metzger: schnelle Eingaben lösen genau **eine** Sicherung aus |
+| TC-M-F30-05 | Metzger: `KMetzgerBest.istGeaendert()` meldet ungesicherte Eingaben |
+
+### Testlauf-Tabelle
+
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 12.09.2026 | TC-F30 + TC-M-F30 | 33/33 | Lokal gegen 127.0.0.1:8787, alle drei Auflösungen |
+| 12.09.2026 | Bäcker + Metzger gesamt | 333/333 | Volle Regression beider Suiten |
+| 12.09.2026 | Python-Werkzeuge | 8/8 grün | Rhythmus, DOCX, Logik, Umzug, PDF, Rechnung, Startwerte, Store |
+
+> **Ein gesperrter Tag lässt sich nicht bedienen.** `tagNurFuer()` liefert den
+> **ersten** passenden Tag ab heute — fällt der auf heute, ist die Ware längst
+> da und alle Felder sind gesperrt. Für Eingabetests gibt es deshalb
+> `tagBestellbarFuer()`, das erst ab morgen sucht. Ohne das schlagen die Tests
+> nur an bestimmten Wochentagen fehl.
+
+> **Der erste Stepper-Knopf ist das Minus.** `.step button` mit `.first()`
+> trifft „−" und bewirkt bei Menge 0 nichts. Für Eingabetests `.nth(1)` nehmen.
+
+> **Kodierung: `Get-Content -Raw` zerstört Umlaute.** In Windows PowerShell 5.1
+> liest `Get-Content -Raw` eine UTF-8-Datei **ohne** Byte-Marke als ANSI — aus
+> „–" wird „â€“". Und `Set-Content -Encoding UTF8` schreibt eine Byte-Marke,
+> die Python als Syntaxfehler meldet. Für Textersetzungen in Quelldateien
+> `[IO.File]::ReadAllText` / `WriteAllText` mit `UTF8Encoding($false)` nutzen.

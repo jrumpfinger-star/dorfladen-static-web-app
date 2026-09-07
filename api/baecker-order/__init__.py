@@ -206,7 +206,7 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
     # Startwerte aus den Rechnungen: greifen NUR, wenn es fuer diesen Wochentag
     # noch keine echte Bestellung gibt. Sobald eine gesendet wurde, hat sie
     # Vorrang - der Durchschnitt ist nur die Starthilfe am ersten Tag.
-    sw_mengen, sw_woche, sw_meta = store.startwerte(bk)
+    sw_mengen, _sw_woche, sw_meta = store.startwerte(bk)
     aus_startwerten = False
     if hat_entwurf:
         mengen = {}
@@ -230,6 +230,8 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         aus_startwerten = bool(sw_mengen)
 
     zeilen = []
+    _bs = store.bestellschluss_tag(datum_iso)
+    _bs_iso = _bs.isoformat() if _bs else ""
     for a in artikel:
         key = store.artikel_key(a)
         zeilen.append({
@@ -240,10 +242,6 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
             "retoure": retouren.get(key, 0),
             "vorbelegt": mengen.get(key, 0),
             "verlauf": verlauf.get(key, [])[:4],
-            # Wochenschnitt aus den Rechnungen. Wichtig fuer Brote: sie werden
-            # nur zwei- bis dreimal die Woche bestellt, ihr Tagesdurchschnitt
-            # rundet auf 0. Der Wochenwert ist dort die brauchbare Angabe.
-            "je_woche": sw_woche.get(key, 0),
             "nur_wochentag": a.get("nur_wochentag"),
         })
 
@@ -278,6 +276,13 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
         "vorlage_datum_de": store.datum_de(quelle) if quelle else "",
+        # Wann muss diese Lieferung spaetestens bestellt sein? In der Regel der
+        # Vortag - faellt der auf Sonntag oder Feiertag, entsprechend frueher.
+        # Der Kiosk schreibt es an, damit niemand Liefertag und Bestelltag
+        # verwechselt.
+        "bestellschluss_datum": _bs_iso,
+        "bestellschluss_datum_de": store.datum_de(_bs_iso) if _bs_iso else "",
+        "bestellschluss_wochentag": store.wochentag(_bs_iso) if _bs_iso else "",
         # Vorbelegung stammt aus dem Rechnungs-Durchschnitt, nicht aus einer
         # echten Bestellung – die Oberflaeche muss das anders benennen.
         "aus_startwerten": aus_startwerten,

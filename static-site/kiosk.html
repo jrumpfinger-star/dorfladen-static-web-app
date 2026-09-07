@@ -295,6 +295,13 @@
     .mb-sub.on{border-color:#2d5016;background:#2d5016;color:#fff}
     /* Tagesleiste */
     .mb-days{display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px}
+    /* Beschriftung der Tagesleiste – die Plättchen sind LIEFERtage */
+    .mb-days-lbl{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+      color:#6b7280;margin:0 0 5px 2px}
+    /* Stille Sicherung: unaufdringlich, aber nachvollziehbar */
+    .mb-autosave{font-size:11.5px;color:#6b7280;white-space:nowrap;margin-left:auto}
+    .mb-autosave.ok{color:#16a34a}
+    .mb-autosave.fehl{color:#b91c1c;font-weight:700}
     .mb-day{min-width:64px;min-height:44px;padding:5px 9px;border:1.5px solid var(--c-border,#e5e7eb);
       border-radius:10px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
     .mb-day .d2{display:block;font-size:10px;font-weight:600;color:#6b7280}
@@ -693,6 +700,13 @@
     .bk-foot .sum{font-size:13px;color:var(--c-muted)}
     .bk-foot .sum b{color:var(--c-text);font-size:15px}
     .bk-foot .sp{flex:1}
+    /* Stille Sicherung: unaufdringlich, aber nachvollziehbar */
+    .bk-autosave{font-size:11.5px;color:#6b7280;white-space:nowrap}
+    .bk-autosave.ok{color:#16a34a}
+    .bk-autosave.fehl{color:#b91c1c;font-weight:700}
+    /* Beschriftung der Tagesleiste – die Plättchen sind LIEFERtage */
+    .bk-days-lbl{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+      letter-spacing:.4px;text-transform:uppercase;color:var(--c-muted);margin:0 0 5px 2px}
     .bk-send{background:var(--bk);color:#fff;border:none;border-radius:11px;padding:0 22px;min-height:52px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
     .bk-send:disabled{opacity:.6;cursor:wait}
     /* Artikelverwaltung */
@@ -6154,6 +6168,13 @@ var K = (function(){
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen
+    // Metzger-Erfassung: dort gilt dasselbe – ein Neuladen mitten in der
+    // Eingabe wirft die Arbeit weg. Das Modul weiß selbst am besten, ob noch
+    // etwas ungesichert ist; raten über CSS-Klassen wäre unzuverlässig.
+    try{
+      if(window.KMetzgerBest && KMetzgerBest.istGeaendert && KMetzgerBest.istGeaendert()) return true;
+    }catch(e){}
+    if(document.querySelector('.mb-overlay')) return true;
     var a = document.activeElement;
     if(a){
       var tag = (a.tagName || '').toLowerCase();
