@@ -190,7 +190,7 @@
 
 <div class="mob-only mob-actions-row">
 
-  <div class="mob-action highlight" id="mob-action-tp" style="display:none;border-color:rgba(30,58,47,.15);background:#f0fdf4" onclick="document.getElementById('tp-overlay').classList.add('open')">
+  <div class="mob-action highlight" id="mob-action-tp" style="display:none;border-color:rgba(30,58,47,.15);background:#f0fdf4" onclick="tpOpenModal()">
 
     <span class="mob-action-icon" style="color:#1e3a2f;background:rgba(30,58,47,.1)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
 
@@ -590,7 +590,7 @@
 
   <div class="promo-bar-in">
 
-    <a href="javascript:void(0)" class="promo-item promo-tp" id="promo-tp-link" style="display:none" onclick="document.getElementById('tp-overlay').classList.add('open')">
+    <a href="javascript:void(0)" class="promo-item promo-tp" id="promo-tp-link" style="display:none" onclick="tpOpenModal()">
 
       <span class="promo-tp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
 
@@ -1798,12 +1798,29 @@
       document.body.classList.remove('overlay-open');
       var y=parseInt(document.documentElement.style.getPropertyValue('--scroll-y')||'0')*-1;
       document.documentElement.style.removeProperty('--scroll-y');
+      // Erst wenn der Browser die Seitenhoehe nach dem Wegfall von
+      // position:fixed neu berechnet hat, laesst sich wieder weit scrollen.
+      void document.body.offsetHeight;
       // Sofort (ohne Smooth-Animation) an die gemerkte Position – sonst springt
       // die Seite sichtbar nach oben und scrollt animiert zurueck.
       var de=document.documentElement, prev=de.style.scrollBehavior;
       de.style.scrollBehavior='auto';
       window.scrollTo(0,y);
-      de.style.scrollBehavior=prev;
+      if(y>0){
+        // Nachladende Bilder aendern die Seitenhoehe noch ein paar Bilder lang.
+        // Faellt die Hoehe dabei kurz unter die Zielposition, begrenzt der
+        // Browser den Bildlauf und die Seite bleibt am Anfang stehen. Deshalb
+        // die Position ueber wenige Bilder halten statt nur einmal zu setzen.
+        var versuche=12;
+        var halten=function(){
+          if(Math.abs(window.scrollY-y)>2) window.scrollTo(0,y);
+          if(--versuche>0) requestAnimationFrame(halten);
+          else de.style.scrollBehavior=prev;
+        };
+        requestAnimationFrame(halten);
+      } else {
+        de.style.scrollBehavior=prev;
+      }
     }
   };
   window._shopOrders=[];
@@ -2063,14 +2080,41 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 <script>
 (function(){
   var fab=document.getElementById('tp-fab'),overlay=document.getElementById('tp-overlay'),modal=document.getElementById('tp-modal'),closeBtn=document.getElementById('tp-close');
-  var _scrollY=0;
-  function openModal(){overlay.classList.add('open');_scrollY=window.scrollY;document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';document.body.style.top='-'+_scrollY+'px';}
-  function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';window.scrollTo(0,_scrollY);document.documentElement.classList.remove('tp-focus');}
+  // Bildlauf-Riegel ueber den gemeinsamen, ZAEHLENDEN Mechanismus
+  // (dlLockScroll/dlUnlockScroll, body.overlay-open). Frueher setzte dieser
+  // Dialog eigene Inline-Stile - dadurch nahmen sich zwei gleichzeitig offene
+  // Dialoge gegenseitig den Riegel weg und die Seite blieb entweder gesperrt
+  // oder sprang beim Schliessen an eine alte Position.
+  function openModal(){
+    if(overlay.classList.contains('open')) return;
+    overlay.classList.add('open');
+    if(window.dlLockScroll) dlLockScroll();
+  }
+  function closeModal(){
+    // Ohne diese Pruefung wuerde ein Druck auf Escape OHNE offenen Dialog den
+    // Riegel eines anderen Dialogs aufheben und die Seite nach oben springen lassen.
+    if(!overlay.classList.contains('open')) return;
+    overlay.classList.remove('open');
+    if(window.dlUnlockScroll) dlUnlockScroll();
+    document.documentElement.classList.remove('tp-focus');
+  }
   window.tpCloseModal=closeModal;
+  window.tpOpenModal=openModal;
   fab.addEventListener('click',openModal);
   closeBtn.addEventListener('click',closeModal);
   overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();var oo=document.getElementById('orders-overlay');if(oo)oo.classList.remove('open');}});
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape') return;
+    closeModal();
+    // "Meine Bestellungen" ebenfalls ordentlich schliessen. Frueher wurde hier
+    // nur die Klasse entfernt - der Riegel blieb stehen und die Seite liess
+    // sich danach gar nicht mehr scrollen, bis man neu geladen hat.
+    var oo=document.getElementById('orders-overlay');
+    if(oo&&oo.classList.contains('open')){
+      oo.classList.remove('open');
+      if(window.dlUnlockScroll) dlUnlockScroll();
+    }
+  });
 
   var WOCHENTAGE=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
   var MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];

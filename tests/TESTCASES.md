@@ -2662,6 +2662,47 @@ Kiosk-Seite in `tests/kiosk-kontakt-haken.spec.js` (K5).
 > „element not visible" aus – einzeln nachgeprüft sind beide grün. Es ist
 > Ladeflackern der Live-Seite, kein fachlicher Fehler.
 
+---
+
+## T-SL – Startseite: Bildlauf-Riegel der Dialoge
+
+Automatisiert in `tests/startseite-scrollriegel.spec.js`
+(mobile / ipad-mini / desktop).
+
+Auf der Startseite liegen mehrere Dialoge übereinander. Der Bildlauf wird über
+den gemeinsamen, **zählenden** Mechanismus `dlLockScroll`/`dlUnlockScroll`
+(`body.overlay-open`) gesperrt. Das TagesInfo-Fenster scherte mit eigenen
+Inline-Stilen aus – daraus entstanden drei Fehler:
+
+1. **Escape schloss „Meine Bestellungen" nur optisch.** Der Riegel blieb stehen,
+   die Seite liess sich danach **gar nicht mehr scrollen** – bis zum Neuladen.
+2. **Escape ohne offenen Dialog sprang an den Seitenanfang.**
+3. **Über die Kachel/den Promo-Link geöffnet sperrte TagesInfo den Hintergrund
+   nicht**, und beim Schliessen sprang die Position.
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-SL-01 | Escape ohne offenen Dialog verändert die Position nicht |
+| TC-SL-02 | Escape auf „Meine Bestellungen" gibt den Bildlauf wieder frei |
+| TC-SL-03 | TagesInfo über die Kachel sperrt den Hintergrund |
+| TC-SL-04 | Schliessen gibt frei und hält die Position |
+| TC-SL-05 | Zwei Dialoge übereinander lassen den Riegel nicht fallen |
+| TC-SL-06 | Mehrfaches Escape sperrt die Seite nicht aus |
+
+> **Zwei Stolpersteine beim Testen:** `html` hat `scroll-behavior:smooth` – nach
+> `window.scrollTo` muss man warten, bevor man `scrollY` ausliest, sonst misst
+> man 0. Und der Fehler zeigt sich nur beim Aufruf über `/`, nicht über
+> `/index.html`: nachladende Bilder verschieben dort das Layout noch einige
+> Bilder lang. Genau deshalb hält `dlUnlockScroll` die Position jetzt über
+> mehrere Bilder nach, statt sie nur einmal zu setzen.
+
+### Testlauf-Tabelle (Bildlauf-Riegel)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 07.09.2026 | TC-SL-01..06 | 18/18 | Lokal gegen 127.0.0.1:8897, alle drei Viewports |
+| 07.09.2026 | TC-KC (Regression) | 16/16 | Seriell; mit 4 Arbeitern flackert die Startseite |
+
+
 
 
 ---
