@@ -115,6 +115,27 @@ test.describe('Mittagstisch: Status sichtbar und einheitlich', () => {
     expect(zeile).toContain('2 Bestellungen');
   });
 
+  test('TC-F3-02 Sonderwunsch-Leiste zieht sich nicht über die volle Breite', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'nur breite Ansicht');
+    // Mit Anmerkung entsteht ein Sonderwunsch – erst dann erscheint die Leiste.
+    await openMittag(page, bestellungen([
+      { id: 'o9', name: 'Mit Wunsch', gericht: GERICHT, menge: 1, preis: 9.8, status: 1, quelle: 0, anmerkung: 'ohne Zwiebeln' },
+    ]));
+    const mass = await page.evaluate(() => {
+      const b = document.querySelector('#mittag-sonder .k-sw-bar');
+      if (!b) return null;
+      return {
+        leiste: b.getBoundingClientRect().width,
+        bereich: b.parentElement.getBoundingClientRect().width,
+      };
+    });
+    expect(mass).not.toBeNull();
+    // Die Leiste richtet sich nach ihrem Inhalt, statt den Knopf ans
+    // aeusserste Ende zu schieben.
+    expect(mass.leiste).toBeLessThan(mass.bereich * 0.75);
+    expect(mass.leiste).toBeGreaterThan(200);
+  });
+
   test('TC-F4-01 Ohne Telefonbestellung ist der Schalter unsichtbar', async ({ page }) => {
     const nurOnline = bestellungen([]).filter((o) => o.quelle === 0);
     await openMittag(page, nurOnline);

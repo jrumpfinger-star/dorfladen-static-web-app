@@ -829,13 +829,16 @@
     html[data-theme="dark"] .kk-sec .kk-sec-n.done{background:var(--c-surf2)}
     html[data-theme="dark"] .kk-ticks.pending{color:#4b5563}
     /* === Sonderwunsch-Leiste & -Liste === */
-    #mittag-sonder .k-sw-bar{margin:0 0 12px;border:1px solid #fcd34d;background:linear-gradient(180deg,#fffbeb,#fff);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;width:100%;text-align:left}
+    /* Breite richtet sich nach dem Inhalt: auf breiten Schirmen wuerde eine
+       Leiste ueber die volle Breite den Knopf weit nach rechts schieben und
+       eine grosse Luecke aufreissen. Schmale Schirme kappt max-width. */
+    #mittag-sonder .k-sw-bar{margin:0 0 12px;border:1px solid #fcd34d;background:linear-gradient(180deg,#fffbeb,#fff);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;width:fit-content;max-width:100%;text-align:left}
     #mittag-sonder .k-sw-bar:hover{background:linear-gradient(180deg,#fef3c7,#fff)}
     #mittag-sonder .k-sw-n{flex:0 0 auto;min-width:46px;height:46px;border-radius:12px;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center}
-    #mittag-sonder .k-sw-bar-txt{flex:1 1 180px;min-width:0}
+    #mittag-sonder .k-sw-bar-txt{flex:0 1 auto;min-width:0}
     #mittag-sonder .k-sw-bar-t1{font-size:15px;font-weight:800;color:#92400e;display:flex;align-items:center;gap:7px}
     #mittag-sonder .k-sw-bar-t2{font-size:12px;color:#a16207;margin-top:2px}
-    #mittag-sonder .k-sw-go{background:#f59e0b;color:#fff;border:none;border-radius:9px;padding:0 15px;min-height:44px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+    #mittag-sonder .k-sw-go{background:#f59e0b;color:#fff;border:none;border-radius:9px;padding:0 15px;min-height:44px;margin-left:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
     .k-sw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px}
     .k-sw-head .k-sw-h1{font-size:15px;font-weight:800;color:#92400e;flex:1 1 200px;min-width:0}
     .k-sw-head .k-sw-h1 small{display:block;font-size:12px;font-weight:500;color:var(--c-muted);margin-top:2px}
