@@ -277,6 +277,220 @@
     #mittag-cook .k-cook-chip.g{background:#dcfce7;color:#166534}
     #mittag-cook .k-cook-chip.o{background:#fff7ed;color:#9a3412}
     #mittag-cook .k-cook-foot{font-size:11px;color:#6b7280;margin-top:8px}
+
+    /* === Metzger-Bestellung (specs/metzger-bestellung/spec.md) ===
+       Ladenbestellung bei Metzger Mair. Eigener Namensraum `mb-`, damit sich
+       nichts mit dem Kunden-Tab „Metzger“ oder dem Bäcker beißt. */
+    @keyframes mbBlink{0%,100%{background:#fef2f2;color:#b91c1c}50%{background:#dc2626;color:#fff}}
+    .k-tab.mb-blink{animation:mbBlink 1.1s ease-in-out infinite;font-weight:800}
+    .mb{--mb-touch:38px}
+    .mb-subs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+    .mb-sub{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;color:#6b7280;
+      border-radius:10px;padding:0 14px;min-height:42px;font-size:13px;font-weight:800;cursor:pointer}
+    .mb-sub.on{border-color:#2d5016;background:#2d5016;color:#fff}
+    /* Tagesleiste */
+    .mb-days{display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px}
+    .mb-day{min-width:64px;min-height:44px;padding:5px 9px;border:1.5px solid var(--c-border,#e5e7eb);
+      border-radius:10px;background:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+    .mb-day .d2{display:block;font-size:10px;font-weight:600;color:#6b7280}
+    .mb-day.on{border-color:#2e7d4f;background:#2e7d4f;color:#fff}
+    .mb-day.on .d2{color:#dcfce7}
+    .mb-day.off{opacity:.35;cursor:not-allowed}
+    .mb-day.sent,.mb-day.korr{border-color:#2e7d4f;background:#dcfce7;color:#166534}
+    /* Statuskarte */
+    .mb-status{background:#fff;border-radius:10px;padding:9px 12px;margin-bottom:8px;
+      font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .mb-status.gesendet{background:#f0fdf4}
+    .mb-quelle{color:#6b7280;font-size:12px}
+    .mb-test{background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;
+      font-size:11px;font-weight:800}
+    /* Werkzeugleiste */
+    .mb-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+    .mb-bar input[type=search]{flex:1;min-width:150px;min-height:42px;padding:6px 10px;
+      border:1.5px solid var(--c-border,#e5e7eb);border-radius:10px;font-size:14px}
+    .mb-tgl{display:flex;border:1.5px solid var(--c-border,#e5e7eb);border-radius:10px;overflow:hidden}
+    .mb-tgl button{border:0;background:#fff;padding:0 12px;min-height:42px;font-size:12px;
+      font-weight:800;cursor:pointer;color:#6b7280}
+    .mb-tgl button.on{background:#2e7d4f;color:#fff}
+    .mb-jump{display:flex;gap:5px;overflow-x:auto;margin-bottom:8px}
+    .mb-jump button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;border-radius:16px;
+      padding:0 12px;min-height:38px;font-size:11px;font-weight:800;cursor:pointer;
+      color:#6b7280;white-space:nowrap}
+    /* Liste: die Breite bestimmt die Spaltenzahl (F17) */
+    .mb-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--mb-sp,100%),1fr));
+      gap:4px 10px;align-items:start}
+    .mb-grp{grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;
+      letter-spacing:.4px;color:#6b7280;margin:12px 0 2px;border-bottom:1px solid var(--c-border,#e5e7eb);
+      padding-bottom:4px}
+    .mb-row{background:#fff;border-radius:8px;padding:4px 8px;box-shadow:0 1px 2px rgba(0,0,0,.05);
+      border-left:4px solid transparent;display:grid;grid-template-columns:46px minmax(0,1fr);
+      gap:4px 8px;align-items:center;scroll-margin-top:120px;scroll-margin-bottom:90px}
+    .mb-row.has{border-left-color:#2e7d4f}
+    .mb-row.extra{border-left-color:#1d4ed8}
+    .mb-row.pruef{border-left-color:#dc2626;background:#fef2f2}
+    .mb-row.offen{grid-column:1/-1;box-shadow:0 3px 14px rgba(0,0,0,.13);border-left-color:#1d4ed8}
+    /* Nummer in eigener Spalte: sie bestimmt beim Metzger die Warengruppe */
+    .mb-nr{font-size:13px;font-weight:800;color:#6b7280;text-align:right;
+      font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;
+      border-right:1px solid var(--c-border,#e5e7eb);padding-right:8px;align-self:stretch;
+      display:flex;align-items:center;justify-content:flex-end;min-height:40px}
+    .mb-row.has .mb-nr{color:#1f2937}
+    .mb-nr.leer{color:#dbe0e6;font-weight:600}
+    .mb-zeile{display:grid;grid-template-columns:minmax(120px,var(--mb-np,200px)) minmax(0,1fr);
+      gap:8px;align-items:center}
+    .mb-nm{font-size:14px;font-weight:600;line-height:1.2;min-width:0}
+    .mb-tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 5px;
+      border-radius:7px;margin-left:5px;vertical-align:middle}
+    .mb-tag.ex{background:#eff6ff;color:#1d4ed8}
+    .mb-tag.pruef{background:#fee2e2;color:#991b1b}
+    /* Badge = Beschriftung zum Ändern + eigenes ✕ zum Entfernen */
+    .mb-chips{display:flex;gap:4px;flex-wrap:wrap;align-items:center;min-width:0}
+    .mb-chip{display:inline-flex;align-items:center;overflow:hidden;min-height:34px;
+      border:1.5px solid #2e7d4f;background:#dcfce7;border-radius:18px}
+    .mb-chip .lab{border:0;background:transparent;color:#166534;font-size:13px;font-weight:800;
+      padding:0 4px 0 11px;min-height:34px;cursor:pointer;display:inline-flex;
+      align-items:center;gap:5px;white-space:nowrap}
+    .mb-chip .x{border:0;background:transparent;color:#166534;font-size:14px;font-weight:800;
+      width:30px;flex:0 0 30px;min-height:34px;cursor:pointer;opacity:.45;line-height:1}
+    .mb-chip .x:hover{opacity:1;background:rgba(22,101,52,.14)}
+    .mb-chip .vak{background:#166534;color:#fff;border-radius:5px;font-size:9px;
+      padding:1px 4px;font-weight:800}
+    .mb-chip.hw{border-color:#e65100;background:#fff7ed;max-width:100%}
+    .mb-chip.hw .lab,.mb-chip.hw .x{color:#9a3412}
+    .mb-chip.hw .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      display:inline-block;line-height:31px;max-width:100%}
+    .mb-add{border:1.5px dashed #dfe3e8;background:#fff;color:#b6bcc4;border-radius:18px;
+      min-width:34px;min-height:34px;font-size:17px;font-weight:800;cursor:pointer;line-height:1}
+    .mb-add:hover{border-color:#2e7d4f;color:#2e7d4f}
+    .mb-add.del:hover{border-color:#dc2626;color:#dc2626}
+    /* Editor: Gruppen legen sich nebeneinander, sobald Platz ist */
+    .mb-ed{grid-column:1/-1;margin-top:6px;padding-top:8px;border-top:1px dashed var(--c-border,#e5e7eb)}
+    .mb-edgrid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;align-items:stretch}
+    .mb-g{border:1px solid var(--c-border,#e5e7eb);border-radius:10px;background:#fff;
+      padding:5px 8px 7px;display:flex;flex-direction:column;gap:5px;min-width:0}
+    .mb-g.vor{flex:1 1 100%;background:#fafbff;border-color:#e3e8f5}
+    .mb-g.kurz{flex:1 1 300px}
+    .mb-g.pad{flex:2 1 440px;border-color:#cbd5e1;background:#fcfdff}
+    .mb-g.pad.aendern{border-color:#1d4ed8;background:#f5f8ff}
+    .mb-g.hinweis{flex:1 1 220px}
+    .mb-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+      color:#9aa2ad;margin:0}
+    .mb-inner{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0}
+    .mb-sugg{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+    .mb-sugg button{border:1.5px solid #1d4ed8;background:#eff6ff;color:#1d4ed8;
+      border-radius:16px;padding:0 12px;min-height:36px;font-size:13px;font-weight:800;cursor:pointer}
+    .mb-sugg button.lieferung{border-color:#dbe2f5;background:#fbfcff;color:#7d879e;font-weight:700}
+    .mb-sugg button.on{border-color:#2e7d4f;background:#dcfce7;color:#166534;font-weight:800}
+    .mb-sugg button.on .vak{background:#166534}
+    .mb-sugg .vak{background:#1d4ed8;color:#fff;border-radius:5px;font-size:9px;
+      padding:1px 4px;font-weight:800;margin-left:5px}
+    .mb-sugg .hak{font-size:12px;margin-right:5px}
+    /* Einheiten als Knöpfe statt Auswahlliste – auf dem Tablet muss ein Wert
+       mit einem Tipp gesetzt sein, ohne dass sich erst ein Menü öffnet. */
+    .mb-einh{display:flex;flex-wrap:wrap;gap:3px}
+    .mb-einh button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;color:#6b7280;
+      border-radius:8px;padding:0 9px;min-height:36px;font-size:12px;font-weight:800;
+      cursor:pointer;white-space:nowrap}
+    .mb-einh button.on{border-color:#2d5016;background:#2d5016;color:#fff}
+    .mb-quick{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    .mb-quick button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;border-radius:9px;
+      min-width:44px;min-height:38px;font-size:14px;font-weight:800;cursor:pointer}
+    .mb-quick button.on{border-color:#1d4ed8;background:#eff6ff;color:#1d4ed8}
+    .mb-step{display:flex;align-items:center;border:1.5px solid var(--c-border,#e5e7eb);
+      border-radius:9px;overflow:hidden}
+    .mb-step button{border:0;background:#f9fafb;min-width:38px;min-height:36px;
+      font-size:17px;font-weight:800;cursor:pointer}
+    .mb-step input{border:0;width:44px;min-height:36px;text-align:center;font-size:15px;font-weight:800}
+    .mb-mal{font-size:14px;font-weight:800;color:#b6bcc4}
+    .mb-mg{width:74px;min-height:38px;border:1.5px solid var(--c-border,#e5e7eb);
+      border-radius:9px;padding:0 8px;font-size:14px;font-weight:700;text-align:center}
+    .mb-g .txt{flex:1 1 130px;min-width:0;min-height:36px;border:1.5px solid var(--c-border,#e5e7eb);
+      border-radius:9px;padding:0 9px;font-size:14px}
+    .mb-g .kurz{font-family:ui-monospace,Consolas,monospace}
+    /* Vakuum ist ein reines Ja/Nein – die Beutelgröße wählt der Metzger. */
+    .mb-vak{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--c-border,#e5e7eb);
+      background:#fff;color:#6b7280;border-radius:9px;padding:0 11px;min-height:36px;
+      font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+    .mb-vak .box{width:16px;height:16px;border:2px solid #cbd5e1;border-radius:4px;
+      display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+    .mb-vak.on{border-color:#2e7d4f;background:#dcfce7;color:#166534}
+    .mb-vak.on .box{border-color:#2e7d4f;background:#2e7d4f;color:#fff}
+    .mb-take,.mb-btn{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;border-radius:9px;
+      min-height:38px;padding:0 12px;font-size:12px;font-weight:800;cursor:pointer;
+      white-space:nowrap;text-decoration:none;color:#1f2937;display:inline-flex;align-items:center}
+    .mb-ok{background:#2e7d4f;color:#fff;border:1.5px solid #2e7d4f;border-radius:9px;
+      min-height:38px;padding:0 13px;font-size:13px;font-weight:800;cursor:pointer}
+    .mb-del{background:#fff;color:#dc2626;border:1.5px solid #fca5a5;border-radius:9px;
+      min-height:38px;padding:0 12px;font-size:13px;font-weight:800;cursor:pointer}
+    .mb-prev{font-size:12px;font-weight:700;color:#2e7d4f;flex:1 1 100%;min-width:0;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mb-prev.bad{color:#dc2626}
+    .mb-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .mb-hint{font-size:11px;color:#6b7280;font-weight:600}
+    /* Fußzeile mit den laufenden Summen */
+    .mb-foot{position:sticky;bottom:0;background:#fff;border-radius:10px;padding:9px 12px;
+      margin-top:10px;box-shadow:0 -2px 10px rgba(0,0,0,.09);display:flex;gap:8px;
+      flex-wrap:wrap;align-items:center;z-index:6}
+    .mb-st{font-size:12px;font-weight:700;color:#6b7280;white-space:nowrap}
+    .mb-st b{color:#1f2937;font-size:14px}
+    .mb-warn{color:#e65100}
+    .mb-send{margin-left:auto;background:#2e7d4f;color:#fff;border:0;border-radius:10px;
+      min-height:42px;padding:0 18px;font-size:14px;font-weight:800;cursor:pointer}
+    /* Verlauf, Artikel, Einstellungen */
+    .mb-vrow,.mb-arow{background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:5px;
+      box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .mb-vmeta{font-size:12px;color:#6b7280;flex:1}
+    .mb-arow.aus{opacity:.55}
+    .mb-aname{flex:1;min-width:120px;font-weight:600}
+    .mb-agrp,.mb-apreis{font-size:12px;color:#6b7280}
+    .mb-cfg{background:#fff;border-radius:10px;padding:12px;display:flex;gap:10px;flex-wrap:wrap}
+    .mb-cfg label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:#6b7280}
+    .mb-cfg input{min-height:40px;border:1.5px solid var(--c-border,#e5e7eb);border-radius:9px;
+      padding:0 9px;font-size:14px}
+    .mb-cfg-tage{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;
+      font-weight:700;color:#6b7280}
+    .mb-cbx{flex-direction:row!important;align-items:center;gap:4px!important}
+    /* Dialoge – kein natives alert/confirm (Konstitution 6) */
+    .mb-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9000;
+      display:flex;align-items:center;justify-content:center;padding:16px}
+    .mb-dlg{background:#fff;border-radius:14px;padding:16px;max-width:640px;width:100%;
+      max-height:86vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+    .mb-dlg-kopf{font-size:16px;font-weight:800;margin-bottom:8px}
+    .mb-dlg-meta{font-size:13px;color:#374151;margin-bottom:8px;line-height:1.6}
+    .mb-dlg-text{font-size:13px;line-height:1.6;background:#f9fafb;border-radius:9px;
+      padding:10px;margin-bottom:10px}
+    .mb-dlg-form{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+    .mb-dlg-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;
+      font-weight:700;color:#6b7280}
+    .mb-dlg-form input{min-height:42px;border:1.5px solid var(--c-border,#e5e7eb);
+      border-radius:9px;padding:0 10px;font-size:14px}
+    .mb-dlg-acts{display:flex;gap:8px;justify-content:flex-end}
+    .mb-dlg-acts .mb-send{margin-left:0}
+    .mb-toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:#1f2937;
+      color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;
+      z-index:9500;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+    /* Breite bestimmt Spaltenzahl und Namensbreite (F17) */
+    @media(min-width:900px){.mb{--mb-np:230px}}
+    @media(min-width:1180px){.mb-liste{--mb-sp:560px}.mb{--mb-np:200px}}
+    @media(min-width:1620px){.mb-liste{--mb-sp:520px}.mb{--mb-np:190px}}
+    /* Schmale Schirme: Badges unter den Namen, kompaktere Fußzeile */
+    @media(max-width:619px){
+      .mb-zeile{grid-template-columns:minmax(0,1fr)}
+      .mb-chips{margin-top:2px}
+      .mb-st{white-space:normal}
+      .mb-foot{padding:7px 10px;gap:6px;row-gap:2px}
+      .mb-hint{display:none}
+    }
+    /* Wenig Höhe: Editor verdichten, Vorschläge in einer wischbaren Zeile */
+    @media(max-height:819px),(max-width:619px){
+      .mb-edgrid{gap:6px}
+      .mb-g{padding:3px 7px 5px;gap:3px}
+      .mb-lbl{font-size:8px}
+      .mb-sugg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+      .mb-sugg::-webkit-scrollbar{display:none}
+      .mb-sugg button{flex:0 0 auto}
+      .mb-quick button{min-width:40px}
+    }
     /* === Bäcker-Tab === */
     :root{--bk:#b45309;--bk-dark:#92400e;--bk-bg:#fffbeb;--bk-line:#fcd34d}
     @keyframes bkBlink{0%,100%{background:#fef2f2;color:#b91c1c}50%{background:#dc2626;color:#fff}}
@@ -1147,6 +1361,10 @@
     <span class="k-tab-icon"><i data-lucide="croissant" style="width:22px;height:22px"></i></span> Bäcker
     <span class="k-tab-badges" id="badges-baecker"></span>
   </div>
+  <div class="k-tab" data-tab="metzgerbest" onclick="K.switchTab('metzgerbest')">
+    <span class="k-tab-icon"><i data-lucide="ham" style="width:22px;height:22px"></i></span> Metzger Mair
+    <span class="k-tab-badges" id="badges-metzgerbest"></span>
+  </div>
   <div class="k-tab" data-tab="kontakt" onclick="K.switchTab('kontakt')" style="display:none">
     <span class="k-tab-icon"><i data-lucide="message-square" style="width:22px;height:22px"></i></span> Kontakt
     <span class="k-tab-badges" id="badges-kontakt"></span>
@@ -1254,6 +1472,13 @@
   <!-- ── Bäcker (Bestellung bei der Bäckerei) ── -->
   <div class="k-panel" id="panel-baecker">
     <div id="baecker-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="croissant" style="width:24px;height:24px"></i></div>Laden…</div></div>
+  </div>
+
+  <!-- Ladenbestellung bei Metzger Mair (specs/metzger-bestellung/spec.md).
+       Nicht zu verwechseln mit dem Tab „Metzger“ – der zeigt die
+       Kundenvorbestellungen. -->
+  <div class="k-panel" id="panel-metzgerbest">
+    <div id="metzgerbest-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="ham" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -1870,6 +2095,7 @@ var K = (function(){
     if(id==='kalender' && window.KalenderKiosk) window.KalenderKiosk.onShow();
     if(id==='kontakt' && window.KKontakt) window.KKontakt.onShow();
     if(id==='baecker' && window.KBaecker) window.KBaecker.onShow();
+    if(id==='metzgerbest' && window.KMetzgerBest) window.KMetzgerBest.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -1878,8 +2104,8 @@ var K = (function(){
   // wurde – sonst bliebe er nach dem Ausrollen unsichtbar, bis jemand das
   // Flag im CMS anlegt.
   function applyKioskFeatures(){
-    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker'};
-    var defaultAn={baecker:true};
+    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',metzgerbest:'kiosk_metzgerbest'};
+    var defaultAn={baecker:true,metzgerbest:true};
     function setTabs(flags,pickDefault){
       Object.keys(map).forEach(function(tab){
         var flag=flags[map[tab]];
@@ -5834,6 +6060,7 @@ var K = (function(){
 <script src="/js/admin-auth.js"></script>
 <script src="/js/kiosk-kalender.js"></script>
 <script src="/js/kiosk-baecker.js"></script>
+<script src="/js/kiosk-metzger-bestellung.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script>

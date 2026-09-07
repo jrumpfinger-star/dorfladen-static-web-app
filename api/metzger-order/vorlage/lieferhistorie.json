@@ -1,0 +1,4379 @@
+{
+  "lieferungen": [
+    {
+      "datum": "20.04.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.572
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 5.062
+        },
+        {
+          "nummer": 70,
+          "stueck": null,
+          "gewicht": 1.042
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.63
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.028
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 1.056
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.784
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.172
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.666
+        },
+        {
+          "nummer": 560,
+          "stueck": null,
+          "gewicht": 1.684
+        },
+        {
+          "nummer": 564,
+          "stueck": null,
+          "gewicht": 1.462
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.224
+        },
+        {
+          "nummer": 583,
+          "stueck": null,
+          "gewicht": 1.024
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.148
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.682
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.21
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.11
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.764
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.83
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.23
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 2.034
+        },
+        {
+          "nummer": 744,
+          "stueck": null,
+          "gewicht": 0.346
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.662
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.506
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.5
+        },
+        {
+          "nummer": 917,
+          "stueck": null,
+          "gewicht": 0.604
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 0.42
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 1029,
+          "stueck": null,
+          "gewicht": 1.0
+        }
+      ]
+    },
+    {
+      "datum": "23.04.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 2.902
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 4.02
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 0.946
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.264
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 1.104
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.452
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 5.503
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.288
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.256
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 1.196
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.0
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.928
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.398
+        },
+        {
+          "nummer": 522,
+          "stueck": null,
+          "gewicht": 1.689
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.796
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.744
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 1.788
+        },
+        {
+          "nummer": 574,
+          "stueck": null,
+          "gewicht": 0.756
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.11
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.979
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.339
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.557
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.575
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 1.256
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.842
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 3.244
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.146
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 5.174
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.872
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.626
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.946
+        },
+        {
+          "nummer": 717,
+          "stueck": null,
+          "gewicht": 1.394
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.788
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.626
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.606
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.546
+        },
+        {
+          "nummer": 763,
+          "stueck": null,
+          "gewicht": 1.378
+        },
+        {
+          "nummer": 980,
+          "stueck": 8.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": null,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "11.05.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.736
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.952
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.96
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 1.208
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 0.792
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 1.145
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.156
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.044
+        },
+        {
+          "nummer": 556,
+          "stueck": null,
+          "gewicht": 0.996
+        },
+        {
+          "nummer": 560,
+          "stueck": null,
+          "gewicht": 1.662
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.28
+        },
+        {
+          "nummer": 574,
+          "stueck": null,
+          "gewicht": 0.788
+        },
+        {
+          "nummer": 576,
+          "stueck": null,
+          "gewicht": 1.044
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.556
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 0.564
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 3.256
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 0.562
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 5.212
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.744
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.51
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.622
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 2.136
+        },
+        {
+          "nummer": 723,
+          "stueck": null,
+          "gewicht": 1.704
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.642
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 6.165
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 3.234
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.484
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 0.756
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": 3.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 9.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "13.05.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.482
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.136
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 1.22
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.756
+        },
+        {
+          "nummer": 70,
+          "stueck": null,
+          "gewicht": 0.662
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.742
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.448
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 4.098
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.436
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.45
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 0.908
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.06
+        },
+        {
+          "nummer": 407,
+          "stueck": null,
+          "gewicht": 1.722
+        },
+        {
+          "nummer": 431,
+          "stueck": null,
+          "gewicht": 0.262
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.022
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.84
+        },
+        {
+          "nummer": 521,
+          "stueck": null,
+          "gewicht": 1.472
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 1.45
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.52
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.732
+        },
+        {
+          "nummer": 564,
+          "stueck": null,
+          "gewicht": 0.988
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.108
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 6.626
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.49
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.446
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.546
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.614
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.522
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.246
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 1.03
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.244
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 0.536
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 1.684
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.89
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.522
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 1.088
+        },
+        {
+          "nummer": 669,
+          "stueck": null,
+          "gewicht": 1.42
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 0.618
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.436
+        },
+        {
+          "nummer": 719,
+          "stueck": null,
+          "gewicht": 0.71
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.612
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": 1.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 8.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "29.06.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 2.844
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.724
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.604
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.492
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 1.034
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.812
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 0.708
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 2.213
+        },
+        {
+          "nummer": 407,
+          "stueck": null,
+          "gewicht": 1.284
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.178
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 0.942
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.62
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.694
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.352
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 1.222
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 1.384
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.586
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 0.59
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 2.734
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 1.974
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.772
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.666
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 2.002
+        },
+        {
+          "nummer": 723,
+          "stueck": null,
+          "gewicht": 1.376
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 1.164
+        },
+        {
+          "nummer": 744,
+          "stueck": null,
+          "gewicht": 0.398
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 5.474
+        },
+        {
+          "nummer": 763,
+          "stueck": null,
+          "gewicht": 1.408
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.494
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.538
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 1.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "02.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 3.03
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.27
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 1.114
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 2.628
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.65
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.33
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.084
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.338
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.2
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.044
+        },
+        {
+          "nummer": 407,
+          "stueck": null,
+          "gewicht": 1.306
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.846
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.112
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 1.016
+        },
+        {
+          "nummer": 522,
+          "stueck": null,
+          "gewicht": 1.858
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.58
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.45
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.134
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.658
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.589
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.667
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 1.302
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 1.558
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 1.374
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.092
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.144
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.1
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.368
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.862
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.624
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.958
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.538
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 1.326
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.608
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 0.98
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": 9.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 7.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "03.07.2026",
+      "positionen": [
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.956
+        },
+        {
+          "nummer": 605,
+          "stueck": 23.9,
+          "gewicht": null
+        },
+        {
+          "nummer": 629,
+          "stueck": null,
+          "gewicht": 6.05
+        },
+        {
+          "nummer": 629,
+          "stueck": null,
+          "gewicht": 6.41
+        }
+      ]
+    },
+    {
+      "datum": "06.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 2.726
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.576
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 7.146
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.71
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.45
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.148
+        },
+        {
+          "nummer": 556,
+          "stueck": null,
+          "gewicht": 0.968
+        },
+        {
+          "nummer": 560,
+          "stueck": null,
+          "gewicht": 1.666
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 1.074
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.542
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.318
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.576
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 2.144
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 0.368
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.868
+        },
+        {
+          "nummer": 717,
+          "stueck": null,
+          "gewicht": 0.686
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 1.178
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 0.548
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.702
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 0.504
+        },
+        {
+          "nummer": 924,
+          "stueck": null,
+          "gewicht": 0.518
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": 7.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 3.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "09.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 7.96
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.864
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 1.404
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 2.966
+        },
+        {
+          "nummer": 70,
+          "stueck": null,
+          "gewicht": 0.98
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.504
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.654
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.127
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.414
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.924
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 0.92
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 5.2
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 5.994
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.124
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 0.718
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.826
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.77
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.014
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.718
+        },
+        {
+          "nummer": 564,
+          "stueck": null,
+          "gewicht": 1.59
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 1.814
+        },
+        {
+          "nummer": 574,
+          "stueck": null,
+          "gewicht": 1.562
+        },
+        {
+          "nummer": 583,
+          "stueck": null,
+          "gewicht": 1.02
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.07
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.704
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.372
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.493
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.63
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.618
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 1.324
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.81
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.19
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 3.126
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.642
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.626
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.738
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 3.086
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.994
+        },
+        {
+          "nummer": 669,
+          "stueck": null,
+          "gewicht": 0.902
+        },
+        {
+          "nummer": 685,
+          "stueck": null,
+          "gewicht": 1.338
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 2.156
+        },
+        {
+          "nummer": 723,
+          "stueck": null,
+          "gewicht": 1.638
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.602
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.692
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 5.364
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 0.478
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.508
+        },
+        {
+          "nummer": 917,
+          "stueck": null,
+          "gewicht": 1.052
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 3.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "13.07.2026",
+      "positionen": [
+        {
+          "nummer": 410,
+          "stueck": null,
+          "gewicht": 3.842
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.674
+        },
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 3.05
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.648
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 2.976
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.568
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.54
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 2.238
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.874
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.336
+        },
+        {
+          "nummer": 521,
+          "stueck": null,
+          "gewicht": 2.138
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.175
+        },
+        {
+          "nummer": 552,
+          "stueck": null,
+          "gewicht": 0.84
+        },
+        {
+          "nummer": 556,
+          "stueck": null,
+          "gewicht": 1.026
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.574
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.356
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 1.608
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.035
+        },
+        {
+          "nummer": 592,
+          "stueck": null,
+          "gewicht": 0.93
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.612
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.184
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.276
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.17
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.102
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.566
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.972
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.304
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 0.588
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 1.992
+        },
+        {
+          "nummer": 719,
+          "stueck": null,
+          "gewicht": 1.272
+        },
+        {
+          "nummer": 744,
+          "stueck": null,
+          "gewicht": 0.182
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 4.85
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 1.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "16.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 3.164
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 2.072
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 1.604
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 3.116
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.572
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.576
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.468
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.834
+        },
+        {
+          "nummer": 407,
+          "stueck": null,
+          "gewicht": 1.364
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 4.764
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.274
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 1.16
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 1.848
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.375
+        },
+        {
+          "nummer": 552,
+          "stueck": null,
+          "gewicht": 0.976
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.71
+        },
+        {
+          "nummer": 576,
+          "stueck": null,
+          "gewicht": 0.974
+        },
+        {
+          "nummer": 583,
+          "stueck": null,
+          "gewicht": 1.032
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.356
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 3.03
+        },
+        {
+          "nummer": 600,
+          "stueck": 13.7,
+          "gewicht": null
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.58
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.44
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.71
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 1.354
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.574
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.402
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 6.35
+        },
+        {
+          "nummer": 629,
+          "stueck": null,
+          "gewicht": 0.355
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 4.958
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.964
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.444
+        },
+        {
+          "nummer": 661,
+          "stueck": null,
+          "gewicht": 0.464
+        },
+        {
+          "nummer": 685,
+          "stueck": null,
+          "gewicht": 1.382
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.454
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.608
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.602
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.574
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 3.412
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.544
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.51
+        },
+        {
+          "nummer": 917,
+          "stueck": null,
+          "gewicht": 0.544
+        },
+        {
+          "nummer": 980,
+          "stueck": 8.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 2.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "17.07.2026",
+      "positionen": [
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 1.3
+        }
+      ]
+    },
+    {
+      "datum": "18.07.2026",
+      "positionen": [
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 3.006
+        }
+      ]
+    },
+    {
+      "datum": "20.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.562
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.67
+        },
+        {
+          "nummer": 70,
+          "stueck": null,
+          "gewicht": 1.176
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.528
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.512
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 1.026
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.77
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 0.682
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.094
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.658
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.236
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.722
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.632
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.704
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 0.542
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.086
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.026
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 2.498
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.202
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.94
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.728
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.074
+        },
+        {
+          "nummer": 717,
+          "stueck": null,
+          "gewicht": 0.59
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.622
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.588
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 5.872
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 0.496
+        },
+        {
+          "nummer": 763,
+          "stueck": null,
+          "gewicht": 1.494
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.476
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 5.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "23.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.48
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.85
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 0.674
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.36
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.482
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.388
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.522
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.596
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 0.71
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 1.102
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 4.022
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.532
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.01
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.418
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 1.056
+        },
+        {
+          "nummer": 521,
+          "stueck": null,
+          "gewicht": 2.03
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.584
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.72
+        },
+        {
+          "nummer": 556,
+          "stueck": null,
+          "gewicht": 0.924
+        },
+        {
+          "nummer": 564,
+          "stueck": null,
+          "gewicht": 1.652
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.714
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 0.536
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.055
+        },
+        {
+          "nummer": 592,
+          "stueck": null,
+          "gewicht": 1.21
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.645
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.575
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.428
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.457
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 1.862
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.678
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.562
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.16
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.146
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.664
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 4.012
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 3.79
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 1.368
+        },
+        {
+          "nummer": 666,
+          "stueck": null,
+          "gewicht": 0.532
+        },
+        {
+          "nummer": 669,
+          "stueck": null,
+          "gewicht": 1.8
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.568
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 2.022
+        },
+        {
+          "nummer": 723,
+          "stueck": null,
+          "gewicht": 1.66
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.574
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.86
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.758
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.672
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.262
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 0.992
+        },
+        {
+          "nummer": 924,
+          "stueck": null,
+          "gewicht": 0.514
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 4.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "27.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 3.674
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.582
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.376
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.024
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 0.778
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 2.26
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 5.868
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 0.64
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.968
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.554
+        },
+        {
+          "nummer": 583,
+          "stueck": null,
+          "gewicht": 1.036
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.47
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 0.534
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 1.198
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.062
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.098
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 5.552
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.786
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.432
+        },
+        {
+          "nummer": 685,
+          "stueck": null,
+          "gewicht": 1.392
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.88
+        },
+        {
+          "nummer": 763,
+          "stueck": null,
+          "gewicht": 1.11
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 2.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "30.07.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.602
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 2.85
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 1.072
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.168
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.618
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.402
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.99
+        },
+        {
+          "nummer": 358,
+          "stueck": null,
+          "gewicht": 0.11
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.482
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.268
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 1.16
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.312
+        },
+        {
+          "nummer": 410,
+          "stueck": null,
+          "gewicht": 0.136
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.766
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 0.964
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.81
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.564
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.06
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.638
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.372
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.45
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.16
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.469
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.576
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 1.35
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.744
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 0.892
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.078
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.092
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 2.008
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 3.076
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.456
+        },
+        {
+          "nummer": 661,
+          "stueck": null,
+          "gewicht": 0.444
+        },
+        {
+          "nummer": 688,
+          "stueck": null,
+          "gewicht": 0.12
+        },
+        {
+          "nummer": 688,
+          "stueck": null,
+          "gewicht": 0.444
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.584
+        },
+        {
+          "nummer": 717,
+          "stueck": null,
+          "gewicht": 1.338
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.622
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.584
+        },
+        {
+          "nummer": 744,
+          "stueck": null,
+          "gewicht": 0.362
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 3.108
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.856
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 3.078
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 1029,
+          "stueck": null,
+          "gewicht": 2.187
+        }
+      ]
+    },
+    {
+      "datum": "03.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.3
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.446
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 8.852
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 0.52
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.698
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 2.124
+        },
+        {
+          "nummer": 407,
+          "stueck": null,
+          "gewicht": 1.606
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.452
+        },
+        {
+          "nummer": 521,
+          "stueck": null,
+          "gewicht": 1.938
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 1.53
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.756
+        },
+        {
+          "nummer": 560,
+          "stueck": null,
+          "gewicht": 1.818
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 5.596
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.466
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 1.56
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 1.888
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.2
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.804
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.1
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.122
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 5.65
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.702
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 0.364
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.726
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.338
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.902
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.738
+        },
+        {
+          "nummer": 719,
+          "stueck": null,
+          "gewicht": 0.544
+        },
+        {
+          "nummer": 723,
+          "stueck": null,
+          "gewicht": 1.748
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 5.78
+        },
+        {
+          "nummer": 763,
+          "stueck": null,
+          "gewicht": 1.434
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.684
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.542
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 1.024
+        },
+        {
+          "nummer": 924,
+          "stueck": null,
+          "gewicht": 0.516
+        },
+        {
+          "nummer": 980,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 7.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "06.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 2.864
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.302
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 1.254
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 2.756
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.684
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.372
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 5.037
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 0.512
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.514
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.416
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 1.368
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.114
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.122
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 1.296
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.9
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.32
+        },
+        {
+          "nummer": 556,
+          "stueck": null,
+          "gewicht": 0.878
+        },
+        {
+          "nummer": 560,
+          "stueck": null,
+          "gewicht": 1.754
+        },
+        {
+          "nummer": 574,
+          "stueck": null,
+          "gewicht": 0.924
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.098
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 0.55
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.092
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.58
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.416
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.492
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.459
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.676
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.49
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.288
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 3.226
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 0.844
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.926
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.356
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.548
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 1.75
+        },
+        {
+          "nummer": 661,
+          "stueck": null,
+          "gewicht": 0.454
+        },
+        {
+          "nummer": 669,
+          "stueck": null,
+          "gewicht": 2.464
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.794
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.734
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.888
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 0.25
+        },
+        {
+          "nummer": 917,
+          "stueck": null,
+          "gewicht": 0.554
+        },
+        {
+          "nummer": 924,
+          "stueck": null,
+          "gewicht": 1.118
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 6.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "10.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 2.504
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 2.03
+        },
+        {
+          "nummer": 70,
+          "stueck": null,
+          "gewicht": 1.088
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.6
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.288
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 9.564
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 1.086
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.656
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 0.698
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.08
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.508
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 0.872
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 0.406
+        },
+        {
+          "nummer": 521,
+          "stueck": null,
+          "gewicht": 2.026
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.746
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.842
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.09
+        },
+        {
+          "nummer": 592,
+          "stueck": null,
+          "gewicht": 0.99
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.596
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.68
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 2.416
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.876
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 3.328
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 2.428
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 5.23
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.372
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 2.476
+        },
+        {
+          "nummer": 661,
+          "stueck": null,
+          "gewicht": 0.326
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.028
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 1.998
+        },
+        {
+          "nummer": 719,
+          "stueck": null,
+          "gewicht": 0.626
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.876
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 5.562
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.552
+        },
+        {
+          "nummer": 924,
+          "stueck": null,
+          "gewicht": 0.54
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": null,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "13.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 3.456
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.76
+        },
+        {
+          "nummer": 12,
+          "stueck": null,
+          "gewicht": 0.786
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 7.155
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 9.265
+        },
+        {
+          "nummer": 144,
+          "stueck": null,
+          "gewicht": 1.6
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.534
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.444
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 1.098
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.146
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.012
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.14
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.62
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.706
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.21
+        },
+        {
+          "nummer": 576,
+          "stueck": null,
+          "gewicht": 1.092
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.736
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 0.532
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.066
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.656
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.392
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.335
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.478
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.674
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.12
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.174
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 2.934
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.858
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.596
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.73
+        },
+        {
+          "nummer": 685,
+          "stueck": null,
+          "gewicht": 1.452
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 0.92
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.746
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.616
+        },
+        {
+          "nummer": 744,
+          "stueck": null,
+          "gewicht": 0.154
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 4.266
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.478
+        },
+        {
+          "nummer": 914,
+          "stueck": null,
+          "gewicht": 0.25
+        },
+        {
+          "nummer": 917,
+          "stueck": null,
+          "gewicht": 0.586
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 4.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "17.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 4.902
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.374
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.552
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.45
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.032
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.604
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 0.68
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.056
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.902
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.716
+        },
+        {
+          "nummer": 521,
+          "stueck": null,
+          "gewicht": 1.79
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.522
+        },
+        {
+          "nummer": 564,
+          "stueck": null,
+          "gewicht": 1.562
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 1.918
+        },
+        {
+          "nummer": 583,
+          "stueck": null,
+          "gewicht": 1.026
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.342
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 2.038
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.678
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 1.788
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 1.646
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 3.452
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.588
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 3.78
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.734
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.438
+        },
+        {
+          "nummer": 661,
+          "stueck": null,
+          "gewicht": 0.402
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.592
+        },
+        {
+          "nummer": 719,
+          "stueck": null,
+          "gewicht": 0.548
+        },
+        {
+          "nummer": 723,
+          "stueck": null,
+          "gewicht": 1.702
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.578
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.778
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 2.598
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 2.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 1008,
+          "stueck": null,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "20.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.418
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 2.746
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.312
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.618
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.358
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 2.508
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.63
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.362
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 0.97
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 1.986
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.07
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.138
+        },
+        {
+          "nummer": 505,
+          "stueck": null,
+          "gewicht": 0.822
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.678
+        },
+        {
+          "nummer": 537,
+          "stueck": null,
+          "gewicht": 2.228
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.716
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 1.878
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 0.53
+        },
+        {
+          "nummer": 588,
+          "stueck": null,
+          "gewicht": 1.156
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 2.612
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.378
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.43
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.461
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.666
+        },
+        {
+          "nummer": 616,
+          "stueck": null,
+          "gewicht": 0.584
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 0.608
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 1.048
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.578
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 4.418
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.682
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.614
+        },
+        {
+          "nummer": 685,
+          "stueck": null,
+          "gewicht": 1.228
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.866
+        },
+        {
+          "nummer": 726,
+          "stueck": null,
+          "gewicht": 0.568
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.904
+        },
+        {
+          "nummer": 744,
+          "stueck": null,
+          "gewicht": 0.342
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 3.154
+        },
+        {
+          "nummer": 763,
+          "stueck": null,
+          "gewicht": 1.098
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 3.012
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": 2.0,
+          "gewicht": null
+        }
+      ]
+    },
+    {
+      "datum": "24.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 3.81
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.362
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 4.542
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 0.66
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 3.222
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 2.594
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.866
+        },
+        {
+          "nummer": 583,
+          "stueck": null,
+          "gewicht": 1.018
+        },
+        {
+          "nummer": 585,
+          "stueck": null,
+          "gewicht": 0.722
+        },
+        {
+          "nummer": 586,
+          "stueck": null,
+          "gewicht": 0.55
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 2.268
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.656
+        },
+        {
+          "nummer": 617,
+          "stueck": null,
+          "gewicht": 3.232
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.03
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 2.084
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 1.048
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 5.362
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.652
+        },
+        {
+          "nummer": 658,
+          "stueck": null,
+          "gewicht": 1.444
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 1.824
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 1.818
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 1.156
+        },
+        {
+          "nummer": 719,
+          "stueck": null,
+          "gewicht": 0.666
+        },
+        {
+          "nummer": 727,
+          "stueck": null,
+          "gewicht": 0.914
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.794
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 2.67
+        },
+        {
+          "nummer": 919,
+          "stueck": null,
+          "gewicht": 0.998
+        },
+        {
+          "nummer": 980,
+          "stueck": 6.0,
+          "gewicht": null
+        },
+        {
+          "nummer": 981,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 982,
+          "stueck": null,
+          "gewicht": null
+        },
+        {
+          "nummer": 1029,
+          "stueck": null,
+          "gewicht": 0.834
+        }
+      ]
+    },
+    {
+      "datum": "26.08.2026",
+      "positionen": [
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.454
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.66
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.486
+        },
+        {
+          "nummer": 556,
+          "stueck": null,
+          "gewicht": 0.936
+        },
+        {
+          "nummer": 688,
+          "stueck": null,
+          "gewicht": 0.208
+        }
+      ]
+    },
+    {
+      "datum": "27.08.2026",
+      "positionen": [
+        {
+          "nummer": 2,
+          "stueck": null,
+          "gewicht": 1.384
+        },
+        {
+          "nummer": 3,
+          "stueck": null,
+          "gewicht": 3.186
+        },
+        {
+          "nummer": 15,
+          "stueck": null,
+          "gewicht": 1.292
+        },
+        {
+          "nummer": 70,
+          "stueck": null,
+          "gewicht": 0.726
+        },
+        {
+          "nummer": 109,
+          "stueck": null,
+          "gewicht": 0.606
+        },
+        {
+          "nummer": 121,
+          "stueck": null,
+          "gewicht": 0.426
+        },
+        {
+          "nummer": 142,
+          "stueck": null,
+          "gewicht": 3.059
+        },
+        {
+          "nummer": 360,
+          "stueck": null,
+          "gewicht": 1.562
+        },
+        {
+          "nummer": 367,
+          "stueck": null,
+          "gewicht": 1.426
+        },
+        {
+          "nummer": 373,
+          "stueck": null,
+          "gewicht": 1.446
+        },
+        {
+          "nummer": 402,
+          "stueck": null,
+          "gewicht": 4.974
+        },
+        {
+          "nummer": 407,
+          "stueck": null,
+          "gewicht": 1.38
+        },
+        {
+          "nummer": 500,
+          "stueck": null,
+          "gewicht": 3.178
+        },
+        {
+          "nummer": 501,
+          "stueck": null,
+          "gewicht": 1.306
+        },
+        {
+          "nummer": 518,
+          "stueck": null,
+          "gewicht": 0.68
+        },
+        {
+          "nummer": 532,
+          "stueck": null,
+          "gewicht": 0.632
+        },
+        {
+          "nummer": 557,
+          "stueck": null,
+          "gewicht": 1.85
+        },
+        {
+          "nummer": 560,
+          "stueck": null,
+          "gewicht": 1.782
+        },
+        {
+          "nummer": 565,
+          "stueck": null,
+          "gewicht": 2.218
+        },
+        {
+          "nummer": 600,
+          "stueck": null,
+          "gewicht": 3.914
+        },
+        {
+          "nummer": 602,
+          "stueck": null,
+          "gewicht": 0.387
+        },
+        {
+          "nummer": 603,
+          "stueck": null,
+          "gewicht": 0.445
+        },
+        {
+          "nummer": 605,
+          "stueck": null,
+          "gewicht": 0.464
+        },
+        {
+          "nummer": 613,
+          "stueck": null,
+          "gewicht": 0.616
+        },
+        {
+          "nummer": 615,
+          "stueck": null,
+          "gewicht": 0.678
+        },
+        {
+          "nummer": 620,
+          "stueck": null,
+          "gewicht": 1.038
+        },
+        {
+          "nummer": 628,
+          "stueck": null,
+          "gewicht": 0.518
+        },
+        {
+          "nummer": 640,
+          "stueck": null,
+          "gewicht": 6.13
+        },
+        {
+          "nummer": 641,
+          "stueck": null,
+          "gewicht": 1.642
+        },
+        {
+          "nummer": 660,
+          "stueck": null,
+          "gewicht": 0.584
+        },
+        {
+          "nummer": 661,
+          "stueck": null,
+          "gewicht": 0.288
+        },
+        {
+          "nummer": 669,
+          "stueck": null,
+          "gewicht": 1.998
+        },
+        {
+          "nummer": 694,
+          "stueck": null,
+          "gewicht": 0.924
+        },
+        {
+          "nummer": 718,
+          "stueck": null,
+          "gewicht": 0.746
+        },
+        {
+          "nummer": 761,
+          "stueck": null,
+          "gewicht": 3.386
+        },
+        {
+          "nummer": 764,
+          "stueck": null,
+          "gewicht": 3.096
+        },
+        {
+          "nummer": 917,
+          "stueck": null,
+          "gewicht": 0.55
+        }
+      ]
+    }
+  ]
+}

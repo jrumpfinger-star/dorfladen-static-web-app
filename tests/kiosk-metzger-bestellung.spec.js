@@ -1,0 +1,399 @@
+/**
+ * Kiosk – Metzger-Bestellung (Playwright E2E)
+ *
+ * Deckt die Test Cases aus specs/metzger-bestellung/spec.md ab:
+ *   F1  Bestelltag wählen
+ *   F3  Portionen als Badges erfassen
+ *   F4  Vorschläge als Mehrfachauswahl
+ *   F5  Kurzeingabe in Papier-Schreibweise
+ *   F6  Vakuum als Ja/Nein
+ *   F10 Suchen und Filtern
+ *   F11 Versanddialog mit Testbetrieb
+ *   F17 Responsive über drei Viewports
+ *
+ * Alle API-Aufrufe werden gemockt. Wichtig: Der Kiosk ist eine PWA – ohne
+ * `serviceWorkers: 'block'` beantwortet der Service Worker die Aufrufe aus
+ * seinem Cache und die Mocks greifen nicht.
+ *
+ * Ausführen:
+ *   npx playwright test tests/kiosk-metzger-bestellung.spec.js
+ */
+
+const { test, expect } = require('@playwright/test');
+
+test.use({ serviceWorkers: 'block' });
+
+const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
+const KIOSK_URL = /localhost|127\.0\.0\.1/.test(BASE) ? `${BASE}/kiosk.html` : `${BASE}/kiosk`;
+
+const TAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+const BESTELLTAGE = [1, 4];          // Montag und Donnerstag (JS: So = 0)
+
+function iso(d) {
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)
+    + '-' + ('0' + d.getDate()).slice(-2);
+}
+
+function plusTage(n) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+/** Nächster Bestelltag ab morgen – heute ist die Ware längst da. */
+function naechsterTag() {
+  for (let i = 1; i < 14; i++) {
+    const d = plusTage(i);
+    if (BESTELLTAGE.includes(d.getDay())) return iso(d);
+  }
+  return iso(plusTage(1));
+}
+
+function tagesleiste() {
+  const out = [];
+  for (let i = 0; i < 14; i++) {
+    const d = plusTage(i);
+    out.push({
+      datum: iso(d),
+      wochentag: TAGE[d.getDay()],
+      bestelltag: BESTELLTAGE.includes(d.getDay()),
+      status: null,
+    });
+  }
+  return out;
+}
+
+const CONFIG = {
+  name: 'Metzgerei Mair',
+  empfaenger: 'jrumpfinger@t-online.de',
+  empfaenger_name: 'Test (Metzger-Bestellung)',
+  metzger_mail: '',
+  bestelltage: [0, 3],
+  bestellschluss: '12:00',
+  kd_nr: '1041',
+};
+
+const ARTIKEL = [
+  { name: 'Lende Schwein', nummer: 2, preis: 11.05, einheit: 'kg',
+    gruppe: 'Fleisch frisch', aktiv: true, auf_formular: true },
+  { name: 'Oberschalenschnitzel', nummer: null, preis: null, einheit: 'kg',
+    gruppe: 'Fleisch frisch', aktiv: true, auf_formular: true },
+  { name: 'Putenschnitzel', nummer: 360, preis: 17.50, einheit: 'kg',
+    gruppe: 'Fleisch frisch', aktiv: true, auf_formular: true },
+  { name: 'Hackfleisch gemischt', nummer: 142, preis: 10.30, einheit: 'kg',
+    gruppe: 'Fleisch frisch', aktiv: true, auf_formular: true },
+  { name: 'Weißwurst', nummer: 600, preis: 8.70, einheit: 'kg',
+    gruppe: 'Würste frisch', aktiv: true, auf_formular: true },
+  { name: 'Griebenschmalz', nummer: 431, preis: 11.75, einheit: 'kg',
+    gruppe: 'Nicht auf dem Formular', aktiv: false, auf_formular: false },
+];
+
+const VORSCHLAEGE = {
+  360: [
+    { portionen: [{ anzahl: 2, menge: 4, einheit: 'St', vakuum: true }],
+      punkte: 1.0, belege: 1, quelle: 'bestellung', zuletzt: '2026-08-24' },
+    { portionen: [{ anzahl: 1, menge: 1.5, einheit: 'kg', vakuum: false }],
+      punkte: 2.8, belege: 7, quelle: 'lieferung', zuletzt: '2026-08-27' },
+    { portionen: [{ anzahl: 1, menge: 0.75, einheit: 'kg', vakuum: false }],
+      punkte: 2.4, belege: 7, quelle: 'lieferung', zuletzt: '2026-08-20' },
+  ],
+};
+
+/** Positionen der vorbelegten Bestellung. */
+function positionen() {
+  return [
+    { nummer: 360, name: 'Putenschnitzel',
+      portionen: [{ anzahl: 2, menge: 4, einheit: 'St', vakuum: true }],
+      hinweis: '', zusatz: false },
+    { nummer: 142, name: 'Hackfleisch gemischt',
+      portionen: [{ anzahl: 2, menge: 500, einheit: 'g', vakuum: true },
+                  { anzahl: 6, menge: 250, einheit: 'g', vakuum: true }],
+      hinweis: '', zusatz: false },
+  ];
+}
+
+async function mockApi(page, opts = {}) {
+  const datum = opts.datum || naechsterTag();
+  const status = opts.status || 0;
+
+  await page.route('**/api/metzger-order**', async (route) => {
+    const url = route.request().url();
+    const method = route.request().method();
+
+    if (method === 'POST') {
+      const gesendet = /\/(senden|korrektur)$/.test(url);
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          success: true, status: gesendet ? 1 : 0,
+          empfaenger: CONFIG.empfaenger, testbetrieb: true,
+          protokoll: [], summen: {},
+        }),
+      });
+      return;
+    }
+    if (/mode=verlauf/.test(url)) {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ success: true, verlauf: opts.verlauf || [] }),
+      });
+      return;
+    }
+    if (/metzger-order\/\d{4}-\d{2}-\d{2}/.test(url)) {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          bestellung: { datum, status, positionen: positionen(), protokoll: [] },
+          artikel: ARTIKEL, vorschlaege: VORSCHLAEGE,
+          vorbelegt_aus: '2026-08-24', bestelltag: true,
+          config: CONFIG, testbetrieb: true, summen: {},
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        success: true, tage: tagesleiste(), aktiv: datum,
+        config: CONFIG, testbetrieb: true,
+      }),
+    });
+  });
+
+  await page.route('**/api/metzger-artikel**', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ success: true, artikel: ARTIKEL }),
+  }));
+
+  // Übrige Kiosk-Aufrufe still beantworten, damit nichts blockiert.
+  await page.route('**/api/**', (route) => {
+    if (/metzger-order|metzger-artikel/.test(route.request().url())) return route.fallback();
+    return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ success: true }),
+    });
+  });
+}
+
+async function oeffneTab(page, opts) {
+  await mockApi(page, opts);
+  await page.goto(KIOSK_URL);
+  await page.locator('.k-tab[data-tab="metzgerbest"]').click();
+  await page.locator('#metzgerbest-body .mb-row').first().waitFor({ timeout: 15000 });
+}
+
+function zeile(page, name) {
+  return page.locator('.mb-row').filter({ hasText: name }).first();
+}
+
+test.describe('Metzger-Bestellung im Kiosk', () => {
+
+  test('TC-F1-01: Tab, Tagesleiste und nur Mo/Do wählbar', async ({ page }) => {
+    await oeffneTab(page);
+    await expect(page.locator('.k-tab[data-tab="metzgerbest"]')).toContainText('Metzger Mair');
+    const tage = page.locator('.mb-day');
+    expect(await tage.count()).toBe(14);
+    // Genau die Bestelltage sind bedienbar.
+    const aktiv = await page.locator('.mb-day:not([disabled])').count();
+    expect(aktiv).toBeGreaterThan(0);
+    expect(await page.locator('.mb-day.off').count()).toBeGreaterThan(0);
+  });
+
+  test('TC-F3-01/02: Nummer als eigene Spalte, Badges zeigen Portionen', async ({ page }) => {
+    await oeffneTab(page);
+    const r = zeile(page, 'Putenschnitzel');
+    await expect(r.locator('.mb-nr')).toHaveText('360');
+    await expect(r.locator('.mb-chip .lab').first()).toContainText('2 × 4 St');
+    await expect(r.locator('.mb-chip .vak').first()).toHaveText('vak');
+    // Artikel ohne Nummer zeigt einen Strich.
+    await expect(zeile(page, 'Oberschalenschnitzel').locator('.mb-nr')).toHaveText('–');
+  });
+
+  test('TC-F3-05: Portion direkt in der Zeile entfernen', async ({ page }) => {
+    await oeffneTab(page);
+    const r = zeile(page, 'Hackfleisch gemischt');
+    expect(await r.locator('.mb-chip').count()).toBe(2);
+    await r.locator('.mb-chip .x').first().click();
+    await expect(zeile(page, 'Hackfleisch gemischt').locator('.mb-chip')).toHaveCount(1);
+    // Der Editor darf sich dabei nicht öffnen.
+    await expect(page.locator('.mb-ed')).toHaveCount(0);
+  });
+
+  test('TC-F3-10/11: Kachel legt sofort an, Einheiten sind Knöpfe', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await expect(page.locator('.mb-ed')).toBeVisible();
+    // Keine Auswahlliste – auf dem Tablet muss ein Tipp genügen.
+    expect(await page.locator('.mb-ed select').count()).toBe(0);
+    await page.locator('.mb-quick button', { hasText: '½' }).first().click();
+    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await expect(zeile(page, 'Weißwurst').locator('.mb-chip')).toHaveCount(2);
+  });
+
+  test('TC-F3-12/F6-06: Größe ist Portionsgröße, unabhängig vom Vakuum', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('.mb-einh button', { hasText: 'Größe' }).click();
+    await page.locator('.mb-quick button', { hasText: 'klein' }).click();
+    await expect(zeile(page, 'Weißwurst').locator('.mb-chip .lab').first())
+      .toContainText('1 × klein');
+    // Der Vakuumschalter bleibt davon unberührt.
+    await expect(page.locator('.mb-vak.on')).toHaveCount(0);
+  });
+
+  test('TC-F6-01/02: Vakuum ist Ja/Nein ohne Beutelgröße', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await expect(page.locator('.mb-vak')).toHaveCount(1);
+    await page.locator('.mb-vak').click();
+    await expect(page.locator('.mb-vak.on')).toHaveCount(1);
+    await page.locator('.mb-quick button', { hasText: '½' }).first().click();
+    await expect(zeile(page, 'Weißwurst').locator('.mb-chip .vak')).toHaveCount(1);
+  });
+
+  test('TC-F4-04/05: Vorschläge sind eine Mehrfachauswahl', async ({ page }) => {
+    await oeffneTab(page);
+    const r = zeile(page, 'Putenschnitzel');
+    await r.locator('.mb-add').click();
+    const vor = page.locator('.mb-sugg button');
+    expect(await vor.count()).toBe(3);
+    // Der erste Vorschlag steckt schon in der Zeile und ist markiert.
+    await expect(page.locator('.mb-sugg button.on')).toHaveCount(1);
+    await vor.nth(1).click();
+    await expect(page.locator('.mb-sugg button.on')).toHaveCount(2);
+    await expect(zeile(page, 'Putenschnitzel').locator('.mb-chip')).toHaveCount(2);
+    // Nochmal tippen wählt wieder ab.
+    await page.locator('.mb-sugg button').nth(1).click();
+    await expect(zeile(page, 'Putenschnitzel').locator('.mb-chip')).toHaveCount(1);
+  });
+
+  test('TC-F4-02: Bestellungen ranken vor Lieferungen', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Putenschnitzel').locator('.mb-add').click();
+    await expect(page.locator('.mb-sugg button').first()).toHaveClass(/bestellung/);
+  });
+
+  test('TC-F5-01/07/11: Kurzeingabe löst auf, Rest wird zum Hinweis', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    const feld = page.locator('#mb-pf');
+
+    await feld.fill('2x500g V + 6x250g');
+    await expect(page.locator('#mb-prev')).toContainText('2 × 500 g (vak)');
+    await page.locator('.mb-take').click();
+    await expect(zeile(page, 'Weißwurst').locator('.mb-chip')).toHaveCount(2);
+
+    // Sternchen trennt, der Rohtext darf nicht als Hinweis übrig bleiben.
+    await zeile(page, 'Weißwurst').locator('.mb-chip .lab').first().click();
+    await page.locator('#mb-pf').fill('*100gr *456kg');
+    await expect(page.locator('#mb-prev')).toContainText('1 × 100 g');
+    await page.locator('.mb-take').click();
+    const chips = zeile(page, 'Weißwurst').locator('.mb-chip');
+    await expect(chips).toHaveCount(2);
+    await expect(zeile(page, 'Weißwurst').locator('.mb-chip.hw')).toHaveCount(0);
+  });
+
+  test('TC-F5-08: Unlesbares landet sichtbar im Hinweis-Badge', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Weißwurst').locator('.mb-add').click();
+    await page.locator('#mb-pf').fill('wie letzte Woche');
+    await page.locator('.mb-take').click();
+    const r = zeile(page, 'Weißwurst');
+    await expect(r.locator('.mb-chip.hw')).toHaveCount(1);
+    await expect(r.locator('.mb-chip.hw .lab')).toContainText('wie letzte Woche');
+    await expect(r).toHaveClass(/pruef/);
+  });
+
+  test('TC-F10-01/02/04: Suche und Filter', async ({ page }) => {
+    await oeffneTab(page);
+    await page.locator('#mb-q').fill('puten');
+    await expect(page.locator('.mb-row')).toHaveCount(1);
+    await page.locator('#mb-q').fill('360');
+    await expect(page.locator('.mb-row')).toHaveCount(1);
+    await page.locator('#mb-q').fill('');
+    await page.locator('.mb-tgl button', { hasText: 'Nur bestellte' }).click();
+    await expect(page.locator('.mb-row')).toHaveCount(2);
+  });
+
+  test('TC-F11-05/06: Versanddialog zeigt Empfänger und Testbetrieb', async ({ page }) => {
+    await oeffneTab(page);
+    await page.locator('.mb-send', { hasText: 'Bestellung senden' }).click();
+    const dlg = page.locator('.mb-dlg');
+    await expect(dlg).toBeVisible();
+    await expect(dlg).toContainText('jrumpfinger@t-online.de');
+    await expect(dlg.locator('.mb-test')).toContainText('Testbetrieb');
+    await expect(dlg).toContainText('Putenschnitzel');
+    await expect(dlg).toContainText('Bestellung-Metzger-Mair.pdf');
+  });
+
+  test('TC-F12-01: Nach dem Versand ist alles gesperrt', async ({ page }) => {
+    await oeffneTab(page, { status: 1 });
+    await expect(page.locator('.mb-status')).toContainText('Gesendet');
+    await expect(page.locator('.mb-add')).toHaveCount(0);
+    await expect(page.locator('.mb-btn', { hasText: 'Korrektur senden' })).toBeVisible();
+  });
+
+  test('TC-F17-01/06: Kein Überlauf, Bedienelemente groß genug', async ({ page }) => {
+    await oeffneTab(page);
+    await zeile(page, 'Putenschnitzel').locator('.mb-add').click();
+    const mass = await page.evaluate(() => {
+      const de = document.documentElement;
+      const inScroller = (el) => {
+        let p = el.parentElement;
+        while (p) {
+          const ox = getComputedStyle(p).overflowX;
+          if (ox === 'auto' || ox === 'scroll' || ox === 'hidden') return true;
+          p = p.parentElement;
+        }
+        return false;
+      };
+      const raus = [];
+      document.querySelectorAll('#panel-metzgerbest *').forEach((el) => {
+        const b = el.getBoundingClientRect();
+        if (b.width && b.right > de.clientWidth + 1 && !inScroller(el)) {
+          raus.push(el.className);
+        }
+      });
+      const klein = [];
+      document.querySelectorAll('#panel-metzgerbest button, #panel-metzgerbest input')
+        .forEach((el) => {
+          const b = el.getBoundingClientRect();
+          if (b.height && (b.height < 33 || b.width < 28)) klein.push(el.className);
+        });
+      return { raus: [...new Set(raus)], klein: [...new Set(klein)] };
+    });
+    expect(mass.raus).toEqual([]);
+    expect(mass.klein).toEqual([]);
+  });
+
+  test('TC-F17-07: Keine nativen Dialoge', async ({ page }) => {
+    await oeffneTab(page);
+    let nativ = false;
+    page.on('dialog', async (d) => { nativ = true; await d.dismiss(); });
+    await page.locator('.mb-send', { hasText: 'Bestellung senden' }).click();
+    await page.locator('.mb-dlg .mb-send').click();
+    await page.waitForTimeout(600);
+    expect(nativ).toBe(false);
+  });
+
+  test('TC-F14-04: Leerer Verlauf erklärt sich', async ({ page }) => {
+    await oeffneTab(page);
+    await page.locator('.mb-sub', { hasText: 'Verlauf' }).click();
+    await expect(page.locator('#metzgerbest-body')).toContainText('Noch keine gesendete Bestellung');
+  });
+
+  test('TC-F9-01: Artikelverwaltung listet den Katalog', async ({ page }) => {
+    await oeffneTab(page);
+    await page.locator('.mb-sub', { hasText: 'Artikel' }).click();
+    await expect(page.locator('.mb-arow')).toHaveCount(ARTIKEL.length);
+    // Ausgeblendete Artikel bleiben sichtbar, nur gedimmt.
+    await expect(page.locator('.mb-arow.aus')).toHaveCount(1);
+  });
+
+  test('TC-F18-03: Der Kunden-Tab „Metzger" bleibt unberührt', async ({ page }) => {
+    await oeffneTab(page);
+    await expect(page.locator('.k-tab[data-tab="metzger"]')).toHaveCount(1);
+    await expect(page.locator('.k-tab[data-tab="metzgerbest"]')).toHaveCount(1);
+  });
+});

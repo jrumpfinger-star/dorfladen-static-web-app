@@ -1,0 +1,1055 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Metzger Mair — Bestellung (Mockup)</title>
+<style>
+:root{
+  --pri:#2d5016;--green:#2e7d4f;--green-light:#dcfce7;--red:#dc2626;
+  --orange:#e65100;--yellow:#f59e0b;--blue:#1d4ed8;--blue-light:#eff6ff;
+  --bg:#f0f2f5;--card:#fff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;
+  --r:12px;--touch:44px;
+  /* Rückfallwerte; messen() passt sie an die tatsächliche Fenstergröße an. */
+  --spalte:460px;--namensp:230px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:12px;padding-bottom:120px}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+
+/* ---- Kopfbereich ---- */
+.head{background:var(--card);border-radius:var(--r);padding:10px 12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px;position:sticky;top:0;z-index:20}
+.days{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.day{min-width:64px;min-height:var(--touch);padding:6px 10px;border:1.5px solid var(--border);
+  border-radius:10px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;
+  text-align:center;white-space:nowrap}
+.day .d2{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+.day.on{border-color:var(--green);background:var(--green);color:#fff}
+.day.on .d2{color:#dcfce7}
+.day.off{opacity:.35;cursor:not-allowed}
+.day.sent{border-color:var(--green);background:var(--green-light);color:#166534}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.bar input[type=search]{flex:1;min-width:160px;min-height:var(--touch);
+  padding:6px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px}
+.tgl{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+.tgl button{border:0;background:#fff;padding:0 12px;min-height:var(--touch);
+  font-size:12px;font-weight:700;cursor:pointer;color:var(--muted)}
+.tgl button.on{background:var(--green);color:#fff}
+.jump{display:flex;gap:5px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+.jump button{border:1.5px solid var(--border);background:#fff;border-radius:16px;
+  padding:0 12px;min-height:var(--touch);font-size:11px;font-weight:700;
+  cursor:pointer;white-space:nowrap;color:var(--muted)}
+
+/* ---- Liste ----
+   Die Liste ist ein Raster, das sich nach der verfügbaren Breite richtet:
+   eine Spalte auf dem Handy, zwei ab ~1000px, drei ab ~1500px. Bei 84 Zeilen
+   spart das die halbe Scrollstrecke. Gruppentitel und der offene Editor
+   spannen immer über alle Spalten. */
+#liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--spalte),1fr));
+  gap:4px 10px;align-items:start}
+.grp{grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);margin:12px 0 2px;padding-left:2px;
+  border-bottom:1px solid var(--border);padding-bottom:4px}
+/* Die Artikelnummer steht in einer eigenen, rechtsbündigen Spalte: Beim Metzger
+   bestimmt die Nummer die Warengruppe, sie muss senkrecht scanbar sein.
+   Die Bezeichnung hat feste Breite, damit die Badges aller Zeilen an derselben
+   Kante beginnen - sonst wandert das Auge über leeren Raum. */
+.row{background:var(--card);border-radius:8px;padding:4px 8px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);border-left:4px solid transparent;
+  display:grid;grid-template-columns:46px minmax(0,1fr);gap:4px 8px;align-items:center}
+.row.offen{grid-column:1/-1;box-shadow:0 3px 14px rgba(0,0,0,.13);
+  border-left-color:var(--blue);background:#fbfcff}
+.row.has{border-left-color:var(--green)}
+.row.chg{border-left-color:var(--orange);background:#fffbeb}
+.row.pruef{border-left-color:var(--red);background:#fef2f2}
+.zeile{display:grid;grid-template-columns:minmax(120px,var(--namensp)) minmax(0,1fr);
+  gap:8px;align-items:center}
+.nrcol{font-size:13px;font-weight:800;color:var(--muted);text-align:right;
+  font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;
+  border-right:1px solid var(--border);padding-right:8px;align-self:stretch;
+  display:flex;align-items:center;justify-content:flex-end;min-height:40px}
+.row.has .nrcol{color:var(--text)}
+.nrcol.leer{color:#dbe0e6;font-weight:600}
+.nm{font-size:14px;font-weight:600;line-height:1.2;min-width:0}
+.tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 5px;
+  border-radius:7px;margin-left:5px;vertical-align:middle}
+.tag.vor{background:var(--blue-light);color:var(--blue)}
+.tag.chg{background:#fef3c7;color:#92400e}
+.tag.pruef{background:#fee2e2;color:#991b1b}
+.chips{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-start;
+  align-items:center;min-width:0}
+/* Badge = Beschriftung zum Bearbeiten + eigenes ✕ zum Entfernen. Beide sind
+   getrennte Knöpfe, damit sich eine Portion direkt in der Zeile löschen lässt,
+   ohne den Editor zu öffnen. */
+.chip{display:inline-flex;align-items:center;overflow:hidden;min-height:34px;
+  border:1.5px solid var(--green);background:var(--green-light);border-radius:18px}
+.chip .lab{border:0;background:transparent;color:#166534;font-size:13px;font-weight:800;
+  padding:0 4px 0 11px;min-height:34px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.chip .x{border:0;background:transparent;color:#166534;font-size:14px;font-weight:800;
+  width:30px;flex:0 0 30px;min-height:34px;cursor:pointer;opacity:.45;line-height:1}
+.chip .x:hover{opacity:1;background:rgba(22,101,52,.14)}
+.chip .vak{background:#166534;color:#fff;border-radius:5px;font-size:9px;
+  padding:1px 4px;font-weight:800}
+/* Der Hinweis ist ebenfalls ein Badge - andersfarbig, damit er auffällt.
+   Eigener Klassenname, weil `.note` bereits der Erklärkasten am Seitenende ist. */
+.chip.hw{border-color:var(--orange);background:#fff7ed;max-width:100%}
+.chip.hw .lab,.chip.hw .x{color:#9a3412}
+.chip.hw .x:hover{background:rgba(154,52,18,.14)}
+/* Ein langer Hinweis darf die Zeile nicht sprengen - er wird gekürzt und
+   steht vollständig im Titel sowie im Editor. */
+.chip.hw .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:inline-block;line-height:31px;max-width:100%}
+.add{border:1.5px dashed #dfe3e8;background:#fff;color:#b6bcc4;
+  border-radius:18px;min-width:34px;min-height:34px;font-size:17px;
+  font-weight:800;cursor:pointer;line-height:1}
+.add:hover{border-color:var(--green);color:var(--green)}
+.row.has .add{border-style:solid;border-color:#e5e7eb}
+
+/* ---- Editor ----
+   Statt gestapelter Blöcke über die volle Breite sitzen die Bedienfelder in
+   Gruppen, die sich nebeneinander legen, sobald Platz da ist. Jede Gruppe hat
+   einen eigenen Rahmen, damit auf einen Blick klar ist, was zusammengehört. */
+.ed{grid-column:1/-1;margin-top:6px;padding-top:8px;border-top:1px dashed var(--border)}
+.edgrid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;align-items:stretch}
+.g{border:1px solid var(--border);border-radius:10px;background:#fff;
+  padding:5px 8px 7px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.g > .lbl{font-size:9px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.5px;color:#9aa2ad;margin:0}
+.g .inner{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0}
+.g-vor{flex:1 1 100%;background:#fafbff;border-color:#e3e8f5}
+.g-kurz{flex:1 1 320px}
+.g-pad{flex:2 1 460px;border-color:#cbd5e1;background:#fcfdff}
+.g-pad.aendern{border-color:var(--blue);background:#f5f8ff}
+.g-hinweis{flex:1 1 240px}
+/* Einheiten als Knöpfe statt Auswahlliste: auf dem Tablet muss ein Wert mit
+   einem Tipp gesetzt sein, ohne dass sich erst ein Menü öffnet. */
+.einh{display:flex;flex-wrap:wrap;gap:3px}
+.einh button{border:1.5px solid var(--border);background:#fff;color:var(--muted);
+  border-radius:8px;padding:0 9px;min-height:36px;font-size:12px;font-weight:800;
+  cursor:pointer;white-space:nowrap}
+.einh button.on{border-color:var(--pri);background:var(--pri);color:#fff}
+.hint2{font-size:11px;color:var(--muted);font-weight:600}
+
+.sugg{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.sugg button{border:1.5px solid var(--blue);background:var(--blue-light);color:var(--blue);
+  border-radius:16px;padding:0 12px;min-height:36px;font-size:13px;font-weight:800;cursor:pointer}
+/* Aus Lieferungen abgeleitet (Rechnungen) - blasser als echte Bestellungen. */
+.sugg button.lieferung{border-color:#dbe2f5;background:#fbfcff;color:#7d879e;font-weight:700}
+/* Ausgewählt: Der Vorschlag steckt bereits in der Zeile. */
+.sugg button.on{border-color:var(--green);background:var(--green-light);color:#166534;
+  font-weight:800}
+.sugg button.on .vak{background:#166534}
+.sugg .hak{font-size:12px;margin-right:5px}
+.quick{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.quick button{border:1.5px solid var(--border);background:#fff;border-radius:9px;
+  min-width:44px;min-height:38px;font-size:14px;font-weight:800;cursor:pointer}
+.quick button:hover{border-color:var(--green);color:var(--green)}
+.quick button.on{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
+.quick button.ok.pad{background:var(--green);color:#fff;border-color:var(--green);
+  min-width:0;padding:0 13px;font-size:13px}
+.quick button.del{color:var(--red);border-color:#fca5a5;min-width:0;padding:0 12px;font-size:13px}
+.step{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
+.step button{border:0;background:#f9fafb;min-width:38px;min-height:36px;
+  font-size:17px;font-weight:800;cursor:pointer}
+.step input{border:0;width:44px;min-height:36px;text-align:center;
+  font-size:15px;font-weight:800}
+.g .mal{font-size:14px;font-weight:800;color:#b6bcc4}
+.g select,.g input.mg{min-height:38px;border:1.5px solid var(--border);border-radius:9px;
+  padding:0 8px;font-size:14px;font-weight:700;background:#fff}
+.g input.mg{width:74px;text-align:center}
+/* Vakuum ist ein eigener Schalter. Erst wenn er an ist, erscheint die
+   Beutelgröße - „kein Vakuum" als scheinbar gewählte Stufe hat verwirrt. */
+.vakbtn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);
+  background:#fff;color:var(--muted);border-radius:9px;padding:0 11px;
+  min-height:36px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+.vakbtn .box{width:16px;height:16px;border:2px solid #cbd5e1;border-radius:4px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.vakbtn.on{border-color:var(--green);background:var(--green-light);color:#166534}
+.vakbtn.on .box{border-color:var(--green);background:var(--green);color:#fff}
+.g input.txt{flex:1 1 130px;min-width:0;min-height:36px;border:1.5px solid var(--border);
+  border-radius:9px;padding:0 9px;font-size:14px}
+.g input.kurz{font-family:ui-monospace,Consolas,monospace}
+.take{border:1.5px solid var(--border);background:#fff;border-radius:9px;
+  min-height:36px;padding:0 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.prev{font-size:12px;font-weight:700;color:var(--green);flex:1 1 100%;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prev.bad{color:var(--red)}
+.sugg .vak{background:var(--blue);color:#fff;border-radius:5px;font-size:9px;
+  padding:1px 4px;font-weight:800;margin-left:5px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.acts button{min-height:38px;border-radius:9px;padding:0 14px;
+  font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);background:#fff}
+.acts .ok{background:var(--green);color:#fff;border-color:var(--green)}
+.acts .del{color:var(--red);border-color:#fca5a5}
+.acts .zu{margin-left:auto;color:var(--muted)}
+
+/* ---- Fuss ---- */
+.foot{position:sticky;bottom:0;background:var(--card);border-radius:var(--r);
+  padding:9px 12px;margin-top:12px;box-shadow:0 -2px 10px rgba(0,0,0,.09);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;z-index:20}
+.st{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.st b{color:var(--text);font-size:14px}
+.foot .send{margin-left:auto;background:var(--green);color:#fff;border:0;
+  border-radius:10px;min-height:var(--touch);padding:0 20px;font-size:14px;
+  font-weight:800;cursor:pointer}
+.note{background:#fff;border-radius:var(--r);padding:10px 12px;margin-top:12px;
+  font-size:12px;color:var(--muted);line-height:1.55;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.note b{color:var(--text)}
+.note code{background:#f3f4f6;padding:1px 5px;border-radius:4px;
+  font-family:ui-monospace,Consolas,monospace;font-size:11px}
+.empty{background:#fff;border-radius:10px;padding:18px;text-align:center;
+  color:var(--muted);font-size:13px}
+
+/* ---- Größenklassen ----
+   Media Queries statt JavaScript: Sie greifen immer und sofort, auch wenn
+   kein resize-Ereignis kommt. Die Breite bestimmt die Spaltenzahl der Liste
+   und ob die Zeile stapelt, die Höhe, wie dicht der Editor sitzt. */
+
+/* schmal: Badges rutschen unter den Namen, Kopf scrollt mit */
+@media (max-width:619px){
+  :root{--spalte:100%;--namensp:0px}
+  .zeile{grid-template-columns:minmax(0,1fr)}
+  .chips{margin-top:2px}
+  .head{position:static}
+  .st{white-space:normal}
+  .foot{padding:7px 10px;gap:6px;row-gap:2px}
+  .foot .send{padding:0 16px}
+  /* Der Bedienhinweis steht auf schmalen Schirmen schon in der Gruppen-
+     beschriftung; hier kostet er nur Höhe. */
+  .hint2{display:none}
+}
+@media (min-width:620px) and (max-width:899px){
+  :root{--spalte:100%;--namensp:190px}
+}
+@media (min-width:900px) and (max-width:1179px){
+  :root{--spalte:100%;--namensp:230px}
+}
+@media (min-width:1180px) and (max-width:1619px){
+  :root{--spalte:560px;--namensp:200px}
+}
+@media (min-width:1620px){
+  :root{--spalte:520px;--namensp:190px}
+}
+
+/* flach: wenig Höhe — der Editor wird verdichtet, damit er zwischen Kopf und
+   Fußleiste passt. Vorschläge stehen dann in einer wischbaren Zeile. */
+@media (max-height:819px), (max-width:619px){
+  .edgrid{gap:6px}
+  .g{padding:3px 7px 5px;gap:3px}
+  .g > .lbl{font-size:8px}
+  .sugg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .sugg::-webkit-scrollbar{display:none}
+  .sugg button{flex:0 0 auto}
+  .quick button{min-width:40px}
+  .acts button{padding:0 10px;font-size:12px;white-space:nowrap}
+  .prev{flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Metzger Mair — Bestellung</h1>
+  <div class="sub">Mockup zur Spec <b>specs/metzger-bestellung/spec.md</b> ·
+    Portionsblöcke, Häufig-Vorschläge, Kurzeingabe und Beutelsummen sind hier echt bedienbar.</div>
+
+  <div class="head">
+    <div class="days" id="days"></div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="Artikel oder Nummer suchen …" oninput="M.such(this.value)">
+      <div class="tgl">
+        <button id="t-alle" class="on" onclick="M.filter('alle')">Übliche Artikel</button>
+        <button id="t-best" onclick="M.filter('best')">Nur bestellte</button>
+      </div>
+    </div>
+    <div class="jump" id="jump"></div>
+  </div>
+
+  <div id="liste"></div>
+
+  <div class="foot" id="foot"></div>
+
+  <div class="note">
+    <b>Kurzeingabe ausprobieren.</b> Editor öffnen und in das Feld
+    „Kurzeingabe" die gewohnte Papier-Schreibweise tippen:
+    <code>2x500g V | 6x250g</code> · <code>1/2 Kräuter</code> ·
+    <code>8St + 4x6St</code> · <code>4x 65cm</code> · <code>2x klein + 1</code> ·
+    <code>1 1/2</code> · <code>20</code>.
+    Ohne Einheit gilt: Bruch → kg, ganze Zahl → Stück. Nicht erkannter Text
+    landet im Hinweis und geht nie verloren.
+  </div>
+</div>
+
+<script src="metzger-vorschlaege.js"></script>
+<script>
+const M = (function () {
+  'use strict';
+
+  // ── Katalog (Auszug des Papierformulars, Reihenfolge wie auf dem Blatt) ──
+  const KATALOG = [
+    { g: 'Fleisch frisch', a: [
+      ['Lende Schwein', 2, 11.05], ['Oberschalenschnitzel', null, null],
+      ['Wammerl o. Kno.', 12, 7.89], ['Halsgrat o. Knochen', 15, 9.54],
+      ['Wammerl geräuchert', 70, 11.10], ['Putenschnitzel', 360, 17.50],
+      ['Hähnchenbrust', 367, 12.50], ['Lende Rind', null, null],
+      ['Braten Rind', 109, 18.50], ['Rouladen', 121, 18.80],
+      ['Tafelspitz', null, null], ['Hackfleisch Rind', null, null],
+      ['Hackfleisch gemischt', 142, 10.30] ] },
+    { g: 'Brät & Leberkäse', a: [
+      ['Leberkäse z. selberbacken', 402, 7.65], ['Milzwurst', 407, 8.00],
+      ['Lüngerl küchenfertig', null, null], ['Blutwürste', null, null],
+      ['Leberwürste', null, null] ] },
+    { g: 'Schinken & Speck', a: [
+      ['Putenschinken', 373, 17.50], ['Hinterschinken', 500, 11.99],
+      ['Gebratener Schinken', 501, 12.60], ['Schwarzgeräuchertes Stück', 505, 14.80],
+      ['Gewürzlende', 532, 11.50], ['Gewürzwammerl', 518, 9.70],
+      ['Farmerschinken', 537, 15.35], ['Wacholderschinken', null, null],
+      ['Lachsschinken', null, null] ] },
+    { g: 'Salami', a: [
+      ['Kantsalami', null, null], ['Hausmachersalami', 557, 16.90],
+      ['hausgem. Salami ital. Art', 560, 17.20], ['Rindersalami', 574, 17.60],
+      ['Sportsalami', 565, 16.00], ['Mailänder (scharf)', null, null] ] },
+    { g: 'Würste frisch', a: [
+      ['Debreziner', 585, 10.70], ['Polnische', 586, 12.75],
+      ['Landjäger', 588, 24.50], ['Weißwurst', 600, 8.70],
+      ['Wollwürste', 602, 7.60], ['Schweinswürstl', 605, 9.55] ] },
+    { g: 'Aufschnitt & Wurstwaren', a: [
+      ['Currywurst', 613, 8.90], ['Lyoner', 615, 8.70], ['Dicke', 616, 8.40],
+      ['Regensburger', 617, 9.25], ['Wiener', 620, 10.50],
+      ['Leberkäse', 640, 8.20], ['Kalbskäs', 641, 7.79],
+      ['Fleischwurst', 658, 8.30], ['Gelbwurst', 660, 8.35],
+      ['Schweinebauch gefüllt', 669, 8.90], ['Kochsalami im Stück', 694, 11.40],
+      ['Leberwurst gold', 718, 7.75], ['Leberwurst grob', 719, 7.60],
+      ['Bauernpressack', 727, 7.90], ['Schinkenwurst', 761, 9.89],
+      ['Paprikawurst', 764, 8.20], ['Käseknacker', 628, 10.99] ] },
+    { g: 'Beilagen', a: [
+      ['Sauerkraut fertig gekocht', 917, 5.20], ['Bratensoße', 919, 5.90],
+      ['Gulaschsuppe', 924, 6.40] ] },
+    { g: 'Verpackung & Sonstiges', a: [
+      ['Papier 28x27 / 18,5x24,5 / groß', null, null], ['Tüten 30x20', null, null],
+      ['Gewürze', null, null] ] }
+  ];
+
+  // Die Beutelgröße entscheidet der Metzger beim Verpacken; sie hängt nicht an
+  // der Portionsgröße und wird deshalb weder erfasst noch geschätzt.
+
+  // Vorbelegung aus dem letzten gleichen Wochentag (Mo 24.08.).
+  const VORBELEGT = {
+    'Lende Schwein':        [{ a: 1, m: .5, e: 'kg', v: false }],
+    'Halsgrat o. Knochen':  [{ a: 1, m: .5, e: 'kg', v: false }],
+    'Putenschnitzel':       [{ a: 2, m: 4, e: 'St', v: 'klein' }],
+    'Hähnchenbrust':        [{ a: 2, m: 3, e: 'St', v: 'klein' }],
+    'Braten Rind':          [{ a: 1, m: 500, e: 'g', v: 'klein' }],
+    'Rouladen':             [{ a: 1, m: 4, e: 'St', v: 'klein' }],
+    'Hackfleisch gemischt': [{ a: 2, m: 500, e: 'g', v: 'klein' },
+                             { a: 6, m: 250, e: 'g', v: 'klein' }],
+    'Leberkäse z. selberbacken': [{ a: 2, m: 1, e: 'kg', v: false }],
+    'Hinterschinken':       [{ a: 1, m: .5, e: 'kg', v: 'klein' }],
+    'Gebratener Schinken':  [{ a: 1, m: .5, e: 'kg', v: 'klein' }],
+    'Gewürzlende':          [{ a: 1, m: .5, e: 'kg', v: false }],
+    'Debreziner':           [{ a: 1, m: 8, e: 'St', v: false },
+                             { a: 4, m: 6, e: 'St', v: 'klein' }],
+    'Weißwurst':            [{ a: 1, m: 30, e: 'St', v: false }],
+    'Wollwürste':           [{ a: 1, m: 4, e: 'St', v: false }],
+    'Wiener':               [{ a: 1, m: 6, e: 'St', v: 'klein' }],
+    'Leberkäse':            [{ a: 1, m: 1, e: 'kg', v: 'klein' }],
+    'Kalbskäs':             [{ a: 1, m: .5, e: 'kg', v: 'klein' }],
+    'Schweinebauch gefüllt':[{ a: 4, m: null, e: 'klein', v: false }],
+    'Käseknacker':          [{ a: 3, m: 4, e: 'St', v: 'klein' }],
+    'Bauernpressack':       [{ a: 3, m: null, e: 'klein', v: false }]
+  };
+
+  // ══════════════════════════════════════════════════
+  //  Vorschläge — aus Rechnungen abgeleitet und lernend
+  // ══════════════════════════════════════════════════
+  //
+  // Startbestand kommt aus metzger-vorschlaege.js (erzeugt von
+  // tools/metzger_vorschlaege_build.py aus den Liefermengen der Rechnungen).
+  // Jede gesendete Bestellung fließt danach mit höherem Gewicht ein, sodass
+  // sich die Liste an die tatsächliche Bestellgewohnheit anpasst.
+
+  const MAX_VORSCHLAEGE = 5;
+  const PUNKTE = { bestellung: 1.0, lieferung: 0.4 };
+  const VORSCHLAG = {};   // name -> [{ bloecke, punkte, quelle, belege }]
+
+  function vSchluessel(bloecke) {
+    return bloecke.map(b => b.a + 'x' + b.m + b.e + (b.v ? ':vak' : ''))
+      .join('|');
+  }
+
+  // Was wirklich bestellt wurde, steht immer vor dem, was aus Lieferungen
+  // abgeleitet ist - die Rechnungen sind nur der Startbestand und füllen die
+  // restlichen Plätze auf.
+  function vSortiere(liste) {
+    liste.sort((x, y) =>
+      (x.quelle === 'bestellung' ? 0 : 1) - (y.quelle === 'bestellung' ? 0 : 1)
+      || y.punkte - x.punkte);
+    if (liste.length > MAX_VORSCHLAEGE) liste.length = MAX_VORSCHLAEGE;
+  }
+
+  function lerne(name, bloecke, quelle) {
+    if (!bloecke.length) return;
+    const liste = VORSCHLAG[name] || (VORSCHLAG[name] = []);
+    const key = vSchluessel(bloecke);
+    let e = liste.find(x => vSchluessel(x.bloecke) === key);
+    if (!e) {
+      e = { bloecke: bloecke.map(b => Object.assign({}, b)),
+            punkte: 0, quelle: quelle, belege: 0 };
+      liste.push(e);
+    }
+    e.punkte += PUNKTE[quelle];
+    e.belege += 1;
+    if (quelle === 'bestellung' && e.quelle !== 'bestellung') {
+      e.quelle = 'bestellung';
+      e.belege = 1;          // Lieferbelege zählen nicht als Bestellungen
+    }
+    vSortiere(liste);
+  }
+
+  function vorschlaegeLaden() {
+    const daten = (window.METZGER_VORSCHLAEGE || {}).artikel || {};
+    Object.keys(daten).forEach(name => {
+      VORSCHLAG[name] = daten[name].map(v => ({
+        bloecke: v.portionen.map(p => ({ a: p.anzahl, m: p.menge, e: p.einheit, v: false })),
+        punkte: v.punkte,
+        quelle: 'lieferung',
+        belege: v.belege,
+      })).slice(0, MAX_VORSCHLAEGE);
+    });
+    // Die letzte gesendete Bestellung zählt schwerer als eine Lieferung.
+    Object.keys(VORBELEGT).forEach(name => lerne(name, VORBELEGT[name], 'bestellung'));
+  }
+
+  function vorschlaege(name) { return VORSCHLAG[name] || []; }
+
+  // ── Zustand ──
+  const pos = {};          // name -> { bloecke, hinweis, pruef }
+  let offen = null;        // Name der Zeile mit offenem Editor
+  let entwurf = null;      // Block im Editor
+  let suche = '';
+  let nurBestellte = false;
+
+  KATALOG.forEach(g => g.a.forEach(([n]) => {
+    const v = VORBELEGT[n];
+    pos[n] = { bloecke: v ? v.map(b => Object.assign({}, b)) : [],
+               hinweis: '', pruef: false, vor: JSON.stringify(v || []) };
+  }));
+
+  // ══════════════════════════════════════════════════
+  //  Parser der Papier-Schreibweise (F5)
+  // ══════════════════════════════════════════════════
+
+  const EINHEIT = {
+    kg: 'kg', g: 'g', gr: 'g', gramm: 'g',
+    st: 'St', stk: 'St', stck: 'St', 'stück': 'St', stueck: 'St',
+    cm: 'cm', schale: 'Schale', schalen: 'Schale', beutel: 'Beutel'
+  };
+  const GROESSE = { klein: 'klein', kleine: 'klein', mittel: 'mittel',
+                    'groß': 'groß', 'große': 'groß', gross: 'groß' };
+
+  function parse(text) {
+    const bloecke = [], rest = [];
+    // Trenner: was auf dem Zettel zwischen zwei Portionen stehen kann.
+    // „/" nur mit Leerzeichen drumherum, sonst würde „1/2" zerrissen.
+    (text || '').split(/\s*(?:\+|\||\*|&|;|,|\bund\b|\s\/\s)\s*/i).forEach(teil => {
+      teil = (teil || '').trim();
+      if (!teil) return;
+      const b = block(teil, rest);
+      if (b) bloecke.push(b);
+    });
+    return { bloecke: bloecke, hinweis: rest.join(' ').trim() };
+  }
+
+  function block(text, rest) {
+    let s = text.trim(), anzahl = 1, vak = false;
+
+    // Führende Sternchen, Striche und Punkte sind Notizzeichen, keine Menge.
+    s = s.replace(/^[*\-–—.:•]+\s*/, '').trim();
+
+    // Vakuum-Kennzeichen an beliebiger Stelle
+    s = s.replace(/(^|\s)(v|vak|vakuum|✓)(\s|$)/i, (_m, a, _b, c) => {
+      vak = true; return (a || '') + (c || ' ');
+    }).trim();
+
+    // "2x " am Anfang
+    const mx = s.match(/^(\d+)\s*[x×]\s*/i);
+    if (mx) { anzahl = parseInt(mx[1], 10) || 1; s = s.slice(mx[0].length).trim(); }
+
+    // Größenwort statt Zahl
+    const wort = GROESSE[s.toLowerCase()];
+    if (wort) return fertig(anzahl, null, wort, vak);
+
+    // gemischter Bruch, Bruch, Dezimalzahl
+    let menge = null, warBruch = false;
+    let m = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)/);
+    if (m) { menge = +m[1] + (+m[2] / +m[3]); warBruch = true; s = s.slice(m[0].length).trim(); }
+    if (menge === null) {
+      m = s.match(/^(\d+)\s*\/\s*(\d+)/);
+      if (m) { menge = +m[1] / +m[2]; warBruch = true; s = s.slice(m[0].length).trim(); }
+    }
+    if (menge === null) {
+      m = s.match(/^(\d+(?:[.,]\d+)?)/);
+      if (m) {
+        menge = parseFloat(m[1].replace(',', '.'));
+        warBruch = /[.,]/.test(m[1]);
+        s = s.slice(m[0].length).trim();
+      }
+    }
+
+    // Einheit
+    let einheit = null;
+    m = s.match(/^([a-zäöüß]+)/i);
+    if (m) {
+      const e = EINHEIT[m[1].toLowerCase()];
+      if (e) { einheit = e; s = s.slice(m[0].length).trim(); }
+      else {
+        const w = GROESSE[m[1].toLowerCase()];
+        if (w) { einheit = w; menge = null; s = s.slice(m[0].length).trim(); }
+      }
+    }
+
+    if (menge === null && einheit === null) {
+      if (!mx) { if (text.trim()) rest.push(text.trim()); return null; }
+      if (s) rest.push(s);
+      return fertig(anzahl, 1, 'St', vak);     // "2x" allein
+    }
+    if (s) rest.push(s);                       // nichts wird verworfen
+    if (!einheit) einheit = warBruch ? 'kg' : 'St';
+    return fertig(anzahl, menge, einheit, vak);
+  }
+
+  function fertig(a, m, e, v) {
+    return { a: Math.max(1, a), m: m, e: e, v: v === true };
+  }
+
+  // ══════════════════════════════════════════════════
+  //  Darstellung
+  // ══════════════════════════════════════════════════
+
+  // ── Einheiten und Schnellwahl-Kacheln ──
+  // „klein/mittel/groß" ist eine Portionsgröße wie „2x klein Schweinebauch" —
+  // sie hat mit dem Vakuumieren nichts zu tun und steht deshalb gleichrangig
+  // neben kg und Stück.
+  const EINHEITEN = [['kg', 'kg'], ['g', 'g'], ['St', 'Stück'], ['cm', 'cm'],
+                     ['groesse', 'Größe'], ['Schale', 'Schale'], ['Beutel', 'Beutel']];
+  const GROESSEN = ['klein', 'mittel', 'groß'];
+  const KACHELN = {
+    kg: [[.25, '¼'], [.5, '½'], [.75, '¾'], [1, '1'], [1.5, '1½'], [2, '2'], [3, '3'], [5, '5']],
+    g: [[100, '100'], [125, '125'], [200, '200'], [250, '250'], [500, '500'], [750, '750']],
+    St: [[2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8'], [10, '10'], [12, '12'], [30, '30']],
+    cm: [[10, '10'], [20, '20'], [30, '30'], [50, '50'], [65, '65']],
+    Schale: [[1, '1'], [2, '2'], [5, '5'], [10, '10'], [20, '20']],
+    Beutel: [[1, '1'], [2, '2'], [5, '5'], [10, '10']],
+    groesse: GROESSEN.map(g => [g, g]),
+  };
+
+  function istGroesse(e) { return GROESSEN.indexOf(e) >= 0; }
+
+  // Der Umschalter „Größe" deckt alle drei Größenwörter ab.
+  function istEinheit(aktuell, knopf) {
+    return knopf === 'groesse' ? istGroesse(aktuell) : aktuell === knopf;
+  }
+
+  function kacheln(e) { return KACHELN[istGroesse(e) ? 'groesse' : e] || []; }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function zahl(n) {
+    if (n === null || n === undefined) return '';
+    if (n === .25) return '¼'; if (n === .5) return '½'; if (n === .75) return '¾';
+    if (n === 1.5) return '1½';
+    return String(n).replace('.', ',');
+  }
+
+  function blockText(b) {
+    const kern = b.m === null ? b.e : zahl(b.m) + ' ' + b.e;
+    return b.a + ' × ' + kern;
+  }
+
+  function posText(p) {
+    const t = p.bloecke.map(blockText).join(' + ');
+    return p.hinweis ? (t ? t + ' — ' + p.hinweis : p.hinweis) : t;
+  }
+
+  function bestellt(p) { return p.bloecke.length > 0 || !!p.hinweis; }
+
+  function geaendert(name) {
+    const p = pos[name];
+    return JSON.stringify(p.bloecke.map(b => ({ a: b.a, m: b.m, e: b.e, v: b.v })))
+      !== (p.vor || '[]') || !!p.hinweis;
+  }
+
+  function tage() {
+    const namen = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const heute = new Date(2026, 7, 27);   // Do 27.08.2026
+    let h = '';
+    for (let i = 0; i < 8; i++) {
+      const d = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate() + i);
+      const wd = d.getDay();
+      const bestelltag = wd === 1 || wd === 4;
+      const cls = i === 0 ? 'day sent' : (bestelltag && i === 4) ? 'day on'
+        : bestelltag ? 'day' : 'day off';
+      h += '<div class="' + cls + '">' + namen[wd]
+        + '<span class="d2">' + d.getDate() + '.' + (d.getMonth() + 1) + '.</span></div>';
+    }
+    return h;
+  }
+
+  function passt(name, nr) {
+    const p = pos[name];
+    if (nurBestellte && !bestellt(p)) return false;
+    if (!suche) return true;
+    const s = suche.toLowerCase();
+    return name.toLowerCase().includes(s) || String(nr || '').includes(s);
+  }
+
+  function render() {
+    document.getElementById('days').innerHTML = tage();
+    document.getElementById('jump').innerHTML = KATALOG.map((g, i) =>
+      '<button onclick="M.spring(' + i + ')">' + esc(g.g) + '</button>').join('');
+
+    let h = '', treffer = 0;
+    KATALOG.forEach((g, gi) => {
+      const zeilen = g.a.filter(([n, nr]) => passt(n, nr));
+      if (!zeilen.length) return;
+      treffer += zeilen.length;
+      h += '<div class="grp" id="g' + gi + '">' + esc(g.g) + '</div>';
+      zeilen.forEach(([n, nr]) => { h += zeile(n, nr); });
+    });
+    document.getElementById('liste').innerHTML = h ||
+      '<div class="empty">Dazu findet sich kein Artikel. Andere Schreibweise probieren?</div>';
+    fuss();
+  }
+
+  function zeile(name, nr) {
+    const p = pos[name];
+    const chg = geaendert(name);
+    let cls = 'row';
+    if (bestellt(p)) cls += ' has';
+    if (chg && !p.pruef) cls += ' chg';
+    if (p.pruef) cls += ' pruef';
+
+    let h = '<div class="' + cls + (offen === name ? ' offen' : '') + '">';
+    h += '<div class="nrcol' + (nr ? '' : ' leer') + '">' + (nr || '–') + '</div>';
+    h += '<div class="zeile"><div class="nm">' + esc(name);
+    if (!chg && bestellt(p)) h += '<span class="tag vor">vorbelegt</span>';
+    if (chg && !p.pruef) h += '<span class="tag chg">geändert</span>';
+    if (p.pruef) h += '<span class="tag pruef">bitte prüfen</span>';
+    h += '</div>';
+
+    h += '<div class="chips">';
+    p.bloecke.forEach((b, i) => {
+      h += '<span class="chip">'
+        + '<button class="lab" title="Portion ändern" onclick="M.edit(\''
+        + esc(name) + '\',' + i + ')">' + esc(blockText(b))
+        + (b.v ? '<span class=\"vak\">vak</span>' : '')
+        + '</button>'
+        + '<button class="x" title="Portion entfernen" onclick="M.weg(\''
+        + esc(name) + '\',' + i + ')">✕</button></span>';
+    });
+    if (p.hinweis) {
+      h += '<span class="chip hw">'
+        + '<button class="lab" title="' + esc(p.hinweis) + ' — ändern" onclick="M.editHinweis(\''
+        + esc(name) + '\')">' + esc(p.hinweis) + '</button>'
+        + '<button class="x" title="Hinweis entfernen" onclick="M.hinweisWeg(\''
+        + esc(name) + '\')">✕</button></span>';
+    }
+    h += '<button class="add" title="Portion hinzufügen" onclick="M.edit(\''
+      + esc(name) + '\',-1)">+</button></div></div>';
+
+    if (offen === name) h += editor(name);
+    return h + '</div>';
+  }
+
+  function editor(name) {
+    const b = entwurf, p = pos[name];
+    let h = '<div class="ed"><div class="edgrid">';
+
+    const vs = vorschlaege(name);
+    if (vs.length) {
+      h += '<div class="g g-vor"><div class="lbl">Häufig bei „' + esc(name)
+        + '" — mehrere möglich, nochmal tippen wählt ab</div><div class="sugg">';
+      vs.forEach((v, i) => {
+        const aktiv = drin(p, v);
+        const herkunft = (v.quelle === 'bestellung'
+          ? v.belege + '× so bestellt'
+          : 'aus ' + v.belege + ' Lieferung' + (v.belege > 1 ? 'en' : ''))
+          + (aktiv ? ' — ist enthalten, Tippen entfernt' : '');
+        h += '<button class="' + v.quelle + (aktiv ? ' on' : '') + '" title="' + herkunft
+          + '" onclick="M.nimm(\'' + esc(name) + '\',' + i + ')">'
+          + (aktiv ? '<span class="hak">✓</span>' : '')
+          + esc(v.bloecke.map(blockText).join(' + '))
+          + (v.bloecke.some(x => x.v) ? '<span class="vak">vak</span>' : '')
+          + '</button>';
+      });
+      h += '</div></div>';
+    }
+
+    h += '<div class="g g-kurz"><div class="lbl">Kurzeingabe wie auf dem Zettel</div>'
+      + '<div class="inner">'
+      + '<input class="txt kurz" id="pf" placeholder="z. B. 2x500g V + 6x250g"'
+      + ' oninput="M.vorschau(this.value)"'
+      + ' onkeydown="if(event.key===\'Enter\')M.kurz(\'' + esc(name) + '\')">'
+      + '<button class="take" onclick="M.kurz(\'' + esc(name) + '\')">Übernehmen</button>'
+      + '<span class="prev" id="prev"></span></div></div>';
+
+    // ── Portionspad: Anzahl + Einheit + Vakuum gelten für die Schnellwahl ──
+    const aendern = b.i >= 0;
+    h += '<div class="g g-pad' + (aendern ? ' aendern' : '') + '"><div class="lbl">'
+      + (aendern ? 'Portion ' + (b.i + 1) + ' ändern'
+                 : 'Portion hinzufügen — Kachel tippen genügt')
+      + '</div><div class="inner">';
+    h += '<div class="step"><button onclick="M.anz(-1)">−</button>'
+      + '<input id="f-a" type="number" min="1" value="' + b.a
+      + '" oninput="M.feld(\'a\',this.value)">'
+      + '<button onclick="M.anz(1)">+</button></div>';
+    h += '<span class="mal">×</span>';
+    h += '<div class="einh">';
+    EINHEITEN.forEach(([e, t]) => {
+      h += '<button class="' + (istEinheit(b.e, e) ? 'on' : '') + '"'
+        + ' onclick="M.einheit(\'' + e + '\')">' + t + '</button>';
+    });
+    h += '</div>';
+    h += '<button class="vakbtn' + (b.v ? ' on' : '') + '" id="vakbtn"'
+      + ' onclick="M.vakAn()"><span class="box">✓</span>vakuumieren</button>';
+    h += '</div>';
+
+    h += '<div class="quick">';
+    kacheln(b.e).forEach(([wert, text]) => {
+      const aktiv = aendern && (b.m === wert || (b.m === null && b.e === wert));
+      h += '<button class="' + (aktiv ? 'on' : '') + '" onclick="M.kachel('
+        + (typeof wert === 'number' ? wert : '\'' + wert + '\'') + ')">' + text + '</button>';
+    });
+    h += '<input class="mg" id="f-m" type="text" placeholder="frei" value="'
+      + (b.m === null ? '' : zahl(b.m)) + '" oninput="M.feld(\'m\',this.value)"'
+      + ' onkeydown="if(event.key===\'Enter\')M.pad(\'' + esc(name) + '\')" title="freie Menge">';
+    h += '<button class="ok pad" onclick="M.pad(\'' + esc(name) + '\')">'
+      + (aendern ? 'Ändern' : '+ Hinzufügen') + '</button>';
+    if (aendern) {
+      h += '<button class="del" onclick="M.loeschen(\'' + esc(name) + '\')">Löschen</button>';
+    }
+    h += '</div></div>';
+
+    h += '<div class="g g-hinweis"><div class="lbl">Hinweis</div><div class="inner">'
+      + '<input class="txt" id="f-h" placeholder="z. B. Kräuter" value="' + esc(p.hinweis)
+      + '" oninput="M.hinweis(\'' + esc(name) + '\',this.value)"></div></div>';
+
+    h += '</div><div class="acts">'
+      + '<button class="ok" onclick="M.zu()">Fertig</button>'
+      + (p.bloecke.length ? '<button class="del" onclick="M.allesWeg(\''
+          + esc(name) + '\')">Alle Portionen löschen</button>' : '')
+      + '<span class="hint2">Mehrere Größen: einfach nacheinander tippen</span>'
+      + '</div>';
+
+    return h + '</div>';
+  }
+
+  function summe() {
+    let n = 0, kg = 0, st = 0, wert = 0, offenePos = 0, vak = 0;
+    KATALOG.forEach(g => g.a.forEach(([name, , preis]) => {
+      const p = pos[name];
+      if (!bestellt(p)) return;
+      n++;
+      let bewertbar = false;
+      p.bloecke.forEach(b => {
+        if (b.v) vak += b.a;
+        if (b.e === 'kg' || b.e === 'g') {
+          const g2 = b.a * b.m * (b.e === 'g' ? .001 : 1);
+          kg += g2;
+          if (preis) { wert += g2 * preis; bewertbar = true; }
+        } else if (b.e === 'St') { st += b.a * b.m; }
+      });
+      if (!bewertbar) offenePos++;
+    }));
+    return { n: n, kg: kg, st: st, vak: vak, wert: wert, offen: offenePos };
+  }
+
+  function fuss() {
+    const s = summe();
+    let h = '<span class="st"><b>' + s.n + '</b> Positionen</span>'
+      + '<span class="st"><b>' + s.kg.toFixed(1).replace('.', ',') + '</b> kg</span>'
+      + '<span class="st"><b>' + s.st + '</b> Stück</span>'
+      + '<span class="st"><b>' + s.vak + '</b> vakuumiert</span>';
+    if (s.wert > 0) {
+      h += '<span class="st">geschätzt mindestens <b>'
+        + s.wert.toFixed(2).replace('.', ',') + ' €</b>'
+        + (s.offen ? ' <span style="color:var(--orange)">(' + s.offen
+          + ' Position' + (s.offen > 1 ? 'en' : '') + ' nicht bewertbar)</span>' : '') + '</span>';
+    } else if (s.n) {
+      h += '<span class="st" style="color:var(--orange)">Wert nicht schätzbar — '
+        + 'Stück- und Größenangaben lassen sich ohne Kilopreis nicht rechnen</span>';
+    }
+    h += '<button class="send" onclick="M.senden()">Bestellung senden</button>';
+    document.getElementById('foot').innerHTML = h;
+  }
+
+  // ══════════════════════════════════════════════════
+  //  Bedienung
+  // ══════════════════════════════════════════════════
+
+  function edit(name, i) {
+    offen = name;
+    const p = pos[name];
+    entwurf = i >= 0 ? Object.assign({ i: i }, p.bloecke[i])
+                     : { i: -1, a: 1, m: null, e: 'kg', v: false };
+    render();
+    sichtbar();
+  }
+
+  // Der Editor darf weder hinter dem festen Kopf noch hinter der Fußleiste
+  // liegen - sonst tippt die Verkäuferin ins Verdeckte (F17). Passt er nicht
+  // ganz in den freien Bereich, wird die Oberkante angelegt: Vorschläge und
+  // Kurzeingabe stehen oben und sind das, was zuerst gebraucht wird.
+  function sichtbar() {
+    const ed = document.querySelector('.ed');
+    if (!ed) return;
+    const kopf = document.querySelector('.head');
+    const fuss = document.querySelector('.foot');
+    const oben = getComputedStyle(kopf).position === 'sticky'
+      ? kopf.getBoundingClientRect().height : 0;
+    const unten = window.innerHeight - fuss.getBoundingClientRect().height;
+    const b = ed.getBoundingClientRect();
+    let d = 0;
+    if (b.height > unten - oben || b.top < oben) d = b.top - oben - 8;
+    else if (b.bottom > unten) d = b.bottom - unten + 8;
+    if (d) window.scrollTo(0, Math.max(0, window.scrollY + d));
+  }
+
+  function feld(k, v) {
+    if (k === 'a') entwurf.a = Math.max(1, parseInt(v, 10) || 1);
+    else if (k === 'm') {
+      const n = parseFloat(String(v).replace(',', '.'));
+      entwurf.m = (isFinite(n) && n > 0) ? n : null;
+    } else entwurf.e = v;
+  }
+
+  function anz(d) {
+    entwurf.a = Math.max(1, entwurf.a + d);
+    const el = document.getElementById('f-a');
+    if (el) el.value = entwurf.a;
+  }
+
+  // Einheit umschalten. „Größe" ist eine Portionsgröße (klein/mittel/groß) und
+  // hat keine Zahl - deshalb wird die Menge dabei geleert.
+  function einheit(e) {
+    if (e === 'groesse') { entwurf.e = 'klein'; entwurf.m = null; }
+    else { if (istGroesse(entwurf.e)) entwurf.m = null; entwurf.e = e; }
+    padNeu();
+  }
+
+  // Kachel tippen: im Hinzufügen-Modus entsteht sofort eine Portion, damit
+  // mehrere verschiedene Größen einfach nacheinander getippt werden können.
+  function kachel(wert) {
+    if (typeof wert === 'string') { entwurf.e = wert; entwurf.m = null; }
+    else entwurf.m = wert;
+    if (entwurf.i >= 0) padNeu();          // Ändern-Modus: nur übernehmen
+    else pad(offen);                        // Hinzufügen-Modus: sofort anlegen
+  }
+
+  function vakAn() {
+    entwurf.v = !entwurf.v;
+    const el = document.getElementById('vakbtn');
+    if (el) el.className = 'vakbtn' + (entwurf.v ? ' on' : '');
+  }
+
+  // Nur das Portionspad neu zeichnen, damit Kurzeingabe und Fokus bleiben.
+  function padNeu() {
+    const alt = document.querySelector('.g-pad');
+    if (!alt || !offen) { render(); return; }
+    const h = document.createElement('div');
+    h.innerHTML = editor(offen);
+    const neu = h.querySelector('.g-pad');
+    if (neu) alt.replaceWith(neu); else render();
+  }
+
+  // Übernimmt den Pad-Inhalt: neue Portion anlegen oder die offene ändern.
+  function pad(name) {
+    const p = pos[name];
+    if (entwurf.m === null && !istGroesse(entwurf.e)) {
+      toast('Bitte eine Menge tippen oder eine Kachel wählen.');
+      return;
+    }
+    const b = { a: entwurf.a, m: istGroesse(entwurf.e) ? null : entwurf.m,
+                e: entwurf.e, v: entwurf.v };
+    if (entwurf.i >= 0) {
+      p.bloecke[entwurf.i] = b;
+      entwurf = { i: -1, a: entwurf.a, m: null, e: entwurf.e, v: entwurf.v };
+    } else {
+      p.bloecke.push(b);
+      entwurf.m = null;                    // bereit für die nächste Größe
+    }
+    p.pruef = false;
+    render();
+    sichtbar();
+  }
+
+  function allesWeg(name) {
+    pos[name].bloecke = [];
+    pos[name].pruef = false;
+    entwurf = { i: -1, a: 1, m: null, e: entwurf.e, v: false };
+    render();
+  }
+
+  function vorschau(text) {
+    const r = parse(text);
+    const el = document.getElementById('prev');
+    if (!el) return;
+    if (!r.bloecke.length && !r.hinweis) { el.textContent = ''; el.className = 'prev'; return; }
+    let t = r.bloecke.map(b =>
+      blockText(b) + (b.v ? ' (vakuumiert)' : '')).join('  +  ');
+    if (r.hinweis) t += (t ? '  ·  ' : '') + 'Hinweis: ' + r.hinweis;
+    el.textContent = '→ ' + t;
+    el.className = r.bloecke.length ? 'prev' : 'prev bad';
+  }
+
+  function kurz(name) {
+    const el = document.getElementById('pf');
+    if (!el || !el.value.trim()) return;
+    const r = parse(el.value);
+    const p = pos[name];
+    p.bloecke = r.bloecke;
+    p.hinweis = r.hinweis;
+    p.pruef = !r.bloecke.length && !!r.hinweis;
+    offen = null; entwurf = null;
+    render();
+  }
+
+  function nimm(name, i) {
+    const v = vorschlaege(name)[i];
+    if (!v) return;
+    const p = pos[name];
+    // Mehrfachauswahl: Ein Vorschlag wird zugeschaltet, ein bereits enthaltener
+    // wieder abgewählt. So lassen sich mehrere Vorschläge kombinieren, statt
+    // dass jeder Tipp die bisherigen Portionen ersetzt.
+    if (v.bloecke.every(b => findeBlock(p, b) >= 0)) {
+      v.bloecke.forEach(b => {
+        const k = findeBlock(p, b);
+        if (k >= 0) p.bloecke.splice(k, 1);
+      });
+    } else {
+      v.bloecke.forEach(b => {
+        if (findeBlock(p, b) < 0) p.bloecke.push(Object.assign({}, b));
+      });
+    }
+    p.pruef = false;
+    render();
+    sichtbar();
+  }
+
+  function gleich(x, y) {
+    return x.a === y.a && x.m === y.m && x.e === y.e && !!x.v === !!y.v;
+  }
+
+  function findeBlock(p, b) {
+    return p.bloecke.findIndex(z => gleich(z, b));
+  }
+
+  function drin(p, v) {
+    return v.bloecke.length > 0 && v.bloecke.every(b => findeBlock(p, b) >= 0);
+  }
+
+  function loeschen(name) {
+    const p = pos[name];
+    if (entwurf.i >= 0) p.bloecke.splice(entwurf.i, 1);
+    entwurf = { i: -1, a: 1, m: null, e: entwurf.e, v: false };
+    render();
+    sichtbar();
+  }
+
+  function hinweis(name, v) { pos[name].hinweis = v; }
+
+  // Direkt in der Zeile entfernen, ohne den Editor zu öffnen.
+  function weg(name, i) {
+    pos[name].bloecke.splice(i, 1);
+    if (offen === name) { offen = null; entwurf = null; }
+    render();
+  }
+
+  function hinweisWeg(name) {
+    const p = pos[name];
+    p.hinweis = '';
+    p.pruef = false;
+    if (offen === name) { offen = null; entwurf = null; }
+    render();
+  }
+
+  function editHinweis(name) {
+    edit(name, -1);
+    const el = document.getElementById('f-h');
+    if (el) { el.focus(); el.select(); }
+  }
+
+  function zu() { offen = null; entwurf = null; render(); }
+  function such(v) { suche = v; render(); }
+
+  function filter(m) {
+    nurBestellte = m === 'best';
+    document.getElementById('t-alle').className = nurBestellte ? '' : 'on';
+    document.getElementById('t-best').className = nurBestellte ? 'on' : '';
+    render();
+  }
+
+  function spring(i) {
+    const el = document.getElementById('g' + i);
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+
+  function toast(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    d.style.cssText = 'position:fixed;left:50%;top:24px;transform:translateX(-50%);'
+      + 'background:#1f2937;color:#fff;padding:10px 18px;border-radius:10px;'
+      + 'font-size:13px;font-weight:700;z-index:99;box-shadow:0 4px 16px rgba(0,0,0,.25)';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 2600);
+  }
+
+  function senden() {
+    const s = summe();
+    if (!s.n) { toast('Es ist noch nichts bestellt.'); return; }
+    let t = 'Bestellung für Montag, 31.08.2026 — Kd.-Nr. 1041\n\n';
+    KATALOG.forEach(g => g.a.forEach(([name]) => {
+      const p = pos[name];
+      if (bestellt(p)) t += name + ' — ' + posText(p) + '\n';
+    }));
+    t += '\nDavon vakuumiert: ' + s.vak + ' Portionen\n';
+    t += '\n(Mockup — es wird nichts versendet. Im Kiosk folgt hier die Vorschau'
+      + ' mit Empfänger, Betreff und PDF-Anhang.)';
+    const w = window.open('', '_blank', 'width=640,height=760');
+    w.document.write('<pre style="font:13px/1.6 ui-monospace,Consolas,monospace;'
+      + 'padding:20px;white-space:pre-wrap">'
+      + t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+      + '</pre>');
+    w.document.title = 'Vorschau Mailtext';
+
+    // Adaptiv: Die gesendete Bestellung fließt in die Vorschläge ein und
+    // verdrängt bei Bedarf einen selteneren Eintrag.
+    let gelernt = 0;
+    KATALOG.forEach(g => g.a.forEach(([name]) => {
+      const p = pos[name];
+      if (p.bloecke.length) { lerne(name, p.bloecke, 'bestellung'); gelernt++; }
+    }));
+    toast('Bestellung gesendet — ' + gelernt + ' Positionen für künftige Vorschläge gemerkt.');
+    render();
+  }
+
+  vorschlaegeLaden();
+  render();
+
+  return { edit: edit, feld: feld, anz: anz, kachel: kachel, einheit: einheit,
+           pad: pad, allesWeg: allesWeg, vakAn: vakAn,
+           vorschau: vorschau, kurz: kurz, nimm: nimm, loeschen: loeschen,
+           weg: weg, hinweisWeg: hinweisWeg, editHinweis: editHinweis,
+           hinweis: hinweis, zu: zu, such: such, filter: filter,
+           spring: spring, senden: senden };
+})();
+</script>
+</body>
+</html>

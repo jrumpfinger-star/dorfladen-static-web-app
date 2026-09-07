@@ -1,0 +1,706 @@
+{
+  "artikel": [
+    {
+      "nummer": 2,
+      "name": "Schweinelende vom Strohschwein",
+      "preis": 11.05,
+      "einheit": "kg",
+      "lieferungen": 22,
+      "gewicht_summe": 60.422,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 3,
+      "name": "Schnitzel vom Strohschwein",
+      "preis": 10.7,
+      "einheit": "kg",
+      "lieferungen": 14,
+      "gewicht_summe": 47.01,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 12,
+      "name": "Wammerl o. Knochen vom Strohschwein",
+      "preis": 7.89,
+      "einheit": "kg",
+      "lieferungen": 9,
+      "gewicht_summe": 10.074,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 15,
+      "name": "Halsgrat o. Knochen vom Strohschwein",
+      "preis": 9.54,
+      "einheit": "kg",
+      "lieferungen": 22,
+      "gewicht_summe": 49.201,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 70,
+      "name": "Wammerl hellgeräuchert am Stück",
+      "preis": 11.1,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 5.674,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 109,
+      "name": "Braten vom Strohrind",
+      "preis": 18.5,
+      "einheit": "kg",
+      "lieferungen": 13,
+      "gewicht_summe": 8.256,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 121,
+      "name": "Rouladen vom Strohrind",
+      "preis": 18.8,
+      "einheit": "kg",
+      "lieferungen": 13,
+      "gewicht_summe": 5.652,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 142,
+      "name": "Hackfleisch gemischt von Strohrind und -Schwein",
+      "preis": 10.3,
+      "einheit": "kg",
+      "lieferungen": 22,
+      "gewicht_summe": 94.457,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 144,
+      "name": "Bolognese hausgemacht",
+      "preis": 9.8,
+      "einheit": "kg",
+      "lieferungen": 8,
+      "gewicht_summe": 8.042,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 358,
+      "name": "Putensteak mariniert",
+      "preis": 17.5,
+      "einheit": "kg",
+      "lieferungen": 1,
+      "gewicht_summe": 0.11,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 360,
+      "name": "Putenschnitzel",
+      "preis": 17.5,
+      "einheit": "kg",
+      "lieferungen": 21,
+      "gewicht_summe": 25.648,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 367,
+      "name": "Hähnchenbrüste",
+      "preis": 12.5,
+      "einheit": "kg",
+      "lieferungen": 17,
+      "gewicht_summe": 21.038,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 373,
+      "name": "Putenbrustschinken hausgemacht",
+      "preis": 17.5,
+      "einheit": "kg",
+      "lieferungen": 10,
+      "gewicht_summe": 10.96,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 402,
+      "name": "Leberkäsbrät",
+      "preis": 7.65,
+      "einheit": "kg",
+      "lieferungen": 23,
+      "gewicht_summe": 71.702,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 407,
+      "name": "Milzwurst",
+      "preis": 8.0,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 8.662,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 410,
+      "name": "Halsgrat mariniert vom Strohschwein",
+      "preis": 10.4,
+      "einheit": "kg",
+      "lieferungen": 2,
+      "gewicht_summe": 3.978,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 431,
+      "name": "Griebenschmalz",
+      "preis": 11.75,
+      "einheit": "kg",
+      "lieferungen": 1,
+      "gewicht_summe": 0.262,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 500,
+      "name": "Hinterschinken",
+      "preis": 11.99,
+      "einheit": "kg",
+      "lieferungen": 17,
+      "gewicht_summe": 57.386,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 501,
+      "name": "gebratener Schinken",
+      "preis": 12.6,
+      "einheit": "kg",
+      "lieferungen": 9,
+      "gewicht_summe": 9.94,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 505,
+      "name": "Bauerngeräuchertes im Stück",
+      "preis": 14.8,
+      "einheit": "kg",
+      "lieferungen": 12,
+      "gewicht_summe": 13.15,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 518,
+      "name": "Gewürzwammerl",
+      "preis": 9.7,
+      "einheit": "kg",
+      "lieferungen": 10,
+      "gewicht_summe": 8.212,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 521,
+      "name": "Südtiroler Speck aufgeschnitten",
+      "preis": 19.2,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 11.394,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 522,
+      "name": "Südtiroler Speck am Stück",
+      "preis": 18.7,
+      "einheit": "kg",
+      "lieferungen": 2,
+      "gewicht_summe": 3.547,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 532,
+      "name": "Gewürzlende",
+      "preis": 11.5,
+      "einheit": "kg",
+      "lieferungen": 12,
+      "gewicht_summe": 10.82,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 537,
+      "name": "Farmerschinken",
+      "preis": 15.35,
+      "einheit": "kg",
+      "lieferungen": 11,
+      "gewicht_summe": 26.856,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 552,
+      "name": "Zwiebelsalami",
+      "preis": 22.8,
+      "einheit": "kg",
+      "lieferungen": 2,
+      "gewicht_summe": 1.816,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 556,
+      "name": "Paprikasalami hausgemacht",
+      "preis": 13.1,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 5.728,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 557,
+      "name": "Hausmachersalami 1a",
+      "preis": 16.9,
+      "einheit": "kg",
+      "lieferungen": 14,
+      "gewicht_summe": 24.456,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 560,
+      "name": "Salami Italia hausgemacht",
+      "preis": 17.2,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 10.366,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 564,
+      "name": "Pfeffersalami",
+      "preis": 19.88,
+      "einheit": "kg",
+      "lieferungen": 5,
+      "gewicht_summe": 7.254,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 565,
+      "name": "Sportsalami",
+      "preis": 16.0,
+      "einheit": "kg",
+      "lieferungen": 11,
+      "gewicht_summe": 26.972,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 574,
+      "name": "Rindersalami hausgemacht 100% Rind",
+      "preis": 17.6,
+      "einheit": "kg",
+      "lieferungen": 4,
+      "gewicht_summe": 4.03,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 576,
+      "name": "Käsesalami",
+      "preis": 22.8,
+      "einheit": "kg",
+      "lieferungen": 3,
+      "gewicht_summe": 3.11,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 583,
+      "name": "Salsiccia Calabra",
+      "preis": 23.4,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 6.156,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 585,
+      "name": "Debrecziner",
+      "preis": 10.7,
+      "einheit": "kg",
+      "lieferungen": 16,
+      "gewicht_summe": 14.668,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 586,
+      "name": "Rohpolnische",
+      "preis": 12.75,
+      "einheit": "kg",
+      "lieferungen": 8,
+      "gewicht_summe": 5.914,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 588,
+      "name": "Landjäger",
+      "preis": 18.5,
+      "einheit": "kg",
+      "lieferungen": 7,
+      "gewicht_summe": 7.534,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 592,
+      "name": "Rauchsalami Niederbayrisch",
+      "preis": 21.98,
+      "einheit": "kg",
+      "lieferungen": 3,
+      "gewicht_summe": 3.13,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 600,
+      "name": "Weißwurst",
+      "preis": 8.7,
+      "einheit": "kg",
+      "lieferungen": 14,
+      "gewicht_summe": 37.902,
+      "stueck_summe": 13.7
+    },
+    {
+      "nummer": 602,
+      "name": "Wollwürste",
+      "preis": 7.6,
+      "einheit": "kg",
+      "lieferungen": 11,
+      "gewicht_summe": 4.89,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 603,
+      "name": "Bratwürste",
+      "preis": 9.15,
+      "einheit": "kg",
+      "lieferungen": 12,
+      "gewicht_summe": 5.343,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 605,
+      "name": "Schweinswürstl",
+      "preis": 9.55,
+      "einheit": "kg",
+      "lieferungen": 12,
+      "gewicht_summe": 6.551,
+      "stueck_summe": 23.9
+    },
+    {
+      "nummer": 613,
+      "name": "Currywurst",
+      "preis": 8.9,
+      "einheit": "kg",
+      "lieferungen": 15,
+      "gewicht_summe": 17.554,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 615,
+      "name": "Lyoner im Ring",
+      "preis": 8.7,
+      "einheit": "kg",
+      "lieferungen": 13,
+      "gewicht_summe": 12.172,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 616,
+      "name": "Dicke",
+      "preis": 8.7,
+      "einheit": "kg",
+      "lieferungen": 18,
+      "gewicht_summe": 20.156,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 617,
+      "name": "Regensburger",
+      "preis": 9.25,
+      "einheit": "kg",
+      "lieferungen": 17,
+      "gewicht_summe": 22.302,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 620,
+      "name": "Wiener",
+      "preis": 10.5,
+      "einheit": "kg",
+      "lieferungen": 24,
+      "gewicht_summe": 58.926,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 628,
+      "name": "Käseknacker",
+      "preis": 10.99,
+      "einheit": "kg",
+      "lieferungen": 20,
+      "gewicht_summe": 27.352,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 629,
+      "name": "Käseknacker klein",
+      "preis": 11.69,
+      "einheit": "kg",
+      "lieferungen": 3,
+      "gewicht_summe": 12.815,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 640,
+      "name": "Leberkäse kalt",
+      "preis": 8.2,
+      "einheit": "kg",
+      "lieferungen": 23,
+      "gewicht_summe": 93.372,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 641,
+      "name": "Kalbskäs",
+      "preis": 7.79,
+      "einheit": "kg",
+      "lieferungen": 18,
+      "gewicht_summe": 33.986,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 658,
+      "name": "Fleischwurst",
+      "preis": 8.3,
+      "einheit": "kg",
+      "lieferungen": 13,
+      "gewicht_summe": 21.962,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 660,
+      "name": "Gelbwurst",
+      "preis": 8.35,
+      "einheit": "kg",
+      "lieferungen": 18,
+      "gewicht_summe": 14.932,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 661,
+      "name": "Gelbwurst m. Peters.",
+      "preis": 8.45,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 2.378,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 666,
+      "name": "Fleischwurst Lucky Luke",
+      "preis": 7.8,
+      "einheit": "kg",
+      "lieferungen": 1,
+      "gewicht_summe": 0.532,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 669,
+      "name": "Schweinebauch gefüllt",
+      "preis": 8.9,
+      "einheit": "kg",
+      "lieferungen": 5,
+      "gewicht_summe": 8.584,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 685,
+      "name": "Käsekrakauer",
+      "preis": 11.55,
+      "einheit": "kg",
+      "lieferungen": 5,
+      "gewicht_summe": 6.792,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 688,
+      "name": "Chili-Cheese-Griller",
+      "preis": 12.8,
+      "einheit": "kg",
+      "lieferungen": 3,
+      "gewicht_summe": 0.772,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 694,
+      "name": "Kochsalami im Stück",
+      "preis": 11.4,
+      "einheit": "kg",
+      "lieferungen": 21,
+      "gewicht_summe": 30.44,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 717,
+      "name": "Delikatess-Leberwurst im Naturdarm",
+      "preis": 7.9,
+      "einheit": "kg",
+      "lieferungen": 4,
+      "gewicht_summe": 4.008,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 718,
+      "name": "Delikatess-Leberwurst gold",
+      "preis": 7.75,
+      "einheit": "kg",
+      "lieferungen": 15,
+      "gewicht_summe": 18.758,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 719,
+      "name": "Leberwurst grob",
+      "preis": 7.6,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 4.366,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 723,
+      "name": "Eierpastete",
+      "preis": 8.5,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 9.828,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 726,
+      "name": "Preßsack schwarz",
+      "preis": 7.99,
+      "einheit": "kg",
+      "lieferungen": 7,
+      "gewicht_summe": 4.21,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 727,
+      "name": "Bauernpreßsack",
+      "preis": 7.9,
+      "einheit": "kg",
+      "lieferungen": 13,
+      "gewicht_summe": 10.108,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 744,
+      "name": "Mettwurst fein",
+      "preis": 8.45,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 1.784,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 761,
+      "name": "Schinkenwurst",
+      "preis": 9.89,
+      "einheit": "kg",
+      "lieferungen": 25,
+      "gewicht_summe": 80.967,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 763,
+      "name": "Champignonschinkenwurst",
+      "preis": 10.4,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 7.922,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 764,
+      "name": "Paprikawurst",
+      "preis": 8.2,
+      "einheit": "kg",
+      "lieferungen": 14,
+      "gewicht_summe": 38.846,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 914,
+      "name": "Knoblauchstangerl",
+      "preis": 10.1,
+      "einheit": "kg",
+      "lieferungen": 10,
+      "gewicht_summe": 4.622,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 917,
+      "name": "Sauerkraut fertig gekocht",
+      "preis": 5.2,
+      "einheit": "kg",
+      "lieferungen": 6,
+      "gewicht_summe": 3.89,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 919,
+      "name": "Bratensoße",
+      "preis": 5.9,
+      "einheit": "kg",
+      "lieferungen": 7,
+      "gewicht_summe": 5.674,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 924,
+      "name": "Gulaschsuppe",
+      "preis": 8.6,
+      "einheit": "kg",
+      "lieferungen": 5,
+      "gewicht_summe": 3.206,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 980,
+      "name": "Vakuumverpackung klein",
+      "preis": 0.3,
+      "einheit": "St",
+      "lieferungen": 21,
+      "gewicht_summe": 0.0,
+      "stueck_summe": 124.0
+    },
+    {
+      "nummer": 981,
+      "name": "Vakuumverpackung mittel",
+      "preis": 0.45,
+      "einheit": "St",
+      "lieferungen": 22,
+      "gewicht_summe": 0.0,
+      "stueck_summe": 20.0
+    },
+    {
+      "nummer": 982,
+      "name": "Vakuumverpackung groß",
+      "preis": 0.65,
+      "einheit": "St",
+      "lieferungen": 20,
+      "gewicht_summe": 0.0,
+      "stueck_summe": 72.0
+    },
+    {
+      "nummer": 1008,
+      "name": "Sülzschalen 20",
+      "preis": 0.1,
+      "einheit": "kg",
+      "lieferungen": 1,
+      "gewicht_summe": 0.0,
+      "stueck_summe": 0.0
+    },
+    {
+      "nummer": 1029,
+      "name": "Marinade Gyros",
+      "preis": 14.8,
+      "einheit": "kg",
+      "lieferungen": 3,
+      "gewicht_summe": 4.021,
+      "stueck_summe": 0.0
+    }
+  ]
+}

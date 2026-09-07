@@ -1,0 +1,3418 @@
+// Erzeugt von tools/metzger_vorschlaege_build.py - nicht von Hand aendern.
+window.METZGER_VORSCHLAEGE = {
+ "stand": "27.08.2026",
+ "max": 5,
+ "artikel": {
+  "Lende Schwein": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.7477,
+    "belege": 7,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7113,
+    "belege": 3,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.658,
+    "belege": 2,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5133,
+    "belege": 3,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 5.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3534,
+    "belege": 1,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Wammerl o. Kno.": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5957,
+    "belege": 2,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5669,
+    "belege": 3,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4559,
+    "belege": 2,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4162,
+    "belege": 2,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Halsgrat o. Knochen": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 2.132,
+    "belege": 7,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9726,
+    "belege": 4,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6851,
+    "belege": 3,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5084,
+    "belege": 2,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4292,
+    "belege": 2,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Wammerl geräuchert": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6232,
+    "belege": 3,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5077,
+    "belege": 2,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2499,
+    "belege": 1,
+    "zuletzt": "20.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Putenschnitzel": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.9326,
+    "belege": 7,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.7405,
+    "belege": 7,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7619,
+    "belege": 2,
+    "zuletzt": "26.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3534,
+    "belege": 1,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2841,
+    "belege": 2,
+    "zuletzt": "02.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Hähnchenbrust": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.7854,
+    "belege": 6,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.6521,
+    "belege": 6,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9337,
+    "belege": 4,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2438,
+    "belege": 1,
+    "zuletzt": "18.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Braten Rind": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 2.6837,
+    "belege": 9,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6162,
+    "belege": 3,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.0841,
+    "belege": 1,
+    "zuletzt": "23.04.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Rouladen": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.8825,
+    "belege": 7,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.1993,
+    "belege": 4,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2991,
+    "belege": 2,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Hackfleisch gemischt": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.6949,
+    "belege": 7,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.298,
+    "belege": 5,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 4.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3854,
+    "belege": 1,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 9.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3364,
+    "belege": 1,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 9.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3241,
+    "belege": 1,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Leberkäse z. selberbacken": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.6277,
+    "belege": 7,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0856,
+    "belege": 4,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6944,
+    "belege": 3,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.664,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 4.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4619,
+    "belege": 2,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Milzwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6972,
+    "belege": 2,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6306,
+    "belege": 3,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1077,
+    "belege": 1,
+    "zuletzt": "13.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Putenschinken": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.2883,
+    "belege": 5,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6754,
+    "belege": 3,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4,
+    "belege": 1,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1051,
+    "belege": 1,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Hinterschinken": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.4727,
+    "belege": 5,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9689,
+    "belege": 3,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.712,
+    "belege": 3,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6978,
+    "belege": 3,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 5.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2725,
+    "belege": 1,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Gebratener Schinken": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.341,
+    "belege": 4,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9603,
+    "belege": 4,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3241,
+    "belege": 1,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Schwarzgeräuchertes Stück": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8574,
+    "belege": 3,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7478,
+    "belege": 3,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5566,
+    "belege": 2,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3241,
+    "belege": 1,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2978,
+    "belege": 2,
+    "zuletzt": "29.06.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Gewürzlende": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.3518,
+    "belege": 5,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.1492,
+    "belege": 4,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4049,
+    "belege": 2,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2378,
+    "belege": 1,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Gewürzwammerl": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0792,
+    "belege": 4,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7678,
+    "belege": 3,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2768,
+    "belege": 2,
+    "zuletzt": "29.06.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2378,
+    "belege": 1,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Farmerschinken": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9044,
+    "belege": 3,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8284,
+    "belege": 4,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6676,
+    "belege": 3,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2181,
+    "belege": 1,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Hausmachersalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 3.1972,
+    "belege": 12,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2725,
+    "belege": 1,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2292,
+    "belege": 1,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "hausgem. Salami ital. Art": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.4019,
+    "belege": 6,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Rindersalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3084,
+    "belege": 1,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2181,
+    "belege": 1,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1892,
+    "belege": 2,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Sportsalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.3724,
+    "belege": 6,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3534,
+    "belege": 1,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3022,
+    "belege": 2,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 5.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2972,
+    "belege": 1,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2725,
+    "belege": 1,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Debreziner": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.2311,
+    "belege": 4,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0132,
+    "belege": 4,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8243,
+    "belege": 4,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5697,
+    "belege": 2,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3668,
+    "belege": 1,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Polnische": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.9289,
+    "belege": 6,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2292,
+    "belege": 1,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2102,
+    "belege": 1,
+    "zuletzt": "06.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Landjäger": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.6343,
+    "belege": 6,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3668,
+    "belege": 1,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Weißwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.2967,
+    "belege": 5,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6752,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 4.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4,
+    "belege": 1,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3219,
+    "belege": 2,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2972,
+    "belege": 1,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Wollwürste": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 2.2165,
+    "belege": 8,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.585,
+    "belege": 3,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Schweinswürstl": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 2.1456,
+    "belege": 8,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4559,
+    "belege": 2,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2,
+    "belege": 1,
+    "zuletzt": "02.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Currywurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.5619,
+    "belege": 6,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6506,
+    "belege": 2,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5493,
+    "belege": 3,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3854,
+    "belege": 1,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Lyoner": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 2.7339,
+    "belege": 8,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9388,
+    "belege": 4,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1927,
+    "belege": 1,
+    "zuletzt": "29.06.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Dicke": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.5287,
+    "belege": 7,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9025,
+    "belege": 4,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5364,
+    "belege": 2,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5264,
+    "belege": 2,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3241,
+    "belege": 1,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Regensburger": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.3228,
+    "belege": 6,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.9145,
+    "belege": 4,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7347,
+    "belege": 3,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3854,
+    "belege": 1,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3241,
+    "belege": 1,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Wiener": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.1161,
+    "belege": 5,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0526,
+    "belege": 4,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0398,
+    "belege": 5,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7668,
+    "belege": 2,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 2,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6353,
+    "belege": 2,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Leberkäse": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 5.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8987,
+    "belege": 4,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8526,
+    "belege": 4,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 4.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5678,
+    "belege": 2,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4393,
+    "belege": 2,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 6.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4,
+    "belege": 1,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Kalbskäs": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 2.5332,
+    "belege": 10,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8246,
+    "belege": 4,
+    "zuletzt": "20.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6325,
+    "belege": 2,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2102,
+    "belege": 1,
+    "zuletzt": "06.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Fleischwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.443,
+    "belege": 6,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5595,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5074,
+    "belege": 2,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5009,
+    "belege": 2,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3241,
+    "belege": 1,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Gelbwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.9134,
+    "belege": 6,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.1777,
+    "belege": 5,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6939,
+    "belege": 2,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5258,
+    "belege": 3,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Schweinebauch gefüllt": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4,
+    "belege": 1,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3084,
+    "belege": 1,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2181,
+    "belege": 1,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1077,
+    "belege": 1,
+    "zuletzt": "13.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Kochsalami im Stück": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.4386,
+    "belege": 6,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.3104,
+    "belege": 4,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0607,
+    "belege": 3,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3566,
+    "belege": 2,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3369,
+    "belege": 2,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Knoblauchstangerl": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.706,
+    "belege": 8,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5957,
+    "belege": 2,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Mettwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.2962,
+    "belege": 5,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1927,
+    "belege": 1,
+    "zuletzt": "29.06.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Leberwurst gold": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.4261,
+    "belege": 5,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0864,
+    "belege": 5,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5955,
+    "belege": 3,
+    "zuletzt": "20.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3854,
+    "belege": 1,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1051,
+    "belege": 1,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Leberwurst grob": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8172,
+    "belege": 3,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6506,
+    "belege": 2,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2292,
+    "belege": 1,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Eierpastete": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.2332,
+    "belege": 5,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1927,
+    "belege": 1,
+    "zuletzt": "29.06.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Pressack schwarz": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.5667,
+    "belege": 6,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.0841,
+    "belege": 1,
+    "zuletzt": "23.04.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Bauernpressack": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.4504,
+    "belege": 6,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.3848,
+    "belege": 4,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4029,
+    "belege": 2,
+    "zuletzt": "06.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1051,
+    "belege": 1,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Schinkenwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6526,
+    "belege": 3,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 2,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6448,
+    "belege": 2,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6378,
+    "belege": 2,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 5.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5168,
+    "belege": 2,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3668,
+    "belege": 1,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Paprikawurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.4014,
+    "belege": 6,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0496,
+    "belege": 3,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5566,
+    "belege": 2,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 2,
+      "menge": 3.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2181,
+    "belege": 1,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1051,
+    "belege": 1,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Champignonschinkenwurst": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8239,
+    "belege": 4,
+    "zuletzt": "03.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6393,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Sauerkraut fertig gekocht": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.3637,
+    "belege": 5,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2181,
+    "belege": 1,
+    "zuletzt": "09.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Bratensoße": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.142,
+    "belege": 4,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2912,
+    "belege": 2,
+    "zuletzt": "06.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1051,
+    "belege": 1,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Gulaschsuppe": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0908,
+    "belege": 4,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3084,
+    "belege": 1,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Käseknacker": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.319,
+    "belege": 5,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7202,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6128,
+    "belege": 3,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.574,
+    "belege": 2,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.4775,
+    "belege": 2,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Rauchsalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5533,
+    "belege": 2,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Pfeffersalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6526,
+    "belege": 3,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1077,
+    "belege": 1,
+    "zuletzt": "13.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Paprikasalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.5073,
+    "belege": 6,
+    "zuletzt": "26.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Schnitzel vom Strohschwein": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.2357,
+    "belege": 5,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.0162,
+    "belege": 4,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6496,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2725,
+    "belege": 1,
+    "zuletzt": "27.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2378,
+    "belege": 1,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Bolognese hausgemacht": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8477,
+    "belege": 4,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6056,
+    "belege": 2,
+    "zuletzt": "06.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3364,
+    "belege": 1,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1051,
+    "belege": 1,
+    "zuletzt": "11.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Putensteak mariniert": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2828,
+    "belege": 1,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Halsgrat mariniert vom Strohschwein": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2828,
+    "belege": 1,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 3.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2292,
+    "belege": 1,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Griebenschmalz": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1077,
+    "belege": 1,
+    "zuletzt": "13.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Südtiroler Speck aufgeschnitten": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8807,
+    "belege": 3,
+    "zuletzt": "10.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3534,
+    "belege": 1,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2292,
+    "belege": 1,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.1077,
+    "belege": 1,
+    "zuletzt": "13.05.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Südtiroler Speck am Stück": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2841,
+    "belege": 2,
+    "zuletzt": "02.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Zwiebelsalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2378,
+    "belege": 1,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2292,
+    "belege": 1,
+    "zuletzt": "13.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Käsesalami": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.6793,
+    "belege": 3,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Salsiccia Calabra": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.5484,
+    "belege": 6,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Bratwürste": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.9824,
+    "belege": 8,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3364,
+    "belege": 1,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 2,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2828,
+    "belege": 1,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2,
+    "belege": 1,
+    "zuletzt": "02.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Käseknacker klein": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2378,
+    "belege": 1,
+    "zuletzt": "16.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 2,
+      "menge": 6.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2025,
+    "belege": 1,
+    "zuletzt": "03.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Gelbwurst m. Peters.": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 1.1826,
+    "belege": 4,
+    "zuletzt": "17.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.7241,
+    "belege": 2,
+    "zuletzt": "27.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Fleischwurst Lucky Luke": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2594,
+    "belege": 1,
+    "zuletzt": "23.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Käsekrakauer": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.8467,
+    "belege": 3,
+    "zuletzt": "13.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.5849,
+    "belege": 2,
+    "zuletzt": "20.08.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Chili-Cheese-Griller": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3951,
+    "belege": 1,
+    "zuletzt": "26.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 2,
+      "menge": 0.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2828,
+    "belege": 1,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Delikatess-Leberwurst im Naturdarm": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2828,
+    "belege": 1,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2499,
+    "belege": 1,
+    "zuletzt": "20.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2102,
+    "belege": 1,
+    "zuletzt": "06.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.5,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.0841,
+    "belege": 1,
+    "zuletzt": "23.04.2026",
+    "quelle": "lieferung"
+   }
+  ],
+  "Marinade Gyros": [
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 0.75,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.3854,
+    "belege": 1,
+    "zuletzt": "24.08.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 2.25,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.2828,
+    "belege": 1,
+    "zuletzt": "30.07.2026",
+    "quelle": "lieferung"
+   },
+   {
+    "portionen": [
+     {
+      "anzahl": 1,
+      "menge": 1.0,
+      "einheit": "kg"
+     }
+    ],
+    "punkte": 0.081,
+    "belege": 1,
+    "zuletzt": "20.04.2026",
+    "quelle": "lieferung"
+   }
+  ]
+ }
+};

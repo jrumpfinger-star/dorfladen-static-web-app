@@ -55,3 +55,8 @@ playwright-report/
 # Baecker-Bestellmails (Geschaeftskorrespondenz mit Kundennummer)
 # Basis fuer den Historie-Import, gehoert nicht ins Repository.
 B*cker/
+
+# Metzger-Rechnungen und Bestellformular (Geschaeftskorrespondenz mit
+# Kundennummer und Preisen). Basis fuer den Katalog- und Vorschlagsaufbau
+# ueber tools/metzger_*.py, gehoert aus demselben Grund nicht ins Repository.
+Metzger Mair/

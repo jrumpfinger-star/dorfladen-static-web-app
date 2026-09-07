@@ -1,0 +1,1041 @@
+{
+  "artikel": [
+    {
+      "name": "Lende Schwein",
+      "nummer": 2,
+      "metzger_name": "Schweinelende vom Strohschwein",
+      "preis": 11.05,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Oberschalenschnitzel",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Wammerl o. Kno.",
+      "nummer": 12,
+      "metzger_name": "Wammerl o. Knochen vom Strohschwein",
+      "preis": 7.89,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Halsgrat o. Knochen",
+      "nummer": 15,
+      "metzger_name": "Halsgrat o. Knochen vom Strohschwein",
+      "preis": 9.54,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Wammerl geräuchert",
+      "nummer": 70,
+      "metzger_name": "Wammerl hellgeräuchert am Stück",
+      "preis": 11.1,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Putenschnitzel",
+      "nummer": 360,
+      "metzger_name": "Putenschnitzel",
+      "preis": 17.5,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Hähnchenbrust",
+      "nummer": 367,
+      "metzger_name": "Hähnchenbrüste",
+      "preis": 12.5,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Lende Rind",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Braten Rind",
+      "nummer": 109,
+      "metzger_name": "Braten vom Strohrind",
+      "preis": 18.5,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Rouladen",
+      "nummer": 121,
+      "metzger_name": "Rouladen vom Strohrind",
+      "preis": 18.8,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Tafelspitz",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Hackfleisch Rind",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Hackfleisch gemischt",
+      "nummer": 142,
+      "metzger_name": "Hackfleisch gemischt von Strohrind und -Schwein",
+      "preis": 10.3,
+      "einheit": "kg",
+      "gruppe": "Fleisch frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Leberkäse z. selberbacken",
+      "nummer": 402,
+      "metzger_name": "Leberkäsbrät",
+      "preis": 7.65,
+      "einheit": "kg",
+      "gruppe": "Brät & Leberkäse",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Milzwurst",
+      "nummer": 407,
+      "metzger_name": "Milzwurst",
+      "preis": 8.0,
+      "einheit": "kg",
+      "gruppe": "Brät & Leberkäse",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Lüngerl küchenfertig",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Brät & Leberkäse",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Blutwürste",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Brät & Leberkäse",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Leberwürste",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Brät & Leberkäse",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Putenschinken",
+      "nummer": 373,
+      "metzger_name": "Putenbrustschinken hausgemacht",
+      "preis": 17.5,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Hinterschinken",
+      "nummer": 500,
+      "metzger_name": "Hinterschinken",
+      "preis": 11.99,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Gebratener Schinken",
+      "nummer": 501,
+      "metzger_name": "gebratener Schinken",
+      "preis": 12.6,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Schwarzgeräuchertes Stück",
+      "nummer": 505,
+      "metzger_name": "Bauerngeräuchertes im Stück",
+      "preis": 14.8,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Gewürzlende",
+      "nummer": 532,
+      "metzger_name": "Gewürzlende",
+      "preis": 11.5,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Gewürzwammerl",
+      "nummer": 518,
+      "metzger_name": "Gewürzwammerl",
+      "preis": 9.7,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Farmerschinken",
+      "nummer": 537,
+      "metzger_name": "Farmerschinken",
+      "preis": 15.35,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Wacholderschinken",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Lachsschinken",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Schinken & Speck",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Kantsalami",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Hausmachersalami",
+      "nummer": 557,
+      "metzger_name": "Hausmachersalami 1a",
+      "preis": 16.9,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "hausgem. Salami ital. Art",
+      "nummer": 560,
+      "metzger_name": "Salami Italia hausgemacht",
+      "preis": 17.2,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Rindersalami",
+      "nummer": 574,
+      "metzger_name": "Rindersalami hausgemacht 100% Rind",
+      "preis": 17.6,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Salami mit Zwiebelrand/Käserand",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Sportsalami",
+      "nummer": 565,
+      "metzger_name": "Sportsalami",
+      "preis": 16.0,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Mailänder (scharf)",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Salami",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Debreziner",
+      "nummer": 585,
+      "metzger_name": "Debrecziner",
+      "preis": 10.7,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Polnische",
+      "nummer": 586,
+      "metzger_name": "Rohpolnische",
+      "preis": 12.75,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Landjäger",
+      "nummer": 588,
+      "metzger_name": "Landjäger",
+      "preis": 18.5,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Weißwurst",
+      "nummer": 600,
+      "metzger_name": "Weißwurst",
+      "preis": 8.7,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Wollwürste",
+      "nummer": 602,
+      "metzger_name": "Wollwürste",
+      "preis": 7.6,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Schweinswürstl",
+      "nummer": 605,
+      "metzger_name": "Schweinswürstl",
+      "preis": 9.55,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Rindsbratwürste",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Kalbsbratwürste",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Würste frisch",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Currywurst",
+      "nummer": 613,
+      "metzger_name": "Currywurst",
+      "preis": 8.9,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Lyoner",
+      "nummer": 615,
+      "metzger_name": "Lyoner im Ring",
+      "preis": 8.7,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Dicke",
+      "nummer": 616,
+      "metzger_name": "Dicke",
+      "preis": 8.7,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Regensburger",
+      "nummer": 617,
+      "metzger_name": "Regensburger",
+      "preis": 9.25,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Wiener",
+      "nummer": 620,
+      "metzger_name": "Wiener",
+      "preis": 10.5,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Fleischkäs altbayrisch",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Leberkäse",
+      "nummer": 640,
+      "metzger_name": "Leberkäse kalt",
+      "preis": 8.2,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Kalbskäs",
+      "nummer": 641,
+      "metzger_name": "Kalbskäs",
+      "preis": 7.79,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Fleischwurst",
+      "nummer": 658,
+      "metzger_name": "Fleischwurst",
+      "preis": 8.3,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Gelbwurst",
+      "nummer": 660,
+      "metzger_name": "Gelbwurst",
+      "preis": 8.35,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Schweinebauch gefüllt",
+      "nummer": 669,
+      "metzger_name": "Schweinebauch gefüllt",
+      "preis": 8.9,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Göttinger",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Kochsalami im Stück",
+      "nummer": 694,
+      "metzger_name": "Kochsalami im Stück",
+      "preis": 11.4,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Kochsalami mit Käse",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Knoblauchstangerl",
+      "nummer": 914,
+      "metzger_name": "Knoblauchstangerl",
+      "preis": 10.1,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Mettwurst",
+      "nummer": 744,
+      "metzger_name": "Mettwurst fein",
+      "preis": 8.45,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Streichwurst geräuchert",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Leberwurst gold",
+      "nummer": 718,
+      "metzger_name": "Delikatess-Leberwurst gold",
+      "preis": 7.75,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Leberwurst grob",
+      "nummer": 719,
+      "metzger_name": "Leberwurst grob",
+      "preis": 7.6,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Pfälzer Leberwurst",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Eierpastete",
+      "nummer": 723,
+      "metzger_name": "Eierpastete",
+      "preis": 8.5,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Pressack schwarz",
+      "nummer": 726,
+      "metzger_name": "Preßsack schwarz",
+      "preis": 7.99,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Bauernpressack",
+      "nummer": 727,
+      "metzger_name": "Bauernpreßsack",
+      "preis": 7.9,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Berliner Zungenwurst",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Putenschinkenwurst",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Schinkenwurst",
+      "nummer": 761,
+      "metzger_name": "Schinkenwurst",
+      "preis": 9.89,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Paprikawurst",
+      "nummer": 764,
+      "metzger_name": "Paprikawurst",
+      "preis": 8.2,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Paprikaschinkenwurst",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Champignonschinkenwurst",
+      "nummer": 763,
+      "metzger_name": "Champignonschinkenwurst",
+      "preis": 10.4,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Tiroler",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Aufschnitt & Wurstwaren",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Sauerkraut fertig gekocht",
+      "nummer": 917,
+      "metzger_name": "Sauerkraut fertig gekocht",
+      "preis": 5.2,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Bratensoße",
+      "nummer": 919,
+      "metzger_name": "Bratensoße",
+      "preis": 5.9,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Gulaschsuppe",
+      "nummer": 924,
+      "metzger_name": "Gulaschsuppe",
+      "preis": 8.6,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Käsegriller klein",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Käseknacker",
+      "nummer": 628,
+      "metzger_name": "Käseknacker",
+      "preis": 10.99,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Rauchsalami",
+      "nummer": 592,
+      "metzger_name": "Rauchsalami Niederbayrisch",
+      "preis": 21.98,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Pfeffersalami",
+      "nummer": 564,
+      "metzger_name": "Pfeffersalami",
+      "preis": 19.88,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Paprikasalami",
+      "nummer": 556,
+      "metzger_name": "Paprikasalami hausgemacht",
+      "preis": 13.1,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Bratensülz Schalen",
+      "nummer": 1008,
+      "metzger_name": "Sülzschalen 20",
+      "preis": 0.1,
+      "einheit": "kg",
+      "gruppe": "Beilagen",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Papier 28x27 / 18,5x24,5 / groß",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Verpackung & Sonstiges",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Tüten 30x20",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Verpackung & Sonstiges",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Gewürze",
+      "nummer": null,
+      "metzger_name": null,
+      "preis": null,
+      "einheit": "kg",
+      "gruppe": "Verpackung & Sonstiges",
+      "aktiv": true,
+      "auf_formular": true
+    },
+    {
+      "name": "Schnitzel vom Strohschwein",
+      "nummer": 3,
+      "metzger_name": "Schnitzel vom Strohschwein",
+      "preis": 10.7,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Bolognese hausgemacht",
+      "nummer": 144,
+      "metzger_name": "Bolognese hausgemacht",
+      "preis": 9.8,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Putensteak mariniert",
+      "nummer": 358,
+      "metzger_name": "Putensteak mariniert",
+      "preis": 17.5,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Halsgrat mariniert vom Strohschwein",
+      "nummer": 410,
+      "metzger_name": "Halsgrat mariniert vom Strohschwein",
+      "preis": 10.4,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Griebenschmalz",
+      "nummer": 431,
+      "metzger_name": "Griebenschmalz",
+      "preis": 11.75,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Südtiroler Speck aufgeschnitten",
+      "nummer": 521,
+      "metzger_name": "Südtiroler Speck aufgeschnitten",
+      "preis": 19.2,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Südtiroler Speck am Stück",
+      "nummer": 522,
+      "metzger_name": "Südtiroler Speck am Stück",
+      "preis": 18.7,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Zwiebelsalami",
+      "nummer": 552,
+      "metzger_name": "Zwiebelsalami",
+      "preis": 22.8,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Käsesalami",
+      "nummer": 576,
+      "metzger_name": "Käsesalami",
+      "preis": 22.8,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Salsiccia Calabra",
+      "nummer": 583,
+      "metzger_name": "Salsiccia Calabra",
+      "preis": 23.4,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Bratwürste",
+      "nummer": 603,
+      "metzger_name": "Bratwürste",
+      "preis": 9.15,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Käseknacker klein",
+      "nummer": 629,
+      "metzger_name": "Käseknacker klein",
+      "preis": 11.69,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Gelbwurst m. Peters.",
+      "nummer": 661,
+      "metzger_name": "Gelbwurst m. Peters.",
+      "preis": 8.45,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Fleischwurst Lucky Luke",
+      "nummer": 666,
+      "metzger_name": "Fleischwurst Lucky Luke",
+      "preis": 7.8,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Käsekrakauer",
+      "nummer": 685,
+      "metzger_name": "Käsekrakauer",
+      "preis": 11.55,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Chili-Cheese-Griller",
+      "nummer": 688,
+      "metzger_name": "Chili-Cheese-Griller",
+      "preis": 12.8,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Delikatess-Leberwurst im Naturdarm",
+      "nummer": 717,
+      "metzger_name": "Delikatess-Leberwurst im Naturdarm",
+      "preis": 7.9,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    },
+    {
+      "name": "Marinade Gyros",
+      "nummer": 1029,
+      "metzger_name": "Marinade Gyros",
+      "preis": 14.8,
+      "einheit": "kg",
+      "gruppe": "Nicht auf dem Formular",
+      "aktiv": false,
+      "auf_formular": false
+    }
+  ],
+  "vakuumbeutel": [
+    {
+      "nummer": 980,
+      "groesse": "klein",
+      "preis": 0.3
+    },
+    {
+      "nummer": 981,
+      "groesse": "mittel",
+      "preis": 0.45
+    },
+    {
+      "nummer": 982,
+      "groesse": "groß",
+      "preis": 0.65
+    }
+  ]
+}
