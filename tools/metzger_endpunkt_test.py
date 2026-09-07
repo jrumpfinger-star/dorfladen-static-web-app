@@ -251,6 +251,32 @@ code, _ = ruf(order, "POST", {"datum": heute, "aktion": "speichern"},
 pruefe("Speichern fuer heute abgelehnt", code == 409, f"-> {code}")
 
 print()
+print("F1  Ein leerer Entwurf sieht nicht nach Arbeit aus")
+code, d = ruf(order)
+kuenftig = next(t["datum"] for t in d["tage"]
+                if t["bestellbar"] and t["status"] is None
+                and f"metzger_order_{t['datum']}" not in ABLAGE)
+code, _ = ruf(order, "POST", {"datum": kuenftig, "aktion": "speichern"},
+              body={"positionen": []})
+pruefe("leerer Entwurf wird angenommen", code == 200, f"-> {code}")
+code, d = ruf(order)
+tage = {t["datum"]: t for t in d["tage"]}
+pruefe("leerer Entwurf bekommt kein Abzeichen",
+       tage[kuenftig]["status"] is None, f"-> {tage[kuenftig]['status']}")
+pruefe("Vorauswahl bleibt auf dem leeren Tag", d.get("aktiv") == kuenftig,
+       f"-> {d.get('aktiv')} statt {kuenftig}")
+code, _ = ruf(order, "POST", {"datum": kuenftig, "aktion": "speichern"},
+              body={"positionen": POS})
+code, d = ruf(order)
+tage = {t["datum"]: t for t in d["tage"]}
+pruefe("gefuellter Entwurf bekommt eines",
+       tage[kuenftig]["status"] == metzger_store.STATUS_ENTWURF,
+       f"-> {tage[kuenftig]['status']}")
+pruefe("Vorauswahl bleibt beim Entwurf", d.get("aktiv") == kuenftig,
+       f"-> {d.get('aktiv')} statt {kuenftig}")
+ABLAGE.pop(f"metzger_order_{kuenftig}", None)
+
+print()
 print("F9  Katalog: ueblich sind die je gelieferten Formularzeilen")
 code, d = ruf(artikel)
 alle = d.get("artikel", [])

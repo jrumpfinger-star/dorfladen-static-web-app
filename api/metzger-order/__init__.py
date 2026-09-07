@@ -154,8 +154,14 @@ def _letzte_werte(letzte):
 def _uebersicht(url, hdrs, cfg):
     """Zustand der naechsten 14 Tage fuer die Tagesleiste (F1)."""
     from datetime import date, timedelta
-    bekannt = {o.get("datum"): o.get("status", 0)
-               for o in store.bestellungen(url, hdrs)}
+    # Ein Entwurf ohne Positionen ist inhaltlich nichts und bekommt deshalb
+    # kein Abzeichen - sonst sieht ein unberuehrter Tag nach Arbeit aus.
+    bekannt = {}
+    for o in store.bestellungen(url, hdrs):
+        st = o.get("status", store.STATUS_ENTWURF)
+        if st == store.STATUS_ENTWURF and not o.get("positionen"):
+            continue
+        bekannt[o.get("datum")] = st
     heute = date.today()
     tage = []
     for i in range(14):
@@ -170,8 +176,11 @@ def _uebersicht(url, hdrs, cfg):
             "bestellbar": ist_tag and store.bestellbar(d),
             "status": bekannt.get(d),
         })
+    # Ein Entwurf gilt als offen - daran wird ja noch gearbeitet. Nur
+    # Gesendetes und Korrigiertes wird uebersprungen.
+    erledigt = (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
     offen = next((t["datum"] for t in tage
-                  if t["bestellbar"] and not t["status"]), None)
+                  if t["bestellbar"] and t["status"] not in erledigt), None)
     return {"tage": tage, "aktiv": offen or store.naechster_bestelltag(cfg)}
 
 

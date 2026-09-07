@@ -218,6 +218,10 @@ sie gilt dann für genau den gewählten Tag.
   Heute und alles davor ist gesperrt.
 - Beim Öffnen ist der nächste bestellbare Bestelltag ohne gesendete Bestellung aktiv.
 - Jeder Tag zeigt seinen Zustand: offen · Entwurf · gesendet · korrigiert.
+  Ein Entwurf **ohne Positionen** zählt dabei als offen — ein unberührter Tag
+  soll nicht nach angefangener Arbeit aussehen.
+- Die Vorauswahl überspringt nur **gesendete und korrigierte** Tage; an einem
+  Entwurf wird ja noch gearbeitet.
 - Ein Tageswechsel mit ungespeicherten Änderungen fragt vorher nach.
 - Speichern und Senden für einen nicht mehr bestellbaren Tag weist die API mit
   409 ab — die Sperre gilt also auch dann, wenn die Oberfläche umgangen wird.
@@ -266,6 +270,19 @@ sie gilt dann für genau den gewählten Tag.
 - **Setup:** Heutiges Datum als Bestelltag.
 - **Action:** `PUT` auf diesen Tag.
 - **Expected:** HTTP 409 mit erklärender Meldung, nichts wird gespeichert.
+
+**TC-F1-08: Leerer Entwurf bekommt kein Abzeichen**
+
+- **Setup:** Für einen künftigen Bestelltag wurde ein Entwurf ohne Positionen
+  gespeichert.
+- **Action:** Tagesleiste laden.
+- **Expected:** Der Tag gilt als offen und bleibt die Vorauswahl.
+
+**TC-F1-09: Gefüllter Entwurf bekommt eines**
+
+- **Setup:** Derselbe Tag mit mindestens einer Position.
+- **Expected:** Der Tag ist als „Entwurf" markiert und bleibt trotzdem die
+  Vorauswahl.
 
 ### F2: Portionsblöcke — das Erfassungsmodell
 
@@ -1538,7 +1555,7 @@ Zwei Punkte sind bewusst als Startwert festgelegt und im Betrieb nachzuschärfen
 
 | Requirement | Test Cases | Plan section | Tasks |
 | --- | --- | --- | --- |
-| F1 Bestelltag wählen | TC-F1-01 … 07 | — | — |
+| F1 Bestelltag wählen | TC-F1-01 … 09 | — | — |
 | F2 Portionsblöcke | TC-F2-01 … 05 | — | — |
 | F3 Portionen erfassen | TC-F3-01 … 16 | — | — |
 | F4 Vorschläge je Artikel | TC-F4-01 … 13 | — | — |
