@@ -2435,20 +2435,20 @@ var K = (function(){
     var swBtn = document.querySelector('[data-mt-filter="sonderwunsch"]');
     if(swBtn){
       swBtn.style.color = cSonder>0 ? '#92400e' : '';
-      swBtn.style.fontWeight = cSonder>0 ? '800' : '';
+      swBtn.style.fontWeight = cSonder>0 ? '600' : '';
     }
     // Highlight "Offen" in red when new orders exist
     var newCount = orders.filter(function(o){return o.status===0;}).length;
     var offenBtn = document.querySelector('[data-mt-filter="offen"]');
     if(offenBtn){
       offenBtn.style.color = newCount>0 ? '#dc2626' : '';
-      offenBtn.style.fontWeight = newCount>0 ? '800' : '';
+      offenBtn.style.fontWeight = newCount>0 ? '600' : '';
     }
     // Highlight Nachrichten tab when unread
     var msgBtn = document.querySelector('[data-mt-filter="nachrichten"]');
     if(msgBtn && _globalUnreadMessages>0){
       msgBtn.style.color = '#3b82f6';
-      msgBtn.style.fontWeight = '800';
+      msgBtn.style.fontWeight = '600';
     } else if(msgBtn){
       msgBtn.style.color = '';
       msgBtn.style.fontWeight = '';

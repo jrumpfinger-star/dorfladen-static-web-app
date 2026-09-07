@@ -10537,7 +10537,7 @@
     // Highlight active filter button
     ['offen','alle','heute','sammel'].forEach(function(f){
       var btn=document.getElementById('fm-orders-btn-'+f);
-      if(btn) btn.style.fontWeight=f===_fmCurrentFilter?'800':'400';
+      if(btn) btn.style.fontWeight=f===_fmCurrentFilter?'600':'400';
     });
     var list=document.getElementById('fm-orders-list');
     list.innerHTML='<p style="color:#6b7280;text-align:center">Laden...</p>';
