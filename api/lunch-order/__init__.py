@@ -111,7 +111,25 @@ def _verlauf_or_legacy(item):
     return out
 
 
+def _als_ganzzahl(wert, ersatz):
+    """Liefert immer eine ganze Zahl.
+
+    Wichtig: dict.get(key, default) greift NUR, wenn der Schluessel fehlt.
+    Steht das Feld in Dataverse auf null, kommt None zurueck - und eine
+    Bestellung mit status=None fiele im Kiosk durch jeden Statusfilter
+    (weder offen noch erledigt noch storniert) und bekaeme keine Knoepfe.
+    """
+    if wert is None:
+        return ersatz
+    try:
+        return int(wert)
+    except (TypeError, ValueError):
+        return ersatz
+
+
 def _serialize(item):
+    status = _als_ganzzahl(item.get("dl_status"), STATUS_NEU)
+    quelle = _als_ganzzahl(item.get("dl_quelle"), QUELLE_ONLINE)
     return {
         "id": item.get("dl_mittagsbestellungid", ""),
         "name": item.get("dl_name", ""),
@@ -123,7 +141,7 @@ def _serialize(item):
         "preis": item.get("dl_preis", 0),
         "datum": (item.get("dl_datum") or "").split("T")[0],
         "anmerkung": item.get("dl_anmerkung", ""),
-        "status": item.get("dl_status", STATUS_NEU),
+        "status": status,
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
         "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
         "personal_antwort": item.get("dl_personal_antwort", ""),
@@ -131,8 +149,8 @@ def _serialize(item):
         "kommentar_gelesen": bool(item.get("dl_kommentar_gelesen", False)),
         "bestellt_am": item.get("createdon", ""),
         "wochentag_label": item.get("dl_wochentag_label", ""),
-        "quelle": item.get("dl_quelle", QUELLE_ONLINE),
-        "quelle_label": QUELLE_LABELS.get(item.get("dl_quelle", QUELLE_ONLINE), "Online"),
+        "quelle": quelle,
+        "quelle_label": QUELLE_LABELS.get(quelle, "Online"),
         "stammkunde_id": item.get("dl_stammkunde_id", ""),
         "erfasst_von": item.get("dl_erfasst_von", ""),
         "device_id": item.get("dl_device_id", ""),

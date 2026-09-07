@@ -2548,6 +2548,45 @@ Wettlauf sicher verliert – ohne diese Verzögerung schlummert der Fehler.
 
 ---
 
+## T-MB – Mittagstisch: Bestellstatus sichtbar und einheitlich
+
+Spec: `specs/mittagstisch-bestellstatus/spec.md`
+Automatisiert in `tests/mittagstisch-bestellstatus.spec.js`
+(mobile / ipad-mini / desktop). Alle API-Aufrufe abgefangen – nichts wird
+gespeichert oder versendet.
+
+Anlass: „Telefonbestellungen erscheinen nicht unter offen. Sie haben auch keinen
+Status z. B. abgeholt." Die Prüfung der Live-Daten (14 Tage, 73 Bestellungen)
+ergab: der Status **war** gesetzt, stand aber nirgends geschrieben – erkennbar
+nur an Randfarbe und Knöpfen.
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F1-01 | Karte zeigt den Status als Text („Bestätigt") |
+| TC-F1-02 | Telefonbestellung zeigt Quelle **und** Status |
+| TC-F2-01 | Bestellung mit `status:null` landet unter „Offen" statt zu verschwinden |
+| TC-F2-02 | Offen + Erledigt + Storniert deckt alle Bestellungen ab |
+| TC-F2-03 | Leere Quelle gilt als Online – Karte und Kochbedarf widersprechen sich nicht |
+| TC-F3-01 | Gruppenzeile nennt Portionen **und** Bestellungen |
+| TC-F4-01 | Ohne Telefonbestellung bleibt der Quellenschalter unsichtbar |
+| TC-F4-02 | Schalter zeigt die Anzahl und blendet Online-Bestellungen aus |
+| TC-F4-03 | Kochbedarf sagt „telefonisch", nicht mehr „vor Ort" |
+| TC-F5-01 | Telefondialog nennt den entstehenden Status vor dem Speichern |
+
+### Testlauf-Tabelle (Bestellstatus)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 07.09.2026 | TC-F1 bis TC-F5 | 30/30 | Lokal gegen 127.0.0.1:8893, alle drei Viewports |
+
+> **Stolperstein:** `tests/kiosk-sonderwuensche.spec.js` setzt die Kiosk-Adresse
+> fest auf `${BASE}/kiosk` – **ohne** `.html`. Gegen einen einfachen lokalen
+> Dateiserver ergibt das einen 404, die Reiter fehlen und **alle** Tests laufen
+> in einen Timeout. Das sieht wie ein Rückschritt aus, ist aber nur die Adresse.
+> Gegen eine bereitgestellte Umgebung laufen sie durch (23/23 verifiziert).
+
+
+---
+
 ## T-B2 – Zweite Bäckerei (Martin's Backstube)
 
 Spec: `specs/baecker-zwei-baeckereien/spec.md` (F17–F26)

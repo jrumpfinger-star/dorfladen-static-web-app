@@ -705,6 +705,12 @@
     .src-online{color:#2563eb}
     .src-telefon{color:#92400e}
     .src-personal{color:#7c3aed}
+    /* Statusabzeichen: gefuellt, damit es sich klar vom Quellenabzeichen abhebt */
+    .k-order-st{font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid transparent}
+    .stx-neu{background:#fef3c7;color:#92400e;border-color:#fde68a}
+    .stx-best{background:#e0f2fe;color:#075985;border-color:#bae6fd}
+    .stx-abgeholt{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .stx-storno{background:#fee2e2;color:#991b1b;border-color:#fecaca}
     .k-order-dish{font-size:14px;color:var(--c-text)}
     .k-order-meta{font-size:13px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap}
     .k-order-note{font-size:13px;color:#92400e;font-style:italic;padding:6px 10px;border-radius:6px;margin-top:4px}
@@ -811,6 +817,10 @@
     .k-filter-btn.active{border-bottom-color:var(--c-green);color:#fff !important;background:var(--c-green);border-radius:8px 8px 0 0}
     .k-filter-btn .k-filter-count{font-size:12px;font-weight:800;background:#f3f4f6;color:var(--c-muted);padding:2px 7px;border-radius:8px;min-width:20px;text-align:center}
     .k-filter-btn.active .k-filter-count{background:rgba(255,255,255,.25);color:#fff}
+    /* Der Quellenschalter wirkt ZUSAETZLICH zum Statusreiter. Eigene Farbe,
+       damit nicht zwei gruene Knoepfe wie eine Auswahl aussehen. */
+    #mt-src-toggle{margin-left:10px;border-left:1px solid var(--c-border);padding-left:14px}
+    #mt-src-toggle.active{background:#92400e;border-bottom-color:#92400e;color:#fff !important}
     .k-filter-label{display:inline}
     @media(max-width:768px){
       .k-filter-bar{flex-wrap:nowrap}
@@ -1075,6 +1085,7 @@
       <button class="k-filter-btn" data-mt-filter="erledigt" onclick="K.setMittagFilter('erledigt')"><i data-lucide="check-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Erledigt</span> <span class="k-filter-count" id="mt-fc-erledigt">0</span></button>
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')" style="color:#dc2626"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
+      <button class="k-filter-btn" id="mt-src-toggle" onclick="K.toggleQuelleFilter()" style="display:none;color:#92400e"><i data-lucide="phone" style="width:14px;height:14px"></i> <span class="k-filter-label">Nur Telefon</span> <span class="k-filter-count" id="mt-fc-telefon">0</span></button>
       <span id="mt-toggle-wrap" style="margin-left:auto;display:none"></span>
     </div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
@@ -1533,6 +1544,11 @@
           <i data-lucide="package" style="width:18px;height:18px"></i> Zum Mitnehmen
         </label>
       </div>
+
+      <div id="no-status-hinweis" style="display:flex;gap:8px;align-items:flex-start;padding:10px 12px;background:#e0f2fe;border:1px solid #bae6fd;border-radius:8px;font-size:13px;color:#075985">
+        <i data-lucide="info" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"></i>
+        <span>Wird als <strong>Best&auml;tigt</strong> gespeichert und steht unter <strong>Offen</strong>, bis Sie sie bei der Abholung auf <strong>Abgeholt</strong> setzen.</span>
+      </div>
     </div>
     <div class="k-modal-footer">
       <button class="k-btn k-btn-lg k-btn-outline" style="flex:1" onclick="K.closeModal('modal-order')">Abbrechen</button>
@@ -1694,8 +1710,28 @@ var K = (function(){
   }
 
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
+  var STATUS_CLASS = {0:'stx-neu',1:'stx-best',2:'stx-storno',3:'stx-abgeholt'};
   var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal'};
   var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal'};
+
+  // Status und Quelle immer als Zahl fuehren. Ein leeres Feld darf nicht dazu
+  // fuehren, dass eine Bestellung durch jeden Statusfilter faellt und dadurch
+  // unsichtbar wird (dann haette sie auch keine Knoepfe).
+  function _zahl(wert, ersatz){
+    if(wert===null || wert===undefined || wert==='') return ersatz;
+    var n = parseInt(wert,10);
+    return isNaN(n) ? ersatz : n;
+  }
+  function _normOrder(o){
+    o.status = _zahl(o.status,0);
+    o.quelle = _zahl(o.quelle,0);
+    // Unbekannte Werte auf den sichersten Fall ziehen: eine Bestellung soll
+    // lieber faelschlich als "offen" auftauchen als voellig unsichtbar sein.
+    if(STATUS[o.status]===undefined) o.status = 0;
+    if(SRC_LABELS[o.quelle]===undefined) o.quelle = 0;
+    return o;
+  }
+  function _istVorOrt(o){ return o.quelle!==0; }
   var DAY_FULL = {101000:'Montag',101001:'Dienstag',101002:'Mittwoch',101003:'Donnerstag',101004:'Freitag',101005:'Samstag'};
 
   // Shop-Order statuses
@@ -1811,6 +1847,18 @@ var K = (function(){
     updateMittagFilterCounts();
   }
 
+  // Zusatzfilter neben dem Status: nur Bestellungen, die NICHT online kamen.
+  // Beantwortet die Frage "wo ist meine Telefonbestellung hin?" ohne die
+  // Statusreiter zu verlassen.
+  var _mittagNurTelefon = false;
+  function toggleQuelleFilter(){
+    _mittagNurTelefon = !_mittagNurTelefon;
+    var btn = document.getElementById('mt-src-toggle');
+    if(btn) btn.classList.toggle('active', _mittagNurTelefon);
+    renderOrders();
+    updateMittagFilterCounts();
+  }
+
   function _loadMessageOrders(){
     document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Nachrichten laden…</div>';
     reinitIcons();
@@ -1818,7 +1866,7 @@ var K = (function(){
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success) return;
-        _msgOrders = res.orders || [];
+        _msgOrders = (res.orders || []).map(_normOrder);
         _renderMessageList();
       })
       .catch(function(){ document.getElementById('mittag-orders').innerHTML = '<div class="k-empty">Fehler beim Laden</div>'; });
@@ -1987,6 +2035,22 @@ var K = (function(){
     var elAlle = document.getElementById('mt-fc-alle');
     var elNachr = document.getElementById('mt-fc-nachrichten');
     var elSonder = document.getElementById('mt-fc-sonderwunsch');
+    // Quellenschalter nur zeigen, wenn es ueberhaupt etwas zu filtern gibt.
+    var cTelefon = orders.filter(function(o){return _istVorOrt(o) && o.status!==2;}).length;
+    var srcBtn = document.getElementById('mt-src-toggle');
+    var elTel = document.getElementById('mt-fc-telefon');
+    if(elTel) elTel.textContent = cTelefon;
+    if(srcBtn){
+      if(cTelefon>0){
+        srcBtn.style.display = '';
+        srcBtn.classList.toggle('active', _mittagNurTelefon);
+      } else {
+        srcBtn.style.display = 'none';
+        // Kein Treffer mehr -> Filter still zuruecknehmen, sonst bliebe die
+        // Liste ohne sichtbaren Grund leer.
+        if(_mittagNurTelefon){ _mittagNurTelefon = false; }
+      }
+    }
     var cSonder = _sonderwunschListe().anzahl;
     if(elOffen) elOffen.textContent = cOffen;
     if(elErledigt) elErledigt.textContent = cErledigt;
@@ -2083,7 +2147,7 @@ var K = (function(){
       .then(function(res){
         if(datum!==_mittagDatum) return; // stale response
         if(!res.success) return;
-        var newOrders = res.orders || [];
+        var newOrders = (res.orders || []).map(_normOrder);
         // K-02: Check for new orders
         var newCount = newOrders.filter(function(o){return o.status===0;}).length;
         if(_prevCounts.mittag >= 0 && newCount > _prevCounts.mittag) _playNewOrderAlert('mittag');
@@ -2199,6 +2263,7 @@ var K = (function(){
     html += '<span class="k-oc-r2">';
     html += '<span class="k-oc-badges">';
     html += '<span class="k-order-src '+srcCls+'">'+srcLabel+'</span>';
+    html += '<span class="k-order-st '+(STATUS_CLASS[o.status]||'stx-neu')+'">'+(STATUS[o.status]||'Neu')+'</span>';
     if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',11)+' MIT</span>';
     if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
     if(hasNote) html += '<span style="color:#92400e;font-size:11px" title="Anmerkung">'+luc('message-square',12)+'</span>';
@@ -2304,10 +2369,13 @@ var K = (function(){
     var map = {}, order = [];
     relevant.forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
-      if(!map[dish]){ map[dish] = {total:0,online:0,vorort:0,offen:0,abgeholt:0}; order.push(dish); }
+      if(!map[dish]){ map[dish] = {total:0,online:0,telefonisch:0,offen:0,abgeholt:0}; order.push(dish); }
       var q = o.menge||1, g = map[dish];
       g.total += q;
-      if(o.quelle===0) g.online += q; else g.vorort += q;
+      // Wichtig: hier geht es um die HERKUNFT (online vs. telefonisch erfasst).
+      // "vor Ort" waere missverstaendlich - so heisst in der Kuechenliste der
+      // Verzehr im Laden. Deshalb "telefonisch".
+      if(o.quelle===0) g.online += q; else g.telefonisch += q;
       if(o.status===3) g.abgeholt += q; else g.offen += q;
     });
     order.sort(function(a,b){return map[b].total - map[a].total;});
@@ -2330,7 +2398,7 @@ var K = (function(){
       html += '<div class="k-cook-name">'+esc(dish)+'</div>';
       html += '<div class="k-cook-chips">';
       if(g.online>0) html += '<span class="k-cook-chip b">'+luc('globe',11)+' '+g.online+' online</span>';
-      if(g.vorort>0) html += '<span class="k-cook-chip o">'+luc('store',11)+' '+g.vorort+' vor Ort</span>';
+      if(g.telefonisch>0) html += '<span class="k-cook-chip o">'+luc('phone',11)+' '+g.telefonisch+' telefonisch</span>';
       if(g.abgeholt>0) html += '<span class="k-cook-chip g">'+luc('check',11)+' '+g.abgeholt+' abgeholt</span>';
       if(g.offen>0) html += '<span class="k-cook-chip">'+luc('utensils',11)+' '+g.offen+' offen</span>';
       html += '</div></div></div>';
@@ -2604,6 +2672,10 @@ var K = (function(){
     else if(_mittagFilter==='erledigt') filterFn = function(o){return o.status===3;};          // abgeholt
     else if(_mittagFilter==='storniert') filterFn = function(o){return o.status===2;};          // storniert
     else filterFn = function(o){return o.status!==2;};                                          // alle (ohne Storno)
+    if(_mittagNurTelefon){
+      var _statusFn = filterFn;
+      filterFn = function(o){ return _statusFn(o) && _istVorOrt(o); };
+    }
     orders.filter(filterFn).forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
       if(!dishMap[dish]){ dishMap[dish] = []; dishOrder.push(dish); }
@@ -2646,7 +2718,8 @@ var K = (function(){
       html += '<div class="k-dish-group'+(isOpen?'':' collapsed')+'" id="'+gid+'">';
       html += '<div class="k-dish-sep-row" onclick="K.toggleDishGroup(\''+gid+'\')">'; 
       html += '<span class="k-dish-sep-arrow">▼</span>';
-      html += '<span class="k-dish-sep-label">'+visibleQty+'× '+esc(dish);
+      html += '<span class="k-dish-sep-label">'+visibleQty+' '+(visibleQty===1?'Portion':'Portionen')+' · '+esc(dish);
+      html += ' <span style="font-size:11px;font-weight:600;color:#6b7280">('+visibleOrders.length+' '+(visibleOrders.length===1?'Bestellung':'Bestellungen')+')</span>';
       if(mitnehmenCount>0) html += ' <span style="font-size:11px;font-weight:500;color:#6b7280">('+mitnehmenCount+' Mitn.)</span>';
       html += '</span>';
       html += '<span class="k-dish-sep-actions" onclick="event.stopPropagation()">';
@@ -2662,6 +2735,9 @@ var K = (function(){
     });
     if(!html && totalCards===0){
       var emptyMsg = _mittagFilter==='erledigt' ? 'Keine erledigten Bestellungen' : _mittagFilter==='storniert' ? 'Keine stornierten Bestellungen' : _mittagFilter==='offen' ? 'Keine offenen Bestellungen' : 'Keine Bestellungen';
+      // Sonst sieht es aus, als gaebe es gar nichts - dabei ist nur der
+      // Quellenfilter aktiv.
+      if(_mittagNurTelefon) emptyMsg += ' aus telefonischer Erfassung';
       html = '<div class="k-empty"><div class="k-empty-icon">'+luc('inbox',24)+'</div>'+emptyMsg+'</div>';
     }
     var _mtHost = document.getElementById('mittag-orders');
@@ -5621,6 +5697,7 @@ var K = (function(){
     openModal: openModal,
     closeModal: closeModal,
     setMittagFilter: setMittagFilter,
+    toggleQuelleFilter: toggleQuelleFilter,
     toggleSwThread: toggleSwThread,
     toggleAllSwThreads: toggleAllSwThreads,
     setSwCompact: setSwCompact,
