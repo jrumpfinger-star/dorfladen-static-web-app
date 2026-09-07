@@ -122,13 +122,14 @@
       +'<div id="hp-chat-devbar" style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:4px 12px;border-bottom:1px solid #eef2f7;display:flex;align-items:center;gap:6px"></div>'
       +'<div id="hp-chat-msgs" style="flex:1;overflow-y:auto;padding:12px;background:#f7faf8;display:flex;flex-direction:column;gap:8px"></div>'
       +'<div style="border-top:1px solid #eef2f7;padding:8px 10px;background:#fff">'
-        +'<details id="hp-chat-ident" style="margin-bottom:6px">'
-          +'<summary style="font-size:12px;color:#6b7280;cursor:pointer">Ihre Daten (optional)</summary>'
+        +'<details id="hp-chat-ident" style="margin-bottom:6px" open>'
+          +'<summary style="font-size:12px;color:#6b7280;cursor:pointer">Ihre Daten</summary>'
           +'<div style="display:flex;gap:6px;margin-top:6px">'
-            +'<input id="hp-chat-name" placeholder="Name" style="flex:1;min-width:0;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">'
+            +'<input id="hp-chat-name" placeholder="Name *" required style="flex:1;min-width:0;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">'
             +'<input id="hp-chat-email" type="email" placeholder="E-Mail" style="flex:1.4;min-width:0;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">'
           +'</div>'
-          +'<div style="font-size:11px;color:#9ca3af;margin-top:5px;line-height:1.35">Damit die Verkäuferin weiß, wer schreibt. Ohne Angabe erscheinen Sie als „Website-Besucher".</div>'
+          +'<div id="hp-chat-ident-err" style="display:none;font-size:11.5px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:5px 8px;margin-top:5px"></div>'
+          +'<div style="font-size:11px;color:#9ca3af;margin-top:5px;line-height:1.35">Ihr Name ist nötig, damit die Verkäuferin weiß, wer schreibt.</div>'
           +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-top:6px"><input type="checkbox" id="hp-chat-email-opt"> Antworten auch per E-Mail</label>'
         +'</details>'
         +'<label id="hp-chat-push-row" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-bottom:6px"><input type="checkbox" id="hp-chat-push-opt" checked> 📲 Antworten als App-Benachrichtigung</label>'
@@ -151,7 +152,29 @@
     document.getElementById('hp-chat-imgbtn').onclick=function(){ document.getElementById('hp-chat-file').click(); };
     document.getElementById('hp-chat-emoji').onclick=function(){ openEmoji(this); };
     document.getElementById('hp-chat-file').addEventListener('change',function(){ if(this.files&&this.files[0]) stagePendingImage(this.files[0]); this.value=''; });
+    // Bild aus der Zwischenablage (Strg+V) direkt im Nachrichtenfeld uebernehmen
+    inp.addEventListener('paste',function(e){
+      var dat=e.clipboardData; if(!dat) return;
+      var datei=null;
+      for(var i=0;i<(dat.items||[]).length;i++){
+        var it=dat.items[i];
+        if(it.kind==='file'&&/^image\//.test(it.type)){ datei=it.getAsFile(); break; }
+      }
+      if(!datei&&dat.files&&dat.files.length&&/^image\//.test(dat.files[0].type)) datei=dat.files[0];
+      if(!datei) return; // reiner Text: normal einfuegen lassen
+      e.preventDefault();
+      stagePendingImage(datei);
+    });
     document.getElementById('hp-chat-prev-x').onclick=clearPending;
+    // "Antworten auch per E-Mail" kennzeichnet das E-Mail-Feld sofort als Pflicht,
+    // damit der Kunde es nicht erst beim Senden erfaehrt.
+    (function(){
+      var opt=document.getElementById('hp-chat-email-opt');
+      var mail=document.getElementById('hp-chat-email');
+      if(!opt||!mail) return;
+      var upd=function(){ mail.placeholder = opt.checked ? 'E-Mail *' : 'E-Mail'; };
+      opt.addEventListener('change',upd); upd();
+    })();
     // Push-Zeile ausblenden, wenn Berechtigung blockiert
     try{ if(typeof Notification!=='undefined' && Notification.permission==='denied'){ var pr=document.getElementById('hp-chat-push-row'); if(pr) pr.style.display='none'; } }catch(e){}
     // Gespeicherte Kundendaten vorbelegen
@@ -267,12 +290,39 @@
     return {name:name.trim(), email:email.trim().toLowerCase(), notify_email:notifyEmail, notify_push:notifyPush};
   }
 
+  // Pflichtangaben pruefen. Der Name ist noetig, damit die Verkaeuferin weiss,
+  // wer schreibt. Wer per E-Mail antworten lassen will, muss eine angeben -
+  // sonst laeuft die Antwort ins Leere.
+  function identPruefen(){
+    var err=document.getElementById('hp-chat-ident-err');
+    var box=document.getElementById('hp-chat-ident');
+    var nameEl=document.getElementById('hp-chat-name');
+    var mailEl=document.getElementById('hp-chat-email');
+    var willMail=!!(document.getElementById('hp-chat-email-opt')||{}).checked;
+    var name=((nameEl||{}).value||'').trim();
+    var mail=((mailEl||{}).value||'').trim();
+    function zeigen(text,feld){
+      if(box) box.open=true;
+      if(err){ err.textContent=text; err.style.display=''; }
+      if(feld){ feld.style.borderColor='#dc2626'; try{ feld.focus(); }catch(e){} }
+      return false;
+    }
+    if(nameEl) nameEl.style.borderColor='#d1d5db';
+    if(mailEl) mailEl.style.borderColor='#d1d5db';
+    if(err) err.style.display='none';
+    if(!name) return zeigen('Bitte tragen Sie Ihren Namen ein.',nameEl);
+    if(willMail && !mail) return zeigen('Für eine Antwort per E-Mail brauchen wir Ihre E-Mail-Adresse.',mailEl);
+    if(willMail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return zeigen('Diese E-Mail-Adresse sieht nicht richtig aus.',mailEl);
+    return true;
+  }
+
   function doSend(){
     if(_sending) return;
     var inp=document.getElementById('hp-chat-input');
     var text=(inp&&inp.value||'').trim();
+    if(!text && !_pendingImg) return;
+    if(!identPruefen()) return;
     if(_pendingImg){ return doSendImage(text); }
-    if(!text) return;
     var meta=collectMeta();
     _sending=true; if(inp){ inp.value=''; inp.style.height='auto'; }
     // Optimistisch anzeigen

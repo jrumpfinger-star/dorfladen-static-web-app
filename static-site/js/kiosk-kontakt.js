@@ -350,6 +350,28 @@
   }
   function removeImage(id){ delete _pendingImg[id]; render(); }
 
+  // Bild aus der Zwischenablage (Strg+V) direkt im Antwortfeld uebernehmen.
+  // Ein Handler am Dokument reicht: die Antwortfelder werden bei jedem render()
+  // neu gebaut, einzeln angehaengte Handler waeren danach weg.
+  document.addEventListener('paste', function(e){
+    var ziel = e.target;
+    if(!ziel || !ziel.id || ziel.id.indexOf('kk-rpt-') !== 0) return;
+    var dat = e.clipboardData;
+    if(!dat) return;
+    var datei = null;
+    // items enthaelt beim Kopieren aus Bildbearbeitung/Screenshot das Bild
+    for(var i=0; i<(dat.items||[]).length; i++){
+      var it = dat.items[i];
+      if(it.kind === 'file' && /^image\//.test(it.type)){ datei = it.getAsFile(); break; }
+    }
+    if(!datei && dat.files && dat.files.length && /^image\//.test(dat.files[0].type)) datei = dat.files[0];
+    if(!datei) return; // reiner Text: normal einfuegen lassen
+    e.preventDefault();
+    // Der getippte Text geht nicht verloren: render() sichert die Entwuerfe
+    // aus den Antwortfeldern, bevor es die Liste neu aufbaut.
+    stageImage(ziel.id.slice(7), datei);
+  });
+
   // ── Auswahl & Löschen (inkl. Mehrfachauswahl) ──
   function selIds(){ return Object.keys(_sel).filter(function(k){ return _sel[k]; }); }
   function updateActions(){

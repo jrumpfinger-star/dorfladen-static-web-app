@@ -2587,6 +2587,75 @@ nur an Randfarbe und Knöpfen.
 > in einen Timeout. Das sieht wie ein Rückschritt aus, ist aber nur die Adresse.
 > Gegen eine bereitgestellte Umgebung laufen sie durch (23/23 verifiziert).
 
+---
+
+## T-PWA – Installationshinweis stört nicht
+
+Automatisiert in `tests/pwa-install-hinweis.spec.js` (mobil, iPhone-Kennung).
+
+Anlass: „Auf Mobile verhindert die Meldung, dass die Seite auch als App
+installiert werden kann, das Scrollen und es nervt die Kunden."
+
+Zwei Ursachen, beide belegt:
+1. Der iOS-Zweig ersetzte den Textblock über `div > div:last-of-type`. Der trifft
+   die **ganze Flex-Zeile** – dabei verschwanden Bild und **beide** Knöpfe, auch
+   das Kreuz. Der Hinweis liess sich auf dem iPhone nicht mehr wegtippen.
+2. Der Balken hielt keinen Platz frei und verdeckte dauerhaft 72px am unteren
+   Rand.
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-PWA-01 | Schließen-Knopf überlebt den iOS-Text, Tap-Target ≥ 44px |
+| TC-PWA-02 | Body hält Platz in Höhe des Balkens frei |
+| TC-PWA-03 | Nach dem Schließen ist der Platz wieder frei |
+| TC-PWA-04 | Beim ersten Besuch erscheint kein Hinweis |
+| TC-PWA-05 | Einmal weggetippt bleibt er weg |
+| TC-PWA-06 | Blendet sich nach 15 s von selbst aus |
+| TC-PWA-07 | Setzt keinen Bildlauf-Riegel |
+
+> **Zwei Stolpersteine:** `offsetParent` ist bei `position:fixed` **immer null** –
+> damit lässt sich die Sichtbarkeit nicht prüfen (Höhe verwenden). Und
+> `mobile.css` setzt `padding-bottom:0!important` auf den Body; ein normaler
+> Inline-Wert wird davon geschluckt, deshalb `setProperty(..., 'important')`.
+> Ausserdem sperrt das Tagesinfo-Popup den Bildlauf (`position:fixed`) – für den
+> Scroll-Test muss es über `tagespost_seen_<datum>` unterdrückt werden.
+
+### Testlauf-Tabelle (Installationshinweis)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 07.09.2026 | TC-PWA-01..07 | 7/7 | Lokal gegen 127.0.0.1:8895 |
+
+---
+
+## T-KC – „Schreib uns": Pflichtangaben und Einfügen
+
+Automatisiert in `tests/kontakt-chat-pflicht.spec.js` (desktop + mobil),
+Kiosk-Seite in `tests/kiosk-kontakt-haken.spec.js` (K5).
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-KC-01 | Ohne Namen wird nicht gesendet |
+| TC-KC-02 | Mit Namen geht die Nachricht raus |
+| TC-KC-03 | „Antwort per E-Mail" ohne Adresse wird abgelehnt |
+| TC-KC-04 | Unsinnige Adresse wird abgelehnt |
+| TC-KC-05 | Mit gültiger Adresse geht es durch |
+| TC-KC-06 | Der Haken kennzeichnet das E-Mail-Feld sofort als Pflicht |
+| TC-KC-07 | Bild per Strg+V erscheint als Vorschau |
+| TC-KC-08 | Reiner Text beim Einfügen bleibt unangetastet |
+| K5-01..03 | Dasselbe im Kiosk-Antwortfeld, inkl. Erhalt des getippten Textes |
+
+> Der Chat wird **nur** aufgebaut, wenn `/api/cms-config` das Merkmal
+> `kiosk_kontakt: true` liefert – ohne diesen Mock bleibt das Widget unsichtbar
+> und alle Prüfungen laufen in einen Timeout.
+
+### Testlauf-Tabelle (Schreib uns)
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 07.09.2026 | TC-KC-01..08 | 8/8 | Lokal, Desktop |
+| 07.09.2026 | TC-KC-01..08 | 8/8 | Lokal, mobil |
+| 07.09.2026 | K1–K5 (Kiosk) | 15/16 | 1 vorbelastet übersprungen |
+
+
 
 ---
 

@@ -288,3 +288,70 @@ test.describe('Kontakt – Spalten (K4)', () => {
     expect(new Set(lefts).size).toBe(1);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  K5 – Bild per Strg+V ins Antwortfeld einfügen
+// ════════════════════════════════════════════════════
+
+test.describe('Kontakt – Einfügen aus der Zwischenablage (K5)', () => {
+
+  /** Öffnet die erste Konversation, damit das Antwortfeld sichtbar ist. */
+  async function antwortfeldOeffnen(page) {
+    await openKontakt(page);
+    await cards(page).first().click();
+    const ta = page.locator('textarea[id^="kk-rpt-"]').first();
+    await expect(ta).toBeVisible({ timeout: 10000 });
+    return ta;
+  }
+
+  test('K5-01: eingefügtes Bild erscheint als Vorschau', async ({ page }) => {
+    const ta = await antwortfeldOeffnen(page);
+    const id = await ta.getAttribute('id');
+    await page.evaluate(async (feldId) => {
+      const cv = document.createElement('canvas');
+      cv.width = 40; cv.height = 30;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#2e7d4f'; ctx.fillRect(0, 0, 40, 30);
+      const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+      const dt = new DataTransfer();
+      dt.items.add(new File([blob], 'bild.png', { type: 'image/png' }));
+      const ev = new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true });
+      document.getElementById(feldId).dispatchEvent(ev);
+    }, id);
+    // Nach dem Einfügen wird die Liste neu gezeichnet – Vorschaubild erscheint
+    await expect(page.locator('#kontakt-list img[src^="data:image"]').first())
+      .toBeVisible({ timeout: 10000 });
+  });
+
+  test('K5-02: bereits getippter Text bleibt erhalten', async ({ page }) => {
+    const ta = await antwortfeldOeffnen(page);
+    const id = await ta.getAttribute('id');
+    await ta.fill('Danke für die');
+    await page.evaluate(async (feldId) => {
+      const cv = document.createElement('canvas');
+      cv.width = 20; cv.height = 20;
+      cv.getContext('2d').fillRect(0, 0, 20, 20);
+      const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+      const dt = new DataTransfer();
+      dt.items.add(new File([blob], 'b.png', { type: 'image/png' }));
+      document.getElementById(feldId).dispatchEvent(
+        new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    }, id);
+    await expect(page.locator('#kontakt-list img[src^="data:image"]').first())
+      .toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#' + id)).toHaveValue('Danke für die');
+  });
+
+  test('K5-03: reiner Text wird normal eingefügt', async ({ page }) => {
+    const ta = await antwortfeldOeffnen(page);
+    const id = await ta.getAttribute('id');
+    await page.evaluate((feldId) => {
+      const dt = new DataTransfer();
+      dt.setData('text/plain', 'nur Text');
+      document.getElementById(feldId).dispatchEvent(
+        new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    }, id);
+    await page.waitForTimeout(500);
+    await expect(page.locator('#kontakt-list img[src^="data:image"]')).toHaveCount(0);
+  });
+});
