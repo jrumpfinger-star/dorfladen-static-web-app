@@ -411,6 +411,12 @@
   var SOC_IMG_TRIES={};   // url -> Anzahl Ladeversuche
   var SOC_IMG_MAX_TRIES=3;
 
+  // Bild zu einem Gericht - normalisierter Abgleich (siehe social.js).
+  function socMtBild(name){
+    if(typeof M.socMtBildFuer==='function') return M.socMtBildFuer(name);
+    return (M._socMtBilder()||{})[name]||null;
+  }
+
   // Ermittelt je Produkt die Bild-URL - gleiche Logik fuer Vorschau UND Teilen.
   function socialResolveImgMap(selected){
     var imgMap={};
@@ -418,7 +424,8 @@
     var _socMtBilder=M._socMtBilder()||{};var _socialKatalog=M._socialKatalog()||[];var _socFreeItems=M._socFreeItems()||[];
     selected.forEach(function(p){
       var url='';var pName=p.name||p.gericht||'';
-      if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url)url=_socMtBilder[pName].bild_url;
+      var mtHit=socMtBild(pName);
+      if(mtHit&&mtHit.bild_url)url=mtHit.bild_url;
       if(!url){var katItem=_socialKatalog.find(function(k){return k.id===p.id;});if(katItem&&katItem.bild_url)url=katItem.bild_url;}
       if(!url&&p.bild_url)url=p.bild_url;
       if(!url){var freeItem=_socFreeItems.find(function(f){return f.id===p.id;});if(freeItem&&freeItem.bild_data)url=freeItem.bild_data;}
@@ -713,7 +720,23 @@
       return;
     }
     loaded=_imgState.loaded;
-    if(_imgState.failed.length)console.warn('[Social] '+_imgState.failed.length+' Bild(er) nicht ladbar - Platzhalter wird verwendet');
+    // Gescheiterte Bilder waren bisher nur eine Konsolenwarnung - im Laden hat
+    // die niemand offen, der Post ging ohne Fotos raus. Jetzt wird beim ersten
+    // Anlauf sichtbar gewarnt und neu geladen; tippt der Nutzer erneut, wird
+    // bewusst ohne diese Bilder geteilt (kein Sackgassen-Zustand).
+    if(_imgState.failed.length){
+      var _fKey=_imgState.failed.slice().sort().join('|');
+      if(window._socShareOhneBild!==_fKey){
+        window._socShareOhneBild=_fKey;
+        socialStatus('soc-post-status','\u26a0\ufe0f '+_imgState.failed.length+' Bild(er) konnten nicht geladen werden \u2013 versuche erneut. Nochmal auf \u201eTeilen\u201c tippen teilt ohne diese Bilder.',false);
+        try{var _rt=socialGenPreview();if(_rt&&_rt.then)_rt.then(function(){
+          var _s2=socialImgsFromCache(socialResolveImgMap(selected));
+          if(!_s2.failed.length&&!_s2.pending.length){window._socShareOhneBild=null;socialStatus('soc-post-status','\u2705 Bilder geladen \u2013 jetzt auf \u201eTeilen\u201c tippen',true);}
+        });}catch(e){}
+        return;
+      }
+      console.warn('[Social] '+_imgState.failed.length+' Bild(er) nicht ladbar - Platzhalter wird verwendet');
+    }else{window._socShareOhneBild=null;}
     var cv=document.createElement('canvas');
     try{socialDrawCompact(cv,cv.getContext('2d'),540,selected,titel,loaded,2);}
     catch(e){try{socialDrawCompact(cv,cv.getContext('2d'),540,selected,titel,{},2);}catch(e2){socialStatus('soc-post-status','Poster-Export fehlgeschlagen',false);return;}}
@@ -1052,7 +1075,7 @@
   window.socialGenMealPoster=function(idx){
     var sel=socialGatherSelected();var mtItems=sel.filter(function(p){return p.kategorie==='Mittagessen';});var meal=mtItems[idx];if(!meal)return;
     var pName=meal.name||'';var imgUrl='';var _socMtBilder=M._socMtBilder();var _socialKatalog=M._socialKatalog();var _socFreeItems=M._socFreeItems();
-    if(_socMtBilder[pName]&&_socMtBilder[pName].bild_url)imgUrl=_socMtBilder[pName].bild_url;if(!imgUrl&&meal.bild_url)imgUrl=meal.bild_url;if(!imgUrl){var katItem=_socialKatalog.find(function(k){return k.id===meal.id;});if(katItem&&katItem.bild_url)imgUrl=katItem.bild_url;}if(!imgUrl){var freeItem=_socFreeItems.find(function(f){return f.id===meal.id;});if(freeItem&&freeItem.bild_data)imgUrl=freeItem.bild_data;}
+    var _mtHit=socMtBild(pName);if(_mtHit&&_mtHit.bild_url)imgUrl=_mtHit.bild_url;if(!imgUrl&&meal.bild_url)imgUrl=meal.bild_url;if(!imgUrl){var katItem=_socialKatalog.find(function(k){return k.id===meal.id;});if(katItem&&katItem.bild_url)imgUrl=katItem.bild_url;}if(!imgUrl){var freeItem=_socFreeItems.find(function(f){return f.id===meal.id;});if(freeItem&&freeItem.bild_data)imgUrl=freeItem.bild_data;}
     var canvas=document.getElementById('soc-post-canvas');if(!canvas)return;var ctx=canvas.getContext('2d');var W=540,H=540,SCALE=2;canvas.width=W*SCALE;canvas.height=H*SCALE;ctx.setTransform(SCALE,0,0,SCALE,0,0);
     function drawMealPoster(foodImg){
       ctx.fillStyle='#faf5ef';ctx.fillRect(0,0,W,H);var imgAreaH=270;
@@ -1080,11 +1103,17 @@
   window.waKatalogDelete=function(retailerId){dlConfirm({icon:'\uD83D\uDDD1\uFE0F',title:'Produkt l\u00F6schen?',msg:'"'+retailerId+'" wird aus dem Katalog entfernt.',ok:'L\u00F6schen',color:'#dc2626'},function(){socialStatus('wa-katalog-status','\u23F3 L\u00F6sche...',true);fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(retailerId),{method:'DELETE'}).then(function(r){return r.json();}).then(function(res){if(res.success){socialStatus('wa-katalog-status','\u2705 Gel\u00F6scht',true);waKatalogLoad();}else{socialStatus('wa-katalog-status','\u274C '+JSON.stringify(res.response||res),false);}}).catch(function(e){socialStatus('wa-katalog-status','\u274C '+e.message,false);});});};
   window.waKatalogDeleteAll=function(){dlConfirm({icon:'\u26A0\uFE0F',title:'Alle Produkte l\u00F6schen?',msg:'ALLE Produkte werden unwiderruflich entfernt.',ok:'Alle l\u00F6schen',color:'#dc2626'},function(){socialStatus('wa-katalog-status','\u23F3 Lade...',true);fetch(API+'/meta-catalog').then(function(r){return r.json();}).then(function(res){var products=res.products||[];if(!products.length){socialStatus('wa-katalog-status','Bereits leer.',true);return;}socialStatus('wa-katalog-status','\u23F3 L\u00F6sche '+products.length+'...',true);Promise.all(products.map(function(p){return fetch(API+'/meta-catalog?retailer_id='+encodeURIComponent(p.retailer_id||''),{method:'DELETE'}).then(function(r){return r.json();});})).then(function(results){var ok=results.filter(function(r){return r.success;}).length;socialStatus('wa-katalog-status','\u2705 '+ok+'/'+products.length+' gel\u00F6scht',ok===products.length);waKatalogLoad();});}).catch(function(e){socialStatus('wa-katalog-status','\u274C '+e.message,false);});});};
   window.waKatalogUpload=function(){socialStatus('wa-katalog-status','\u23F3 Lade heutige Mittagessen...',true);var todayMeals=M.socialGetTodayMeals();if(!todayMeals.length){socialStatus('wa-katalog-status','\u274C Keine Mittagessen f\u00FCr heute gefunden.',false);return;}var _socMtBilder=M._socMtBilder();
-    M.socialLoadMtBilder(function(){var meals=todayMeals.map(function(m){var hasImg=!!(_socMtBilder[m.gericht]&&_socMtBilder[m.gericht].bild_url);return{gericht:m.gericht,preis:m.preis,has_image:hasImg};});socialStatus('wa-katalog-status','\u23F3 Sende '+meals.length+' Gerichte...',true);fetch(API+'/meta-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({meals:meals})}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('wa-katalog-status','\u274C '+res.error,false);return;}socialStatus('wa-katalog-status','\u2705 '+res.succeeded+'/'+res.total+' aktualisiert',res.failed===0);waKatalogLoad();}).catch(function(e){socialStatus('wa-katalog-status','\u274C '+e.message,false);});});};
-  window.socialSyncMetaCatalog=function(){var selected=socialGatherSelected();var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});if(!mtItems.length){socialStatus('soc-post-status','Keine Mittagessen ausgew\u00e4hlt',false);return;}socialStatus('soc-post-status','\u23F3 Sende...',true);var _socMtBilder=M._socMtBilder();var meals=mtItems.map(function(m){return{gericht:m.name,preis:m.preis,has_image:!!(_socMtBilder[m.name]&&_socMtBilder[m.name].bild_url)};});fetch(API+'/meta-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({meals:meals})}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-post-status','\u274C '+res.error,false);return;}socialStatus('soc-post-status','\u2705 '+res.succeeded+'/'+res.total+' aktualisiert',res.failed===0);}).catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});};
+    M.socialLoadMtBilder(function(){var meals=todayMeals.map(function(m){var hasImg=!!(socMtBild(m.gericht)&&socMtBild(m.gericht).bild_url);return{gericht:m.gericht,preis:m.preis,has_image:hasImg};});socialStatus('wa-katalog-status','\u23F3 Sende '+meals.length+' Gerichte...',true);fetch(API+'/meta-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({meals:meals})}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('wa-katalog-status','\u274C '+res.error,false);return;}socialStatus('wa-katalog-status','\u2705 '+res.succeeded+'/'+res.total+' aktualisiert',res.failed===0);waKatalogLoad();}).catch(function(e){socialStatus('wa-katalog-status','\u274C '+e.message,false);});});};
+  window.socialSyncMetaCatalog=function(){var selected=socialGatherSelected();var mtItems=selected.filter(function(p){return p.kategorie==='Mittagessen';});if(!mtItems.length){socialStatus('soc-post-status','Keine Mittagessen ausgew\u00e4hlt',false);return;}socialStatus('soc-post-status','\u23F3 Sende...',true);var meals=mtItems.map(function(m){return{gericht:m.name,preis:m.preis,has_image:!!(socMtBild(m.name)&&socMtBild(m.name).bild_url)};});fetch(API+'/meta-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({meals:meals})}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-post-status','\u274C '+res.error,false);return;}socialStatus('soc-post-status','\u2705 '+res.succeeded+'/'+res.total+' aktualisiert',res.failed===0);}).catch(function(e){socialStatus('soc-post-status','\u274C '+e.message,false);});};
 
-  // Expose socialLoadMtBilder on window for CMS wochenplan usage
-  window.socialLoadMtBilder = M.socialLoadMtBilder || function(){};
+  // Expose socialLoadMtBilder on window for CMS wochenplan usage.
+  // WICHTIG: nicht ueberschreiben, wenn social.js die Funktion schon gesetzt
+  // hat. Der frueher hier stehende Fallback `|| function(){}` hat die
+  // funktionierende Ladefunktion durch eine leere Attrappe ersetzt (sie war
+  // nie in _socialModule veroeffentlicht) - die Mittagstisch-Bilder wurden
+  // dadurch nie nachgeladen und der Rueckruf nie ausgeloest.
+  if(typeof M.socialLoadMtBilder==='function') window.socialLoadMtBilder=M.socialLoadMtBilder;
+  else if(typeof window.socialLoadMtBilder!=='function') window.socialLoadMtBilder=function(cb){if(cb)cb();};
 
   // ═══════════════════════════════════════════════════════════════════════
   //  VORSCHAU: einpassen, zoomen, Vollbild

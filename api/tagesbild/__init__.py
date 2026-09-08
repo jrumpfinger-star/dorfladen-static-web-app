@@ -3,6 +3,7 @@ Tagesbild – Full-Resolution-Bildproxy fuer die TagesInfo-Lightbox.
 
 GET /api/tagesbild?datei=<dateiname>
 GET /api/tagesbild?sp_id=<sharepoint-item-id>
+GET /api/tagesbild?...&max=<breite>   (optional, 64..2000, Standard 1400)
 
 Die TagesInfo speichert im Post nur kleine 200px-Thumbnails (als data:-URI),
 damit die Liste schnell laedt. Fuer die Lightbox (Bild anklicken = vergroessern)
@@ -48,6 +49,10 @@ FOLDER_TTL = 3600      # 1 h
 URL_TTL = 600          # 10 min (Graph-downloadUrl haelt ~1 h)
 IMG_TTL = 1800         # 30 min fertig verkleinerte Bilddaten
 IMG_MAX = 24           # Obergrenze, damit der Speicher nicht unbegrenzt waechst
+
+STD_BREITE = 1400      # Lightbox-tauglich
+MIN_BREITE = 64        # kleinste sinnvolle Vorschau
+MAX_BREITE = 2000
 
 
 def _cache_get(key, ttl):
@@ -208,9 +213,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if datei and not _valid_datei(datei):
         return _err("ungueltiger Dateiname", 400)
 
+    # Gewuenschte Breite: 44px-Vorschaubilder brauchen kein 1400px-Bild.
+    try:
+        breite = int(req.params.get("max") or STD_BREITE)
+    except ValueError:
+        breite = STD_BREITE
+    breite = max(MIN_BREITE, min(MAX_BREITE, breite))
+
     # Fertiges Bild schon da? Dann ohne Graph-Aufruf und ohne Verkleinern
     # ausliefern - das spart pro Aufruf mehrere Sekunden.
-    schluessel = "img:" + (("id:" + sp_id) if sp_id else ("datei:" + datei))
+    schluessel = "img:" + (("id:" + sp_id) if sp_id else ("datei:" + datei)) + ":" + str(breite)
     fertig = _img_get(schluessel)
     if fertig:
         kopf = _cors()
@@ -225,7 +237,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if sp_id:
         dl, name = _download_url_by_id(token, sp_id)
         if dl:
-            return _liefere(dl, name or datei or "bild.jpg", schluessel)
+            return _liefere(dl, name or datei or "bild.jpg", schluessel, breite)
         # Item-Id loest nicht mehr auf (Bild ersetzt/verschoben) -> ueber den
         # mitgegebenen Dateinamen weiterversuchen statt aufzugeben.
         if not datei:
@@ -239,10 +251,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if not dl:
         return _err("Bild nicht gefunden", 404)
 
-    return _liefere(dl, datei, schluessel)
+    return _liefere(dl, datei, schluessel, breite)
 
 
-def _liefere(dl, datei, schluessel=None):
+def _liefere(dl, datei, schluessel=None, breite=STD_BREITE):
     """Bild herunterladen, verkleinern und mit CORS-Kopfzeilen ausliefern."""
     try:
         r = requests.get(dl, timeout=20)
@@ -256,7 +268,7 @@ def _liefere(dl, datei, schluessel=None):
             from PIL import Image
             import io
             im = Image.open(io.BytesIO(content))
-            max_w = 1400
+            max_w = breite
             if im.width > max_w:
                 ratio = max_w / float(im.width)
                 im = im.resize((max_w, int(im.height * ratio)), Image.LANCZOS)

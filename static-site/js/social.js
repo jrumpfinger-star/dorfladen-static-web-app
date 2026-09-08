@@ -525,7 +525,56 @@
   var _socFreeItems=[];
   var _socFreeCounter=0;
   window._socialMtBilderLoaded=false;
-  function socialLoadMtBilder(cb){ fetch(API+'/social-katalog?action=mt-bilder').then(function(r){return r.json();}).then(function(res){ var bilder=res.bilder||{}; Object.keys(bilder).forEach(function(k){if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64;}); _socMtBilder=bilder; window._socialMtBilderLoaded=true; if(cb)cb(); }).catch(function(){if(cb)cb();}); }
+  var _socMtBilderNorm={};
+
+  // Gerichtsnamen auf eine vergleichbare Form bringen. Die Bilder sind unter
+  // dem Gerichtsnamen abgelegt; ein Leerzeichen, "u." statt "und" oder ein
+  // Umlaut mehr liess den buchstabengenauen Vergleich bisher scheitern - das
+  // Bild war vorhanden, im Post fehlte es trotzdem.
+  function socNormGericht(s){
+    return String(s||'').toLowerCase()
+      .replace(/\u00e4/g,'ae').replace(/\u00f6/g,'oe').replace(/\u00fc/g,'ue').replace(/\u00df/g,'ss')
+      .replace(/\bu\.\s*/g,'und ')
+      .replace(/[^a-z0-9]+/g,'');
+  }
+
+  // Bild zu einem Gericht suchen: erst buchstabengenau, dann normalisiert.
+  function socMtBildFuer(name){
+    if(!name) return null;
+    if(_socMtBilder[name]) return _socMtBilder[name];
+    return _socMtBilderNorm[socNormGericht(name)]||null;
+  }
+
+  function socMtIndexAufbauen(){
+    _socMtBilderNorm={};
+    Object.keys(_socMtBilder).forEach(function(k){
+      var n=socNormGericht(k);
+      if(n&&!_socMtBilderNorm[n]) _socMtBilderNorm[n]=_socMtBilder[k];
+    });
+  }
+
+  function socialLoadMtBilder(cb){
+    fetch(API+'/social-katalog?action=mt-bilder')
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(res){
+        var bilder=res.bilder||{};
+        // bild_url zeigt seit der Proxy-Umstellung auf /api/tagesbild (gleiche
+        // Herkunft, ohne Ablauffrist). base64 wird nur noch beruecksichtigt,
+        // wenn es ausdruecklich angefordert wurde.
+        Object.keys(bilder).forEach(function(k){ if(bilder[k].bild_base64) bilder[k].bild_url=bilder[k].bild_base64; });
+        _socMtBilder=bilder;
+        socMtIndexAufbauen();
+        window._socialMtBilderLoaded=true;
+        if(cb)cb();
+      })
+      .catch(function(e){
+        // Frueher verschluckt: Ein API-Ausfall sah aus wie "keine Bilder
+        // hinterlegt" und der Post ging ohne Fotos raus.
+        window._socMtBilderFehler=e.message||'unbekannt';
+        socialStatus('soc-post-status','\u26a0\ufe0f Mittagstisch-Bilder konnten nicht geladen werden ('+(e.message||'Netzfehler')+')',false);
+        if(cb)cb();
+      });
+  }
 
   // Expose for CMS wochenplan image rendering
   window.socialLoadMtBilder = socialLoadMtBilder;
@@ -534,8 +583,8 @@
   function socialBuildPostItems(){ var wrap=document.getElementById('soc-post-items'); if(!wrap)return; var _prevChecked={}; wrap.querySelectorAll('input.soc-post-wp:checked, input.soc-post-cb:checked').forEach(function(cb){_prevChecked[cb.value]=true;}); var todayMeals=socialGetTodayMeals(); _socialKatalog.sort(function(a,b){return (a.name||'').localeCompare(b.name||'','de');}); var allCats=[]; _socialKatalog.forEach(function(p){var c=p.kategorie||'Sonstiges';if(allCats.indexOf(c)===-1)allCats.push(c);}); var html='';
     html+='<div id="soc-pick-selected" style="display:none;margin-bottom:10px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:8px 12px"><div style="font-size:11px;font-weight:600;color:#16a34a;margin-bottom:4px">&#10003; Ausgew\u00e4hlt:</div><div id="soc-pick-tags"></div></div>';
     if(todayMeals.length){ var days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag']; var isMorgen2=window._socSelectedDay==='morgen'; var mealDate=isMorgen2?new Date(Date.now()+86400000):new Date(); var mealDay=days[mealDate.getDay()]; var mealLabel=isMorgen2?'Morgiges':'Heutiges'; html+='<div style="margin-bottom:10px;background:#f6f7f5;border:1px solid #e6e7e4;border-radius:10px;padding:8px 12px"><div style="font-size:12px;font-weight:600;color:#2e7d4f;margin-bottom:5px">&#127869; '+mealLabel+' Mittagessen ('+esc(mealDay)+')</div>';
-      todayMeals.forEach(function(m){ var wpId='wp-'+m.id; var mtImg=_socMtBilder[m.gericht]; html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #cfe6d6;border-radius:10px;margin-bottom:4px;min-height:44px"><label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer"><input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate(this)" style="width:18px;height:18px;accent-color:#2e7d4f">';
-        if(mtImg&&mtImg.bild_url) html+='<img src="'+esc(mtImg.bild_url)+'" ondblclick="dlImagePopup(this.src,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0;cursor:zoom-in" onerror="this.style.display=\'none\'">';
+      todayMeals.forEach(function(m){ var wpId='wp-'+m.id; var mtImg=socMtBildFuer(m.gericht); html+='<div class="soc-mt-row" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid #cfe6d6;border-radius:10px;margin-bottom:4px;min-height:44px"><label style="display:flex;align-items:center;gap:6px;flex:1;cursor:pointer"><input type="checkbox" class="soc-post-wp" value="'+esc(wpId)+'" data-name="'+esc(m.gericht)+'" data-preis="'+esc(m.preis?m.preis.toFixed(2):'')+'" data-kat="Mittagessen" data-img="'+esc(mtImg&&mtImg.bild_url?mtImg.bild_url:'')+'" onchange="socialPickUpdate(this)" style="width:18px;height:18px;accent-color:#2e7d4f">';
+        if(mtImg&&mtImg.bild_url) html+='<img src="'+esc(mtImg.thumb_url||mtImg.bild_url)+'" data-full="'+esc(mtImg.bild_url)+'" ondblclick="dlImagePopup(this.getAttribute(\'data-full\')||this.src,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0;cursor:zoom-in" onerror="this.style.display=\'none\'">';
         html+='<span style="font-weight:600;font-size:13px;flex:1">'+esc(m.gericht)+'</span>'; if(m.preis) html+='<span style="font-size:12px;color:#2e7d32;font-weight:600">'+m.preis.toFixed(2).replace('.',',')+' &#8364;</span>'; html+='</label>';
         html+='<label title="Bild hochladen" style="cursor:pointer;padding:6px 10px;border-radius:6px;background:#eef6f0;border:1px solid #cfe6d6;font-size:18px;flex-shrink:0;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">&#128247;<input type="file" accept="image/*" onchange="socialMtBildUpload(this,\''+esc(m.gericht).replace(/'/g,"\\'")+'\')" style="display:none"></label>';
         html+='<button class="soc-mt-paste" data-gericht="'+esc(m.gericht).replace(/'/g,"&#39;")+'" onclick="socialMtPasteFocus(this)" title="Bild aus Zwischenablage" style="padding:4px 8px;border-radius:6px;background:#eef6f0;border:1px solid #cfe6d6;font-size:12px;cursor:pointer;flex-shrink:0">&#128203;</button></div>'; }); html+='</div>'; }
@@ -587,11 +636,11 @@
   window.socialPickImgPaste=function(prodId,e){var items=e.clipboardData&&e.clipboardData.items;if(!items)return;for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image')!==-1){e.preventDefault();var f=items[i].getAsFile();if(f){var reader=new FileReader();reader.onload=function(ev){socialPickImgUpload(prodId,ev.target.result);};reader.readAsDataURL(f);}return;}}};
   window.socialPickImgPreview=function(prodId){var img=document.getElementById('soc-pick-img-'+prodId);if(!img)return;var src=img.tagName==='IMG'?img.src:'';if(!src)return;var item=_socialKatalog.find(function(p){return p.id===prodId;});var name=item?item.name:'';var old=document.getElementById('soc-img-popup');if(old)old.remove();var ov=document.createElement('div');ov.id='soc-img-popup';ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer';ov.onclick=function(){ov.remove();};var im=document.createElement('img');im.src=src;im.style.cssText='max-width:90vw;max-height:75vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)';ov.appendChild(im);if(name){var lbl=document.createElement('div');lbl.textContent=name;lbl.style.cssText='color:#fff;font-size:15px;font-weight:600;margin-top:12px;text-align:center;max-width:90vw;word-break:break-word';ov.appendChild(lbl);}var cls=document.createElement('button');cls.textContent='\u2715';cls.style.cssText='position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center';cls.onclick=function(e){e.stopPropagation();ov.remove();};ov.appendChild(cls);document.body.appendChild(ov);};
   window.socialFreeRemove=function(id){_socFreeItems=_socFreeItems.filter(function(f){return f.id!==id;});var list=document.getElementById('soc-free-list');if(list) list.innerHTML=socialRenderFreeItems();socialPickUpdate();};
-  window.socialMtBildUpload=function(input,gericht){if(!input.files||!input.files[0])return;var fd=new FormData();fd.append('gericht',gericht);fd.append('bild',input.files[0]);socialStatus('soc-post-status','Bild wird hochgeladen...',true);fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-post-status',res.error,false);return;}socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" gespeichert!',true);_socMtBilder[gericht]={bild_url:res.bild_url};socialUpdateMtThumb(gericht,res.bild_url);}).catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});};
+  window.socialMtBildUpload=function(input,gericht){if(!input.files||!input.files[0])return;var fd=new FormData();fd.append('gericht',gericht);fd.append('bild',input.files[0]);socialStatus('soc-post-status','Bild wird hochgeladen...',true);fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-post-status',res.error,false);return;}socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" gespeichert!',true);_socMtBilder[gericht]={bild_url:res.bild_url};socMtIndexAufbauen();socialUpdateMtThumb(gericht,res.bild_url);}).catch(function(e){socialStatus('soc-post-status','Upload-Fehler: '+e.message,false);});};
   function socialUpdateMtThumb(gericht,url){var rows=document.querySelectorAll('.soc-mt-row');for(var i=0;i<rows.length;i++){var cb=rows[i].querySelector('.soc-post-wp');if(!cb)continue;if(cb.getAttribute('data-name')!==gericht)continue;var lbl=cb.closest('label');if(!lbl)continue;var existing=lbl.querySelector('img');if(existing){existing.src=url;}else{var img=document.createElement('img');img.src=url;img.style.cssText='width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0';img.onerror=function(){this.style.display='none';};cb.parentNode.insertBefore(img,cb.nextSibling);}break;}socialGenPreview();}
   var _socMtPasteTarget=null;
   window.socialMtPasteFocus=function(btn){_socMtPasteTarget=btn.getAttribute('data-gericht');btn.style.background='#fef08a';btn.textContent='\u23F3 Strg+V';setTimeout(function(){btn.style.background='#fff8e1';btn.textContent='\uD83D\uDCCB';},3000);};
-  document.addEventListener('paste',function(e){if(!_socMtPasteTarget)return;var items=e.clipboardData&&e.clipboardData.items;if(!items)return;for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image/')===0){e.preventDefault();var file=items[i].getAsFile();var gericht=_socMtPasteTarget;_socMtPasteTarget=null;var fd=new FormData();fd.append('gericht',gericht);fd.append('bild',file);socialStatus('soc-post-status','Bild wird hochgeladen...',true);fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-post-status',res.error,false);return;}socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" eingef\u00fcgt!',true);_socMtBilder[gericht]={bild_url:res.bild_url};socialUpdateMtThumb(gericht,res.bild_url);}).catch(function(err){socialStatus('soc-post-status','Paste-Fehler: '+err.message,false);});return;}}});
+  document.addEventListener('paste',function(e){if(!_socMtPasteTarget)return;var items=e.clipboardData&&e.clipboardData.items;if(!items)return;for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image/')===0){e.preventDefault();var file=items[i].getAsFile();var gericht=_socMtPasteTarget;_socMtPasteTarget=null;var fd=new FormData();fd.append('gericht',gericht);fd.append('bild',file);socialStatus('soc-post-status','Bild wird hochgeladen...',true);fetch(API+'/social-katalog?action=mt-bild',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.error){socialStatus('soc-post-status',res.error,false);return;}socialStatus('soc-post-status','Bild f\u00fcr "'+gericht+'" eingef\u00fcgt!',true);_socMtBilder[gericht]={bild_url:res.bild_url};socMtIndexAufbauen();socialUpdateMtThumb(gericht,res.bild_url);}).catch(function(err){socialStatus('soc-post-status','Paste-Fehler: '+err.message,false);});return;}}});
   window.socialPickFilter=function(){var q=(document.getElementById('soc-pick-search').value||'').toLowerCase().trim();var activeCat=document.querySelector('.soc-cat-chip.soc-cat-active');var catFilter=activeCat?activeCat.getAttribute('data-cat'):'';var rows=document.querySelectorAll('#soc-pick-grid .soc-pick-row');var shown=0;rows.forEach(function(row){var name=row.getAttribute('data-search')||'';var cat=row.getAttribute('data-cat')||'';var matchQ=!q||name.indexOf(q)!==-1;var matchCat=!catFilter||cat===catFilter;row.style.display=(matchQ&&matchCat)?'flex':'none';if(matchQ&&matchCat)shown++;});var cnt=document.getElementById('soc-pick-count');if(cnt) cnt.textContent=shown+' / '+_socialKatalog.length+' Produkte';};
   window.socialPickCat=function(btn){document.querySelectorAll('.soc-cat-chip').forEach(function(c){c.classList.remove('soc-cat-active');c.style.background='#fff';c.style.color='#374151';});btn.classList.add('soc-cat-active');btn.style.background='#1f2937';btn.style.color='#fff';socialPickFilter();};
   window.SOC_MAX_ITEMS=3;
@@ -611,7 +660,7 @@
 
   // --- Poster drawing + sharing (loaded from social-poster.js) ---
   // These are heavy functions, kept in a separate continuation
-  window._socialModule={esc:esc,API:API,socialStatus:socialStatus,socialGatherSelected:socialGatherSelected,getFeatureFlags:getFeatureFlags,_socialKatalog:function(){return _socialKatalog;},_socMtBilder:function(){return _socMtBilder;},_socFreeItems:function(){return _socFreeItems;},socialGetTodayMeals:socialGetTodayMeals,socialDrawPoster:null,socialDrawMealPosterAuto:null,socialWrapText:null,socialBuildPostItems:socialBuildPostItems,socialInitBildHandlers:socialInitBildHandlers,lucideIcon:lucideIcon};
+  window._socialModule={esc:esc,API:API,socialStatus:socialStatus,socialGatherSelected:socialGatherSelected,getFeatureFlags:getFeatureFlags,_socialKatalog:function(){return _socialKatalog;},_socMtBilder:function(){return _socMtBilder;},socMtBildFuer:socMtBildFuer,socialLoadMtBilder:socialLoadMtBilder,_socFreeItems:function(){return _socFreeItems;},socialGetTodayMeals:socialGetTodayMeals,socialDrawPoster:null,socialDrawMealPosterAuto:null,socialWrapText:null,socialBuildPostItems:socialBuildPostItems,socialInitBildHandlers:socialInitBildHandlers,lucideIcon:lucideIcon};
 
   // Init when DOM ready + preload data in background
   function _socialInit(){

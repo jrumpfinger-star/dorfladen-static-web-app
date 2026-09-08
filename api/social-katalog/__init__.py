@@ -235,6 +235,10 @@ def load_kategorien():
     return DEFAULT_KATEGORIEN
 
 
+# Breite der 44px-Vorschaubilder im Katalog (2x fuer scharfe Darstellung).
+THUMB_BREITE = 128
+
+
 def _proxy_url(info):
     """Stabile, gleich-origin Bildadresse ueber /api/tagesbild.
 
@@ -259,7 +263,13 @@ def _proxy_url(info):
 
 
 def _use_proxy_urls(eintraege):
-    """bild_url auf den Proxy umbiegen - ausser es sind bereits Inline-Daten."""
+    """bild_url auf den Proxy umbiegen - ausser es sind bereits Inline-Daten.
+
+    Auch `thumb_url` wird umgebogen: Die von Graph gelieferte Vorschauadresse
+    laeuft ebenfalls ab, wodurch die 44px-Bildchen im Katalog nach einiger Zeit
+    verschwanden (onerror blendet sie aus). Ueber den Proxy mit kleiner Breite
+    sind sie dauerhaft gueltig und wenige KB gross.
+    """
     for info in eintraege:
         if not isinstance(info, dict):
             continue
@@ -270,6 +280,7 @@ def _use_proxy_urls(eintraege):
         pu = _proxy_url(info)
         if pu:
             info["bild_url"] = pu
+            info["thumb_url"] = pu + "&max=" + str(THUMB_BREITE)
 
 
 def _refresh_url(token, folder_id, item):
@@ -311,19 +322,25 @@ def handle_get(req, token, folder_id):
     katalog = load_katalog(token, folder_id)
     want_base64 = req.params.get("base64", "") == "1"
 
-    # Parallel: refresh download URLs (they expire after ~1h)
-    items_with_bild = [item for item in katalog if item.get("bild_datei")]
+    # Die SharePoint-Downloadadressen laufen nach ~1 h ab. Sie aufzufrischen
+    # kostet einen Graph-Aufruf je Eintrag (45 pro Kiosk-Start) und meist ein
+    # Zurueckschreiben des ganzen Katalogs. Seit die Bilder ueber /api/tagesbild
+    # ausgeliefert werden, wird die aufgefrischte Adresse nur noch fuer die
+    # base64-Umwandlung gebraucht - sonst ueberschreibt _use_proxy_urls sie
+    # ohnehin. Deshalb nur noch in diesem Fall auffrischen.
     changed = False
-    if items_with_bild:
-        with ThreadPoolExecutor(max_workers=8) as pool:
-            futures = {pool.submit(_refresh_url, token, folder_id, item): item for item in items_with_bild}
-            for f in as_completed(futures):
-                try:
-                    _, was_changed = f.result()
-                    if was_changed:
-                        changed = True
-                except:
-                    pass
+    if want_base64:
+        items_with_bild = [item for item in katalog if item.get("bild_datei")]
+        if items_with_bild:
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = {pool.submit(_refresh_url, token, folder_id, item): item for item in items_with_bild}
+                for f in as_completed(futures):
+                    try:
+                        _, was_changed = f.result()
+                        if was_changed:
+                            changed = True
+                    except:
+                        pass
     if changed:
         # thumb_url ist fluechtig -> nicht mit persistieren (bleibt in der Response).
         persist = [{k: v for k, v in it.items() if k != "thumb_url"} for it in katalog]
