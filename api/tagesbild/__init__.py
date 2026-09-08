@@ -2,11 +2,22 @@
 Tagesbild – Full-Resolution-Bildproxy fuer die TagesInfo-Lightbox.
 
 GET /api/tagesbild?datei=<dateiname>
+GET /api/tagesbild?sp_id=<sharepoint-item-id>
 
 Die TagesInfo speichert im Post nur kleine 200px-Thumbnails (als data:-URI),
 damit die Liste schnell laedt. Fuer die Lightbox (Bild anklicken = vergroessern)
 liefert dieser Endpoint das Original aus dem SharePoint-Ordner "SocialMedia"
 in voller Aufloesung. Der Dateiname stammt aus dem Feld `bild_datei` des Items.
+
+Zweiter Einsatzzweck: stabile Bildquelle fuer Katalog- und Mittagstisch-Bilder.
+Die in SharePoint gespeicherten `download.aspx`-URLs tragen ein befristetes
+`tempauth`-Token und sind nach Ablauf tot (401); ausserdem sind sie
+cross-origin und wuerden ein Canvas "tainten", sodass der Social-Poster das
+Bild nicht exportieren kann. Ueber diesen Proxy kommen die Bilder
+gleich-origin, ohne Ablaufdatum und ohne Canvas-Verunreinigung.
+
+`sp_id` ist dabei der robusteste Weg: die SharePoint-Item-Id bleibt auch dann
+gueltig, wenn die Datei umbenannt wird, und umgeht Sonderzeichen im Namen.
 
 Robust: kein base64-Ballast im Haupt-Payload; das grosse Bild wird erst beim
 Klick geladen. Kurzer In-Memory-Cache reduziert Graph-Aufrufe.
@@ -16,6 +27,7 @@ import os
 import re
 import time
 import threading
+from urllib.parse import quote
 
 import msal
 import requests
@@ -34,6 +46,8 @@ _cache = {}
 _cache_lock = threading.Lock()
 FOLDER_TTL = 3600      # 1 h
 URL_TTL = 600          # 10 min (Graph-downloadUrl haelt ~1 h)
+IMG_TTL = 1800         # 30 min fertig verkleinerte Bilddaten
+IMG_MAX = 24           # Obergrenze, damit der Speicher nicht unbegrenzt waechst
 
 
 def _cache_get(key, ttl):
@@ -47,6 +61,25 @@ def _cache_get(key, ttl):
 def _cache_set(key, val):
     with _cache_lock:
         _cache[key] = {"val": val, "ts": time.time()}
+
+
+def _img_get(key):
+    return _cache_get(key, IMG_TTL)
+
+
+def _img_set(key, val):
+    """Fertig verkleinertes Bild merken und den Speicher begrenzen.
+
+    Ohne diesen Zwischenspeicher laedt jeder Aufruf das 2-20 MB grosse Original
+    erneut von SharePoint und verkleinert es neu (gemessen 5-20 s je Bild).
+    """
+    with _cache_lock:
+        _cache[key] = {"val": val, "ts": time.time()}
+        bilder = [(k, v["ts"]) for k, v in _cache.items() if k.startswith("img:")]
+        if len(bilder) > IMG_MAX:
+            bilder.sort(key=lambda x: x[1])
+            for k, _ in bilder[:len(bilder) - IMG_MAX]:
+                _cache.pop(k, None)
 
 
 def _cors():
@@ -95,7 +128,8 @@ def _download_url(token, folder_id, filename):
     if cached:
         return cached
     h = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
-    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{folder_id}:/{filename}"
+    url = (f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/"
+           f"{folder_id}:/{quote(filename, safe='')}")
     r = requests.get(url, headers=h, timeout=15)
     if r.status_code == 200:
         dl = r.json().get("@microsoft.graph.downloadUrl", "")
@@ -103,6 +137,29 @@ def _download_url(token, folder_id, filename):
             _cache_set(key, dl)
         return dl
     return ""
+
+
+def _download_url_by_id(token, sp_id):
+    """Download-URL + Dateiname ueber die SharePoint-Item-Id aufloesen.
+
+    Unabhaengig vom Dateinamen und damit immun gegen Sonderzeichen und
+    spaetere Umbenennungen. Rueckgabe: (download_url, name).
+    """
+    key = "id:" + sp_id
+    cached = _cache_get(key, URL_TTL)
+    if cached:
+        return cached
+    h = {"Authorization": "Bearer " + token, "Accept": "application/json"}
+    url = f"https://graph.microsoft.com/v1.0/drives/{SP_DRIVE}/items/{sp_id}"
+    r = requests.get(url, headers=h, timeout=15)
+    if r.status_code == 200:
+        data = r.json()
+        dl = data.get("@microsoft.graph.downloadUrl", "")
+        if dl:
+            val = (dl, data.get("name", ""))
+            _cache_set(key, val)
+            return val
+    return ("", "")
 
 
 _MIME = {
@@ -120,20 +177,59 @@ def _err(msg, code):
     return func.HttpResponse(msg, status_code=code, headers=_cors())
 
 
+def _valid_datei(name):
+    """Dateiname ohne Pfadanteil.
+
+    Umlaute und andere Nicht-ASCII-Zeichen sind ausdruecklich erlaubt: Die
+    Bilder werden nach dem Gericht benannt (z. B.
+    "mt_..._champignonsrahmsosse_ae3590.png" mit scharfem S), und eine reine
+    ASCII-Pruefung hat solche Dateien faelschlich abgewiesen. Verboten bleibt
+    alles, womit man den Ordner verlassen koennte.
+    """
+    if not name or len(name) > 300:
+        return False
+    if any(c in name for c in ("/", "\\", ":", "?", "#", "%")):
+        return False
+    if ".." in name:
+        return False
+    return not any(ord(c) < 32 for c in name)
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=200, headers=_cors())
 
     datei = (req.params.get("datei") or "").strip()
-    if not datei:
-        return _err("datei fehlt", 400)
-    # Pfad-Traversal verhindern: nur einfache Dateinamen erlauben.
-    if not re.match(r"^[A-Za-z0-9._-]+$", datei):
+    sp_id = (req.params.get("sp_id") or "").strip()
+    if not datei and not sp_id:
+        return _err("datei oder sp_id fehlt", 400)
+    if sp_id and not re.match(r"^[A-Za-z0-9!._-]{1,200}$", sp_id):
+        return _err("ungueltige sp_id", 400)
+    if datei and not _valid_datei(datei):
         return _err("ungueltiger Dateiname", 400)
+
+    # Fertiges Bild schon da? Dann ohne Graph-Aufruf und ohne Verkleinern
+    # ausliefern - das spart pro Aufruf mehrere Sekunden.
+    schluessel = "img:" + (("id:" + sp_id) if sp_id else ("datei:" + datei))
+    fertig = _img_get(schluessel)
+    if fertig:
+        kopf = _cors()
+        kopf["Content-Type"] = fertig[1]
+        kopf["Cache-Control"] = "public, max-age=86400"
+        return func.HttpResponse(fertig[0], status_code=200, headers=kopf)
 
     token = _get_token()
     if not token:
         return _err("Auth fehlgeschlagen", 500)
+
+    if sp_id:
+        dl, name = _download_url_by_id(token, sp_id)
+        if dl:
+            return _liefere(dl, name or datei or "bild.jpg", schluessel)
+        # Item-Id loest nicht mehr auf (Bild ersetzt/verschoben) -> ueber den
+        # mitgegebenen Dateinamen weiterversuchen statt aufzugeben.
+        if not datei:
+            return _err("Bild nicht gefunden", 404)
 
     folder_id = _find_folder(token)
     if not folder_id:
@@ -143,6 +239,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     if not dl:
         return _err("Bild nicht gefunden", 404)
 
+    return _liefere(dl, datei, schluessel)
+
+
+def _liefere(dl, datei, schluessel=None):
+    """Bild herunterladen, verkleinern und mit CORS-Kopfzeilen ausliefern."""
     try:
         r = requests.get(dl, timeout=20)
         if r.status_code != 200:
@@ -167,6 +268,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             ctype = "image/jpeg"
         except Exception:
             pass  # PIL fehlt/Fehler: Original unveraendert ausliefern
+        if schluessel:
+            _img_set(schluessel, (content, ctype))
         headers = _cors()
         headers["Content-Type"] = ctype
         # Bild darf gecacht werden (Inhalt aendert sich pro Dateiname nicht).

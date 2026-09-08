@@ -6,6 +6,7 @@ import requests
 import base64
 import uuid
 from datetime import datetime
+from urllib.parse import quote
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------- config ----------
@@ -234,6 +235,43 @@ def load_kategorien():
     return DEFAULT_KATEGORIEN
 
 
+def _proxy_url(info):
+    """Stabile, gleich-origin Bildadresse ueber /api/tagesbild.
+
+    Die in SharePoint gespeicherten `download.aspx`-URLs tragen ein befristetes
+    `tempauth`-Token. Laeuft es ab, liefert SharePoint 401 und das Bild fehlt im
+    Post, obwohl es existiert. Ausserdem sind diese URLs cross-origin ohne
+    CORS-Freigabe: Der Social-Poster kann ein damit gezeichnetes Canvas nicht
+    exportieren ("tainted") und faellt auf ein Poster ganz ohne Bilder zurueck.
+
+    Der Proxy loest beides: keine Ablauffrist und gleiche Herkunft.
+    """
+    if info.get("bild_sp_id"):
+        u = "/api/tagesbild?sp_id=" + quote(str(info["bild_sp_id"]), safe="")
+        # Dateiname als Rueckfallebene mitgeben: Falls die Item-Id nicht mehr
+        # aufloest (Bild ersetzt/verschoben), findet der Proxy es ueber den Namen.
+        if info.get("bild_datei"):
+            u += "&datei=" + quote(str(info["bild_datei"]), safe="")
+        return u
+    if info.get("bild_datei"):
+        return "/api/tagesbild?datei=" + quote(str(info["bild_datei"]), safe="")
+    return ""
+
+
+def _use_proxy_urls(eintraege):
+    """bild_url auf den Proxy umbiegen - ausser es sind bereits Inline-Daten."""
+    for info in eintraege:
+        if not isinstance(info, dict):
+            continue
+        if str(info.get("bild_base64") or "").startswith("data:"):
+            continue
+        if str(info.get("bild_url") or "").startswith("data:"):
+            continue
+        pu = _proxy_url(info)
+        if pu:
+            info["bild_url"] = pu
+
+
 def _refresh_url(token, folder_id, item):
     """Refresh download URL + thumbnail URL for a single item. Returns (item, changed)."""
     if not item.get("bild_datei"):
@@ -306,6 +344,11 @@ def handle_get(req, token, folder_id):
                             katalog[idx]["bild_url"] = result
                     except:
                         pass
+
+    # Bilder gleich-origin und ohne Ablauffrist ausliefern (siehe _proxy_url).
+    # Muss NACH dem Speichern und nach der base64-Umwandlung geschehen, damit
+    # weder die SharePoint-URL ueberschrieben noch der Download gestoert wird.
+    _use_proxy_urls(katalog)
 
     kategorien = load_kategorien()
     return ok({"success": True, "kategorien": kategorien, "items": katalog})
@@ -385,7 +428,9 @@ def handle_post(req, token, folder_id):
     if not save_katalog(token, folder_id, katalog):
         return err("Katalog konnte nicht gespeichert werden", 500)
 
-    return ok({"success": True, "item": entry})
+    antwort = dict(entry)
+    _use_proxy_urls([antwort])
+    return ok({"success": True, "item": antwort})
 
 
 def handle_patch(req, token, folder_id):
@@ -440,7 +485,9 @@ def handle_patch(req, token, folder_id):
     if not save_katalog(token, folder_id, katalog):
         return err("Katalog konnte nicht gespeichert werden", 500)
 
-    return ok({"success": True, "item": katalog[found]})
+    antwort = dict(katalog[found])
+    _use_proxy_urls([antwort])
+    return ok({"success": True, "item": antwort})
 
 
 def handle_delete(req, token, folder_id):
@@ -538,6 +585,7 @@ def handle_mt_bilder_get(req, token, folder_id):
                             bilder[gericht]["bild_base64"] = result
                     except:
                         pass
+    _use_proxy_urls(list(bilder.values()))
     return ok({"success": True, "bilder": bilder})
 
 
@@ -591,7 +639,11 @@ def handle_mt_bilder_post(req, token, folder_id):
         "aktualisiert": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     save_mt_bilder(token, folder_id, bilder)
-    return ok({"success": True, "gericht": gericht, "bild_url": bild_url})
+    # Dem Kiosk die Proxy-Adresse zurueckgeben, damit das eben hochgeladene Bild
+    # sofort gleich-origin geladen wird (sonst waere es bis zum naechsten
+    # Neuladen cross-origin und wuerde den Poster-Canvas "tainten").
+    return ok({"success": True, "gericht": gericht,
+               "bild_url": _proxy_url(bilder[gericht]) or bild_url})
 
 
 def handle_mt_bilder_delete(req, token, folder_id):
