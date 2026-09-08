@@ -256,7 +256,7 @@ beseitigt. Das Prüfskript erfasst jetzt zusätzlich die Rollstreifen `.mb-days`
 
 | Reiter | Aufgabe | Stand |
 | --- | --- | --- |
-| **Metzger Mair** | T032 | Liefertagsleiste (`.mb-days`) und Warengruppen-Sprungleiste (`.mb-jump`) vom Rollstreifen auf Raster/Umbruch, Datum `.d2` schneidet nicht mehr ab. Regelprüfung 0 Befunde. **Offen:** die Seitenhöhe — 15,9 Bildschirme bei 320 px — bleibt der größte Hebel und ist **nicht abgenommen**. |
+| **Metzger Mair** | T032 | Liefertagsleiste (`.mb-days`) und Warengruppen-Sprungleiste (`.mb-jump`) vom Rollstreifen auf Raster/Umbruch, Datum `.d2` schneidet nicht mehr ab. **Nur wählbare Liefertage:** die strukturellen Nicht-Liefertage (Di, Mi, Fr, Sa, So) werden ausgeblendet, übrig bleiben Do und Mo. **Portions-Chips verschlankt:** waren 62 px hoch (zwei erzwungene 44-px-Innenknöpfe + Innenabstand), jetzt ist der Chip selbst das 44-px-Ziel, innere Knöpfe schlank. Regelprüfung 0 Befunde. **Offen:** die reine Seitenhöhe (15,3 Bildschirme bei 320 px, bedingt durch ~60 Artikel à 44 px Zeilenhöhe) — inhärent an die 44-px-Regel, nicht abgenommen. |
 | **Social** | T033 | Warenplättchen und Freitext der Beitragsvorschau kürzten per Inline-Stil (`max-width:140px`/`ellipsis`); über die Signatur in `#panel-social` auf Umbruch gestellt. Der **Katalogumbau T026** (statt 469 offener Felder höchstens 20) steht noch aus. |
 | **Kalender** | T034 | Wochenleiste vom Rollstreifen auf Raster, `.dnum`-Tageszahl kappt nicht mehr. Regelprüfung 0 Befunde. |
 | **Kontakt** | T035 | Ellipsis-Verschnitt und Fettschrift (800/700) beseitigt, Auswahl-Ankreuzfeld überlappt den Pfeil nicht mehr, Kopf bricht bei 320 px um. Regelprüfung 0 Befunde. |
