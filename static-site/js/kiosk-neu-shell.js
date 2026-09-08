@@ -89,69 +89,45 @@
     return kachel;
   };
 
-  // ── Bäcker: nur Bäckerei und Liefertag bleiben stehen ────────────────
+  // ── Bäcker: Liefertag zuerst, dann Bäckerei ─────────────────────────
   //
   // Der Kopf des Bäcker-Reiters ist ein einziger Block (.bk-sticky). Das
-  // Gestaltungsblatt dreht seine Reihenfolge so, dass Bäckereileiste und
-  // Tagesleiste unten liegen. Damit beim Scrollen genau diese Scheibe
-  // stehen bleibt und der Rest darüber hinausgeschoben wird, muss `top`
-  // negativ sein — um die Höhe des Teils, der wegscrollen darf.
+  // Fachmodul baut ihn in der Reihenfolge Unterreiter, Liefertag, Hinweise,
+  // Bäckerei, Status, Werkzeuge auf.
   //
-  // Diese Höhe kann nur der Browser kennen: Der Testbetrieb-Hinweis und der
-  // Rücksetz-Knopf erscheinen je nach Lage, und der Statustext bricht je
-  // nach Breite um. Deshalb wird nach jeder Änderung neu gemessen.
-  var kopfLauf = null;
-
-  /**
-   * Setzt den Versatz, mit dem der Bäcker-Kopf einrastet.
-   *
-   * Alles oberhalb der Bäckereileiste (Statusblock, Hinweise, Werkzeuge)
-   * darf beim Scrollen hinausgeschoben werden; Bäckerei und Liefertag
-   * bleiben stehen. Der Versatz ist deshalb negativ und so groß wie der
-   * Teil, der wegdarf.
-   *
-   * Zwei Feinheiten, die beim Bauen Zeit gekostet haben:
-   *  - Gemessen wird der Abstand zwischen zwei Rechtecken desselben
-   *    Elternelements. Der bleibt gleich, ob der Kopf anliegt oder nicht -
-   *    `offsetTop` wich um ein paar Pixel ab.
-   *  - Der Bezugsrahmen für `top` beginnt am Innenrand des Reiters, nicht
-   *    an dessen Außenkante. Ohne diesen Ausgleich säße der Kopf um den
-   *    Innenabstand zu tief und die Zeile darunter schaute darüber hervor.
-   *
-   * Nachgezogen wird auch beim Scrollen: Symbole und Schriften laden nach
-   * und verschieben den Kopf sonst um wenige Pixel gegen die Oberkante.
-   */
-  function baeckerKopfSetzen() {
+  // Nach dem Arbeitsablauf gehört der Liefertag nach oben: Er ist das
+  // Hauptmerkmal, nach dem ausgewählt wird — erst danach die Bäckerei. Beide
+  // sollen außerdem beim Blättern durch die Artikelliste stehen bleiben.
+  //
+  // Beides zusammen geht nur, wenn sie ein gemeinsamer Block sind. Den legt
+  // diese Schicht an und hängt Liefertag und Bäckerei hinein; das Fachmodul
+  // bleibt unberührt und baut den Kopf weiter so auf wie bisher. Nach jedem
+  // Neuaufbau stellt der Beobachter die Ordnung wieder her.
+  function baeckerKopfOrdnen() {
     var kopf = document.querySelector('#panel-baecker .bk-sticky');
     if (!kopf) return;
-    var erster = kopf.querySelector('.bk-sub');
-    if (!erster) { kopf.style.top = '0px'; return; }
 
-    var k = kopf.getBoundingClientRect();
-    var e = erster.getBoundingClientRect();
-    var weg = Math.max(0, Math.round(e.top - k.top));
+    // Bereits umgehängt (dann liegt die Tagesleiste im festen Block) oder
+    // in dieser Ansicht gar nicht vorhanden (Verlauf, Artikel).
+    var tage = kopf.querySelector(':scope > .bk-days');
+    if (!tage) return;
 
-    var reiter = kopf.closest('.k-panel');
-    var luft = reiter ? (parseFloat(getComputedStyle(reiter).paddingTop) || 0) : 0;
+    var fest = kopf.parentNode.querySelector(':scope > .kneu-bk-fest');
+    if (!fest) {
+      fest = document.createElement('div');
+      fest.className = 'kneu-bk-fest';
+      // Bewusst neben den Kopf, nicht hinein: Ein haftender Block bleibt nur
+      // innerhalb seines Elternteils stehen. Im Kopf waere er beim ersten
+      // Dutzend Artikel wieder verschwunden; als Geschwister des Kopfes
+      // begleitet er die ganze Liste.
+      kopf.parentNode.insertBefore(fest, kopf);
+    }
 
-    var neu = -(weg + luft) + 'px';
-    if (kopf.style.top !== neu) kopf.style.top = neu;
-  }
-
-  function baeckerKopf() {
-    if (kopfLauf) return;
-    kopfLauf = requestAnimationFrame(function () {
-      kopfLauf = null;
-      try { baeckerKopfSetzen(); }
-      catch (err) { /* Darstellung darf die Bedienung nie blockieren */ }
-    });
-  }
-  KNeu.baeckerKopf = baeckerKopf;
-
-  function baeckerKopfBeobachten() {
-    var reiter = document.getElementById('panel-baecker');
-    if (!reiter) return;
-    reiter.addEventListener('scroll', baeckerKopf, { passive: true });
+    var beschriftung = kopf.querySelector(':scope > .bk-days-lbl');
+    var baeckerei = kopf.querySelector(':scope > .bk-btabs');
+    if (beschriftung) fest.appendChild(beschriftung);
+    fest.appendChild(tage);
+    if (baeckerei) fest.appendChild(baeckerei);
   }
 
   // Das Tagesfeld erscheint erst, wenn die Tagesleiste weggescrollt ist.
@@ -426,7 +402,7 @@
     leiste.addEventListener('click', function () {
       symboleNachziehen();
       baeckerWerkzeuge();
-      baeckerKopf();
+      baeckerKopfOrdnen();
       mittagTagFeld();
       socialKatalog();
       kalenderDatumswahl();
@@ -444,7 +420,7 @@
     var beob = new MutationObserver(function () {
       symboleNachziehen();
       baeckerWerkzeuge();
-      baeckerKopf();
+      baeckerKopfOrdnen();
       mittagTagFeld();
       socialKatalog();
       kalenderDatumswahl();
@@ -456,16 +432,14 @@
   function start() {
     reiterBeobachten();
     inhalteBeobachten();
-    baeckerKopfBeobachten();
     mittagScrollBeobachten();
     mittagTagBeobachten();
     symboleNachziehen();
     baeckerWerkzeuge();
-    baeckerKopf();
+    baeckerKopfOrdnen();
     mittagTagFeld();
     socialKatalog();
     kalenderDatumswahl();
-    window.addEventListener('resize', baeckerKopf);
     document.documentElement.classList.add('kneu');
   }
 

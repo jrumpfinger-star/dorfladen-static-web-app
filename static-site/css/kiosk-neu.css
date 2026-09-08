@@ -2461,35 +2461,68 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 
 /* Ab Tablet passt der Statusblock wieder in eine Zeile. */
 
-/* ── 14.11  Wichtiges bleibt stehen, auch auf dem Handy ──────────────────
+/* ── 14.11  Liefertag zuerst, und er bleibt stehen ───────────────────────
  *
  * Das Grundblatt fixiert den Kopf erst ab 900 px Breite - mit gutem Grund:
  * mit 645 px haette er auf dem Handy die halbe Liste verdeckt.
  *
- * Jetzt bleibt nur noch die Scheibe stehen, ohne die man sich beim
- * 30. Artikel verirrt: welche Baeckerei und welcher Liefertag. Damit sie
- * am unteren Rand des Kopfes liegt und beim Hochschieben als letzte
- * verschwindet, wird der Kopf zur Spalte und die Reihenfolge per `order`
- * gedreht - Statusblock, Hinweise und Werkzeuge stehen darueber und
- * scrollen weg, sobald man sie gelesen hat.
+ * Nach dem Arbeitsablauf gehoert der Liefertag nach oben: Er ist das
+ * Hauptmerkmal, nach dem ausgewaehlt wird, danach erst die Baeckerei. Beide
+ * muessen ausserdem stehen bleiben, damit man sich beim 30. Artikel nicht
+ * verirrt.
  *
- * Den genauen Versatz kann nur der Browser kennen (der Testbetrieb-Hinweis
- * und der Ruecksetz-Knopf erscheinen je nach Lage). Ihn setzt
- * `baeckerKopf()` in js/kiosk-neu-shell.js als `top`.
+ * Beides zusammen geht nur, wenn sie ein gemeinsamer Block sind. Den legt
+ * `baeckerKopfOrdnen()` in js/kiosk-neu-shell.js an - das Fachmodul bleibt
+ * unberuehrt. Hier bleibt dieser Block oben stehen, waehrend Statuskarte,
+ * Hinweise und Werkzeuge darunter wegscrollen.
  */
 #panel-baecker .bk-sticky{
-  position:sticky;
-  top:0;                       /* wird von kiosk-neu-shell.js ueberschrieben */
-  z-index:6;
+  position:static;
   display:flex;
   flex-direction:column;
   margin:0 calc(var(--pad) * -1);
   padding:0 var(--pad);
+  background:none;
+  box-shadow:none;
+}
+
+#panel-baecker .kneu-bk-fest{
+  position:sticky;
+  top:0;
+  z-index:7;
+  margin:0 calc(var(--pad) * -1);
+  padding:2px var(--pad) 4px;
   background:var(--flaeche);
   box-shadow:0 7px 10px -9px rgba(15,42,30,.45);
 }
+/* Die Baeckereiauswahl steht unter dem Liefertag - erst wann, dann wer.
+   Sie war ein waagerechter Rollstreifen mit fester Zeile: Zwei Knoepfe zu
+   je 148 px passten nicht in 317 px, der zweite Name war angeschnitten und
+   eine Bildlaufleiste fraß zwei Pixel Hoehe. Jetzt bricht die Zeile um und
+   die Namen stehen vollstaendig. */
+#panel-baecker .kneu-bk-fest > .bk-btabs{
+  display:flex;
+  flex-wrap:wrap;
+  overflow:visible;
+  gap:6px;
+  margin:4px 0 0;
+}
+#panel-baecker .kneu-bk-fest > .bk-btabs > button{
+  flex:1 1 auto;
+  min-width:0;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+}
+#panel-baecker .kneu-bk-fest > .bk-btabs > button *{
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  max-width:none !important;
+}
+#panel-baecker .kneu-bk-fest > .bk-days{ margin-bottom:0 }
 
-/* Reihenfolge: erst das Gelesene, unten das dauerhaft Gebrauchte. */
+/* Reihenfolge des Restes: erst das Gelesene, dann die Werkzeuge. */
 #panel-baecker .bk-sticky > *          { order:1 }
 #panel-baecker .bk-sticky > .bk-stat   { order:2 }
 #panel-baecker .bk-sticky > .bk-offen  { order:3 }
@@ -2497,8 +2530,6 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 #panel-baecker .bk-sticky > .bk-tools  { order:5 }
 #panel-baecker .bk-sticky > .bk-sortnote{ order:6 }
 #panel-baecker .bk-sticky > .bk-sub    { order:7 }
-#panel-baecker .bk-sticky > .bk-days-lbl{ order:8 }
-#panel-baecker .bk-sticky > .bk-days   { order:9; margin-bottom:0 }
 
 /* Die Baeckereileiste ist als Filterleiste selbst fixiert (top:-12px) und
    rastete dadurch unabhaengig vom Kopf ein - sie sass um

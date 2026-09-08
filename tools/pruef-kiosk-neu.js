@@ -201,7 +201,7 @@ function messen() {
    * Ein Streifen, den man schieben muss, verbirgt, was es ueberhaupt gibt.
    * Filter und Werkzeugleisten muessen vollstaendig sichtbar sein.
    */
-  document.querySelectorAll('.k-app .k-filter-bar, .k-app .bk-tools, .k-app .k-day-bar, .k-app .bk-days, .k-app .bk-sub, .k-app .mb-days, .k-app .mb-jump, .k-app .kal-days').forEach((el) => {
+  document.querySelectorAll('.k-app .k-filter-bar, .k-app .bk-tools, .k-app .k-day-bar, .k-app .bk-days, .k-app .bk-sub, .k-app .bk-btabs, .k-app .mb-days, .k-app .mb-jump, .k-app .kal-days').forEach((el) => {
     if (!sichtbar(el)) return;
     const s = getComputedStyle(el);
     const rollt = (s.overflowX === 'auto' || s.overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 2;
