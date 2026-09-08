@@ -865,7 +865,31 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .mb-subs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:4px 0 }
 .mb-sub{ flex:0 0 auto; min-height:var(--tap-min); border-radius:999px; padding:8px 14px }
 .mb-chips, .mb-quick{ display:flex; flex-wrap:wrap; gap:6px }
-.mb-chip{ min-height:var(--tap-min); border-radius:999px; padding:8px 14px; font-size:13px }
+/* Portions-Chip: Der Chip selbst ist das 44-px-Antippziel; die inneren Knöpfe
+   (Portion ändern / entfernen) dürfen deshalb ihre natürliche, schlanke Größe
+   behalten. Ohne diese Befreiung addierten sich zwei erzwungene 44-px-Knöpfe
+   plus 8-px-Innenabstand zu einem 62 px hohen, überdimensionierten Feld. */
+.mb-chip{
+  min-height:var(--tap-min);
+  border-radius:999px;
+  padding:0 4px 0 2px;
+  font-size:13px;
+  gap:1px;
+}
+.mb-chip .lab{
+  min-height:0 !important;
+  min-width:0 !important;
+  align-self:stretch;
+  padding:0 2px 0 12px !important;
+}
+.mb-chip .x{
+  min-height:0 !important;
+  min-width:0 !important;
+  align-self:stretch;
+  padding:0 9px !important;
+  font-size:15px;
+}
+.mb-chip.hw .lab{ padding:0 2px 0 12px !important }
 @container liste (min-width:960px){
   .mb-liste{ --mb-sp:470px }
 }
