@@ -941,6 +941,20 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 #panel-metzgerbest .mb-foot .mb-btn,
 #panel-metzgerbest .mb-foot .mb-send{ order:2 }
 
+/* Der „geschätzt mindestens"-Betrag half beim Bestellen nie weiter: Er ist
+   eine Schätzung, abgerechnet wird ohnehin nach Gewicht durch den Metzger.
+   Er kostete aber eine eigene Zeile in der Fußleiste und entfällt deshalb.
+   Die Fußleiste führt zuerst die vier Zähler (Positionen, Kilo, Stück,
+   Vakuum); alles danach ist der Schätzwert. */
+#panel-metzgerbest .mb-foot .mb-st:nth-of-type(n+5){ display:none }
+
+/* Auf dem Handy zählt jeder Millimeter. Positionen, Kilo, Stück und
+   Vakuumzahl stehen als Zwischenstand in der Liste darüber ohnehin fest;
+   in der Fußleiste bleiben die beiden Knöpfe, um die es dort geht. */
+@media (max-width:699px){
+  #panel-metzgerbest .mb-foot .mb-st{ display:none }
+}
+
 /* Ab 620 px steht der Name in einer eigenen Spalte, die starr bis zu 230 px
    breit war — auch bei einem kurzen Namen wie „Rouladen". Den Portions-Badges
    blieb dadurch so wenig Platz, dass sie einzeln untereinander umbrachen,
@@ -1122,6 +1136,61 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 }
 /* „45 Produkte" war mit 10 px kaum zu entziffern. */
 #panel-social div[style*="font-size:10px"]{ font-size:12px !important }
+
+/* ── T026  Katalog: ruhige Zeilen statt Formularteppich ─────────────────
+ *
+ * Der Katalog hielt für jeden der 45 Artikel ein Preisfeld und eine
+ * Uhrzeit-Auswahl gleichzeitig offen — im ganzen Reiter 469 Felder. Wer
+ * drei Artikel für den Tagespost auswählen wollte, suchte sie zwischen
+ * hundert Eingabefeldern.
+ *
+ * Die Hilfeschicht klappt die Felder ein und setzt eine ruhige Zeile davor,
+ * die den Wert im Klartext zeigt. Die Felder bleiben samt Werten im
+ * Dokument — das Fachmodul liest sie beim Absenden unverändert aus. Offen
+ * ist immer höchstens ein Artikel.
+ */
+#panel-social .kneu-kat-felder{ display:none !important }
+#panel-social .kneu-kat-zeile.kneu-kat-offen .kneu-kat-felder{
+  display:flex !important;
+  margin-top:4px;
+}
+#panel-social .kneu-kat-zeile.kneu-kat-offen .kneu-kat-wert{ display:none }
+
+#panel-social .kneu-kat-kurz{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:3px;
+}
+#panel-social .kneu-kat-wert{
+  font-size:13px;
+  font-weight:600;
+  color:var(--mut);
+  line-height:var(--zh);
+}
+/* Wie die Portions-Badges: schlank gezeichnet, in voller Größe antippbar.
+   Bei 45 Zeilen untereinander würde ein 44 px hoher Kasten die Liste sonst
+   zu einer Knopfwand machen. */
+#panel-social .kneu-kat-btn{
+  min-height:var(--tap-min);
+  height:var(--tap-min);
+  padding:0 12px;
+  border:9px solid transparent;
+  background-clip:padding-box;
+  background-color:var(--karte);
+  box-shadow:inset 0 0 0 1.5px var(--gr);
+  border-radius:999px;
+  color:var(--gr);
+  font-size:13px;
+  font-weight:600;
+  line-height:1;
+  cursor:pointer;
+}
+#panel-social .kneu-kat-zeile.kneu-kat-offen .kneu-kat-btn{
+  background-color:var(--gr);
+  color:#fff;
+}
 
 /* Die Beitragsvorschau kürzte ihre Warenplättchen und den Freitext per
    Inline-Stil (`max-width:140px`/`text-overflow:ellipsis`): aus „Cordon bleu
@@ -2474,8 +2543,12 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   overflow:visible;
   padding-bottom:4px;
 }
-@media (min-width:430px){
-  #panel-kalender .kal-days{ grid-template-columns:repeat(7,1fr) }
+/* Ab 360 px stehen alle sieben Tage nebeneinander statt in zwei Reihen. Mit
+   4 px Zwischenraum bleibt jede Tagesfläche auch bei 360 px über den 44 px,
+   die F4 verlangt ((360 − 24 − 24) / 7 = 44,6). Das spart auf dem Handy eine
+   ganze Reihe Kopfhöhe. */
+@media (min-width:360px){
+  #panel-kalender .kal-days{ grid-template-columns:repeat(7,1fr); gap:4px }
 }
 
 #panel-kalender .kal-day{
@@ -2486,6 +2559,68 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 /* Zeilenhöhe großzügig, damit die große Tageszahl nicht am Rahmen kappt. */
 #panel-kalender .kal-day .dnum{ line-height:1.3; overflow:visible }
 #panel-kalender .kal-day .dow{ line-height:1.3 }
+
+/* Auf dem Handy war der Kopf des Terminkalenders höher als der Inhalt:
+   Wochenzeile, „+ Neuer Eintrag", zwei Reihen Tage und drei Reihen Filter
+   ergaben rund 400 px, bevor der erste Termin zu sehen war. Die Tage stehen
+   jetzt in einer Reihe (oben), und die Filter rücken enger zusammen. */
+@media (max-width:699px){
+  /* Schlank gezeichnet, in voller Größe antippbar — wie die Portions-Badges
+     beim Metzger. Die sieben Filter brauchen bei 390 px zwangsläufig drei
+     Reihen (676 px Inhalt auf 351 px Breite); flacher gezeichnet kosten sie
+     104 statt 140 px, ohne dass die Treffsicherheit leidet. */
+  #panel-kalender .kal-chip{
+    height:var(--tap-min);
+    margin:-6px 0;
+    padding:0 9px;
+    border:6px solid transparent;
+    background-clip:padding-box;
+    box-shadow:inset 0 0 0 1.5px var(--line);
+    font-size:12px;
+    gap:4px;
+  }
+  #panel-kalender .kal-chip.active{ box-shadow:inset 0 0 0 1.5px var(--gr) }
+  #panel-kalender .kal-filters{ gap:4px }
+  /* Der Zeitraum steht schon in der Tagesreihe darunter. */
+  #panel-kalender #kal-range{ display:none }
+}
+
+/* ── 15.1  Datum wählen statt Woche für Woche blättern ───────────────────
+ *
+ * Für einen Termin in einigen Monaten musste man ein Dutzend Mal auf „›"
+ * tippen. Die Wochenangabe ist deshalb selbst die Datumsauswahl: Ein Tippen
+ * öffnet die Datumsauswahl des Geräts. Das kostet keinen zusätzlichen Platz
+ * — wichtig, weil der Kopf auf dem Handy ohnehin knapp ist.
+ */
+#panel-kalender .kal-week{
+  position:relative;
+  cursor:pointer;
+  border-radius:var(--r-s);
+}
+#panel-kalender .kal-week::after{
+  content:'Datum wählen';
+  display:block;
+  font-size:10.5px;
+  font-weight:600;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--gr);
+  line-height:1.3;
+}
+/* Das Datumsfeld liegt unsichtbar über der Wochenangabe: Die Geräte öffnen
+   ihre Auswahl nur bei einer echten Bedienung des Feldes, ein nachgebauter
+   Knopf könnte das nicht. */
+#panel-kalender .kneu-kal-datum{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  min-height:var(--tap-min);
+  opacity:0;
+  border:0;
+  padding:0;
+  cursor:pointer;
+}
 
 /* ── 16  Metzger Mair: Liefertagsleiste ohne Rollstreifen ────────────────
  *

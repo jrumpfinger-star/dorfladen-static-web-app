@@ -242,6 +242,169 @@
     feld.classList.toggle('k-tag-jetzt-aus', leisteNochZuSehen);
   }
 
+  // ── Social-Katalog: ruhige Zeilen statt lauter offener Felder ────────
+  //
+  // Der Katalog stellte für jeden der 45 Artikel gleichzeitig ein Preisfeld
+  // und eine Uhrzeit-Auswahl offen. Zusammen mit den übrigen Feldern des
+  // Reiters standen 469 Eingabefelder gleichzeitig offen — man sah einen
+  // Formularteppich statt einer Warenliste, und ein Fehlgriff war leicht.
+  //
+  // Hier wird nichts entfernt: Die Felder bleiben mit ihren Werten im
+  // Dokument, damit das Fachmodul sie beim Absenden weiterhin ausliest
+  // (`.soc-pick-preis[data-id]`). Sie werden nur eingeklappt und durch eine
+  // ruhige Zeile ersetzt, die den Wert im Klartext zeigt. Geöffnet ist
+  // immer höchstens ein Artikel.
+  function socialKatalogText(zeile) {
+    var anzeige = zeile.querySelector('.kneu-kat-wert');
+    if (!anzeige) return;
+    var preis = zeile.querySelector('.soc-pick-preis');
+    var ab = zeile.querySelector('.soc-pick-ab');
+    var teile = [];
+    var pv = preis && preis.value ? preis.value.trim() : '';
+    teile.push(pv ? pv.replace('.', ',') + ' \u20AC' : 'kein Preis');
+    if (ab && ab.value) teile.push('ab ' + ab.value);
+    var text = teile.join('  \u00B7  ');
+    if (anzeige.textContent !== text) anzeige.textContent = text;
+
+    var knopf = zeile.querySelector('.kneu-kat-btn');
+    if (knopf) {
+      var offen = zeile.classList.contains('kneu-kat-offen');
+      var soll = offen ? 'Fertig' : 'Bearbeiten';
+      if (knopf.textContent !== soll) knopf.textContent = soll;
+      knopf.setAttribute('aria-expanded', offen ? 'true' : 'false');
+    }
+  }
+
+  function socialKatalog() {
+    var zeilen = document.querySelectorAll('#soc-pick-grid .soc-pick-row');
+    for (var i = 0; i < zeilen.length; i++) {
+      var zeile = zeilen[i];
+      if (zeile.getAttribute('data-kneu-kat')) { socialKatalogText(zeile); continue; }
+
+      var preis = zeile.querySelector('.soc-pick-preis');
+      if (!preis) continue;
+      var felder = preis.parentNode;
+      if (!felder) continue;
+
+      zeile.setAttribute('data-kneu-kat', '1');
+      zeile.classList.add('kneu-kat-zeile');
+      felder.classList.add('kneu-kat-felder');
+
+      var kurz = document.createElement('div');
+      kurz.className = 'kneu-kat-kurz';
+
+      var wert = document.createElement('span');
+      wert.className = 'kneu-kat-wert';
+      kurz.appendChild(wert);
+
+      var knopf = document.createElement('button');
+      knopf.type = 'button';
+      knopf.className = 'kneu-kat-btn';
+      knopf.textContent = 'Bearbeiten';
+      // Der Name des Artikels steht unmittelbar darüber; für die Vorlesehilfe
+      // wird er mit aufgenommen, damit "Bearbeiten" nicht allein steht.
+      var name = zeile.querySelector('div[style*="font-weight:600"]');
+      knopf.setAttribute('aria-label', 'Preis und Uhrzeit bearbeiten'
+        + (name ? ' \u2013 ' + name.textContent.trim() : ''));
+      kurz.appendChild(knopf);
+
+      felder.parentNode.insertBefore(kurz, felder);
+
+      (function (z, k) {
+        k.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          var warOffen = z.classList.contains('kneu-kat-offen');
+          var offene = document.querySelectorAll('#soc-pick-grid .kneu-kat-offen');
+          for (var n = 0; n < offene.length; n++) {
+            offene[n].classList.remove('kneu-kat-offen');
+            socialKatalogText(offene[n]);
+          }
+          if (!warOffen) {
+            z.classList.add('kneu-kat-offen');
+            var p = z.querySelector('.soc-pick-preis');
+            if (p) { try { p.focus(); p.select(); } catch (e) { /* Eingabe ist nicht erzwingbar */ } }
+          }
+          socialKatalogText(z);
+        });
+        var spiegeln = function () { socialKatalogText(z); };
+        z.querySelector('.kneu-kat-felder').addEventListener('input', spiegeln);
+        z.querySelector('.kneu-kat-felder').addEventListener('change', spiegeln);
+      })(zeile, knopf);
+
+      socialKatalogText(zeile);
+    }
+  }
+
+  // ── Terminkalender: Datum wählen statt Woche für Woche blättern ──────
+  //
+  // Der Kalender kennt nur „eine Woche vor / zurück". Für einen Termin in
+  // drei Monaten waren das ein Dutzend Tipper. Die Wochenangabe wird deshalb
+  // zur Datumsauswahl: Darüber liegt ein unsichtbares Datumsfeld, das die
+  // Auswahl des Geräts öffnet.
+  //
+  // Das Fachmodul bleibt unberührt. Gesteuert wird es so, wie eine Bedienerin
+  // es auch täte — über seine eigenen Blätterknöpfe.
+  function kalenderSpringen(zielIso) {
+    var tage = document.querySelectorAll('#kal-days .kal-day');
+    if (!tage.length) return;
+    var ersterTag = tage[0].getAttribute('data-day');
+    if (!ersterTag) return;
+
+    var tagMs = 86400000;
+    var montagJetzt = new Date(ersterTag + 'T12:00:00');
+    var ziel = new Date(zielIso + 'T12:00:00');
+    if (isNaN(ziel.getTime())) return;
+
+    // Montag der Zielwoche (in Deutschland beginnt die Woche am Montag).
+    var montagZiel = new Date(ziel);
+    montagZiel.setDate(ziel.getDate() - ((ziel.getDay() + 6) % 7));
+
+    var wochen = Math.round((montagZiel - montagJetzt) / (7 * tagMs));
+    var knopf = document.querySelector(
+      '#panel-kalender .kal-nav[data-act="' + (wochen < 0 ? 'prev' : 'next') + '"]');
+    if (!knopf) return;
+
+    if (wochen !== 0) {
+      // Jeder Tipper stößt beim Modul ein Nachladen an. Bei zwanzig Wochen
+      // wären das zwanzig überflüssige Abrufe, deren Antworten sich auch noch
+      // überholen könnten. Für die Dauer des Sprungs — ein einziger, nicht
+      // unterbrochener Durchlauf — wird das Nachladen deshalb stillgelegt und
+      // danach genau einmal ausgelöst.
+      var echtesHolen = window.fetch;
+      window.fetch = function () { return new Promise(function () { }); };
+      try {
+        for (var i = 0; i < Math.abs(wochen); i++) knopf.click();
+      } finally {
+        window.fetch = echtesHolen;
+      }
+      try { window.KalenderKiosk.reload(); }
+      catch (e) { return; }
+    }
+
+    // Den gewünschten Tag auswählen, sobald die Woche steht.
+    var versuche = 0;
+    (function tagWaehlen() {
+      var el = document.querySelector('#kal-days .kal-day[data-day="' + zielIso + '"]');
+      if (el) { el.click(); return; }
+      if (++versuche < 40) setTimeout(tagWaehlen, 100);
+    })();
+  }
+
+  function kalenderDatumswahl() {
+    var woche = document.querySelector('#panel-kalender .kal-week');
+    if (!woche || woche.querySelector('.kneu-kal-datum')) return;
+
+    var feld = document.createElement('input');
+    feld.type = 'date';
+    feld.className = 'kneu-kal-datum';
+    feld.setAttribute('aria-label', 'Datum wählen und dorthin springen');
+    feld.addEventListener('change', function () {
+      if (feld.value) kalenderSpringen(feld.value);
+    });
+    woche.appendChild(feld);
+  }
+
   // Ein eigener, enger Beobachter nur für die Tagesleiste. Der große
   // Beobachter unten darf keine Attribute verfolgen: `baeckerWerkzeuge()`
   // setzt selbst Klassen und würde sich sonst endlos wieder aufrufen.
@@ -265,6 +428,8 @@
       baeckerWerkzeuge();
       baeckerKopf();
       mittagTagFeld();
+      socialKatalog();
+      kalenderDatumswahl();
       requestAnimationFrame(function () {
         var offen = document.querySelector('.k-panel.active');
         if (offen && offen.scrollTop > 0) offen.scrollTop = 0;
@@ -281,6 +446,8 @@
       baeckerWerkzeuge();
       baeckerKopf();
       mittagTagFeld();
+      socialKatalog();
+      kalenderDatumswahl();
     });
     beob.observe(haupt, { childList: true, subtree: true });
   }
@@ -296,6 +463,8 @@
     baeckerWerkzeuge();
     baeckerKopf();
     mittagTagFeld();
+    socialKatalog();
+    kalenderDatumswahl();
     window.addEventListener('resize', baeckerKopf);
     document.documentElement.classList.add('kneu');
   }
