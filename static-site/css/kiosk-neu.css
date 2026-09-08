@@ -173,6 +173,7 @@ h1, h2, h3, h4, .k-header h1, .k-tab-lbl,
   container-name:kopf;
   display:flex;
   align-items:center;
+  flex-wrap:wrap;
   gap:10px;
   padding:8px calc(var(--pad) + var(--sar)) 8px calc(var(--pad) + var(--sal));
   background:linear-gradient(135deg,#2d5016 0%,#3f7522 100%);
@@ -180,7 +181,11 @@ h1, h2, h3, h4, .k-header h1, .k-tab-lbl,
   flex-shrink:0;
 }
 
-.k-header-brand{ flex:1 1 auto; display:flex; align-items:center; gap:9px; min-width:0 }
+/* Die Marke behält ihre Zeile: Sonst quetschen die Knöpfe den Titel auf
+   wenige Pixel und „Kiosk" endet als Auslassungszeichen (gemessen bei
+   320 px: 34 px Text auf 21 px Platz). Reicht die Breite nicht für beides,
+   rücken die Knöpfe in die zweite Zeile. */
+.k-header-brand{ flex:1 1 200px; display:flex; align-items:center; gap:9px; min-width:0 }
 .k-header-logo{ display:inline-flex; flex:0 0 auto }
 .k-header-logo i, .k-header-logo svg{ width:22px; height:22px }
 .k-header h1{
@@ -198,7 +203,7 @@ h1, h2, h3, h4, .k-header h1, .k-tab-lbl,
 
 .k-header #k-sparkline{ flex:0 0 auto; width:72px; height:28px; opacity:.75 }
 
-.k-header-acts{ flex:0 0 auto; display:flex; align-items:center; gap:6px }
+.k-header-acts{ flex:0 1 auto; display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px }
 
 .k-hbtn{
   min-width:var(--tap-min);
@@ -222,21 +227,21 @@ h1, h2, h3, h4, .k-header h1, .k-tab-lbl,
 
 /* Was die Kopfzeile zeigt, hängt von ihrer eigenen Breite ab, nicht von der
    Fensterbreite – ab Tablet nimmt die Reiterleiste links Platz weg. Zuerst
-   weichen die selteneren Verweise, dann das Datum, dann die Uhr, zuletzt die
-   Verlaufskurve. Die Knöpfe behalten immer ihre volle Größe (F4).
+   weicht das Datum, dann die Uhr, zuletzt die Verlaufskurve. Die Knöpfe
+   behalten immer ihre volle Größe (F4).
    Die Grenzen sind gemessen (Innenbreite der Kopfzeile):
    Titel 138 px + Zeichen 31 px, Knöpfe 194 bzw. 294 px, Uhr 62 px,
    Uhr mit Datum 174 px (längster Fall „Donnerstag, 30. September 2026"),
-   Verlaufskurve 72 px, Zwischenraum je 10 px. */
-.k-header-when,
-.k-header #k-sparkline,
-.k-header-acts a[href="/index.html"],
-.k-header-acts a[href="/cms.html"]{ display:none }
+   Verlaufskurve 72 px, Zwischenraum je 10 px.
 
-@container kopf (min-width:490px){
-  .k-header-acts a[href="/index.html"],
-  .k-header-acts a[href="/cms.html"]{ display:inline-flex }
-}
+   Die Verweise „Zur Website" und „Zum CMS" waren unter 490 px ausgeblendet.
+   Das sparte Platz, nahm der Verkäuferin auf dem Telefon aber zwei Wege, die
+   der gewohnte Kiosk anbietet — gemessen mit tools/pruef-funktionen-laufend.js.
+   Anzeige und Uhr dürfen weichen, eine Funktion nicht: Passt die Reihe nicht,
+   bricht sie jetzt um, statt Knöpfe verschwinden zu lassen. */
+.k-header-when,
+.k-header #k-sparkline{ display:none }
+
 @container kopf (min-width:560px){
   .k-header-when{ display:block }
   .k-header .k-date{ display:none }
