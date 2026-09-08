@@ -865,31 +865,114 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .mb-subs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:4px 0 }
 .mb-sub{ flex:0 0 auto; min-height:var(--tap-min); border-radius:999px; padding:8px 14px }
 .mb-chips, .mb-quick{ display:flex; flex-wrap:wrap; gap:6px }
-/* Portions-Chip: Der Chip selbst ist das 44-px-Antippziel; die inneren Knöpfe
-   (Portion ändern / entfernen) dürfen deshalb ihre natürliche, schlanke Größe
-   behalten. Ohne diese Befreiung addierten sich zwei erzwungene 44-px-Knöpfe
-   plus 8-px-Innenabstand zu einem 62 px hohen, überdimensionierten Feld. */
+/* Portions-Chip: schlank gezeichnet, aber in voller Größe antippbar.
+ *
+ * Der Chip muss 44 px hoch sein, damit er sicher zu treffen ist. Als volle
+ * Farbfläche wirkte er dadurch klobig und fraß Höhe. Deshalb ist der obere
+ * und untere Rand jetzt durchsichtig: Er zählt zur Antippfläche, wird aber
+ * nicht gezeichnet. Sichtbar bleibt eine 32 px hohe Pille — ein Drittel
+ * weniger Fläche bei unveränderter Treffsicherheit.
+ *
+ * Die Kontur kommt als innenliegender Schatten statt als Rahmen, weil ein
+ * echter Rahmen den durchsichtigen Streifen mitzeichnen würde.
+ */
 .mb-chip{
   min-height:var(--tap-min);
+  height:var(--tap-min);
+  border:0;
+  border-top:6px solid transparent;
+  border-bottom:6px solid transparent;
+  background-clip:padding-box;
+  box-shadow:inset 0 0 0 1.5px #2e7d4f;
   border-radius:999px;
   padding:0 4px 0 2px;
   font-size:13px;
   gap:1px;
 }
+.mb-chip.hw{ box-shadow:inset 0 0 0 1.5px #e65100 }
+/* Die durchsichtigen Ränder halten die Reihen schon auseinander; ein
+   zusätzlicher Zeilenabstand würde die Liste wieder auseinanderziehen. */
+#panel-metzgerbest .mb-chips{ gap:0 4px }
 .mb-chip .lab{
   min-height:0 !important;
   min-width:0 !important;
   align-self:stretch;
-  padding:0 2px 0 12px !important;
+  padding:0 2px 0 11px !important;
 }
 .mb-chip .x{
   min-height:0 !important;
   min-width:0 !important;
   align-self:stretch;
-  padding:0 9px !important;
+  padding:0 8px !important;
   font-size:15px;
 }
-.mb-chip.hw .lab{ padding:0 2px 0 12px !important }
+.mb-chip.hw .lab{ padding:0 2px 0 11px !important }
+
+/* Die Fußleiste („4 Positionen … Speichern · Bestellung senden") klebt am
+ * unteren Rand des Reiters. Der Reiter hatte dort aber 20 px Polsterung, und
+ * die Leiste rastet am Innenrand ein — in diesem Streifen schauten
+ * Listenzeilen unter ihr hervor. Es sah aus, als liefe die Liste durch die
+ * Knöpfe hindurch. Außerdem war die Leiste seitlich eingerückt und fluchtete
+ * dadurch nicht mit der Menüleiste darunter.
+ *
+ * Sie sitzt jetzt bündig am unteren Rand und reicht über die volle Breite.
+ */
+#panel-metzgerbest{ padding-bottom:0 }
+#panel-metzgerbest .mb-foot{
+  margin-left:calc(var(--pad) * -1);
+  margin-right:calc(var(--pad) * -1);
+  padding-left:var(--pad);
+  padding-right:var(--pad);
+  border-radius:0;
+  background:var(--karte);
+  border-top:1px solid var(--line);
+  row-gap:2px;
+}
+/* „Speichern" und „Bestellung senden" landeten auf zwei verschiedenen Zeilen,
+   weil der Sendeknopf hinter dem Zwischenstand nicht mehr in die Zeile passte.
+   Ein leerer Umbruchpunkt trennt Zwischenstand und Knöpfe sauber, danach
+   stehen beide Knöpfe zusammen in einer Zeile — 26 px weniger Höhe. */
+#panel-metzgerbest .mb-foot::before{
+  content:'';
+  flex:0 0 100%;
+  order:1;
+  height:0;
+}
+#panel-metzgerbest .mb-foot .mb-btn,
+#panel-metzgerbest .mb-foot .mb-send{ order:2 }
+
+/* Ab 620 px steht der Name in einer eigenen Spalte, die starr bis zu 230 px
+   breit war — auch bei einem kurzen Namen wie „Rouladen". Den Portions-Badges
+   blieb dadurch so wenig Platz, dass sie einzeln untereinander umbrachen,
+   während links daneben eine leere Fläche stand. Die Spalte richtet sich
+   jetzt nach dem Namen: eine Untergrenze hält die Zeilen ruhig ausgerichtet,
+   die Obergrenze bleibt wie bisher. So laufen die Badges nebeneinander. */
+@media (min-width:620px){
+  #panel-metzgerbest .mb-zeile{ grid-template-columns:auto minmax(0,1fr) }
+  #panel-metzgerbest .mb-nm{ min-width:118px; max-width:var(--mb-np,200px) }
+}
+
+/* Der Knopf „Portion hinzufügen" stand bisher unmittelbar hinter der letzten
+   Portion — je nach Anzahl der Badges an einer anderen Stelle — und war als
+   blassgraue gestrichelte Fläche kaum zu erkennen. Er sitzt jetzt immer am
+   rechten Rand der Zeile und ist in der Hausfarbe gezeichnet. Die Reihenfolge
+   stellt sicher, dass auch die blassen Vorschlagswerte davor liegen. */
+#panel-metzgerbest .mb-chips{ align-items:center }
+#panel-metzgerbest .mb-chip,
+#panel-metzgerbest .mb-frueher{ order:0 }
+#panel-metzgerbest .mb-add:not(.del){
+  order:1;
+  margin-left:auto;
+  border:2px solid var(--gr);
+  border-style:solid;
+  background:#fff;
+  color:var(--gr);
+  font-size:22px;
+  line-height:1;
+}
+#panel-metzgerbest .mb-add:not(.del):hover{ background:#eaf4ee }
+/* Das ✕ zum Entfernen einer zusätzlichen Position bleibt am Ende und ruhig. */
+#panel-metzgerbest .mb-add.del{ order:2 }
 @container liste (min-width:960px){
   .mb-liste{ --mb-sp:470px }
 }
@@ -991,6 +1074,54 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
    Bis dahin sorgen diese Regeln wenigstens für bedienbare Maße. */
 #panel-social input, #panel-social select, #panel-social textarea{ max-width:100% }
 .soc-cat-chip{ min-height:var(--tap-min); border-radius:999px; padding:8px 14px }
+.soc-cat-chip[style*="font-size:11px"]{ font-size:13px !important }
+
+/* Katalogzeilen: Bild, Name und Eingabefelder standen in keinem Verhältnis.
+ *
+ *  - Das Vorschaubild war fest auf 40 px gesetzt. Die Quelle ist 128 px groß,
+ *    auf 40 px erkennt man den Artikel aber nicht mehr — es sah aus, als
+ *    fehlten die Bilder.
+ *  - Preisfeld und Uhrzeit-Auswahl tragen 11 px Schrift, werden von der
+ *    44-px-Regel aber auf volle Bedienhöhe gebracht: ein großes Feld mit
+ *    winziger Beschriftung. Die Schrift wächst auf Lesegröße mit.
+ *  - Der Artikelname war mit 13 px kleiner als die Felder daneben.
+ *
+ * Alle Werte stehen als Inline-Stil im Modul; da die Fachmodule unberührt
+ * bleiben, werden sie hier über ihre Signatur überschrieben.
+ */
+#panel-social .soc-pick-row img[style*="width:40px"],
+#panel-social .soc-pick-row div[style*="width:40px"]{
+  width:56px !important;
+  height:56px !important;
+}
+#panel-social .soc-pick-row div[style*="font-size:13px"]{
+  font-size:15px !important;
+  line-height:var(--zh) !important;
+}
+#panel-social .soc-pick-preis,
+#panel-social .soc-pick-ab{
+  font-size:15px !important;
+  padding:4px 8px !important;
+}
+#panel-social .soc-pick-preis{ width:78px !important }
+/* Der runde Knopf „Bild ändern" sitzt als Eckmarke auf dem Vorschaubild und
+   ist im Modul 22 px groß. Die 44-px-Regel blies ihn auf vier Fünftel des
+   Bildes auf — man sah den Artikel nicht mehr, sondern nur die Eckmarke.
+   Er bleibt jetzt eine kleine Marke, behält aber über den durchsichtigen
+   Rand die volle Antippfläche und rückt aus dem Bild heraus. */
+#panel-social .soc-pick-row button[style*="border-radius:50%"]{
+  width:var(--tap-min) !important;
+  height:var(--tap-min) !important;
+  border:10px solid transparent !important;
+  background-clip:padding-box !important;
+  background-color:#fff !important;
+  box-shadow:inset 0 0 0 1px #d1d5db !important;
+  bottom:-13px !important;
+  right:-13px !important;
+  font-size:12px !important;
+}
+/* „45 Produkte" war mit 10 px kaum zu entziffern. */
+#panel-social div[style*="font-size:10px"]{ font-size:12px !important }
 
 /* Die Beitragsvorschau kürzte ihre Warenplättchen und den Freitext per
    Inline-Stil (`max-width:140px`/`text-overflow:ellipsis`): aus „Cordon bleu
@@ -1163,31 +1294,29 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   margin:0 0 var(--gap);
   overflow:hidden;
 }
-/* Die Ueberschrift "Kochbedarf - ueber alle Status" kostete zwei Zeilen fuer
-   eine Selbstverstaendlichkeit. Der Einklapp-Knopf wandert in die Zeile. */
+/* Die Überschrift „Kochbedarf — über alle Status" kostete eine volle Zeile für
+ * eine Selbstverständlichkeit: links das Wort, rechts der Einklapp-Knopf, und
+ * dazwischen 200 px Leere. Zusammen 54 px Höhe für 18 px Text.
+ *
+ * Der Knopf sitzt jetzt als Eckmarke auf der Karte, die Überschrift entfällt —
+ * die Karte darunter sagt mit „15 Port. · Cordon bleu …" ohnehin deutlicher,
+ * worum es geht. Das spart die Zeile vollständig.
+ */
+#panel-mittag .k-cook{ position:relative }
 #panel-mittag .k-cook-head{
+  position:absolute;
+  top:4px;
+  right:4px;
+  z-index:1;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:6px 6px 4px 12px;
+  gap:0;
+  padding:0;
   min-height:0;
   border:0;
   background:none;
 }
-#panel-mittag .k-cook-title{
-  display:flex;
-  align-items:center;
-  gap:5px;
-  font-size:10.5px;
-  font-weight:600;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-  color:var(--mut);
-  padding:0;
-}
-#panel-mittag .k-cook-title .sub{ display:none }
-#panel-mittag .k-cook-title svg{ width:13px; height:13px }
+#panel-mittag .k-cook-title{ display:none }
 #panel-mittag .k-cook-actions{ padding:0 }
 /* Nur noch das Zeichen: der Zustand ist am Pfeil ablesbar, das Wort
    "Einklappen" kostete eine halbe Zeile Hoehe fuer keinen Gewinn. */
@@ -1226,6 +1355,9 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   box-shadow:none;
 }
 #panel-mittag .k-cook-grid > .k-cook-card:first-child{ border-top:0 }
+/* Die Eckmarke zum Einklappen liegt über der ersten Karte; dort bleibt Platz
+   für sie frei, damit kein Text darunter verschwindet. */
+#panel-mittag .k-cook-grid > .k-cook-card:first-child{ padding-right:52px }
 
 /* Die Portionszahl ist die eigentliche Botschaft - sie bekommt eine Kachel. */
 #panel-mittag .k-cook-n{
@@ -1385,27 +1517,36 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 #panel-mittag .k-filter-bar{
   display:flex;
   flex-wrap:wrap;
-  gap:5px;
+  gap:3px;
   overflow:visible;
   padding:2px 0 9px;
   margin:0;
   border:0;
   background:none;
 }
+/* Der Umschalter „Alle" trug einen Inline-Stil `margin-left:auto` und wurde
+   dadurch an den rechten Rand geschoben — er bekam eine dritte Zeile ganz
+   für sich allein, obwohl daneben Platz war. Er läuft jetzt einfach mit.
+   Sein Symbol entfällt wie bei den Filterchips: neben dem ausgeschriebenen
+   Wort sagt es nichts, kostet aber die Breite, die über eine dritte Zeile
+   entscheidet. */
+#panel-mittag #mt-toggle-wrap{ margin-left:0 !important }
+#panel-mittag #mt-toggle-wrap svg{ display:none }
+#panel-mittag #mt-toggle-wrap .k-btn{ padding:0 8px !important; font-size:12px !important }
 
 #panel-mittag .k-filter-btn{
   flex:0 1 auto;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:5px;
+  gap:4px;
   min-height:36px;
-  padding:0 10px;
+  padding:0 7px;
   border:1px solid var(--line);
   border-radius:999px;
   background:var(--karte);
   color:var(--mut);
-  font-size:12.5px;
+  font-size:12px;
   font-weight:600;
   line-height:var(--zh);
   white-space:nowrap;
@@ -1417,7 +1558,7 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
    Chips traegt die Unterscheidung weiter. */
 #panel-mittag .k-filter-btn .k-filter-label{
   display:inline !important;
-  font-size:12.5px;
+  font-size:12px;
 }
 #panel-mittag .k-filter-btn svg{ display:none }
 /* Der Umschalter rechts gehoert nicht zu den Filtern und darf nicht
@@ -1460,9 +1601,13 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 #panel-mittag .k-filter-btn[data-mt-filter="storniert"]{ color:var(--red); border-color:var(--red-b) }
 #panel-mittag .k-filter-btn[data-mt-filter="storniert"].active{ background:var(--red); border-color:var(--red); color:#fff }
 
-/* Auf dem Handy noch etwas enger - jedes Wort bleibt vollstaendig. */
+/* Auf dem Handy noch etwas enger - jedes Wort bleibt vollstaendig.
+   Enger als die Grundregel, sonst passen die acht Filter nicht in zwei
+   Zeilen und die Leiste frisst eine dritte, in der oft nur ein einzelner
+   Knopf steht. */
 @media (max-width:699px){
-  #panel-mittag .k-filter-btn{ padding:0 10px }
+  #panel-mittag .k-filter-bar{ gap:2px }
+  #panel-mittag .k-filter-btn{ padding:0 5px }
 }
 
 /* ── 13.5  Gerichtsgruppe: Trennzeile statt Kasten ───────────────────── */
@@ -1677,23 +1822,19 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
  * Gemessen auf 320 x 568 px: Hinweis, Kopfzeile, Tagesleiste, Kochbedarf,
  * Sonderwuensche, Filter und Gruppenzeile belegten zusammen 471 px - fuer
  * Bestellungen blieb nichts uebrig. Hier wird jeder Baustein gekuerzt,
- * ohne dass eine Bedienmoeglichkeit wegfaellt: der Einklapp-Knopf wandert
- * in die Ecke der Kochbedarfs-Karte statt in eine eigene Zeile.
+ * ohne dass eine Bedienmoeglichkeit wegfaellt.
+ *
+ * Die Eckmarke fuer den Einklapp-Knopf gilt inzwischen ueberall (13.4) und
+ * steht deshalb nicht mehr hier. Auf flachen Schirmen faellt zusaetzlich die
+ * Fusszeile der Kochbedarfs-Karte weg.
  *
  * Die Schranke liegt bei 820 px Hoehe, damit auch das quer gehaltene
  * Tablet (1024 x 768) und der Buero-Bildschirm (1280 x 800) profitieren -
  * dort ist die Hoehe knapp, nicht die Breite.
  */
 @media (max-height:820px){
-  #panel-mittag .k-cook{ position:relative }
-  #panel-mittag .k-cook-head{
-    position:absolute;
-    top:5px; right:5px;
-    z-index:1;
-    padding:0;
-  }
-  #panel-mittag .k-cook-title{ display:none }
-  #panel-mittag .k-cook-card{ padding:9px 58px 9px 12px }
+  #panel-mittag .k-cook-card{ padding:9px 12px }
+  #panel-mittag .k-cook-grid > .k-cook-card:first-child{ padding-right:52px }
   #panel-mittag .k-cook-foot{ display:none }
 
   #panel-mittag .k-day-bar{ padding:6px 0 8px }
@@ -1730,7 +1871,6 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
     grid-template-columns:repeat(auto-fill, minmax(330px, 1fr));
     gap:10px;
   }
-  #panel-mittag .k-cook-title .sub{ display:inline; font-weight:500; text-transform:none; letter-spacing:0 }
 }
 
 /* ── 13.10  Beim Scrollen bleibt nur die Filterleiste stehen ─────────────
@@ -1794,6 +1934,10 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   cursor:pointer;
 }
 #panel-mittag .k-tag-jetzt:active{ background:var(--gr); color:#fff }
+/* Solange die Tagesleiste selbst im Bild ist, sagt das Feld nichts Neues und
+   nimmt der Filterleiste die Breite, die über eine dritte Zeile entscheidet.
+   Die Hilfeschicht setzt diese Kennzeichnung beim Scrollen. */
+#panel-mittag .k-tag-jetzt.k-tag-jetzt-aus{ display:none }
 
 /* Niedrige Schirme: senkrecht verdichten, aber die seitliche Polsterung
    behalten - sie traegt den deckenden Grund bis an den Rand. */

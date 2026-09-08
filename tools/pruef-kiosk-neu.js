@@ -13,6 +13,9 @@
  *   - Fettschrift ueber 600             (F17)
  *   - abgeschnittener Text              (F18)
  *   - waagerechte Rollstreifen          (F19)
+ *   - Bilder, die nichts zeigen         (F20)
+ *   - Feld gross, Beschriftung winzig   (F21)
+ *   - Eckmarke verdeckt ihr Bild        (F22)
  *   - ueberlappende Elemente in Zeilen  (F2)
  *   - Dialoge vollstaendig im Blickfeld (F6)
  *   - Scrolltiefe je Reiter in Bildschirmen
@@ -205,6 +208,61 @@ function messen() {
     if (rollt) {
       merke('rollstreifen', kennung(el), { inhalt: el.scrollWidth, platz: el.clientWidth });
     }
+  });
+
+  /* ── F20: Bilder, die nichts zeigen ──────────────────────────────────
+   * Ein Bild, das nicht laedt oder auf Briefmarkengroesse gequetscht wird,
+   * hilft niemandem beim Erkennen der Ware.
+   */
+  document.querySelectorAll('.k-app img').forEach((im) => {
+    if (!sichtbar(im)) return;
+    if (im.closest('.k-tab-icon, .k-umbau-hinweis')) return;
+    if (im.complete && im.naturalWidth === 0) {
+      merke('bild-laedt-nicht', kennung(im), { quelle: (im.currentSrc || im.getAttribute('src') || '').slice(-50) });
+      return;
+    }
+    // Nur echte Fotos pruefen - Sinnbilder duerfen klein sein.
+    const quelle = im.currentSrc || im.getAttribute('src') || '';
+    if (!/bild|foto|image|thumb/i.test(quelle)) return;
+    const r = im.getBoundingClientRect();
+    if (im.naturalWidth >= 96 && r.width < 48) {
+      merke('bild-zu-klein', kennung(im), { gezeigt: Math.round(r.width), vorhanden: im.naturalWidth });
+    }
+  });
+
+  /* ── F21: Bedienfeld gross, Beschriftung winzig ──────────────────────
+   * Ein 44 px hohes Feld mit 11-px-Schrift wirkt aufgeblasen und ist
+   * schlechter zu lesen als ein kleineres Feld mit ordentlicher Schrift.
+   */
+  document.querySelectorAll('.k-app input:not([type=hidden]):not([type=checkbox]):not([type=radio]), .k-app select, .k-app textarea').forEach((f) => {
+    if (!sichtbar(f)) return;
+    const r = f.getBoundingClientRect();
+    const gr = parseFloat(getComputedStyle(f).fontSize) || 0;
+    if (r.height >= 40 && gr > 0 && gr < 13) {
+      merke('feld-gross-schrift-klein', kennung(f), { hoehe: Math.round(r.height), schrift: gr });
+    }
+  });
+
+  /* ── F22: Eckmarke verdeckt ihr Bild ─────────────────────────────────
+   * Kleine Knoepfe auf Vorschaubildern werden von der 44-px-Regel leicht
+   * so gross, dass sie das Bild zudecken, das sie nur markieren sollen.
+   */
+  document.querySelectorAll('.k-app img').forEach((im) => {
+    if (!sichtbar(im)) return;
+    const ib = im.getBoundingClientRect();
+    if (ib.width < 8) return;
+    const eltern = im.closest('div');
+    if (!eltern) return;
+    eltern.querySelectorAll('button, [role=button]').forEach((btn) => {
+      if (!sichtbar(btn)) return;
+      const bb2 = btn.getBoundingClientRect();
+      const ux = Math.max(0, Math.min(bb2.right, ib.right) - Math.max(bb2.left, ib.left));
+      const uy = Math.max(0, Math.min(bb2.bottom, ib.bottom) - Math.max(bb2.top, ib.top));
+      const anteil = (ux * uy) / (ib.width * ib.height);
+      if (anteil > 0.45) {
+        merke('knopf-verdeckt-bild', kennung(btn), { anteil: Math.round(anteil * 100) + '%' });
+      }
+    });
   });
 
   /* ── F1/F9: Reiter und Zaehler ── */

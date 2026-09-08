@@ -154,6 +154,13 @@
     reiter.addEventListener('scroll', baeckerKopf, { passive: true });
   }
 
+  // Das Tagesfeld erscheint erst, wenn die Tagesleiste weggescrollt ist.
+  function mittagScrollBeobachten() {
+    var reiter = document.getElementById('panel-mittag');
+    if (!reiter) return;
+    reiter.addEventListener('scroll', mittagTagSichtbarkeit, { passive: true });
+  }
+
   /* ── Werkzeugleiste: die beiden Umschalter als ein Segment ────────────
    *
    * Die Leiste enthaelt zwei Umschalter ("Uebliche Artikel" /
@@ -217,6 +224,22 @@
     // einer Leiste, in der jeder Millimeter über eine weitere Zeile entscheidet.
     var text = teile.length ? teile.join(' · ') : aktiv.textContent.trim();
     if (feld.textContent !== text) feld.textContent = text;
+    mittagTagSichtbarkeit();
+  }
+
+  // Solange die Tagesleiste selbst zu sehen ist, wiederholt das Feld nur,
+  // was zwei Zeilen darüber schon steht — und kostet in der Filterleiste die
+  // Breite, die über eine zusätzliche Zeile entscheidet. Es erscheint
+  // deshalb erst, wenn die Tagesleiste nach oben weggescrollt ist.
+  function mittagTagSichtbarkeit() {
+    var panel = document.getElementById('panel-mittag');
+    var bar = document.getElementById('mittag-day-bar');
+    var feld = document.querySelector('#mittag-status-bar .k-tag-jetzt');
+    if (!panel || !bar || !feld) return;
+    var pb = panel.getBoundingClientRect();
+    var bb = bar.getBoundingClientRect();
+    var leisteNochZuSehen = bb.bottom > pb.top + 4;
+    feld.classList.toggle('k-tag-jetzt-aus', leisteNochZuSehen);
   }
 
   // Ein eigener, enger Beobachter nur für die Tagesleiste. Der große
@@ -267,6 +290,7 @@
     reiterBeobachten();
     inhalteBeobachten();
     baeckerKopfBeobachten();
+    mittagScrollBeobachten();
     mittagTagBeobachten();
     symboleNachziehen();
     baeckerWerkzeuge();
