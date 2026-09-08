@@ -246,15 +246,25 @@ zugunsten der Lesbarkeit gestiegen ist** (320 px Mittagstisch von 4,4 auf 5,2
 Bildschirme; Bäcker bei 360/375 px auf 5,3/5,5). Das ist ein bewusster Preis,
 den der Auftraggeber **noch nicht bestätigt hat**.
 
-### 5.3 Reiter, die noch gar nicht angefasst sind
+### 5.3 Reiter — Stand nach dem Regeldurchlauf vom 08.09. (abends)
 
-| Reiter | Aufgabe | Bekannte Schwierigkeiten |
+Ein vollständiger Prüflauf `pruef-kiosk-neu.js` über **alle acht Reiter × elf
+Breiten** (88 Kombinationen) meldet **0 Befunde**. Die Regelverstöße (Rollstreifen,
+abgeschnittener Text, Fettschrift, Überlappung) sind damit auf allen Reitern
+beseitigt. Das Prüfskript erfasst jetzt zusätzlich die Rollstreifen `.mb-days`,
+`.mb-jump` und `.kal-days`.
+
+| Reiter | Aufgabe | Stand |
 | --- | --- | --- |
-| **Metzger Mair** | T032 | **der schwierigste.** 31 Funktionen, Seite heute 5 672 px hoch (11,4 Bildschirme — größter offener Hebel), 118 zu kleine Antippflächen, Mengendialog außerhalb des Bildschirms. Modul hat 0 Inline-Stile, also gut über `#panel-metzgerbest` zu fassen. |
-| **Social** | T033 | 119 + 48 Inline-Stile — müssen vermutlich erst durch Klassen ersetzt werden. Unterreiterleiste fällt auf `clientHeight:12` statt 44 zusammen. Vorsicht: dieselben Dateien wurden zuletzt in `e9b25f8` angefasst. |
-| **Kalender** | T034 | rund 28 bedienbare Funktionen, `addEventListener` statt `onclick` |
-| **Kontakt** | T035 | 12 Funktionen, 49 Inline-Stile |
-| **Online-Shop / Metzger (alt)** | T036 | ausgeblendet, müssen trotzdem mit umgebaut werden und nach dem Einblenden alle Regeln erfüllen |
+| **Metzger Mair** | T032 | Liefertagsleiste (`.mb-days`) und Warengruppen-Sprungleiste (`.mb-jump`) vom Rollstreifen auf Raster/Umbruch, Datum `.d2` schneidet nicht mehr ab. Regelprüfung 0 Befunde. **Offen:** die Seitenhöhe — 15,9 Bildschirme bei 320 px — bleibt der größte Hebel und ist **nicht abgenommen**. |
+| **Social** | T033 | Warenplättchen und Freitext der Beitragsvorschau kürzten per Inline-Stil (`max-width:140px`/`ellipsis`); über die Signatur in `#panel-social` auf Umbruch gestellt. Der **Katalogumbau T026** (statt 469 offener Felder höchstens 20) steht noch aus. |
+| **Kalender** | T034 | Wochenleiste vom Rollstreifen auf Raster, `.dnum`-Tageszahl kappt nicht mehr. Regelprüfung 0 Befunde. |
+| **Kontakt** | T035 | Ellipsis-Verschnitt und Fettschrift (800/700) beseitigt, Auswahl-Ankreuzfeld überlappt den Pfeil nicht mehr, Kopf bricht bei 320 px um. Regelprüfung 0 Befunde. |
+| **Abhol / Metzger (alt)** | T036 | Zähler-Filterleisten (`#abhol-filter-bar`, `#metzger-filter-bar`) brechen bei 320 px um statt zu rollen. Vollständiger Umbau der ausgeblendeten Reiter steht noch aus. |
+
+**Noch offen bleibt** neben T026 und der Metzger-Seitenhöhe die **Abnahme Reiter
+für Reiter durch den Auftraggeber** sowie die Bedienhilfen T021–T025.
+
 
 ### 5.4 Bedienhilfen — größtenteils offen
 

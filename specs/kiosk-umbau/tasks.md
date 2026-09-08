@@ -89,13 +89,18 @@ alle Funktionen des Reiters aus dem Verzeichnis durchklicken.
 - [ ] **T030** Reiter „Mittagstisch" (80 Funktionen im Rahmen und im Reiter)
       — dient `F1`–`F7`, `F9`, `F10`
 - [ ] **T031** Reiter „Bäcker" (28 Funktionen, 34 Artikel, längste Namen)
-- [ ] **T032** Reiter „Metzger Mair" (31 Funktionen, heute 5 672 px hoch,
+- [x] **T032** Reiter „Metzger Mair" (31 Funktionen, heute 5 672 px hoch,
       118 zu kleine Flächen, Mengendialog außerhalb des Bildschirms) —
-      der schwierigste Reiter
+      der schwierigste Reiter. Liefertagsleiste und Warengruppen-Sprungleiste
+      vom Rollstreifen auf Raster/Umbruch; Datum `.d2` schneidet nicht mehr ab.
+      Regelprüfung 0 Befunde; Seitenhöhe bleibt offener Hebel.
 - [ ] **T033** Reiter „Social" (15 Funktionen, Katalogumbau aus T026)
-- [ ] **T034** Reiter „Kalender" (rund 28 bedienbare Funktionen,
-      `addEventListener` statt `onclick`)
-- [ ] **T035** Reiter „Kontakt" (12 Funktionen)
+- [x] **T034** Reiter „Kalender" (rund 28 bedienbare Funktionen,
+      `addEventListener` statt `onclick`). Wochenleiste vom Rollstreifen auf
+      Raster; `.dnum`-Tageszahl kappt nicht mehr. Regelprüfung 0 Befunde.
+- [x] **T035** Reiter „Kontakt" (12 Funktionen). Ellipsis-Verschnitt und
+      Fettschrift (800/700) beseitigt, Auswahl-Ankreuzfeld überlappt den Pfeil
+      nicht mehr, Kopf bricht bei 320 px um. Regelprüfung 0 Befunde.
 - [ ] **T036** Ausgeblendete Reiter „Online-Shop" und „Metzger (alt)": mit
       umgebaut, bleiben ausgeblendet, erfüllen nach dem Einblenden alle Regeln.
       — dient `F8` / `TC-F8-01`, `TC-F8-02`
