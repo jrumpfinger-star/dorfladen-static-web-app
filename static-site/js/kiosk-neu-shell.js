@@ -89,7 +89,154 @@
     return kachel;
   };
 
-  // ── Bäcker: Liefertag zuerst, dann Bäckerei ─────────────────────────
+  // ── Rückfrage vor folgenschweren Schritten (F5 / TC-F5-05) ───────────
+  //
+  // Kalender, Kontakt und Social fragen vor dem Löschen bereits nach. Beim
+  // Bäcker und beim Metzger gab es keine einzige Rückfrage — ausgerechnet
+  // dort, wo eine Bestellung per E-Mail hinausgeht oder eine ganze Liste
+  // überschrieben wird. Ein Fehlgriff war nicht zurückzuholen.
+  //
+  // Gefragt wird nur vor dem, was sich nicht mehr rückgängig machen lässt.
+  // Das Entfernen einer einzelnen Portion bleibt bewusst ohne Rückfrage: Es
+  // kommt oft vor, ist sofort sichtbar und mit einem Griff wieder erfasst —
+  // eine Frage bei jedem Handgriff würde nur noch weggetippt.
+  var RUECKFRAGEN = [
+    {
+      reiter: 'panel-baecker', muster: /an b(ä|ae)ckerei senden/i,
+      titel: 'Bestellung an die Bäckerei senden?',
+      text: 'Die Bäckerei bekommt sie sofort. Ändern geht danach nur noch als Korrektur.',
+      ja: 'Senden',
+    },
+    {
+      reiter: 'panel-baecker', muster: /zur(ü|ue)cksetzen/i,
+      titel: 'Alle Mengen zurücksetzen?',
+      text: 'Die heute erfassten Mengen werden durch die vom letzten gleichen Wochentag ersetzt.',
+      ja: 'Zurücksetzen',
+    },
+    {
+      reiter: 'panel-metzgerbest', muster: /(bestellung|korrektur) senden/i,
+      titel: 'Bestellung an den Metzger senden?',
+      text: 'Der Metzger bekommt sie sofort. Ändern geht danach nur noch als Korrektur.',
+      ja: 'Senden',
+    },
+    {
+      reiter: null, muster: /^\s*verwerfen\s*$/i,
+      titel: 'Änderungen verwerfen?',
+      text: 'Das Erfasste wird gelöscht. Eine bereits gesendete Bestellung bleibt, wie sie ist.',
+      ja: 'Verwerfen',
+    },
+  ];
+
+  var frageOffen = null;
+
+  /**
+   * Zeigt eine Rückfrage als Blatt am unteren Rand.
+   * Die verneinende Antwort hat den Bedienfokus — wer versehentlich zweimal
+   * tippt, löst nichts aus.
+   */
+  function frageStellen(eintrag, weiter) {
+    if (frageOffen) return;
+
+    var hülle = document.createElement('div');
+    hülle.className = 'kneu-frage';
+
+    var blatt = document.createElement('div');
+    blatt.className = 'kneu-frage-blatt';
+    blatt.setAttribute('role', 'alertdialog');
+    blatt.setAttribute('aria-modal', 'true');
+
+    var titel = document.createElement('div');
+    titel.className = 'kneu-frage-titel';
+    titel.textContent = eintrag.titel;
+
+    var text = document.createElement('div');
+    text.className = 'kneu-frage-text';
+    text.textContent = eintrag.text;
+
+    var reihe = document.createElement('div');
+    reihe.className = 'kneu-frage-knoepfe';
+
+    var nein = document.createElement('button');
+    nein.type = 'button';
+    nein.className = 'kneu-frage-nein';
+    nein.textContent = 'Abbrechen';
+
+    var ja = document.createElement('button');
+    ja.type = 'button';
+    ja.className = 'kneu-frage-ja';
+    ja.textContent = eintrag.ja;
+
+    reihe.appendChild(nein);
+    reihe.appendChild(ja);
+    blatt.appendChild(titel);
+    blatt.appendChild(text);
+    blatt.appendChild(reihe);
+    hülle.appendChild(blatt);
+
+    var vorher = document.activeElement;
+    function schliessen() {
+      if (!frageOffen) return;
+      frageOffen = null;
+      document.removeEventListener('keydown', beiTaste, true);
+      if (hülle.parentNode) hülle.parentNode.removeChild(hülle);
+      try { if (vorher && vorher.focus) vorher.focus(); } catch (e) { /* Fokus ist nicht erzwingbar */ }
+    }
+    function beiTaste(ev) {
+      if (ev.key === 'Escape') { ev.preventDefault(); schliessen(); }
+    }
+
+    nein.addEventListener('click', schliessen);
+    ja.addEventListener('click', function () { schliessen(); weiter(); });
+    hülle.addEventListener('click', function (ev) { if (ev.target === hülle) schliessen(); });
+    document.addEventListener('keydown', beiTaste, true);
+
+    frageOffen = hülle;
+    document.body.appendChild(hülle);
+    try { nein.focus(); } catch (e) { /* Fokus ist nicht erzwingbar */ }
+  }
+
+  function rueckfragenBeobachten() {
+    // In der Erfassungsphase: So greift die Rückfrage, bevor der Knopf des
+    // Fachmoduls seine eigene Behandlung startet. Die Module bleiben dadurch
+    // unverändert.
+    document.addEventListener('click', function (ev) {
+      var knopf = ev.target && ev.target.closest
+        ? ev.target.closest('button, [role=button]') : null;
+      if (!knopf) return;
+
+      // Die Knöpfe der Rückfrage selbst tragen die Namen der Aktionen
+      // („Verwerfen", „Senden") und dürfen keine zweite Rückfrage auslösen.
+      if (knopf.closest('.kneu-frage')) return;
+
+      // Nach dem Bestätigen läuft derselbe Tipper noch einmal durch - dann
+      // ohne Rückfrage.
+      if (knopf.getAttribute('data-kneu-bestaetigt')) {
+        knopf.removeAttribute('data-kneu-bestaetigt');
+        return;
+      }
+
+      var beschriftung = (knopf.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!beschriftung) return;
+
+      for (var i = 0; i < RUECKFRAGEN.length; i++) {
+        var e = RUECKFRAGEN[i];
+        if (e.reiter && !knopf.closest('#' + e.reiter)) continue;
+        if (!e.muster.test(beschriftung)) continue;
+
+        ev.preventDefault();
+        ev.stopPropagation();
+        (function (ziel, eintrag) {
+          frageStellen(eintrag, function () {
+            ziel.setAttribute('data-kneu-bestaetigt', '1');
+            ziel.click();
+          });
+        })(knopf, e);
+        return;
+      }
+    }, true);
+  }
+
+
   //
   // Der Kopf des Bäcker-Reiters ist ein einziger Block (.bk-sticky). Das
   // Fachmodul baut ihn in der Reihenfolge Unterreiter, Liefertag, Hinweise,
@@ -432,6 +579,7 @@
   function start() {
     reiterBeobachten();
     inhalteBeobachten();
+    rueckfragenBeobachten();
     mittagScrollBeobachten();
     mittagTagBeobachten();
     symboleNachziehen();

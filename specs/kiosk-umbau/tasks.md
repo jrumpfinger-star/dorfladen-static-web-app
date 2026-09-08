@@ -68,18 +68,32 @@
       zu ändern. — dient `F5`
 - [ ] **T021** Vorbelegung: Erfassungsformulare öffnen mit Werten aus dem
       letzten vergleichbaren Vorgang statt leer. — dient `F5` / `TC-F5-01`
+      *Bäcker und Metzger tun das bereits im Fachmodul („vorbelegt vom letzten
+      Samstag", „vorbelegt aus der Bestellung vom …"). Offen ist die Prüfung,
+      ob wirklich kein befüllbares Feld leer bleibt.*
 - [ ] **T022** Ein-Klick-Normalfall: Der häufigste Abschluss eines Vorgangs ist
       mit einem Antippen erledigt, ohne Zwischendialog. — dient `F5` / `TC-F5-02`
 - [ ] **T023** Vorschläge statt Tippen: antippbare Mengen, Einheiten, Kunden und
       Textbausteine; freie Eingabe bleibt möglich. — dient `F5` / `TC-F5-03`
+      *Der Metzger bietet sie bereits an („Häufig bei …"). Für Bäcker und
+      Mittagstisch noch zu prüfen.*
 - [ ] **T024** Klartext und Fehlervermeidung: unmögliche Eingaben werden nicht
       angeboten, Meldungen ohne Fehlercodes und Feldnamen.
       — dient `F5` / `TC-F5-04`
-- [ ] **T025** Rückgängig oder Rückfrage bei jeder löschenden und versendenden
+      *Offen: Mehrere Module melden noch den Ausnahmetext („Fehler: " +
+      e.message). Das lässt sich nur im Fachmodul beheben.*
+- [x] **T025** Rückgängig oder Rückfrage bei jeder löschenden und versendenden
       Aktion. — dient `F5` / `TC-F5-05`
-- [ ] **T026** Regel R5: Katalog im Reiter „Social" — Einträge als ruhige Zeilen
+      Kalender, Kontakt und Social fragten bereits nach; Bäcker und Metzger
+      hatten keine einzige Rückfrage. Die Hilfeschicht legt jetzt ein Blatt vor
+      „An Bäckerei senden", „Bestellung/Korrektur senden", „Zurücksetzen" und
+      „Verwerfen". Geprüft: Abbrechen und Escape lösen nachweislich keinen
+      Schreibzugriff aus, Bestätigen führt die Aktion genau einmal aus.
+- [x] **T026** Regel R5: Katalog im Reiter „Social" — Einträge als ruhige Zeilen
       mit „Bearbeiten", Felder nur für den offenen Eintrag. Statt 469
       gleichzeitig offener Felder höchstens 20. — dient `F5` / `TC-F5-06`
+      Sichtbare Eingabefelder von 90 auf 3; die Werte bleiben im Dokument,
+      das Fachmodul liest sie beim Absenden unverändert aus.
 
 ### Reiter einzeln durcharbeiten
 
@@ -94,7 +108,10 @@ alle Funktionen des Reiters aus dem Verzeichnis durchklicken.
       der schwierigste Reiter. Liefertagsleiste und Warengruppen-Sprungleiste
       vom Rollstreifen auf Raster/Umbruch; Datum `.d2` schneidet nicht mehr ab.
       Regelprüfung 0 Befunde; Seitenhöhe bleibt offener Hebel.
-- [ ] **T033** Reiter „Social" (15 Funktionen, Katalogumbau aus T026)
+- [x] **T033** Reiter „Social" (15 Funktionen, Katalogumbau aus T026).
+      Katalog eingeklappt (T026), Vorschaubild von 40 auf 56 px, Schrift in
+      Preisfeld und Uhrzeit von 11 auf 15 px, Kamera-Eckmarke verdeckt das
+      Bild nicht mehr. Regelprüfung 0 Befunde.
 - [x] **T034** Reiter „Kalender" (rund 28 bedienbare Funktionen,
       `addEventListener` statt `onclick`). Wochenleiste vom Rollstreifen auf
       Raster; `.dnum`-Tageszahl kappt nicht mehr. Regelprüfung 0 Befunde.

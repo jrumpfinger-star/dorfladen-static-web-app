@@ -1211,7 +1211,78 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   overflow-wrap:anywhere;
 }
 
-/* ── 12  Dunkles Farbschema ──────────────────────────────────────────── */
+/* ── 17  Rückfrage vor folgenschweren Schritten ──────────────────────────
+ *
+ * Am Telefon ein Blatt am unteren Rand — dort, wo der Daumen ist. Ab 640 px
+ * eine Karte in der Mitte. Die verneinende Antwort steht links und trägt den
+ * Bedienfokus, damit ein zweiter Tipper aus Versehen nichts auslöst.
+ */
+.kneu-frage{
+  position:fixed;
+  inset:0;
+  z-index:9800;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  background:rgba(15,42,30,.44);
+  padding:0;
+}
+.kneu-frage-blatt{
+  width:100%;
+  max-width:520px;
+  background:var(--karte);
+  border-radius:var(--r-l) var(--r-l) 0 0;
+  padding:18px var(--pad) calc(var(--pad) + 6px);
+  box-shadow:0 -8px 30px rgba(15,42,30,.28);
+}
+.kneu-frage-titel{
+  font-size:17px;
+  font-weight:600;
+  line-height:var(--zh);
+  color:var(--ink);
+}
+.kneu-frage-text{
+  margin-top:6px;
+  font-size:14px;
+  font-weight:400;
+  line-height:var(--zh);
+  color:var(--mut);
+}
+.kneu-frage-knoepfe{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+.kneu-frage-knoepfe button{
+  flex:1 1 140px;
+  min-height:var(--tap);
+  padding:0 16px;
+  border-radius:var(--r-m);
+  font-size:15px;
+  font-weight:600;
+  line-height:var(--zh);
+  cursor:pointer;
+}
+.kneu-frage-nein{
+  border:1.5px solid var(--line);
+  background:var(--karte);
+  color:var(--ink);
+}
+.kneu-frage-ja{
+  border:1.5px solid var(--gr);
+  background:var(--gr);
+  color:#fff;
+}
+.kneu-frage-nein:focus-visible,
+.kneu-frage-ja:focus-visible{ outline:3px solid var(--gr); outline-offset:2px }
+
+@media (min-width:640px){
+  .kneu-frage{ align-items:center; padding:var(--pad) }
+  .kneu-frage-blatt{ border-radius:var(--r-l); box-shadow:0 12px 40px rgba(15,42,30,.3) }
+}
+
+/* ── 18  Dunkles Farbschema ─────────────────────────────────────────── */
 
 html[data-theme="dark"] .k-tabs{ background:var(--c-card); border-color:var(--c-border) }
 html[data-theme="dark"] .k-filter-btn{ background:var(--c-card); border-color:var(--c-border); color:var(--c-text) }
