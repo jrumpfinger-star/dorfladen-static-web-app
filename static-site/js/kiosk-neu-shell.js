@@ -89,7 +89,83 @@
     return kachel;
   };
 
-  // ── Rückfrage vor folgenschweren Schritten (F5 / TC-F5-05) ───────────
+  // ── Meldungen in Alltagssprache (F5 / TC-F5-04) ──────────────────────
+  //
+  // Mehrere Module reichen im Fehlerfall den technischen Text durch:
+  // `toast(e.message || 'Der Entwurf konnte nicht gespeichert werden.')`
+  // zeigt bei einem Netzfehler „Failed to fetch" statt des vorgesehenen
+  // deutschen Satzes. Für eine Verkäuferin ist das keine Auskunft.
+  //
+  // Die Module bleiben unverändert. Stattdessen wird die Meldezeile
+  // beobachtet: Steht dort Technik, wird sie durch einen Satz ersetzt, der
+  // sagt, was los ist und was zu tun ist.
+  var TECHNIK = [
+    {
+      muster: /failed to fetch|networkerror|load failed|net::|err_internet|offline/i,
+      klar: 'Keine Verbindung. Bitte die Netzverbindung prüfen und noch einmal versuchen.',
+    },
+    {
+      muster: /\b401\b|unauthorized/i,
+      klar: 'Die Anmeldung ist abgelaufen. Bitte neu anmelden.',
+    },
+    {
+      muster: /\b403\b|forbidden/i,
+      klar: 'Dafür fehlt die Berechtigung. Bitte im Laden Bescheid geben.',
+    },
+    {
+      muster: /\b404\b|not found/i,
+      klar: 'Das ist nicht mehr da. Bitte die Ansicht aktualisieren.',
+    },
+    {
+      muster: /\b5\d\d\b|internal server|bad gateway|service unavailable|timeout|timed out|aborted/i,
+      klar: 'Der Dienst antwortet gerade nicht. Bitte gleich noch einmal versuchen.',
+    },
+    {
+      muster: /unexpected token|json|syntaxerror|typeerror|referenceerror|cannot read|is not a function|undefined|\bnull\b/i,
+      klar: 'Die Antwort war unvollständig. Bitte noch einmal versuchen.',
+    },
+  ];
+
+  /**
+   * Macht aus einer technischen Meldung einen brauchbaren Satz.
+   * Alles, was schon deutsch und verständlich ist, bleibt unangetastet.
+   */
+  KNeu.klartext = function (text) {
+    var t = String(text == null ? '' : text).trim();
+    if (!t) return t;
+
+    // „Fehler: " davor sagt nichts; entscheidend ist, was dahinter steht.
+    var kern = t.replace(/^(fehler|error)\s*:\s*/i, '').trim();
+
+    for (var i = 0; i < TECHNIK.length; i++) {
+      if (TECHNIK[i].muster.test(kern)) return TECHNIK[i].klar;
+    }
+    // Übrig bleiben Ausnahmenamen und Zustandsnummern ohne Satzbau.
+    if (/^[A-Za-z]*Error\b/.test(kern) || /\bhttp\b/i.test(kern)) {
+      return 'Das hat nicht geklappt. Bitte noch einmal versuchen.';
+    }
+    return t;
+  };
+
+  function meldungenBeobachten() {
+    if (!window.MutationObserver) return;
+    var beob = new MutationObserver(function (aenderungen) {
+      for (var i = 0; i < aenderungen.length; i++) {
+        var ziel = aenderungen[i].target;
+        var el = ziel.nodeType === 1 ? ziel : ziel.parentElement;
+        if (!el || !el.closest) continue;
+        var box = el.closest('#k-toast, .k-toast, [id$="-status"]');
+        if (!box) continue;
+        var alt = box.textContent;
+        var neu = KNeu.klartext(alt);
+        // Nur reiner Text wird ersetzt - sonst gingen Symbole verloren.
+        if (neu !== alt && box.children.length === 0) box.textContent = neu;
+      }
+    });
+    beob.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+
   //
   // Kalender, Kontakt und Social fragen vor dem Löschen bereits nach. Beim
   // Bäcker und beim Metzger gab es keine einzige Rückfrage — ausgerechnet
@@ -580,6 +656,7 @@
     reiterBeobachten();
     inhalteBeobachten();
     rueckfragenBeobachten();
+    meldungenBeobachten();
     mittagScrollBeobachten();
     mittagTagBeobachten();
     symboleNachziehen();

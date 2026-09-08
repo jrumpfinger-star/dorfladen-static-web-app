@@ -266,27 +266,49 @@ beseitigt. Das Prüfskript erfasst jetzt zusätzlich die Rollstreifen `.mb-days`
 für Reiter durch den Auftraggeber** sowie die Bedienhilfen T021–T025.
 
 
-### 5.4 Bedienhilfen — größtenteils offen
+### 5.4 Bedienhilfen — T024, T025 und T026 stehen
 
-`kiosk-neu-shell.js` enthält bisher nur Symbolnachzug, die Hinweiszeile
-`KNeu.melden()` mit Rückgängig-Knopf und die zwei Bäckerhelfer. **Offen sind
-T021–T026**, und das ist der Teil, der dem Auftraggeber am wichtigsten ist:
+`kiosk-neu-shell.js` ist inzwischen die tragende Hilfeschicht. Sie ändert
+**kein Fachmodul**, sondern legt sich darüber:
 
-- T021 Vorbelegung aus dem letzten vergleichbaren Vorgang statt leerer Formulare
-- T022 Ein-Klick-Normalfall ohne Zwischendialog
-- T023 Vorschläge statt Tippen (Mengen, Einheiten, Kunden, Textbausteine)
-- T024 Klartext statt Fehlercodes; unmögliche Eingaben gar nicht erst anbieten
-- T025 Rückgängig oder Rückfrage bei jeder löschenden und versendenden Aktion
-- T026 Social-Katalog: statt 469 gleichzeitig offener Felder höchstens 20
+- **T024 Klartext — erledigt.** Mehrere Module reichten den technischen Text
+  durch: `toast(e.message || 'deutscher Satz')` zeigte bei einem Netzfehler
+  „Failed to fetch". Da `toast` modulintern ist, wird die Meldezeile
+  (`#k-toast`, `…-status`) beobachtet und Technik durch einen brauchbaren Satz
+  ersetzt. Verständliche Meldungen bleiben unangetastet (`KNeu.klartext()`).
+- **T025 Rückfrage — erledigt.** Kalender, Kontakt und Social fragten schon
+  nach; Bäcker und Metzger hatten **keine einzige** Rückfrage. Jetzt liegt ein
+  Blatt vor „An Bäckerei senden", „Bestellung/Korrektur senden",
+  „Zurücksetzen" und „Verwerfen". Das Entfernen einer einzelnen Portion bleibt
+  bewusst ohne Rückfrage — sonst wird sie nur noch weggetippt.
+- **T026 Social-Katalog — erledigt.** Sichtbare Eingabefelder von 90 auf 3.
+  Die Felder bleiben samt Werten im Dokument, das Fachmodul liest sie beim
+  Absenden unverändert aus (durch einen Test abgesichert).
 
-### 5.5 Tests und Rollout — offen
+**Noch offen:**
 
-- T040 Funktionsverzeichnis `kiosk.html` ↔ `kiosk-neu.html` — keine Funktion darf fehlen
-- T041 Selbsttest der Umformung (außerhalb der Regelbereiche zeichengleich)
-- T042 `tests/kiosk-neu.spec.js` über alle elf Breiten und acht Reiter
-- T043 bestehende Playwright-Tests gegen die Zweitseite
-- T050 Vollständiger Prüflauf, null Befunde
-- T051 Abnahme, T052 Version erhöhen und veröffentlichen
+- T021 Vorbelegung — Bäcker und Metzger tun das bereits im Fachmodul
+  („vorbelegt vom letzten Samstag"). Offen ist die systematische Prüfung, ob
+  wirklich kein befüllbares Feld leer bleibt.
+- T022 Ein-Klick-Normalfall ohne Zwischendialog.
+- T023 Vorschläge statt Tippen — der Metzger bietet sie an („Häufig bei …"),
+  Bäcker und Mittagstisch sind noch zu prüfen.
+
+### 5.5 Tests und Rollout — bis auf die Abnahme erledigt
+
+- **T042 erledigt:** `tests/kiosk-neu.spec.js` sichert die Umbauten mit echten
+  Daten in allen drei Auflösungen ab (31 bestanden, 11 datenbedingt
+  übersprungen, 0 Fehler). Die Datei überspringt sich selbst, wenn kein
+  Entwicklungs-Proxy läuft — ein Lauf gegen die veröffentlichte Seite bleibt
+  dadurch sauber.
+- **T050 erledigt:** 88 Kombinationen, 0 Befunde.
+- T040 Funktionsverzeichnis `kiosk.html` ↔ `kiosk-neu.html` — offen
+- T041 Selbsttest der Umformung — offen
+- T043 bestehende Tests gegen die Zweitseite — offen; sie sind von den
+  Umbauten nicht betroffen, weil der Produktivkiosk weder `kiosk-neu.css` noch
+  `kiosk-neu-shell.js` lädt.
+- **T051 Abnahme durch den Auftraggeber — der einzige echte Reststand.**
+  T052 (Version erhöhen, veröffentlichen) folgt danach.
 
 ---
 
@@ -345,10 +367,17 @@ T021–T026**, und das ist der Teil, der dem Auftraggeber am wichtigsten ist:
 
 ### 6.4 Betrieb der Prüfumgebung
 
-- Testserver starten — **immer `detach:true`**:
+- Testserver starten — **immer `detach:true`**. Der Proxy liegt jetzt im Repo:
   ```
-  node <session-files>\dev-proxy.js 8787 "C:/Source/dorfladen-static-web-app/static-site"
+  node tools/dev-proxy.js 8787
   ```
+- Die Tests der Zweitseite brauchen genau diese Adresse:
+  ```
+  $env:TEST_URL="http://localhost:8787"
+  node node_modules\@playwright\test\cli.js test tests/kiosk-neu.spec.js
+  ```
+  (`npx` scheitert auf diesem Rechner an der Ausführungsrichtlinie von
+  PowerShell — den Playwright-Aufruf deshalb direkt über `node` starten.)
 - In **jedem** Playwright-Skript `**/version.json` mit `page.route` abfangen,
   sonst startet der Kiosk mitten in der Messung neu.
 - Ladefolge: nach `goto` **6 s** warten, dann `K.switchTab('…')`, dann nochmals
@@ -358,7 +387,14 @@ T021–T026**, und das ist der Teil, der dem Auftraggeber am wichtigsten ist:
   eigene Zwischenspeicher. **Maßgeblich ist der Skriptlauf**, nicht das Bild im
   geteilten Fenster. Dem Auftraggeber immer **Strg+F5** dazusagen.
 - **PowerShell 5.1:** `node -e "…"` mit eingebetteten Anführungszeichen
-  zerbricht am Parser — immer eine `.js`-Datei anlegen.
+  zerbricht am Parser — immer eine `.js`-Datei anlegen. **Und niemals
+  `Get-Content | Set-Content` auf Quelldateien**: Das schreibt UTF-8 mit
+  Vorspann und zerstört sämtliche Umlaute („wÃ¤hlen"). Für Änderungen an
+  Dateien die Werkzeuge des Editors benutzen.
+- **Tests datenunabhängig schreiben.** An einem ruhigen Tag ist der
+  Mittagstisch kürzer als der Bildschirm — ein Test, der „scrolle 600 px"
+  voraussetzt, schlägt dann grundlos fehl. Erst prüfen, ob der Fall überhaupt
+  herstellbar ist, sonst `test.skip`.
 
 ---
 

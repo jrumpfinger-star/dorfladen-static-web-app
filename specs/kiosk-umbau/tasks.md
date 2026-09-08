@@ -77,11 +77,14 @@
       Textbausteine; freie Eingabe bleibt möglich. — dient `F5` / `TC-F5-03`
       *Der Metzger bietet sie bereits an („Häufig bei …"). Für Bäcker und
       Mittagstisch noch zu prüfen.*
-- [ ] **T024** Klartext und Fehlervermeidung: unmögliche Eingaben werden nicht
+- [x] **T024** Klartext und Fehlervermeidung: unmögliche Eingaben werden nicht
       angeboten, Meldungen ohne Fehlercodes und Feldnamen.
       — dient `F5` / `TC-F5-04`
-      *Offen: Mehrere Module melden noch den Ausnahmetext („Fehler: " +
-      e.message). Das lässt sich nur im Fachmodul beheben.*
+      Mehrere Module reichten den technischen Text durch
+      (`toast(e.message || 'deutscher Satz')` zeigte bei einem Netzfehler
+      „Failed to fetch"). Die Hilfeschicht beobachtet die Meldezeile und
+      ersetzt Technik durch einen Satz, der sagt, was los ist und was zu tun
+      ist. Deutsche Meldungen bleiben unangetastet.
 - [x] **T025** Rückgängig oder Rückfrage bei jeder löschenden und versendenden
       Aktion. — dient `F5` / `TC-F5-05`
       Kalender, Kontakt und Social fragten bereits nach; Bäcker und Metzger
@@ -130,19 +133,36 @@ alle Funktionen des Reiters aus dem Verzeichnis durchklicken.
 - [ ] **T041** Selbsttest der Umformung: alle Regeln R1–R7 haben gegriffen, und
       außerhalb der Regelbereiche ist die erzeugte Datei zeichengleich mit
       `kiosk.html`. — deckt `TC-F7-03`
-- [ ] **T042** `tests/kiosk-neu.spec.js`: F1–F4, F6, F9, F10 über alle elf
-      Prüfbreiten und alle acht Reiter, mit echten Daten.
-      — deckt `TC-F1-*`, `TC-F2-*`, `TC-F3-*`, `TC-F4-*`, `TC-F6-*`, `TC-F9-*`, `TC-F10-01`
+- [x] **T042** `tests/kiosk-neu.spec.js`: Regressionsschutz für die Umbauten,
+      mit echten Daten über den Entwicklungs-Proxy, in allen drei Auflösungen
+      (375, 768, 1280). Geprüft werden die Entscheidungen, die der allgemeine
+      Regelprüflauf nicht ausdrücken kann: nur wählbare Liefertage, schlanke
+      Portions-Badges bei voller Antippfläche, fester Ort des „+"-Knopfes,
+      Fußzeile ohne Schätzwert und bündig, Kochbedarf ohne Überschriftszeile,
+      Tagesfeld ohne Wiederholung, Social-Katalog eingeklappt samt Auslesen
+      durch das Fachmodul, Datumswahl im Kalender, Liefertag vor dem Kopf beim
+      Bäcker, Rückfrage vor folgenschweren Schritten, Klartext-Meldungen.
+      Stand: 31 bestanden, 11 datenbedingt übersprungen, 0 Fehler.
+      — deckt `TC-F5-04`, `TC-F5-05`, `TC-F5-06`, Teile von `TC-F1`–`TC-F4`
 - [ ] **T043** [P] Bestehende Playwright-Tests unter `tests/` gegen
       `kiosk-neu.html` laufen lassen. — deckt `TC-F7-02`
+      *Hinweis: Der Produktivkiosk lädt weder `kiosk-neu.css` noch
+      `kiosk-neu-shell.js`; die bestehenden Tests sind von den Umbauten
+      deshalb nicht betroffen.*
 
 ## Validation & Rollout
 
-- [ ] **T050** Vollständiger Prüflauf mit echten Daten über alle Reiter, alle
+- [x] **T050** Vollständiger Prüflauf mit echten Daten über alle Reiter, alle
       Breiten, alle Erfassungsdialoge. Null Befunde.
+      88 Kombinationen (8 Reiter × 11 Breiten), 0 Befunde. Das Werkzeug prüft
+      inzwischen zusätzlich F20 (Bilder, die nichts zeigen), F21 (großes Feld
+      mit winziger Schrift) und F22 (Eckmarke verdeckt ihr Bild).
 - [ ] **T051** Abnahme durch den Auftraggeber am lokalen Zweitkiosk.
       — deckt `TC-F11-01`
+      *Der einzige verbleibende Schritt. Start:
+      `node tools/dev-proxy.js 8787`, dann `http://localhost:8787/kiosk-neu.html`.*
 - [ ] **T052** Version erhöhen, veröffentlichen, Dev-Proxys beenden.
+      *Erst nach T051.*
 
 ## Traceability
 
