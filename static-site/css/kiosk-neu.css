@@ -2326,23 +2326,33 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
  * im schrumpfenden Flex nicht durch), sodass das Datum `.d2 «08.09.»`
  * waagerecht abschnitt – gemessen scrollWidth 28 gegen clientWidth 24.
  *
- * Ein Raster mit gleich breiten Feldern zeigt alle Liefertage ohne Schieben
- * und ohne Verschnitt: vier Spalten unter 430 px, sieben darüber.
+ * Der Metzger liefert nur an festen Wochentagen (hier Do und Mo). Die übrigen
+ * fünf Wochentage waren dauerhaft ausgegraut und nie antippbar — sie füllten
+ * zwei volle Rasterzeilen mit toter Fläche. Sie werden ausgeblendet; übrig
+ * bleiben die tatsächlichen Liefertage. Ein verpasster Liefertag („zu spät —
+ * bestellt wird spätestens am Vortag") bleibt als Hinweis stehen, weil er den
+ * nächsten möglichen Termin einordnet.
+ *
+ * Weil nur noch wenige Felder übrig sind, wäre ein starres Sieben-Spalten-
+ * Raster verschwenderisch breit. Die Leiste bricht stattdessen um und die
+ * Felder behalten eine ruhige, gleichmäßige Breite.
  */
 
 #panel-metzgerbest .mb-days{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
+  display:flex;
+  flex-wrap:wrap;
   gap:5px;
   overflow:visible;
   padding-bottom:8px;
 }
-@media (min-width:430px){
-  #panel-metzgerbest .mb-days{ grid-template-columns:repeat(7,1fr) }
+/* Strukturelle Nicht-Liefertage (Di, Mi, Fr, Sa, So) verschwinden ganz. */
+#panel-metzgerbest .mb-days .mb-day.off[title*="liefert der Metzger nicht"]{
+  display:none;
 }
 
 #panel-metzgerbest .mb-day{
-  min-width:0;
+  flex:0 0 auto;
+  min-width:88px;
   min-height:var(--tap-min);
   padding:5px 6px;
   white-space:normal;
