@@ -135,15 +135,56 @@ def build_pdf(artikel, positionen, datum_iso, kd_nr="", korrektur=False,
     return bytes(out) if not isinstance(out, str) else out.encode("latin-1")
 
 
+def _umbrechen(pdf, text, breite):
+    """Text in Zeilen zerlegen, die in ``breite`` Millimeter passen.
+
+    Gebrochen wird an Leerzeichen. Ein einzelnes ueberlanges Wort bleibt
+    stehen und ragt lieber etwas heraus, als dass es zerschnitten wird -
+    abgeschnittener Text war genau der Fehler, den diese Funktion behebt.
+    """
+    zeilen, laufend = [], ""
+    for wort in str(text).split(" "):
+        versuch = f"{laufend} {wort}".strip()
+        if laufend and pdf.get_string_width(versuch) > breite:
+            zeilen.append(laufend)
+            laufend = wort
+        else:
+            laufend = versuch
+    zeilen.append(laufend)
+    return zeilen or [""]
+
+
 def _zeile(pdf, nummer, name, pos):
-    """Eine Formularzeile. Ohne Bestellung steht dort ein Strich."""
-    text = P.position_text(pos) if pos else "\u2014"
+    """Eine Formularzeile. Ohne Bestellung steht dort ein Strich.
+
+    Die Bestellspalte wurde frueher hart bei 70 Zeichen abgeschnitten. Bei
+    mehreren Portionsgroessen fehlten dem Metzger dadurch stillschweigend
+    Positionen - er lieferte weniger, als bestellt war. Die Spalte bricht
+    jetzt um und die Zeile waechst mit.
+    """
+    text = P.position_text(pos, kurz_vakuum=True) if pos else "\u2014"
+    zeilenhoehe = 5.6
+    breite_best = pdf.w - pdf.l_margin - pdf.r_margin - 16 - 74
+
+    pdf.set_font("Helvetica", "B" if pos else "", 8)
+    zeilen = _umbrechen(pdf, " " + latin1(text), breite_best - 1)
+    hoehe = zeilenhoehe * len(zeilen)
+
+    # Passt die gewachsene Zeile nicht mehr aufs Blatt, beginnt sie oben auf
+    # dem naechsten - eine ueber den Seitenrand laufende Zeile waere wieder
+    # ein Stueck fehlende Bestellung.
+    if pdf.get_y() + hoehe > pdf.page_break_trigger:
+        pdf.add_page()
+
+    x0, y0 = pdf.get_x(), pdf.get_y()
     pdf.set_font("Helvetica", "", 8)
-    pdf.cell(16, 5.6, latin1(nummer if nummer else "-"), border=1, align="R")
-    pdf.cell(74, 5.6, latin1(name)[:44], border=1)
+    pdf.cell(16, hoehe, latin1(nummer if nummer else "-"), border=1, align="R")
+    pdf.cell(74, hoehe, latin1(name)[:44], border=1)
+
     if pos:
         pdf.set_font("Helvetica", "B", 8)
-    pdf.cell(0, 5.6, " " + latin1(text)[:70], border=1, ln=1)
+    pdf.multi_cell(breite_best, zeilenhoehe, "\n".join(zeilen), border=1)
+    pdf.set_xy(x0, y0 + hoehe)
 
 
 def _datum_de(datum_iso):

@@ -813,7 +813,11 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
    ebenfalls zum Blatt und braucht kein Nachschieben mehr. */
 .mb-ed{
   position:sticky;
-  bottom:0;
+  /* Die Fußleiste klebt ebenfalls am unteren Rand. Ohne diesen Abstand läge
+     das Blatt darunter und die Abschlusszeile wäre verdeckt. Die Höhe der
+     Fußleiste wechselt mit ihrem Inhalt und wird von der Hilfeschicht
+     gemessen (js/kiosk-neu-shell.js). */
+  bottom:var(--mb-fuss, 0px);
   z-index:30;
   grid-column:1 / -1;
   margin:6px calc(var(--pad) * -1) 0;
@@ -822,7 +826,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   border-top:2px solid var(--c-green);
   border-radius:var(--r-m) var(--r-m) 0 0;
   box-shadow:var(--schatten-blatt);
-  max-height:64dvh;
+  max-height:calc(64dvh - var(--mb-fuss, 0px));
   overflow-y:auto;
 }
 @media (min-width:1180px){
@@ -834,6 +838,19 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
     margin-inline:0;
     padding-inline:12px;
   }
+}
+
+/* Das Blatt rollt bei vielen Vorschlägen innen (max-height). Der Abschluss
+   „Übernehmen" lag dadurch unterhalb seines eigenen Randes — man musste im
+   Blatt weiterscrollen, um den Vorgang zu beenden. Die Abschlusszeile bleibt
+   deshalb am unteren Rand des Blattes stehen. */
+.mb-ed .mb-quick{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  background:var(--c-card);
+  padding-top:8px;
+  box-shadow:0 -6px 8px -6px rgba(16,24,40,.18);
 }
 
 /* Fußleisten der Reiter bleiben stehen. */

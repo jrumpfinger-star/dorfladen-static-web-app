@@ -452,14 +452,36 @@
     if (!ed) { editorGesehen = null; return; }
     if (editorGesehen === ed) return;
     editorGesehen = ed;
+    KNeu.editorLaeufe = (KNeu.editorLaeufe || 0) + 1;
+
     // Ein klebendes Element haelt sich selbst fuer sichtbar - `scrollIntoView`
-    // auf dem Blatt bewirkt deshalb nichts. Gescrollt wird die Zeile, zu der
-    // es gehoert.
-    var ziel = ed.closest('.mb-row') || ed;
-    requestAnimationFrame(function () {
-      try { ziel.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-      catch (e) { ziel.scrollIntoView(); }
-    });
+    // auf dem Blatt bewirkt deshalb nichts, und „mittig" laesst den unteren
+    // Rand ueberstehen. Gerechnet wird deshalb der genaue Versatz: so weit,
+    // dass das ganze Blatt im Reiter steht. Unmittelbar nach dem Neuaufbau
+    // stehen die Hoehen der Liste noch nicht fest, deshalb wird nachgefasst.
+    var reiter = document.getElementById('panel-metzgerbest');
+    var versuche = 0;
+    (function holen() {
+      var blatt = document.querySelector('#panel-metzgerbest .mb-ed');
+      if (!blatt || !reiter) return;
+
+      // Die Fußleiste klebt ebenfalls am unteren Rand des Reiters. Ihre Höhe
+      // wechselt mit dem Inhalt, deshalb wird sie gemessen und dem
+      // Gestaltungsblatt gemeldet - sonst läge das Blatt darunter.
+      var fuss = document.getElementById('mb-foot');
+      var fh = fuss ? Math.round(fuss.getBoundingClientRect().height) : 0;
+      reiter.style.setProperty('--mb-fuss', fh + 'px');
+
+      var p = reiter.getBoundingClientRect();
+      var b = blatt.getBoundingClientRect();
+      var unten = p.bottom - fh;
+      var luft = 8;
+      var weg = 0;
+      if (b.bottom > unten - luft) weg = b.bottom - unten + luft;
+      if (b.top - weg < p.top + luft) weg = b.top - p.top - luft;
+      if (Math.abs(weg) > 1) reiter.scrollTop += weg;
+      if (++versuche < 6) setTimeout(holen, 120);
+    })();
   }
 
 

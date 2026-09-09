@@ -122,13 +122,19 @@ def menge_text(block):
     return f"{block.get('anzahl', 1)} \u00d7 {kern}"
 
 
-def position_text(position, mit_vakuum=True):
-    """Portionen einer Position als Klartext, wie er in die Mail geht."""
+def position_text(position, mit_vakuum=True, kurz_vakuum=False):
+    """Portionen einer Position als Klartext, wie er in die Mail geht.
+
+    ``kurz_vakuum`` schreibt statt ``(vakuumiert)`` ein ``V`` hinter die
+    Menge - so wie es auf dem Papierformular des Metzgers steht (``2x 4 St V``).
+    Das gedruckte Formular nutzt die kurze Form, weil dort die Spaltenbreite
+    zaehlt; in der Mail bleibt das Wort ausgeschrieben.
+    """
     teile = []
     for b in position.get("portionen", []):
         t = menge_text(b)
         if mit_vakuum and b.get("vakuum"):
-            t += " (vakuumiert)"
+            t += " V" if kurz_vakuum else " (vakuumiert)"
         teile.append(t)
     text = ", ".join(teile)
     hinweis = position.get("hinweis") or ""
