@@ -217,13 +217,29 @@ Jede Stufe ist für sich abnehmbar und für sich umkehrbar.
   dass dort eine Regel angefasst wurde.
 - **Abnahme:** Bereich für Bereich im Prototyp, mit Live-Daten.
 
-### Stufe 3 — Feinschliff (2–3 Tage)
+### Stufe 3 — Feinschliff (2–3 Tage) ✔ Darstellung geprüft
 
 - Bereiche, die nach Stufe 2 noch fremd wirken, einzeln nachziehen —
   zuerst die täglich benutzten: Wochenplan, Angebote, Bestellungen.
 - Inline-Gestaltung in `cms.js` (580 Stellen) dort angleichen, wo sie stört.
-- Prüfung über 6 Breiten × 15 Bereiche; Dunkelmodus.
-- **Ergebnis:** Kein Bruch mehr zwischen Kiosk und CMS.
+- Prüfung über 8 Breiten × 15 Bereiche **und die Dialoge**
+  (`tools/pruef-cms-darstellung.js`, 136 Kombinationen); Dunkelmodus.
+- **Ergebnis:** 0 Befunde. Zum Vergleich hat die gewohnte Fassung über
+  dieselben 136 Kombinationen **119 Befunde** (zu kleine Bedienelemente,
+  herausragende Inhalte).
+- **Offen:** die Feinarbeit an einzelnen Bereichen und an der
+  Inline-Gestaltung in `cms.js`.
+
+### Bekannte Grenze der Umgebung: Produktbilder
+
+Die Produktfotos in Angeboten und Flyern liegen in **SharePoint** und werden
+über MSAL geholt. Das verlangt eine Microsoft-Anmeldung in einem eigenen
+Fenster. Auf `http://localhost:…` lässt der Browser dieses Fenster nicht zu
+(`popup_window_error`), deshalb bleiben die Kacheln im Prototyp leer.
+
+**Das betrifft die gewohnte Fassung genauso** — nachgewiesen durch denselben
+Ablauf auf `cms.html`. Es ist keine Folge des Umbaus und auf der
+ausgelieferten Seite nicht vorhanden.
 
 ### Stufe 4 — Umschalten (½ Tag)
 
@@ -269,8 +285,15 @@ bei einem Vielfachen und trüge 915 Kopplungen als Risiko.
 | Funktionserhalt | `tools/pruef-cms-abgleich.js` | F2 — läuft bei jeder Änderung, Sekunden |
 | Umwertung | Bericht von `build-cms-neu.js` | F4 |
 | Oberfläche | `tests/cms-neu.spec.js` (3 Größen) | F3, F6 |
-| Erscheinungsbild | eigenes Messskript über 6 Breiten × 15 Bereiche | F6 |
+| **Erscheinungsbild vollständig** | `tools/pruef-cms-darstellung.js` — **8 Breiten × 15 Bereiche + Dialoge = 136 Kombinationen** | F3, F6 |
 | Bestand | `tests/cms-social.spec.js` (13 Fälle) | Rückfallprobe |
+
+Die Playwright-Datei deckt die drei Größen ab, die die Konstitution fordert.
+Das reicht für einen Umbau dieser Größe nicht: Im Laden stehen Geräte von
+320 bis 1920 px, und die Dialoge sind ein eigener Bauteil, den ein
+Reiterdurchlauf nie berührt. Deshalb das zweite Werkzeug — es fährt das
+vollständige Kreuz ab und lässt sich auch auf `cms.html` anwenden, um zu
+zeigen, ob ein Befund neu ist.
 
 **Zur Anmeldung in Tests:** Die vorhandene Testdatei prüft nur die Struktur,
 weil das CMS ein Kennwort verlangt. Das bleibt so — die Tests setzen die

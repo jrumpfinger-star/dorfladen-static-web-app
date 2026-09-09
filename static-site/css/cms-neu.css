@@ -451,6 +451,19 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
 /* Reihen von Unterreitern und Filtern brechen um, statt hinauszulaufen. */
 .cmsneu-inhalt .cms-subtabs,
 .cmsneu-inhalt .cms-subtab-row{ flex-wrap:wrap }
+
+/* Der Wochenplan fordert fünf Spalten zu mindestens 180 px - zusammen
+   948 px. Seine Umbruchregel misst aber die **Fensterbreite**, und die ist
+   seit der Seitenleiste nicht mehr die Breite des Inhalts: Bei 1024 px
+   blieben dem Inhalt nur 912 px, die Regel für 960 px griff nicht, und die
+   letzte Spalte ragte hinaus.
+
+   Statt den Haltepunkt zu verschieben (und beim nächsten Leistenmaß wieder
+   danebenzuliegen) richtet sich das Raster jetzt nach dem Platz, den es
+   tatsächlich hat. */
+.cmsneu-inhalt .cms-grid{
+  grid-template-columns:repeat(auto-fit, minmax(165px, 1fr));
+}
 /* Der Design-Bereich trägt seine Unterreiter in einer Reihe ohne eigene
    Klasse; dort greift die Umgebung des Knopfes. */
 #cms-panel-cfg .cms-subtab{ flex:0 0 auto }
@@ -500,6 +513,15 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
     border-radius:var(--r-l);
     padding-bottom:0;
   }
+}
+
+/* Der Kopf eines Dialogs trägt Titel und Knöpfe in einer Reihe. Auf einem
+   schmalen Schirm lief „Abbrechen" über den rechten Rand hinaus und war
+   nicht mehr zu treffen. Die Reihe bricht jetzt um. */
+#cms-modal-wrap .cms-modal-header{ flex-wrap:wrap; row-gap:8px }
+@media (max-width:520px){
+  #cms-modal-wrap .cms-modal-header > div{ flex-wrap:wrap }
+  #cms-modal-wrap .cms-modal-header > *{ min-width:0 }
 }
 
 /* ── 8  Anmeldung ─────────────────────────────────────────────────────── */
