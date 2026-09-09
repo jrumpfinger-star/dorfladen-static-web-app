@@ -187,7 +187,7 @@
       card.className='cms-card';
       var h='';
       h+='<div class="cms-flex cms-between cms-ang-toggle" style="padding:12px 12px 10px 12px" data-action="toggleAngItems">';
-      h+='<div style="display:flex;align-items:center"><div><div style="font-weight:600;color:#1f2937">'+esc(g.titel||'Angebot')+'</div>';
+      h+='<div style="display:flex;align-items:center"><div><div style="font-weight:600;color:var(--ink)">'+esc(g.titel||'Angebot')+'</div>';
       h+='<div class="cms-ang-meta">'+toIsoDateOnly(g.von)+' bis '+toIsoDateOnly(g.bis)+' · '+g.items.length+' Artikel</div></div>';
       h+='<span class="cms-ang-chevron collapsed">&#9660;</span></div>';
       h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
@@ -287,8 +287,8 @@
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
-      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0 2px;color:#6b7280">\uD83D\uDCC1</button>'
-+'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:12px;background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:1px 4px;color:#6b7280">\uD83D\uDCCB</button>'
+      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:var(--schrift-normal);background:none;border:none;cursor:pointer;padding:0 2px;color:var(--mut)">\uD83D\uDCC1</button>'
++'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:var(--schrift-klein);background:none;border:1px solid var(--line);border-radius:var(--r-s);cursor:pointer;padding:1px 4px;color:var(--mut)">\uD83D\uDCCB</button>'
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
@@ -421,7 +421,7 @@
         +'</div>'
         +'<input type="hidden" id="cms-akt-edit-id" value="'+esc(isEdit?(aktion.aktion_id||''):'')+'">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 2px">'
-          +'<strong style="font-size:13px;color:#374151">Artikel</strong>'
+          +'<strong style="font-size:var(--schrift-normal);color:var(--ink)">Artikel</strong>'
           +'<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="addAngRow" type="button">+ Artikel</button>'
         +'</div>'
         +'<div id="cms-akt-items" style="display:flex;flex-direction:column;gap:10px;min-height:0;padding:4px 0"></div>'
@@ -706,9 +706,9 @@
     html+='<div class="cms-modal" style="max-width:420px;text-align:center;position:relative">';
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>\u26a0\ufe0f Angebot l\u00f6schen?</h3>';
-    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich l\u00f6schen?</p>';
-    html+='<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
-    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
+    html+='<p style="font-size:var(--schrift-normal);color:var(--mut);margin-bottom:8px">"'+esc(ak.titel)+'" mit '+ak.items.length+' Artikeln wirklich l\u00f6schen?</p>';
+    html+='<p style="font-size:var(--schrift-klein);color:var(--mut);margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line)">';
     html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteAkt" data-id="'+esc(aktId)+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
@@ -1017,7 +1017,7 @@
     el.className='cms-toast';
     el.style.background=type==='error'?'#dc2626':type==='warn'?'#d97706':'#16a34a';
     if(undoFn){
-      el.innerHTML=esc(msg)+' <button style="margin-left:12px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600" class="cms-undo-btn">↩ Rückgängig</button>';
+      el.innerHTML=esc(msg)+' <button style="margin-left:12px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:var(--karte);padding:3px 10px;border-radius:var(--r-s);cursor:pointer;font-size:var(--schrift-klein);font-weight:600" class="cms-undo-btn">↩ Rückgängig</button>';
       el.querySelector('.cms-undo-btn').addEventListener('click',function(e){e.stopPropagation();undoFn();el.remove();});
       document.body.appendChild(el);
       setTimeout(function(){el.remove();},8000);
@@ -1165,7 +1165,7 @@
 
   function loadSeiteninhalte(){
     var container=document.getElementById('cms-seiten-fields');
-    container.innerHTML='<div style="text-align:center;padding:20px;color:#6b7280">Lade Seiteninhalte&hellip;</div>';
+    container.innerHTML='<div style="text-align:center;padding:20px;color:var(--mut)">Lade Seiteninhalte&hellip;</div>';
     fetch(API+'/cms-config')
       .then(function(r){return r.json();})
       .then(function(cfg){
@@ -1195,15 +1195,15 @@
         }
         container.innerHTML=SEITEN_KEYS.map(function(s){
           var val=map[s.key]||'';
-          var statusDot=val?'<span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-left:6px" title="Inhalt vorhanden"></span>'
-                           :'<span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:6px" title="Noch kein Inhalt"></span>';
-          var hint=val?'':'<p style="font-size:11px;color:#d97706;margin:4px 0 0">&#9888; Noch kein Inhalt in Dataverse. Bitte Text eingeben und speichern.</p>';
+          var statusDot=val?'<span style="width:8px;height:8px;border-radius:50%;background:var(--gr);display:inline-block;margin-left:6px" title="Inhalt vorhanden"></span>'
+                           :'<span style="width:8px;height:8px;border-radius:50%;background:var(--amb);display:inline-block;margin-left:6px" title="Noch kein Inhalt"></span>';
+          var hint=val?'':'<p style="font-size:var(--schrift-klein);color:var(--amb);margin:4px 0 0">&#9888; Noch kein Inhalt in Dataverse. Bitte Text eingeben und speichern.</p>';
           return '<div class="cms-card" data-seiten-key="'+s.key+'" style="margin-bottom:2px">'
             +'<div class="cms-card-header" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none" onclick="cmsSeitenToggle(\''+s.key+'\')">'
             +'<span>'+s.icon+' '+s.label+statusDot+'</span>'
             +'<span style="display:flex;align-items:center;gap:8px">'
-            +'<a href="'+s.page+'" target="_blank" style="font-size:11px;color:#5ea88a;text-decoration:none" title="Seite anzeigen" onclick="event.stopPropagation()">&#128065;</a>'
-            +'<span class="cms-seiten-arrow" id="seiten-arrow-'+s.key+'" style="font-size:16px;transition:transform .2s">&#9654;</span>'
+            +'<a href="'+s.page+'" target="_blank" style="font-size:var(--schrift-klein);color:var(--gr);text-decoration:none" title="Seite anzeigen" onclick="event.stopPropagation()">&#128065;</a>'
+            +'<span class="cms-seiten-arrow" id="seiten-arrow-'+s.key+'" style="font-size:var(--schrift-gross);transition:transform .2s">&#9654;</span>'
             +'</span></div>'
             +'<div class="cms-card-body" id="seiten-body-'+s.key+'" style="display:none">'
             +rteBar('seiten-'+s.key)
@@ -1217,7 +1217,7 @@
         window._seitenLoaded=true;
       })
       .catch(function(e){
-        container.innerHTML='<p style="color:#dc2626">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</p>';
+        container.innerHTML='<p style="color:var(--red)">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</p>';
       });
   }
 
@@ -1778,18 +1778,18 @@
     var all=cfgPresetsGet();
     var list=all[section]||[];
     if(!list.length){
-      container.innerHTML='<span style="font-size:11px;color:#9ca3af;font-style:italic">Noch keine Vorlagen gespeichert.</span>';
+      container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--mut);font-style:italic">Noch keine Vorlagen gespeichert.</span>';
       return;
     }
     var html='';
     list.forEach(function(p,i){
       var d=new Date(p.ts);
       var dateStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
-      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#fff;border:1px solid #e5e7eb;border-radius:6px">';
-      html+='<span style="flex:1;font-size:11px;font-weight:600;color:#374151" title="'+dateStr+'">'+p.name+'</span>';
-      html+='<span style="font-size:9px;color:#9ca3af">'+dateStr+'</span>';
+      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-s)">';
+      html+='<span style="flex:1;font-size:var(--schrift-klein);font-weight:600;color:var(--ink)" title="'+dateStr+'">'+p.name+'</span>';
+      html+='<span style="font-size:9px;color:var(--mut)">'+dateStr+'</span>';
       html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px" data-action="cfgPresetLoad" data-section="'+section+'" data-idx="'+i+'">Laden</button>';
-      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:#dc2626" data-action="cfgPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
+      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:var(--red)" data-action="cfgPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
       html+='</div>';
     });
     container.innerHTML=html;
@@ -1845,7 +1845,7 @@
     target=(target||'plakat').toLowerCase();
     var container=document.getElementById('cfg-live-preview-'+target);
     if(!container)return;
-    container.innerHTML='<span style="font-size:12px;color:#6b7280">Wird generiert\u2026</span>';
+    container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--mut)">Wird generiert\u2026</span>';
     var gen=++_livePreviewGen;
     ensureAngeboteForPreview().then(function(){
       if(gen!==_livePreviewGen)return;
@@ -1869,14 +1869,14 @@
           canvas.toBlob(function(blob){
             if(!blob||gen!==_livePreviewGen)return;
             var url=URL.createObjectURL(blob);
-            container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Flyer-Vorschau">';
+            container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Flyer-Vorschau">';
           },'image/png');
-        }).catch(function(){container.innerHTML='<span style="font-size:11px;color:#dc2626">Fehler</span>';});
+        }).catch(function(){container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--red)">Fehler</span>';});
       }else{
         generateAngebotPlakat(data,function(blob){
           if(!blob||gen!==_livePreviewGen)return;
           var url=URL.createObjectURL(blob);
-          container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Plakat-Vorschau">';
+          container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Plakat-Vorschau">';
         },cfg);
       }
     });
@@ -1944,9 +1944,9 @@
       var html='<div class="cms-modal-bg">';
       html+='<div class="cms-modal" style="max-width:90vw;max-height:90vh;text-align:center;overflow:auto;position:relative">';
       html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
-      html+='<h3 style="margin:0 0 12px;font-size:15px">Vorschau (Gro\u00df)</h3>';
-      html+='<img src="'+url+'" style="max-width:100%;max-height:75vh;border-radius:8px;border:1px solid #e5e7eb">';
-      html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb;margin-top:12px">';
+      html+='<h3 style="margin:0 0 12px;font-size:var(--schrift-gross)">Vorschau (Gro\u00df)</h3>';
+      html+='<img src="'+url+'" style="max-width:100%;max-height:75vh;border-radius:var(--r-s);border:1px solid var(--line)">';
+      html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line);margin-top:12px">';
       html+='<button class="cms-btn cms-btn-gray" id="cfg-lp-dl">\u2b07\ufe0f Download</button>';
       html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
       html+='</div></div></div>';
@@ -2025,7 +2025,7 @@
     var html='<div style="background:linear-gradient(135deg,'+c.headerBg+' 0%,'+c.headerBg+' 50%,'+adjustColor(c.headerBg,20)+' 100%);color:'+c.headerText+';padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;border-radius:12px 12px 0 0">';
     html+='<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:'+c.headerText+'"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
     html+='<span>Sonderangebote</span>';
-    html+='<span style="font-size:11px;font-weight:400;opacity:.85;margin-left:auto">'+HPANG_SAMPLES.length+' Artikel</span>';
+    html+='<span style="font-size:var(--schrift-klein);font-weight:400;opacity:.85;margin-left:auto">'+HPANG_SAMPLES.length+' Artikel</span>';
     html+='</div>';
 
     // Build grid
@@ -2510,14 +2510,14 @@
     var containerId=kind==='flyer'?'wp-flyer-live-preview':'wp-home-live-preview';
     var container=document.getElementById(containerId);
     if(!container)return;
-    container.innerHTML='<span style="font-size:12px;color:#6b7280">Wird generiert\u2026</span>';
+    container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--mut)">Wird generiert\u2026</span>';
     if(typeof generateMenuImage==='function'){
       generateMenuImage(mealRows,header,function(blob){
         var url=URL.createObjectURL(blob);
-        container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:6px" alt="Vorschau">';
+        container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Vorschau">';
       },tpl,kind);
     }else{
-      container.innerHTML='<span style="font-size:12px;color:#dc2626">generateMenuImage nicht verf\u00fcgbar</span>';
+      container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--red)">generateMenuImage nicht verf\u00fcgbar</span>';
     }
   };
 
@@ -2570,18 +2570,18 @@
     var all=wpPresetsGet();
     var list=all[section]||[];
     if(!list.length){
-      container.innerHTML='<span style="font-size:11px;color:#9ca3af;font-style:italic">Noch keine Vorlagen gespeichert.</span>';
+      container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--mut);font-style:italic">Noch keine Vorlagen gespeichert.</span>';
       return;
     }
     var html='';
     list.forEach(function(p,i){
       var d=new Date(p.ts);
       var dateStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
-      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#fff;border:1px solid #e5e7eb;border-radius:6px">';
-      html+='<span style="flex:1;font-size:11px;font-weight:600;color:#374151" title="'+dateStr+'">'+p.name+'</span>';
-      html+='<span style="font-size:9px;color:#9ca3af">'+dateStr+'</span>';
+      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-s)">';
+      html+='<span style="flex:1;font-size:var(--schrift-klein);font-weight:600;color:var(--ink)" title="'+dateStr+'">'+p.name+'</span>';
+      html+='<span style="font-size:9px;color:var(--mut)">'+dateStr+'</span>';
       html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px" data-action="wpPresetLoad" data-section="'+section+'" data-idx="'+i+'">Laden</button>';
-      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:#dc2626" data-action="wpPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
+      html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:var(--red)" data-action="wpPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
       html+='</div>';
     });
     container.innerHTML=html;
@@ -2674,11 +2674,11 @@
       var h='<div class="cms-meal-hdr" style="background:'+col+'">'+DAYS[dc]+'</div>';
       var b='<div class="cms-meal-body">';
       if(items.length===0){
-        b+='<div style="color:#d1d5db;font-size:13px;text-align:center;padding:16px 0">Kein Gericht</div>';
+        b+='<div style="color:var(--line);font-size:var(--schrift-normal);text-align:center;padding:16px 0">Kein Gericht</div>';
       } else {
         var notice=items[0].beschreibung;
         if(notice&&!items[0].gericht){
-          b+='<div style="color:#9ca3af;font-size:13px;font-style:italic;text-align:center;padding:12px 4px">'+esc(notice)+'</div>';
+          b+='<div style="color:var(--mut);font-size:var(--schrift-normal);font-style:italic;text-align:center;padding:12px 4px">'+esc(notice)+'</div>';
           b+='<div class="cms-meal-actions">';
           b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+items[0].id+'">Bearbeiten</button>';
           b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+items[0].id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
@@ -2687,15 +2687,15 @@
           items.forEach(function(m){
             var imgHtml='';
             if(showImgs&&m.gericht&&_cmsMtBilder()[m.gericht]&&_cmsMtBilder()[m.gericht].bild_url){
-              imgHtml='<img src="'+esc(_cmsMtBilder()[m.gericht].bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;flex-shrink:0;cursor:pointer" title="Klick zum Bearbeiten" onclick="document.querySelector(\'[data-action=editMeal][data-id=\\x22'+m.id+'\\x22]\').click()" onerror="this.style.display=\'none\'">';
+              imgHtml='<img src="'+esc(_cmsMtBilder()[m.gericht].bild_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-s);border:1px solid var(--line);flex-shrink:0;cursor:pointer" title="Klick zum Bearbeiten" onclick="document.querySelector(\'[data-action=editMeal][data-id=\\x22'+m.id+'\\x22]\').click()" onerror="this.style.display=\'none\'">';
             }
             b+='<div class="cms-meal-item" style="'+(imgHtml?'display:flex;align-items:center;gap:8px':'')+'">';
             b+=imgHtml;
             b+='<span style="flex:1">'+esc(m.gericht)+'</span>';
             if(m.preis) b+='<span class="price">'+fmtP(m.preis)+'</span>';
             b+='</div>';
-            if(m.beschreibung) b+='<div style="color:#9ca3af;font-size:11px;font-style:italic;padding:0 8px 4px">'+esc(m.beschreibung)+'</div>';
-            if(m.allergene) b+='<div style="color:#d97706;font-size:10px;padding:0 8px 4px">\u26a0\ufe0f '+esc(m.allergene)+'</div>';
+            if(m.beschreibung) b+='<div style="color:var(--mut);font-size:var(--schrift-klein);font-style:italic;padding:0 8px 4px">'+esc(m.beschreibung)+'</div>';
+            if(m.allergene) b+='<div style="color:var(--amb);font-size:10px;padding:0 8px 4px">\u26a0\ufe0f '+esc(m.allergene)+'</div>';
             b+='<div class="cms-meal-actions">';
             b+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editMeal" data-id="'+m.id+'">Bearbeiten</button>';
             b+='<button class="cms-btn-trash" title="Wochenplan-Eintrag l\u00f6schen" aria-label="L\u00f6schen" data-action="deleteMeal" data-id="'+m.id+'"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
@@ -2757,16 +2757,16 @@
     h+='<div class="cms-art-dd"></div></div>';
     h+='<input class="cms-input cms-price" data-f="price" type="text" inputmode="decimal" placeholder="Preis" value="'+(price!=null?fmtDePrice(price):'')+'">';
     h+='</div>';
-    h+='<input class="cms-input" data-f="allergene" type="text" placeholder="Allergene/Zusatzstoffe (z.B. A,C,G)" value="'+esc(allergene||'')+'" style="margin-top:6px;font-size:12px">';
+    h+='<input class="cms-input" data-f="allergene" type="text" placeholder="Allergene/Zusatzstoffe (z.B. A,C,G)" value="'+esc(allergene||'')+'" style="margin-top:6px;font-size:var(--schrift-klein)">';
     // Optional image row
     h+='<div style="display:flex;align-items:center;gap:6px;margin-top:6px">';
-    h+='<img class="cms-meal-img-pv" data-row="'+rn+'" src="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;display:none">';
-    h+='<label style="cursor:pointer;padding:3px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #d1d5db;font-size:11px;color:#374151;display:inline-flex;align-items:center;gap:3px">';
+    h+='<img class="cms-meal-img-pv" data-row="'+rn+'" src="" style="width:36px;height:36px;object-fit:cover;border-radius:var(--r-s);border:1px solid var(--line);display:none">';
+    h+='<label style="cursor:pointer;padding:3px 8px;border-radius:var(--r-s);background:var(--line);border:1px solid var(--line);font-size:var(--schrift-klein);color:var(--ink);display:inline-flex;align-items:center;gap:3px">';
     h+='\uD83D\uDCF7 Bild<input type="file" accept="image/*" data-action="mealRowImg" data-row="'+rn+'" style="display:none">';
     h+='</label>';
-    h+='<button type="button" data-action="mealRowPaste" data-row="'+rn+'" title="Bild aus Zwischenablage (Klick + Strg+V)" style="padding:2px 6px;border-radius:6px;background:#f3f4f6;border:1px solid #d1d5db;font-size:11px;cursor:pointer;color:#374151">\uD83D\uDCCB Einf\u00fcgen</button>';
+    h+='<button type="button" data-action="mealRowPaste" data-row="'+rn+'" title="Bild aus Zwischenablage (Klick + Strg+V)" style="padding:2px 6px;border-radius:var(--r-s);background:var(--line);border:1px solid var(--line);font-size:var(--schrift-klein);cursor:pointer;color:var(--ink)">\uD83D\uDCCB Einf\u00fcgen</button>';
     h+='<input type="hidden" data-f="bild_file" value="">';
-    h+='<span class="cms-meal-img-status" style="font-size:10px;color:#9ca3af"></span>';
+    h+='<span class="cms-meal-img-status" style="font-size:10px;color:var(--mut)"></span>';
     h+='</div>';
     row.innerHTML=h;
     c.appendChild(row);
@@ -2868,18 +2868,18 @@
     html+='<div class="cms-modal" style="max-width:600px;position:relative">';
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>'+title+'</h3>';
-    html+='<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Wochentag</label>';
+    html+='<div style="margin-bottom:12px"><label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);display:block;margin-bottom:4px">Wochentag</label>';
     html+='<select id="cms-meal-day" class="cms-input">'+dayOpts+'</select></div>';
-    html+='<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">Hinweis <span style="font-weight:400;color:#9ca3af">(optional)</span></label>';
+    html+='<div style="margin-bottom:12px"><label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);display:block;margin-bottom:4px">Hinweis <span style="font-weight:400;color:var(--mut)">(optional)</span></label>';
     html+='<select id="cms-meal-notice-sel" class="cms-input" data-action="noticeSelChange">'+noticeOpts+'</select>';
     html+='<input id="cms-meal-notice-custom" class="cms-input" style="margin-top:6px;'+(isCustom?'':'display:none')+'" value="'+esc(isCustom?noticeVal:'')+'" placeholder="Eigenen Hinweis eingeben..."></div>';
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-    html+='<span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Gerichte</span>';
+    html+='<span style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px">Gerichte</span>';
     if(!isEdit) html+='<button class="cms-btn cms-btn-sm cms-btn-gray" type="button" data-action="addMealRow">+ Gericht</button>';
     html+='</div>';
     html+='<div id="cms-meal-rows"></div>';
     html+='<input type="hidden" id="cms-meal-id" value="'+(meal?meal.id:'')+'">';
-    html+='<div class="cms-modal-footer" style="padding:14px 0 0;border-top:1px solid #e5e7eb;margin-top:12px">';
+    html+='<div class="cms-modal-footer" style="padding:14px 0 0;border-top:1px solid var(--line);margin-top:12px">';
     html+='<button class="cms-btn cms-btn-primary" data-action="saveMeal">\ud83d\udcbe Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
@@ -3026,9 +3026,9 @@
     html+='<div class="cms-modal" style="max-width:420px;text-align:center;position:relative">';
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
     html+='<h3>\u26a0\ufe0f Wochenplan-Eintrag l\u00f6schen?</h3>';
-    html+='<p style="font-size:13px;color:#6b7280;margin-bottom:8px">"'+esc(m.gericht||'Eintrag')+'" am '+m.wochentag_name+' wirklich l\u00f6schen?</p>';
-    html+='<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
-    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
+    html+='<p style="font-size:var(--schrift-normal);color:var(--mut);margin-bottom:8px">"'+esc(m.gericht||'Eintrag')+'" am '+m.wochentag_name+' wirklich l\u00f6schen?</p>';
+    html+='<p style="font-size:var(--schrift-klein);color:var(--mut);margin-bottom:16px">Kann nach dem L\u00f6schen kurzzeitig r\u00fcckg\u00e4ngig gemacht werden.</p>';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line)">';
     html+='<button class="cms-btn cms-btn-del" style="flex:1" data-action="confirmDeleteMeal" data-id="'+id+'">\ud83d\uddd1\ufe0f L\u00f6schen</button>';
     html+='<button class="cms-btn cms-btn-gray" style="flex:1" data-action="closeModal">Abbrechen</button>';
     html+='</div></div></div>';
@@ -3098,21 +3098,21 @@
     Object.keys(sections).forEach(function(name){
       var items=sections[name];
       var card=document.createElement('div'); card.className='cms-card';
-      var html='<div class="cms-card-header" style="background:linear-gradient(135deg,#15803d,#16a34a)">'+esc(name)+'</div>';
+      var html='<div class="cms-card-header" style="background:linear-gradient(135deg,#15803d,var(--gr))">'+esc(name)+'</div>';
       html+='<div>';
       items.forEach(function(h){
         html+='<div class="cms-hours-row" data-hid="'+h.id+'">';
         html+='<div class="cms-hours-top"><span class="cms-hours-day">'+(DAY_SHORT[h.wochentag]||'?')+'</span>';
-        html+='<label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" class="h-closed" '+(h.geschlossen?'checked':'')+' data-action="hoursChanged"><span style="color:#6b7280">Geschlossen</span></label></div>';
+        html+='<label style="display:flex;align-items:center;gap:4px;font-size:var(--schrift-klein)"><input type="checkbox" class="h-closed" '+(h.geschlossen?'checked':'')+' data-action="hoursChanged"><span style="color:var(--mut)">Geschlossen</span></label></div>';
         html+='<div class="cms-hours-times">';
         html+='<div class="cms-hours-block"><span class="cms-hours-label">VM:</span>';
         html+='<input type="time" class="cms-hours-time h-vm-von" value="'+h.vormittag_von+'" data-action="hoursChanged">';
-        html+='<span style="color:#d1d5db">&ndash;</span>';
+        html+='<span style="color:var(--line)">&ndash;</span>';
         html+='<input type="time" class="cms-hours-time h-vm-bis" value="'+h.vormittag_bis+'" data-action="hoursChanged">';
         html+='</div>';
         html+='<div class="cms-hours-block"><span class="cms-hours-label">NM:</span>';
         html+='<input type="time" class="cms-hours-time h-nm-von" value="'+h.nachmittag_von+'" data-action="hoursChanged">';
-        html+='<span style="color:#d1d5db">&ndash;</span>';
+        html+='<span style="color:var(--line)">&ndash;</span>';
         html+='<input type="time" class="cms-hours-time h-nm-bis" value="'+h.nachmittag_bis+'" data-action="hoursChanged">';
         html+='</div></div></div>';
       });
@@ -3185,11 +3185,11 @@
   function loadHomepage(){
     var container = document.getElementById('cms-hp-fields');
     var empty = document.getElementById('cms-hp-empty');
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Lade Homepage-Inhalte&hellip;</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mut)">Lade Homepage-Inhalte&hellip;</div>';
     fetch(API+'/cms-config?full=true')
       .then(function(r){return r.json();})
       .then(function(res){
-        if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
+        if(!res.success){container.innerHTML='<p style="color:var(--red)">Fehler: '+res.error+'</p>';return;}
         _hpItems = Array.isArray(res.data) ? res.data : [];
         _hpLoaded = true;
         // Filter out design_config, logo fields, image data, and Seiteninhalte keys (shown in accordion below)
@@ -3217,7 +3217,7 @@
         container.innerHTML = textItems.map(function(item){
           var val = String(item.wert||'');
           var meta = HP_FIELD_META[item.name] || HP_FIELD_META[item.key] || {icon:'&#128221;', desc:''};
-          var descHtml = meta.desc ? '<p style="font-size:11px;color:#9ca3af;margin:2px 0 8px">'+meta.desc+'</p>' : '';
+          var descHtml = meta.desc ? '<p style="font-size:var(--schrift-klein);color:var(--mut);margin:2px 0 8px">'+meta.desc+'</p>' : '';
           var fieldHtml;
           var useHtml = isHtmlField(item.name);
           // Auto-detect HTML content in value
@@ -3225,26 +3225,26 @@
           if(isImageValue(val)){
             // Show image preview only (base64 data hidden)
             fieldHtml='<div style="display:flex;align-items:center;gap:12px">'
-              +'<img src="'+val+'" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb" alt="Bild-Vorschau">'
-              +'<span style="font-size:11px;color:#9ca3af">Bild ('+Math.round(val.length/1024)+' KB base64)</span>'
+              +'<img src="'+val+'" style="max-width:200px;max-height:120px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--gr-t)" alt="Bild-Vorschau">'
+              +'<span style="font-size:var(--schrift-klein);color:var(--mut)">Bild ('+Math.round(val.length/1024)+' KB base64)</span>'
               +'</div>'
               +'<input type="hidden" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'">';
           } else if(useHtml){
             fieldHtml=rteToolbar(item.id)
               +'<div class="cms-rte-editor" contenteditable="true" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" data-hp-html="1">'+val+'</div>';
           } else {
-            fieldHtml='<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px">';
+            fieldHtml='<input class="cms-input" data-hp-id="'+item.id+'" data-hp-name="'+esc(item.name)+'" value="'+esc(val)+'" style="width:100%;font-size:var(--schrift-normal);padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-s)">';
           }
           return '<div class="cms-card" style="margin-bottom:12px">'
-            +'<div class="cms-card-header" style="font-size:13px">'+meta.icon+' '+esc(item.name)+'</div>'
+            +'<div class="cms-card-header" style="font-size:var(--schrift-normal)">'+meta.icon+' '+esc(item.name)+'</div>'
             +'<div class="cms-card-body" style="padding:12px 16px">'
             +descHtml
             +fieldHtml
-            +'<div style="margin-top:6px;font-size:11px;color:#d1d5db">ID: '+item.id+'</div>'
+            +'<div style="margin-top:6px;font-size:var(--schrift-klein);color:var(--line)">ID: '+item.id+'</div>'
             +'</div></div>';
         }).join('');
       })
-      .catch(function(e){container.innerHTML='<p style="color:#dc2626">'+_cmsErr(e)+'</p>';});
+      .catch(function(e){container.innerHTML='<p style="color:var(--red)">'+_cmsErr(e)+'</p>';});
   }
 
   // Focus RTE editor before toolbar command
@@ -3310,7 +3310,7 @@
   }
 
   window.cmsLogoRemove=function(){
-    document.getElementById('cms-logo-preview').innerHTML='<span style="color:#9ca3af;font-size:12px">Kein Logo</span>';
+    document.getElementById('cms-logo-preview').innerHTML='<span style="color:var(--mut);font-size:var(--schrift-klein)">Kein Logo</span>';
     fetch(API+'/logo',{method:'DELETE'})
       .then(function(r){return r.json();})
       .then(function(res){if(res.success)toast('Logo entfernt','ok');else toast('Fehler: '+res.error,'error');})
@@ -3437,16 +3437,16 @@
   function loadNews(){
     var container = document.getElementById('cms-news-list');
     var empty = document.getElementById('cms-news-empty');
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Lade Beitr&auml;ge&hellip;</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mut)">Lade Beitr&auml;ge&hellip;</div>';
     fetch(API+'/news?all=true')
       .then(function(r){return r.json();})
       .then(function(res){
-        if(!res.success){container.innerHTML='<p style="color:#dc2626">Fehler: '+res.error+'</p>';return;}
+        if(!res.success){container.innerHTML='<p style="color:var(--red)">Fehler: '+res.error+'</p>';return;}
         _newsItems = res.data || [];
         _newsLoaded = true;
         renderNewsList();
       })
-      .catch(function(e){container.innerHTML='<p style="color:#dc2626">'+_cmsErr(e)+'</p>';});
+      .catch(function(e){container.innerHTML='<p style="color:var(--red)">'+_cmsErr(e)+'</p>';});
   }
 
   function renderNewsList(){
@@ -3465,8 +3465,8 @@
         +'<td class="cms-news-date">'+dateStr+'</td>'
         +'<td><div class="cms-news-title">'+esc(n.titel)+'</div>'+(desc?'<div class="cms-news-desc">'+esc(desc.length>80?desc.substring(0,80)+'…':desc)+'</div>':'')+'</td>'
         +'<td><span class="cms-news-badge'+(isActive?' active':'')+'">'+(isActive?'Aktiv':'Inaktiv')+'</span></td>'
-        +'<td style="font-size:11px;color:#6b7280">'+(n.dl_aktiv_bis?new Date(n.dl_aktiv_bis).toLocaleDateString('de-DE',{day:'numeric',month:'numeric',year:'2-digit'}):'∞')+'</td>'
-        +'<td style="text-align:center">'+(isLaufband?'<span class="cms-news-badge active" style="background:#dbeafe;color:#1e40af">📢</span>':'–')+'</td>'
+        +'<td style="font-size:var(--schrift-klein);color:var(--mut)">'+(n.dl_aktiv_bis?new Date(n.dl_aktiv_bis).toLocaleDateString('de-DE',{day:'numeric',month:'numeric',year:'2-digit'}):'∞')+'</td>'
+        +'<td style="text-align:center">'+(isLaufband?'<span class="cms-news-badge active" style="background:var(--blu-l);color:var(--blu)">📢</span>':'–')+'</td>'
         +'<td class="cms-news-actions cms-news-act-col">'
         +'<button class="cms-news-abtn" data-action="toggleNewsStatus" data-id="'+n.id+'" title="'+(isActive?'Deaktivieren':'Aktivieren')+'">'+(isActive?'⏸':'▶')+'</button>'
         +'<button class="cms-news-abtn" data-action="editNews" data-id="'+n.id+'" title="Bearbeiten">✏️</button>'
@@ -3474,7 +3474,7 @@
         +'</td></tr>';
     });
     html+='</tbody></table></div>';
-    if(isMob) html+='<p style="font-size:11px;color:#9ca3af;margin:6px 0 0;text-align:center">Tippen Sie auf einen Beitrag zum Bearbeiten</p>';
+    if(isMob) html+='<p style="font-size:var(--schrift-klein);color:var(--mut);margin:6px 0 0;text-align:center">Tippen Sie auf einen Beitrag zum Bearbeiten</p>';
     container.innerHTML = html;
   }
 
@@ -3506,7 +3506,7 @@
     overlay.className='cms-modal-bg';
     overlay.innerHTML='<div class="cms-modal" style="max-width:720px;position:relative;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif">'
       +'<button class="cms-modal-close" data-action="closeNewsModal" title="Schlie\u00dfen">\u2715</button>'
-      +'<h3 style="margin:0 0 14px;font-size:15px;font-weight:600;border-bottom:1px solid #e5e7eb;padding-bottom:10px">'+title+'</h3>'
+      +'<h3 style="margin:0 0 14px;font-size:var(--schrift-gross);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:10px">'+title+'</h3>'
       +'<label class="cms-news-lbl">Titel</label>'
       +'<input class="cms-input" id="news-edit-titel" value="'+esc(titel)+'" placeholder="Überschrift des Beitrags">'
       +'<label class="cms-news-lbl">Inhalt</label>'
@@ -3529,8 +3529,8 @@
       +'<button type="button" class="cms-btn cms-btn-sm cms-btn-gray" id="news-edit-img-clear" style="display:none">✕ Entfernen</button>'
       +'<input type="hidden" id="news-edit-img-data">'
       +'</div>'
-      +'<div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:#2e7d4f"> <span style="font-size:13px;font-weight:600;color:#374151">Im Laufband anzeigen</span></label><div id="news-laufband-bis-row" style="display:none;align-items:center;gap:6px"><span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">bis</span><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:170px;padding:5px 8px;font-size:13px"></div></div>'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span style="font-size:13px;font-weight:600;color:#374151">Aktiv bis</span><input type="date" class="cms-input" id="news-edit-aktiv-bis" style="max-width:170px;padding:5px 8px;font-size:13px"><span style="font-size:11px;color:#9ca3af">(leer = unbegrenzt)</span></div>'
+      +'<div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="news-edit-laufband" style="width:18px;height:18px;accent-color:var(--gr)"> <span style="font-size:var(--schrift-normal);font-weight:600;color:var(--ink)">Im Laufband anzeigen</span></label><div id="news-laufband-bis-row" style="display:none;align-items:center;gap:6px"><span style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px">bis</span><input type="date" class="cms-input" id="news-edit-laufband-bis" style="max-width:170px;padding:5px 8px;font-size:var(--schrift-normal)"></div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span style="font-size:var(--schrift-normal);font-weight:600;color:var(--ink)">Aktiv bis</span><input type="date" class="cms-input" id="news-edit-aktiv-bis" style="max-width:170px;padding:5px 8px;font-size:var(--schrift-normal)"><span style="font-size:var(--schrift-klein);color:var(--mut)">(leer = unbegrenzt)</span></div>'
       +'<div class="cms-modal-footer" style="padding:14px 0 0;margin-top:16px">'
       +'<button class="cms-btn cms-btn-primary" data-action="saveNews">\ud83d\udcbe Speichern</button>'
       +'<button class="cms-btn cms-btn-gray" data-action="closeNewsModal">Abbrechen</button>'
@@ -3596,7 +3596,7 @@
     if(!titel){toast('Bitte Titel eingeben','warning');return;}
     var imgD = document.getElementById('news-edit-img-data');
     if(imgD && imgD.value){
-      inhalt += '<div class="news-beitragsbild"><img src="'+imgD.value+'" alt="Beitragsbild" style="max-width:100%;border-radius:8px;margin-top:12px"></div>';
+      inhalt += '<div class="news-beitragsbild"><img src="'+imgD.value+'" alt="Beitragsbild" style="max-width:100%;border-radius:var(--r-s);margin-top:12px"></div>';
     }
     var lbCb = document.getElementById('news-edit-laufband');
     var lbBis = document.getElementById('news-edit-laufband-bis');
@@ -3621,12 +3621,12 @@
     var overlay = document.createElement('div');
     overlay.id='cms-news-del-modal';
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
-    overlay.innerHTML='<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px">'
-      +'<h3 style="margin:0 0 12px;font-size:15px">Beitrag l&ouml;schen?</h3>'
-      +'<p style="margin:0 0 16px;font-size:13px;color:#4b5563">&bdquo;'+esc(name)+'&ldquo; l&ouml;schen? Kann kurzzeitig r&uuml;ckg&auml;ngig gemacht werden.</p>'
+    overlay.innerHTML='<div style="background:var(--karte);border-radius:var(--r-m);padding:24px;width:90%;max-width:400px">'
+      +'<h3 style="margin:0 0 12px;font-size:var(--schrift-gross)">Beitrag l&ouml;schen?</h3>'
+      +'<p style="margin:0 0 16px;font-size:var(--schrift-normal);color:var(--ink)">&bdquo;'+esc(name)+'&ldquo; l&ouml;schen? Kann kurzzeitig r&uuml;ckg&auml;ngig gemacht werden.</p>'
       +'<div style="display:flex;gap:8px;justify-content:flex-end">'
       +'<button class="cms-btn cms-btn-gray" onclick="document.getElementById(\'cms-news-del-modal\').remove()">Abbrechen</button>'
-      +'<button class="cms-btn" style="background:#dc2626;color:#fff" data-action="confirmDeleteNews" data-id="'+id+'">L&ouml;schen</button>'
+      +'<button class="cms-btn" style="background:var(--red);color:var(--karte)" data-action="confirmDeleteNews" data-id="'+id+'">L&ouml;schen</button>'
       +'</div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
@@ -4154,21 +4154,21 @@
     var html='<div class="cms-modal-bg">';
     html+='<div class="cms-modal" style="max-width:520px;text-align:center;position:relative">';
     html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
-    html+='<h3 style="margin:0 0 12px;font-size:15px">Vorschau</h3>';
+    html+='<h3 style="margin:0 0 12px;font-size:var(--schrift-gross)">Vorschau</h3>';
     // Wrap image in relative container for clickable card zones
     html+='<div id="cms-share-img-wrap" style="position:relative;display:inline-block;margin-bottom:12px">';
-    html+='<img id="cms-share-img" src="'+url+'" style="max-width:100%;max-height:55vh;border-radius:8px;border:1px solid #e5e7eb;display:block">';
+    html+='<img id="cms-share-img" src="'+url+'" style="max-width:100%;max-height:55vh;border-radius:var(--r-s);border:1px solid var(--line);display:block">';
     html+='</div>';
-    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb">';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line)">';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">\u2b07\ufe0f Download</button>';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">\ud83d\udda8\ufe0f Drucken</button>';
     if(opts.showEinzelflyer){
-      html+='<button class="cms-btn" id="cms-share-flyer" style="background:#e65100;color:#fff">\ud83d\udccb Alle Einzelflyer</button>';
+      html+='<button class="cms-btn" id="cms-share-flyer" style="background:var(--amb);color:var(--karte)">\ud83d\udccb Alle Einzelflyer</button>';
     }
     html+='<button class="cms-btn cms-btn-gray" data-action="closeModal">Schlie\u00dfen</button>';
     html+='</div>';
     if(opts.showEinzelflyer){
-      html+='<p style="margin:8px 0 0;font-size:11px;color:#9ca3af">\ud83d\udc46 Auf eine Karte klicken \u2192 Kachel-Bild bearbeiten</p>';
+      html+='<p style="margin:8px 0 0;font-size:var(--schrift-klein);color:var(--mut)">\ud83d\udc46 Auf eine Karte klicken \u2192 Kachel-Bild bearbeiten</p>';
     }
     html+='</div></div>';
     document.getElementById('cms-modal-wrap').innerHTML=html;
@@ -4277,51 +4277,51 @@
     var html='<div class="cms-modal-bg" style="align-items:flex-start;overflow-y:auto;padding:12px 6px">';
     html+='<div class="cms-modal" style="max-width:440px;max-height:none;text-align:center;position:relative;margin:10px auto">';
     html+='<button class="cms-modal-close" id="pce-close" title="Schlie\u00dfen ohne Speichern">\u2715</button>';
-    html+='<h3 style="margin:0 0 4px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+' <span onclick="document.getElementById(\'pce-close\')?.click(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></h3>';
+    html+='<h3 style="margin:0 0 4px;font-size:var(--schrift-gross);display:flex;align-items:center;justify-content:center;gap:6px">\ud83d\uddbc Kachel bearbeiten: '+(item.produkt||'Produkt')+' <span onclick="document.getElementById(\'pce-close\')?.click(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:var(--schrift-klein);background:var(--gr-l);color:var(--gr);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></h3>';
     var _pceIsMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    html+='<p style="margin:0 0 4px;font-size:11px;color:#9ca3af">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
-    html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:12px;font-weight:600;color:#e65100">Aktiv: \ud83d\uddbc Bild</p>';
+    html+='<p style="margin:0 0 4px;font-size:var(--schrift-klein);color:var(--mut)">'+(_pceIsMobile?'Element horizontal ziehen \u2022 \u22EF = Men\u00fc':'Element ziehen \u2022 \u22EF = Men\u00fc \u2022 Rechtsklick = Men\u00fc')+'</p>';
+    html+='<p id="pce-active-el" style="margin:0 0 8px;font-size:var(--schrift-klein);font-weight:600;color:var(--amb)">Aktiv: \ud83d\uddbc Bild</p>';
     html+='<div id="pce-wrap" style="position:relative;display:inline-block;max-width:100%;border:1px solid #e5e7eb;border-radius:'+mgRad+'px;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none">';
     html+='<canvas id="pce-canvas" width="'+CARD_W+'" height="'+CARD_H+'" style="display:block;width:100%;height:auto"></canvas>';
     html+='<div id="pce-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5"></div>';
     html+='</div>';
     // ── D-Pad: arrow cross to nudge selected element ──
     html+='<div id="pce-dpad" style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px">';
-    html+='<span id="pce-dpad-label" style="font-size:10px;font-weight:600;color:#e65100">Verschieben: \ud83d\uddbc Bild</span>';
-    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="up" style="font-size:14px;padding:4px 14px;line-height:1">\u25B2</button>';
+    html+='<span id="pce-dpad-label" style="font-size:10px;font-weight:600;color:var(--amb)">Verschieben: \ud83d\uddbc Bild</span>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="up" style="font-size:var(--schrift-normal);padding:4px 14px;line-height:1">\u25B2</button>';
     html+='<div style="display:flex;gap:2px">';
-    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="left" style="font-size:14px;padding:4px 14px;line-height:1">\u25C0</button>';
-    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="right" style="font-size:14px;padding:4px 14px;line-height:1">\u25B6</button>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="left" style="font-size:var(--schrift-normal);padding:4px 14px;line-height:1">\u25C0</button>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="right" style="font-size:var(--schrift-normal);padding:4px 14px;line-height:1">\u25B6</button>';
     html+='</div>';
-    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="down" style="font-size:14px;padding:4px 14px;line-height:1">\u25BC</button>';
+    html+='<button class="cms-btn cms-btn-gray pce-nudge" data-dir="down" style="font-size:var(--schrift-normal);padding:4px 14px;line-height:1">\u25BC</button>';
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">';
-    html+='<span style="font-size:12px;color:#6b7280">\ud83d\udd0d Gr\u00f6\u00dfe</span>';
-    html+='<input type="range" id="pce-scale" min="20" max="300" value="'+(ov.imgScale||100)+'" style="width:160px;accent-color:#e65100">';
-    html+='<span id="pce-scale-val" style="font-size:12px;font-weight:600;min-width:36px">'+(ov.imgScale||100)+'%</span>';
+    html+='<span style="font-size:var(--schrift-klein);color:var(--mut)">\ud83d\udd0d Gr\u00f6\u00dfe</span>';
+    html+='<input type="range" id="pce-scale" min="20" max="300" value="'+(ov.imgScale||100)+'" style="width:160px;accent-color:var(--amb)">';
+    html+='<span id="pce-scale-val" style="font-size:var(--schrift-klein);font-weight:600;min-width:36px">'+(ov.imgScale||100)+'%</span>';
     html+='</div>';
     html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px">';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-ghost" style="font-size:12px">\ud83d\udc7b Ghost</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-dup" style="font-size:12px">\ud83d\udcdd Duplikat</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-add-ghost" style="font-size:11px;padding:3px 8px" title="Weitere Ghost-Kopie hinzuf\u00fcgen">+ \ud83d\udc7b</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-add-dup" style="font-size:11px;padding:3px 8px" title="Weitere Duplikat-Kopie hinzuf\u00fcgen">+ \ud83d\udcdd</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-ghost" style="font-size:var(--schrift-klein)">\ud83d\udc7b Ghost</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-dup" style="font-size:var(--schrift-klein)">\ud83d\udcdd Duplikat</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-add-ghost" style="font-size:var(--schrift-klein);padding:3px 8px" title="Weitere Ghost-Kopie hinzuf\u00fcgen">+ \ud83d\udc7b</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-add-dup" style="font-size:var(--schrift-klein);padding:3px 8px" title="Weitere Duplikat-Kopie hinzuf\u00fcgen">+ \ud83d\udcdd</button>';
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:4px">';
-    html+='<span style="font-size:12px;color:#6b7280">\u21bb Drehung</span>';
-    html+='<input type="range" id="pce-rot" min="-180" max="180" value="'+(ov.imgRot||0)+'" style="width:140px;accent-color:#7c3aed">';
-    html+='<span id="pce-rot-val" style="font-size:12px;font-weight:600;min-width:36px">'+(ov.imgRot||0)+'\u00b0</span>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-reset" style="font-size:11px;padding:3px 8px" title="Rotation zur\u00fccksetzen">\u2b6f 0\u00b0</button>';
-    html+='<label class="cms-btn cms-btn-gray" id="pce-custom-img-label" style="font-size:12px;padding:3px 10px;cursor:pointer">\ud83d\uddbc+ Bild<input type="file" accept="image/*" id="pce-custom-img" style="display:none"></label>';
+    html+='<span style="font-size:var(--schrift-klein);color:var(--mut)">\u21bb Drehung</span>';
+    html+='<input type="range" id="pce-rot" min="-180" max="180" value="'+(ov.imgRot||0)+'" style="width:140px;accent-color:var(--gr)">';
+    html+='<span id="pce-rot-val" style="font-size:var(--schrift-klein);font-weight:600;min-width:36px">'+(ov.imgRot||0)+'\u00b0</span>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-rot-reset" style="font-size:var(--schrift-klein);padding:3px 8px" title="Rotation zur\u00fccksetzen">\u2b6f 0\u00b0</button>';
+    html+='<label class="cms-btn cms-btn-gray" id="pce-custom-img-label" style="font-size:var(--schrift-klein);padding:3px 10px;cursor:pointer">\ud83d\uddbc+ Bild<input type="file" accept="image/*" id="pce-custom-img" style="display:none"></label>';
     html+='</div>';
     html+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px">';
-    html+='<button class="cms-btn" id="pce-print" style="font-size:12px;padding:3px 14px;background:#2e7d32;color:#fff">\ud83d\udda8\ufe0f Drucken</button>';
-    html+='<button class="cms-btn" id="pce-download" style="font-size:12px;padding:3px 14px;background:#1565c0;color:#fff">\u2b07\ufe0f Download</button>';
+    html+='<button class="cms-btn" id="pce-print" style="font-size:var(--schrift-klein);padding:3px 14px;background:var(--gr-d);color:var(--karte)">\ud83d\udda8\ufe0f Drucken</button>';
+    html+='<button class="cms-btn" id="pce-download" style="font-size:var(--schrift-klein);padding:3px 14px;background:var(--blu);color:var(--karte)">\u2b07\ufe0f Download</button>';
     html+='</div>';
     html+='<div id="pce-copies-list" style="display:none;text-align:center;margin-top:4px;gap:4px;flex-wrap:wrap;justify-content:center"></div>';
-    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid #e5e7eb;margin-top:8px">';
-    html+='<button class="cms-btn" id="pce-save" style="background:#16a34a;color:#fff;font-size:14px;padding:8px 24px">\ud83d\udcbe Speichern</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-close-discard" style="font-size:12px">\u274c Verwerfen</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="pce-reset" style="font-size:12px">\u21ba Zur\u00fccksetzen</button>';
+    html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line);margin-top:8px">';
+    html+='<button class="cms-btn" id="pce-save" style="background:var(--gr);color:var(--karte);font-size:var(--schrift-normal);padding:8px 24px">\ud83d\udcbe Speichern</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-close-discard" style="font-size:var(--schrift-klein)">\u274c Verwerfen</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="pce-reset" style="font-size:var(--schrift-klein)">\u21ba Zur\u00fccksetzen</button>';
     html+='</div>';
     html+='</div></div>';
 
@@ -5097,7 +5097,7 @@
     var ghostBtn=document.getElementById('pce-ghost');
     function updateGhostBtn(){
       var on=ov.ghostMode==='on';var sel=on&&_activeEl==='ghost';
-      ghostBtn.innerHTML='\ud83d\udc7b Ghost: '+(on?'<b style="color:#b45309">AN</b>':'AUS');
+      ghostBtn.innerHTML='\ud83d\udc7b Ghost: '+(on?'<b style="color:var(--amb)">AN</b>':'AUS');
       ghostBtn.style.background=on?(sel?'#fde68a':'#fef3c7'):'';ghostBtn.style.borderColor=on?'#f59e0b':'';
     }
     updateGhostBtn();
@@ -5112,7 +5112,7 @@
     var dupBtn=document.getElementById('pce-dup');
     function updateDupBtn(){
       var on=!!ov.dupOn;var sel=on&&_activeEl==='dup';
-      dupBtn.innerHTML='\ud83d\udcdd Duplikat: '+(on?'<b style="color:#1d4ed8">AN</b>':'AUS');
+      dupBtn.innerHTML='\ud83d\udcdd Duplikat: '+(on?'<b style="color:var(--blu)">AN</b>':'AUS');
       dupBtn.style.background=on?(sel?'#bfdbfe':'#dbeafe'):'';dupBtn.style.borderColor=on?'#3b82f6':'';
     }
     updateDupBtn();
@@ -5137,7 +5137,7 @@
         var sel=_activeEl==='copy-'+ci;
         h+='<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid '+(sel?'#f59e0b':'#d1d5db')+';background:'+(sel?'#fef3c7':'#f9fafb')+'" data-copy-sel="'+ci+'">'
           +icon+' '+(ci+1)
-          +' <span data-copy-del="'+ci+'" style="color:#ef4444;font-weight:600;cursor:pointer;margin-left:2px" title="L\u00f6schen">\u00d7</span>'
+          +' <span data-copy-del="'+ci+'" style="color:var(--red);font-weight:600;cursor:pointer;margin-left:2px" title="L\u00f6schen">\u00d7</span>'
           +'</span> ';
       });
       cList.innerHTML=h;
@@ -6221,7 +6221,7 @@
     if(!isMobile){
       win=window.open('','_blank');
       if(!win){toast('Popup-Blocker aktiv \u2013 bitte erlauben','warn');return;}
-      win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Segoe UI,system-ui,-apple-system,sans-serif;color:#888"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
+      win.document.write('<html><head><title>Einzelflyer</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Segoe UI,system-ui,-apple-system,sans-serif;color:var(--mut)"><div style="text-align:center"><div style="font-size:2rem;margin-bottom:12px">\u23f3</div>Einzelflyer werden erstellt\u2026</div></body></html>');
     }
     toast('Einzelflyer werden erstellt...','ok');
     // Fetch missing images first
@@ -6307,7 +6307,7 @@
               if(dirty&&!wm){
                 wm=doc.createElement('div');wm.className='unsaved-wm no-print';
                 wm.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:24px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;background:rgba(239,68,68,0.75)';
-                wm.innerHTML='<span style="font-size:12px;font-weight:600;color:#fff;letter-spacing:1px">\u26a0 UNGESPEICHERT</span>';
+                wm.innerHTML='<span style="font-size:var(--schrift-klein);font-weight:600;color:var(--karte);letter-spacing:1px">\u26a0 UNGESPEICHERT</span>';
                 fw.appendChild(wm);
               }else if(!dirty&&wm){wm.remove();}
             }
@@ -6340,7 +6340,7 @@
         // Arrow cross HTML builder
         function arrowCross(prefix,idx,label){
           return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:1px">'
-            +'<span style="font-size:10px;font-weight:600;color:#555">'+label+'</span>'
+            +'<span style="font-size:10px;font-weight:600;color:var(--ink)">'+label+'</span>'
             +'<button data-ov="'+prefix+'" data-dir="up" data-idx="'+idx+'" class="abtn" title="hoch">\u25B2</button>'
             +'<div style="display:flex;gap:1px">'
             +'<button data-ov="'+prefix+'" data-dir="left" data-idx="'+idx+'" class="abtn" title="links">\u25C0</button>'
@@ -6396,8 +6396,8 @@
           +(isMobile?'.el-zone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.el-zone.selected .el-touch-menu{display:block}.el-zone.selected .rz-handle{display:block}':'');
         var _flyerEdToolbar='<div class="toolbar no-print">'
           +'<button class="btn-print" data-act="print-all">\ud83d\udda8\ufe0f Alle drucken</button>'
-          +'<span style="color:#888;font-size:13px">'+canvases.length+' Flyer</span>'
-          +'<span style="color:#2563eb;font-size:12px;font-weight:600">'+(isMobile?'\ud83d\udc46 Ziehen = Verschieben \u2022 \u22EF = Men\u00fc \u2022 \u21F2 = Gr\u00f6\u00dfe':'\ud83d\udd79\ufe0f Elemente anklicken & verschieben \u2022 Rechtsklick = Men\u00fc')+'</span>'
+          +'<span style="color:var(--mut);font-size:var(--schrift-normal)">'+canvases.length+' Flyer</span>'
+          +'<span style="color:var(--blu);font-size:var(--schrift-klein);font-weight:600">'+(isMobile?'\ud83d\udc46 Ziehen = Verschieben \u2022 \u22EF = Men\u00fc \u2022 \u21F2 = Gr\u00f6\u00dfe':'\ud83d\udd79\ufe0f Elemente anklicken & verschieben \u2022 Rechtsklick = Men\u00fc')+'</span>'
           +'<button class="btn-close" data-act="close">Schlie\u00dfen</button>'
           +'</div>';
         var _bodyHtml='';
@@ -6412,34 +6412,34 @@
             +'<div class="el-overlay" id="ov-'+i+'">'+overlayHtml+'</div></div>'
             +'<img id="fimg-print-'+i+'" src="'+dataUrl+'" class="print-only" style="display:none;width:100%">'
             +'<div class="no-print" style="text-align:center;padding:8px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">'
-            +'<button class="btn-print" data-act="print" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#2e7d32;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\ud83d\udda8\ufe0f'+(isMobile?'':' Drucken')+'</button>'
-            +'<button data-act="art-save" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:none;background:#1565c0;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\ud83d\udcbe'+(isMobile?'':' Speichern')+'</button>'
-            +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:6px;border:none;background:#6d28d9;color:#fff;font-size:13px;cursor:pointer;font-weight:600">\u2b07\ufe0f'+(isMobile?'':' Download')+'</button>'
-            +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:6px;border:1px solid #e65100;background:#fff7ed;color:#e65100;font-size:13px;cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
-            +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;font-size:12px;cursor:pointer">\u21ba Reset</button>'
-            +'<button data-act="add-custom-img" data-idx="'+i+'" style="padding:6px 12px;border-radius:6px;border:1px solid #ea580c;background:#fff7ed;color:#ea580c;font-size:12px;cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild</button>'
-            +'<span style="color:#888;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px">'+safeName+' <span onclick="if(typeof window.cmsCloseModal===\'function\') window.cmsCloseModal(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:11px;background:#e8f5e9;color:#16a34a;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></span>'
+            +'<button class="btn-print" data-act="print" data-idx="'+i+'" style="padding:6px 16px;border-radius:var(--r-s);border:none;background:var(--gr-d);color:var(--karte);font-size:var(--schrift-normal);cursor:pointer;font-weight:600">\ud83d\udda8\ufe0f'+(isMobile?'':' Drucken')+'</button>'
+            +'<button data-act="art-save" data-idx="'+i+'" style="padding:6px 16px;border-radius:var(--r-s);border:none;background:var(--blu);color:var(--karte);font-size:var(--schrift-normal);cursor:pointer;font-weight:600">\ud83d\udcbe'+(isMobile?'':' Speichern')+'</button>'
+            +'<button class="btn-dl" data-act="dl" data-idx="'+i+'" data-name="'+safeName+'" style="padding:6px 16px;border-radius:var(--r-s);border:none;background:var(--gr-d);color:var(--karte);font-size:var(--schrift-normal);cursor:pointer;font-weight:600">\u2b07\ufe0f'+(isMobile?'':' Download')+'</button>'
+            +'<button data-act="art-revert" data-idx="'+i+'" style="padding:6px 16px;border-radius:var(--r-s);border:1px solid var(--amb);background:var(--amb-l);color:var(--amb);font-size:var(--schrift-normal);cursor:pointer;font-weight:600">\u21a9 Verwerfen</button>'
+            +'<button data-act="art-reset" data-idx="'+i+'" style="padding:6px 12px;border-radius:var(--r-s);border:1px solid #ccc;background:var(--karte);color:#333;font-size:var(--schrift-klein);cursor:pointer">\u21ba Reset</button>'
+            +'<button data-act="add-custom-img" data-idx="'+i+'" style="padding:6px 12px;border-radius:var(--r-s);border:1px solid var(--amb);background:var(--amb-l);color:var(--amb);font-size:var(--schrift-klein);cursor:pointer;font-weight:600">\ud83d\uddbc+ Bild</button>'
+            +'<span style="color:var(--mut);font-size:var(--schrift-klein);font-weight:600;display:inline-flex;align-items:center;gap:4px">'+safeName+' <span onclick="if(typeof window.cmsCloseModal===\'function\') window.cmsCloseModal(); cmsTab(\'help\'); cmsSwitchHelpTopic(\'editor-help\')" title="Hilfe anzeigen" style="cursor:pointer;font-size:var(--schrift-klein);background:var(--gr-l);color:var(--gr);width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></span>'
             +'</div>'
             +'<div class="ctl-bar no-print">'
             +'<div class="abtn-grp">'+arrowCross('sel',i,'\u2b05\u27a1 Selektiertes Element')+'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:600;color:#555">\u21bb Drehung</span>'
-            +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+i+'" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+i+'"><span id="sr-'+i+'">0\u00b0</span></label>'
+            +'<span style="font-size:10px;font-weight:600;color:var(--ink)">\u21bb Drehung</span>'
+            +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+i+'" style="width:100px;accent-color:var(--gr)" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+i+'"><span id="sr-'+i+'">0\u00b0</span></label>'
             +'<button class="tog" data-act="sel-rot-reset" data-idx="'+i+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
             +'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udc7b Ghost</span>'
+            +'<span style="font-size:10px;font-weight:600;color:var(--ink)">\ud83d\udc7b Ghost</span>'
             +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+i+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+i+'"><span id="ga-'+i+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
             +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+i+'"><span id="gs-'+i+'">'+(ov.ghostScale||100)+'%</span></label>'
             +'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udcdd Duplikat</span>'
+            +'<span style="font-size:10px;font-weight:600;color:var(--ink)">\ud83d\udcdd Duplikat</span>'
             +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+i+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
             +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+i+'"><span id="ds-'+i+'">'+(ov.dupScale||100)+'%</span></label>':'')
             +'</div>'
             +'<div class="abtn-grp">'
-            +'<span style="font-size:10px;font-weight:600;color:#555">Weitere Kopien</span>'
+            +'<span style="font-size:10px;font-weight:600;color:var(--ink)">Weitere Kopien</span>'
             +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
             +'<button class="tog" data-act="add-ghost-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udc7b Ghost</button>'
             +'<button class="tog" data-act="add-dup-copy" data-idx="'+i+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
@@ -6448,9 +6448,9 @@
             _bodyHtml+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
             ov.copies.forEach(function(cp,ci){
               var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
-              _bodyHtml+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
+              _bodyHtml+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:var(--line);border:1px solid var(--line)">'
                 +icon+(ci+1)
-                +' <span data-act="del-copy" data-idx="'+i+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:600;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
+                +' <span data-act="del-copy" data-idx="'+i+'" data-ci="'+ci+'" style="color:var(--red);font-weight:600;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
                 +'</span>';
             });
             _bodyHtml+='</div>';
@@ -6591,23 +6591,23 @@
             var bar=fp.querySelector('.ctl-bar');if(!bar)return;
             var nh='<div class="abtn-grp">'+arrowCross('sel',idx,'\u2b05\u27a1 Selektiertes Element')+'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:600;color:#555">\u21bb Drehung</span>'
-              +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+idx+'" style="width:100px;accent-color:#7c3aed" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+idx+'"><span id="sr-'+idx+'">0\u00b0</span></label>'
+              +'<span style="font-size:10px;font-weight:600;color:var(--ink)">\u21bb Drehung</span>'
+              +'<label style="font-size:10px;display:flex;align-items:center;gap:3px"><input type="range" class="sld" id="sld-rot-'+idx+'" style="width:100px;accent-color:var(--gr)" min="-180" max="180" value="0" data-act="sel-rot" data-idx="'+idx+'"><span id="sr-'+idx+'">0\u00b0</span></label>'
               +'<button class="tog" data-act="sel-rot-reset" data-idx="'+idx+'" style="font-size:9px;padding:1px 6px">\u2b6f 0\u00b0</button>'
               +'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udc7b Ghost</span>'
+              +'<span style="font-size:10px;font-weight:600;color:var(--ink)">\ud83d\udc7b Ghost</span>'
               +'<button class="tog'+(ov.ghostMode==='on'?' on':'')+'" data-act="toggle-ghost" data-idx="'+idx+'">'+(ov.ghostMode==='on'?'AN':'Auto')+'</button>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Deckkraft <input type="range" class="sld" min="10" max="90" value="'+Math.round((ov.ghostAlpha||0.45)*100)+'" data-act="ghost-alpha" data-idx="'+idx+'"><span id="ga-'+idx+'">'+Math.round((ov.ghostAlpha||0.45)*100)+'%</span></label>'
               +'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.ghostScale||100)+'" data-act="ghost-scale" data-idx="'+idx+'"><span id="gs-'+idx+'">'+(ov.ghostScale||100)+'%</span></label>'
               +'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:600;color:#555">\ud83d\udcdd Duplikat</span>'
+              +'<span style="font-size:10px;font-weight:600;color:var(--ink)">\ud83d\udcdd Duplikat</span>'
               +'<button class="tog'+(ov.dupOn?' on':'')+'" data-act="toggle-dup" data-idx="'+idx+'">'+(ov.dupOn?'AN':'AUS')+'</button>'
               +(ov.dupOn?'<label style="font-size:10px;display:flex;align-items:center;gap:3px">Gr\u00f6\u00dfe <input type="range" class="sld" min="10" max="300" value="'+(ov.dupScale||100)+'" data-act="dup-scale" data-idx="'+idx+'"><span id="ds-'+idx+'">'+(ov.dupScale||100)+'%</span></label>':'')
               +'</div>'
               +'<div class="abtn-grp">'
-              +'<span style="font-size:10px;font-weight:600;color:#555">Weitere Kopien</span>'
+              +'<span style="font-size:10px;font-weight:600;color:var(--ink)">Weitere Kopien</span>'
               +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
               +'<button class="tog" data-act="add-ghost-copy" data-idx="'+idx+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udc7b Ghost</button>'
               +'<button class="tog" data-act="add-dup-copy" data-idx="'+idx+'" style="font-size:10px;padding:2px 6px">+ \ud83d\udcdd Duplikat</button>'
@@ -6616,9 +6616,9 @@
               nh+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
               ov.copies.forEach(function(cp,ci){
                 var icon=cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd';
-                nh+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:#f3f4f6;border:1px solid #d1d5db">'
+                nh+='<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:3px;font-size:10px;background:var(--line);border:1px solid var(--line)">'
                   +icon+(ci+1)
-                  +' <span data-act="del-copy" data-idx="'+idx+'" data-ci="'+ci+'" style="color:#ef4444;font-weight:600;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
+                  +' <span data-act="del-copy" data-idx="'+idx+'" data-ci="'+ci+'" style="color:var(--red);font-weight:600;cursor:pointer" title="L\u00f6schen">\u00d7</span>'
                   +'</span>';
               });
               nh+='</div>';
@@ -8412,7 +8412,7 @@
       html+='<span class="rte-sep"></span>';
       html+='<button class="rte-btn" onclick="sortRteLink(\''+uid+'\')" title="Link">🔗</button>';
       html+='<span style="flex:1"></span>';
-      html+='<button class="rte-btn" onclick="sortRemoveLine('+i+')" title="Zeile entfernen" style="color:#dc2626">✕</button>';
+      html+='<button class="rte-btn" onclick="sortRemoveLine('+i+')" title="Zeile entfernen" style="color:var(--red)">✕</button>';
       html+='</div>';
       html+='<div class="rte-editor" id="'+uid+'" contenteditable="true"></div>';
       html+='</div>';
@@ -8498,7 +8498,7 @@
       .then(function(res){
         _galLoaded=true;
         if(!res.success){
-          grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler: '+(res.error||'')+'</div>';
+          grid.innerHTML='<div style="text-align:center;padding:24px;color:var(--red)">Fehler: '+(res.error||'')+'</div>';
           _galData={categories:[],images:[]};
           galUpdateCatSelect();
           galRenderFolderList();
@@ -8510,7 +8510,7 @@
         galRenderGrid();
       })
       .catch(function(e){
-        grid.innerHTML='<div style="text-align:center;padding:24px;color:#dc2626">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</div>';
+        grid.innerHTML='<div style="text-align:center;padding:24px;color:var(--red)">Fehler beim Laden. Bitte erneut versuchen.'+_cmsLog(e)+'</div>';
       });
   };
 
@@ -8529,13 +8529,13 @@
     var container=document.getElementById('gal-folder-list');
     if(!container||!_galData)return;
     var cats=(_galData.categories||[]).filter(function(c){return c.id;});
-    if(!cats.length){container.innerHTML='<span style="font-size:12px;color:var(--c-m-muted)">Keine Ordner vorhanden</span>';return;}
+    if(!cats.length){container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--c-m-muted)">Keine Ordner vorhanden</span>';return;}
     var html='';
     cats.forEach(function(cat){
-      html+='<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;background:#f3f4f6;border:1px solid #e5e7eb;font-size:12px;font-weight:600">';
+      html+='<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;background:var(--line);border:1px solid var(--line);font-size:var(--schrift-klein);font-weight:600">';
       html+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> ';
       html+=cat.name+' <span style="opacity:.6">('+cat.count+')</span>';
-      html+=' <button onclick="galDeleteFolder(\''+cat.id+'\',\''+cat.name.replace(/'/g,"\\'")+'\','+cat.count+')" style="width:16px;height:16px;border-radius:50%;border:none;background:transparent;color:#9ca3af;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s" title="Ordner löschen" onmouseover="this.style.background=\'#fecaca\';this.style.color=\'#dc2626\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#9ca3af\'">&times;</button>';
+      html+=' <button onclick="galDeleteFolder(\''+cat.id+'\',\''+cat.name.replace(/'/g,"\\'")+'\','+cat.count+')" style="width:16px;height:16px;border-radius:50%;border:none;background:transparent;color:var(--mut);cursor:pointer;font-size:var(--schrift-klein);display:inline-flex;align-items:center;justify-content:center;transition:all .15s" title="Ordner löschen" onmouseover="this.style.background=\'#fecaca\';this.style.color=\'#dc2626\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#9ca3af\'">&times;</button>';
       html+='</span>';
     });
     container.innerHTML=html;
@@ -8560,14 +8560,14 @@
       (cat.images||[]).forEach(function(img){
         var desc=img.description||'';
         var descEsc=desc.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-        html+='<div style="border-radius:8px;overflow:hidden;background:#f3f4f6;border:1px solid #e5e7eb">';
+        html+='<div style="border-radius:var(--r-s);overflow:hidden;background:var(--line);border:1px solid var(--line)">';
         html+='<div style="position:relative;aspect-ratio:4/3">';
         html+='<img src="'+(img.thumb||img.url)+'" alt="'+img.name.replace(/"/g,'&quot;')+'" style="width:100%;height:100%;object-fit:cover;display:block">';
-        html+='<button onclick="galDelete(\''+img.id+'\',\''+img.name.replace(/'/g,"\\'")+'\',event)" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:6px;border:none;background:rgba(220,38,38,.85);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s" title="Bild löschen">&times;</button>';
+        html+='<button onclick="galDelete(\''+img.id+'\',\''+img.name.replace(/'/g,"\\'")+'\',event)" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:var(--r-s);border:none;background:rgba(220,38,38,.85);color:var(--karte);cursor:pointer;font-size:var(--schrift-normal);display:flex;align-items:center;justify-content:center;transition:background .15s" title="Bild löschen">&times;</button>';
         html+='</div>';
         html+='<div style="padding:6px 8px">';
-        html+='<div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px" title="'+img.name.replace(/"/g,'&quot;')+'">'+img.name+'</div>';
-        html+='<input class="cms-input" value="'+descEsc+'" placeholder="Untertitel..." style="width:100%;font-size:11px;padding:3px 6px;box-sizing:border-box" onchange="galSaveDesc(\''+img.id+'\',this.value)" title="Untertitel / Beschreibung">';
+        html+='<div style="font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px" title="'+img.name.replace(/"/g,'&quot;')+'">'+img.name+'</div>';
+        html+='<input class="cms-input" value="'+descEsc+'" placeholder="Untertitel..." style="width:100%;font-size:var(--schrift-klein);padding:3px 6px;box-sizing:border-box" onchange="galSaveDesc(\''+img.id+'\',this.value)" title="Untertitel / Beschreibung">';
         html+='</div></div>';
       });
       html+='</div></div></div>';
@@ -8753,14 +8753,14 @@
     q.forEach(function(item,i){
       var icon=CAT_ICONS[item.category]||'\uD83D\uDD14';
       var catName=CAT_NAMES[item.category]||'Alle';
-      html+='<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6">';
+      html+='<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">';
       html+='<span style="font-size:18px">'+icon+'</span>';
       html+='<div style="flex:1;min-width:0">';
-      html+='<div style="font-weight:600;font-size:13px;color:#1f2937">'+item.title+'</div>';
-      html+='<div style="font-size:12px;color:#6b7280;white-space:pre-line;overflow:hidden;text-overflow:ellipsis">'+item.message+'</div>';
-      html+='<div style="font-size:11px;color:#9ca3af;margin-top:2px">'+catName+'</div>';
+      html+='<div style="font-weight:600;font-size:var(--schrift-normal);color:var(--ink)">'+item.title+'</div>';
+      html+='<div style="font-size:var(--schrift-klein);color:var(--mut);white-space:pre-line;overflow:hidden;text-overflow:ellipsis">'+item.message+'</div>';
+      html+='<div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">'+catName+'</div>';
       html+='</div>';
-      html+='<button onclick="pushRemoveFromQueue('+i+')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:2px 6px" title="Entfernen">&times;</button>';
+      html+='<button onclick="pushRemoveFromQueue('+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:var(--schrift-gross);padding:2px 6px" title="Entfernen">&times;</button>';
       html+='</div>';
     });
     list.innerHTML=html;
@@ -9013,29 +9013,29 @@
       return true;
     });
     var dupTotal=rows.filter(function(r){return r.isDup;}).length;
-    var html='<div style="font-size:11px;color:#6b7280;margin-bottom:6px">'+rows.length+' von '+subs.length+' angezeigt'
-      +(dupTotal?' \u00b7 <span style="color:#b45309;font-weight:600">'+dupTotal+' m\u00f6glich doppelt</span>':'')+'</div>';
-    html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;border-bottom:2px solid #e5e7eb">'
+    var html='<div style="font-size:var(--schrift-klein);color:var(--mut);margin-bottom:6px">'+rows.length+' von '+subs.length+' angezeigt'
+      +(dupTotal?' \u00b7 <span style="color:var(--amb);font-weight:600">'+dupTotal+' m\u00f6glich doppelt</span>':'')+'</div>';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein)"><thead><tr style="text-align:left;border-bottom:2px solid var(--line)">'
       +'<th style="padding:4px 6px">#</th><th style="padding:4px 6px">Plattform / Ger\u00e4t</th><th style="padding:4px 6px">Kategorien</th><th style="padding:4px 6px">E-Mail</th><th style="padding:4px 6px">Registriert</th><th style="padding:4px 6px">Keys</th><th style="padding:4px 6px"></th></tr></thead><tbody>';
     rows.forEach(function(r,i){
       var s=r.s;
       var keyOk=s.has_p256dh&&s.has_auth;
-      var ownBadge=r.isOwn?' <span style="background:#ede9fe;color:#7c3aed;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:600">\uD83D\uDCF1 Dieses Ger\u00e4t</span>':'';
-      var dupBadge=(r.isDup&&!r.isOwn)?' <span title="Mehrere Abos mit gleicher Ger\u00e4te-ID bzw. E-Mail+Plattform" style="background:#fef3c7;color:#b45309;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:600">\u26A0 m\u00f6glich doppelt</span>':'';
+      var ownBadge=r.isOwn?' <span style="background:var(--gr-l);color:var(--gr);border-radius:var(--r-s);padding:1px 6px;font-size:10px;font-weight:600">\uD83D\uDCF1 Dieses Ger\u00e4t</span>':'';
+      var dupBadge=(r.isDup&&!r.isOwn)?' <span title="Mehrere Abos mit gleicher Ger\u00e4te-ID bzw. E-Mail+Plattform" style="background:var(--amb-l);color:var(--amb);border-radius:var(--r-s);padding:1px 6px;font-size:10px;font-weight:600">\u26A0 m\u00f6glich doppelt</span>':'';
       var devLine=s.device_id?('Ger\u00e4t-ID: '+esc(String(s.device_id).slice(0,8))):'';
       var epLine=s.endpoint_tail?('\u2026'+esc(s.endpoint_tail)):'';
       var detail=[esc(s.endpoint_domain),devLine,epLine].filter(function(x){return x;}).join(' \u00b7 ');
       var bg=r.isOwn?'background:#faf5ff':(r.isDup?'background:#fffbeb':'');
       html+='<tr style="border-bottom:1px solid #f3f4f6;'+bg+'">'
         +'<td style="padding:4px 6px">'+(i+1)+'</td>'
-        +'<td style="padding:4px 6px">'+r.plat.icon+' '+esc(r.plat.label)+ownBadge+dupBadge+'<div style="color:#9ca3af;font-size:10px;word-break:break-all">'+detail+'</div></td>'
+        +'<td style="padding:4px 6px">'+r.plat.icon+' '+esc(r.plat.label)+ownBadge+dupBadge+'<div style="color:var(--mut);font-size:10px;word-break:break-all">'+detail+'</div></td>'
         +'<td style="padding:4px 6px">'+esc((s.categories||[]).join(', '))+'</td>'
-        +'<td style="padding:4px 6px;word-break:break-all">'+(s.email?esc(s.email):'<span style="color:#9ca3af">\u2013</span>')+'</td>'
-        +'<td style="padding:4px 6px;white-space:nowrap;color:#6b7280">'+(fmtDate(s.created)||'<span style="color:#9ca3af">\u2013</span>')+'</td>'
+        +'<td style="padding:4px 6px;word-break:break-all">'+(s.email?esc(s.email):'<span style="color:var(--mut)">\u2013</span>')+'</td>'
+        +'<td style="padding:4px 6px;white-space:nowrap;color:var(--mut)">'+(fmtDate(s.created)||'<span style="color:var(--mut)">\u2013</span>')+'</td>'
         +'<td style="padding:4px 6px;color:'+(keyOk?'#16a34a':'#dc2626')+'">'+(keyOk?'&#10003;':'&#10007;')+'</td>'
         +'<td style="padding:4px 6px;white-space:nowrap">'
-        +(r.isOwn?'<button onclick="pushTestOwnDevice()" title="Test-Push nur an dieses Ger\u00e4t" style="background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-right:4px">&#128276; Test</button>':'')
-        +'<button onclick="pushDeleteSub(\''+s.record_id+'\')" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">&#128465;</button>'
+        +(r.isOwn?'<button onclick="pushTestOwnDevice()" title="Test-Push nur an dieses Ger\u00e4t" style="background:var(--gr-l);color:var(--gr);border:1px solid var(--gr-l);border-radius:var(--r-s);padding:2px 8px;font-size:var(--schrift-klein);cursor:pointer;margin-right:4px">&#128276; Test</button>':'')
+        +'<button onclick="pushDeleteSub(\''+s.record_id+'\')" style="background:var(--red-l);color:var(--red);border:1px solid var(--red-b);border-radius:var(--r-s);padding:2px 8px;font-size:var(--schrift-klein);cursor:pointer">&#128465;</button>'
         +'</td>'
         +'</tr>';
     });
@@ -9786,18 +9786,18 @@
           daysWrap.innerHTML='<div class="cms-empty" style="padding:8px 0">Keine Internet-Bestellungen im Zeitraum.</div>';
           return;
         }
-        var html='<table style="width:100%;border-collapse:collapse;font-size:12px">'+
-          '<thead><tr style="text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280">'+
+        var html='<table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein)">'+
+          '<thead><tr style="text-align:left;border-bottom:1px solid var(--line);color:var(--mut)">'+
           '<th style="padding:6px 8px">Tag</th><th style="padding:6px 8px;text-align:right">Best.</th><th style="padding:6px 8px;text-align:right">Port.</th><th style="padding:6px 8px;text-align:right">Neu</th><th style="padding:6px 8px;text-align:right">Best.</th><th style="padding:6px 8px;text-align:right">Abg.</th><th style="padding:6px 8px;text-align:right">Storno</th></tr></thead><tbody>';
         rows.forEach(function(r){
-          html+='<tr style="border-bottom:1px solid #f3f4f6">'+
+          html+='<tr style="border-bottom:1px solid var(--line)">'+
             '<td style="padding:6px 8px;white-space:nowrap">'+_statsFmtDateYmd(r.datum)+'</td>'+
             '<td style="padding:6px 8px;text-align:right;font-weight:600">'+_statsNum(r.total).toLocaleString('de-DE')+'</td>'+
             '<td style="padding:6px 8px;text-align:right">'+_statsNum(r.menge).toLocaleString('de-DE')+'</td>'+
-            '<td style="padding:6px 8px;text-align:right;color:#f59e0b">'+_statsNum(r['0']).toLocaleString('de-DE')+'</td>'+
-            '<td style="padding:6px 8px;text-align:right;color:#3b82f6">'+_statsNum(r['1']).toLocaleString('de-DE')+'</td>'+
-            '<td style="padding:6px 8px;text-align:right;color:#6b7280">'+_statsNum(r['3']).toLocaleString('de-DE')+'</td>'+
-            '<td style="padding:6px 8px;text-align:right;color:#ef4444">'+_statsNum(r['2']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:var(--amb)">'+_statsNum(r['0']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:var(--blu)">'+_statsNum(r['1']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:var(--mut)">'+_statsNum(r['3']).toLocaleString('de-DE')+'</td>'+
+            '<td style="padding:6px 8px;text-align:right;color:var(--red)">'+_statsNum(r['2']).toLocaleString('de-DE')+'</td>'+
           '</tr>';
         });
         html+='</tbody></table>';
@@ -10100,8 +10100,8 @@
         var ang=Math.atan2(dy,dx)+Math.PI/2;if(ang<0)ang+=Math.PI*2;
         var frac=ang/(Math.PI*2)*100;
         var html=(frac<=m.deskPct)
-          ? '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#6366f1"></span>Desktop: <b>'+m.deskPct+'%</b> ('+m.desktop.toLocaleString('de-DE')+')</div>'
-          : '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f59e0b"></span>Mobil: <b>'+m.mobPct+'%</b> ('+m.mobile.toLocaleString('de-DE')+')</div>';
+          ? '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--gr)"></span>Desktop: <b>'+m.deskPct+'%</b> ('+m.desktop.toLocaleString('de-DE')+')</div>'
+          : '<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--amb)"></span>Mobil: <b>'+m.mobPct+'%</b> ('+m.mobile.toLocaleString('de-DE')+')</div>';
         _statsShowTip(html,e.clientX,e.clientY);
       });
       canvas.addEventListener('mouseleave',_statsHideTip);
@@ -10112,12 +10112,12 @@
     var el=document.getElementById('stats-top-pages');
     if(!el)return;
     if(!pages||!pages.length){el.innerHTML='<div class="cms-empty">Noch keine Daten</div>';return;}
-    var html='<table style="width:100%;font-size:12px;border-collapse:collapse">';
-    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">SEITE</th><th style="text-align:right;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+    var html='<table style="width:100%;font-size:var(--schrift-klein);border-collapse:collapse">';
+    html+='<tr style="background:var(--gr-t)"><th style="text-align:left;padding:8px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">SEITE</th><th style="text-align:right;padding:8px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">AUFRUFE</th></tr>';
     pages.forEach(function(p,i){
       var name=p.page==='/'?'Startseite':p.page.replace(/^\//,'').replace(/\.html$/,'');
       var bg=i%2===0?'#fff':'#fafbfc';
-      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+name+'</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#0ea5e9">'+p.views.toLocaleString('de-DE')+'</td></tr>';
+      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:var(--ink)">'+name+'</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--blu)">'+p.views.toLocaleString('de-DE')+'</td></tr>';
     });
     html+='</table>';
     el.innerHTML=html;
@@ -10127,11 +10127,11 @@
     var el=document.getElementById('stats-referrers');
     if(!el)return;
     if(!refs||!refs.length){el.innerHTML='<div class="cms-empty">Keine externen Quellen</div>';return;}
-    var html='<table style="width:100%;font-size:12px;border-collapse:collapse">';
-    html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">QUELLE</th><th style="text-align:right;padding:8px 12px;font-weight:600;color:#6b7280;font-size:11px">BESUCHE</th></tr>';
+    var html='<table style="width:100%;font-size:var(--schrift-klein);border-collapse:collapse">';
+    html+='<tr style="background:var(--gr-t)"><th style="text-align:left;padding:8px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">QUELLE</th><th style="text-align:right;padding:8px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">BESUCHE</th></tr>';
     refs.forEach(function(r,i){
       var bg=i%2===0?'#fff':'#fafbfc';
-      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:#374151">'+r.domain+'</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#8b5cf6">'+r.views.toLocaleString('de-DE')+'</td></tr>';
+      html+='<tr style="background:'+bg+'"><td style="padding:8px 12px;color:var(--ink)">'+r.domain+'</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--gr)">'+r.views.toLocaleString('de-DE')+'</td></tr>';
     });
     html+='</table>';
     el.innerHTML=html;
@@ -10143,22 +10143,22 @@
     if((!cities||!cities.length)&&(!regions||!regions.length)){el.innerHTML='<div class="cms-empty">Noch keine Standort-Daten</div>';return;}
     var html='';
     if(cities&&cities.length){
-      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83D\uDCCD Städte</h4>';
-      html+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:16px">';
-      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">STANDORT</th><th style="text-align:right;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+      html+='<h4 style="margin:0 0 8px;font-size:var(--schrift-klein);font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px">\uD83D\uDCCD Städte</h4>';
+      html+='<table style="width:100%;font-size:var(--schrift-klein);border-collapse:collapse;margin-bottom:16px">';
+      html+='<tr style="background:var(--gr-t)"><th style="text-align:left;padding:6px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">STANDORT</th><th style="text-align:right;padding:6px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">AUFRUFE</th></tr>';
       cities.forEach(function(c,i){
         var bg=i%2===0?'#fff':'#fafbfc';
-        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(c.city)+'</td><td style="padding:6px 12px;text-align:right;font-weight:600;color:#e53e3e">'+c.views.toLocaleString('de-DE')+'</td></tr>';
+        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:var(--ink)">'+esc(c.city)+'</td><td style="padding:6px 12px;text-align:right;font-weight:600;color:var(--red)">'+c.views.toLocaleString('de-DE')+'</td></tr>';
       });
       html+='</table>';
     }
     if(regions&&regions.length){
-      html+='<h4 style="margin:0 0 8px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">\uD83C\uDFD7 Regionen</h4>';
-      html+='<table style="width:100%;font-size:12px;border-collapse:collapse">';
-      html+='<tr style="background:#f9fafb"><th style="text-align:left;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">REGION</th><th style="text-align:right;padding:6px 12px;font-weight:600;color:#6b7280;font-size:11px">AUFRUFE</th></tr>';
+      html+='<h4 style="margin:0 0 8px;font-size:var(--schrift-klein);font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px">\uD83C\uDFD7 Regionen</h4>';
+      html+='<table style="width:100%;font-size:var(--schrift-klein);border-collapse:collapse">';
+      html+='<tr style="background:var(--gr-t)"><th style="text-align:left;padding:6px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">REGION</th><th style="text-align:right;padding:6px 12px;font-weight:600;color:var(--mut);font-size:var(--schrift-klein)">AUFRUFE</th></tr>';
       regions.forEach(function(r,i){
         var bg=i%2===0?'#fff':'#fafbfc';
-        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:#374151">'+esc(r.region)+'</td><td style="padding:6px 12px;text-align:right;font-weight:600;color:#e53e3e">'+r.views.toLocaleString('de-DE')+'</td></tr>';
+        html+='<tr style="background:'+bg+'"><td style="padding:6px 12px;color:var(--ink)">'+esc(r.region)+'</td><td style="padding:6px 12px;text-align:right;font-weight:600;color:var(--red)">'+r.views.toLocaleString('de-DE')+'</td></tr>';
       });
       html+='</table>';
     }
@@ -10177,15 +10177,15 @@
     _ordersLoaded=true;
     var list=document.getElementById('cms-orders-list');
     if(!list) return;
-    list.innerHTML='<p style="text-align:center;padding:20px;color:#6b7280">⏳ Bestellungen werden geladen…</p>';
+    list.innerHTML='<p style="text-align:center;padding:20px;color:var(--mut)">⏳ Bestellungen werden geladen…</p>';
     fetch(API+'/shop-order?mode=cms')
       .then(function(r){return r.json();})
       .then(function(res){
-        if(!res.success||!res.orders){list.innerHTML='<p style="color:#ef4444">Fehler beim Laden</p>';return;}
+        if(!res.success||!res.orders){list.innerHTML='<p style="color:var(--red)">Fehler beim Laden</p>';return;}
         _ordersData=res.orders;
         cmsRenderOrders();
       })
-      .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
+      .catch(function(e){list.innerHTML='<p style="color:var(--red)">Fehler: '+esc(e.message)+'</p>';});
   };
 
   function cmsRenderOrders(){
@@ -10193,17 +10193,17 @@
     var filterVal=document.getElementById('cms-orders-filter').value;
     var orders=_ordersData;
     if(filterVal!=='all') orders=orders.filter(function(o){return String(o.status)===filterVal;});
-    if(!orders.length){list.innerHTML='<p style="text-align:center;color:#6b7280;padding:20px">Keine Bestellungen '+(filterVal!=='all'?'mit Status "'+STATUS_LABELS[+filterVal]+'"':'')+'</p>';return;}
+    if(!orders.length){list.innerHTML='<p style="text-align:center;color:var(--mut);padding:20px">Keine Bestellungen '+(filterVal!=='all'?'mit Status "'+STATUS_LABELS[+filterVal]+'"':'')+'</p>';return;}
 
-    var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">NR.</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">KUNDE</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">BESTELLT</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">ABHOLUNG</th>';
-    html+='<th style="text-align:right;padding:8px;font-weight:600;color:#6b7280">SUMME</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">STATUS</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">AKTION</th>';
+    var html='<table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein)">';
+    html+='<thead><tr style="background:var(--gr-t);border-bottom:2px solid var(--line)">';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">NR.</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">KUNDE</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">BESTELLT</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">ABHOLUNG</th>';
+    html+='<th style="text-align:right;padding:8px;font-weight:600;color:var(--mut)">SUMME</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:var(--mut)">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:var(--mut)">AKTION</th>';
     html+='</tr></thead><tbody>';
     orders.forEach(function(o,i){
       var bg=i%2===0?'#fff':'#fafbfc';
@@ -10211,37 +10211,37 @@
       var posCount=o.positionen?o.positionen.length:0;
       html+='<tr style="background:'+bg+';border-bottom:1px solid #f3f4f6">';
       html+='<td style="padding:8px;font-weight:600">'+esc(o.bestellnummer)+'</td>';
-      html+='<td style="padding:8px">'+esc(o.kunde_name)+'<br><span style="font-size:10px;color:#9ca3af">'+esc(o.kunde_email)+'</span></td>';
+      html+='<td style="padding:8px">'+esc(o.kunde_name)+'<br><span style="font-size:10px;color:var(--mut)">'+esc(o.kunde_email)+'</span></td>';
       html+='<td style="padding:8px">'+fmtDe(o.bestelldatum)+'</td>';
       html+='<td style="padding:8px;font-weight:600">'+fmtDe(o.abholdatum)+'</td>';
       html+='<td style="padding:8px;text-align:right;font-weight:600">'+((+o.gesamtsumme).toFixed(2).replace('.',','))+' €</td>';
       html+='<td style="padding:8px;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:'+col+'">'+esc(o.status_text)+'</span></td>';
       html+='<td style="padding:8px;text-align:center">';
-      if(o.status<=1) html+='<a class="cms-btn cms-btn-sm" style="background:#fef3c7;color:#92400e;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'&tab=pack" target="_blank"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px"></i> Packen</a> ';
-      if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:#dbeafe;color:#1e40af;text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
+      if(o.status<=1) html+='<a class="cms-btn cms-btn-sm" style="background:var(--amb-l);color:var(--amb);text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'&tab=pack" target="_blank"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px"></i> Packen</a> ';
+      if(o.status===0) html+='<a class="cms-btn cms-btn-sm" style="background:var(--blu-l);color:var(--blu);text-decoration:none" href="/shop-admin?order='+encodeURIComponent(o.id)+'" target="_blank"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</a>';
       if(o.status===1) html+='<button class="cms-btn cms-btn-sm" style="background:#d1fae5;color:#065f46" onclick="cmsOrderStatus(\''+o.id+'\',2,\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\',\''+esc(o.kunde_name)+'\',\''+esc(o.abholdatum)+'\')">✓ Abholbereit</button>';
-      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:#f3f4f6;color:#374151" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')"><i data-lucide="package-check" style="width:12px;height:12px;vertical-align:-2px"></i> Abgeholt</button>';
+      if(o.status===2) html+='<button class="cms-btn cms-btn-sm" style="background:var(--line);color:var(--ink)" onclick="cmsOrderStatus(\''+o.id+'\',3,\''+esc(o.bestellnummer)+'\')"><i data-lucide="package-check" style="width:12px;height:12px;vertical-align:-2px"></i> Abgeholt</button>';
       if(o.status<3) html+=' <button class="cms-btn cms-btn-sm cms-btn-danger" onclick="cmsShowShopStornoDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\')" title="Stornieren"><i data-lucide="x" style="width:12px;height:12px;vertical-align:-2px"></i></button>';
       html+='</td></tr>';
       // Expandable positions row
       if(posCount){
-        html+='<tr style="background:#fefce8"><td colspan="7" style="padding:4px 8px 8px 24px;font-size:11px">';
+        html+='<tr style="background:#fefce8"><td colspan="7" style="padding:4px 8px 8px 24px;font-size:var(--schrift-klein)">';
         html+='<strong>'+posCount+' Position(en):</strong> ';
         o.positionen.forEach(function(p){html+=esc(p.bezeichnung)+' ('+p.menge+' '+esc(p.einheit)+') '+((+p.positionspreis).toFixed(2).replace('.',','))+'€, ';});
-        if(o.anmerkungen) html+='<br><em style="color:#92400e">📝 '+esc(o.anmerkungen)+'</em>';
+        if(o.anmerkungen) html+='<br><em style="color:var(--amb)">📝 '+esc(o.anmerkungen)+'</em>';
         html+='</td></tr>';
       }
       // Messages row
       var hasMsg=o.kunde_kommentar||o.personal_antwort;
       if(hasMsg||o.status<3){
-        html+='<tr style="background:'+(o.kunde_kommentar&&!o.kommentar_gelesen?'#eff6ff':'#f9fafb')+'"><td colspan="7" style="padding:6px 8px 8px 24px;font-size:12px">';
+        html+='<tr style="background:'+(o.kunde_kommentar&&!o.kommentar_gelesen?'#eff6ff':'#f9fafb')+'"><td colspan="7" style="padding:6px 8px 8px 24px;font-size:var(--schrift-klein)">';
         if(o.kunde_kommentar){
-          html+='<div style="padding:4px 8px;background:#dbeafe;border-radius:6px;color:#1e40af;margin-bottom:4px"><strong>\u2709 Kunde:</strong> '+esc(o.kunde_kommentar);
+          html+='<div style="padding:4px 8px;background:var(--blu-l);border-radius:var(--r-s);color:var(--blu);margin-bottom:4px"><strong>\u2709 Kunde:</strong> '+esc(o.kunde_kommentar);
           if(!o.kommentar_gelesen) html+=' <button class="cms-btn cms-btn-sm" style="font-size:10px;padding:1px 6px;margin-left:4px" onclick="cmsMarkShopMsgRead(\''+o.id+'\')">Gelesen</button>';
           html+='</div>';
         }
-        if(o.personal_antwort) html+='<div style="padding:4px 8px;background:#dcfce7;border-radius:6px;color:#166534;margin-bottom:4px"><strong>\ud83d\udcac Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-        if(o.status<3) html+='<button class="cms-btn cms-btn-sm" style="background:#1e40af;color:#fff;font-size:11px;padding:3px 10px" onclick="cmsShowShopReplyDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\')"><i data-lucide="reply" style="width:12px;height:12px;vertical-align:-2px"></i> Antworten</button>';
+        if(o.personal_antwort) html+='<div style="padding:4px 8px;background:var(--gr-l);border-radius:var(--r-s);color:var(--gr-d);margin-bottom:4px"><strong>\ud83d\udcac Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+        if(o.status<3) html+='<button class="cms-btn cms-btn-sm" style="background:var(--blu);color:var(--karte);font-size:var(--schrift-klein);padding:3px 10px" onclick="cmsShowShopReplyDialog(\''+o.id+'\',\''+esc(o.bestellnummer)+'\',\''+esc(o.kunde_email)+'\')"><i data-lucide="reply" style="width:12px;height:12px;vertical-align:-2px"></i> Antworten</button>';
         html+='</td></tr>';
       }
     });
@@ -10289,19 +10289,19 @@
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
     var modal=document.createElement('div');
     modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-    modal.innerHTML='<div style="font-size:16px;font-weight:600;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
-      +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr||'?')+'</div>'
-      +'<div style="font-size:13px;font-weight:600;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+    modal.innerHTML='<div style="font-size:var(--schrift-gross);font-weight:600;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+      +'<div style="font-size:var(--schrift-klein);color:var(--mut);margin-bottom:14px">'+esc(bestellnr||'?')+'</div>'
+      +'<div style="font-size:var(--schrift-normal);font-weight:600;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
       +'<div id="cms-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
-      +'<textarea id="cms-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
-      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:600;cursor:pointer">Abbrechen</button>'
-      +'<button id="cms-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+      +'<textarea id="cms-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid var(--line);border-radius:var(--r-s);padding:6px 8px;font-family:inherit;font-size:var(--schrift-klein);box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-storno-cancel" style="flex:1;padding:10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);font-weight:600;cursor:pointer">Abbrechen</button>'
+      +'<button id="cms-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:var(--r-s);background:var(--red);color:var(--karte);font-weight:600;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
     overlay.appendChild(modal);document.body.appendChild(overlay);
     var optsDiv=modal.querySelector('#cms-storno-opts');var selectedReason='';
     CMS_SHOP_STORNO_REASONS.forEach(function(r){
       var opt=document.createElement('label');
       opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
-      opt.innerHTML='<input type="radio" name="cms-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
+      opt.innerHTML='<input type="radio" name="cms-storno-reason" value="'+esc(r)+'" style="accent-color:var(--red)"> '+esc(r);
       opt.querySelector('input').addEventListener('change',function(){
         selectedReason=r;
         modal.querySelector('#cms-storno-confirm').disabled=false;
@@ -10353,13 +10353,13 @@
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
     var modal=document.createElement('div');
     modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-    var h='<div style="font-size:16px;font-weight:600;margin-bottom:4px">\ud83d\udcac Nachricht an Kunden</div>';
-    h+='<div style="font-size:12px;color:#6b7f72;margin-bottom:12px">'+esc(bestellnr||'')+'</div>';
-    if(o&&o.kunde_kommentar) h+='<div style="padding:6px 10px;background:#dbeafe;border-radius:8px;font-size:12px;color:#1e40af;margin-bottom:10px"><strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
-    if(o&&o.personal_antwort) h+='<div style="padding:6px 10px;background:#dcfce7;border-radius:8px;font-size:12px;color:#166534;margin-bottom:10px"><strong>Letzte Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
-    h+='<textarea id="cms-shop-reply-text" placeholder="Ihre Antwort\u2026" rows="3" style="width:100%;border:1px solid #dfe7e2;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;box-sizing:border-box;resize:none;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
-    h+='<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-shop-reply-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:600;cursor:pointer">Abbrechen</button>';
-    h+='<button id="cms-shop-reply-send" style="flex:1;padding:10px;border:none;border-radius:10px;background:#1e40af;color:#fff;font-weight:600;cursor:pointer">Senden</button></div>';
+    var h='<div style="font-size:var(--schrift-gross);font-weight:600;margin-bottom:4px">\ud83d\udcac Nachricht an Kunden</div>';
+    h+='<div style="font-size:var(--schrift-klein);color:var(--mut);margin-bottom:12px">'+esc(bestellnr||'')+'</div>';
+    if(o&&o.kunde_kommentar) h+='<div style="padding:6px 10px;background:var(--blu-l);border-radius:var(--r-s);font-size:var(--schrift-klein);color:var(--blu);margin-bottom:10px"><strong>Kunde:</strong> '+esc(o.kunde_kommentar)+'</div>';
+    if(o&&o.personal_antwort) h+='<div style="padding:6px 10px;background:var(--gr-l);border-radius:var(--r-s);font-size:var(--schrift-klein);color:var(--gr-d);margin-bottom:10px"><strong>Letzte Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+    h+='<textarea id="cms-shop-reply-text" placeholder="Ihre Antwort\u2026" rows="3" style="width:100%;border:1px solid var(--line);border-radius:var(--r-s);padding:8px 10px;font-family:inherit;font-size:var(--schrift-normal);box-sizing:border-box;resize:none;overflow:hidden" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>';
+    h+='<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-shop-reply-cancel" style="flex:1;padding:10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);font-weight:600;cursor:pointer">Abbrechen</button>';
+    h+='<button id="cms-shop-reply-send" style="flex:1;padding:10px;border:none;border-radius:var(--r-s);background:var(--blu);color:var(--karte);font-weight:600;cursor:pointer">Senden</button></div>';
     modal.innerHTML=h;
     overlay.appendChild(modal);document.body.appendChild(overlay);
     modal.querySelector('#cms-shop-reply-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
@@ -10415,7 +10415,7 @@
 
     open.forEach(function(o){
       html+='<div class="order-header">'+esc(o.bestellnummer)+' · '+esc(o.kunde_name)+' · Abholung: '+fmtDe(o.abholdatum)+'</div>';
-      if(o.anmerkungen) html+='<div style="padding:4px 8px;color:#92400e;font-style:italic">📝 '+esc(o.anmerkungen)+'</div>';
+      if(o.anmerkungen) html+='<div style="padding:4px 8px;color:var(--amb);font-style:italic">📝 '+esc(o.anmerkungen)+'</div>';
       html+='<table><thead><tr><th style="width:30px">✓</th><th>ARTIKEL</th><th>MENGE</th><th>EINHEIT</th><th>PREIS</th></tr></thead><tbody>';
       (o.positionen||[]).forEach(function(p){
         html+='<tr><td><span class="check"></span></td>';
@@ -10439,38 +10439,38 @@
   var _kundenData=[];
   window.cmsLoadKunden=function(){
     var list=document.getElementById('cms-kunden-list');
-    list.innerHTML='<p style="text-align:center;color:#6b7280">⏳ Kunden werden geladen…</p>';
+    list.innerHTML='<p style="text-align:center;color:var(--mut)">⏳ Kunden werden geladen…</p>';
     fetch(API+'/shop-admin?action=kunden')
       .then(function(r){return r.json();})
       .then(function(res){
-        if(!res.success){list.innerHTML='<p style="color:#ef4444">Fehler: '+(res.error||'')+'</p>';return;}
+        if(!res.success){list.innerHTML='<p style="color:var(--red)">Fehler: '+(res.error||'')+'</p>';return;}
         _kundenData=res.kunden||[];
         cmsRenderKunden();
       })
-      .catch(function(e){list.innerHTML='<p style="color:#ef4444">Fehler: '+esc(e.message)+'</p>';});
+      .catch(function(e){list.innerHTML='<p style="color:var(--red)">Fehler: '+esc(e.message)+'</p>';});
   };
   function cmsRenderKunden(){
     var list=document.getElementById('cms-kunden-list');
     var kunden=_kundenData;
-    if(!kunden.length){list.innerHTML='<p style="text-align:center;color:#6b7280">Keine Kunden gefunden</p>';return;}
-    var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    html+='<thead><tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">NAME</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">E-MAIL</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">TELEFON</th>';
-    html+='<th style="text-align:left;padding:8px;font-weight:600;color:#6b7280">ADRESSE</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">STATUS</th>';
-    html+='<th style="text-align:center;padding:8px;font-weight:600;color:#6b7280">AKTION</th>';
+    if(!kunden.length){list.innerHTML='<p style="text-align:center;color:var(--mut)">Keine Kunden gefunden</p>';return;}
+    var html='<table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein)">';
+    html+='<thead><tr style="background:var(--gr-t);border-bottom:2px solid var(--line)">';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">NAME</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">E-MAIL</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">TELEFON</th>';
+    html+='<th style="text-align:left;padding:8px;font-weight:600;color:var(--mut)">ADRESSE</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:var(--mut)">STATUS</th>';
+    html+='<th style="text-align:center;padding:8px;font-weight:600;color:var(--mut)">AKTION</th>';
     html+='</tr></thead><tbody>';
     kunden.forEach(function(k,i){
       var bg=i%2===0?'#fff':'#fafbfc';
-      var statusBadge=k.aktiv?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">Aktiv</span>':'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">Inaktiv</span>';
+      var statusBadge=k.aktiv?'<span style="background:var(--gr-l);color:var(--gr-d);padding:2px 8px;border-radius:var(--r-s);font-size:10px;font-weight:600">Aktiv</span>':'<span style="background:var(--red-l);color:var(--red);padding:2px 8px;border-radius:var(--r-s);font-size:10px;font-weight:600">Inaktiv</span>';
       var adresse=[k.strasse,k.plz,k.ort].filter(Boolean).join(', ');
       html+='<tr style="background:'+bg+'">';
       html+='<td style="padding:8px;font-weight:600">'+esc(k.vorname)+' '+esc(k.nachname)+'</td>';
       html+='<td style="padding:8px">'+esc(k.email)+'</td>';
       html+='<td style="padding:8px">'+esc(k.telefon||'–')+'</td>';
-      html+='<td style="padding:8px;font-size:11px">'+esc(adresse||'–')+'</td>';
+      html+='<td style="padding:8px;font-size:var(--schrift-klein)">'+esc(adresse||'–')+'</td>';
       html+='<td style="padding:8px;text-align:center">'+statusBadge+'</td>';
       html+='<td style="padding:8px;text-align:center"><button class="cms-btn cms-btn-sm" onclick="cmsEditKunde(\''+k.id+'\')"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px"></i> Bearbeiten</button></td>';
       html+='</tr>';
@@ -10489,35 +10489,35 @@
     html+='<button class="cms-btn cms-btn-primary" id="kd-save"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-2px"></i> Speichern</button>';
     html+='<button class="cms-btn cms-btn-gray" id="kd-close">Abbrechen</button></div></div>';
     html+='<div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Nachname<input id="kd-nachname" class="cms-input" value="'+esc(k.nachname)+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280;grid-column:1/3">E-Mail<input class="cms-input" value="'+esc(k.email)+'" disabled style="width:100%;margin-top:2px;background:#f3f4f6"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Telefon<input id="kd-telefon" class="cms-input" value="'+esc(k.telefon||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Straße<input id="kd-strasse" class="cms-input" value="'+esc(k.strasse||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
-    html+='<label style="font-size:11px;font-weight:600;color:#6b7280;grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:#2e7d4f"> Konto aktiv</label>';
-    html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
-    html+='<div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px"><i data-lucide="landmark" style="width:12px;height:12px;vertical-align:-2px"></i> SEPA-Lastschriftmandat</div>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut)">Vorname<input id="kd-vorname" class="cms-input" value="'+esc(k.vorname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut)">Nachname<input id="kd-nachname" class="cms-input" value="'+esc(k.nachname)+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);grid-column:1/3">E-Mail<input class="cms-input" value="'+esc(k.email)+'" disabled style="width:100%;margin-top:2px;background:var(--line)"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut)">Telefon<input id="kd-telefon" class="cms-input" value="'+esc(k.telefon||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut)">Straße<input id="kd-strasse" class="cms-input" value="'+esc(k.strasse||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut)">PLZ<input id="kd-plz" class="cms-input" value="'+esc(k.plz||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut)">Ort<input id="kd-ort" class="cms-input" value="'+esc(k.ort||'')+'" style="width:100%;margin-top:2px"></label>';
+    html+='<label style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);grid-column:1/3;display:flex;align-items:center;gap:8px"><input type="checkbox" id="kd-aktiv" '+(k.aktiv?'checked':'')+' style="width:18px;height:18px;accent-color:var(--gr)"> Konto aktiv</label>';
+    html+='<div style="grid-column:1/3;border-top:1px solid var(--line);padding-top:10px;margin-top:4px">';
+    html+='<div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);margin-bottom:6px"><i data-lucide="landmark" style="width:12px;height:12px;vertical-align:-2px"></i> SEPA-Lastschriftmandat</div>';
     var hasMd=k.mandatsreferenz||k.iban_masked;
     if(hasMd){
-      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:10px">';
-      html+='<div><span style="color:#6b7280">IBAN:</span> <b style="font-family:monospace;letter-spacing:1px">'+esc(k.iban_masked||'–')+'</b></div>';
-      html+='<div><span style="color:#6b7280">Kontoinhaber:</span> <b>'+esc(k.kontoinhaber||'–')+'</b></div>';
-      html+='<div><span style="color:#6b7280">Mandatsreferenz:</span> <b>'+esc(k.mandatsreferenz||'–')+'</b></div>';
-      html+='<div><span style="color:#6b7280">Mandatsdatum:</span> <b>'+fmtDe(k.mandatsdatum)+'</b></div>';
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:var(--schrift-klein);background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s);padding:10px;margin-bottom:10px">';
+      html+='<div><span style="color:var(--mut)">IBAN:</span> <b style="font-family:monospace;letter-spacing:1px">'+esc(k.iban_masked||'–')+'</b></div>';
+      html+='<div><span style="color:var(--mut)">Kontoinhaber:</span> <b>'+esc(k.kontoinhaber||'–')+'</b></div>';
+      html+='<div><span style="color:var(--mut)">Mandatsreferenz:</span> <b>'+esc(k.mandatsreferenz||'–')+'</b></div>';
+      html+='<div><span style="color:var(--mut)">Mandatsdatum:</span> <b>'+fmtDe(k.mandatsdatum)+'</b></div>';
       var msBadge=k.mandatsstatus==='aktiv'?'background:#dcfce7;color:#166534':'background:#fee2e2;color:#991b1b';
-      html+='<div style="grid-column:1/3"><span style="color:#6b7280">Status:</span> <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;'+msBadge+'">'+esc(k.mandatsstatus||'–')+'</span></div>';
+      html+='<div style="grid-column:1/3"><span style="color:var(--mut)">Status:</span> <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;'+msBadge+'">'+esc(k.mandatsstatus||'–')+'</span></div>';
       html+='</div>';
     } else {
-      html+='<div style="font-size:12px;color:#9ca3af;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px">Kein SEPA-Mandat hinterlegt</div>';
+      html+='<div style="font-size:var(--schrift-klein);color:var(--mut);padding:8px 10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:10px">Kein SEPA-Mandat hinterlegt</div>';
     }
     html+='</div>';
-    html+='<div style="grid-column:1/3;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">';
-    html+='<div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px">Passwort zurücksetzen</div>';
+    html+='<div style="grid-column:1/3;border-top:1px solid var(--line);padding-top:10px;margin-top:4px">';
+    html+='<div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);margin-bottom:6px">Passwort zurücksetzen</div>';
     html+='<div style="display:flex;gap:8px;align-items:center">';
     html+='<input type="password" id="kd-new-pw" class="cms-input" placeholder="Neues Passwort (min. 8 Zeichen)" style="flex:1">';
-    html+='<button class="cms-btn cms-btn-sm" id="kd-reset-pw" style="background:#fef3c7;color:#92400e;white-space:nowrap"><i data-lucide="key-round" style="width:12px;height:12px;vertical-align:-2px"></i> Setzen</button>';
+    html+='<button class="cms-btn cms-btn-sm" id="kd-reset-pw" style="background:var(--amb-l);color:var(--amb);white-space:nowrap"><i data-lucide="key-round" style="width:12px;height:12px;vertical-align:-2px"></i> Setzen</button>';
     html+='</div></div>';
     html+='</div></div></div>';
     wrap.innerHTML=html;
@@ -10722,11 +10722,11 @@
       if(btn) btn.style.fontWeight=f===_fmCurrentFilter?'600':'400';
     });
     var list=document.getElementById('fm-orders-list');
-    list.innerHTML='<p style="color:#6b7280;text-align:center">Laden...</p>';
+    list.innerHTML='<p style="color:var(--mut);text-align:center">Laden...</p>';
 
     var url=API+'/fleisch-order?mode=kiosk';
     fetch(url).then(function(r){return r.json();}).then(function(data){
-      if(!data.success){list.innerHTML='<p style="color:#ef4444">Fehler</p>';return;}
+      if(!data.success){list.innerHTML='<p style="color:var(--red)">Fehler</p>';return;}
       var orders=data.bestellungen||[];
       var today=new Date().toISOString().slice(0,10);
 
@@ -10734,7 +10734,7 @@
       else if(_fmCurrentFilter==='heute') orders=orders.filter(function(o){return o.liefertag===today;});
       else if(_fmCurrentFilter==='sammel'){_fmRenderSammel(orders,list);return;}
 
-      if(!orders.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine Bestellungen</p>';return;}
+      if(!orders.length){list.innerHTML='<p style="color:var(--mut);text-align:center">Keine Bestellungen</p>';return;}
 
       var html='';
       orders.forEach(function(o,idx){
@@ -10749,42 +10749,42 @@
         // Header row (clickable)
         html+='<div data-fm-toggle="'+idx+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:#faf5f3">';
         html+='<span style="background:'+sc+';color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap">'+esc(sl)+'</span>';
-        html+='<span style="font-weight:600;font-size:13px;flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
-        html+='<span style="font-size:13px;color:#374151;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.name)+'</span>';
-        html+='<span style="font-size:12px;color:#6b7280;flex-shrink:0">'+esc(ld)+'</span>';
-        html+='<span style="font-size:13px;font-weight:600;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
-        if(hasMsg) html+='<span style="background:#fbbf24;color:#7c2d12;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600" title="Neue Nachricht">\u2709</span>';
-        html+='<span data-fm-arrow="'+idx+'" style="transition:transform .2s;font-size:14px;color:#9ca3af">\u25B6</span>';
+        html+='<span style="font-weight:600;font-size:var(--schrift-normal);flex-shrink:0">'+esc(o.bestellnummer)+'</span>';
+        html+='<span style="font-size:var(--schrift-normal);color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.name)+'</span>';
+        html+='<span style="font-size:var(--schrift-klein);color:var(--mut);flex-shrink:0">'+esc(ld)+'</span>';
+        html+='<span style="font-size:var(--schrift-normal);font-weight:600;flex-shrink:0">'+Number(o.gesamtsumme||0).toFixed(2)+' \u20AC</span>';
+        if(hasMsg) html+='<span style="background:var(--amb);color:#7c2d12;padding:1px 6px;border-radius:var(--r-s);font-size:10px;font-weight:600" title="Neue Nachricht">\u2709</span>';
+        html+='<span data-fm-arrow="'+idx+'" style="transition:transform .2s;font-size:var(--schrift-normal);color:var(--mut)">\u25B6</span>';
         html+='</div>';
 
         // Detail (collapsed)
-        html+='<div data-fm-detail="'+idx+'" style="display:none;padding:12px;border-top:1px solid #e5e7eb;background:#fff">';
+        html+='<div data-fm-detail="'+idx+'" style="display:none;padding:12px;border-top:1px solid var(--line);background:var(--karte)">';
 
         // Positionen table
         var pos=o.positionen||[];
         if(pos.length){
-          html+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:4px 6px">Artikel</th><th style="text-align:right;padding:4px 6px">Menge</th><th style="text-align:right;padding:4px 6px">Preis/kg</th><th style="text-align:right;padding:4px 6px">Summe</th></tr></thead><tbody>';
+          html+='<table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein);margin-bottom:12px"><thead><tr style="background:var(--gr-t)"><th style="text-align:left;padding:4px 6px">Artikel</th><th style="text-align:right;padding:4px 6px">Menge</th><th style="text-align:right;padding:4px 6px">Preis/kg</th><th style="text-align:right;padding:4px 6px">Summe</th></tr></thead><tbody>';
           pos.forEach(function(p){
             var ps=Number(p.endpreis||p.preis_kg*p.menge_kg||0).toFixed(2);
-            html+='<tr style="border-top:1px solid #f3f4f6"><td style="padding:4px 6px">'+esc(p.bezeichnung||p.artikelnummer)+'</td><td style="text-align:right;padding:4px 6px">'+Number(p.menge_kg||0).toFixed(1)+' kg</td><td style="text-align:right;padding:4px 6px">'+Number(p.preis_kg||0).toFixed(2)+' \u20AC</td><td style="text-align:right;padding:4px 6px;font-weight:600">'+ps+' \u20AC</td></tr>';
+            html+='<tr style="border-top:1px solid var(--line)"><td style="padding:4px 6px">'+esc(p.bezeichnung||p.artikelnummer)+'</td><td style="text-align:right;padding:4px 6px">'+Number(p.menge_kg||0).toFixed(1)+' kg</td><td style="text-align:right;padding:4px 6px">'+Number(p.preis_kg||0).toFixed(2)+' \u20AC</td><td style="text-align:right;padding:4px 6px;font-weight:600">'+ps+' \u20AC</td></tr>';
           });
           html+='</tbody></table>';
         }
 
         // Anmerkung
-        if(o.anmerkung) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#fef3c7;border-radius:6px;color:#92400e"><strong>Anmerkung:</strong> '+esc(o.anmerkung)+'</div>';
+        if(o.anmerkung) html+='<div style="font-size:var(--schrift-klein);margin-bottom:8px;padding:6px 8px;background:var(--amb-l);border-radius:var(--r-s);color:var(--amb)"><strong>Anmerkung:</strong> '+esc(o.anmerkung)+'</div>';
 
         // Kundenkommentar
         if(o.kunde_kommentar){
-          html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dbeafe;border-radius:6px;color:#1e40af"><strong>Kunde:</strong> '+esc(o.kunde_kommentar);
+          html+='<div style="font-size:var(--schrift-klein);margin-bottom:8px;padding:6px 8px;background:var(--blu-l);border-radius:var(--r-s);color:var(--blu)"><strong>Kunde:</strong> '+esc(o.kunde_kommentar);
           if(!o.kommentar_gelesen) html+=' <button class="cms-btn" style="font-size:10px;padding:2px 6px;margin-left:6px" data-fm-gelesen="'+esc(o.id)+'">Als gelesen markieren</button>';
           html+='</div>';
         }
         // Personal-Antwort
-        if(o.personal_antwort) html+='<div style="font-size:12px;margin-bottom:8px;padding:6px 8px;background:#dcfce7;border-radius:6px;color:#166534"><strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
+        if(o.personal_antwort) html+='<div style="font-size:var(--schrift-klein);margin-bottom:8px;padding:6px 8px;background:var(--gr-l);border-radius:var(--r-s);color:var(--gr-d)"><strong>Antwort:</strong> '+esc(o.personal_antwort)+'</div>';
 
         // Kontakt
-        html+='<div style="font-size:12px;margin-bottom:12px;color:#6b7280">';
+        html+='<div style="font-size:var(--schrift-klein);margin-bottom:12px;color:var(--mut)">';
         html+='<strong>Telefon:</strong> '+esc(o.telefon||'-');
         if(o.email) html+=' &middot; <strong>E-Mail:</strong> '+esc(o.email);
         html+='</div>';
@@ -10797,9 +10797,9 @@
             var bc=FM_STATUS_C[ns];
             html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:'+bc+';color:#fff;border:none;border-radius:6px" data-fm-status="'+esc(o.id)+'" data-fm-newstatus="'+ns+'">'+FM_STATUS_L[ns]+'</button>';
           });
-          html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px" data-fm-storno="'+esc(o.id)+'" data-fm-storno-nr="'+esc(o.bestellnummer||'')+'" data-fm-storno-name="'+esc(o.name||'')+'">Stornieren</button>';
+          html+='<button class="cms-btn" style="font-size:var(--schrift-klein);padding:4px 10px;background:var(--red);color:var(--karte);border:none;border-radius:var(--r-s)" data-fm-storno="'+esc(o.id)+'" data-fm-storno-nr="'+esc(o.bestellnummer||'')+'" data-fm-storno-name="'+esc(o.name||'')+'">Stornieren</button>';
         }
-        html+='<button class="cms-btn" style="font-size:11px;padding:4px 10px;background:#1e40af;color:#fff;border:none;border-radius:6px" data-fm-reply="'+esc(o.id)+'">Nachricht senden</button>';
+        html+='<button class="cms-btn" style="font-size:var(--schrift-klein);padding:4px 10px;background:var(--blu);color:var(--karte);border:none;border-radius:var(--r-s)" data-fm-reply="'+esc(o.id)+'">Nachricht senden</button>';
         html+='</div>';
 
         html+='</div>'; // detail
@@ -10808,7 +10808,7 @@
 
       list.innerHTML=html;
       _fmWireOrderEvents();
-    }).catch(function(e){list.innerHTML='<p style="color:#ef4444">'+_cmsErr(e)+'</p>';});
+    }).catch(function(e){list.innerHTML='<p style="color:var(--red)">'+_cmsErr(e)+'</p>';});
   };
 
   // ── Sammelbestellung: Aggregate articles per delivery day ──
@@ -10816,7 +10816,7 @@
 
   function _fmRenderSammel(orders,list){
     var open=orders.filter(function(o){return o.status<3;});
-    if(!open.length){list.innerHTML='<p style="color:#6b7280;text-align:center">Keine offenen Bestellungen</p>';return;}
+    if(!open.length){list.innerHTML='<p style="color:var(--mut);text-align:center">Keine offenen Bestellungen</p>';return;}
 
     // Group by liefertag
     var byDay={};
@@ -10838,14 +10838,14 @@
       var dayLabel=day;
       try{var dd=new Date(day+'T12:00:00');var wt=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];dayLabel=wt[dd.getDay()]+', '+dd.getDate()+'.'+(dd.getMonth()+1)+'.'+dd.getFullYear();}catch(e){}
 
-      html+='<div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:12px;overflow:hidden">';
-      html+='<div style="background:#7f1d1d;color:#fff;padding:10px 14px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center">';
+      html+='<div style="border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:12px;overflow:hidden">';
+      html+='<div style="background:var(--red);color:var(--karte);padding:10px 14px;font-weight:600;font-size:var(--schrift-normal);display:flex;justify-content:space-between;align-items:center">';
       html+='<span>'+esc(dayLabel)+'</span>';
-      html+='<span style="font-size:12px;font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
+      html+='<span style="font-size:var(--schrift-klein);font-weight:400;opacity:.8">'+g.orders.length+' Bestellung'+(g.orders.length>1?'en':'')+'</span>';
       html+='</div>';
 
       var arts=Object.values(g.articles).sort(function(a,b){return a.bezeichnung.localeCompare(b.bezeichnung,'de');});
-      html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#fef2f2"><th style="width:32px;padding:6px;text-align:center"><input type="checkbox" class="fm-cms-sammel-all" data-day="'+di+'" title="Alle markieren" style="width:16px;height:16px;cursor:pointer"></th><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
+      html+='<table style="width:100%;border-collapse:collapse;font-size:var(--schrift-normal)"><thead><tr style="background:var(--red-l)"><th style="width:32px;padding:6px;text-align:center"><input type="checkbox" class="fm-cms-sammel-all" data-day="'+di+'" title="Alle markieren" style="width:16px;height:16px;cursor:pointer"></th><th style="text-align:left;padding:6px 10px">Artikel</th><th style="text-align:right;padding:6px 10px">Gesamt-Menge</th></tr></thead><tbody>';
       arts.forEach(function(a,ai){
         var rk=di+'-'+ai;
         var chk=_fmCmsSammelChecked[rk]||false;
@@ -10857,8 +10857,8 @@
       });
       html+='</tbody></table>';
 
-      html+='<div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right">';
-      html+='<button class="cms-btn" style="font-size:11px;padding:4px 12px" onclick="window.print()">Drucken</button>';
+      html+='<div style="padding:8px 10px;border-top:1px solid var(--line);text-align:right">';
+      html+='<button class="cms-btn" style="font-size:var(--schrift-klein);padding:4px 12px" onclick="window.print()">Drucken</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -10950,19 +10950,19 @@
         overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center';
         var modal=document.createElement('div');
         modal.style.cssText='background:#fff;border-radius:14px;padding:20px 24px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.2)';
-        modal.innerHTML='<div style="font-size:16px;font-weight:600;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
-          +'<div style="font-size:12px;color:#6b7f72;margin-bottom:14px">'+esc(bestellnr)+' – '+esc(name)+'</div>'
-          +'<div style="font-size:13px;font-weight:600;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
+        modal.innerHTML='<div style="font-size:var(--schrift-gross);font-weight:600;margin-bottom:4px">⚠️ Bestellung stornieren</div>'
+          +'<div style="font-size:var(--schrift-klein);color:var(--mut);margin-bottom:14px">'+esc(bestellnr)+' – '+esc(name)+'</div>'
+          +'<div style="font-size:var(--schrift-normal);font-weight:600;margin-bottom:8px">Stornierungsgrund (Pflichtfeld):</div>'
           +'<div id="cms-fm-storno-opts" style="display:flex;flex-direction:column;gap:6px"></div>'
-          +'<textarea id="cms-fm-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid #dfe7e2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
-          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid #dfe7e2;border-radius:10px;background:#fff;font-weight:600;cursor:pointer">Abbrechen</button>'
-          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
+          +'<textarea id="cms-fm-storno-comment" placeholder="Zusätzlicher Kommentar (optional)…" rows="2" style="width:100%;margin-top:12px;border:1px solid var(--line);border-radius:var(--r-s);padding:6px 8px;font-family:inherit;font-size:var(--schrift-klein);box-sizing:border-box;overflow:hidden;resize:none" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+          +'<div style="display:flex;gap:8px;margin-top:14px"><button id="cms-fm-storno-cancel" style="flex:1;padding:10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);font-weight:600;cursor:pointer">Abbrechen</button>'
+          +'<button id="cms-fm-storno-confirm" style="flex:1;padding:10px;border:none;border-radius:var(--r-s);background:var(--red);color:var(--karte);font-weight:600;cursor:pointer;opacity:.4" disabled>Stornieren</button></div>';
         overlay.appendChild(modal);document.body.appendChild(overlay);
         var optsDiv=modal.querySelector('#cms-fm-storno-opts');var selectedReason='';
         CMS_FM_STORNO_REASONS.forEach(function(r){
           var opt=document.createElement('label');
           opt.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s';
-          opt.innerHTML='<input type="radio" name="cms-fm-storno-reason" value="'+esc(r)+'" style="accent-color:#dc2626"> '+esc(r);
+          opt.innerHTML='<input type="radio" name="cms-fm-storno-reason" value="'+esc(r)+'" style="accent-color:var(--red)"> '+esc(r);
           opt.querySelector('input').addEventListener('change',function(){
             selectedReason=r;
             modal.querySelector('#cms-fm-storno-confirm').disabled=false;
@@ -11021,11 +11021,11 @@
 
     var box=document.createElement('div');
     box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)';
-    box.innerHTML='<div style="font-size:16px;font-weight:600;margin-bottom:12px;color:#7f1d1d">Nachricht an Kunden</div>'
-      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:14px;resize:none;font-family:inherit;overflow:hidden" placeholder="Ihre Nachricht..." oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
+    box.innerHTML='<div style="font-size:var(--schrift-gross);font-weight:600;margin-bottom:12px;color:var(--red)">Nachricht an Kunden</div>'
+      +'<textarea id="fm-cms-reply-text" rows="4" style="width:100%;border:1px solid var(--line);border-radius:var(--r-s);padding:10px;font-size:var(--schrift-normal);resize:none;font-family:inherit;overflow:hidden" placeholder="Ihre Nachricht..." oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'"></textarea>'
       +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
-      +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:13px;padding:8px 16px">Abbrechen</button>'
-      +'<button id="fm-cms-reply-send" class="cms-btn cms-btn-primary" style="font-size:13px;padding:8px 16px;background:#1e40af;color:#fff;border:none">Senden</button>'
+      +'<button id="fm-cms-reply-cancel" class="cms-btn" style="font-size:var(--schrift-normal);padding:8px 16px">Abbrechen</button>'
+      +'<button id="fm-cms-reply-send" class="cms-btn cms-btn-primary" style="font-size:var(--schrift-normal);padding:8px 16px;background:var(--blu);color:var(--karte);border:none">Senden</button>'
       +'</div>';
     ov.appendChild(box);
     document.body.appendChild(ov);

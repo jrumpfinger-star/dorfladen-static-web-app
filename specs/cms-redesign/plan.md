@@ -141,9 +141,17 @@ Deklarationen ist der Arbeitsvorrat für die nächste Runde — sie schrumpft
 sichtbar, statt unter den Tisch zu fallen.
 
 Für `cms.js` (580 weitere Inline-Gestaltungen in erzeugtem Markup) gilt
-dasselbe, aber **erst in Stufe 3** und **von Hand geprüft** — dort steht die
-Gestaltung in Zeichenkettenverkettung und lässt sich nicht so sicher
-maschinell fassen.
+dasselbe — dort baut die Fachlogik Dialoge und Listen als Zeichenketten
+zusammen, die die Markup-Umformung nicht erreicht. Sie werden von einem
+eigenen Werkzeug `tools/cms-js-stilwerte.js` mit derselben Tabelle
+umgewertet, allerdings **an Ort und Stelle**: `cms.js` ist und bleibt
+handgepflegt, es gibt dafür keine erzeugte Datei.
+
+Sicherheitsnetz dort: Angefasst wird nur, was zweifelsfrei ein Stilwert ist —
+Zeichenfolgen der Form `style="…"` **ohne** Zeichenkettenverkettung. Enthält
+der Wert ein `'`, `+`, `` ` ``, `${` oder einen Zeilenumbruch, greift der
+Ausdruck womöglich über das Ende der Zeichenkette hinaus und würde Code
+zerschneiden; solche Stellen bleiben unberührt und werden gezählt.
 
 ### 3.4 Der Abgleich — der eigentliche Sicherheitsgurt
 
@@ -265,7 +273,9 @@ bei einem Vielfachen und trüge 915 Kopplungen als Risiko.
 | `static-site/css/cms-neu.css` | Gestaltungsblatt des CMS |
 | `static-site/cms-neu.html` | Erzeugter Prototyp |
 | `tools/build-cms-neu.js` | Umformung U1–U7 |
+| `tools/cms-js-stilwerte.js` | Umwertung der Inline-Gestaltung in `cms.js` (Dialoge) |
 | `tools/pruef-cms-abgleich.js` | Funktionsabgleich |
+| `tools/pruef-cms-darstellung.js` | Darstellung über 8 Breiten × 15 Bereiche + Dialoge |
 | `tools/cms-stilwerte.json` | Zuordnungstabelle der Inline-Werte |
 | `tests/cms-neu.spec.js` | Playwright: F3, F6 über drei Größen |
 

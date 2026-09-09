@@ -50,6 +50,7 @@ const BREITEN = [
    und senden nichts. Bewusst KEIN Loeschen-Dialog. */
 const DIALOGE = [
   { bereich: 'ang', wahl: '[data-action="openNewAktion"]', name: 'Neue Aktion' },
+  { bereich: 'ang', text: 'Bearbeiten', name: 'Aktion bearbeiten' },
   { bereich: 'wp', wahl: '[data-action="openAddMeal"]', name: 'Gericht anlegen' },
 ];
 
@@ -196,16 +197,24 @@ async function main() {
     for (const d of DIALOGE) {
       await page.evaluate((t) => window.cmsTab(t), d.bereich);
       await page.waitForTimeout(600);
-      const knopf = page.locator('#cms-panel-' + d.bereich + ' ' + d.wahl).first();
+      const knopf = d.wahl
+        ? page.locator('#cms-panel-' + d.bereich + ' ' + d.wahl).first()
+        : page.locator('#cms-panel-' + d.bereich + ' button')
+          .filter({ hasText: d.text }).first();
       if (!(await knopf.count())) continue;
       await knopf.click().catch(() => {});
-      await page.waitForTimeout(1200);
+      await page.waitForTimeout(1400);
       const m = await pruefeDialog(page);
       geprueft++;
       if (m.auf && (m.quer || m.rausN || m.kleinN || m.passt === false)) {
         befunde.push({ breite: w, gerat: name, was: 'Dialog ' + d.name, ...m });
       }
-      await page.evaluate(() => window.cmsCloseModal && window.cmsCloseModal()).catch(() => {});
+      // Ohne Nebenwirkung schliessen: nicht ueber "Abbrechen", das koennte
+      // eine Rueckfrage aufwerfen.
+      await page.evaluate(() => {
+        const wrap = document.getElementById('cms-modal-wrap');
+        if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
+      });
       await page.waitForTimeout(400);
     }
 

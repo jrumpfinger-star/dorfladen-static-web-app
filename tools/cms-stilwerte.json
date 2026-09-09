@@ -55,6 +55,9 @@
 
     "#6b7280": "var(--mut)",
     "#9ca3af": "var(--mut)",
+    "#888": "var(--mut)",
+    "#6b7f72": "var(--mut)",
+    "#555": "var(--ink)",
 
     "#d1d5db": "var(--line)",
     "#e5e7eb": "var(--line)",
@@ -63,6 +66,7 @@
     "#cbd5e1": "var(--line)",
     "#d6d3d1": "var(--line)",
     "#eef0f2": "var(--line)",
+    "#dfe7e2": "var(--line)",
 
     "#f9fafb": "var(--gr-t)",
     "#f8fafc": "var(--gr-t)",
@@ -99,6 +103,8 @@
     "#bbf7d0": "var(--gr-l)",
     "#f0f4f1": "var(--gr-l)",
     "#e8ece8": "var(--gr-l)",
+    "#dcfce7": "var(--gr-l)",
+    "#22c55e": "var(--gr)",
 
     "#b91c1c": "var(--red)",
     "#dc2626": "var(--red)",
@@ -121,6 +127,9 @@
     "#ff9800": "var(--amb)",
     "#7d6608": "var(--amb)",
     "#92620e": "var(--amb)",
+    "#e65100": "var(--amb)",
+    "#ea580c": "var(--amb)",
+    "#fbbf24": "var(--amb)",
     "#fffbeb": "var(--amb-l)",
     "#fef3c7": "var(--amb-l)",
     "#fff3e0": "var(--amb-l)",
@@ -138,6 +147,7 @@
     "#0ea5e9": "var(--blu)",
     "#06b6d4": "var(--blu)",
     "#0d9488": "var(--blu)",
+    "#1565c0": "var(--blu)",
     "#eff6ff": "var(--blu-l)",
     "#dbeafe": "var(--blu-l)",
     "#f0f9ff": "var(--blu-l)",
