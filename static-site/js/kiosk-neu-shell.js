@@ -485,6 +485,36 @@
   }
 
 
+  // ── Mittagstisch: „Alle" stand zweimal nebeneinander ────────────────
+  //
+  // In der Filterleiste sitzt der Filter „Alle 7" und unmittelbar daneben der
+  // Umschalter, der alle Bestellkarten auf- oder zuklappt. Das Fachmodul
+  // beschriftet ihn mit „Alle" bzw. „Zu" — zwei gleich aussehende Knöpfe mit
+  // ganz verschiedener Wirkung, und „Zu" sagt für sich genommen nichts.
+  //
+  // Die Beschriftung wird deshalb hier gesetzt. Woran der Zustand erkennbar
+  // ist: Das Fachmodul haengt „expandAllCards" oder „collapseAllCards" an den
+  // Knopf. Nach jedem Neuaufbau stellt der Beobachter die Beschriftung wieder
+  // her.
+  function mittagUmschalterBenennen() {
+    var knopf = document.querySelector('#mt-toggle-wrap .k-btn');
+    if (!knopf) return;
+    var aufklappen = /expandAllCards/.test(knopf.getAttribute('onclick') || '');
+    var soll = aufklappen ? 'Aufklappen' : 'Zuklappen';
+    if (knopf.textContent.trim() === soll) return;
+
+    // Nur den Text ersetzen; das Symbol des Moduls bleibt unberuehrt.
+    var gesetzt = false;
+    for (var i = 0; i < knopf.childNodes.length; i++) {
+      var k = knopf.childNodes[i];
+      if (k.nodeType === 3 && k.nodeValue.trim()) { k.nodeValue = soll; gesetzt = true; break; }
+    }
+    if (!gesetzt) knopf.appendChild(document.createTextNode(soll));
+    knopf.setAttribute('title', aufklappen
+      ? 'Alle Bestellungen aufklappen'
+      : 'Alle Bestellungen zuklappen');
+  }
+
   //
   // Der Katalog stellte für jeden der 45 Artikel gleichzeitig ein Preisfeld
   // und eine Uhrzeit-Auswahl offen. Zusammen mit den übrigen Feldern des
@@ -688,7 +718,8 @@
       // laufen. Vorher haette ein einziger Fehler die ganze Kette angehalten.
       [
         metzgerEditorInsBild, symboleNachziehen, baeckerWerkzeuge,
-        baeckerKopfOrdnen, mittagTagFeld, socialKatalog, kalenderDatumswahl,
+        baeckerKopfOrdnen, mittagTagFeld, mittagUmschalterBenennen,
+        socialKatalog, kalenderDatumswahl,
       ].forEach(function (hilfe) {
         try { hilfe(); }
         catch (e) { /* Darstellung darf die Bedienung nie blockieren */ }

@@ -1702,7 +1702,8 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
    für sich allein, obwohl daneben Platz war. Er läuft jetzt einfach mit.
    Sein Symbol entfällt wie bei den Filterchips: neben dem ausgeschriebenen
    Wort sagt es nichts, kostet aber die Breite, die über eine dritte Zeile
-   entscheidet. */
+   entscheidet. Die Beschriftung setzt die Hilfeschicht — „Alle" stand sonst
+   zweimal nebeneinander (Filter und Umschalter). */
 #panel-mittag #mt-toggle-wrap{ margin-left:0 !important }
 #panel-mittag #mt-toggle-wrap svg{ display:none }
 #panel-mittag #mt-toggle-wrap .k-btn{ padding:0 8px !important; font-size:12px !important }
