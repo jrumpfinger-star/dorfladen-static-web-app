@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
+from shared import richtext  # noqa: E402
 import store  # noqa: E402
 from docx_fill import fill_form  # noqa: E402
 from pdf_fill import build_pdf  # noqa: E402
@@ -83,8 +84,12 @@ def _send_mail(to_email, to_name, subject, body_text, attachment_bytes, format_=
     )
 
 
-def _mail_text(datum_iso, cfg, korrektur=False):
-    """``cfg`` ist die Konfiguration EINER Baeckerei."""
+def _mail_text(datum_iso, cfg, korrektur=False, notiz=None):
+    """``cfg`` ist die Konfiguration EINER Baeckerei.
+
+    Ein erfasster Hinweis steht auch im Mailtext, nicht nur im Anhang - manche
+    Empfaenger oeffnen den Anhang erst spaeter (Spec bestell-freitext).
+    """
     tag = store.wochentag(datum_iso)
     einleitung = (
         "anbei die Korrektur unserer Bestellung"
@@ -94,11 +99,14 @@ def _mail_text(datum_iso, cfg, korrektur=False):
     tour = store.tour_nr(cfg, datum_iso)
     if tour:
         kennung += f" / Tour-Nr. {tour}"
+    hinweis = (notiz or {}).get("text", "").strip() if notiz else ""
+    hinweis_block = f"Hinweis vom Dorfladen:\n{hinweis}\n\n" if hinweis else ""
     return (
         f"Guten Tag,\n\n"
         f"{einleitung} f\u00fcr {tag}, den {store.datum_de(datum_iso)}.\n"
         f"{kennung}\n\n"
-        f"Das ausgef\u00fcllte Bestellformular finden Sie im Anhang.\n\n"
+        + hinweis_block
+        + f"Das ausgef\u00fcllte Bestellformular finden Sie im Anhang.\n\n"
         f"Mit freundlichen Gr\u00fc\u00dfen\n"
         f"Dorfladen Oberornau"
     )
@@ -185,6 +193,7 @@ def _dokument(url, hdrs, bcfg, bk, datum_iso):
     artikel = store.sort_artikel(store.load_artikel(url, hdrs, bk))
     zeilen = _positionen_formular(order, artikel)
     korrektur = order.get("status") == store.STATUS_KORRIGIERT
+    notiz = order.get("notiz")
     if (bcfg.get("format") or "docx").lower() == "docx":
         return build_formular(
             zeilen, store.datum_de(datum_iso),
@@ -192,6 +201,7 @@ def _dokument(url, hdrs, bcfg, bk, datum_iso):
             tour_nr=store.tour_nr(bcfg, datum_iso),
             testbetrieb=store.testbetrieb(bcfg),
             korrektur=korrektur,
+            notiz=notiz,
         )
     return build_pdf(
         zeilen,
@@ -201,6 +211,7 @@ def _dokument(url, hdrs, bcfg, bk, datum_iso):
         testbetrieb=store.testbetrieb(bcfg),
         korrektur=korrektur,
         formular=True,
+        notiz=notiz,
     )
 
 
@@ -306,6 +317,7 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "aus_startwerten": aus_startwerten,
         "startwerte_meta": sw_meta if aus_startwerten else {},
         "protokoll": order.get("protokoll", []),
+        "notiz": order.get("notiz"),
         "positionen": zeilen,
         "tour_nr": store.tour_nr(cfg, datum_iso),
         "kd_nr": cfg.get("kd_nr"),
@@ -515,6 +527,12 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
     positionen = body.get("positionen")
     if positionen is None:
         positionen = order.get("positionen", [])
+    # Der Hinweis des Dorfladens: Kommt keiner mit, bleibt der gespeicherte
+    # stehen - genau wie bei den Positionen (Spec bestell-freitext, F5).
+    if "notiz" in body:
+        notiz = richtext.notiz_aus(body.get("notiz"))
+    else:
+        notiz = order.get("notiz")
 
     artikel = store.load_artikel(url, hdrs, bk)
     versand = _positionen_fuer_versand({"positionen": positionen}, artikel)
@@ -532,7 +550,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
                 versand, store.datum_de(datum_iso), store.wochentag(datum_iso),
                 kd_nr=cfg.get("kd_nr", ""), baeckerei_name=cfg.get("name", ""),
                 tour_nr=store.tour_nr(cfg, datum_iso),
-                testbetrieb=testbetrieb, korrektur=korrektur,
+                testbetrieb=testbetrieb, korrektur=korrektur, notiz=notiz,
             )
         else:
             with open(VORLAGE, "rb") as fh:
@@ -541,6 +559,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
                 vorlage, store.datum_de(datum_iso), versand,
                 kd_nr=cfg.get("kd_nr", "1190"),
                 tour_nr=store.tour_nr(cfg, datum_iso),
+                notiz=notiz,
             )
     except Exception as e:
         logging.error(f"[baecker-order] Formular fehlgeschlagen ({format_}): {e}")
@@ -550,7 +569,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
     betreff = ("Korrektur Bestellung " if korrektur else "Bestellung ") + store.datum_de(datum_iso)
     ok, info = _send_mail(
         cfg.get("empfaenger"), cfg.get("empfaenger_name") or "B\u00e4ckerei",
-        betreff, _mail_text(datum_iso, cfg, korrektur), dokument, format_,
+        betreff, _mail_text(datum_iso, cfg, korrektur, notiz), dokument, format_,
     )
     if not ok:
         logging.error(f"[baecker-order] Mailversand fehlgeschlagen: {info}")
@@ -572,6 +591,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
         "baeckerei": bk,
         "status": store.STATUS_KORRIGIERT if korrektur else store.STATUS_GESENDET,
         "positionen": positionen,
+        "notiz": notiz,
         "protokoll": [eintrag] + (order.get("protokoll") or []),
     })
     # Eine Korrektur macht den vorherigen Ausdruck ungueltig.
@@ -813,6 +833,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "baeckerei": bk,
                 "status": order.get("status", store.STATUS_ENTWURF),
                 "positionen": body.get("positionen") or [],
+                "notiz": (richtext.notiz_aus(body.get("notiz"))
+                          if "notiz" in body else order.get("notiz")),
                 "vorlage_datum": body.get("vorlage_datum", order.get("vorlage_datum", "")),
                 "protokoll": order.get("protokoll", []),
             })

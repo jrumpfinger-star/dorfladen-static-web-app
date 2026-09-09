@@ -433,6 +433,7 @@
         : 'Noch nicht gesendet') + bestellschlussText() + herkunft + '</div>';
     }
     h += '</div>';
+    h += notizKnopf();
     if (druckOffen) {
       // Der Ausdruck geht vor: erst danach gilt der Tag als erledigt.
       h += '<button class="bk-cta" onclick="KBaecker.drucken()">' + luc('printer', 15) + ' Jetzt drucken</button>';
@@ -470,9 +471,39 @@
     return h + '</div>';
   }
 
+  /* ── Hinweis zur Bestellung (Spec bestell-freitext) ──────────────────
+     Ein optionaler Text, der auf dem Bestellformular mitgedruckt wird -
+     „bitte erst ab 7 Uhr liefern" und Ähnliches. Er gehoert zu genau
+     dieser Baeckerei und diesem Liefertag. */
+  function notizKnopf() {
+    if (!window.KNotiz || !_b) return '';
+    var da = KNotiz.hatText(_b.notiz);
+    return '<button class="kn-knopf' + (da ? ' hat' : '') + '"'
+      + ' onclick="KBaecker.notizOeffnen()" title="'
+      + (da ? 'Hinweis für die Bäckerei ändern' : 'Hinweis für die Bäckerei hinzufügen')
+      + '">' + (da ? 'Hinweis ändern' : 'Hinweis hinzufügen')
+      + (da ? '<span class="kn-vorschau">' + esc(KNotiz.kurz(_b.notiz, 34)) + '</span>' : '')
+      + '</button>';
+  }
+
+  function notizOeffnen() {
+    if (!window.KNotiz || !_b) return;
+    var nurLesen = !!_b.gesperrt && !_korrektur;
+    KNotiz.oeffnen({
+      html: (_b.notiz && _b.notiz.html) || '',
+      gesperrt: nurLesen,
+      titel: 'Hinweis für ' + (_b.baeckerei_name || 'die Bäckerei'),
+      erklaerung: 'Dieser Text wird unten auf dem Bestellformular mitgedruckt.',
+      uebernehmen: function (wert) {
+        _b.notiz = wert;
+        autoSichern();
+        render();
+      }
+    });
+  }
+
   /* Wann muss diese Lieferung spaetestens bestellt sein? Nur anschreiben, wenn
-     der Bestelltag nicht heute ist - sonst ist es nur Rauschen. */
-  function bestellschlussText() {
+     der Bestelltag nicht heute ist - sonst ist es nur Rauschen. */  function bestellschlussText() {
     var d = _b && _b.bestellschluss_datum;
     if (!d) return '';
     var n = new Date();
@@ -982,6 +1013,7 @@
       body: JSON.stringify({
         baeckerei: _bk, datum: _datum, aktion: 'speichern',
         positionen: nutzbarePositionen(),
+        notiz: (_b && _b.notiz) || null,
         vorlage_datum: _b.vorlage_datum || '',
         korrekturmodus: _korrektur
       })
@@ -1073,6 +1105,7 @@
       body: JSON.stringify({
         baeckerei: _bk, datum: _datum, aktion: _korrektur ? 'korrektur' : 'senden',
         positionen: nutzbarePositionen(),
+        notiz: (_b && _b.notiz) || null,
         wer: (window.K && K.currentUser) || 'Kiosk'
       })
     }).then(function (r) { return r.json(); })
@@ -1615,7 +1648,8 @@
     zusatzWeg: zusatzWeg, suche: suche,
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,
     bearbeiten: bearbeiten, aendernSpeichern: aendernSpeichern,
-    tagAusVerlauf: tagAusVerlauf, dlgZu: dlgZu
+    tagAusVerlauf: tagAusVerlauf, dlgZu: dlgZu,
+    notizOeffnen: notizOeffnen
   };
 
   if (document.readyState === 'loading') {

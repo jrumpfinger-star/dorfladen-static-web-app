@@ -16,6 +16,8 @@ darf an einem Zeichen niemals scheitern.
 from fpdf import FPDF
 
 import metzger_portionen as P
+from shared import pdf_notiz
+from shared import richtext
 
 _ERSATZ = {
     "\u00d7": "x",                                        # Multiplikationszeichen
@@ -41,9 +43,12 @@ def latin1(text):
 
 
 class Formular(FPDF):
-    def __init__(self, kopf):
+    def __init__(self, kopf, notiz_bloecke=None):
         super().__init__(orientation="P", unit="mm", format="A4")
         self.kopf_text = kopf
+        # Der Hinweis des Dorfladens steht auf der ersten Seite zwischen
+        # Kopfzeile und Tabelle - dort wird er zuerst gelesen (F3).
+        self.notiz_bloecke = notiz_bloecke or []
         self.set_auto_page_break(auto=True, margin=14)
 
     def header(self):
@@ -52,6 +57,9 @@ class Formular(FPDF):
         self.set_font("Helvetica", "", 9)
         self.cell(0, 5, latin1(self.kopf_text), ln=1)
         self.ln(1)
+        if self.page_no() == 1 and self.notiz_bloecke:
+            pdf_notiz.zeichne(self, self.notiz_bloecke, latin1, umbruch=False)
+            self.ln(2)
         self._spaltenkopf()
 
     def _spaltenkopf(self):
@@ -70,11 +78,13 @@ class Formular(FPDF):
 
 
 def build_pdf(artikel, positionen, datum_iso, kd_nr="", korrektur=False,
-              erstellt=""):
+              erstellt="", notiz=None):
     """Formular-PDF als ``bytes``.
 
     ``artikel``    Katalog in Formularreihenfolge (alle Zeilen)
     ``positionen`` erfasste Positionen der Bestellung
+    ``notiz``      optionaler Hinweis des Dorfladens (F3); ohne ihn sieht das
+                   Blatt aus wie bisher
     """
     von_nummer, von_name = {}, {}
     for p in positionen:
@@ -93,7 +103,7 @@ def build_pdf(artikel, positionen, datum_iso, kd_nr="", korrektur=False,
     if erstellt:
         kopf += f"   .   erstellt {erstellt}"
 
-    pdf = Formular(kopf)
+    pdf = Formular(kopf, richtext.als_bloecke(richtext.html_aus(notiz)))
     pdf.alias_nb_pages()
     pdf.add_page()
 

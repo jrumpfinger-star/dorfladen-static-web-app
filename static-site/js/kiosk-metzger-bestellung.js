@@ -662,12 +662,17 @@ window.KMetzgerBest = (function () {
     if (_korrektur) {
       // Korrektur: kein Entwurfs-Speichern, sonst wuerde die gesendete
       // Bestellung ueberschrieben.
+      h += notizKnopf();
       h += '<button class="mb-btn" onclick="KMetzgerBest.verwerfen()">Verwerfen</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.korrekturSenden()">Korrektur senden</button>';
     } else if (!gesperrt()) {
+      h += notizKnopf();
       h += '<span class="mb-autosave"></span>';
       h += '<button class="mb-btn" onclick="KMetzgerBest.speichern()">Speichern</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.senden()">Bestellung senden</button>';
+    } else {
+      // Gesendet und keine Korrektur offen: Der Hinweis ist nur noch lesbar.
+      h += notizKnopf();
     }
     el.innerHTML = h;
   }
@@ -958,6 +963,38 @@ window.KMetzgerBest = (function () {
     if (el) { el.focus(); el.select(); }
   }
 
+  /* ── Hinweis zur ganzen Bestellung (Spec bestell-freitext) ───────────
+     Nicht zu verwechseln mit dem Positions-Hinweis darüber: Dieser Text
+     gilt für die gesamte Bestellung und wird auf dem Bestellformular
+     mitgedruckt. Erfasst wird er im gemeinsamen Textgestalter. */
+  function notizKnopf() {
+    if (!window.KNotiz) return '';
+    var da = KNotiz.hatText(_b && _b.notiz);
+    var vorschau = da ? KNotiz.kurz(_b.notiz, 34) : '';
+    return '<button class="kn-knopf' + (da ? ' hat' : '') + '"'
+      + ' onclick="KMetzgerBest.notizOeffnen()" title="'
+      + (da ? 'Hinweis für die Metzgerei ändern' : 'Hinweis für die Metzgerei hinzufügen')
+      + '">' + (da ? 'Hinweis ändern' : 'Hinweis hinzufügen')
+      + (da ? '<span class="kn-vorschau">' + esc(vorschau) + '</span>' : '')
+      + '</button>';
+  }
+
+  function notizOeffnen() {
+    if (!window.KNotiz || !_b) return;
+    var nurLesen = gesperrt();
+    KNotiz.oeffnen({
+      html: (_b.notiz && _b.notiz.html) || '',
+      gesperrt: nurLesen,
+      titel: 'Hinweis für die Metzgerei',
+      erklaerung: 'Dieser Text wird oben auf dem Bestellformular mitgedruckt.',
+      uebernehmen: function (wert) {
+        _b.notiz = wert;
+        markiereGeaendert();
+        fuss();
+      }
+    });
+  }
+
   function zu() { _offen = null; _entwurf = null; render(); }
   function such(v) { _suche = v; render(); }
   function filter(alle) { _alleArtikel = !!alle; render(); }
@@ -1053,7 +1090,7 @@ window.KMetzgerBest = (function () {
   function speichern(still) {
     return fetch(API + '/metzger-order/' + encodeURIComponent(_datum) + '/speichern', {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ positionen: nutzbare() })
+      body: JSON.stringify({ positionen: nutzbare(), notiz: (_b && _b.notiz) || null })
     }).then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d || !d.success) throw new Error(fehlerText(d, ''));
@@ -1120,7 +1157,8 @@ window.KMetzgerBest = (function () {
     var pfad = korr ? '/korrektur' : '/senden';
     return fetch(API + '/metzger-order/' + encodeURIComponent(_datum) + pfad, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ positionen: nutzbare(), wer: 'Kiosk' })
+      body: JSON.stringify({ positionen: nutzbare(), notiz: (_b && _b.notiz) || null,
+                             wer: 'Kiosk' })
     }).then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d || !d.success) throw new Error(fehlerText(d, ''));
@@ -1276,6 +1314,7 @@ window.KMetzgerBest = (function () {
     vakAn: vakAn, pad: pad, nimm: nimm, vorschau: vorschau, kurz: kurz,
     weg: weg, allesWeg: allesWeg, loeschen: loeschen,
     hinweis: hinweis, hinweisWeg: hinweisWeg, editHinweis: editHinweis, zu: zu,
+    notizOeffnen: notizOeffnen,
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
     speichern: speichern, senden: senden, korrektur: korrektur,
     verwerfen: verwerfen, korrekturSenden: korrekturSenden,

@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
+from shared import richtext                # noqa: E402
 import metzger_portionen as P              # noqa: E402
 import metzger_store as store              # noqa: E402
 from metzger_pdf import build_pdf          # noqa: E402
@@ -69,8 +70,12 @@ def _send_mail(to_email, to_name, subject, body_text, anhang):
     )
 
 
-def _mail_text(datum_iso, cfg, positionen, korrektur=False):
-    """Positionsliste im Klartext; das Formular liegt zusaetzlich als PDF bei."""
+def _mail_text(datum_iso, cfg, positionen, korrektur=False, notiz=None):
+    """Positionsliste im Klartext; das Formular liegt zusaetzlich als PDF bei.
+
+    Ein erfasster Hinweis steht auch hier, nicht nur im Anhang - manche
+    Empfaenger oeffnen den Anhang erst spaeter (Spec bestell-freitext).
+    """
     einleitung = ("anbei die Korrektur unserer Bestellung"
                   if korrektur else "anbei unsere Bestellung")
     zeilen = []
@@ -80,11 +85,14 @@ def _mail_text(datum_iso, cfg, positionen, korrektur=False):
             nr = f"{p['nummer']} " if p.get("nummer") else ""
             zeilen.append(f"  {nr}{p.get('name', '')} \u2014 {text}")
     s = P.summen(positionen)
+    hinweis = (notiz or {}).get("text", "").strip() if notiz else ""
+    hinweis_block = f"Hinweis vom Dorfladen:\n{hinweis}\n\n" if hinweis else ""
     return (
         f"Guten Tag,\n\n"
         f"{einleitung} f\u00fcr {store.wochentag(datum_iso)}, "
         f"den {store.datum_de(datum_iso)}.\n"
         f"Kd.-Nr. {cfg.get('kd_nr', '')}\n\n"
+        + hinweis_block
         + "\n".join(zeilen) + "\n\n"
         f"Davon vakuumiert: {s['vakuum']} Portionen\n"
         f"Gesamt: {s['positionen']} Positionen, "
@@ -123,6 +131,7 @@ def _entwurf(url, hdrs, cfg, datum_iso):
     order.setdefault("status", store.STATUS_ENTWURF)
     order.setdefault("positionen", [])
     order.setdefault("protokoll", [])
+    order.setdefault("notiz", None)         # Hinweis des Dorfladens (F5)
     order.pop("dokument", None)             # das PDF geht nicht in die Liste
     return rec_id, order, quelle, store.letzte_bestellung(alle)
 
@@ -207,12 +216,14 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     if not positionen:
         return _err("Es ist noch nichts bestellt. Bitte mindestens eine "
                     "Position erfassen.")
+    notiz = richtext.notiz_aus(body.get("notiz"))
 
     rec_id, artikel = store.load_artikel(url, hdrs)
     try:
         anhang = build_pdf(artikel, positionen, datum_iso,
                            kd_nr=cfg.get("kd_nr", ""), korrektur=korrektur,
-                           erstellt=datetime.now().strftime("%d.%m.%Y %H:%M"))
+                           erstellt=datetime.now().strftime("%d.%m.%Y %H:%M"),
+                           notiz=notiz)
     except Exception as e:
         logging.error(f"[metzger] PDF fehlgeschlagen: {e}")
         return _err("Das Bestellformular konnte nicht erzeugt werden. "
@@ -220,7 +231,7 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
 
     betreff = ("Korrektur Bestellung " if korrektur else "Bestellung ") \
         + store.datum_de(datum_iso)
-    text = _mail_text(datum_iso, cfg, positionen, korrektur)
+    text = _mail_text(datum_iso, cfg, positionen, korrektur, notiz)
     try:
         erfolg = _send_mail(cfg.get("empfaenger"), cfg.get("empfaenger_name", ""),
                             betreff, text, anhang)
@@ -239,6 +250,7 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
         "datum": datum_iso,
         "status": store.STATUS_KORRIGIERT if korrektur else store.STATUS_GESENDET,
         "positionen": positionen,
+        "notiz": notiz,
         "dokument": base64.b64encode(anhang).decode("ascii"),
     })
     protokoll = order.get("protokoll") or []
@@ -374,7 +386,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if order.get("status") == store.STATUS_GESENDET:
             return _err("Die Bestellung ist bereits gesendet. Bitte "
                         "\u201eKorrektur senden\u201c verwenden.", 409)
-        order.update({"datum": datum, "positionen": _positionen_aus(body)})
+        order.update({"datum": datum, "positionen": _positionen_aus(body),
+                      "notiz": richtext.notiz_aus(body.get("notiz"))})
         order.setdefault("status", store.STATUS_ENTWURF)
         if not store.save_order(url, hdrs, rec_id, order):
             return _err("Der Entwurf konnte nicht gespeichert werden.", 502)

@@ -18,6 +18,9 @@ Zeichen niemals scheitern.
 """
 from fpdf import FPDF
 
+from shared import pdf_notiz
+from shared import richtext
+
 # Zeichen, die in Artikelnamen und Kopfzeilen realistisch vorkommen und in
 # Latin-1 fehlen.
 _ERSATZ = {
@@ -57,7 +60,8 @@ def _menge(wert):
 
 
 def build_pdf(positionen, datum_de, wochentag, kd_nr="", baeckerei_name="",
-              tour_nr="", testbetrieb=False, korrektur=False, formular=False):
+              tour_nr="", testbetrieb=False, korrektur=False, formular=False,
+              notiz=None):
     """Baut das Formular und gibt die PDF-Bytes.
 
     ``positionen`` sind dicts mit nummer, name, menge, retoure.
@@ -66,6 +70,10 @@ def build_pdf(positionen, datum_de, wochentag, kd_nr="", baeckerei_name="",
     Katalogzeilen, leere Mengenfelder bleiben leer. So sieht der Papierausdruck
     aus wie das versendete Dokument (F23). Ohne das Kennzeichen entsteht die
     kompakte Fassung fuer den Mailanhang, in der nur Bestelltes steht.
+
+    ``notiz`` ist der optionale Hinweis des Dorfladens (Spec bestell-freitext,
+    F3). Er steht **unter** der Tabelle, damit das gewohnte Blatt oben
+    unveraendert bleibt.
     """
     p = FPDF(format="A4")
     p.set_auto_page_break(True, margin=16)
@@ -131,6 +139,10 @@ def build_pdf(positionen, datum_de, wochentag, kd_nr="", baeckerei_name="",
         p.cell(24, 6.5, latin1(_menge(menge) or leer), border=1, align="R")
         p.cell(24, 6.5, latin1(_menge(retoure) or leer), border=1, align="R")
         p.ln()
+
+    # ── Hinweis des Dorfladens ──
+    p.ln(4)
+    pdf_notiz.zeichne(p, richtext.als_bloecke(richtext.html_aus(notiz)), latin1)
 
     # ── Fuss ──
     # Gezaehlt wird, was tatsaechlich bestellt ist - im Formular stehen alle

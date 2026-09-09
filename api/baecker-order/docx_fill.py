@@ -12,6 +12,9 @@ import re
 import zipfile
 from xml.etree import ElementTree as ET
 
+import notiz_docx
+from shared import richtext
+
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 w = lambda tag: f"{{{W}}}{tag}"  # noqa: E731
 
@@ -165,13 +168,16 @@ def _norm_nr(value):
 #  Hauptfunktion
 # ──────────────────────────────────────────────────────────────────────
 
-def fill_form(template_bytes, datum, positionen, kd_nr="1190", tour_nr="87"):
+def fill_form(template_bytes, datum, positionen, kd_nr="1190", tour_nr="87",
+              notiz=None):
     """Erzeugt das ausgefuellte Bestellformular.
 
     template_bytes : Inhalt der Vorlagendatei (.docx)
     datum          : Liefertag als 'TT.MM.JJJJ'
     positionen     : Liste von dicts mit nummer, name, menge, retoure
     kd_nr, tour_nr : Kopfdaten (Tour-Nr. haengt vom Wochentag ab)
+    notiz          : optionaler Hinweis des Dorfladens; er kommt unter die
+                     Tabelle (Spec bestell-freitext, F4)
 
     Rueckgabe: bytes des fertigen .docx
     """
@@ -267,6 +273,9 @@ def fill_form(template_bytes, datum, positionen, kd_nr="1190", tour_nr="87"):
                 _set_cell(tcs[2], str(pos.get("menge") or "") or "")
                 _set_cell(tcs[3], str(pos.get("retoure") or "") or "")
                 tbl.append(neu)
+
+    # ── Hinweis des Dorfladens unter die Tabelle ──
+    notiz_docx.anhaengen(body, richtext.als_bloecke(richtext.html_aus(notiz)))
 
     parts[DOC_PART] = _serialize(root, xml_text).encode("utf-8")
 

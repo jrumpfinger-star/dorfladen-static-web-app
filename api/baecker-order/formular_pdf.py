@@ -23,6 +23,9 @@ Zwanzigstel-Punkt) und werden auf die nutzbare Seitenbreite umgerechnet:
 
 from fpdf import FPDF
 
+from shared import pdf_notiz
+from shared import richtext
+
 # Spaltenbreiten der Word-Tabelle in dxa - Verhaeltnis bleibt erhalten.
 SPALTEN_DXA = (1282, 2717, 1690, 2578)
 NUTZBARE_BREITE = 180.0          # A4 (210 mm) minus 15 mm Rand je Seite
@@ -99,12 +102,16 @@ def _tabellenkopf(p):
 
 
 def build_formular(positionen, datum_de, kd_nr="", tour_nr="",
-                   testbetrieb=False, korrektur=False):
+                   testbetrieb=False, korrektur=False, notiz=None):
     """Baut das Blatt und gibt die PDF-Bytes.
 
     ``positionen`` sind dicts mit nummer, name, menge, retoure - und zwar
     **alle** Katalogzeilen, so wie im Word-Formular. Leere Felder bleiben
     leer, damit man notfalls mit dem Stift nachtragen kann.
+
+    ``notiz`` ist der optionale Hinweis des Dorfladens (Spec bestell-freitext,
+    F3). Er steht **unter** der Tabelle: Dieses Blatt bildet bewusst das
+    gewohnte Word-Formular nach, oben darf sich nichts veraendern.
     """
     p = FPDF(format="A4")
     p.set_auto_page_break(True, margin=15)
@@ -139,6 +146,9 @@ def build_formular(positionen, datum_de, kd_nr="", tour_nr="",
         p.cell(breiten[2], hoehe, latin1(_menge(menge)), border=1)
         p.cell(breiten[3], hoehe, latin1(_menge(retoure)), border=1)
         p.ln()
+
+    p.ln(3)
+    pdf_notiz.zeichne(p, richtext.als_bloecke(richtext.html_aus(notiz)), latin1)
 
     p.ln(3)
     p.set_font("Helvetica", "I", 8)
