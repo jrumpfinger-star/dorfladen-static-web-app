@@ -73,3 +73,28 @@ body{ line-height:var(--zh) }
 
 /* Umlaute brauchen Luft nach oben – 1.15 kappt die Punkte über ä, ö, ü. */
 h1, h2, h3, h4{ line-height:1.3 }
+
+/* ── Dunkles Farbschema ───────────────────────────────────────────────────
+   Nur die Werte werden getauscht; jede Regel, die auf dem Schema aufbaut,
+   folgt automatisch.
+
+   Wichtig sind hier vor allem die Zustandstöne: Ein Rot, das auf Weiß gut
+   lesbar ist (#b91c1c), verschwindet auf einem dunklen Grund beinahe. Sie
+   werden deshalb aufgehellt, ihre Flächen und Ränder abgedunkelt. */
+html[data-theme="dark"]{
+  --gr:      #5cb85f;
+  --gr-d:    #74c777;
+  --gr-l:    #1e2a20;
+  --gr-t:    #171f1a;
+  --ink:     #e6eae8;
+  --mut:     #9aa6a0;
+  --flaeche: #12171a;
+  --karte:   #1b2228;
+  --line:    #2a333a;
+  --amb:     #f0b429;  --amb-l:#2a2113;  --amb-b:#4a3a17;
+  --blu:     #7ab8ff;  --blu-l:#132030;  --blu-b:#254463;
+  --red:     #f08a80;  --red-l:#2a1717;  --red-b:#5a2626;
+  --schatten-1: 0 1px 3px rgba(0,0,0,.35), 0 1px 2px rgba(0,0,0,.25);
+  --schatten-2: 0 4px 14px rgba(0,0,0,.45);
+  --schatten-blatt: 0 -8px 32px rgba(0,0,0,.55);
+}

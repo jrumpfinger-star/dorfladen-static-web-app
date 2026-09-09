@@ -343,6 +343,49 @@ regel('U5', 'Inline-Gestaltung auf das Schema ziehen', function (t) {
 });
 
 /* ══════════════════════════════════════════════════════════════════════
+   U5b Kartenköpfe vereinheitlichen
+
+   Die Farbe eines Kartenkopfs war frueher eine Wegweisung: Push violett,
+   Einstellungen indigo, Metzger rot. Diese Aufgabe hat jetzt der Farbpunkt
+   der Navigationsgruppe. Uebrig blieben 22 verschiedene Kopffarben, die
+   ohne diesen Zusammenhang zufaellig wirkten - und zwei grosse rote Koepfe
+   beim Metzger lasen sich, als sei etwas schiefgegangen.
+
+   Warum hier und nicht im Gestaltungsblatt? Viele dieser Koepfe tragen ihr
+   `background` inline MIT `!important`. Eine Regel im Blatt kaeme dagegen
+   nicht an - inline `!important` schlaegt alles. Also wird der Wert selbst
+   gesetzt.
+
+   Ausgenommen bleibt der Hinweiskopf (bernstein): Er bildet die gelbe
+   Hinweisbox der Website ab und sagt damit etwas ueber den Inhalt aus.
+   ══════════════════════════════════════════════════════════════════════ */
+
+regel('U5b', 'Kartenköpfe vereinheitlichen', function (t) {
+  let vereinheitlicht = 0, belassen = 0;
+  const text = t.replace(
+    /(<div\b[^>]*class="cms-card-header"[^>]*style=")([^"]*)(")/g,
+    function (ganz, vorn, stil, hinten) {
+      const neu = stil.split(';').map(function (d) {
+        const i = d.indexOf(':');
+        if (i < 0) return d;
+        const eigen = d.slice(0, i).trim().toLowerCase();
+        if (eigen !== 'background' && eigen !== 'background-color') return d;
+        // Bernstein bleibt: Der Hinweiskopf sagt etwas aus.
+        if (/--amb/.test(d)) { belassen++; return d; }
+        vereinheitlicht++;
+        const wichtig = /!important/.test(d) ? '!important' : '';
+        return d.slice(0, i + 1) + 'var(--gr)' + wichtig;
+      }).join(';');
+      return vorn + neu + hinten;
+    });
+  return {
+    text: text,
+    info: vereinheitlicht + ' Kartenköpfe auf die Hausfarbe, '
+      + belassen + ' als Hinweis belassen'
+  };
+});
+
+/* ══════════════════════════════════════════════════════════════════════
    U6  Hilfeschicht einbinden
 
    Sie ergaenzt die Oberflaeche von aussen (Navigationsblatt auf dem

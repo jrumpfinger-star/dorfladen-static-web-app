@@ -207,11 +207,11 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <!-- === VIEW MODE (rendered HTML) === -->
     <div id="sort-view-mode">
       <div class="cms-card">
-        <div class="cms-card-header" style="background:var(--gr-d)">Einleitungstext</div>
+        <div class="cms-card-header" style="background:var(--gr)">Einleitungstext</div>
         <div class="cms-card-body" id="sort-view-intro" style="font-size:var(--schrift-normal);line-height:1.6"></div>
       </div>
       <div class="cms-card">
-        <div class="cms-card-header" style="background:var(--gr-d)">Highlights</div>
+        <div class="cms-card-header" style="background:var(--gr)">Highlights</div>
         <div class="cms-card-body" id="sort-view-highlights" style="font-size:var(--schrift-normal);line-height:1.7"></div>
       </div>
       <div class="cms-card">
@@ -236,7 +236,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <div id="sort-edit-mode" style="display:none">
 
       <div class="cms-card">
-        <div class="cms-card-header" style="background:var(--gr-d)">Einleitungstext</div>
+        <div class="cms-card-header" style="background:var(--gr)">Einleitungstext</div>
         <div class="cms-card-body">
           <div class="rte-wrap">
             <div class="rte-toolbar" data-rte="sort-rte-intro">
@@ -252,7 +252,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div>
 
       <div class="cms-card">
-        <div class="cms-card-header" style="background:var(--gr-d)">Highlights</div>
+        <div class="cms-card-header" style="background:var(--gr)">Highlights</div>
         <div class="cms-card-body">
           <div id="sort-rte-lines"></div>
           <button class="cms-btn cms-btn-gray" style="margin-top:8px" onclick="sortAddLine()">+ Zeile hinzufügen</button>
@@ -356,7 +356,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <p style="font-size:var(--schrift-normal);color:var(--mut);margin:0 0 16px">Senden Sie Push-Nachrichten an alle Nutzer, die Benachrichtigungen aktiviert haben.</p>
 
     <div class="cms-card" style="margin-bottom:16px">
-      <div class="cms-card-header" style="background:#7c3aed">Schnell-Vorlagen</div>
+      <div class="cms-card-header" style="background:var(--gr)">Schnell-Vorlagen</div>
       <div class="cms-card-body" style="display:flex;flex-wrap:wrap;gap:8px">
         <button class="cms-btn" onclick="pushTemplate('tagesinfo')" style="background:var(--gr-l);color:var(--gr-d);border:1px solid var(--gr-l);font-size:var(--schrift-normal)">&#128203; TagesInfo</button>
         <button class="cms-btn" onclick="pushTemplate('news')" style="background:var(--blu-l);color:var(--blu);border:1px solid var(--blu-b);font-size:var(--schrift-normal)">&#128240; Neuigkeit</button>
@@ -408,12 +408,12 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           </select>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <label id="push-only-me-wrap" style="display:flex;align-items:center;gap:6px;font-size:var(--schrift-klein);font-weight:600;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:var(--r-s);padding:6px 10px;cursor:pointer" title="Testversand: Es wird ausschlie&szlig;lich an dieses Ger&auml;t (deinen Browser) gesendet, nicht an alle Abonnenten.">
+          <label id="push-only-me-wrap" style="display:flex;align-items:center;gap:6px;font-size:var(--schrift-klein);font-weight:600;color:var(--gr);background:var(--gr-t);border:1px solid var(--gr-l);border-radius:var(--r-s);padding:6px 10px;cursor:pointer" title="Testversand: Es wird ausschlie&szlig;lich an dieses Ger&auml;t (deinen Browser) gesendet, nicht an alle Abonnenten.">
             <input type="checkbox" id="push-only-me" style="cursor:pointer">&#128274; Nur an mich (dieses Ger&auml;t)
           </label>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="cms-btn cms-btn-primary" id="push-send-btn" onclick="pushSendNow()" style="background:#7c3aed">&#128276; Sofort senden</button>
+          <button class="cms-btn cms-btn-primary" id="push-send-btn" onclick="pushSendNow()" style="background:var(--gr)">&#128276; Sofort senden</button>
           <button class="cms-btn" id="push-queue-btn" onclick="pushAddToQueue()" style="background:var(--line);color:var(--ink);border:1px solid var(--line)">&#128203; Zur Warteschlange</button>
           <span id="push-status" style="font-size:var(--schrift-normal);color:var(--mut)"></span>
         </div>
@@ -421,7 +421,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     </div>
 
     <div class="cms-card" id="push-queue-card" style="margin-bottom:16px;display:none">
-      <div class="cms-card-header" style="background:#4f46e5">&#128203; Warteschlange <span id="push-queue-count" style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:var(--r-s);font-size:var(--schrift-klein);margin-left:6px">0</span></div>
+      <div class="cms-card-header" style="background:var(--gr)">&#128203; Warteschlange <span id="push-queue-count" style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:var(--r-s);font-size:var(--schrift-klein);margin-left:6px">0</span></div>
       <div class="cms-card-body">
         <div id="push-queue-list" style="margin-bottom:12px"></div>
         <div id="push-queue-preview" style="display:none;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s);padding:12px;margin-bottom:12px">
@@ -430,7 +430,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <div style="font-size:var(--schrift-normal);color:var(--ink);white-space:pre-line;margin-top:4px" id="push-queue-preview-body"></div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="cms-btn cms-btn-primary" onclick="pushSendQueue()" style="background:#4f46e5">&#128276; Alle gesammelt senden</button>
+          <button class="cms-btn cms-btn-primary" onclick="pushSendQueue()" style="background:var(--gr-d)">&#128276; Alle gesammelt senden</button>
           <button class="cms-btn" onclick="pushClearQueue()" style="background:var(--red-l);color:var(--red);border:1px solid var(--red-b);font-size:var(--schrift-klein)">&#128465; Leeren</button>
           <span id="push-queue-status" style="font-size:var(--schrift-normal);color:var(--mut)"></span>
         </div>
@@ -471,7 +471,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <div id="settings-status" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem;margin-bottom:14px"></div>
 
     <div class="cms-card">
-      <div class="cms-card-header" style="background:#6366f1!important">&#9881; Features</div>
+      <div class="cms-card-header" style="background:var(--gr)!important">&#9881; Features</div>
       <div class="cms-card-body" style="display:flex;flex-direction:column;gap:0">
 
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)">
@@ -544,7 +544,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     </div>
 
     <div class="cms-card" style="margin-top:18px">
-      <div class="cms-card-header" style="background:var(--blu)!important">&#128273; Funktionen freischalten (Homepage &amp; Kiosk)</div>
+      <div class="cms-card-header" style="background:var(--gr)!important">&#128273; Funktionen freischalten (Homepage &amp; Kiosk)</div>
       <div class="cms-card-body" style="display:flex;flex-direction:column;gap:0">
         <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0 0 6px">W&auml;hlen Sie, welche Funktionen auf der &ouml;ffentlichen <strong>Homepage</strong> und im internen <strong>Kiosk</strong> erscheinen. Nur aktivierte Funktionen sind sichtbar.</p>
 
@@ -820,7 +820,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
     <!-- Metzger-Bestellung (Metzgerei Mair) -->
     <div class="cms-card" style="margin-top:18px">
-      <div class="cms-card-header" style="background:var(--red)!important">&#129385; Metzger-Bestellung</div>
+      <div class="cms-card-header" style="background:var(--gr)!important">&#129385; Metzger-Bestellung</div>
       <div class="cms-card-body" style="display:flex;flex-direction:column;gap:12px">
         <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0">Steuert den Tab &bdquo;Metzger Mair&ldquo; im Kiosk: an welchen Tagen geliefert wird, bis wann bestellt wird und an wen die Bestellung geht.</p>
 
@@ -924,7 +924,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <div class="cms-card" style="margin-bottom:0">
         <div class="cms-card-body" style="text-align:center;padding:16px">
           <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px">Zeitraum</div>
-          <div id="stats-total-views" style="font-size:28px;font-weight:600;color:#6366f1;margin:4px 0">-</div>
+          <div id="stats-total-views" style="font-size:28px;font-weight:600;color:var(--gr);margin:4px 0">-</div>
           <div style="font-size:var(--schrift-klein);color:var(--mut)">Seitenaufrufe</div>
         </div>
       </div>
@@ -973,7 +973,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
     <!-- Timeline Chart -->
     <div class="cms-card">
-      <div class="cms-card-header" style="background:var(--blu)!important">&#128200; Verlauf</div>
+      <div class="cms-card-header" style="background:var(--gr)!important">&#128200; Verlauf</div>
       <div class="cms-card-body" style="padding:12px">
         <canvas id="stats-chart" style="width:100%;height:220px"></canvas>
       </div>
@@ -982,7 +982,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <!-- Hourly + Devices row -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="cms-card">
-        <div class="cms-card-header" style="background:#6366f1!important">&#128340; Uhrzeiten</div>
+        <div class="cms-card-header" style="background:var(--gr)!important">&#128340; Uhrzeiten</div>
         <div class="cms-card-body" style="padding:12px">
           <canvas id="stats-hourly-chart" style="width:100%;height:160px"></canvas>
         </div>
@@ -1004,13 +1004,13 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
       </div>
       <div class="cms-card">
-        <div class="cms-card-header" style="background:#8b5cf6!important">&#128279; Herkunft</div>
+        <div class="cms-card-header" style="background:var(--gr)!important">&#128279; Herkunft</div>
         <div class="cms-card-body" id="stats-referrers" style="padding:0">
           <div class="cms-empty">Lade...</div>
         </div>
       </div>
       <div class="cms-card" style="grid-column:1/-1">
-        <div class="cms-card-header" style="background:var(--red)!important">&#128205; Standorte</div>
+        <div class="cms-card-header" style="background:var(--gr)!important">&#128205; Standorte</div>
         <div class="cms-card-body" id="stats-locations" style="padding:0 0 8px">
           <div class="cms-empty">Lade...</div>
         </div>
@@ -1152,7 +1152,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             </div>
           </div>
           <div class="cms-card" style="margin-top:14px">
-            <div class="cms-card-header" style="background:var(--blu)">&#128247; Hero-Banner</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#128247; Hero-Banner</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Hero Overlay-Abdunklung: <span id="hcfg-heroOverlay-val">50</span>%
                 <input type="range" id="hcfg-heroOverlay" min="0" max="100" value="50" style="width:100%" oninput="document.getElementById('hcfg-heroOverlay-val').textContent=this.value">
@@ -1166,7 +1166,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
         <div>
           <div class="cms-card">
-            <div class="cms-card-header" style="background:#7c3aed">&#128065; Sektionen anzeigen</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#128065; Sektionen anzeigen</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">
                 <input type="checkbox" id="hcfg-showTopbar" checked> Kontaktleiste (oben)
@@ -1393,18 +1393,18 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <!--  WP SECTION 2: FLYER / DRUCK                    -->
       <!-- ════════════════════════════════════════════════ -->
       <div id="wp-sec-flyer" style="display:none">
-        <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;border-radius:var(--r-m);padding:16px;margin-bottom:12px">
+        <div style="background:linear-gradient(135deg,var(--gr-t),var(--gr-l));border:1px solid var(--gr-l);border-radius:var(--r-m);padding:16px;margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
             <span style="font-size:18px">&#128196;</span>
             <div>
-              <div style="font-size:var(--schrift-normal);font-weight:600;color:#4338ca">Flyer / Druck-Layout</div>
+              <div style="font-size:var(--schrift-normal);font-weight:600;color:var(--gr-d)">Flyer / Druck-Layout</div>
               <div style="font-size:var(--schrift-klein);color:var(--mut)">Template &amp; Farben f&uuml;r Vorschau, Teilen und Drucken des Wochenplans</div>
             </div>
           </div>
 
           <!-- Template Selection -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#4338ca">&#127912; Template</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#127912; Template</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Flyer/Druck-Layout
                 <select id="hcfg-wpFlyerTemplate" class="cms-input" style="margin-top:4px">
@@ -1455,7 +1455,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Colors -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#4338ca">&#127912; Farben anpassen</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#127912; Farben anpassen</div>
             <div class="cms-card-body">
               <div id="hcfg-wpFlyer-colors" style="padding:0">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -1487,7 +1487,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Schriften (Bild/Canvas) -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#4338ca">&#127912; Schriften (Bild / Vorschau)</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#127912; Schriften (Bild / Vorschau)</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Wochentag: <span id="hcfg-wpCanvasDaySize-val">15</span>px
                 <input type="range" id="hcfg-wpCanvasDaySize" min="10" max="22" step="1" value="15" style="width:100%" oninput="document.getElementById('hcfg-wpCanvasDaySize-val').textContent=this.value">
@@ -1503,7 +1503,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Transparenz -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#4338ca">&#128065; Hinweis &amp; Footer</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#128065; Hinweis &amp; Footer</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                 <label style="font-size:var(--schrift-klein);color:var(--ink)">Hinweistext-Farbe<input type="color" id="hcfg-wpHintColor" value="#9ca3af" style="width:100%;height:24px;border:1px solid var(--line);border-radius:var(--r-s);cursor:pointer"></label>
@@ -1639,7 +1639,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <div class="cms-wp-preview-name">Fresh</div>
                 </button>
                 <button type="button" class="cms-wp-preview" data-action="pickPlakatTpl" data-value="modern-mag-bold" title="Mag Bold (Violett)">
-                  <div class="cms-wp-thumb cms-wp-thumb-flyermag" style="background:#faf5ff"><div class="cms-wp-thumb-h" style="background:#ede9fe;border-color:#8b5cf6"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
+                  <div class="cms-wp-thumb cms-wp-thumb-flyermag" style="background:var(--gr-t)"><div class="cms-wp-thumb-h" style="background:var(--gr-l);border-color:var(--gr)"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
                   <div class="cms-wp-preview-name">Bold</div>
                 </button>
                 <button type="button" class="cms-wp-preview" data-action="pickPlakatTpl" data-value="modern-mag-xl" title="Mag XL (Gro&szlig;bild)">
@@ -1817,18 +1817,18 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <!--  SECTION 2: EINZELFLYER                         -->
       <!-- ════════════════════════════════════════════════ -->
       <div id="cfg-sec-flyer" style="display:none">
-        <div style="background:linear-gradient(135deg,#f3f0f8,#ece8f4);border:1px solid var(--line);border-radius:var(--r-m);padding:16px;margin-bottom:12px">
+        <div style="background:linear-gradient(135deg,var(--gr-t),var(--gr-t));border:1px solid var(--line);border-radius:var(--r-m);padding:16px;margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
             <span style="font-size:18px">&#128196;</span>
             <div>
-              <div style="font-size:var(--schrift-normal);font-weight:600;color:#6d28d9">Einzelflyer-Design</div>
+              <div style="font-size:var(--schrift-normal);font-weight:600;color:var(--gr-d)">Einzelflyer-Design</div>
               <div style="font-size:var(--schrift-klein);color:var(--mut)">Template, Farben &amp; Schrift f&uuml;r Einzelflyer</div>
             </div>
           </div>
 
           <!-- Template Selection -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#6d28d9">&#127912; Template</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#127912; Template</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Einzelflyer-Template
                 <select id="cfg-flyerTemplate" class="cms-input" style="margin-top:4px">
@@ -1876,7 +1876,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <div class="cms-wp-preview-name">Fresh</div>
                 </button>
                 <button type="button" class="cms-wp-preview" data-action="pickFlyerTpl" data-value="modern-mag-bold" title="Mag Bold (Violett)">
-                  <div class="cms-wp-thumb cms-wp-thumb-flyermag" style="background:#faf5ff"><div class="cms-wp-thumb-h" style="background:#ede9fe;border-color:#8b5cf6"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
+                  <div class="cms-wp-thumb cms-wp-thumb-flyermag" style="background:var(--gr-t)"><div class="cms-wp-thumb-h" style="background:var(--gr-l);border-color:var(--gr)"></div><div class="cms-wp-thumb-b"><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div><div class="cms-wp-thumb-line"></div></div></div>
                   <div class="cms-wp-preview-name">Bold</div>
                 </button>
                 <button type="button" class="cms-wp-preview" data-action="pickFlyerTpl" data-value="modern-mag-xl" title="Mag XL (Gro&szlig;bild)">
@@ -1889,7 +1889,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Colors -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#6d28d9">&#127912; Flyer-Farben</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#127912; Flyer-Farben</div>
             <div class="cms-card-body">
               <div id="cfg-tpl-flyer-colors" style="padding:0">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -1917,7 +1917,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer-specific settings -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#6d28d9">&#128181; Flyer-Preisschild</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#128181; Flyer-Preisschild</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preis-Schriftgr&ouml;&szlig;e
                 <div style="display:flex;align-items:center;gap:8px">
@@ -1936,7 +1936,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Preisschild-Form -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#6d28d9">&#128181; Preisschild-Form</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#128181; Preisschild-Form</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Vorlage
                 <select id="cfg-flyer-tagPreset" class="cms-input cfg-persec-ctl" data-sec="flyer" style="margin-top:4px">
@@ -1997,7 +1997,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Bild- & Preis-Anker -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--blu)">&#128204; Bild- &amp; Preis-Position</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#128204; Bild- &amp; Preis-Position</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:14px">
               <!-- Image width -->
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Bildbreite
@@ -2055,7 +2055,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Dekoration -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:#6d28d9">&#127807; Dekoration</div>
+            <div class="cms-card-header" style="background:var(--gr)">&#127807; Dekoration</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <div style="padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
                 <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);margin-bottom:6px">&#127912; Deko-Farben</div>
@@ -2571,7 +2571,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   <!-- Metzger (Fleisch-Vorbestellung) -->
   <div id="cms-panel-metzger" style="display:none">
     <div class="cms-card">
-      <div class="cms-card-header" style="background:var(--red)!important">Konfiguration</div>
+      <div class="cms-card-header" style="background:var(--gr)!important">Konfiguration</div>
       <div class="cms-card-body">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:8px 12px;background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r-s)">
           <label style="font-size:var(--schrift-normal);font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--red)"><input type="checkbox" id="fm-cfg-aktiv" checked> Vorbestellung aktiviert</label>
@@ -2610,7 +2610,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div>
     </div>
     <div class="cms-card" style="margin-top:16px">
-      <div class="cms-card-header" style="background:var(--red)!important">Bestellungen</div>
+      <div class="cms-card-header" style="background:var(--gr)!important">Bestellungen</div>
       <div class="cms-card-body">
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
           <button class="cms-btn" onclick="cmsLoadFleischOrders('offen')" id="fm-orders-btn-offen" style="font-size:var(--schrift-klein);background:var(--red-l);color:var(--red);border:1px solid var(--red-b)">Offene</button>
@@ -3252,7 +3252,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <div class="cms-card-header">&#128276; Push-Benachrichtigungen</div>
           <div class="cms-card-body" style="font-size:var(--schrift-normal);line-height:1.65;color:var(--ink)">
             <p style="margin:0 0 10px">Senden Sie Direktnachrichten an alle registrierten Smartphone- und Desktop-Abonnenten.</p>
-            <div style="background:#f3e8ff;border-left:4px solid #9333ea;padding:10px 14px;border-radius:var(--r-s);font-size:var(--schrift-klein);margin-bottom:12px">&#8505;&#65039; <strong>Testphase:</strong> Push befindet sich noch in der optionalen Testphase.</div>
+            <div style="background:var(--gr-t);border-left:4px solid var(--gr);padding:10px 14px;border-radius:var(--r-s);font-size:var(--schrift-klein);margin-bottom:12px">&#8505;&#65039; <strong>Testphase:</strong> Push befindet sich noch in der optionalen Testphase.</div>
             <h4 style="margin:0 0 6px;color:var(--gr-d)">Nachricht senden</h4>
             <ol style="margin:0 0 12px;padding-left:20px">
               <li>Tab <strong>Push</strong> &#246;ffnen.</li>

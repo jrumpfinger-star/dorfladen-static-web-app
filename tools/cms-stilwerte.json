@@ -12,9 +12,15 @@
     "tragen Zustand, nicht Aussehen. cms.js schreibt sie zur Laufzeit.",
     "",
     "Nicht zugeordnete Werte bleiben stehen und werden vom Werkzeug berichtet.",
-    "Bewusst NICHT zugeordnet sind Fremdfarben (WhatsApp-Grün) und die",
-    "Kennfarben einzelner Bereiche (Violett für Push, Indigo für Settings,",
-    "Beige für den Kachel-Editor) - sie sind Wiedererkennung, kein Zufall."
+    "Bewusst NICHT zugeordnet sind Fremdfarben (WhatsApp-Grün) und die zweite",
+    "Hausfarbe (Beige, #bd8b5c/#8b7355).",
+    "",
+    "Die Violett- und Indigo-Familie war früher die Kennfarbe einzelner",
+    "Bereiche (Push, Einstellungen). Diese Wegweisung leistet jetzt der",
+    "Farbpunkt der Navigationsgruppe; in den Bereichen selbst wirkten die",
+    "Farben ohne diesen Zusammenhang zufällig - Kartenköpfe und Hauptknöpfe",
+    "sind deshalb überall die Hausfarbe. Zustandsfarben (Hinweis, Fehler,",
+    "Nachricht) bleiben davon unberührt."
   ],
 
   "zustand": [
@@ -138,7 +144,25 @@
     "#e8f6f8": "var(--blu-l)",
     "#cffafe": "var(--blu-l)",
     "#bfdbfe": "var(--blu-b)",
-    "#bae6fd": "var(--blu-b)"
+    "#bae6fd": "var(--blu-b)",
+
+    "#6d28d9": "var(--gr-d)",
+    "#4338ca": "var(--gr-d)",
+    "#4f46e5": "var(--gr-d)",
+    "#7c3aed": "var(--gr)",
+    "#8b5cf6": "var(--gr)",
+    "#6366f1": "var(--gr)",
+    "#9333ea": "var(--gr)",
+    "#ede9fe": "var(--gr-l)",
+    "#ddd6fe": "var(--gr-l)",
+    "#c7d2fe": "var(--gr-l)",
+    "#e0e7ff": "var(--gr-l)",
+    "#faf5ff": "var(--gr-t)",
+    "#f5f3ff": "var(--gr-t)",
+    "#f3e8ff": "var(--gr-t)",
+    "#eef2ff": "var(--gr-t)",
+    "#f3f0f8": "var(--gr-t)",
+    "#ece8f4": "var(--gr-t)"
   },
 
   "masse": {

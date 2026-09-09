@@ -16,37 +16,19 @@
 6	border-radius:3px 3px 0 0
 5	font-size:18px
 5	background:#334155
-5	background:#6d28d9
 4	color:var(--c-m-pri)
-4	background:#4338ca
-3	background:#7c3aed
 3	background:rgba(255,255,255,0.2)
-2	background:#4f46e5
 2	background:rgba(255,255,255,.25)
-2	background:#6366f1!important
 2	border-bottom:2px solid var(--c-m-pri)
 2	border:1px solid #334155
 2	border:2px solid #8b7355
 2	background:rgba(255,255,255,0.15)
-2	background:#faf5ff
-2	background:#ede9fe
-2	border-color:#8b5cf6
 2	color:var(--c-green)
 2	color:var(--c-muted)
 2	outline:none
 2	border:1px solid var(--c-border)
 2	background:#25D366
 1	background:var(--c-m-pri)
-1	color:#7c3aed
-1	background:#f5f3ff
-1	border:1px solid #ddd6fe
-1	color:#6366f1
-1	background:#8b5cf6!important
-1	background:linear-gradient(135deg,#eef2ff,#e0e7ff)
-1	border:1px solid #c7d2fe
-1	color:#4338ca
-1	background:linear-gradient(135deg,#f3f0f8,#ece8f4)
-1	color:#6d28d9
 1	background:transparent
 1	font-size:17px
 1	border-left-color:var(--c-green)
@@ -59,5 +41,3 @@
 1	box-shadow:0 2px 8px rgba(46,125,79,.28)
 1	box-shadow:0 2px 8px rgba(37,211,102,.3)
 1	border:1px solid #e2c98a
-1	background:#f3e8ff
-1	border-left:4px solid #9333ea

@@ -408,6 +408,9 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
   height:20px;
   accent-color:var(--gr);
 }
+/* Schieberegler kamen im Browserblau daher und fielen aus dem Bild. */
+.cmsneu-inhalt input[type="range"],
+#cms-modal-wrap input[type="range"]{ accent-color:var(--gr) }
 
 /* Chips und kleine Knöpfe aus den Fachmodulen: Sie kamen mit 36 bzw. 40 px
    und waren damit auf dem Telefon zu knapp. */
@@ -482,6 +485,23 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
 #cms-modal-wrap h1, #cms-modal-wrap h2, #cms-modal-wrap h3,
 #cms-modal-wrap h4, #cms-login h2{ font-weight:600 }
 
+/* ── 6b  Einheitliche Kartenköpfe ─────────────────────────────────────── */
+
+/* Die Vereinheitlichung geschieht in der Umformung (Regel U5b), nicht hier:
+   Viele Kartenköpfe tragen ihr `background` inline mit `!important`, und
+   dagegen kommt kein Gestaltungsblatt an. Diese Regel deckt nur die Köpfe
+   ohne eigenen Wert ab. */
+.cmsneu-inhalt .cms-card-header{ background:var(--gr) }
+
+/* „Vorbestellung aktiviert" beim Metzger stand in Rot mit rotem Grund. Auch
+   hier meinte Rot Fleisch, nicht Fehler - die Zeile las sich wie eine
+   Störungsmeldung, obwohl sie einen eingeschalteten Zustand anzeigt. */
+#cms-panel-metzger div:has(> label > #fm-cfg-aktiv){
+  background:var(--gr-l) !important;
+  border-color:var(--gr-l) !important;
+}
+#cms-panel-metzger label:has(> #fm-cfg-aktiv){ color:var(--gr-d) !important }
+
 /* ── 7  Dialoge als Blatt ─────────────────────────────────────────────── */
 
 /* Dasselbe Muster wie im Kiosk: Telefon als Blatt am unteren Rand, ab
@@ -545,19 +565,11 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
 
 /* ── 9  Dunkles Farbschema ────────────────────────────────────────────── */
 
+/* Die Werte des dunklen Schemas stehen in css/dl-design.css. Hier bleiben
+   nur die Aliasse: Die Grundgestaltung setzt `--c-m-*` ebenfalls unter
+   `html[data-theme="dark"]` und haette sonst das gleiche Gewicht bei
+   spaeterer Stelle. */
 html[data-theme="dark"]{
-  --karte:#1b2228;
-  --flaeche:#12171a;
-  --ink:#e6eae8;
-  --mut:#9aa6a0;
-  --line:#2a333a;
-  --gr:#5cb85f;
-  --gr-d:#74c777;
-  --gr-l:#1e2a20;
-  --gr-t:#171f1a;
-  /* Die Aliasse müssen im dunklen Schema erneut gesetzt werden: Die
-     Grundgestaltung setzt `--c-m-*` unter `html[data-theme="dark"]` und
-     hätte dort sonst das stärkere Gewicht. */
   --c-m-bg:var(--flaeche);
   --c-m-pri:var(--gr);
   --c-m-pri-light:var(--gr-l);
@@ -574,6 +586,26 @@ html[data-theme="dark"] .cmsneu-kopf,
 html[data-theme="dark"] .cmsneu-nav{ background:var(--karte) }
 html[data-theme="dark"] .cmsneu-kopf-acts .cms-btn,
 html[data-theme="dark"] .cmsneu-menue{
+  background:var(--karte);
+  color:var(--ink);
+  border-color:var(--line);
+}
+
+/* Der Social-Bereich benutzt Bausteine aus dem Kiosk (`k-order`, `k-btn`,
+   `k-filter-bar`). Die Grundgestaltung setzt sie über `#cms-panel-social`
+   auf Weiß - eine Kennung schlägt jede Klassenregel, auch die des dunklen
+   Schemas in admin-dark.css. Im Dunkeln blieben die Karten deshalb weiß,
+   während der Text hell wurde: helle Schrift auf weißem Grund.
+
+   Das ist ein Bestandsfehler, kein Ergebnis des Umbaus - er tritt in der
+   gewohnten Fassung genauso auf. Er wird hier mitbehoben, weil er beim
+   Durchsehen aufgefallen ist. */
+html[data-theme="dark"] #cms-panel-social .k-order,
+html[data-theme="dark"] #cms-panel-social .k-btn-outline,
+html[data-theme="dark"] #cms-panel-social .k-filter-bar,
+html[data-theme="dark"] #cms-panel-social .soc-card,
+html[data-theme="dark"] .cmsneu-inhalt .k-order,
+html[data-theme="dark"] .cmsneu-inhalt .soc-card{
   background:var(--karte);
   color:var(--ink);
   border-color:var(--line);
