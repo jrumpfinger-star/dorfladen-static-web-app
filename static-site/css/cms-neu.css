@@ -577,15 +577,20 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
 
 /* Die drei Bildknöpfe waren 23 bis 26 px breit. Sie bekommen die volle
    Antippfläche - schmaler wäre bequemer für das Auge, aber die 44 px sind
-   nicht verhandelbar. */
+   nicht verhandelbar.
+
+   Der Hintergrund bleibt bewusst OHNE `!important`: Der Einfüge-Knopf färbt
+   sich beim Antippen gelb und schreibt dafür seinen Hintergrund direkt ins
+   Element. Ein `!important` im Blatt würde diese Rückmeldung verschlucken -
+   der Knopf sähe aus, als täte er nichts. */
 #cms-modal-wrap .cms-ang-row-img{ gap:6px }
 #cms-modal-wrap .cms-ang-row-img button{
   min-width:var(--tap-min);
   min-height:var(--tap-min);
   border:1px solid var(--line) !important;
   border-radius:var(--r-s) !important;
-  background:var(--karte) !important;
-  padding:0 !important;
+  padding:0 8px !important;
+  white-space:nowrap;
 }
 #cms-modal-wrap .cms-ang-row-img button:hover{ border-color:var(--gr) !important }
 #cms-modal-wrap .cms-bild-preview{

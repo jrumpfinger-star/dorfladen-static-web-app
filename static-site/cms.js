@@ -8205,8 +8205,13 @@
         (function(){
           var rn=t.getAttribute('data-row');if(!rn)return;
           _angPasteTarget=rn;
+          // 4 Sekunden waren zu knapp, um zum Fenster zu wechseln und Strg+V
+          // zu druecken. Der Knopf bleibt jetzt 20 Sekunden bereit.
           t.style.background='#fef08a';t.textContent='\u23F3 Strg+V';
-          setTimeout(function(){t.style.background='';t.textContent='\uD83D\uDCCB';_angPasteTarget=null;},4000);
+          setTimeout(function(){
+            if(_angPasteTarget!==rn) return;   // schon eingefuegt
+            t.style.background='';t.textContent='\uD83D\uDCCB';_angPasteTarget=null;
+          },20000);
         })();
         break;
       case 'settingsSave':saveFeatureFlags();break;
@@ -11046,6 +11051,66 @@
     });
     setTimeout(function(){document.getElementById('fm-cms-reply-text').focus();},100);
   }
+
+  // --- Bild aus der Zwischenablage in eine Artikelzeile ------------------
+  //
+  // Der Knopf "Bild aus Zwischenablage einfuegen" setzte bisher nur ein Ziel
+  // (`_angPasteTarget`) und faerbte sich gelb - ausgewertet hat es nie
+  // jemand. Es gab in cms.js kein einziges paste-Ereignis; die Funktion war
+  // also nie vorhanden. Hier ist der fehlende Empfaenger.
+  //
+  // Er tut dasselbe wie der Datei-Weg daneben: verkleinern, in die Zeile
+  // setzen, unter dem Strichcode nach SharePoint hochladen.
+  function angBildAusZwischenablage(rn, blob){
+    var row=document.getElementById('cms-ar-'+rn);
+    if(!row){toast('Die Zeile ist nicht mehr da.','warn');return;}
+    var knopf=row.querySelector('.cms-bild-paste-sp');
+    var bildInp=row.querySelector('[data-f="bild_data"]');
+    var nrInp=row.querySelector('[data-f="artikelnummer"]');
+    var prodInp=row.querySelector('[data-f="produkt"]');
+    var scNr=((nrInp&&nrInp.value)||'').trim() || ((prodInp&&prodInp.value)||'').trim();
+    if(!scNr){toast('Bitte zuerst einen Artikel ausw\u00e4hlen','warn');return;}
+
+    var reader=new FileReader();
+    reader.onload=function(){
+      cmsCompressImage(reader.result, 500, 500, function(klein){
+        if(bildInp){bildInp.value=klein;bildInp.setAttribute('data-bild-dirty','1');}
+        var pv=row.querySelector('.cms-bild-preview');
+        if(pv){pv.src=klein;pv.style.display='';}
+        var cl=row.querySelector('.cms-bild-clear');
+        if(cl)cl.style.display='';
+        if(knopf){knopf.disabled=true;knopf.textContent='\u23F3';}
+        uploadImageToSharePoint(scNr, klein).then(function(){
+          toast('Bild als '+scNr+' in StrichcodeBilder hochgeladen!');
+        }).catch(function(e){
+          // Ohne SharePoint bleibt das Bild trotzdem in der Zeile stehen und
+          // wird mit der Aktion gespeichert - nur der Ablageort fehlt.
+          var msg=(e&&e.message)||String(e);
+          if(msg.indexOf('interaction_in_progress')!==-1) msg='Anmeldung l\u00e4uft noch \u2013 bitte kurz warten und erneut versuchen';
+          toast('Bild eingef\u00fcgt, aber nicht hochgeladen: '+msg,'warn');
+          console.error(e);
+        }).then(function(){
+          if(knopf){knopf.disabled=false;knopf.textContent='\uD83D\uDCCB';knopf.style.background='';}
+        });
+      });
+    };
+    reader.readAsDataURL(blob);
+  }
+
+  document.addEventListener('paste', function(e){
+    if(!_angPasteTarget) return;
+    var teile=e.clipboardData&&e.clipboardData.items;
+    if(!teile) return;
+    for(var i=0;i<teile.length;i++){
+      if(teile[i].type.indexOf('image/')!==0) continue;
+      e.preventDefault();
+      var rn=_angPasteTarget;
+      _angPasteTarget=null;
+      angBildAusZwischenablage(rn, teile[i].getAsFile());
+      return;
+    }
+    toast('In der Zwischenablage ist kein Bild.','warn');
+  });
 
   // --- Init (only if already authenticated via session) ---
   if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
