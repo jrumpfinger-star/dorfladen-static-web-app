@@ -234,6 +234,115 @@ regel('U4', 'Rasterhülle um Kopf, Navigation und Inhalt', function (t) {
 });
 
 /* ══════════════════════════════════════════════════════════════════════
+   U5  Inline-Gestaltung auf das Schema ziehen (Spec F4)
+
+   Das CMS traegt 1 725 style-Attribute im Markup. Sie werden NICHT
+   entfernt, sondern umgewertet: Es bleiben gleich viele Attribute in
+   gleicher Reihenfolge, nur ihre Werte kommen aus dem Designschema.
+   Damit bleibt jeder Lese- und Schreibzugriff aus cms.js gueltig.
+
+   Nicht angefasst werden:
+     - Eigenschaften aus `zustand` (display, width, transform ...)
+     - eigene Eigenschaften (--name)
+     - alles innerhalb von <script>-Bloecken
+     - Werte, die die Tabelle nicht kennt - sie werden berichtet
+   ══════════════════════════════════════════════════════════════════════ */
+
+const tabelle = JSON.parse(fs.readFileSync(
+  path.join(__dirname, 'cms-stilwerte.json'), 'utf8'));
+
+const ZUSTAND = new Set(tabelle.zustand);
+const FARBEIGEN = new Set(tabelle.farbEigenschaften);
+
+const bericht = { umgestellt: 0, unveraendert: 0, offen: new Map() };
+
+function skriptbereiche(text) {
+  const out = [];
+  const re = /<script\b[^>]*>[\s\S]*?<\/script>/g;
+  let m;
+  while ((m = re.exec(text)) !== null) out.push([m.index, m.index + m[0].length]);
+  return out;
+}
+
+function werteUm(deklaration) {
+  const i = deklaration.indexOf(':');
+  if (i < 0) return { text: deklaration, geaendert: false, gepflegt: true };
+  const eigen = deklaration.slice(0, i).trim().toLowerCase();
+  const wert = deklaration.slice(i + 1);
+
+  // Zustand und eigene Eigenschaften bleiben unberuehrt.
+  if (eigen.startsWith('--') || ZUSTAND.has(eigen)) {
+    return { text: deklaration, geaendert: false, gepflegt: true };
+  }
+
+  let neu = wert;
+
+  if (FARBEIGEN.has(eigen)) {
+    neu = neu.replace(/#[0-9a-fA-F]{3,8}/g, function (h) {
+      return tabelle.farben[h.toLowerCase()] || h;
+    });
+  }
+
+  const masse = tabelle.masse[eigen];
+  if (masse) {
+    const schluessel = neu.trim().replace(/\s+/g, ' ');
+    if (masse[schluessel]) neu = neu.replace(schluessel, masse[schluessel]);
+  }
+
+  const geaendert = neu !== wert;
+  // Als "offen" gilt, was gestalterisch ist, aber nicht zugeordnet werden
+  // konnte - der Arbeitsvorrat fuer die naechste Runde.
+  const gepflegt = geaendert || !(FARBEIGEN.has(eigen) || tabelle.masse[eigen]);
+  return {
+    text: deklaration.slice(0, i + 1) + neu,
+    geaendert: geaendert,
+    gepflegt: gepflegt,
+    schluessel: eigen + ':' + wert.trim().replace(/\s+/g, ' ')
+  };
+}
+
+regel('U5', 'Inline-Gestaltung auf das Schema ziehen', function (t) {
+  const tabu = skriptbereiche(t);
+  const imSkript = function (i) {
+    return tabu.some(function (b) { return i >= b[0] && i < b[1]; });
+  };
+
+  const re = /style="([^"]*)"/g;
+  let m, out = '', zuletzt = 0;
+  while ((m = re.exec(t)) !== null) {
+    if (imSkript(m.index)) continue;
+    // Bilddaten und Verweise enthalten Semikolons - dort wird nicht zerlegt.
+    if (/url\(|data:/.test(m[1])) continue;
+
+    const teile = m[1].split(';');
+    const neu = teile.map(function (d) {
+      if (!d.trim()) return d;
+      const r = werteUm(d);
+      if (r.geaendert) bericht.umgestellt++;
+      else bericht.unveraendert++;
+      if (!r.gepflegt) {
+        bericht.offen.set(r.schluessel, (bericht.offen.get(r.schluessel) || 0) + 1);
+      }
+      return r.text;
+    }).join(';');
+
+    if (neu !== m[1]) {
+      out += t.slice(zuletzt, m.index) + 'style="' + neu + '"';
+      zuletzt = m.index + m[0].length;
+    }
+  }
+  out += t.slice(zuletzt);
+
+  const offen = Array.from(bericht.offen.values()).reduce(function (a, b) { return a + b; }, 0);
+  return {
+    text: out,
+    info: bericht.umgestellt + ' umgestellt, ' + bericht.unveraendert
+      + ' unverändert, ' + offen + ' offen ('
+      + bericht.offen.size + ' verschiedene)'
+  };
+});
+
+/* ══════════════════════════════════════════════════════════════════════
    U6  Hilfeschicht einbinden
 
    Sie ergaenzt die Oberflaeche von aussen (Navigationsblatt auf dem
@@ -309,6 +418,24 @@ function main() {
   if (crlf) text = text.replace(/\n/g, '\r\n');
   fs.writeFileSync(ziel, text, 'utf8');
   console.log('────────────────────────────────────────────────────────────────────────');
+
+  // Der Arbeitsvorrat: was gestalterisch ist, aber noch keine Zuordnung hat.
+  if (bericht.offen.size) {
+    const sortiert = Array.from(bericht.offen.entries())
+      .sort(function (a, b) { return b[1] - a[1]; });
+    console.log('Noch nicht zugeordnet (' + sortiert.length + ' verschiedene, '
+      + 'die 15 häufigsten):');
+    sortiert.slice(0, 15).forEach(function (e) {
+      console.log('  ' + String(e[1]).padStart(4) + '  ' + e[0]);
+    });
+    const rest = path.join(wurzel, 'tools', 'cms-stilwerte-offen.txt');
+    fs.writeFileSync(rest, sortiert.map(function (e) {
+      return e[1] + '\t' + e[0];
+    }).join('\n') + '\n', 'utf8');
+    console.log('  vollständige Liste: ' + path.relative(wurzel, rest));
+    console.log('────────────────────────────────────────────────────────────────────────');
+  }
+
   console.log('geschrieben: ' + path.relative(wurzel, ziel)
     + '  (' + vorher + ' → ' + text.length + ' Zeichen)');
   console.log('');

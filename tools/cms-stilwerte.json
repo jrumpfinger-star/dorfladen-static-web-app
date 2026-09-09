@@ -1,0 +1,166 @@
+{
+  "_": [
+    "Zuordnungstabelle für die Inline-Gestaltung des CMS (Spec cms-redesign, F4).",
+    "",
+    "Das CMS trägt 1 725 style-Attribute mit rund 7 500 Deklarationen im Markup.",
+    "Sie werden nicht entfernt, sondern umgewertet: Die Werte wandern auf das",
+    "Designschema (css/dl-design.css). Der Mechanismus bleibt unangetastet -",
+    "es bleiben gleich viele Attribute in gleicher Reihenfolge, damit jeder",
+    "Lese- und Schreibzugriff aus cms.js gültig bleibt.",
+    "",
+    "'zustand' nennt die Eigenschaften, die NIEMALS angefasst werden: Sie",
+    "tragen Zustand, nicht Aussehen. cms.js schreibt sie zur Laufzeit.",
+    "",
+    "Nicht zugeordnete Werte bleiben stehen und werden vom Werkzeug berichtet.",
+    "Bewusst NICHT zugeordnet sind Fremdfarben (WhatsApp-Grün) und die",
+    "Kennfarben einzelner Bereiche (Violett für Push, Indigo für Settings,",
+    "Beige für den Kachel-Editor) - sie sind Wiedererkennung, kein Zufall."
+  ],
+
+  "zustand": [
+    "display", "visibility", "position", "top", "right", "bottom", "left",
+    "z-index", "transform", "transform-origin", "transition", "animation",
+    "flex", "flex-grow", "flex-shrink", "flex-basis", "order",
+    "width", "height", "min-width", "min-height", "max-width", "max-height",
+    "overflow", "overflow-x", "overflow-y", "resize",
+    "grid-template-columns", "grid-template-rows", "grid-column", "grid-row",
+    "opacity", "pointer-events", "content", "float", "clear",
+    "background-image", "background-size", "background-position",
+    "list-style", "list-style-type", "appearance", "-webkit-appearance"
+  ],
+
+  "farbEigenschaften": [
+    "color", "background", "background-color", "border", "border-top",
+    "border-right", "border-bottom", "border-left", "border-color",
+    "border-top-color", "border-right-color", "border-bottom-color",
+    "border-left-color", "outline", "outline-color", "fill", "stroke",
+    "box-shadow", "caret-color", "accent-color", "text-decoration-color"
+  ],
+
+  "farben": {
+    "#374151": "var(--ink)",
+    "#1f2937": "var(--ink)",
+    "#4b5563": "var(--ink)",
+    "#111827": "var(--ink)",
+    "#0f172a": "var(--ink)",
+    "#292524": "var(--ink)",
+    "#1c1917": "var(--ink)",
+    "#44403c": "var(--ink)",
+
+    "#6b7280": "var(--mut)",
+    "#9ca3af": "var(--mut)",
+
+    "#d1d5db": "var(--line)",
+    "#e5e7eb": "var(--line)",
+    "#e2e8f0": "var(--line)",
+    "#f3f4f6": "var(--line)",
+    "#cbd5e1": "var(--line)",
+    "#d6d3d1": "var(--line)",
+    "#eef0f2": "var(--line)",
+
+    "#f9fafb": "var(--gr-t)",
+    "#f8fafc": "var(--gr-t)",
+    "#f1f5f9": "var(--gr-t)",
+    "#fafaf9": "var(--gr-t)",
+    "#f6f7f5": "var(--gr-t)",
+    "#f0f4f8": "var(--gr-t)",
+    "#faf9f6": "var(--gr-t)",
+    "#f4f1ea": "var(--gr-t)",
+    "#fdf8f0": "var(--gr-t)",
+    "#fafbfc": "var(--gr-t)",
+
+    "#fff": "var(--karte)",
+    "#ffffff": "var(--karte)",
+
+    "#1b5e20": "var(--gr-d)",
+    "#166534": "var(--gr-d)",
+    "#2e7d32": "var(--gr-d)",
+    "#388e3c": "var(--gr-d)",
+    "#2d5016": "var(--gr-d)",
+    "#1a3c28": "var(--gr-d)",
+    "#2d7a5e": "var(--gr-d)",
+
+    "#2e7d4f": "var(--gr)",
+    "#16a34a": "var(--gr)",
+    "#059669": "var(--gr)",
+    "#10b981": "var(--gr)",
+    "#4ade80": "var(--gr)",
+    "#5ea88a": "var(--gr)",
+
+    "#e8f5e9": "var(--gr-l)",
+    "#f0fdf4": "var(--gr-l)",
+    "#c8e6c9": "var(--gr-l)",
+    "#bbf7d0": "var(--gr-l)",
+    "#f0f4f1": "var(--gr-l)",
+    "#e8ece8": "var(--gr-l)",
+
+    "#b91c1c": "var(--red)",
+    "#dc2626": "var(--red)",
+    "#991b1b": "var(--red)",
+    "#ef4444": "var(--red)",
+    "#e53e3e": "var(--red)",
+    "#7f1d1d": "var(--red)",
+    "#9f1239": "var(--red)",
+    "#fef2f2": "var(--red-l)",
+    "#fee2e2": "var(--red-l)",
+    "#fecaca": "var(--red-b)",
+    "#fecdd3": "var(--red-b)",
+
+    "#92400e": "var(--amb)",
+    "#b45309": "var(--amb)",
+    "#d97706": "var(--amb)",
+    "#f59e0b": "var(--amb)",
+    "#9a3412": "var(--amb)",
+    "#f57f17": "var(--amb)",
+    "#ff9800": "var(--amb)",
+    "#7d6608": "var(--amb)",
+    "#92620e": "var(--amb)",
+    "#fffbeb": "var(--amb-l)",
+    "#fef3c7": "var(--amb-l)",
+    "#fff3e0": "var(--amb-l)",
+    "#fef9e7": "var(--amb-l)",
+    "#fff7ed": "var(--amb-l)",
+    "#fde68a": "var(--amb-b)",
+    "#fed7aa": "var(--amb-b)",
+
+    "#2563eb": "var(--blu)",
+    "#1d4ed8": "var(--blu)",
+    "#1e40af": "var(--blu)",
+    "#3b82f6": "var(--blu)",
+    "#0284c7": "var(--blu)",
+    "#0369a1": "var(--blu)",
+    "#0ea5e9": "var(--blu)",
+    "#06b6d4": "var(--blu)",
+    "#0d9488": "var(--blu)",
+    "#eff6ff": "var(--blu-l)",
+    "#dbeafe": "var(--blu-l)",
+    "#f0f9ff": "var(--blu-l)",
+    "#e8f6f8": "var(--blu-l)",
+    "#cffafe": "var(--blu-l)",
+    "#bfdbfe": "var(--blu-b)",
+    "#bae6fd": "var(--blu-b)"
+  },
+
+  "masse": {
+    "border-radius": {
+      "4px": "var(--r-s)",
+      "6px": "var(--r-s)",
+      "8px": "var(--r-s)",
+      "10px": "var(--r-s)",
+      "12px": "var(--r-m)"
+    },
+    "font-size": {
+      "11px": "var(--schrift-klein)",
+      "12px": "var(--schrift-klein)",
+      "13px": "var(--schrift-normal)",
+      "14px": "var(--schrift-normal)",
+      "15px": "var(--schrift-gross)",
+      "16px": "var(--schrift-gross)"
+    },
+    "box-shadow": {
+      "0 1px 2px rgba(0,0,0,0.04)": "var(--schatten-1)",
+      "0 1px 3px rgba(0,0,0,0.06)": "var(--schatten-1)",
+      "0 2px 8px rgba(0,0,0,0.08)": "var(--schatten-2)"
+    }
+  }
+}

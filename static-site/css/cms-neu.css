@@ -24,6 +24,26 @@
 
 /* ── 1  Seite und Rasterhülle ─────────────────────────────────────────── */
 
+/* Die alten Seitenvariablen zeigen auf das Schema. Damit folgen auch die
+   615 Zeilen der Grundgestaltung (cms-base.css) dem neuen Bild, ohne dass
+   dort eine einzige Regel angefasst werden muss - und ohne die tausenden
+   `var(--c-m-…)`-Verwendungen umzuschreiben. */
+:root{
+  --c-m-bg:var(--flaeche);
+  --c-m-pri:var(--gr-d);
+  --c-m-pri-light:var(--gr-l);
+  --c-m-text:var(--ink);
+  --c-m-muted:var(--mut);
+  --c-green:var(--gr);
+  --c-muted:var(--mut);
+  --c-text:var(--ink);
+  --c-border:var(--line);
+  --c-card:var(--karte);
+  --c-bg:var(--flaeche);
+  /* --c-m-sec bleibt das Beige der Marke: es ist die zweite Hausfarbe und
+     kein Zufallswert. */
+}
+
 html, body{
   height:100%;
   overflow:hidden;          /* nur der Inhaltsbereich rollt */
@@ -389,9 +409,65 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
   accent-color:var(--gr);
 }
 
-/* Halbfett genügt - fett wirkt auf dem Bildschirm unruhig. */
+/* Chips und kleine Knöpfe aus den Fachmodulen: Sie kamen mit 36 bzw. 40 px
+   und waren damit auf dem Telefon zu knapp. */
+.cmsneu-inhalt .soc-cat-chip,
+.cmsneu-inhalt .k-btn-sm,
+.cmsneu-inhalt .cms-btn-sm,
+.cmsneu-inhalt .cms-subtab{
+  min-height:var(--tap-min);
+}
+
+/* Ausnahme mit `!important`: Diese Bedienelemente erzeugt social.js zur
+   Laufzeit MIT Inline-Maßen (`min-height:34px`). Inline schlägt jedes
+   Gestaltungsblatt; ohne Vorrang bliebe die Antippfläche zu klein. Die
+   Ausnahme ist eng gefasst und hier begründet - nicht als Gewohnheit. */
+.cmsneu-inhalt #soc-zoom-bar button,
+.cmsneu-inhalt .soc-zoom-bar button,
+.cmsneu-inhalt .k-btn.k-btn-sm{
+  min-height:var(--tap-min) !important;
+}
+.cmsneu-inhalt #soc-zoom-bar button,
+.cmsneu-inhalt .soc-zoom-bar button{
+  min-width:var(--tap-min) !important;
+}
+
+/* ── 6a  Breite Inhalte auf schmalem Schirm ───────────────────────────── */
+
+/* Tabellen in Bestellungen und Statistik sind breiter als ein Telefon. Sie
+   ragten bisher aus dem Inhaltsbereich heraus und wurden dort abgeschnitten
+   - die rechten Spalten waren nicht erreichbar. Sie rollen jetzt für sich,
+   ohne die Seite zu verschieben. */
+@media (max-width:700px){
+  .cmsneu-inhalt table{
+    display:block;
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+}
+
+/* Reihen von Unterreitern und Filtern brechen um, statt hinauszulaufen. */
+.cmsneu-inhalt .cms-subtabs,
+.cmsneu-inhalt .cms-subtab-row{ flex-wrap:wrap }
+/* Der Design-Bereich trägt seine Unterreiter in einer Reihe ohne eigene
+   Klasse; dort greift die Umgebung des Knopfes. */
+#cms-panel-cfg .cms-subtab{ flex:0 0 auto }
+#cms-panel-cfg .cms-subtab:first-child{ margin-left:0 }
+@media (max-width:700px){
+  #cms-panel-cfg [style*="display:flex"]:has(> .cms-subtab){ flex-wrap:wrap }
+}
+
+/* Halbfett genügt - fett wirkt auf dem Bildschirm unruhig. Überschriften
+   bringen aus dem Browser 700 mit und müssen ausdrücklich zurückgenommen
+   werden; `b, strong, th` deckt sie nicht ab. */
 .cmsneu-app b, .cmsneu-app strong, .cmsneu-app th,
-#cms-modal-wrap b, #cms-modal-wrap strong{ font-weight:600 }
+#cms-modal-wrap b, #cms-modal-wrap strong,
+.cmsneu-app h1, .cmsneu-app h2, .cmsneu-app h3,
+.cmsneu-app h4, .cmsneu-app h5, .cmsneu-app h6,
+#cms-modal-wrap h1, #cms-modal-wrap h2, #cms-modal-wrap h3,
+#cms-modal-wrap h4, #cms-login h2{ font-weight:600 }
 
 /* ── 7  Dialoge als Blatt ─────────────────────────────────────────────── */
 
@@ -457,6 +533,20 @@ html[data-theme="dark"]{
   --gr-d:#74c777;
   --gr-l:#1e2a20;
   --gr-t:#171f1a;
+  /* Die Aliasse müssen im dunklen Schema erneut gesetzt werden: Die
+     Grundgestaltung setzt `--c-m-*` unter `html[data-theme="dark"]` und
+     hätte dort sonst das stärkere Gewicht. */
+  --c-m-bg:var(--flaeche);
+  --c-m-pri:var(--gr);
+  --c-m-pri-light:var(--gr-l);
+  --c-m-text:var(--ink);
+  --c-m-muted:var(--mut);
+  --c-green:var(--gr);
+  --c-muted:var(--mut);
+  --c-text:var(--ink);
+  --c-border:var(--line);
+  --c-card:var(--karte);
+  --c-bg:var(--flaeche);
 }
 html[data-theme="dark"] .cmsneu-kopf,
 html[data-theme="dark"] .cmsneu-nav{ background:var(--karte) }

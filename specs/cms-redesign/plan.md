@@ -3,7 +3,7 @@
 > Gehört zu [spec.md](./spec.md). Keine Verhaltensweise in diesem Plan, die
 > nicht in der Spezifikation steht.
 
-**Status:** Draft — zur Abstimmung
+**Status:** Stufe 0–2 umgesetzt · Stufe 3 (Feinschliff) und 4 (Umschalten) offen
 
 **Last updated:** 2026-09-09
 
@@ -203,14 +203,18 @@ Jede Stufe ist für sich abnehmbar und für sich umkehrbar.
   und echten Daten. Innen noch das alte Bild.
 - **Abnahme:** Alle 15 Bereiche durchklicken. Funktioniert alles?
 
-### Stufe 2 — Das Bild (3–4 Tage)
+### Stufe 2 — Das Bild (3–4 Tage) ✔ umgesetzt
 
 - Zuordnungstabelle `tools/cms-stilwerte.json` aufbauen; Regel U5 anschalten.
 - Reihenfolge nach Häufigkeit: die 20 häufigsten Werte decken schon über die
   Hälfte der Vorkommen ab.
 - Nach jeder Runde: Prototyp ansehen, Bericht der nicht zugeordneten
   Deklarationen abarbeiten.
-- **Ergebnis:** Das CMS sieht aus wie der Kiosk.
+- **Ergebnis:** 1 802 Deklarationen umgewertet; 330 bleiben bewusst stehen
+  (Fremdfarben wie WhatsApp-Grün, Kennfarben einzelner Bereiche, `none`).
+  Zusätzlich zeigen die alten Seitenvariablen (`--c-m-*`, `--c-green` …) auf
+  das Schema — dadurch folgt auch die Grundgestaltung dem neuen Bild, ohne
+  dass dort eine Regel angefasst wurde.
 - **Abnahme:** Bereich für Bereich im Prototyp, mit Live-Daten.
 
 ### Stufe 3 — Feinschliff (2–3 Tage)
