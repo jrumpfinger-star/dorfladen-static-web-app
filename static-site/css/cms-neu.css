@@ -414,17 +414,19 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
 
 /* Chips und kleine Knöpfe aus den Fachmodulen: Sie kamen mit 36 bzw. 40 px
    und waren damit auf dem Telefon zu knapp. */
-.cmsneu-inhalt .soc-cat-chip,
 .cmsneu-inhalt .k-btn-sm,
 .cmsneu-inhalt .cms-btn-sm,
 .cmsneu-inhalt .cms-subtab{
   min-height:var(--tap-min);
 }
 
-/* Ausnahme mit `!important`: Diese Bedienelemente erzeugt social.js zur
-   Laufzeit MIT Inline-Maßen (`min-height:34px`). Inline schlägt jedes
-   Gestaltungsblatt; ohne Vorrang bliebe die Antippfläche zu klein. Die
-   Ausnahme ist eng gefasst und hier begründet - nicht als Gewohnheit. */
+/* Ausnahmen mit `!important`. Sie sind eng gefasst und hier begründet -
+   nicht als Gewohnheit:
+     - `.soc-cat-chip` bekommt seine 36 px in der Grundgestaltung selbst mit
+       `!important`; ohne gleichen Nachdruck bliebe die Fläche zu klein.
+     - Die Zoom-Leiste erzeugt social.js zur Laufzeit MIT Inline-Maßen, und
+       inline schlägt jedes Gestaltungsblatt. */
+.cmsneu-inhalt .soc-cat-chip{ min-height:var(--tap-min) !important }
 .cmsneu-inhalt #soc-zoom-bar button,
 .cmsneu-inhalt .soc-zoom-bar button,
 .cmsneu-inhalt .k-btn.k-btn-sm{

@@ -22,8 +22,8 @@ const fs = require('fs');
 const path = require('path');
 
 const wurzel = path.resolve(__dirname, '..');
-const altPfad = process.argv[2] || path.join(wurzel, 'static-site', 'cms.html');
-const neuPfad = process.argv[3] || path.join(wurzel, 'static-site', 'cms-neu.html');
+const altPfad = process.argv[2] || path.join(wurzel, 'static-site', 'cms-klassisch.html');
+const neuPfad = process.argv[3] || path.join(wurzel, 'static-site', 'cms.html');
 const skriptPfad = path.join(wurzel, 'static-site', 'cms.js');
 
 function lies(p) {

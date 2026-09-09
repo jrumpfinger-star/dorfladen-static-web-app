@@ -3,7 +3,7 @@
 > Spec-driven development. Every requirement carries explicit test cases.
 > Ein Spec mit offenen `[NEEDS CLARIFICATION]`-Markern darf NICHT nach `/sdd-plan`.
 
-**Status:** Draft — zur Abstimmung
+**Status:** Implemented — produktiv seit dem Umschalten (Stufe 4)
 
 **Owner:** Dorfladen — Ladenleitung (CMS-Pflege)
 
@@ -384,11 +384,14 @@ Neue Dateien im Frontend:
 
 | Datei | Rolle |
 | --- | --- |
+| `static-site/cms-klassisch.html` | Die gepflegte Quelle (vormals `cms.html`) |
 | `static-site/css/dl-design.css` | Das gemeinsame Schema (F1) |
 | `static-site/css/cms-neu.css` | Das Gestaltungsblatt des CMS |
-| `static-site/cms-neu.html` | Der erzeugte Prototyp (F5) |
+| `static-site/cms.html` | Erzeugt — die Seite, mit der gearbeitet wird |
+| `static-site/cms-neu.html` | Erzeugt — Vorschau mit Entwurfshinweis (F5) |
 | `tools/build-cms-neu.js` | Die Umformung |
 | `tools/pruef-cms-abgleich.js` | Der Funktionsabgleich (F2) |
+| `tools/pruef-cms-darstellung.js` | Die Darstellungsprüfung (F3, F6) |
 | `tools/cms-stilwerte.json` | Die Zuordnungstabelle (F4) |
 
 ## Open Questions

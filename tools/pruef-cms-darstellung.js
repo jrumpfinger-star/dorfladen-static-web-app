@@ -23,14 +23,14 @@
  * eigentliche Absicherung liegt serverseitig im admin_auth_guard der API.
  *
  * Aufruf:
- *   node tools/pruef-cms-darstellung.js [http://localhost:8788] [cms-neu.html]
+ *   node tools/pruef-cms-darstellung.js [http://localhost:8788] [cms.html]
  */
 'use strict';
 
 const { chromium } = require('playwright');
 
 const BASIS = process.argv[2] || 'http://localhost:8788';
-const SEITE = process.argv[3] || 'cms-neu.html';
+const SEITE = process.argv[3] || 'cms.html';
 
 const BEREICHE = ['wp', 'hours', 'ang', 'sort', 'hp', 'news', 'gallery', 'cfg',
   'orders', 'metzger', 'stats', 'social', 'push', 'settings', 'help'];

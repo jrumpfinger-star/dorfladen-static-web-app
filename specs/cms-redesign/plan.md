@@ -3,7 +3,7 @@
 > Gehört zu [spec.md](./spec.md). Keine Verhaltensweise in diesem Plan, die
 > nicht in der Spezifikation steht.
 
-**Status:** Stufe 0–2 umgesetzt · Stufe 3 (Feinschliff) und 4 (Umschalten) offen
+**Status:** Umgesetzt und produktiv (Stufen 0–4)
 
 **Last updated:** 2026-09-09
 
@@ -241,12 +241,16 @@ Fenster. Auf `http://localhost:…` lässt der Browser dieses Fenster nicht zu
 Ablauf auf `cms.html`. Es ist keine Folge des Umbaus und auf der
 ausgelieferten Seite nicht vorhanden.
 
-### Stufe 4 — Umschalten (½ Tag)
+### Stufe 4 — Umschalten (½ Tag) ✔ umgesetzt
 
 - `cms.html` → `cms-klassisch.html` (Rückfallweg), erzeugter Stand → `cms.html`.
 - Ab dann ist `cms-klassisch.html` die gepflegte Quelle — genau wie beim
-  Kiosk mit `kiosk-klassisch.html`.
-- **Abnahme:** Der Auftraggeber gibt frei.
+  Kiosk mit `kiosk-klassisch.html`. Das Werkzeug erzeugt aus ihr **zwei**
+  Seiten: `cms.html` für den Betrieb (ohne Hinweis) und `cms-neu.html` als
+  Vorschau (mit Hinweis, Ziel der Prüfwerkzeuge).
+- Alle Verweise auf `/cms.html` (Kiosk, Portal, `routes.json`) bleiben
+  gültig — die Adresse ändert sich nicht.
+- **Abnahme:** Der Auftraggeber hat freigegeben.
 
 **Aufwand insgesamt: rund 8–11 Arbeitstage.** Ein Neubau der Oberfläche läge
 bei einem Vielfachen und trüge 915 Kopplungen als Risiko.

@@ -1,5 +1,6 @@
-/* ERZEUGT aus static-site/cms.html durch tools/build-cms-neu.js.
-   Nicht von Hand aendern. Grundlage fuer css/cms-neu.css. */
+/* ERZEUGT aus static-site/cms-klassisch.html durch
+   tools/build-cms-neu.js. Nicht von Hand aendern.
+   Grundlage fuer css/cms-neu.css. */
     /* Halbfett statt fett - bold ist schwer zu lesen. */
     b,strong,th{font-weight:600}
   html,body{overflow-x:hidden;max-width:100vw}

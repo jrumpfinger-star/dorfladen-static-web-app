@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 /*
- * Erzeugt static-site/cms-neu.html aus static-site/cms.html.
+ * Erzeugt die beiden CMS-Seiten aus static-site/cms-klassisch.html.
  *
  * Siehe specs/cms-redesign/plan.md, Abschnitt 3.2 "Die Umformungsregeln".
+ *
+ * Zwei Ausgaben aus derselben Quelle - genau wie beim Kiosk:
+ *   cms.html       die Seite, mit der gearbeitet wird
+ *   cms-neu.html   dieselbe Seite mit Entwurfshinweis, Ziel der Pruefwerkzeuge
+ *
+ * `cms-klassisch.html` bleibt die einzige Stelle, an der die Fachlogik
+ * gepflegt wird - und der Rueckfallweg, falls im Betrieb etwas auffaellt.
  *
  * Grundsatz wie beim Kiosk-Umbau: Alles, was keine Regel trifft, wird
  * zeichengleich uebernommen. Dadurch bleiben saemtliche Bedienfunktionen
@@ -20,9 +27,13 @@ const fs = require('fs');
 const path = require('path');
 
 const wurzel = path.resolve(__dirname, '..');
-const quelle = path.join(wurzel, 'static-site', 'cms.html');
-const ziel = path.join(wurzel, 'static-site', 'cms-neu.html');
+const quelle = path.join(wurzel, 'static-site', 'cms-klassisch.html');
+const zielBetrieb = path.join(wurzel, 'static-site', 'cms.html');
+const zielVorschau = path.join(wurzel, 'static-site', 'cms-neu.html');
 const basisBlatt = path.join(wurzel, 'static-site', 'css', 'cms-base.css');
+
+// Wird je Durchlauf gesetzt: nur die Vorschau traegt den Entwurfshinweis.
+let vorschau = false;
 
 /* ══════════════════════════════════════════════════════════════════════
    Die Bereiche und ihre Gruppen (Spec F3)
@@ -72,8 +83,9 @@ regel('U1', 'Gestaltungsblatt auslagern', function (t) {
 
   // Der bestehende Block wird ausgelagert und weiter geladen, damit kein
   // Element unformatiert bleibt. Das neue Blatt liegt darueber.
-  const kopf = '/* ERZEUGT aus static-site/cms.html durch tools/build-cms-neu.js.\n'
-    + '   Nicht von Hand aendern. Grundlage fuer css/cms-neu.css. */\n';
+  const kopf = '/* ERZEUGT aus static-site/cms-klassisch.html durch\n'
+    + '   tools/build-cms-neu.js. Nicht von Hand aendern.\n'
+    + '   Grundlage fuer css/cms-neu.css. */\n';
   fs.writeFileSync(basisBlatt, kopf + inhalt, 'utf8');
 
   const neu =
@@ -404,10 +416,15 @@ regel('U6', 'Hilfeschicht einbinden', function (t) {
 });
 
 /* ══════════════════════════════════════════════════════════════════════
-   U7  Titel und Hinweisstreifen (Spec F5)
+   U7  Titel und Entwurfshinweis (Spec F5)
+
+   Nur die Vorschau traegt den Hinweis. Die Seite, mit der gearbeitet wird,
+   heisst wie eh und je und traegt keinen Streifen.
    ══════════════════════════════════════════════════════════════════════ */
 
 regel('U7', 'Entwurf kennzeichnen', function (t) {
+  if (!vorschau) return { text: t, info: 'kein Hinweis (Seite für den Betrieb)' };
+
   const von = '<title>Dorfladen CMS</title>';
   if (t.indexOf(von) < 0) throw new Error('U7: Titel nicht gefunden');
   t = t.replace(von, '<title>Dorfladen CMS (Entwurf)</title>');
@@ -416,7 +433,8 @@ regel('U7', 'Entwurf kennzeichnen', function (t) {
   if (t.indexOf(anker) < 0) throw new Error('U7: <body> nicht gefunden');
   const streifen = '<body>\n'
     + '<div class="cmsneu-hinweis" role="status">Entwurf des neuen CMS — '
-    + '<b>wirkt auf echte Daten</b> <a href="/cms.html">· gewohnte Fassung</a></div>\n';
+    + '<b>wirkt auf echte Daten</b> '
+    + '<a href="/cms-klassisch.html">· gewohnte Fassung</a></div>\n';
   t = t.replace(anker, streifen);
 
   return { text: t, info: 'Titel und Hinweisstreifen gesetzt' };
@@ -426,11 +444,12 @@ regel('U7', 'Entwurf kennzeichnen', function (t) {
    Ablauf
    ══════════════════════════════════════════════════════════════════════ */
 
-function main() {
-  if (!fs.existsSync(quelle)) {
-    console.error('Quelle fehlt: ' + quelle);
-    process.exit(2);
-  }
+function baue(ziel, istVorschau) {
+  vorschau = istVorschau;
+  bericht.umgestellt = 0;
+  bericht.unveraendert = 0;
+  bericht.offen.clear();
+
   let text = fs.readFileSync(quelle, 'utf8');
   const vorher = text.length;
 
@@ -440,7 +459,9 @@ function main() {
   const crlf = text.indexOf('\r\n') >= 0;
   if (crlf) text = text.replace(/\r\n/g, '\n');
 
-  console.log('Umbau: cms.html -> cms-neu.html');
+  console.log('');
+  console.log('Umbau: cms-klassisch.html -> ' + path.basename(ziel)
+    + '   (' + (istVorschau ? 'Vorschau mit Hinweis' : 'Seite fuer den Betrieb') + ')');
   console.log('────────────────────────────────────────────────────────────────────────');
 
   regeln.forEach(function (r) {
@@ -455,17 +476,30 @@ function main() {
       process.exit(1);
     }
     text = erg.text;
-    console.log('  ' + r.nr + '   ok      ' + r.titel + ' – ' + erg.info);
+    console.log('  ' + r.nr.padEnd(4) + ' ok      ' + r.titel + ' – ' + erg.info);
   });
 
   if (crlf) text = text.replace(/\n/g, '\r\n');
   fs.writeFileSync(ziel, text, 'utf8');
   console.log('────────────────────────────────────────────────────────────────────────');
+  console.log('geschrieben: ' + path.relative(wurzel, ziel)
+    + '  (' + vorher + ' → ' + text.length + ' Zeichen)');
+}
+
+function main() {
+  if (!fs.existsSync(quelle)) {
+    console.error('Quelle fehlt: ' + quelle);
+    process.exit(2);
+  }
+
+  baue(zielBetrieb, false);
+  baue(zielVorschau, true);
 
   // Der Arbeitsvorrat: was gestalterisch ist, aber noch keine Zuordnung hat.
   if (bericht.offen.size) {
     const sortiert = Array.from(bericht.offen.entries())
       .sort(function (a, b) { return b[1] - a[1]; });
+    console.log('');
     console.log('Noch nicht zugeordnet (' + sortiert.length + ' verschiedene, '
       + 'die 15 häufigsten):');
     sortiert.slice(0, 15).forEach(function (e) {
@@ -476,11 +510,8 @@ function main() {
       return e[1] + '\t' + e[0];
     }).join('\n') + '\n', 'utf8');
     console.log('  vollständige Liste: ' + path.relative(wurzel, rest));
-    console.log('────────────────────────────────────────────────────────────────────────');
   }
 
-  console.log('geschrieben: ' + path.relative(wurzel, ziel)
-    + '  (' + vorher + ' → ' + text.length + ' Zeichen)');
   console.log('');
   console.log('Jetzt prüfen:  node tools/pruef-cms-abgleich.js');
 }
