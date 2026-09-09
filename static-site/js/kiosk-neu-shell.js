@@ -436,7 +436,33 @@
     feld.classList.toggle('k-tag-jetzt-aus', leisteNochZuSehen);
   }
 
-  // ── Social-Katalog: ruhige Zeilen statt lauter offener Felder ────────
+  // ── Metzger: der Mengeneditor muss zu sehen sein ────────────────────
+  //
+  // Der Editor ist als Blatt am unteren Rand gestaltet (`position:sticky`).
+  // Ein solches Blatt klebt aber erst, wenn seine Zeile im Bild ist — tippt
+  // man weit unten in der Liste auf „+", bleibt es unterhalb des Bildschirms
+  // stehen. Das Fachmodul hat dafür ein eigenes Nachschieben, das mit dem
+  // klebenden Blatt nicht mehr greift.
+  //
+  // Deshalb wird der Editor hier ins Bild geholt, sobald er erscheint —
+  // einmal je Öffnung, damit das Blättern danach frei bleibt.
+  var editorGesehen = null;
+  function metzgerEditorInsBild() {
+    var ed = document.querySelector('#panel-metzgerbest .mb-ed');
+    if (!ed) { editorGesehen = null; return; }
+    if (editorGesehen === ed) return;
+    editorGesehen = ed;
+    // Ein klebendes Element haelt sich selbst fuer sichtbar - `scrollIntoView`
+    // auf dem Blatt bewirkt deshalb nichts. Gescrollt wird die Zeile, zu der
+    // es gehoert.
+    var ziel = ed.closest('.mb-row') || ed;
+    requestAnimationFrame(function () {
+      try { ziel.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      catch (e) { ziel.scrollIntoView(); }
+    });
+  }
+
+
   //
   // Der Katalog stellte für jeden der 45 Artikel gleichzeitig ein Preisfeld
   // und eine Uhrzeit-Auswahl offen. Zusammen mit den übrigen Feldern des
@@ -636,12 +662,15 @@
     var haupt = document.querySelector('.k-main');
     if (!haupt || !window.MutationObserver) return;
     var beob = new MutationObserver(function () {
-      symboleNachziehen();
-      baeckerWerkzeuge();
-      baeckerKopfOrdnen();
-      mittagTagFeld();
-      socialKatalog();
-      kalenderDatumswahl();
+      // Jede Hilfe fuer sich: Steigt eine aus, sollen die uebrigen trotzdem
+      // laufen. Vorher haette ein einziger Fehler die ganze Kette angehalten.
+      [
+        metzgerEditorInsBild, symboleNachziehen, baeckerWerkzeuge,
+        baeckerKopfOrdnen, mittagTagFeld, socialKatalog, kalenderDatumswahl,
+      ].forEach(function (hilfe) {
+        try { hilfe(); }
+        catch (e) { /* Darstellung darf die Bedienung nie blockieren */ }
+      });
     });
     beob.observe(haupt, { childList: true, subtree: true });
   }

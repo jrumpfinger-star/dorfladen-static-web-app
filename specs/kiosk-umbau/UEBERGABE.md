@@ -328,23 +328,42 @@ Vorprüfungen wurden dafür nachgeholt, eine dritte hat den Livegang gestoppt.
 
 **Nicht bestanden — die bestehende Testsuite:**
 
-Für den Wechsel wurde probeweise umgestellt (`kiosk.html` aus
-`kiosk-klassisch.html` erzeugt, ohne Hinweisstreifen) und die vorhandenen
-Tests dagegen laufen gelassen. Ergebnis: **26 von 78 Tests rot**, darunter
-Kernfälle wie „Tab-Wechsel zeigt korrektes Panel", „Filterwechsel ändert
-active-Klasse" und fast die gesamte Kalender-Suite.
+Der erste Vergleichslauf war **wertlos**: Die Tests rufen `/kiosk` ohne Endung
+auf; der Dev-Proxy kannte das nicht und reichte sie stillschweigend an die
+Live-Seite weiter. Geprüft wurde also gar nicht der Umbau. Behoben (der Proxy
+ergänzt die Endung wie Azure) und um den Schalter `--umbau` erweitert, mit dem
+dieselbe Testdatei gegen beide Stände läuft.
 
-Die Ursachen sind vermutlich zwei, und genau das ist der Punkt — sie waren in
-der Nacht nicht mehr sauber zu trennen:
+**Richtig gemessen** fällt der *gewohnte* Kiosk in dieser Umgebung selbst durch
+— 39 von 103 bzw. 68 von 271 Tests. Die Suite ist für eine angemeldete,
+veröffentlichte Umgebung geschrieben. Maßgeblich ist deshalb nur der
+Unterschied zwischen beiden Ständen.
 
-1. **Erwartet:** Die neue Rückfrage (T025) fängt „senden" und „zurücksetzen"
-   ab. Tests, die diese Knöpfe antippen, laufen in die Zeitsperre. Das ist
-   gewolltes Verhalten, die Tests müssen es lernen.
-2. **Unklar:** Die Tests greifen teils über Auszeichnungen zu, die R2/R3
-   ersetzt haben (Kopfzeile, Reiterleiste). Ob dahinter nur veraltete
-   Suchausdrücke stecken oder ein echter Fehler, ist **nicht geprüft**.
+**Von den Abweichungen sind erledigt:**
 
-Der Umbau wurde deshalb zurückgestellt; `kiosk.html` ist unverändert.
+| Fall | Befund | Erledigt durch |
+| --- | --- | --- |
+| Bestellquellen-Labels | Schrift 10,5 statt 11 px | Schriftgröße korrigiert |
+| TC-F17-01/06 | Chip-Innenknöpfe 32 statt 33 px hoch | durchsichtiger Rand um 1 px zurück |
+| TC-F7-01…04, TC-F12-03 (Bäcker) | Meine Rückfrage verdeckte den Versanddialog des Moduls | Rückfrage beim Senden entfernt — die Module fragen längst mit Empfänger, Betreff und Positionsliste |
+| TC-F2-05, TC-F34-04, TC-F32-06 | Rückfrage vor Zurücksetzen/Verwerfen | Tests bestätigen sie, wenn sie erscheint — laufen gegen beide Stände |
+| TC-F33-04 | Test fror die alte Palette ein | prüft jetzt die Absicht: der gewählte Tag trägt keine Bäckerei-Farbe |
+| TC-F3-01 (Mittag) | `text-transform:uppercase` machte aus „3 Portionen" „3 PORTIONEN" | Versalien entfernt — lange Gerichtsnamen lesen sich so besser |
+| TC-F9-03, TC-F11-02 (Kalender) | **keine Regression** — F9-03 besteht im Umbau und scheitert am gewohnten Kiosk, F11-02 scheitert bei beiden | — |
+
+**Offen — der letzte Punkt vor dem Livegang:**
+
+`TC-F17-04` („Hinzufügen" liegt nicht hinter der Fußzeile). Der Mengeneditor
+ist als Blatt am unteren Rand gestaltet (`position:sticky`). Ein klebendes
+Blatt rastet aber erst ein, wenn seine Zeile im Bild ist — tippt man weit unten
+in der Liste auf „+", bleibt der Editor unterhalb des Bildschirms. Das
+Nachschieben des Fachmoduls (`inSicht()`) greift dabei nicht mehr.
+
+Ein Versuch, das aus der Hilfeschicht heraus nachzuholen, reicht noch nicht:
+`scrollIntoView` auf der Zeile wirkt (nachgemessen: 965 px), der Stand wird
+aber wieder auf 0 zurückgesetzt — vermutlich durch den nächsten Neuaufbau des
+Moduls. **Das ist ein echter Bedienfehler, kein veralteter Test**, und er
+gehört behoben, bevor umgestellt wird.
 
 **Wenn der Wechsel gemacht wird, dann so:**
 

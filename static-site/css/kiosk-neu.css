@@ -1779,17 +1779,19 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   transition:transform .18s;
 }
 #panel-mittag .k-dish-group.collapsed .k-dish-sep-arrow{ transform:rotate(-90deg) }
+/* Keine Grossbuchstaben: Die Zeile traegt den Gerichtsnamen, und lange Namen
+   wie „Cordon bleu mit Pommes oder Kartoffelsalat" sind in Versalien deutlich
+   schwerer zu lesen. Die zurueckgenommene Farbe reicht als Abstufung. */
 #panel-mittag .k-dish-sep-label{
   flex:1;
   min-width:0;
   color:var(--mut);
   font-size:11.5px;
   font-weight:600;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  letter-spacing:.02em;
   line-height:var(--zh);
 }
-#panel-mittag .k-dish-sep-label span{ text-transform:none; letter-spacing:0 }
+#panel-mittag .k-dish-sep-label span{ letter-spacing:0 }
 #panel-mittag .k-dish-body{
   display:flex !important;
   flex-direction:column;

@@ -271,6 +271,17 @@ async function tagWaehlen(page, datum) {
   await page.waitForTimeout(500);
 }
 
+/**
+ * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
+ * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
+ * Kiosk kennt sie nicht. Damit dieselbe Datei gegen beide laeuft, wird sie
+ * bestaetigt, wenn sie erscheint - und sonst nichts getan.
+ */
+async function bestaetigenFallsGefragt(page) {
+  const ja = page.locator('.kneu-frage-ja');
+  if (await ja.count()) await ja.click();
+}
+
 test.describe('Zweite Bäckerei', () => {
   test.use({ serviceWorkers: 'block' });
 
@@ -841,10 +852,15 @@ test.describe('Bäcker – einheitliches Farbschema (F33)', () => {
     const rand = await page.locator('#panel-baecker .bk-stat').evaluate(
       (el) => getComputedStyle(el).borderTopColor);
     expect(rand).not.toBe(LEIT.freundl);
-    // Der gewählte Tag ist neutral dunkel, nicht in einer dritten Farbe.
+    // Der gewählte Tag darf keine der beiden Bäckerei-Farben tragen - sonst
+    // liest man die Auswahl als Bäckerei. Auf welchen Ton er stattdessen
+    // setzt, ist Sache der Gestaltung: Der gewohnte Kiosk nimmt neutrales
+    // Dunkelgrau, der Umbau die Hausfarbe, mit der er Auswahl in allen
+    // Reitern einheitlich kennzeichnet.
     const aktiv = await page.locator('#panel-baecker .bk-day.active').evaluate(
       (el) => getComputedStyle(el).backgroundColor);
-    expect(aktiv).toBe('rgb(31, 41, 55)');
+    expect(aktiv).not.toBe(LEIT.freundl);
+    expect(aktiv).not.toBe(LEIT.martins);
   });
 
   test('TC-F33-05: Die Punkte je Bäckerei bleiben unterscheidbar', async ({ page }) => {
@@ -915,6 +931,10 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
     await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
     await page.waitForTimeout(400);
     await page.locator('#panel-baecker .bk-stat button', { hasText: 'Verwerfen' }).click();
+    // Verwerfen loescht das Erfasste und laesst sich nicht zurueckholen; der
+    // umgebaute Kiosk fragt deshalb vorher nach (TC-F5-05). Der gewohnte
+    // Kiosk kennt die Rueckfrage nicht - beide Wege bestehen.
+    await bestaetigenFallsGefragt(page);
     await page.waitForTimeout(900);
     await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' })).toBeVisible();
   });

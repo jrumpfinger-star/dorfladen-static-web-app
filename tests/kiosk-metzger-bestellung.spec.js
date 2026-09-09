@@ -208,6 +208,17 @@ function zeile(page, name) {
   return page.locator('.mb-row').filter({ hasText: name }).first();
 }
 
+/**
+ * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
+ * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
+ * Kiosk kennt sie nicht. Damit dieselbe Datei gegen beide laeuft, wird sie
+ * bestaetigt, wenn sie erscheint - und sonst nichts getan.
+ */
+async function bestaetigenFallsGefragt(page) {
+  const ja = page.locator('.kneu-frage-ja');
+  if (await ja.count()) await ja.click();
+}
+
 test.describe('Metzger-Bestellung im Kiosk', () => {
 
   test('TC-F1-01: Tab, Tagesleiste und nur Mo/Do wählbar', async ({ page }) => {
@@ -618,6 +629,10 @@ test.describe('Metzger-Bestellung – Korrektur ist zweistufig (F32)', () => {
     await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
     expect(await page.locator('.mb-add').count()).toBeGreaterThan(0);
     await page.locator('.mb-btn', { hasText: 'Verwerfen' }).first().click();
+    // Verwerfen loescht das Erfasste und laesst sich nicht zurueckholen; der
+    // umgebaute Kiosk fragt deshalb vorher nach (TC-F5-05). Der gewohnte
+    // Kiosk kennt die Rueckfrage nicht - beide Wege bestehen.
+    await bestaetigenFallsGefragt(page);
     await page.waitForTimeout(800);
     await expect(page.locator('.mb-add')).toHaveCount(0);
     await expect(page.locator('.mb-btn', { hasText: 'Korrigieren' })).toBeVisible();
