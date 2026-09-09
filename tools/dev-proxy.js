@@ -17,6 +17,11 @@
  *
  * Voreinstellung: Port 8787, Verzeichnis `static-site` neben diesem Werkzeug.
  *
+ * Mit `--umbau` wird unter `/kiosk.html` die umgebaute Seite ausgeliefert.
+ * Damit lassen sich die vorhandenen Tests, die auf `/kiosk.html` zeigen,
+ * gegen den Umbau laufen lassen, ohne die Seite im Projekt zu vertauschen:
+ *   node tools/dev-proxy.js 8788 --umbau
+ *
  * ACHTUNG: Schreibende Zugriffe gehen an die echte Seite. Beim Pruefen also
  * nichts versenden, was nicht versendet werden soll.
  */
@@ -28,10 +33,10 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 
-const PORT = parseInt(process.argv[2] || '8787', 10);
-const WURZEL = path.resolve(
-  process.argv[3] || path.join(__dirname, '..', 'static-site')
-);
+const args = process.argv.slice(2).filter((a) => a !== '--umbau');
+const UMBAU = process.argv.indexOf('--umbau') > 0;
+const PORT = parseInt(args[0] || '8787', 10);
+const WURZEL = path.resolve(args[1] || path.join(__dirname, '..', 'static-site'));
 const LIVE = 'https://www.dorfladen-oberornau.de';
 
 const MIME = {
@@ -70,6 +75,14 @@ function weiterreichen(req, res) {
 function ausliefern(req, res) {
   let rel = decodeURIComponent(req.url.split('?')[0]);
   if (rel === '/' || rel === '') rel = '/kiosk.html';
+  // Azure Static Web Apps liefert `/kiosk` als `kiosk.html` aus. Ohne diese
+  // Ergaenzung liefe ein Aufruf ohne Endung an der lokalen Datei vorbei und
+  // stillschweigend gegen die Live-Seite - eine Pruefung waere wertlos.
+  if (!path.extname(rel) && fs.existsSync(path.join(WURZEL, rel + '.html'))) {
+    rel += '.html';
+  }
+  // Prueflauf gegen den Umbau: Die vorhandenen Tests zeigen auf /kiosk.
+  if (UMBAU && rel === '/kiosk.html') rel = '/kiosk-neu.html';
   const datei = path.join(WURZEL, rel);
   if (!datei.startsWith(WURZEL)) {
     res.writeHead(403);

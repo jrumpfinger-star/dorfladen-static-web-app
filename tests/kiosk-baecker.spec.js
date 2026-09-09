@@ -217,6 +217,17 @@ async function openBaecker(page, opts = {}) {
 const rows = (page) => page.locator('#panel-baecker .bk-row');
 const row = (page, name) => rows(page).filter({ hasText: name });
 
+/**
+ * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
+ * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
+ * Kiosk kennt sie nicht. Damit dieselbe Datei gegen beide laeuft, wird sie
+ * bestaetigt, wenn sie erscheint - und sonst nichts getan.
+ */
+async function bestaetigenFallsGefragt(page) {
+  const ja = page.locator('.kneu-frage-ja');
+  if (await ja.count()) await ja.click();
+}
+
 // ════════════════════════════════════════════════════
 //  F1 – Bestelltag wählen
 // ════════════════════════════════════════════════════
@@ -284,6 +295,10 @@ test.describe('Bäcker – Vorbelegung (F2)', () => {
     await expect(feld).toHaveValue('49');
 
     await page.locator('button:has-text("zurücksetzen")').click();
+    // Zurücksetzen überschreibt alle erfassten Mengen und lässt sich nicht
+    // zurückholen; der umgebaute Kiosk fragt deshalb vorher nach (TC-F5-05).
+    // Im gewohnten Kiosk gibt es die Rückfrage nicht - beide Wege bestehen.
+    await bestaetigenFallsGefragt(page);
     await expect(feld).toHaveValue('48');
     await expect(row(page, 'Kaisersemmel')).not.toHaveClass(/changed/);
   });

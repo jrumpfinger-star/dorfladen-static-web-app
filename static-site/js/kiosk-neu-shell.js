@@ -166,34 +166,29 @@
   }
 
 
+  // ── Rückfrage vor folgenschweren Schritten (F5 / TC-F5-05) ───────────
   //
-  // Kalender, Kontakt und Social fragen vor dem Löschen bereits nach. Beim
-  // Bäcker und beim Metzger gab es keine einzige Rückfrage — ausgerechnet
-  // dort, wo eine Bestellung per E-Mail hinausgeht oder eine ganze Liste
-  // überschrieben wird. Ein Fehlgriff war nicht zurückzuholen.
+  // Gefragt wird nur dort, wo es sonst niemand tut.
   //
-  // Gefragt wird nur vor dem, was sich nicht mehr rückgängig machen lässt.
+  // Beim Senden fragen Bäcker und Metzger längst nach: Sie zeigen einen
+  // Versanddialog mit Empfänger, Betreff und allen Positionen und lassen ihn
+  // ausdrücklich bestätigen. Eine allgemeine Rückfrage davor hat diesen viel
+  // nützlicheren Dialog nur verdeckt und aus einem Weg zwei gemacht — sie ist
+  // deshalb wieder entfallen.
+  //
+  // Ohne Absicherung waren das Zurücksetzen — es überschreibt alle erfassten
+  // Mengen mit denen des letzten gleichen Wochentags — und das Verwerfen.
+  // Beides ist selten und nicht zurückzuholen; dort steht die Rückfrage.
+  //
   // Das Entfernen einer einzelnen Portion bleibt bewusst ohne Rückfrage: Es
   // kommt oft vor, ist sofort sichtbar und mit einem Griff wieder erfasst —
   // eine Frage bei jedem Handgriff würde nur noch weggetippt.
   var RUECKFRAGEN = [
     {
-      reiter: 'panel-baecker', muster: /an b(ä|ae)ckerei senden/i,
-      titel: 'Bestellung an die Bäckerei senden?',
-      text: 'Die Bäckerei bekommt sie sofort. Ändern geht danach nur noch als Korrektur.',
-      ja: 'Senden',
-    },
-    {
       reiter: 'panel-baecker', muster: /zur(ü|ue)cksetzen/i,
       titel: 'Alle Mengen zurücksetzen?',
       text: 'Die heute erfassten Mengen werden durch die vom letzten gleichen Wochentag ersetzt.',
       ja: 'Zurücksetzen',
-    },
-    {
-      reiter: 'panel-metzgerbest', muster: /(bestellung|korrektur) senden/i,
-      titel: 'Bestellung an den Metzger senden?',
-      text: 'Der Metzger bekommt sie sofort. Ändern geht danach nur noch als Korrektur.',
-      ja: 'Senden',
     },
     {
       reiter: null, muster: /^\s*verwerfen\s*$/i,
