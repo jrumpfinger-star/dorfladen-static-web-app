@@ -17,8 +17,15 @@ const fs = require('fs');
 const path = require('path');
 
 const wurzel = path.resolve(__dirname, '..');
-const quelle = path.join(wurzel, 'static-site', 'kiosk.html');
-const ziel = path.join(wurzel, 'static-site', 'kiosk-neu.html');
+// Quelle ist der gewohnte Kiosk. Er bleibt unter `kiosk-klassisch.html`
+// erreichbar - als Rueckfallweg, falls im Betrieb etwas auffaellt, und als
+// einzige Stelle, an der die Fachlogik gepflegt wird.
+const quelle = path.join(wurzel, 'static-site', 'kiosk-klassisch.html');
+// Zwei Ausgaben aus derselben Quelle:
+//   kiosk.html      - die Seite, mit der gearbeitet wird
+//   kiosk-neu.html  - dieselbe Seite mit Umbau-Hinweis, Ziel der Pruefwerkzeuge
+const zielLive = path.join(wurzel, 'static-site', 'kiosk.html');
+const zielVorschau = path.join(wurzel, 'static-site', 'kiosk-neu.html');
 
 const REITER = [
   { id: 'mittag', icon: 'utensils', text: 'Mittagstisch', kurz: 'Mittag', badges: true },
@@ -98,6 +105,9 @@ const HINWEIS = `<div class="k-umbau-hinweis" id="k-umbau-hinweis">
 
 const regeln = [];
 let crlfGlobal = false;
+// Wird je Durchlauf gesetzt: Die Vorschau traegt Hinweisstreifen und
+// Titelzusatz, die Seite fuer den Betrieb nicht.
+let vorschau = true;
 
 function regel(nr, zweck, fn) {
   regeln.push({ nr: nr, zweck: zweck, fn: fn });
@@ -141,6 +151,9 @@ regel('R1', 'Gestaltungsblatt auslagern', function (t) {
 });
 
 regel('R7a', 'Titel kennzeichnen', function (t) {
+  // Nur die Vorschau traegt den Zusatz. Die Seite, mit der gearbeitet wird,
+  // heisst wie eh und je.
+  if (!vorschau) return { text: t, info: 'Titel bleibt (Seite fuer den Betrieb)' };
   const von = '<title>Kiosk – Dorfladen Oberornau</title>';
   if (t.indexOf(von) < 0) throw new Error('R7a: Titel nicht gefunden');
   return { text: t.replace(von, '<title>Kiosk (Umbau) – Dorfladen Oberornau</title>'), info: 'Titel gesetzt' };
@@ -159,7 +172,10 @@ regel('R3', 'Reiterleiste ersetzen', function (t) {
 regel('R4', 'Rasterhülle um Kopf, Reiter, Inhalt und Fußleiste', function (t) {
   const auf = '<body>\n';
   if (t.indexOf(auf) < 0) throw new Error('R4: <body> nicht gefunden');
-  t = t.replace(auf, auf + '\n' + HINWEIS + '<div class="k-app">\n');
+  // Der Hinweisstreifen gehoert nur in die Vorschau - er warnt davor, dass
+  // die Zweitseite auf echten Daten arbeitet. In der Seite fuer den Betrieb
+  // waere er sinnlos und wuerde nur Hoehe kosten.
+  t = t.replace(auf, auf + '\n' + (vorschau ? HINWEIS : '') + '<div class="k-app">\n');
   const zu = '<!-- ═══ New order modal ═══ -->';
   if (t.indexOf(zu) < 0) throw new Error('R4: Ende-Anker nicht gefunden');
   t = t.replace(zu, '</div><!-- /k-app -->\n\n' + zu);
@@ -177,11 +193,8 @@ regel('R6', 'Hilfeschicht einbinden', function (t) {
 
 // ─────────────────────────────────────────────────────────────────────────
 
-function main() {
-  if (!fs.existsSync(quelle)) {
-    console.error('Quelle fehlt: ' + quelle);
-    process.exit(1);
-  }
+function bauen(ziel, istVorschau) {
+  vorschau = istVorschau;
   let text = fs.readFileSync(quelle, 'utf8');
   // Zeilenenden fuer die Verarbeitung vereinheitlichen und am Ende
   // unveraendert zurueckschreiben, damit die Datei byteweise vergleichbar bleibt.
@@ -190,7 +203,8 @@ function main() {
   if (crlf) text = text.replace(/\r\n/g, '\n');
   const vorher = text.length;
 
-  console.log('Umbau: kiosk.html → kiosk-neu.html');
+  console.log('\nUmbau: ' + path.basename(quelle) + ' -> ' + path.basename(ziel)
+    + (istVorschau ? '   (Vorschau mit Hinweis)' : '   (Seite fuer den Betrieb)'));
   console.log('─'.repeat(72));
   for (const r of regeln) {
     let e;
@@ -199,7 +213,7 @@ function main() {
     } catch (err) {
       console.error(`  ${r.nr}  FEHLER  ${r.zweck}`);
       console.error(`        ${err.message}`);
-      console.error('\nAbbruch: kiosk-neu.html wurde nicht geschrieben.');
+      console.error('\nAbbruch: ' + path.basename(ziel) + ' wurde nicht geschrieben.');
       process.exit(2);
     }
     text = e.text;
@@ -210,7 +224,7 @@ function main() {
   const kopf =
     '<!-- ════════════════════════════════════════════════════════════════\n' +
     '     ERZEUGTE DATEI - NICHT VON HAND AENDERN.\n' +
-    '     Quelle:  static-site/kiosk.html\n' +
+    '     Quelle:  static-site/kiosk-klassisch.html\n' +
     '     Werkzeug: tools/build-kiosk-neu.js   (node tools/build-kiosk-neu.js)\n' +
     '     Regeln:  specs/kiosk-umbau/plan.md\n' +
     '     ════════════════════════════════════════════════════════════════ -->\n';
@@ -220,6 +234,15 @@ function main() {
   if (crlf) text = text.replace(/\n/g, '\r\n');
   fs.writeFileSync(ziel, text, 'utf8');
   console.log(`geschrieben: ${path.relative(wurzel, ziel)}  (${vorher} → ${nachher} Zeichen)`);
+}
+
+function main() {
+  if (!fs.existsSync(quelle)) {
+    console.error('Quelle fehlt: ' + quelle);
+    process.exit(1);
+  }
+  bauen(zielLive, false);
+  bauen(zielVorschau, true);
 }
 
 main();

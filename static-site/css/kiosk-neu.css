@@ -995,7 +995,18 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
    stellt sicher, dass auch die blassen Vorschlagswerte davor liegen. */
 #panel-metzgerbest .mb-chips{ align-items:center }
 #panel-metzgerbest .mb-chip,
-#panel-metzgerbest .mb-frueher{ order:0 }
+/* Der Vorschlag „so war es zuletzt" trug `white-space:nowrap` und wurde
+   dadurch am Rand abgeschnitten, sobald die letzte Bestellung mehrere
+   Portionsgrößen hatte („1 × 2 kg + 1 × 4 St + 1 × 2 St + …"). Gerade dann
+   ist er am nützlichsten. Er bricht jetzt um. */
+#panel-metzgerbest .mb-frueher{
+  order:0;
+  white-space:normal;
+  text-align:left;
+  overflow-wrap:anywhere;
+  line-height:var(--zh);
+  padding:6px 11px;
+}
 #panel-metzgerbest .mb-add:not(.del){
   order:1;
   margin-left:auto;
@@ -1885,17 +1896,28 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   text-align:left;
   white-space:nowrap;
 }
+/* Die Menge ist beim Zusammenstellen die wichtigste Zahl der Zeile — sie
+   entscheidet, wie viele Portionen auf den Teller kommen. Sie stand bisher
+   klein und grau neben dem Preis. Jetzt trägt sie ein eigenes Feld in der
+   Hausfarbe und ist auf einen Blick zu erfassen. */
 #panel-mittag .k-order-hdr .k-oc-qty{
   grid-column:3;
   grid-row:2;
   justify-self:start;
   min-width:0 !important;
-  color:var(--mut);
-  font-size:12px;
+  display:inline-flex;
+  align-items:center;
+  padding:1px 9px;
+  border-radius:999px;
+  background:var(--gr-l);
+  color:var(--gr-d);
+  font-size:14px;
   font-weight:600;
+  font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
-#panel-mittag .k-order-hdr .k-oc-qty::before{ content:'· '; color:var(--line) }
+/* Der Trennpunkt entfällt: Das Feld grenzt sich selbst ab. */
+#panel-mittag .k-order-hdr .k-oc-qty::before{ content:none }
 #panel-mittag .k-order-hdr .k-oc-actions{
   grid-column:4;
   grid-row:1 / 3;
