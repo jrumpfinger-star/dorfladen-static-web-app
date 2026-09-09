@@ -143,6 +143,9 @@ regel('R1', 'Gestaltungsblatt auslagern', function (t) {
 
   const neu =
     '  <link rel="stylesheet" href="/css/kiosk-base.css">\n' +
+    // Das gemeinsame Designschema (Werte) liegt vor dem Seitenblatt.
+    // Siehe specs/cms-redesign, F1: ein Wert, eine Stelle.
+    '  <link rel="stylesheet" href="/css/dl-design.css">\n' +
     '  <link rel="stylesheet" href="/css/kiosk-neu.css">\n';
   return {
     text: t.slice(0, a) + neu + t.slice(b + '  </style>\n'.length),

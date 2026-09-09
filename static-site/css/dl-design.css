@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Dorfladen — Designschema
+   ═══════════════════════════════════════════════════════════════════════
+
+   Die gemeinsame Grundlage aller umgebauten Oberflächen: Kiosk und CMS.
+   Hier stehen die **Werte** — Farben, Maße, Rundungen, Schatten,
+   Umschaltpunkte. Anordnung und Aussehen der einzelnen Bausteine stehen im
+   Blatt der jeweiligen Seite (`kiosk-neu.css`, `cms-neu.css`).
+
+   Grundsatz: **Ein Wert, eine Stelle.** Wer eine Farbe ändern will, ändert
+   sie hier — und nicht an 818 Inline-Stellen.
+
+   Entstanden im Kiosk-Umbau (specs/kiosk-umbau), herausgelöst für das
+   CMS-Redesign (specs/cms-redesign, F1).
+
+   Muss VOR dem Seitenblatt geladen werden.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* Bedienmaß. Die Verfassung fordert 44 px; im Laden wird mit Handschuhen
+     und in Eile bedient, deshalb liegt der Regelwert darüber. */
+  --tap: 48px;
+  --tap-min: 44px;
+
+  /* Breite der Navigationsleiste, wächst mit dem Fenster. */
+  --nav-w: 76px;
+  --nav-h: auto;
+
+  --gap: 10px;
+  --pad: 12px;
+
+  --r-s: 10px;
+  --r-m: 14px;
+  --r-l: 18px;
+
+  --schrift-klein: 12px;
+  --schrift-normal: 14px;
+  --schrift-gross: 16px;
+
+  /* Umlautpunkte werden bei zu enger Zeilenhöhe abgeschnitten. */
+  --zh: 1.35;
+
+  --schatten-1: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+  --schatten-2: 0 4px 14px rgba(16,24,40,.10);
+  --schatten-blatt: 0 -8px 32px rgba(16,24,40,.18);
+
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* Farbpalette aus dem abgenommenen Entwurf (mittagstisch-mobile-mockup). */
+  --gr:    #2e7d4f;   /* Hausfarbe            */
+  --gr-d:  #1b5e3a;   /* dunkler, für Verläufe */
+  --gr-l:  #e8f3ec;   /* Fläche hell          */
+  --gr-t:  #f5faf7;   /* Fläche sehr hell     */
+  --ink:   #132a1e;   /* Text                 */
+  --mut:   #688073;   /* Text zurückgenommen  */
+  --flaeche:#f1f5f2;  /* Seitenhintergrund    */
+  --karte: #ffffff;
+  --line:  #e1ebe5;   /* Trennlinie           */
+  --amb:   #b45309;  --amb-l:#fff5e6;  --amb-b:#f5d9a8;   /* Hinweis   */
+  --blu:   #1d4ed8;  --blu-l:#eaf1ff;  --blu-b:#c3d8fb;   /* Nachricht */
+  --red:   #b91c1c;  --red-l:#fdeeed;  --red-b:#f3c8c5;   /* Abbruch   */
+  --sh:    0 1px 2px rgba(16,40,28,.06), 0 4px 12px rgba(16,40,28,.05);
+}
+
+/* Umschaltpunkte: 640 px Tablet, 1180 px breit, 1620 px sehr breit. */
+@media (min-width:640px){ :root{ --nav-w:84px; --pad:14px; --gap:12px } }
+@media (min-width:1180px){ :root{ --nav-w:228px; --pad:16px; --gap:14px } }
+@media (min-width:1620px){ :root{ --nav-w:252px; --pad:20px; --gap:16px } }
+
+body{ line-height:var(--zh) }
+
+/* Umlaute brauchen Luft nach oben – 1.15 kappt die Punkte über ä, ö, ü. */
+h1, h2, h3, h4{ line-height:1.3 }

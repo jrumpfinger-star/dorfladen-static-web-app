@@ -1,0 +1,468 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   CMS-Redesign — Gestaltungsblatt
+   Liegt über css/cms-base.css und ersetzt Gerüst, Anordnung und Bedienmaße.
+   Werte kommen aus css/dl-design.css.
+
+   Spec:  specs/cms-redesign/spec.md
+   Plan:  specs/cms-redesign/plan.md
+
+   Aufbau
+     1  Seite und Rasterhülle
+     2  Hinweisstreifen
+     3  Kopfzeile
+     4  Navigation mit Gruppen
+     5  Inhaltsbereich
+     6  Bedienmaße
+     7  Dialoge als Blatt
+     8  Anmeldung
+     9  Dunkles Farbschema
+
+   STUFE 1: Gerüst, Navigation, Dialogmuster, Bedienmaße.
+   Das Innenleben der Bereiche trägt noch seine Inline-Gestaltung; sie wird
+   in Stufe 2 auf das Schema gezogen (Spec F4).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1  Seite und Rasterhülle ─────────────────────────────────────────── */
+
+html, body{
+  height:100%;
+  overflow:hidden;          /* nur der Inhaltsbereich rollt */
+  max-width:none;
+}
+body{
+  background:var(--flaeche);
+  color:var(--ink);
+  /* Der Hinweisstreifen liegt im Fluss statt fest über allem: Sonst müsste
+     das Raster einen Abstand raten, und bei zweizeiligem Streifen wäre die
+     Kopfzeile halb verdeckt. */
+  display:flex;
+  flex-direction:column;
+  height:100dvh;
+  height:100svh;
+}
+body > #cms-login, body > .cmsneu-app{ flex:1 1 auto; min-height:0 }
+
+/* `#cms-app` wird zur Hülle. Die alte `.cms-wrap` brachte hier eine feste
+   Breite von 1000 px und einen Außenabstand mit - auf einem breiten Schirm
+   blieb dadurch die Hälfte der Fläche ungenutzt. */
+.cmsneu-app{
+  max-width:none;
+  margin:0;
+  padding:0;
+  height:auto;
+  display:grid;
+  grid-template-areas:
+    "hd"
+    "main";
+  grid-template-rows:auto minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr);
+  font-family:"Segoe UI", system-ui, -apple-system, sans-serif;
+}
+.cmsneu-app > .cmsneu-kopf{ grid-area:hd }
+.cmsneu-app > .cmsneu-nav { grid-area:nav }
+.cmsneu-app > .cmsneu-inhalt{ grid-area:main; min-width:0; min-height:0 }
+
+/* Ab Tablet wandert die Navigation an den linken Rand. */
+@media (min-width:640px){
+  .cmsneu-app{
+    grid-template-areas:
+      "nav hd"
+      "nav main";
+    grid-template-rows:auto minmax(0,1fr);
+    grid-template-columns:var(--nav-w) minmax(0,1fr);
+  }
+}
+
+/* ── 2  Hinweisstreifen (Spec F5) ─────────────────────────────────────── */
+
+.cmsneu-hinweis{
+  flex:0 0 auto;
+  z-index:9500;
+  padding:6px 12px;
+  background:var(--amb-l);
+  border-bottom:1px solid var(--amb-b);
+  color:var(--amb);
+  font:600 var(--schrift-klein)/1.4 "Segoe UI", system-ui, sans-serif;
+  text-align:center;
+}
+.cmsneu-hinweis b{ font-weight:600 }
+.cmsneu-hinweis a{ color:var(--amb); text-underline-offset:2px }
+/* Auf dem Telefon nur die Warnung - der Rückverweis kostete dort eine
+   zweite Zeile und drückte die Kopfzeile zusammen. */
+@media (max-width:600px){
+  .cmsneu-hinweis a{ display:none }
+  .cmsneu-hinweis{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+}
+
+/* ── 3  Kopfzeile ─────────────────────────────────────────────────────── */
+
+.cmsneu-kopf{
+  display:flex;
+  align-items:center;
+  gap:var(--gap);
+  min-height:56px;
+  padding:6px var(--pad);
+  background:var(--karte);
+  border-bottom:1px solid var(--line);
+}
+.cmsneu-marke{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  cursor:pointer;
+}
+.cmsneu-marke img{
+  height:34px;
+  width:auto;
+  flex:0 0 auto;
+  border-radius:var(--r-s);
+}
+/* Ohne hinterlegtes Logo bleibt ein leeres <img> als Rahmen stehen. */
+.cmsneu-marke img[src=""]{ display:none }
+.cmsneu-marke h1{
+  margin:0;
+  font-size:var(--schrift-gross);
+  font-weight:600;
+  color:var(--gr);
+  white-space:nowrap;
+}
+.cmsneu-marke:hover h1{ color:var(--gr-d) }
+
+.cmsneu-kopf-info{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-left:auto;
+  min-width:0;
+}
+.cmsneu-kopf-info #cms-status{
+  font-size:var(--schrift-klein);
+  font-weight:600;
+  color:var(--mut);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.cmsneu-kopf-info #cms-version{
+  font-size:11px;
+  color:var(--mut);
+  opacity:.6;
+}
+
+.cmsneu-kopf-acts{ display:flex; align-items:center; gap:6px }
+.cmsneu-kopf-acts .cms-btn{
+  min-height:var(--tap-min);
+  padding:6px 12px;
+  border:1px solid var(--line);
+  border-radius:var(--r-s);
+  background:var(--karte);
+  color:var(--ink);
+  font-size:var(--schrift-klein);
+  font-weight:600;
+  text-decoration:none;
+  text-transform:none;
+  letter-spacing:0;
+  box-shadow:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.cmsneu-kopf-acts .cms-btn:hover{ border-color:var(--gr); color:var(--gr) }
+.cmsneu-kopf-acts svg{ color:var(--mut) }
+.cmsneu-kopf-acts .cms-btn:hover svg{ color:var(--gr) }
+
+/* Der Knopf „Bereich" öffnet die Navigation - nur auf dem Telefon nötig. */
+.cmsneu-menue{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:var(--tap-min);
+  min-width:var(--tap-min);
+  padding:6px 12px;
+  border:1px solid var(--line);
+  border-radius:var(--r-s);
+  background:var(--karte);
+  color:var(--ink);
+  font-size:var(--schrift-klein);
+  font-weight:600;
+  cursor:pointer;
+}
+.cmsneu-menue-txt{ display:none }
+@media (min-width:400px){ .cmsneu-menue-txt{ display:inline } }
+@media (min-width:640px){ .cmsneu-menue{ display:none } }
+
+@media (max-width:520px){
+  .cmsneu-kopf-info #cms-version{ display:none }
+  .cmsneu-lang{ display:none }
+  .cmsneu-kopf-acts .cms-btn{ padding:6px 10px }
+}
+@media (max-width:400px){
+  .cmsneu-marke h1{ display:none }
+}
+
+/* ── 4  Navigation mit Gruppen (Spec F3) ──────────────────────────────── */
+
+/* Auf dem Telefon ein Blatt über dem Inhalt: 15 Einträge in einer Fußleiste
+   wären nicht zu treffen. Ab 640 px eine Leiste am linken Rand. */
+.cmsneu-nav{
+  margin:0;
+  position:fixed;
+  inset:0;
+  z-index:9200;
+  display:none;
+  background:rgba(15,23,42,.5);
+}
+body.cmsneu-nav-auf .cmsneu-nav{ display:block }
+
+.cmsneu-nav > .cms-tabs{
+  position:absolute;
+  inset:auto 0 0 0;
+  max-height:82dvh;
+  max-height:82svh;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  /* Die Grundgestaltung erlaubt Umbruch. In einer senkrechten Leiste bricht
+     der Rest dadurch in eine zweite Spalte und zeichnet über den Inhalt. */
+  flex-wrap:nowrap;
+  gap:0;
+  padding:8px 8px calc(8px + var(--sab));
+  border:0;
+  border-radius:var(--r-l) var(--r-l) 0 0;
+  background:var(--karte);
+  box-shadow:var(--schatten-blatt);
+}
+
+.cmsneu-gruppe{
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:column;
+  flex-wrap:nowrap;
+  gap:2px;
+  padding:6px 0;
+}
+.cmsneu-gruppe + .cmsneu-gruppe{ border-top:1px solid var(--line) }
+.cmsneu-gruppe-kopf{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 12px;
+  font-size:11px;
+  font-weight:600;
+  color:var(--mut);
+  letter-spacing:.3px;
+  text-transform:uppercase;
+}
+/* Der Farbpunkt ersetzt die bunten Schriftfarben der alten Reiter: Die
+   Wiedererkennung bleibt, das Bild wird ruhig. */
+.cmsneu-gruppe-kopf::before{
+  content:"";
+  width:8px;
+  height:8px;
+  flex:0 0 auto;
+  border-radius:50%;
+  background:var(--gruppe, var(--gr));
+}
+
+/* Die Reiterknöpfe dürfen KEINE eigenen Klassen tragen: cmsTab() setzt
+   `className` neu und würde sie beim ersten Wechsel abräumen. Deshalb hängt
+   alles an `.cms-tab` im Zusammenhang der Gruppe. */
+.cmsneu-nav .cms-tab{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-height:var(--tap-min);
+  padding:8px 12px;
+  border:0;
+  border-radius:var(--r-s);
+  background:none;
+  color:var(--ink);
+  font-size:var(--schrift-normal);
+  font-weight:600;
+  text-align:left;
+  cursor:pointer;
+}
+.cmsneu-nav .cms-tab svg{
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+  margin:0;
+  color:var(--mut);
+  vertical-align:middle;
+}
+.cmsneu-nav .cms-tab:hover{ background:var(--gr-t) }
+.cmsneu-nav .cms-tab.active{
+  background:var(--gr-l);
+  color:var(--gr-d);
+  border-bottom:0;
+}
+.cmsneu-nav .cms-tab.active svg{ color:var(--gr) }
+
+@media (min-width:640px){
+  .cmsneu-nav{
+    position:static;
+    display:block;
+    background:var(--karte);
+    border-right:1px solid var(--line);
+    overflow:hidden;
+  }
+  .cmsneu-nav > .cms-tabs{
+    position:static;
+    max-height:none;
+    height:100%;
+    overflow-y:auto;
+    padding:8px 6px calc(8px + var(--sab));
+    border-radius:0;
+    box-shadow:none;
+    background:none;
+  }
+  .cmsneu-gruppe-kopf{
+    justify-content:center;
+    padding:6px 2px;
+    font-size:0;                 /* nur der Farbpunkt bleibt */
+  }
+  .cmsneu-nav .cms-tab{
+    flex-direction:column;
+    gap:3px;
+    padding:6px 2px;
+    font-size:11px;
+    text-align:center;
+    line-height:1.2;
+  }
+  .cmsneu-nav .cms-tab svg{ width:20px; height:20px }
+}
+
+/* Ab 1180 px ist Platz für ausgeschriebene Gruppen und Beschriftungen. */
+@media (min-width:1180px){
+  .cmsneu-gruppe-kopf{
+    justify-content:flex-start;
+    padding:6px 12px 2px;
+    font-size:11px;
+  }
+  .cmsneu-nav .cms-tab{
+    flex-direction:row;
+    gap:10px;
+    padding:7px 12px;
+    font-size:var(--schrift-normal);
+    text-align:left;
+  }
+  .cmsneu-gruppe{ padding:3px 0 }
+  .cmsneu-nav > .cms-tabs{ padding:8px 10px calc(8px + var(--sab)) }
+}
+
+/* ── 5  Inhaltsbereich ────────────────────────────────────────────────── */
+
+.cmsneu-inhalt{
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:var(--pad);
+  -webkit-overflow-scrolling:touch;
+}
+.cmsneu-inhalt > div{ max-width:1180px }
+
+/* Die alte Reiterleiste brachte einen Abstand nach unten mit, der jetzt
+   vom Raster kommt. */
+.cms-tabs-wrap{ margin-bottom:0 }
+
+/* ── 6  Bedienmaße (Spec F6) ──────────────────────────────────────────── */
+
+/* Die Verfassung fordert 44 px. Im CMS waren Knöpfe 8 px hoch gepolstert
+   und damit auf dem Telefon kaum zu treffen. */
+.cmsneu-inhalt .cms-btn,
+.cmsneu-inhalt button:not(.cms-tab),
+#cms-modal-wrap button{
+  min-height:var(--tap-min);
+}
+.cmsneu-inhalt input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.cmsneu-inhalt select,
+#cms-modal-wrap input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+#cms-modal-wrap select{
+  min-height:var(--tap-min);
+}
+/* Kästchen und Schalter bleiben klein, bekommen aber eine große Fläche. */
+.cmsneu-inhalt input[type="checkbox"],
+.cmsneu-inhalt input[type="radio"]{
+  width:20px;
+  height:20px;
+  accent-color:var(--gr);
+}
+
+/* Halbfett genügt - fett wirkt auf dem Bildschirm unruhig. */
+.cmsneu-app b, .cmsneu-app strong, .cmsneu-app th,
+#cms-modal-wrap b, #cms-modal-wrap strong{ font-weight:600 }
+
+/* ── 7  Dialoge als Blatt ─────────────────────────────────────────────── */
+
+/* Dasselbe Muster wie im Kiosk: Telefon als Blatt am unteren Rand, ab
+   640 px mittige Karte, ab 1180 px angedockte Spalte rechts. */
+#cms-modal-wrap{
+  position:fixed;
+  inset:0;
+  z-index:9400;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+}
+#cms-modal-wrap > .cms-modal,
+#cms-modal-wrap > div > .cms-modal{
+  width:100%;
+  max-width:none;
+  max-height:88dvh;
+  max-height:88svh;
+  border-radius:var(--r-l) var(--r-l) 0 0;
+  box-shadow:var(--schatten-blatt);
+  padding-bottom:var(--sab);
+}
+@media (min-width:640px){
+  #cms-modal-wrap{ align-items:center; padding:24px }
+  #cms-modal-wrap > .cms-modal,
+  #cms-modal-wrap > div > .cms-modal{
+    max-width:680px;
+    max-height:86dvh;
+    border-radius:var(--r-l);
+    padding-bottom:0;
+  }
+}
+
+/* ── 8  Anmeldung ─────────────────────────────────────────────────────── */
+
+#cms-login{
+  min-height:100dvh;
+  min-height:100svh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:var(--pad);
+  max-width:none;
+}
+#cms-login .cms-login-box{
+  width:100%;
+  max-width:380px;
+  border-radius:var(--r-l);
+  box-shadow:var(--schatten-2);
+}
+#cms-login input, #cms-login button{ min-height:var(--tap-min) }
+
+/* ── 9  Dunkles Farbschema ────────────────────────────────────────────── */
+
+html[data-theme="dark"]{
+  --karte:#1b2228;
+  --flaeche:#12171a;
+  --ink:#e6eae8;
+  --mut:#9aa6a0;
+  --line:#2a333a;
+  --gr:#5cb85f;
+  --gr-d:#74c777;
+  --gr-l:#1e2a20;
+  --gr-t:#171f1a;
+}
+html[data-theme="dark"] .cmsneu-kopf,
+html[data-theme="dark"] .cmsneu-nav{ background:var(--karte) }
+html[data-theme="dark"] .cmsneu-kopf-acts .cms-btn,
+html[data-theme="dark"] .cmsneu-menue{
+  background:var(--karte);
+  color:var(--ink);
+  border-color:var(--line);
+}
