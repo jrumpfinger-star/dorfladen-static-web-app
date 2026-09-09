@@ -295,7 +295,6 @@ für Reiter durch den Auftraggeber** sowie die Bedienhilfen T021–T025.
   Bäcker und Mittagstisch sind noch zu prüfen.
 
 ### 5.5 Tests und Rollout — bis auf die Abnahme erledigt
-
 - **T042 erledigt:** `tests/kiosk-neu.spec.js` sichert die Umbauten mit echten
   Daten in allen drei Auflösungen ab (31 bestanden, 11 datenbedingt
   übersprungen, 0 Fehler). Die Datei überspringt sich selbst, wenn kein
@@ -309,6 +308,57 @@ für Reiter durch den Auftraggeber** sowie die Bedienhilfen T021–T025.
   `kiosk-neu-shell.js` lädt.
 - **T051 Abnahme durch den Auftraggeber — der einzige echte Reststand.**
   T052 (Version erhöhen, veröffentlichen) folgt danach.
+
+### 5.6 Livegang — vorbereitet, aber **bewusst nicht vollzogen**
+
+Der Auftraggeber hat am 09.09. gefragt, ob der Umbau live gehen kann. Zwei
+Vorprüfungen wurden dafür nachgeholt, eine dritte hat den Livegang gestoppt.
+
+**Bestanden — keine Funktion geht verloren (T040):**
+
+- `tools/pruef-funktionen.js` gleicht das Markup ab: 152 Bedienpunkte in
+  beiden Seiten, alle 11 Fachmodule vorhanden.
+- `tools/pruef-funktionen-laufend.js` öffnet **beide Seiten**, klappert alle
+  acht Reiter ab und vergleicht die *tatsächlich sichtbaren* Bedienpunkte.
+  Ergebnis bei 375 px und 1280 px: **jeder Bedienpunkt des gewohnten Kiosks
+  ist im Umbau erreichbar.** Dabei gefunden und behoben: Die Kopfzeile blendete
+  „Zur Website" und „Zum CMS" unter 490 px aus — auf dem Telefon fehlten damit
+  zwei Wege. Bewusst anders bleiben nur die Tage ohne Lieferung und die
+  Uhrzeit hinter „Bearbeiten"; beides ist im Werkzeug begründet.
+
+**Nicht bestanden — die bestehende Testsuite:**
+
+Für den Wechsel wurde probeweise umgestellt (`kiosk.html` aus
+`kiosk-klassisch.html` erzeugt, ohne Hinweisstreifen) und die vorhandenen
+Tests dagegen laufen gelassen. Ergebnis: **26 von 78 Tests rot**, darunter
+Kernfälle wie „Tab-Wechsel zeigt korrektes Panel", „Filterwechsel ändert
+active-Klasse" und fast die gesamte Kalender-Suite.
+
+Die Ursachen sind vermutlich zwei, und genau das ist der Punkt — sie waren in
+der Nacht nicht mehr sauber zu trennen:
+
+1. **Erwartet:** Die neue Rückfrage (T025) fängt „senden" und „zurücksetzen"
+   ab. Tests, die diese Knöpfe antippen, laufen in die Zeitsperre. Das ist
+   gewolltes Verhalten, die Tests müssen es lernen.
+2. **Unklar:** Die Tests greifen teils über Auszeichnungen zu, die R2/R3
+   ersetzt haben (Kopfzeile, Reiterleiste). Ob dahinter nur veraltete
+   Suchausdrücke stecken oder ein echter Fehler, ist **nicht geprüft**.
+
+Der Umbau wurde deshalb zurückgestellt; `kiosk.html` ist unverändert.
+
+**Wenn der Wechsel gemacht wird, dann so:**
+
+1. `git mv static-site/kiosk.html static-site/kiosk-klassisch.html`
+   — bleibt als Rückfallweg erreichbar und ist die einzige Quelle.
+2. `tools/build-kiosk-neu.js` erzeugt **zwei** Ausgaben aus dieser Quelle:
+   `kiosk.html` (ohne Hinweisstreifen, gewohnter Titel) und `kiosk-neu.html`
+   (mit Hinweis, Ziel der Prüfwerkzeuge). Der Umbau dafür war fertig und ist
+   im Verlauf dieser Sitzung beschrieben.
+3. **Erst danach** die 26 roten Tests einzeln durchgehen: je Fall entscheiden,
+   ob der Test das neue Verhalten lernen muss oder ob ein echter Fehler
+   dahintersteckt.
+4. Version erhöhen, veröffentlichen (Push auf `main` löst die Veröffentlichung
+   aus).
 
 ---
 
