@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   /* ============================================================================
    * INHALTSVERZEICHNIS (cms.js ~12.600 Zeilen, eine IIFE)
    * Zum Springen: Strg+F nach dem Anker-Text in [Klammern] suchen.
@@ -292,9 +292,9 @@
       +'</div>'
       +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
       +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
-      +'<input class="cms-input cms-price" data-f="preis" placeholder="VK" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="Aktion" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="SC" value="'+esc((item&&item.artikelnummer)||'')+'" title="Strichcode">'
+      +'<input class="cms-input cms-price" data-f="preis" placeholder="Preis" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
+      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="statt" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
+      +'<input class="cms-input" data-f="artikelnummer" placeholder="Strichcode" value="'+esc((item&&item.artikelnummer)||'')+'" title="Strichcode">'
       +'</div>';
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');

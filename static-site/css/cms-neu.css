@@ -504,6 +504,95 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
 }
 #cms-panel-metzger label:has(> #fm-cfg-aktiv){ color:var(--gr-d) !important }
 
+/* ── 7a  Das Innere der Dialoge ───────────────────────────────────────── */
+
+/* Die Dialoge entstehen zur Laufzeit in cms.js. Ihre Werte stehen inzwischen
+   auf dem Schema, ihr Aufbau kam aber aus der alten Zeit: 30 px hohe Felder,
+   getönte Bänder statt Karten, Rundungen von 4 bis 16 px nebeneinander. Sie
+   sahen deshalb weiter alt aus, obwohl die Farben stimmten.
+
+   Hier bekommen sie dasselbe Bild wie der übrige Kiosk: weiße Karten mit
+   Haarlinie, ein Radius, ruhige Abstände. Am Markup ändert sich nichts. */
+
+#cms-modal-wrap .cms-modal{
+  border-radius:var(--r-l);
+  box-shadow:var(--schatten-2);
+  border:1px solid var(--line);
+}
+#cms-modal-wrap .cms-modal-header{
+  background:var(--karte);
+  border-bottom:1px solid var(--line);
+  padding:12px 16px;
+}
+#cms-modal-wrap .cms-modal-header h3{
+  font-size:var(--schrift-gross);
+  color:var(--gr-d);
+}
+#cms-modal-wrap .cms-modal-footer{
+  background:var(--karte);
+  border-top:1px solid var(--line);
+}
+
+/* Die Artikelzeile war ein getöntes Band mit grünem Balken links. Als Karte
+   ist erkennbar, wo eine Position anfängt und aufhört. */
+#cms-modal-wrap .cms-ang-row{
+  background:var(--karte) !important;
+  border:1px solid var(--line) !important;
+  border-left:1px solid var(--line) !important;
+  border-radius:var(--r-m) !important;
+  box-shadow:var(--schatten-1);
+  padding:14px 12px 12px !important;
+}
+#cms-modal-wrap .cms-ang-row:hover{
+  border-color:var(--gr) !important;
+  box-shadow:var(--schatten-2);
+}
+#cms-modal-wrap .cms-ang-row-num{
+  background:var(--gr);
+  border-radius:999px;
+  padding:1px 7px;
+}
+#cms-modal-wrap .cms-ang-fields{ gap:var(--gap) }
+
+/* Die Felder waren 30 px hoch und 12 px klein - im Laden nicht zu treffen
+   und schwer zu lesen. */
+#cms-modal-wrap .cms-input,
+#cms-modal-wrap .cms-ang-fields .cms-input{
+  height:auto;
+  min-height:var(--tap-min);
+  padding:8px 10px;
+  font-size:var(--schrift-normal);
+  border:1px solid var(--line);
+  border-radius:var(--r-s);
+  background:var(--karte);
+  color:var(--ink);
+}
+#cms-modal-wrap .cms-input:focus,
+#cms-modal-wrap select:focus,
+#cms-modal-wrap textarea:focus{
+  outline:2px solid var(--gr);
+  outline-offset:1px;
+  border-color:var(--gr);
+}
+
+/* Die drei Bildknöpfe waren 23 bis 26 px breit. Sie bekommen die volle
+   Antippfläche - schmaler wäre bequemer für das Auge, aber die 44 px sind
+   nicht verhandelbar. */
+#cms-modal-wrap .cms-ang-row-img{ gap:6px }
+#cms-modal-wrap .cms-ang-row-img button{
+  min-width:var(--tap-min);
+  min-height:var(--tap-min);
+  border:1px solid var(--line) !important;
+  border-radius:var(--r-s) !important;
+  background:var(--karte) !important;
+  padding:0 !important;
+}
+#cms-modal-wrap .cms-ang-row-img button:hover{ border-color:var(--gr) !important }
+#cms-modal-wrap .cms-bild-preview{
+  border-radius:var(--r-s) !important;
+  border:1px solid var(--line) !important;
+}
+
 /* ── 7  Dialoge als Blatt ─────────────────────────────────────────────── */
 
 /* Dasselbe Muster wie im Kiosk: Telefon als Blatt am unteren Rand, ab
