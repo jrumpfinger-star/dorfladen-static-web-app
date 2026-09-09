@@ -3607,48 +3607,137 @@ var K = (function(){
     var byDish = {};
     todayOrders.forEach(function(o){
       var key = o.gericht || 'Unbekannt';
-      if(!byDish[key]) byDish[key] = { count: 0, mitnehmen: 0, vorOrt: 0, kunden: [] };
+      if(!byDish[key]) byDish[key] = { count: 0, mitnehmen: 0, vorOrt: 0, bestellungen: 0, kunden: [] };
       var qty = o.menge || 1;
-      byDish[key].count += qty;
-      if(o.mitnehmen) byDish[key].mitnehmen += qty; else byDish[key].vorOrt += qty;
-      var name = o.name || '?';
-      byDish[key].kunden.push(name + (qty > 1 ? ' ('+qty+'x)' : '') + (o.mitnehmen ? ' (mitnehmen)' : ''));
+      var d = byDish[key];
+      d.count += qty;
+      d.bestellungen++;
+      if(o.mitnehmen) d.mitnehmen += qty; else d.vorOrt += qty;
+      d.kunden.push({
+        name: o.name || '?',
+        menge: qty,
+        mitnehmen: !!o.mitnehmen,
+        hinweis: (o.anmerkung || o.kunde_kommentar || '').trim()
+      });
+    });
+
+    var sortedDishes = Object.keys(byDish).sort(function(a,b){
+      return byDish[b].count - byDish[a].count || a.localeCompare(b,'de');
+    });
+    var totalPortions = 0, totalMit = 0, totalOrt = 0;
+    sortedDishes.forEach(function(dish){
+      var d = byDish[dish];
+      totalPortions += d.count; totalMit += d.mitnehmen; totalOrt += d.vorOrt;
+      d.kunden.sort(function(a,b){ return a.name.localeCompare(b.name,'de'); });
     });
 
     var selDate = new Date(_mittagDatum+'T12:00:00');
     var datum = selDate.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
-    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Küchenliste</title>';
-    html += '<style>body{font-family:Arial,sans-serif;padding:20px;max-width:700px;margin:0 auto}';
-    html += 'h1{font-size:20px;border-bottom:2px solid #1b5e20;padding-bottom:8px}';
-    html += '.dish{margin:16px 0;page-break-inside:avoid}';
-    html += '.dish-head{background:#e8f5e9;padding:10px 14px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-weight:600}';
-    html += '.dish-count{font-size:24px;color:#1b5e20}';
-    html += '.dish-details{padding:6px 14px;font-size:13px;color:#555}';
-    html += '.kunde{padding:2px 0;border-bottom:1px dotted #ddd}';
-    html += '.summary{margin-top:24px;padding:12px;background:#f5f5f5;border-radius:8px;font-weight:600}';
-    html += '@media print{body{padding:10px}}</style></head><body>';
-    html += '<h1>Küchenliste – ' + datum + '</h1>';
+    var jetzt = new Date().toLocaleString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 
-    var totalPortions = 0;
-    var sortedDishes = Object.keys(byDish).sort();
-    sortedDishes.forEach(function(dish){
+    var html = '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>Küchenliste</title>';
+    html += '<style>';
+    html += '@page{size:A4;margin:12mm}';
+    html += '*{box-sizing:border-box}';
+    html += 'body{font-family:"Segoe UI",Arial,sans-serif;color:#1f2a24;max-width:760px;margin:0 auto;padding:18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}';
+    html += '.kl-kopf{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;border-bottom:3px solid #1b5e20;padding-bottom:10px}';
+    html += '.kl-marke{font-size:11px;color:#5a7566;letter-spacing:.06em}';
+    html += '.kl-kopf h1{font-size:23px;font-weight:600;margin:2px 0 0;color:#1b5e20}';
+    html += '.kl-datum{font-size:14px;color:#33604a;margin-top:3px}';
+    html += '.kl-kennzahlen{display:flex;gap:7px;flex:0 0 auto}';
+    html += '.kl-kz{border:1px solid #cfe3d6;border-radius:8px;background:#f4faf6;padding:6px 10px;min-width:76px;text-align:right}';
+    html += '.kl-kz-wert{display:block;font-size:20px;font-weight:600;color:#1b5e20;line-height:1.1;font-variant-numeric:tabular-nums}';
+    html += '.kl-kz-text{display:block;font-size:10px;color:#5a7566;margin-top:2px}';
+    html += '.kl-abschnitt{font-size:11px;font-weight:600;color:#5a7566;margin:18px 0 6px}';
+    html += 'table{width:100%;border-collapse:collapse}';
+    html += '.kl-blick{font-size:13px}';
+    html += '.kl-blick th{font-size:10px;font-weight:600;color:#5a7566;padding:4px 8px;border-bottom:1px solid #dbe7e0;text-align:right}';
+    html += '.kl-blick th:first-child{text-align:left}';
+    html += '.kl-blick td{padding:5px 8px;border-bottom:1px dotted #e2ece6;text-align:right;font-variant-numeric:tabular-nums}';
+    html += '.kl-blick td:first-child{text-align:left}';
+    html += '.kl-blick tfoot td{border-top:2px solid #1b5e20;border-bottom:none;font-weight:600;color:#1b5e20}';
+    html += '.kl-gericht{margin-top:14px;border:1px solid #d8e8de;border-radius:10px;overflow:hidden;page-break-inside:avoid}';
+    html += '.kl-g-kopf{display:flex;align-items:center;gap:10px;background:#e8f5e9;padding:8px 12px;border-bottom:1px solid #d8e8de}';
+    html += '.kl-g-nr{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#1b5e20;color:#fff;font-size:11px;line-height:22px;text-align:center}';
+    html += '.kl-g-name{flex:1;min-width:0;font-size:16px;font-weight:600}';
+    html += '.kl-g-teil{flex:0 0 auto;font-size:11px;color:#3c6b52;white-space:nowrap}';
+    html += '.kl-g-zahl{flex:0 0 auto;text-align:right;font-size:26px;font-weight:600;color:#1b5e20;line-height:1;font-variant-numeric:tabular-nums}';
+    html += '.kl-g-zahl small{display:block;font-size:9px;font-weight:400;color:#5a7566;margin-top:2px}';
+    html += '.kl-tab{font-size:13px}';
+    html += '.kl-tab th{font-size:10px;font-weight:600;color:#5a7566;background:#fafcfb;padding:5px 10px;border-bottom:1px solid #dbe7e0;text-align:left}';
+    html += '.kl-tab td{padding:6px 10px;border-bottom:1px dotted #e2ece6;vertical-align:top}';
+    html += '.kl-tab tr:last-child td{border-bottom:none}';
+    html += '.kl-tab .s-menge{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}';
+    html += '.kl-box{display:block;width:13px;height:13px;margin-top:2px;border:1.5px solid #9ab5a6;border-radius:3px}';
+    html += '.kl-tag{display:inline-block;font-size:10px;padding:1px 8px;border-radius:10px;border:1px solid;white-space:nowrap}';
+    html += '.kl-tag-mit{background:#fff4e5;border-color:#f0c98a;color:#8a5a10}';
+    html += '.kl-tag-ort{background:#eef4f0;border-color:#d2e2d8;color:#4a6b58}';
+    html += '.kl-hinweis{color:#8a5a10}';
+    html += '.kl-leer{color:#b9c8c0}';
+    html += '.kl-notiz{margin-top:16px;border:1px dashed #c6d9cd;border-radius:8px;padding:8px 12px 26px;font-size:11px;color:#7b8f84;page-break-inside:avoid}';
+    html += '.kl-fuss{margin-top:12px;border-top:1px solid #dbe7e0;padding-top:7px;display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#7b8f84}';
+    html += '@media print{body{padding:0;max-width:none}.noprint{display:none}}';
+    html += '</style></head><body>';
+
+    html += '<div class="kl-kopf">';
+    html += '<div><div class="kl-marke">Dorfladen Oberornau · Mittagstisch</div>';
+    html += '<h1>Küchenliste</h1>';
+    html += '<div class="kl-datum">' + esc(datum) + '</div></div>';
+    html += '<div class="kl-kennzahlen">';
+    html += '<div class="kl-kz"><span class="kl-kz-wert">' + totalPortions + '</span><span class="kl-kz-text">Portionen</span></div>';
+    html += '<div class="kl-kz"><span class="kl-kz-wert">' + totalOrt + '</span><span class="kl-kz-text">vor Ort</span></div>';
+    html += '<div class="kl-kz"><span class="kl-kz-wert">' + totalMit + '</span><span class="kl-kz-text">mitnehmen</span></div>';
+    html += '</div></div>';
+
+    // Die Uebersicht hilft nur, wenn es mehrere Gerichte gibt.
+    if (sortedDishes.length > 1) {
+      html += '<div class="kl-abschnitt">Auf einen Blick</div>';
+      html += '<table class="kl-blick"><colgroup><col><col style="width:88px"><col style="width:98px"><col style="width:92px"></colgroup>';
+      html += '<thead><tr><th>Gericht</th><th>vor Ort</th><th>mitnehmen</th><th>Portionen</th></tr></thead><tbody>';
+      sortedDishes.forEach(function(dish){
+        var d = byDish[dish];
+        html += '<tr><td>' + esc(dish) + '</td>';
+        html += '<td>' + (d.vorOrt || '<span class="kl-leer">–</span>') + '</td>';
+        html += '<td>' + (d.mitnehmen || '<span class="kl-leer">–</span>') + '</td>';
+        html += '<td>' + d.count + '</td></tr>';
+      });
+      html += '</tbody><tfoot><tr><td>' + sortedDishes.length + ' Gerichte · ' + todayOrders.length + ' Bestellungen</td>';
+      html += '<td>' + totalOrt + '</td><td>' + totalMit + '</td><td>' + totalPortions + '</td></tr></tfoot></table>';
+    }
+
+    sortedDishes.forEach(function(dish, i){
       var d = byDish[dish];
-      totalPortions += d.count;
-      html += '<div class="dish">';
-      html += '<div class="dish-head"><span>' + esc(dish) + '</span><span class="dish-count">' + d.count + 'x</span></div>';
-      html += '<div class="dish-details">';
-      if(d.mitnehmen > 0) html += 'Mitnehmen: ' + d.mitnehmen + ' · ';
-      if(d.vorOrt > 0) html += 'Vor Ort: ' + d.vorOrt;
-      html += '<div style="margin-top:4px">';
-      d.kunden.forEach(function(k){ html += '<div class="kunde">' + esc(k) + '</div>'; });
-      html += '</div></div></div>';
+      var teile = [];
+      if(d.vorOrt > 0) teile.push(d.vorOrt + ' vor Ort');
+      if(d.mitnehmen > 0) teile.push(d.mitnehmen + ' mitnehmen');
+      html += '<div class="kl-gericht">';
+      html += '<div class="kl-g-kopf">';
+      html += '<span class="kl-g-nr">' + (i+1) + '</span>';
+      html += '<span class="kl-g-name">' + esc(dish) + '</span>';
+      html += '<span class="kl-g-teil">' + teile.join(' · ') + '</span>';
+      html += '<span class="kl-g-zahl">' + d.count + '<small>' + (d.count === 1 ? 'Portion' : 'Portionen') + '</small></span>';
+      html += '</div>';
+      html += '<table class="kl-tab"><colgroup><col style="width:30px"><col><col style="width:66px"><col style="width:104px"><col style="width:31%"></colgroup>';
+      html += '<thead><tr><th></th><th>Kundin / Kunde</th><th class="s-menge">Menge</th><th>Ausgabe</th><th>Hinweis</th></tr></thead><tbody>';
+      d.kunden.forEach(function(k){
+        html += '<tr><td><span class="kl-box"></span></td>';
+        html += '<td>' + esc(k.name) + '</td>';
+        html += '<td class="s-menge">' + k.menge + '×</td>';
+        html += '<td><span class="kl-tag ' + (k.mitnehmen ? 'kl-tag-mit">mitnehmen' : 'kl-tag-ort">vor Ort') + '</span></td>';
+        html += '<td class="' + (k.hinweis ? 'kl-hinweis' : 'kl-leer') + '">' + (k.hinweis ? esc(k.hinweis) : '–') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
     });
 
-    html += '<div class="summary">Gesamt: ' + totalPortions + ' Portionen · ' + sortedDishes.length + ' Gerichte · ' + todayOrders.length + ' Bestellungen</div>';
+    html += '<div class="kl-notiz">Notizen der Küche</div>';
+    html += '<div class="kl-fuss"><span>Küchenliste ' + esc(datum) + '</span>';
+    html += '<span>' + sortedDishes.length + ' Gericht' + (sortedDishes.length === 1 ? '' : 'e') + ' · ' + todayOrders.length + ' Bestellungen · ' + totalPortions + ' Portionen</span>';
+    html += '<span>gedruckt am ' + esc(jetzt) + ' Uhr</span></div>';
+    html += '<div class="noprint" style="margin-top:18px;text-align:center"><button onclick="window.print()" style="background:#1b5e20;color:#fff;border:none;border-radius:8px;padding:11px 28px;font-size:14px;font-weight:600;cursor:pointer">Küchenliste drucken</button></div>';
     html += '<script>window.onload=function(){window.print();}<\/script>';
     html += '</body></html>';
 
-    var w = window.open('', '_blank', 'width=700,height=900');
+    var w = window.open('', '_blank', 'width=760,height=900');
     w.document.write(html); w.document.close();
   }
 

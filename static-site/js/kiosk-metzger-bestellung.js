@@ -542,10 +542,12 @@ window.KMetzgerBest = (function () {
     // Anhalt beim Neuerfassen: Was zuletzt bestellt wurde, steht blass daneben,
     // solange die Zeile leer ist. Ein Tipp übernimmt es.
     var frueher = !lock && !bestellt(p) ? letzteWerte(a) : null;
+    // Die Blöcke werden mit „|" getrennt: Ein „+" zwischen den Mengen las
+    // sich wie ein Rechenzeichen und ging in „1 × 2 kg" unter.
     if (frueher) {
       h += '<button class="mb-frueher" title="' + esc(letzteQuelle())
         + ' — tippen übernimmt" onclick="KMetzgerBest.frueher(\'' + esc(key) + '\')">'
-        + esc(frueher.map(blockText).join(' + ')) + '</button>';
+        + esc(frueher.map(blockText).join(' | ')) + '</button>';
     }
     if (istExtra && !lock) {
       h += '<button class="mb-add del" title="Position entfernen"'

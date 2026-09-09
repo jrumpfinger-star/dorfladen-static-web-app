@@ -440,10 +440,15 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   background:var(--c-bg);
 }
 .k-panel > .k-day-bar{ top:calc(var(--pad) * -1); padding-top:6px; padding-bottom:6px }
+/* `top` ist bei allen diesen Leisten negativ und nicht 0: Der Bezugsrahmen
+   beginnt am Innenrand des Rollbereichs, also --pad unterhalb der Reiterkante.
+   Mit `top:0` rastet die Leiste --pad zu tief ein, und der weggescrollte
+   Inhalt zieht in diesem Spalt darueber sichtbar vorbei. Nur der gehaltene
+   Zustand verschiebt sich dadurch - im normalen Fluss aendert `top` nichts. */
 .k-panel > #mittag-stats,
-.k-panel > #metzger-stats{ top:0 }
-.k-panel > .k-filter-bar{ top:0 }
-.k-panel > .k-hist-bar{ top:0 }
+.k-panel > #metzger-stats{ top:calc(var(--pad) * -1) }
+.k-panel > .k-filter-bar{ top:calc(var(--pad) * -1) }
+.k-panel > .k-hist-bar{ top:calc(var(--pad) * -1) }
 
 /* Tagesleiste: waagerecht scrollbar, ragt bewusst über den Rand hinaus. */
 .k-day-bar{
@@ -897,6 +902,11 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
  *
  * Die Kontur kommt als innenliegender Schatten statt als Rahmen, weil ein
  * echter Rahmen den durchsichtigen Streifen mitzeichnen würde.
+ *
+ * Wichtig: Der Chip darf keinen senkrechten Innenabstand bekommen. Die beiden
+ * Knöpfe darin (Beschriftung und ✕) holen sich ihre Antippfläche über
+ * `align-self:stretch` aus der Chiphöhe. Jeder Innenabstand geht ihnen direkt
+ * verloren — 6 px oben und unten ließen von 34 px nur noch 22 px übrig.
  */
 .mb-chip{
   min-height:var(--tap-min);
@@ -994,7 +1004,6 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
    rechten Rand der Zeile und ist in der Hausfarbe gezeichnet. Die Reihenfolge
    stellt sicher, dass auch die blassen Vorschlagswerte davor liegen. */
 #panel-metzgerbest .mb-chips{ align-items:center }
-#panel-metzgerbest .mb-chip,
 /* Der Vorschlag „so war es zuletzt" trug `white-space:nowrap` und wurde
    dadurch am Rand abgeschnitten, sobald die letzte Bestellung mehrere
    Portionsgrößen hatte („1 × 2 kg + 1 × 4 St + 1 × 2 St + …"). Gerade dann
@@ -1020,6 +1029,52 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 #panel-metzgerbest .mb-add:not(.del):hover{ background:#eaf4ee }
 /* Das ✕ zum Entfernen einer zusätzlichen Position bleibt am Ende und ruhig. */
 #panel-metzgerbest .mb-add.del{ order:2 }
+
+/* Zwei Zeilen statt zweier Spalten: Der Artikelname steht für sich, die
+   erfassten Mengen stehen darunter.
+
+   Bisher teilten sich Name und Portions-Badges die Breite. Bei mehreren
+   Portionsgrößen brachen die Badges in der schmalen rechten Spalte um,
+   während links neben dem Namen Platz frei blieb — unruhig und schwer zu
+   lesen. Über die volle Breite passen sie meist in eine Zeile.
+
+   Der blasse Anhalt „so war es zuletzt" bleibt oben beim Namen: Er ist
+   keine Bestellung, also darf er die Zeile auch nicht höher machen. Die
+   Zeile wächst nur, wenn wirklich etwas erfasst ist.
+
+   `.mb-chips` wird dafür aufgelöst (display:contents), damit Name, Anhalt,
+   Plus-Knopf und Badges in einem gemeinsamen Fluss liegen; ein leerer
+   Umbruchpunkt (::after) trennt Kopfzeile und Badges. */
+#panel-metzgerbest .mb-zeile{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:0 8px;
+}
+#panel-metzgerbest .mb-chips{ display:contents }
+#panel-metzgerbest .mb-nm{
+  order:0;
+  flex:0 1 auto;
+  min-width:0;
+  max-width:none;
+}
+#panel-metzgerbest .mb-frueher{ order:1 }
+#panel-metzgerbest .mb-add:not(.del){ order:2 }
+#panel-metzgerbest .mb-add.del{ order:3 }
+#panel-metzgerbest .mb-zeile::after{
+  content:'';
+  order:4;
+  flex:0 0 100%;
+  height:0;
+}
+#panel-metzgerbest .mb-chip{ order:5; margin-top:4px }
+/* Die Nummer gehoert zum Namen, nicht zu den Mengen: Sie stand mittig zur
+   ganzen Zeile und rutschte damit neben die Badges. Sie richtet sich jetzt
+   an der Kopfzeile aus. */
+#panel-metzgerbest .mb-nr{
+  align-items:flex-start;
+  padding-top:13px;
+}
 @container liste (min-width:960px){
   .mb-liste{ --mb-sp:470px }
 }
@@ -2599,6 +2654,10 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
  */
 #panel-baecker .bk-sticky{
   position:static;
+  /* Ohne Klebewirkung braucht die Huelle auch keine eigene Ebene mehr.
+     Blieb sie auf 20, zeichnete der weggescrollte Inhalt ueber die
+     Kopfleiste hinweg. */
+  z-index:auto;
   display:flex;
   flex-direction:column;
   margin:0 calc(var(--pad) * -1);
@@ -2609,10 +2668,18 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 
 #panel-baecker .kneu-bk-fest{
   position:sticky;
-  top:0;
-  z-index:7;
-  margin:0 calc(var(--pad) * -1);
-  padding:2px var(--pad) 4px;
+  /* Der Reiter hat oben einen Rand von --pad. Eine klebende Leiste bleibt
+     jedoch am *Inhaltsrand* stehen, also --pad unterhalb der Panelkante.
+     In diesem Streifen zog der weggescrollte Inhalt sichtbar vorbei.
+     Deshalb: negativer Haltepunkt (Leiste haelt an der Panelkante) und der
+     Rand wandert als Innenabstand in die Leiste - so bleibt das Bild in
+     Ruhe unveraendert und die Leiste springt beim Anscrollen nicht. */
+  top:calc(var(--pad) * -1);
+  /* Ueber allem, was im Reiter darunter durchlaeuft (Werkzeugleiste 10,
+     Alt-Huelle 20) - aber unter der Fussleiste (25). */
+  z-index:22;
+  margin:calc(var(--pad) * -1) calc(var(--pad) * -1) 0;
+  padding:calc(var(--pad) + 2px) var(--pad) 4px;
   background:var(--flaeche);
   box-shadow:0 7px 10px -9px rgba(15,42,30,.45);
 }
