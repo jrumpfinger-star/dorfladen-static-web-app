@@ -269,11 +269,34 @@ window.KGetraenke = (function () {
   //  Mengen
   // ══════════════════════════════════════════════════
 
-  function setze(k, n) {
+  /** Menge setzen.
+   *
+   *  ``vonFeld`` bedeutet: Die Zahl kam aus dem Eingabefeld, in dem gerade
+   *  geschrieben wird. Dann wird die Zeile nur aufgefrischt — ein
+   *  vollstaendiges Neuzeichnen wuerde das Feld unter den Fingern
+   *  wegziehen (Fokus, Tabulator und zweite Ziffer gingen verloren).
+   */
+  function setze(k, n, vonFeld) {
     n = Math.max(0, Math.min(MAX_MENGE, Math.round(Number(n) || 0)));
     if (n) _menge[k] = n; else delete _menge[k];
-    zeichneListe();
+    frischeZeile(k);
+    if (!vonFeld) {
+      var feld = $('gk-list') && $('gk-list').querySelector(
+        '[data-menge="' + String(k).replace(/"/g, '\\"') + '"]');
+      if (feld) feld.value = n;
+    }
     sichern();
+  }
+
+  /** Enter springt ins naechste Mengenfeld — so lassen sich alle Mengen
+   *  nacheinander eingeben, ohne die Hand von der Tastatur zu nehmen. */
+  function naechstesFeld(k) {
+    var felder = Array.prototype.slice.call(
+      document.querySelectorAll('#gk-list .gk-row [data-menge]'));
+    var i = -1;
+    felder.forEach(function (f, n) { if (f.dataset.menge === k) i = n; });
+    var next = felder[i + 1] || felder[0];
+    if (next) { next.focus(); next.select(); }
   }
 
   function uebernimmLetzte() {
@@ -354,6 +377,12 @@ window.KGetraenke = (function () {
       + '<div class="txt">'
       + '<div class="z1">' + (kw ? 'KW ' + kw + ' \u00b7 ' + esc(deutsch(_datum)) : '\u2014') + '</div>'
       + '<div class="z2">' + z2 + '</div></div>'
+      /* Ist dieser Termin schon abgeschickt, war nicht zu erkennen, wie man
+         die naechste Bestellung beginnt — der Termin lag allein im Blatt.
+         Jetzt steht der Weg dorthin sichtbar in der Zeile. */
+      + (_status ? '<button class="gk-neubest" id="gk-neubest" '
+          + 'title="F\u00fcr einen anderen Liefertermin bestellen">'
+          + ikone('calendar-plus') + '<span class="lang">Neue Bestellung</span></button>' : '')
       + '<button class="gk-mehr" id="gk-mehr" title="Termin, Filter und weitere Schritte">'
       + ikone('info') + '</button></div>';
   }
@@ -368,7 +397,11 @@ window.KGetraenke = (function () {
       + '<div class="gk-blatt-sub">' + esc(_cfg.name || 'Lieferant')
       + (kw ? ' \u00b7 KW ' + kw : '') + '</div></div>';
 
-    h += '<div class="gk-blatt-z"><label for="gk-datum">Liefertermin</label>'
+    h += '<div class="gk-blatt-t">Liefertermin \u00b7 neue Bestellung</div>';
+    h += '<div class="gk-blatt-hinweis">Jeder Liefertermin hat seine eigene '
+      + 'Bestellung. F\u00fcr eine <b>neue Bestellung</b> hier einfach ein '
+      + 'sp\u00e4teres Datum w\u00e4hlen \u2014 die Liste startet dann neu.</div>';
+    h += '<div class="gk-blatt-z"><label for="gk-datum">Termin</label>'
       + '<input type="date" id="gk-datum" value="' + esc(_datum) + '"></div>';
     h += '<button class="gk-take" id="gk-take">' + esc(takeText()) + '</button>';
 
@@ -402,7 +435,12 @@ window.KGetraenke = (function () {
     return h + '</div>';
   }
 
-  function blatt(auf) {
+  /* Achtung: Weiter unten gibt es ein `blatt(id, inhalt)`, das Überlagerungen
+     baut (Artikel anlegen, Versand). Funktionsdeklarationen werden hochgezogen
+     — zwei gleichnamige, und die spätere gewinnt für die ganze Datei. Genau
+     das ließ den „i"-Knopf ins Leere laufen. Diese hier heißt deshalb
+     unverwechselbar. */
+  function blattZeigen(auf) {
     var el = $('gk-blatt');
     if (!el) return;
     el.hidden = !auf;
@@ -465,14 +503,9 @@ window.KGetraenke = (function () {
     fusszeile();
   }
 
-  function zeile(a, letzte) {
-    var k = key(a);
-    var menge = _menge[k] || 0;
-    var row = document.createElement('div');
-    row.className = 'gk-row' + (menge ? ' has' : '')
-      + (menge && letzte && menge !== letzte ? ' chg' : '');
-    row.setAttribute('data-key', k);
-
+  /** Die Merkzeichen am Namen. Ausgelagert, weil die Zeile beim Tippen
+   *  punktgenau aufgefrischt wird und dabei nur dieser Teil neu entsteht. */
+  function tagsHtml(a, menge, letzte) {
     var tags = '';
     if (!menge && letzte) tags += '<span class="gk-tag vor">letzte: ' + letzte + '</span>';
     if (menge && letzte && menge !== letzte) tags += '<span class="gk-tag chg">war ' + letzte + '</span>';
@@ -487,38 +520,133 @@ window.KGetraenke = (function () {
         ? '<span class="gk-tag dauer" title="Bleibt in der Artikelliste">neu \u00b7 dauerhaft</span>'
         : '<span class="gk-tag einmal" title="Gilt nur f\u00fcr diese Bestellung">nur diese Bestellung</span>';
     }
+    return tags;
+  }
 
-    // Vorschlaege: "ueblich" (Median aller bisherigen Mengen) und "letzte"
-    // (Menge der juengsten Bestellung), sofern beide sich unterscheiden (F4).
+  /** Vorschlaege: "ueblich" (Median der bisherigen Mengen) und "letzte"
+   *  (Menge der juengsten Bestellung), sofern beide sich unterscheiden (F4).
+   *  Sie tragen keinen Tab-Stopp, damit die Tabulatortaste von Mengenfeld zu
+   *  Mengenfeld springt. */
+  function suggHtml(a, k, menge, letzte) {
     var vor = [];
     if (a.ueblich) vor.push({ n: a.ueblich, l: '\u00fcblich ' + a.ueblich });
     if (letzte && letzte !== a.ueblich) vor.push({ n: letzte, l: 'letzte ' + letzte });
+    return vor.map(function (v) {
+      return '<button type="button" tabindex="-1" data-set="' + esc(k) + '" data-n="' + v.n + '"'
+        + (menge === v.n ? ' class="on"' : '') + '>'
+        + (menge === v.n ? '<span class="hak">\u2713</span>' : '') + v.l + '</button>';
+    }).join('');
+  }
+
+  function zeile(a, letzte) {
+    var k = key(a);
+    var menge = _menge[k] || 0;
+    var row = document.createElement('div');
+    row.className = 'gk-row' + (menge ? ' has' : '')
+      + (menge && letzte && menge !== letzte ? ' chg' : '');
+    row.setAttribute('data-key', k);
+    // Der Vergleichswert haengt an der Zeile, damit das Auffrischen beim
+    // Tippen ihn nicht neu suchen muss.
+    row.setAttribute('data-letzte', letzte || 0);
 
     row.innerHTML =
       '<div class="gk-geb">' + esc(a.gebinde || '\u2014') + '</div>'
       + '<div class="gk-zeile">'
-      +   '<div class="gk-nm">' + esc(a.name) + tags
+      +   '<div class="gk-nm">' + esc(a.name)
+      +     '<span class="gk-tags">' + tagsHtml(a, menge, letzte) + '</span>'
       +     '<span class="gk-pr">'
       +       '<span class="gk-geb-klein">' + esc(a.gebinde || '\u2014') + ' \u00b7 </span>'
       +       (a.preis ? eur(a.preis) + ' / Kiste' : 'Preis nicht belegt') + '</span>'
       +   '</div>'
       +   '<div class="gk-chips">'
       +     '<div class="gk-step">'
-      +       '<button data-minus="' + esc(k) + '" aria-label="Eine Kiste weniger"'
+      /* +/- ohne Tab-Stopp: So springt die Tabulatortaste von Menge zu
+         Menge, statt an jedem Knopf haengen zu bleiben. */
+      +       '<button type="button" tabindex="-1" data-minus="' + esc(k) + '" aria-label="Eine Kiste weniger"'
       +         (menge ? '' : ' disabled') + '>\u2212</button>'
       +       '<input type="number" min="0" max="99" inputmode="numeric" value="' + menge + '" '
-      +         'data-menge="' + esc(k) + '" aria-label="Kisten ' + esc(a.name) + '">'
-      +       '<button data-plus="' + esc(k) + '" aria-label="Eine Kiste mehr">+</button>'
+      +         'data-menge="' + esc(k) + '" aria-label="Kisten ' + esc(a.name) + '" '
+      /* Beim Antippen ist der Wert markiert - eine neue Zahl ersetzt ihn,
+         statt sich davorzuschieben. Auch beim Klick, nicht nur beim
+         Hineinspringen: Ein zweiter Klick ins selbe Feld loest kein `focus`
+         mehr aus, und genau dort blieb der alte Wert sonst stehen. */
+      +         'onfocus="this.select()" onclick="this.select()">'
+      +       '<button type="button" tabindex="-1" data-plus="' + esc(k) + '" aria-label="Eine Kiste mehr">+</button>'
       +     '</div>'
-      +     '<div class="gk-sugg">' + vor.map(function (v) {
-              return '<button data-set="' + esc(k) + '" data-n="' + v.n + '"'
-                + (menge === v.n ? ' class="on"' : '') + '>'
-                + (menge === v.n ? '<span class="hak">\u2713</span>' : '') + v.l + '</button>';
-            }).join('') + '</div>'
+      +     '<div class="gk-sugg">' + suggHtml(a, k, menge, letzte) + '</div>'
       +     (menge && a.preis ? '<span class="gk-kisteninfo">' + eur(menge * a.preis) + '</span>' : '')
       +   '</div>'
       + '</div>';
     return row;
+  }
+
+  /** Eine Zeile punktgenau auffrischen, ohne sie neu zu bauen.
+   *
+   *  Frueher zeichnete jede Mengenaenderung die ganze Liste neu. Damit wurde
+   *  auch das Eingabefeld weggeworfen, in dem gerade getippt wurde: Der Fokus
+   *  ging verloren, die Tabulatortaste landete im Nichts und eine zweite
+   *  Ziffer kam nie an. Das Eingabefeld selbst wird hier bewusst nicht
+   *  angefasst, solange darin geschrieben wird.
+   */
+  function frischeZeile(k) {
+    var row = $('gk-list') && $('gk-list').querySelector(
+      '.gk-row[data-key="' + String(k).replace(/"/g, '\\"') + '"]');
+    var a = finde(k);
+    if (!row || !a) { zeichneListe(); return; }
+
+    var menge = _menge[k] || 0;
+    var letzte = Number(row.getAttribute('data-letzte')) || 0;
+
+    row.classList.toggle('has', !!menge);
+    row.classList.toggle('chg', !!(menge && letzte && menge !== letzte));
+
+    var minus = row.querySelector('[data-minus]');
+    if (minus) minus.disabled = !menge;
+
+    var feld = row.querySelector('[data-menge]');
+    if (feld && document.activeElement !== feld) feld.value = menge;
+
+    var tags = row.querySelector('.gk-tags');
+    if (tags) tags.innerHTML = tagsHtml(a, menge, letzte);
+
+    var sugg = row.querySelector('.gk-sugg');
+    if (sugg) sugg.innerHTML = suggHtml(a, k, menge, letzte);
+
+    var info = row.querySelector('.gk-kisteninfo');
+    if (menge && a.preis) {
+      if (!info) {
+        info = document.createElement('span');
+        info.className = 'gk-kisteninfo';
+        row.querySelector('.gk-chips').appendChild(info);
+      }
+      info.textContent = eur(menge * a.preis);
+    } else if (info) {
+      info.remove();
+    }
+
+    frischeGruppe(a.gruppe);
+    fusszeile();
+  }
+
+  /** Die Kistenzahl in der Warengruppen-Ueberschrift mitziehen. */
+  function frischeGruppe(gruppe) {
+    var kopf = $('gk-grp-' + slug(gruppe || ''));
+    if (!kopf) return;
+    var kisten = 0;
+    katalog().forEach(function (x) {
+      if (x.gruppe === gruppe) kisten += _menge[key(x)] || 0;
+    });
+    var sum = kopf.querySelector('.gsum');
+    if (kisten) {
+      if (!sum) {
+        sum = document.createElement('span');
+        sum.className = 'gsum';
+        kopf.appendChild(sum);
+      }
+      sum.textContent = kisten + ' Kisten';
+    } else if (sum) {
+      sum.remove();
+    }
   }
 
   function fusszeile() {
@@ -611,15 +739,27 @@ window.KGetraenke = (function () {
       var b = e.target.closest('button');
       if (!b || !b.dataset.jump) return;
       var ziel = $('gk-grp-' + b.dataset.jump);
-      blatt(false);
+      blattZeigen(false);
       if (ziel) ziel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     // Termin, Filter und Sprungmarken stehen im Blatt hinter dem „i".
     var mehr = $('gk-mehr');
-    if (mehr) mehr.addEventListener('click', function () { blatt(true); });
+    if (mehr) mehr.addEventListener('click', function () { blattZeigen(true); });
     var zu = $('gk-blatt-zu');
-    if (zu) zu.addEventListener('click', function () { blatt(false); });
+    if (zu) zu.addEventListener('click', function () { blattZeigen(false); });
+    /* „Neue Bestellung" öffnet dasselbe Blatt und stellt den Termin scharf —
+       ein Datum genügt, den Rest macht der Kiosk. */
+    var neubest = $('gk-neubest');
+    if (neubest) neubest.addEventListener('click', function () {
+      blattZeigen(true);
+      var d = $('gk-datum');
+      if (d) {
+        d.scrollIntoView({ block: 'center' });
+        d.focus();
+        if (d.showPicker) { try { d.showPicker(); } catch (e) { /* nicht überall erlaubt */ } }
+      }
+    });
 
     // Ein Zuhoerer fuer die ganze Liste: Die Zeilen werden bei jeder Aenderung
     // neu gezeichnet, einzeln gebundene Zuhoerer gingen dabei verloren.
@@ -635,9 +775,24 @@ window.KGetraenke = (function () {
       }
     });
     liste.addEventListener('change', function (e) {
+      // Beim Verlassen den angezeigten Wert bereinigen (leeres Feld -> 0).
       if (e.target.dataset && e.target.dataset.menge) {
-        setze(e.target.dataset.menge, e.target.value);
+        var k = e.target.dataset.menge;
+        setze(k, e.target.value);
+        e.target.value = _menge[k] || 0;
       }
+    });
+    /* Waehrend des Tippens mitrechnen, aber das Feld nicht anfassen: So
+       kommen auch zweistellige Mengen an und der Cursor bleibt stehen. */
+    liste.addEventListener('input', function (e) {
+      if (e.target.dataset && e.target.dataset.menge) {
+        setze(e.target.dataset.menge, e.target.value, true);
+      }
+    });
+    liste.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || !e.target.dataset || !e.target.dataset.menge) return;
+      e.preventDefault();
+      naechstesFeld(e.target.dataset.menge);
     });
   }
 

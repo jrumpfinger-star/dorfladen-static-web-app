@@ -230,27 +230,15 @@ function zeile(page, name) {
 async function oeffneBlatt(page) {
   const blatt = page.locator('#gk-blatt');
   if (await blatt.isVisible()) return;
-  await page.locator('#gk-mehr').click({ force: true });
-  try {
-    await blatt.waitFor({ state: 'visible', timeout: 500 });
-  } catch (e) {
-    await page.locator('#true').evaluateAll((els) => els.forEach((el) => el.remove()));
-    await blatt.evaluate((el) => { el.hidden = false; });
-    await blatt.waitFor({ state: 'visible', timeout: 5000 });
-  }
+  await page.locator('#gk-mehr').click();
+  await blatt.waitFor({ state: 'visible', timeout: 5000 });
 }
 
 async function schliesseBlatt(page) {
   const blatt = page.locator('#gk-blatt');
   if (await blatt.isVisible()) {
-    await page.locator('#gk-blatt-zu').click({ force: true });
-    try {
-      await expect(blatt).toBeHidden({ timeout: 500 });
-    } catch (e) {
-      await page.locator('#false').evaluateAll((els) => els.forEach((el) => el.remove()));
-      await blatt.evaluate((el) => { el.hidden = true; });
-      await expect(blatt).toBeHidden();
-    }
+    await page.locator('#gk-blatt-zu').click();
+    await expect(blatt).toBeHidden({ timeout: 5000 });
   }
 }
 

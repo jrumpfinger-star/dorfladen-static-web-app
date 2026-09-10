@@ -295,6 +295,34 @@ const REITER = [
 ];
 
 test.describe('Bestellreiter auf dem Telefon', () => {
+  /* Regression: Im Getränke-Modul hieß die Blatt-Umschaltung `blatt(auf)`,
+     weiter unten gab es aber schon ein `blatt(id, inhalt)` für Überlagerungen.
+     Funktionsdeklarationen werden hochgezogen — die spätere gewann, und der
+     „i"-Knopf legte statt des Blattes ein leeres <div id="true"> an. Er wirkte
+     tot, ohne dass ein Fehler in der Konsole erschien. */
+  for (const r of REITER) {
+    test(`TC-F8-01: „i" öffnet und schließt das Blatt (${r.name})`, async ({ page }) => {
+      await page.setViewportSize(KLEIN);
+      await oeffne(page, r.tab);
+      const p = r.tab === 'getraenke' ? 'gk' : r.tab === 'baecker' ? 'bk' : 'mb';
+      const blatt = page.locator(`#${p}-blatt`);
+      await expect(blatt, `${r.name}: kein Blatt im Markup`).toHaveCount(1);
+      await expect(blatt).toBeHidden();
+
+      await page.locator(`.${p}-mehr`).click();
+      await expect(blatt,
+        `${r.name}: Der „i"-Knopf öffnet das Blatt nicht.`).toBeVisible({ timeout: 3000 });
+
+      // Kein Streu-Element aus einem fehlgeleiteten Aufruf.
+      await expect(page.locator('#true'),
+        `${r.name}: „i" hat ein Streu-Element <div id="true"> angelegt — `
+        + 'die Blatt-Funktion wurde von einer gleichnamigen überdeckt.').toHaveCount(0);
+
+      await page.locator(`.${p}-blatt-zu`).click();
+      await expect(blatt, `${r.name}: „Schließen" schließt das Blatt nicht.`).toBeHidden();
+    });
+  }
+
   for (const r of REITER) {
     test(`TC-F1-01/02 + TC-F2-01: ${r.name} bei 360 × 640`, async ({ page }) => {
       await page.setViewportSize(KLEIN);
@@ -329,6 +357,40 @@ test.describe('Bestellreiter auf dem Telefon', () => {
     expect(sichtbar,
       `Sichtbare Panels: ${sichtbar.join(', ') || 'keins'}`).toEqual(['panel-baecker']);
   });
+
+  test('TC-F9-01: Zweistellige Mengen, Markierung und Tabulator (Getränke)',
+    async ({ page }) => {
+      /* Regression: Jede Mengenänderung zeichnete die ganze Liste neu. Damit
+         verschwand das Feld, in dem gerade getippt wurde — die zweite Ziffer
+         kam nie an, der Fokus ging verloren und die Tabulatortaste landete im
+         Nichts. Zusätzlich verdeckten die Pfeilchen des Zahlenfelds die
+         zweite Stelle. */
+      await page.setViewportSize(KLEIN);
+      await oeffne(page, 'getraenke');
+      const felder = page.locator('#gk-list .gk-row [data-menge]');
+      const erstes = felder.first();
+
+      // Zweistellig tippen, ohne dass das Feld unter den Fingern verschwindet.
+      await erstes.click();
+      await page.keyboard.type('12');
+      await expect(erstes, 'Die zweite Ziffer kam nicht an').toHaveValue('12');
+      await expect(erstes, 'Das Feld hat den Fokus verloren').toBeFocused();
+
+      // Die Zahl muss auch sichtbar sein - kein Abschneiden durch Pfeilchen.
+      const passt = await erstes.evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
+      expect(passt, 'Der Wert wird im Feld abgeschnitten').toBe(true);
+
+      // Antippen markiert den Wert: Eine neue Zahl ersetzt ihn.
+      await erstes.click();
+      await page.keyboard.type('7');
+      await expect(erstes, 'Der alte Wert wurde nicht ersetzt').toHaveValue('7');
+
+      // Tabulator springt ins nächste Mengenfeld, nicht auf +/-.
+      await page.keyboard.press('Tab');
+      const zweites = felder.nth(1);
+      await expect(zweites,
+        'Die Tabulatortaste führt nicht ins nächste Mengenfeld').toBeFocused();
+    });
 
   test('TC-F3-01: Die Sendeschaltfläche gibt es genau einmal', async ({ page }) => {
     await page.setViewportSize(KLEIN);

@@ -277,7 +277,7 @@
       ? fuss.offsetHeight : 0) + 10 + 'px');
   }
 
-  function subTabs() {
+  function subTabs(extra) {
     function b(id, label, ic, cnt) {
       return '<button class="k-filter-btn' + (_sub === id ? ' active' : '')
         + '" onclick="KBaecker.sub(\'' + id + '\')">' + luc(ic, 14) + ' '
@@ -285,7 +285,7 @@
         + (cnt != null ? ' <span class="k-filter-count">' + cnt + '</span>' : '')
         + '</button>';
     }
-    return '<div class="k-filter-bar bk-sub">'
+    return '<div class="k-filter-bar bk-sub' + (extra ? ' ' + extra : '') + '">'
       + b('bestellung', 'Bestellung', 'croissant')
       + b('verlauf', 'Verlauf', 'history')
       + b('artikel', 'Artikel', 'list', _artikel.length || null)
@@ -589,6 +589,10 @@
     var zusatz = alle.filter(function (p) { return p.zusatz; });
 
     var h = '<div class="bk-fest">';
+    /* Bereichswechsel sichtbar im Kopf: Artikelverwaltung und Verlauf waren
+       nach dem Umbau nur noch im Blatt hinter dem „i" erreichbar und wurden
+       dort nicht gefunden. Auf dem Telefon bleibt er im Blatt. */
+    h += subTabs('nur-breit');
     h += tagesleiste();
     h += baeckerReiter();
     h += kontextZeile();

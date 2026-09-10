@@ -671,7 +671,9 @@ test.describe('Metzger-Bestellung – Einstellungen im CMS (F36)', () => {
 
   test('TC-F36-01: Kein Einstellungen-Reiter mehr im Kiosk', async ({ page }) => {
     await oeffneTab(page);
-    const reiter = await page.locator('#panel-metzgerbest .mb-sub')
+    // Der Bereichswechsel steht im Kopf (ab Tablet) und noch einmal im Blatt
+    // (Telefon). Geprüft wird die sichtbare Leiste im Kopf.
+    const reiter = await page.locator('#panel-metzgerbest .mb-subs.nur-breit .mb-sub')
       .allInnerTexts();
     expect(reiter.map((t) => t.trim())).toEqual(['Bestellung', 'Verlauf', 'Artikel']);
   });

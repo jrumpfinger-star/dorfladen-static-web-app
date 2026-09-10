@@ -3168,6 +3168,9 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
   /* Die Gruppenüberschrift kostete mit Rändern rund 40 px — eine dreiviertel
      Artikelzeile. Schrift und Farbe bleiben, nur die Luft weicht. */
   #panel-baecker .bk-grp{ margin:5px 0 3px; padding:3px 10px }
+  /* Auf dem Telefon steht der Bereichswechsel im Blatt („Artikel verwalten",
+     „Verlauf ansehen"), nicht im Kopf — dort fehlt der Platz. */
+  #panel-baecker .bk-sub.nur-breit{ display:none }
   /* Die Zeile bleibt 44 px bedienbar; nur die Luft um sie herum gibt nach.
      Vier vollständige Zeilen passen dadurch auch auf 640 px Höhe (F1). */
   #panel-baecker .bk-row{ margin-bottom:3px; padding:4px 9px }
@@ -3256,6 +3259,28 @@ html[data-theme="dark"] .bk-mehr{ background:var(--c-surf2, #1f2933); color:var(
   cursor:pointer;
 }
 .gk-mehr svg{ width:19px; height:19px }
+
+/* „Neue Bestellung": sichtbarer Weg zum nächsten Liefertermin, sobald der
+   aktuelle abgeschickt ist. Auf dem Telefon bleibt nur das Symbol. */
+.gk-neubest{
+  display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
+  min-height:var(--tap-min, 44px); padding:0 12px;
+  border-radius:var(--r-s);
+  border:1.5px solid var(--gr, #2e7d4f);
+  background:var(--gr-t, #f5faf7); color:var(--gr, #2e7d4f);
+  font:inherit; font-weight:600; font-size:13px; cursor:pointer; white-space:nowrap;
+}
+.gk-neubest svg{ width:17px; height:17px }
+.gk-blatt-hinweis{
+  margin:0 0 8px; font-size:12.5px; line-height:1.35; color:var(--mut, #688073);
+}
+
+/* Das Mengenfeld ist ein input[type=number]. Die Pfeilchen des Browsers
+   schoben sich über die 52 px breite Zelle — aus „10" wurde sichtbar „1(".
+   Sie entfallen (wie beim Bäcker), das Feld wird etwas breiter. */
+.gk-step input{ width:60px; -moz-appearance:textfield; appearance:textfield }
+.gk-step input::-webkit-outer-spin-button,
+.gk-step input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
 
 .gk-blatt{
   position:fixed;
@@ -3372,6 +3397,12 @@ html[data-theme="dark"] .gk-kontext{ background:var(--c-surf2, #1f2933) }
   border:1px solid var(--line, #e1ebe5); background:var(--karte, #fff);
   font:inherit; font-weight:600; cursor:pointer;
 }
+/* Der Bereichswechsel (Bestellung · Verlauf · Artikel) steht ab Tablet
+   sichtbar im festen Kopf — über ihn erreicht man die Artikelverwaltung.
+   Auf dem Telefon fehlt dafür der Platz; dort steht er im Blatt hinter dem
+   „i" (siehe Telefon-Abschnitte weiter unten). */
+.bk-sub.nur-breit, .mb-subs.nur-breit{ display:flex }
+
 .mb-subs.im-blatt, .mb-nur-tel{ display:none }
 .mb-blatt .mb-nur-tel{ display:block }
 
@@ -3379,6 +3410,8 @@ html[data-theme="dark"] .gk-kontext{ background:var(--c-surf2, #1f2933) }
    Artikelzeilen ganz sichtbar sind (Spec F1). Antippflächen bleiben ≥44 px. */
 @media (max-width:559px){
   #panel-metzgerbest .mb-days-lbl{ display:none }
+  /* Auf dem Telefon steht der Bereichswechsel im Blatt, nicht im Kopf. */
+  #panel-metzgerbest .mb-subs.nur-breit{ display:none }
   #panel-metzgerbest .mb-fest .mb-bar{ margin:5px 0 0 }
   #panel-metzgerbest .mb-kontext{ margin-top:4px }
   #panel-metzgerbest .mb-liste{ gap:2px 10px }
@@ -3473,6 +3506,10 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
   /* Die Preiszeile darf die Zeile nicht auf drei Zeilen aufblaehen. */
   #panel-getraenke .gk-pr{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
   #panel-getraenke .gk-sugg button{ white-space:nowrap; font-size:12px }
+  /* Auf dem Telefon trägt „Neue Bestellung" nur das Symbol — die Kontextzeile
+     hat neben dem „i" keinen Platz für Text. */
+  #panel-getraenke .gk-neubest{ padding:0 10px }
+  #panel-getraenke .gk-neubest .lang{ display:none }
   #panel-getraenke .gk-subs.im-blatt,
   #panel-getraenke .gk-nur-tel{ display:flex }
 }

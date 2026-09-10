@@ -357,6 +357,11 @@ window.KMetzgerBest = (function () {
      hinter dem „i". */
   function renderBestellung() {
     var h = '<div class="mb-fest">';
+    /* Der Bereichswechsel gehört sichtbar in den Kopf: Über ihn erreicht man
+       die Artikelverwaltung. Beim Umbau lag er nur noch im Blatt hinter dem
+       „i" — dort hat ihn niemand gesucht. Auf dem Telefon bleibt er im Blatt
+       (Platz), ab Tablet steht er wieder oben. */
+    h += subTabs('nur-breit');
     h += tagesleiste();
     h += kontextZeile();
     h += '<div class="mb-bar">'
