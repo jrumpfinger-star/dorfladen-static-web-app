@@ -21,6 +21,7 @@ dem die Kalenderwoche fuer den Betreff entsteht.
 import json
 import logging
 import os
+import statistics
 from datetime import date, datetime
 
 import msal
@@ -58,6 +59,11 @@ DEFAULT_CONFIG = {
 }
 
 MAX_MENGE = 99
+
+# „ueblich" ist der Median der Mengen aus den juengsten UEBLICH_FENSTER
+# gesendeten Bestellungen. Ein hartes Fenster (statt Zeitgewichtung wie beim
+# Metzger) genuegt hier: Getraenke werden selten und in ganzen Kisten bestellt.
+UEBLICH_FENSTER = 8
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -309,6 +315,59 @@ def load_artikel(url, hdrs):
 def save_artikel(url, hdrs, rec_id, artikel):
     return write_json(url, hdrs, KEY_ARTIKEL, rec_id, {"artikel": artikel},
                       "Getr\u00e4nke Artikel")
+
+
+def _stat_schluessel(nummer, name):
+    """Gemeinsamer Schluessel fuer Katalog und Position (Nummer, sonst Name)."""
+    nr = str(nummer or "").strip()
+    return nr if nr else (name or "").strip().lower()
+
+
+def statistik_aktualisieren(artikel, alle_bestellungen):
+    """`bestellungen` und `ueblich` je Artikel aus der Historie neu ableiten.
+
+    Abgeleitet wird aus dem Order-Store, nicht als loser Zaehler (Spec F6):
+    So bleibt der Wert nach Korrekturen korrekt (ein Termin zaehlt genau
+    einmal, Spec F5) und der erste Lauf fuellt zugleich den Bestand (Backfill,
+    Spec F7).
+
+    - ``bestellungen``: Zahl verschiedener gesendeter/korrigierter Termine, in
+      denen der Artikel mit Menge > 0 vorkam.
+    - ``ueblich``: kaufmaennisch auf ganze Kisten gerundeter Median der Mengen
+      aus den juengsten ``UEBLICH_FENSTER`` dieser Termine; ``None``, wenn
+      keiner vorliegt.
+
+    Einmalige Zusatzpositionen (``zusatz``) zaehlen nicht (Spec F4).
+    Gibt die (in place) veraenderte Artikelliste zurueck.
+    """
+    gesendet = [o for o in (alle_bestellungen or [])
+                if o.get("status") in (STATUS_GESENDET, STATUS_KORRIGIERT)]
+    gesendet.sort(key=lambda o: o.get("datum", ""), reverse=True)  # neueste zuerst
+
+    counts = {}          # schluessel -> Zahl der Termine
+    werte = {}           # schluessel -> Mengen, neueste zuerst
+    for o in gesendet:
+        gesehen = set()
+        for roh in o.get("positionen", []):
+            p = normalisiere_position(roh)
+            if p.get("zusatz") or not bestellt(p):
+                continue
+            key = _stat_schluessel(p.get("nummer"), p.get("name"))
+            if not key or key in gesehen:
+                continue
+            gesehen.add(key)
+            counts[key] = counts.get(key, 0) + 1
+            werte.setdefault(key, []).append(p["menge"])
+
+    for a in artikel:
+        if a.get("zusatz"):
+            continue
+        key = _stat_schluessel(a.get("nummer"), a.get("name"))
+        reihe = werte.get(key, [])[:UEBLICH_FENSTER]
+        a["bestellungen"] = counts.get(key, 0)
+        # Kaufmaennisch runden (round-half-up); Mengen sind stets positiv.
+        a["ueblich"] = int(statistics.median(reihe) + 0.5) if reihe else None
+    return artikel
 
 
 def artikel_nach_nummer(artikel):

@@ -217,6 +217,17 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     order["protokoll"] = protokoll
     store.save_order(url, hdrs, rec_id, order)
 
+    # Katalog nachfuehren: „ueblich" und „bestellungen" spiegeln jetzt das
+    # laufende Bestellverhalten (Spec getraenke-ueblich-lernen, F1). Schlaegt
+    # das fehl, ist die Bestellung trotzdem versandt - die Statistik ist nur
+    # eine Hilfe, kein Teil des Auftrags.
+    try:
+        art_id, artikel = store.load_artikel(url, hdrs)
+        store.statistik_aktualisieren(artikel, store.bestellungen(url, hdrs))
+        store.save_artikel(url, hdrs, art_id, artikel)
+    except Exception as e:
+        logging.warning(f"[getraenke] Statistik nicht aktualisiert: {e}")
+
     return _ok({
         "status": order["status"],
         "empfaenger": cfg.get("empfaenger"),
