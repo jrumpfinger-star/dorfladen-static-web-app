@@ -60,3 +60,9 @@ B*cker/
 # Kundennummer und Preisen). Basis fuer den Katalog- und Vorschlagsaufbau
 # ueber tools/metzger_*.py, gehoert aus demselben Grund nicht ins Repository.
 Metzger Mair/
+
+# Getraenke-Kratzer-Rechnungen und -Bestellungen (Geschaeftskorrespondenz mit
+# Kundennummer und Preisen). Basis fuer den Katalogaufbau ueber
+# tools/getraenke_katalog_build.py, gehoert aus demselben Grund nicht ins
+# Repository.
+Getr*nke/

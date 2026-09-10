@@ -883,6 +883,64 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
       </div>
     </div>
+
+    <!-- Getränke-Bestellung (Getränke Kratzer) – specs/getraenke-bestellung/spec.md -->
+    <div class="cms-card" style="margin-top:18px">
+      <div class="cms-card-header" style="background:var(--gr)!important">&#127870; Getr&auml;nke-Bestellung</div>
+      <div class="cms-card-body" style="display:flex;flex-direction:column;gap:12px">
+        <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0">Steuert den Tab &bdquo;Getr&auml;nke&ldquo; im Kiosk. Hier wird <em>unregelm&auml;&szlig;ig</em> bestellt &ndash; es gibt deshalb keine festen Bestelltage, sondern einen frei w&auml;hlbaren Liefertermin.</p>
+
+        <div id="gkcfg-status" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem"></div>
+
+        <div>
+          <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Name des Lieferanten</label>
+          <input type="text" id="gkcfg-name" class="cms-input" placeholder="Getr&auml;nke Kratzer">
+          <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Erscheint im Kiosk.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Kunden-Nr.</label>
+            <input type="text" id="gkcfg-kdnr" class="cms-input" placeholder="15554">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Steht in jeder Bestellmail.</div>
+          </div>
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Tour</label>
+            <input type="text" id="gkcfg-tour" class="cms-input" placeholder="1">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Optional &ndash; steht neben der Kunden-Nr.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Bestellung geht an</label>
+            <input type="text" id="gkcfg-empfaenger" class="cms-input" placeholder="bestellung@getraenke-kratzer.de">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Empf&auml;nger der Bestellmail &ndash; hier zum Testen die eigene Adresse eintragen.</div>
+          </div>
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Anrede im Mailtext</label>
+            <input type="text" id="gkcfg-empfaenger-name" class="cms-input" placeholder="Getr&auml;nke Kratzer">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Adresse des Lieferanten</label>
+          <input type="text" id="gkcfg-lieferant" class="cms-input" placeholder="bestellung@getraenke-kratzer.de">
+          <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Nur zum Abgleich: Weicht der Empf&auml;nger davon ab, l&auml;uft der Testbetrieb.</div>
+        </div>
+
+        <div id="gkcfg-testhinweis" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem;background:var(--amb-l);color:var(--amb);border:1px solid var(--amb-b)">
+          <strong>Testbetrieb.</strong> Bestellungen gehen an die oben eingetragene Adresse, <em>nicht</em> an den Getr&auml;nkelieferanten. Im Kiosk ist das gekennzeichnet.
+          <button class="cms-btn cms-btn-sm cms-btn-gray" data-action="gkcfgEchtAdresse" style="margin-left:8px">An den Lieferanten umstellen</button>
+        </div>
+        <div id="gkcfg-echthinweis" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem;background:var(--gr-l);color:var(--gr-d);border:1px solid var(--gr-l)">
+          <strong>Scharf geschaltet.</strong> Bestellungen gehen direkt an den Getr&auml;nkelieferanten.
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="cms-btn cms-btn-primary" id="gkcfg-save" data-action="gkcfgSave">&#128190; Getr&auml;nke-Einstellungen speichern</button>
+          <span id="gkcfg-saved-hint" style="display:none;font-size:.82rem;color:var(--gr);font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
+      
   </div>
 
   <!-- Statistik / Analytics -->

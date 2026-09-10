@@ -1083,6 +1083,7 @@
     if(name==='settings' && !_kontaktLoaded) loadKontaktdaten();
     if(name==='settings' && !_bkcfgLoaded) loadBaeckerConfig();
     if(name==='settings' && !_mbcfgLoaded) loadMetzgerBestConfig();
+    if(name==='settings' && !_gkcfgLoaded) loadGetraenkeConfig();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
@@ -8220,6 +8221,8 @@
       case 'bkcfgEchtAdresse':bkcfgEchtAdresse();break;
       case 'mbcfgSave':saveMetzgerBestConfig();break;
       case 'mbcfgEchtAdresse':mbcfgEchtAdresse();break;
+      case 'gkcfgSave':saveGetraenkeConfig();break;
+      case 'gkcfgEchtAdresse':gkcfgEchtAdresse();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
@@ -9744,6 +9747,137 @@
       toast(_cmsErr(e),'error');
     }).then(function(){
       if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Metzger-Einstellungen speichern';}
+    });
+  }
+
+  // === GETRAENKE-BESTELLUNG (Getraenke Kratzer) ====================
+  // Wie beim Metzger: Stammdaten gehoeren ins CMS, nicht in den Kiosk.
+  // Es gibt hier bewusst keine Bestelltage - bei Kratzer wird
+  // unregelmaessig bestellt (specs/getraenke-bestellung/spec.md, F1).
+  var _gkcfgLoaded=false, _gkcfg={};
+
+  function gkcfgStatus(text,art){
+    var el=document.getElementById('gkcfg-status');
+    if(!el) return;
+    if(!text){el.style.display='none';return;}
+    el.style.display='block';
+    el.textContent=text;
+    var fehler=art==='fehler';
+    el.style.background=fehler?'#fef2f2':'#eff6ff';
+    el.style.color=fehler?'#b91c1c':'#1d4ed8';
+    el.style.border='1px solid '+(fehler?'#fecaca':'#bfdbfe');
+  }
+
+  /* Testbetrieb: Solange der Empfaenger nicht der Lieferant selbst ist,
+     gehen Bestellungen an die Testadresse. */
+  function gkcfgHinweis(){
+    var el=document.getElementById('gkcfg-empfaenger');
+    var lf=document.getElementById('gkcfg-lieferant');
+    if(!el||!lf) return;
+    var test=document.getElementById('gkcfg-testhinweis');
+    var scharf=document.getElementById('gkcfg-echthinweis');
+    var ziel=(lf.value||'').trim().toLowerCase();
+    var ist=(el.value||'').trim().toLowerCase();
+    var gleich=!!ziel&&ist===ziel;
+    if(test) test.style.display=gleich?'none':'block';
+    if(scharf) scharf.style.display=gleich?'block':'none';
+  }
+
+  function gkcfgEchtAdresse(){
+    var el=document.getElementById('gkcfg-empfaenger');
+    var lf=document.getElementById('gkcfg-lieferant');
+    var name=document.getElementById('gkcfg-empfaenger-name');
+    if(!el||!lf) return;
+    var ziel=(lf.value||'').trim();
+    if(!ziel){ gkcfgStatus('Bitte zuerst die Adresse des Lieferanten eintragen.','fehler'); return; }
+    el.value=ziel;
+    if(name&&!(name.value||'').trim()){
+      var n=document.getElementById('gkcfg-name');
+      name.value=(n&&n.value)||'Getr\u00e4nke Kratzer';
+    }
+    gkcfgHinweis();
+  }
+
+  function gkcfgFelderFuellen(){
+    var c=_gkcfg||{};
+    function v(id,wert){var e=document.getElementById(id);if(e)e.value=wert||'';}
+    v('gkcfg-name',c.name);
+    v('gkcfg-kdnr',c.kd_nr);
+    v('gkcfg-tour',c.tour);
+    v('gkcfg-empfaenger',c.empfaenger);
+    v('gkcfg-empfaenger-name',c.empfaenger_name);
+    v('gkcfg-lieferant',c.lieferant_mail);
+    gkcfgHinweis();
+  }
+
+  function gkcfgFelderLesen(){
+    function v(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';}
+    return {
+      name:v('gkcfg-name'),
+      kd_nr:v('gkcfg-kdnr'),
+      tour:v('gkcfg-tour'),
+      empfaenger:v('gkcfg-empfaenger'),
+      empfaenger_name:v('gkcfg-empfaenger-name'),
+      lieferant_mail:v('gkcfg-lieferant')
+    };
+  }
+
+  function loadGetraenkeConfig(){
+    if(_gkcfgLoaded) return;
+    _gkcfgLoaded=true;
+    gkcfgStatus('Einstellungen werden geladen\u2026');
+    fetch(API+'/getraenke-order/config',{headers:_cmsAuthHeaders()})
+      .then(function(r){return r.json();}).then(function(res){
+        if(!res||!res.success||!res.config) throw new Error('config');
+        _gkcfg=res.config;
+        gkcfgFelderFuellen();
+        gkcfgStatus('');
+        ['gkcfg-empfaenger','gkcfg-lieferant'].forEach(function(id){
+          var e=document.getElementById(id);
+          if(e) e.addEventListener('input',gkcfgHinweis);
+        });
+      }).catch(function(){
+        _gkcfgLoaded=false;   // beim naechsten Oeffnen erneut versuchen
+        gkcfgStatus('Die Getr\u00e4nke-Einstellungen konnten nicht geladen werden.','fehler');
+      });
+  }
+
+  function saveGetraenkeConfig(){
+    var c=gkcfgFelderLesen();
+    var mail=c.empfaenger;
+    if(mail.indexOf('@')<0||mail.split('@').pop().indexOf('.')<0){
+      gkcfgStatus('Bitte eine g\u00fcltige E-Mail-Adresse angeben.','fehler');return;
+    }
+    if(c.lieferant_mail&&(c.lieferant_mail.indexOf('@')<0
+        ||c.lieferant_mail.split('@').pop().indexOf('.')<0)){
+      gkcfgStatus('Die Adresse des Lieferanten ist keine g\u00fcltige E-Mail-Adresse.','fehler');return;
+    }
+    if(!c.kd_nr){
+      gkcfgStatus('Die Kunden-Nr. geh\u00f6rt in jede Bestellung.','fehler');return;
+    }
+    var btn=document.getElementById('gkcfg-save');
+    var hint=document.getElementById('gkcfg-saved-hint');
+    if(btn){btn.disabled=true;btn.textContent='\u23F3 Speichern\u2026';}
+    fetch(API+'/getraenke-order/config',{
+      method:'POST',
+      headers:_cmsAuthHeaders(),
+      body:JSON.stringify({config:c})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res&&res.success){
+        if(res.config) _gkcfg=res.config;
+        gkcfgStatus('');
+        gkcfgHinweis();
+        toast('Getr\u00e4nke-Einstellungen gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        gkcfgStatus((res&&res.error)||'Speichern fehlgeschlagen.','fehler');
+        toast('Fehler: '+((res&&res.error)||'Speichern fehlgeschlagen.'),'error');
+      }
+    }).catch(function(e){
+      gkcfgStatus('Netzwerkfehler \u2013 bitte erneut versuchen.','fehler');
+      toast(_cmsErr(e),'error');
+    }).then(function(){
+      if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Getr\u00e4nke-Einstellungen speichern';}
     });
   }
 

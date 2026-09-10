@@ -1362,3 +1362,199 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
 .k-header-link i,.k-header-link svg{width:18px;height:18px}
 .k-header-sep{width:1px;height:26px;background:rgba(255,255,255,.28);flex-shrink:0}
 @media(max-width:640px){.k-header-admin .k-header-admin-lbl,.k-header-link .k-header-link-lbl{display:none}.k-header-admin,.k-header-link{padding:8px}}
+
+/* === Getraenke-Bestellung (specs/getraenke-bestellung/spec.md) ===
+   Ladenbestellung bei Getraenke Kratzer. Eigener Namensraum `gk-`.
+   Anders als Baecker und Metzger ohne Tagesleiste: Bei Kratzer wird
+   unregelmaessig bestellt, es gibt einen freien Liefertermin (Spec F1). */
+#panel-getraenke b,#panel-getraenke strong{font-weight:600}
+.gk{--gk-touch:44px;--gk-spalte:460px;--gk-namensp:250px;padding-bottom:8px}
+.gk-subs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.gk-sub{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;color:#6b7280;
+  border-radius:10px;padding:0 14px;min-height:42px;font-size:13px;font-weight:600;cursor:pointer}
+.gk-sub.on{border-color:#2d5016;background:#2d5016;color:#fff}
+
+/* Kopf: Liefertermin, Suche, Filter, Sprungleiste */
+.gk-head{background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:10px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.gk-termin{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.gk-termin label{font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:#9aa2ad}
+.gk-termin input[type=date]{min-height:var(--gk-touch);border:1.5px solid var(--c-border,#e5e7eb);
+  border-radius:10px;padding:0 10px;font-size:14px;font-weight:600;font-family:inherit}
+.gk-kw{background:#eff6ff;color:#1d4ed8;border-radius:16px;padding:5px 12px;
+  font-size:12px;font-weight:600;white-space:nowrap}
+.gk-take{margin-left:auto;border:1.5px solid var(--c-border,#e5e7eb);background:#fff;
+  border-radius:10px;min-height:var(--gk-touch);padding:0 14px;font-size:12px;
+  font-weight:600;cursor:pointer;white-space:nowrap;color:#1f2937}
+.gk-take:hover{border-color:#2e7d4f;color:#2e7d4f}
+.gk-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.gk-bar input[type=search]{flex:1;min-width:160px;min-height:var(--gk-touch);
+  padding:6px 10px;border:1.5px solid var(--c-border,#e5e7eb);border-radius:10px;
+  font-size:14px;font-family:inherit}
+.gk-tgl{display:flex;border:1.5px solid var(--c-border,#e5e7eb);border-radius:10px;overflow:hidden}
+.gk-tgl button{border:0;background:#fff;padding:0 12px;min-height:var(--gk-touch);
+  font-size:12px;font-weight:600;cursor:pointer;color:#6b7280;white-space:nowrap}
+.gk-tgl button.on{background:#2e7d4f;color:#fff}
+.gk-jump{display:flex;gap:5px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+.gk-jump button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;border-radius:16px;
+  padding:0 12px;min-height:var(--gk-touch);font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;color:#6b7280}
+.gk-jump button:hover{border-color:#2e7d4f;color:#2e7d4f}
+
+/* Statuszeilen */
+.gk-status{background:#fff;border-radius:10px;padding:9px 12px;margin-bottom:8px;
+  font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.gk-status.gesendet{background:#f0fdf4}
+.gk-test{background:#fffbeb;border:1.5px solid #fcd34d;color:#92400e;border-radius:10px;
+  padding:7px 11px;margin-bottom:8px;font-size:12px;font-weight:600;line-height:1.45}
+
+/* Liste: mehrspaltig, sobald Platz ist - bei 50 Zeilen halbiert das die Scrollstrecke */
+.gk-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--gk-spalte),1fr));
+  gap:4px 10px;align-items:start}
+.gk-grp{grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:#6b7280;margin:12px 0 2px;padding:0 0 4px 2px;
+  border-bottom:1px solid var(--c-border,#e5e7eb);display:flex;gap:8px;align-items:baseline}
+.gk-grp .gsum{margin-left:auto;font-weight:600;color:#2e7d4f;text-transform:none;letter-spacing:0}
+/* Das Gebinde entscheidet ueber Kistengroesse und Pfand und steht deshalb in
+   einer eigenen, senkrecht scanbaren Spalte - wie die Nummer beim Metzger. */
+.gk-row{background:#fff;border-radius:8px;padding:4px 8px;box-shadow:0 1px 2px rgba(0,0,0,.05);
+  border-left:4px solid transparent;display:grid;grid-template-columns:64px minmax(0,1fr);
+  gap:4px 8px;align-items:center}
+.gk-row.has{border-left-color:#2e7d4f}
+.gk-row.chg{border-left-color:#e65100;background:#fffbeb}
+.gk-geb{font-size:12px;font-weight:600;color:#6b7280;text-align:right;
+  font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;
+  border-right:1px solid var(--c-border,#e5e7eb);padding-right:8px;align-self:stretch;
+  display:flex;align-items:center;justify-content:flex-end;min-height:40px}
+.gk-row.has .gk-geb{color:#1f2937}
+.gk-zeile{display:grid;grid-template-columns:minmax(120px,var(--gk-namensp)) minmax(0,1fr);
+  gap:8px;align-items:center}
+.gk-nm{font-size:14px;font-weight:600;line-height:1.2;min-width:0}
+.gk-nm .gk-pr{display:block;font-size:11px;font-weight:600;color:#6b7280;
+  font-variant-numeric:tabular-nums}
+.gk-tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;
+  border-radius:7px;margin-left:5px;vertical-align:middle}
+.gk-tag.vor{background:#eff6ff;color:#1d4ed8}
+.gk-tag.chg{background:#fef3c7;color:#92400e}
+.gk-tag.ohne{background:#fee2e2;color:#991b1b}
+.gk-tag.rech{background:#f3f4f6;color:#4b5563}
+.gk-tag.dauer{background:#ede9fe;color:#5b21b6}
+.gk-tag.einmal{background:#fef3c7;color:#92400e}
+.gk-tag.aus{background:#f3f4f6;color:#6b7280}
+.gk-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;min-width:0}
+
+/* Mengeneingabe: Getraenke laufen ausschliesslich in ganzen Kisten -
+   ein Schrittzaehler genuegt (plan.md, Leitentscheidung 2). */
+.gk-step{display:flex;align-items:center;border:1.5px solid var(--c-border,#e5e7eb);
+  border-radius:10px;overflow:hidden;background:#fff}
+.gk-step button{border:0;background:#f9fafb;min-width:40px;min-height:38px;
+  font-size:18px;font-weight:600;cursor:pointer;color:#6b7280;line-height:1}
+.gk-step button:hover:not(:disabled){background:#dcfce7;color:#166534}
+.gk-step button:disabled{opacity:.3;cursor:not-allowed}
+.gk-step input{border:0;width:52px;min-height:38px;text-align:center;font-size:15px;
+  font-weight:600;font-variant-numeric:tabular-nums;font-family:inherit;background:transparent}
+.gk-row.has .gk-step{border-color:#2e7d4f}
+.gk-row.has .gk-step input{color:#166534}
+.gk-sugg{display:flex;gap:5px;flex-wrap:wrap}
+.gk-sugg button{border:1.5px solid #1d4ed8;background:#eff6ff;color:#1d4ed8;
+  border-radius:16px;padding:0 11px;min-height:34px;font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap}
+.gk-sugg button.on{border-color:#2e7d4f;background:#dcfce7;color:#166534}
+.gk-sugg button .hak{margin-right:4px}
+.gk-kisteninfo{font-size:11px;font-weight:600;color:#6b7280;white-space:nowrap}
+.gk-empty{grid-column:1/-1;background:#fff;border-radius:10px;padding:18px;
+  text-align:center;color:#6b7280;font-size:13px;line-height:1.5}
+
+/* Fussleiste mit den Summen */
+.gk-foot{position:sticky;bottom:0;background:#fff;border-radius:12px;padding:9px 12px;
+  margin-top:12px;box-shadow:0 -2px 10px rgba(0,0,0,.09);display:flex;gap:8px;
+  flex-wrap:wrap;align-items:center;z-index:20}
+.gk-st{font-size:12px;font-weight:600;color:#6b7280;white-space:nowrap}
+.gk-st b{color:#1f2937;font-size:14px}
+.gk-send{margin-left:auto;background:#2e7d4f;color:#fff;border:0;border-radius:10px;
+  min-height:var(--gk-touch);padding:0 20px;font-size:14px;font-weight:600;cursor:pointer}
+.gk-send:disabled{background:#cbd5e1;cursor:not-allowed}
+.gk-leeren{border:1.5px solid #fca5a5;background:#fff;color:#dc2626;border-radius:10px;
+  min-height:var(--gk-touch);padding:0 14px;font-size:12px;font-weight:600;cursor:pointer}
+.gk-neuknopf{border:1.5px dashed #cbd5e1;background:#fff;color:#6b7280;border-radius:10px;
+  min-height:var(--gk-touch);padding:0 14px;font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap}
+.gk-neuknopf:hover{border-color:#2e7d4f;color:#2e7d4f;border-style:solid}
+
+/* Verlauf und Artikelpflege */
+.gk-panel{background:#fff;border-radius:12px;padding:10px 12px;margin-top:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.gk-panel h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;
+  color:#6b7280;margin:0 0 8px}
+.gk-verlauf{display:flex;gap:6px;flex-wrap:wrap}
+.gk-verlauf div{border:1.5px solid var(--c-border,#e5e7eb);border-radius:10px;
+  padding:6px 10px;font-size:12px;font-weight:600;min-width:150px}
+.gk-verlauf div span{display:block;font-size:11px;font-weight:600;color:#6b7280}
+.gk-arow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 9px;
+  background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin-bottom:4px}
+.gk-arow.aus{opacity:.55}
+.gk-arow .gk-anm{font-weight:600;font-size:13px;flex:1;min-width:120px}
+.gk-arow .gk-anr{font-size:11px;color:#6b7280;font-family:ui-monospace,Consolas,monospace}
+.gk-arow button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;color:#6b7280;
+  border-radius:9px;min-height:38px;padding:0 12px;font-size:12px;font-weight:600;cursor:pointer}
+.gk-arow button:hover{border-color:#2e7d4f;color:#2e7d4f}
+
+/* Blaetter: Versandvorschau und Artikel anlegen (Constitution 6 - kein confirm) */
+.gk-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;
+  display:flex;align-items:center;justify-content:center;padding:14px}
+.gk-overlay[hidden]{display:none}
+.gk-dlg{background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:88vh;
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);
+  color:#1f2937;font-size:14px}
+.gk-dlg header{padding:12px 14px;border-bottom:1px solid var(--c-border,#e5e7eb)}
+.gk-dlg header h3{margin:0;font-size:15px}
+.gk-dlg header p{margin:3px 0 0;font-size:12px;color:#6b7280;line-height:1.45}
+.gk-dlg .gk-body{padding:12px 14px;overflow:auto}
+.gk-dlg pre{margin:0;background:#f8fafc;border:1px solid var(--c-border,#e5e7eb);
+  border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.5;
+  font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.gk-dlg footer{padding:10px 14px;border-top:1px solid var(--c-border,#e5e7eb);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.gk-dlg footer .ok{background:#2e7d4f;color:#fff;border:0;border-radius:10px;
+  min-height:var(--gk-touch);padding:0 18px;font-size:14px;font-weight:600;cursor:pointer}
+.gk-dlg footer .ok:disabled{background:#cbd5e1;cursor:not-allowed}
+.gk-dlg footer .zu{margin-left:auto;border:1.5px solid var(--c-border,#e5e7eb);background:#fff;
+  color:#6b7280;border-radius:10px;min-height:var(--gk-touch);padding:0 14px;
+  font-size:13px;font-weight:600;cursor:pointer}
+.gk-feld{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;min-width:0}
+.gk-feld label{font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:#9aa2ad}
+.gk-feld input,.gk-feld select{min-height:var(--gk-touch);border:1.5px solid var(--c-border,#e5e7eb);
+  border-radius:10px;padding:0 10px;font-size:14px;font-family:inherit;background:#fff;
+  color:#1f2937;width:100%}
+.gk-feld .hilf{font-size:11px;color:#6b7280;line-height:1.4}
+.gk-feldreihe{display:flex;gap:10px;flex-wrap:wrap}
+.gk-feldreihe .gk-feld{flex:1 1 150px}
+.gk-haken{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#6b7280;
+  line-height:1.45;cursor:pointer;margin-bottom:10px}
+.gk-haken input{width:20px;height:20px;margin:1px 0 0;flex:0 0 auto;cursor:pointer}
+.gk-haken b{color:#1f2937}
+.gk-warn{background:#fffbeb;border:1.5px solid #fcd34d;color:#92400e;border-radius:10px;
+  padding:8px 10px;font-size:12px;font-weight:600;line-height:1.45;margin-bottom:10px}
+.gk-warn[hidden]{display:none}
+.gk-vorschau{background:#f8fafc;border:1px solid var(--c-border,#e5e7eb);border-radius:10px;
+  padding:9px 11px;font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#6b7280}
+.gk-vorschau b{color:#166534}
+.gk-toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:#1f2937;
+  color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;
+  z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.28);max-width:calc(100% - 28px);text-align:center}
+
+/* Groessenklassen - Constitution Prinzip 7 */
+@media(max-width:700px){
+  .gk{--gk-spalte:100%;--gk-namensp:0px}
+  .gk-zeile{grid-template-columns:minmax(0,1fr)}
+  .gk-chips{margin-top:3px}
+  .gk-st{white-space:normal}
+  .gk-foot{padding:7px 10px;gap:6px;row-gap:2px}
+  .gk-take{margin-left:0;flex:1 1 100%}
+  .gk-send{margin-left:0;flex:1 1 100%}
+}
+@media(min-width:701px) and (max-width:1100px){
+  .gk{--gk-spalte:100%;--gk-namensp:210px}
+}

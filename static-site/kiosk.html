@@ -79,6 +79,11 @@
     <span class="k-tab-lbl"><span class="lang">Metzger Mair</span><span class="kurz">Mair</span></span>
     <span class="k-tab-badges" id="badges-metzgerbest"></span>
   </div>
+  <div class="k-tab" data-tab="getraenke" onclick="K.switchTab('getraenke')">
+    <span class="k-tab-icon"><i data-lucide="cup-soda"></i></span>
+    <span class="k-tab-lbl"><span class="lang">Getränke</span><span class="kurz">Getränke</span></span>
+    <span class="k-tab-badges" id="badges-getraenke"></span>
+  </div>
   <div class="k-tab" data-tab="kontakt" onclick="K.switchTab('kontakt')" style="display:none">
     <span class="k-tab-icon"><i data-lucide="message-square"></i></span>
     <span class="k-tab-lbl"><span class="lang">Kontakt</span><span class="kurz">Kontakt</span></span>
@@ -196,6 +201,13 @@
        Kundenvorbestellungen. -->
   <div class="k-panel" id="panel-metzgerbest">
     <div id="metzgerbest-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="ham" style="width:24px;height:24px"></i></div>Laden…</div></div>
+  </div>
+
+  <!-- Ladenbestellung bei Getränke Kratzer (specs/getraenke-bestellung/spec.md).
+       Ohne Bestelltagsleiste: Hier wird unregelmäßig bestellt, deshalb steht
+       im Kopf ein frei wählbarer Liefertermin. -->
+  <div class="k-panel" id="panel-getraenke">
+    <div id="getraenke-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="cup-soda" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -815,6 +827,7 @@ var K = (function(){
     if(id==='kontakt' && window.KKontakt) window.KKontakt.onShow();
     if(id==='baecker' && window.KBaecker) window.KBaecker.onShow();
     if(id==='metzgerbest' && window.KMetzgerBest) window.KMetzgerBest.onShow();
+    if(id==='getraenke' && window.KGetraenke) window.KGetraenke.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -823,8 +836,8 @@ var K = (function(){
   // wurde – sonst bliebe er nach dem Ausrollen unsichtbar, bis jemand das
   // Flag im CMS anlegt.
   function applyKioskFeatures(){
-    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',metzgerbest:'kiosk_metzgerbest'};
-    var defaultAn={baecker:true,metzgerbest:true};
+    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',metzgerbest:'kiosk_metzgerbest',getraenke:'kiosk_getraenke'};
+    var defaultAn={baecker:true,metzgerbest:true,getraenke:true};
     function setTabs(flags,pickDefault){
       Object.keys(map).forEach(function(tab){
         var flag=flags[map[tab]];
@@ -4872,6 +4885,7 @@ var K = (function(){
 <script src="/js/kiosk-notiz.js"></script>
 <script src="/js/kiosk-baecker.js"></script>
 <script src="/js/kiosk-metzger-bestellung.js"></script>
+<script src="/js/kiosk-getraenke.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script src="/js/kiosk-neu-shell.js"></script>
@@ -4931,7 +4945,7 @@ var K = (function(){
     // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest')) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen

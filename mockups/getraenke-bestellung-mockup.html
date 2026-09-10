@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Getränke Kratzer — Bestellung (Mockup)</title>
+<style>
+:root{
+  --pri:#2d5016;--green:#2e7d4f;--green-light:#dcfce7;--red:#dc2626;
+  --orange:#e65100;--yellow:#f59e0b;--blue:#1d4ed8;--blue-light:#eff6ff;
+  --bg:#f0f2f5;--card:#fff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;
+  --r:12px;--touch:44px;
+  --spalte:460px;--namensp:250px;
+}
+*{box-sizing:border-box}
+body b,body strong{font-weight:600}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:12px;padding-bottom:120px}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+.sub b{color:var(--text)}
+
+/* ---- Kopfbereich ---- */
+.head{background:var(--card);border-radius:var(--r);padding:10px 12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px;position:sticky;top:0;z-index:20}
+/* Bei Kratzer wird unregelmässig bestellt: Es gibt keine festen Bestelltage
+   wie beim Bäcker. Statt einer Tagesleiste steht deshalb ein freier
+   Liefertermin im Kopf, aus dem sich die Kalenderwoche für den Betreff ergibt. */
+.termin{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.termin label{font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:#9aa2ad}
+.termin input[type=date]{min-height:var(--touch);border:1.5px solid var(--border);
+  border-radius:10px;padding:0 10px;font-size:14px;font-weight:600;font-family:inherit}
+.kw{background:var(--blue-light);color:var(--blue);border-radius:16px;
+  padding:5px 12px;font-size:12px;font-weight:600;white-space:nowrap}
+.termin .take{margin-left:auto}
+.take{border:1.5px solid var(--border);background:#fff;border-radius:10px;
+  min-height:var(--touch);padding:0 14px;font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap;color:var(--text)}
+.take:hover{border-color:var(--green);color:var(--green)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.bar input[type=search]{flex:1;min-width:160px;min-height:var(--touch);
+  padding:6px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px}
+.tgl{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+.tgl button{border:0;background:#fff;padding:0 12px;min-height:var(--touch);
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);white-space:nowrap}
+.tgl button.on{background:var(--green);color:#fff}
+.jump{display:flex;gap:5px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+.jump button{border:1.5px solid var(--border);background:#fff;border-radius:16px;
+  padding:0 12px;min-height:var(--touch);font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;color:var(--muted)}
+.jump button:hover{border-color:var(--green);color:var(--green)}
+
+/* ---- Liste ----
+   Wie beim Metzger ein Raster, das sich nach der Breite richtet: eine Spalte
+   auf dem Handy, mehrere auf dem Tablet. Bei 50 Zeilen halbiert das die
+   Scrollstrecke. Gruppentitel spannen immer über alle Spalten. */
+#liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--spalte),1fr));
+  gap:4px 10px;align-items:start}
+.grp{grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);margin:12px 0 2px;padding-left:2px;
+  border-bottom:1px solid var(--border);padding-bottom:4px;
+  display:flex;gap:8px;align-items:baseline}
+.grp .gsum{margin-left:auto;font-weight:600;color:var(--green);text-transform:none;
+  letter-spacing:0}
+/* Das Gebinde steht in einer eigenen, rechtsbündigen Spalte: Es entscheidet
+   über Kistengrösse und Pfand und muss senkrecht scanbar sein — beim Metzger
+   erfüllt die Artikelnummer dieselbe Aufgabe. */
+.row{background:var(--card);border-radius:8px;padding:4px 8px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);border-left:4px solid transparent;
+  display:grid;grid-template-columns:64px minmax(0,1fr);gap:4px 8px;align-items:center}
+.row.has{border-left-color:var(--green)}
+.row.chg{border-left-color:var(--orange);background:#fffbeb}
+.geb{font-size:12px;font-weight:600;color:var(--muted);text-align:right;
+  font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;
+  border-right:1px solid var(--border);padding-right:8px;align-self:stretch;
+  display:flex;align-items:center;justify-content:flex-end;min-height:40px}
+.row.has .geb{color:var(--text)}
+.zeile{display:grid;grid-template-columns:minmax(120px,var(--namensp)) minmax(0,1fr);
+  gap:8px;align-items:center}
+.nm{font-size:14px;font-weight:600;line-height:1.2;min-width:0}
+.nm .pr{display:block;font-size:11px;font-weight:600;color:var(--muted);
+  font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;
+  border-radius:7px;margin-left:5px;vertical-align:middle}
+.tag.vor{background:var(--blue-light);color:var(--blue)}
+.tag.chg{background:#fef3c7;color:#92400e}
+.tag.neu{background:#fee2e2;color:#991b1b}
+.tag.rech{background:#f3f4f6;color:#4b5563}
+.tag.dauer{background:#ede9fe;color:#5b21b6}
+.tag.einmal{background:#fef3c7;color:#92400e}
+
+/* ---- Formularfelder im Anlege-Dialog ---- */
+.feld{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;min-width:0}
+.feld label{font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:#9aa2ad}
+.feld input,.feld select{min-height:var(--touch);border:1.5px solid var(--border);
+  border-radius:10px;padding:0 10px;font-size:14px;font-family:inherit;
+  background:#fff;color:var(--text);width:100%}
+.feld input:focus,.feld select:focus{outline:2px solid var(--blue);outline-offset:1px}
+.feld .hilf{font-size:11px;color:var(--muted)}
+.feldreihe{display:flex;gap:10px;flex-wrap:wrap}
+.feldreihe .feld{flex:1 1 150px}
+.haken{display:flex;gap:9px;align-items:flex-start;font-size:12px;
+  color:var(--muted);line-height:1.45;cursor:pointer;margin-bottom:10px}
+.haken input{width:20px;height:20px;margin:1px 0 0;flex:0 0 auto;cursor:pointer}
+.haken b{color:var(--text)}
+.warn{background:#fffbeb;border:1.5px solid #fcd34d;color:#92400e;
+  border-radius:10px;padding:8px 10px;font-size:12px;font-weight:600;
+  line-height:1.45;margin-bottom:10px}
+.warn[hidden]{display:none}
+.vorschau{background:#f8fafc;border:1px solid var(--border);border-radius:10px;
+  padding:9px 11px;font-family:ui-monospace,Consolas,monospace;font-size:13px;
+  color:var(--muted)}
+.vorschau b{color:#166534}
+/* Der Anlegen-Knopf sitzt in der Fussleiste neben den Summen. */
+.foot .neu{border:1.5px dashed #cbd5e1;background:#fff;color:var(--muted);
+  border-radius:10px;min-height:var(--touch);padding:0 14px;font-size:12px;
+  font-weight:600;cursor:pointer;white-space:nowrap}
+.foot .neu:hover{border-color:var(--green);color:var(--green);border-style:solid}
+.chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;min-width:0}
+
+/* Mengeneingabe: Getränke werden ausschliesslich in ganzen Kisten bestellt.
+   Ein Schrittzähler genügt deshalb — es braucht weder Einheiten noch
+   Portionsblöcke wie beim Metzger. */
+.step{display:flex;align-items:center;border:1.5px solid var(--border);
+  border-radius:10px;overflow:hidden;background:#fff}
+.step button{border:0;background:#f9fafb;min-width:40px;min-height:38px;
+  font-size:18px;font-weight:600;cursor:pointer;color:var(--muted);line-height:1}
+.step button:hover:not(:disabled){background:var(--green-light);color:#166534}
+.step button:disabled{opacity:.3;cursor:not-allowed}
+.step input{border:0;width:52px;min-height:38px;text-align:center;
+  font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;
+  font-family:inherit;background:transparent}
+.row.has .step{border-color:var(--green)}
+.row.has .step input{color:#166534}
+/* Vorschlagsknöpfe aus den ausgewerteten Bestellmails: „üblich" ist der
+   Median der bisherigen Mengen, „letzte" die Menge der jüngsten Bestellung.
+   Ein Tipp setzt die Menge — das ist der schnellste Weg für die Routinefälle. */
+.sugg{display:flex;gap:5px;flex-wrap:wrap}
+.sugg button{border:1.5px solid var(--blue);background:var(--blue-light);
+  color:var(--blue);border-radius:16px;padding:0 11px;min-height:34px;
+  font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.sugg button.on{border-color:var(--green);background:var(--green-light);color:#166534}
+.sugg button .hak{margin-right:4px}
+.kisteninfo{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+
+/* ---- Fuss ---- */
+.foot{position:sticky;bottom:0;background:var(--card);border-radius:var(--r);
+  padding:9px 12px;margin-top:12px;box-shadow:0 -2px 10px rgba(0,0,0,.09);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;z-index:20}
+.st{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.st b{color:var(--text);font-size:14px}
+.foot .send{margin-left:auto;background:var(--green);color:#fff;border:0;
+  border-radius:10px;min-height:var(--touch);padding:0 20px;font-size:14px;
+  font-weight:600;cursor:pointer}
+.foot .send:disabled{background:#cbd5e1;cursor:not-allowed}
+.foot .leeren{border:1.5px solid #fca5a5;background:#fff;color:var(--red);
+  border-radius:10px;min-height:var(--touch);padding:0 14px;font-size:12px;
+  font-weight:600;cursor:pointer}
+
+/* ---- Verlauf & Hinweise ---- */
+.panel{background:#fff;border-radius:var(--r);padding:10px 12px;margin-top:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.panel h2{font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);margin:0 0 8px}
+.verlauf{display:flex;gap:6px;flex-wrap:wrap}
+.verlauf div{border:1.5px solid var(--border);border-radius:10px;padding:6px 10px;
+  font-size:12px;font-weight:600;min-width:140px}
+.verlauf div span{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.note{background:#fff;border-radius:var(--r);padding:10px 12px;margin-top:12px;
+  font-size:12px;color:var(--muted);line-height:1.55;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.note b{color:var(--text)}
+.note code{background:#f3f4f6;padding:1px 5px;border-radius:4px;
+  font-family:ui-monospace,Consolas,monospace;font-size:11px}
+.empty{grid-column:1/-1;background:#fff;border-radius:10px;padding:18px;
+  text-align:center;color:var(--muted);font-size:13px}
+
+/* ---- Vorschau der Bestellmail ----
+   Kratzer bekommt heute eine formlose Mail. Damit beim Lieferanten nichts
+   Ungewohntes ankommt, zeigt die Vorschau exakt den Text, der bisher von Hand
+   getippt wurde — inklusive Leerzeile zwischen den Warengruppen. */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:50;
+  display:flex;align-items:center;justify-content:center;padding:14px}
+.overlay[hidden]{display:none}
+.dlg{background:#fff;border-radius:var(--r);max-width:640px;width:100%;
+  max-height:88vh;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.dlg header{padding:12px 14px;border-bottom:1px solid var(--border)}
+.dlg header h2{margin:0;font-size:15px}
+.dlg header p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.dlg .body{padding:12px 14px;overflow:auto}
+.dlg pre{margin:0;background:#f8fafc;border:1px solid var(--border);
+  border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.5;
+  font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap;
+  word-break:break-word}
+.dlg footer{padding:10px 14px;border-top:1px solid var(--border);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dlg footer .ok{background:var(--green);color:#fff;border:0;border-radius:10px;
+  min-height:var(--touch);padding:0 18px;font-size:14px;font-weight:600;cursor:pointer}
+.dlg footer .zu{margin-left:auto;border:1.5px solid var(--border);background:#fff;
+  color:var(--muted);border-radius:10px;min-height:var(--touch);padding:0 14px;
+  font-size:13px;font-weight:600;cursor:pointer}
+/* Über der Fussleiste, damit die Summen beim Übernehmen sichtbar bleiben. */
+.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);
+  background:#166534;color:#fff;border-radius:10px;padding:11px 18px;
+  font-size:13px;font-weight:600;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.28);
+  max-width:calc(100% - 28px);text-align:center}
+.toast[hidden]{display:none}
+
+/* ---- Größenklassen ---- */
+@media (max-width:619px){
+  :root{--spalte:100%;--namensp:0px}
+  .zeile{grid-template-columns:minmax(0,1fr)}
+  .chips{margin-top:3px}
+  .head{position:static}
+  .st{white-space:normal}
+  .foot{padding:7px 10px;gap:6px;row-gap:2px}
+  .termin .take{margin-left:0;flex:1 1 100%}
+  /* Die Fussleiste bricht hier auf mehrere Zeilen um; der Hinweis muss
+     entsprechend höher stehen, sonst verdeckt er die Summen. */
+  .toast{bottom:132px}
+}
+@media (min-width:620px) and (max-width:899px){
+  :root{--spalte:100%;--namensp:210px}
+}
+@media (min-width:900px) and (max-width:1179px){
+  :root{--spalte:100%;--namensp:250px}
+}
+@media (min-width:1180px) and (max-width:1619px){
+  :root{--spalte:560px;--namensp:220px}
+}
+@media (min-width:1620px){
+  :root{--spalte:520px;--namensp:210px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Getränke Kratzer — Bestellung</h1>
+  <div class="sub" id="sub">Mockup mit Live-Daten</div>
+
+  <div class="head">
+    <div class="termin">
+      <label for="datum">Liefertermin</label>
+      <input type="date" id="datum">
+      <span class="kw" id="kw"></span>
+      <button class="take" id="uebernehmen"></button>
+    </div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="Getränk oder Gebinde suchen …">
+      <div class="tgl">
+        <button data-filter="ueblich" class="on">Übliche Artikel</button>
+        <button data-filter="alle">Alle Artikel</button>
+        <button data-filter="best">Nur bestellte</button>
+      </div>
+    </div>
+    <div class="jump" id="jump"></div>
+  </div>
+
+  <div id="liste"></div>
+
+  <div class="foot" id="foot"></div>
+
+  <div class="panel">
+    <h2>Bisherige Bestellungen bei Kratzer</h2>
+    <div class="verlauf" id="verlauf"></div>
+  </div>
+
+  <div class="note" id="note"></div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-titel">
+    <header>
+      <h2 id="dlg-titel">Bestellung senden</h2>
+      <p id="dlg-sub"></p>
+    </header>
+    <div class="body"><pre id="dlg-text"></pre></div>
+    <footer>
+      <button class="ok" id="dlg-senden">Jetzt senden</button>
+      <button class="zu" id="dlg-zu">Zurück</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="neu-overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="neu-titel">
+    <header>
+      <h2 id="neu-titel">Neuer Artikel</h2>
+      <p>Für Sorten, die noch auf keiner Rechnung standen — etwa eine neue
+         Adelholzener-Saisonsorte.</p>
+    </header>
+    <div class="body">
+      <div class="feld">
+        <label for="neu-text">Bezeichnung für die Bestellmail *</label>
+        <input type="text" id="neu-text" autocomplete="off"
+               placeholder="z. B. Adelh. Rhabarber PET 0,5l">
+        <span class="hilf">Genau so, wie es Kratzer lesen soll.</span>
+      </div>
+      <div class="feldreihe">
+        <div class="feld">
+          <label for="neu-gebinde">Gebinde</label>
+          <input type="text" id="neu-gebinde" list="gebindeliste" placeholder="12x0,50">
+          <datalist id="gebindeliste"></datalist>
+        </div>
+        <div class="feld">
+          <label for="neu-menge">Kisten</label>
+          <input type="number" id="neu-menge" min="1" max="99" value="1">
+        </div>
+      </div>
+      <div class="feld">
+        <label for="neu-gruppe">Warengruppe</label>
+        <select id="neu-gruppe"></select>
+      </div>
+      <div class="feldreihe">
+        <div class="feld">
+          <label for="neu-nr">Artikel-Nr. bei Kratzer</label>
+          <input type="text" id="neu-nr" placeholder="optional, z. B. KA50123">
+        </div>
+        <div class="feld">
+          <label for="neu-preis">Preis je Kiste</label>
+          <input type="text" id="neu-preis" inputmode="decimal" placeholder="optional, z. B. 6,69">
+        </div>
+      </div>
+      <label class="haken">
+        <input type="checkbox" id="neu-dauer">
+        <span><b>Dauerhaft in die Artikelliste übernehmen.</b>
+          Ohne Haken gilt der Artikel nur für diese eine Bestellung.</span>
+      </label>
+      <div class="warn" id="neu-warn" hidden></div>
+      <div class="vorschau" id="neu-vorschau"></div>
+    </div>
+    <footer>
+      <button class="ok" id="neu-ok">Hinzufügen</button>
+      <button class="zu" id="neu-zu">Abbrechen</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="getraenke-katalog.js"></script>
+<script>
+const G = (function () {
+  'use strict';
+
+  const D = window.GETRAENKE_DATEN;
+
+  // Ein Artikel gilt als „üblich", wenn er in mindestens zwei der
+  // ausgewerteten Bestellungen vorkam. Alles darunter ist Gelegenheitsware und
+  // steht erst unter „Alle Artikel" — sonst erschlägt die Liste den Nutzer.
+  const UEBLICH_AB = 2;
+
+  // Zustand der Eingabe. `menge` hält nur Positionen > 0.
+  const S = {
+    menge: {},
+    vorbelegt: {},
+    neu: [],          // Selbst angelegte Artikel (siehe artikelAnlegen)
+    datum: '',
+    filter: 'ueblich',
+    suche: '',
+    gesendet: false
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  // Grundbestand aus den Rechnungen plus alles, was der Laden selbst angelegt
+  // hat. Überall dort, wo früher D.artikel stand, muss der Gesamtbestand
+  // stehen — sonst tauchen neue Artikel weder in Liste noch in der Mail auf.
+  const katalog = () => D.artikel.concat(S.neu);
+  const artikel = (nr) => katalog().find((a) => a.nr === nr);
+
+  // ── Datum & Kalenderwoche ────────────────────────────────────────────
+  // Der Betreff der bisherigen Mails lautet „Bestellung für Dorfladen
+  // Oberornau KW 36". Die Woche wird deshalb nach ISO-8601 aus dem
+  // Liefertermin berechnet.
+  function kalenderwoche(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return null;
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+    const start = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t - start) / 86400000 + 1) / 7);
+  }
+
+  function deutsch(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('de-DE',
+      { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function naechsterMontag() {
+    const d = new Date();
+    d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+    return d.toISOString().slice(0, 10);
+  }
+
+  // ── Summen ───────────────────────────────────────────────────────────
+  // Warenwert und Pfand stammen aus den Rechnungen. Beides ist eine Schätzung
+  // und wird auch so beschriftet: Kratzer passt Preise laut Rechnungsfuss
+  // laufend an.
+  function summen() {
+    let kisten = 0, positionen = 0, wert = 0, pfand = 0, ohnePreis = 0;
+    for (const [nr, n] of Object.entries(S.menge)) {
+      if (!n) continue;
+      const a = artikel(nr);
+      if (!a) continue;
+      kisten += n;
+      positionen++;
+      if (a.preis) wert += n * a.preis; else ohnePreis++;
+      pfand += n * (D.pfand[a.gebinde] || 0);
+    }
+    return { kisten, positionen, wert, pfand, ohnePreis };
+  }
+
+  const eur = (n) => n.toLocaleString('de-DE',
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+  // ── Mengen setzen ────────────────────────────────────────────────────
+  function setze(nr, n) {
+    n = Math.max(0, Math.min(99, Math.round(n || 0)));
+    if (n) S.menge[nr] = n; else delete S.menge[nr];
+    zeichne();
+  }
+
+  function uebernimmLetzte() {
+    S.menge = Object.assign({}, S.vorbelegt);
+    melde('Letzte Bestellung (' + D.letzteBestellung.datum + ') übernommen.');
+    zeichne();
+  }
+
+  function leeren() {
+    S.menge = {};
+    // Einmalige Artikel gehören zu dieser Bestellung; mit ihr fallen sie weg.
+    S.neu = S.neu.filter((a) => a.dauerhaft);
+    zeichne();
+  }
+
+  // ── Filter ───────────────────────────────────────────────────────────
+  function sichtbar(a) {
+    const menge = S.menge[a.nr] || 0;
+    if (S.suche) {
+      const q = S.suche.toLowerCase();
+      const treffer = (a.name + ' ' + a.gebinde + ' ' + a.bestelltext)
+        .toLowerCase().includes(q);
+      if (!treffer) return false;
+      return true;   // Die Suche sticht den Filter: gesucht wird im Gesamtbestand.
+    }
+    if (S.filter === 'best') return menge > 0;
+    if (S.filter === 'alle') return true;
+    // Selbst angelegte Artikel bleiben immer sichtbar: Sie haben noch keine
+    // Bestellhistorie und fielen sonst sofort aus der üblichen Liste.
+    return a.neu || a.bestellt >= UEBLICH_AB || menge > 0;
+  }
+
+  // ── Zeichnen ─────────────────────────────────────────────────────────
+  function zeichne() {
+    const liste = $('liste');
+    liste.innerHTML = '';
+    const sichtbare = katalog().filter(sichtbar);
+
+    if (!sichtbare.length) {
+      liste.innerHTML = '<div class="empty">Kein Getränk gefunden. ' +
+        'Suche leeren, auf „Alle Artikel" wechseln oder unten einen neuen ' +
+        'Artikel anlegen.</div>';
+    }
+
+    let gruppe = null;
+    for (const a of sichtbare) {
+      if (a.gruppe !== gruppe) {
+        gruppe = a.gruppe;
+        const kisten = katalog()
+          .filter((x) => x.gruppe === gruppe)
+          .reduce((s, x) => s + (S.menge[x.nr] || 0), 0);
+        const kopf = document.createElement('div');
+        kopf.className = 'grp';
+        kopf.id = 'grp-' + slug(gruppe);
+        kopf.innerHTML = esc(gruppe) +
+          (kisten ? '<span class="gsum">' + kisten + ' Kisten</span>' : '');
+        liste.appendChild(kopf);
+      }
+      liste.appendChild(zeile(a));
+    }
+
+    kopfzeile();
+    fusszeile();
+  }
+
+  function zeile(a) {
+    const menge = S.menge[a.nr] || 0;
+    const letzte = S.vorbelegt[a.nr] || 0;
+    const row = document.createElement('div');
+    row.className = 'row' + (menge ? ' has' : '') +
+      (menge && letzte && menge !== letzte ? ' chg' : '');
+
+    let tags = '';
+    if (!menge && letzte) {
+      tags += '<span class="tag vor">letzte: ' + letzte + '</span>';
+    }
+    if (menge && letzte && menge !== letzte) {
+      tags += '<span class="tag chg">war ' + letzte + '</span>';
+    }
+    // Vier Wolfra-Sorten und zwei Adelholzener-Sorten wurden bestellt, aber in
+    // keiner der neun Rechnungen abgerechnet: Preis und Artikelnummer fehlen.
+    if (!a.belegt && !a.neu) {
+      tags += '<span class="tag neu" title="In keiner vorliegenden Rechnung ' +
+        'abgerechnet — Preis unbekannt">ohne Preis</span>';
+    }
+    // Selbst angelegte Artikel: „einmalig" verschwindet nach dem Senden wieder,
+    // „dauerhaft" bliebe im echten Betrieb im Katalog stehen.
+    if (a.neu) {
+      tags += a.dauerhaft
+        ? '<span class="tag dauer" title="Bleibt in der Artikelliste">' +
+          'neu · dauerhaft</span>'
+        : '<span class="tag einmal" title="Gilt nur für diese Bestellung">' +
+          'nur diese Bestellung</span>';
+    }
+    // Für diese Artikel gibt es keine gewachsene Bestellschreibweise, weil sie
+    // bisher nur in Sammelzeilen („Je 1 Kiste …:") vorkamen. Der Mailtext
+    // benutzt dann die Rechnungsbezeichnung von Kratzer.
+    if (a.textquelle === 'rechnung') {
+      tags += '<span class="tag rech" title="Mailtext benutzt die ' +
+        'Rechnungsbezeichnung von Kratzer">Rechnungstext</span>';
+    }
+
+    const preis = a.preis
+      ? eur(a.preis) + ' / Kiste'
+      : 'Preis nicht belegt';
+
+    // Vorschläge: „üblich" (Median aller bisherigen Mengen) und „letzte"
+    // (Menge der jüngsten Bestellung), sofern beide sich unterscheiden.
+    const vorschlaege = [];
+    if (a.ueblich) vorschlaege.push({ n: a.ueblich, l: 'üblich ' + a.ueblich });
+    if (letzte && letzte !== a.ueblich) {
+      vorschlaege.push({ n: letzte, l: 'letzte ' + letzte });
+    }
+
+    row.innerHTML =
+      '<div class="geb">' + esc(a.gebinde) + '</div>' +
+      '<div class="zeile">' +
+        '<div class="nm">' + esc(a.name) + tags +
+          '<span class="pr">' + preis + '</span></div>' +
+        '<div class="chips">' +
+          '<div class="step">' +
+            '<button data-minus="' + a.nr + '" aria-label="Eine Kiste weniger"' +
+              (menge ? '' : ' disabled') + '>−</button>' +
+            '<input type="number" min="0" max="99" inputmode="numeric" ' +
+              'value="' + menge + '" data-menge="' + a.nr + '" ' +
+              'aria-label="Kisten ' + esc(a.name) + '">' +
+            '<button data-plus="' + a.nr + '" aria-label="Eine Kiste mehr">+</button>' +
+          '</div>' +
+          '<div class="sugg">' +
+            vorschlaege.map((v) =>
+              '<button data-set="' + a.nr + '" data-n="' + v.n + '"' +
+              (menge === v.n ? ' class="on"' : '') + '>' +
+              (menge === v.n ? '<span class="hak">✓</span>' : '') +
+              v.l + '</button>').join('') +
+          '</div>' +
+          (menge && a.preis
+            ? '<span class="kisteninfo">' + eur(menge * a.preis) + '</span>'
+            : '') +
+        '</div>' +
+      '</div>';
+    return row;
+  }
+
+  function kopfzeile() {
+    const kw = kalenderwoche(S.datum);
+    $('kw').textContent = kw ? 'KW ' + kw + ' · ' + deutsch(S.datum) : '—';
+    $('uebernehmen').textContent =
+      'Letzte Bestellung übernehmen (' + D.letzteBestellung.datum + ')';
+
+    const jump = $('jump');
+    if (jump.childElementCount) return;   // Sprungleiste ist statisch.
+    for (const g of D.gruppen) {
+      const b = document.createElement('button');
+      b.textContent = g;
+      b.onclick = () => {
+        const ziel = document.getElementById('grp-' + slug(g));
+        if (ziel) ziel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      jump.appendChild(b);
+    }
+  }
+
+  function fusszeile() {
+    const s = summen();
+    const foot = $('foot');
+    foot.innerHTML =
+      '<span class="st"><b>' + s.kisten + '</b> Kisten</span>' +
+      '<span class="st"><b>' + s.positionen + '</b> Positionen</span>' +
+      '<span class="st">Warenwert ca. <b>' + eur(s.wert) + '</b>' +
+        (s.ohnePreis ? ' <span title="Positionen ohne belegten Preis">(+' +
+          s.ohnePreis + ' ohne Preis)</span>' : '') + '</span>' +
+      '<span class="st" title="Kistenpfand für alle Kisten. Berechnet wird ' +
+        'nur, was nicht als Leergut zurückgeht.">Pfand max. <b>' +
+        eur(s.pfand) + '</b></span>' +
+      (s.positionen ? '<button class="leeren" id="btn-leeren">Alles leeren</button>' : '') +
+      '<button class="neu" id="btn-neu">+ Artikel anlegen</button>' +
+      '<button class="send" id="btn-send"' + (s.positionen ? '' : ' disabled') + '>' +
+        'Bestellung prüfen &amp; senden</button>';
+    if ($('btn-leeren')) $('btn-leeren').onclick = leeren;
+    $('btn-neu').onclick = anlegenOeffnen;
+    $('btn-send').onclick = vorschau;
+  }
+
+  // ── Artikel anlegen ──────────────────────────────────────────────────
+  // Kratzer führt saisonale Sorten, die in keiner der ausgewerteten Rechnungen
+  // stehen. Ohne diesen Weg müsste der Laden für eine einzige neue Sorte
+  // wieder zur formlosen Mail greifen. Zwei Fälle sind zu unterscheiden:
+  // einmalig (Probesorte) und dauerhaft (neue Standardsorte).
+  let neuZaehler = 0;
+
+  function anlegenOeffnen() {
+    $('neu-text').value = '';
+    $('neu-gebinde').value = '';
+    $('neu-menge').value = '1';
+    $('neu-nr').value = '';
+    $('neu-preis').value = '';
+    $('neu-dauer').checked = false;
+    $('neu-warn').hidden = true;
+
+    // Gebinde und Warengruppen kommen aus dem echten Bestand — frei getippte
+    // Fantasiegebinde wären für Pfand und Preis wertlos.
+    $('gebindeliste').innerHTML = [...new Set(katalog().map((a) => a.gebinde))]
+      .map((g) => '<option value="' + esc(g) + '">').join('');
+    $('neu-gruppe').innerHTML = D.gruppen
+      .map((g) => '<option value="' + esc(g) + '">' + esc(g) + '</option>').join('');
+    $('neu-gruppe').value = 'Erfrischungsgetränke PET 0,5 l';
+
+    neuVorschau();
+    $('neu-overlay').hidden = false;
+    $('neu-text').focus();
+  }
+
+  // Wie beim Metzger: gleiche Bezeichnung ohne Sonderzeichen gilt als Dublette.
+  // Zwei gleich benannte Artikel würden in Vorbelegung und Verlauf verschmelzen.
+  const flach = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  function dublette(text) {
+    return katalog().find((a) =>
+      flach(a.bestelltext) === flach(text) || flach(a.name) === flach(text));
+  }
+
+  function neuVorschau() {
+    const text = $('neu-text').value.trim();
+    const n = Math.max(1, Number($('neu-menge').value) || 1);
+    $('neu-vorschau').innerHTML = text
+      ? 'Zeile in der Mail:<br><b>' + n + (n === 1 ? ' Kiste ' : ' Kisten ') +
+        esc(text) + '</b>'
+      : 'Zeile in der Mail: <span>… Bezeichnung eingeben</span>';
+
+    const doppelt = text ? dublette(text) : null;
+    const warn = $('neu-warn');
+    if (doppelt) {
+      warn.innerHTML = '„' + esc(doppelt.name) + '" (' + esc(doppelt.gebinde) +
+        ') gibt es schon. Trotzdem anlegen? Besser: Dialog schließen und die ' +
+        'vorhandene Zeile benutzen — auf „Alle Artikel" umschalten.';
+      warn.hidden = false;
+    } else {
+      warn.hidden = true;
+    }
+  }
+
+  function anlegen() {
+    const text = $('neu-text').value.trim();
+    if (!text) {
+      melde('Bitte eine Bezeichnung für die Bestellmail eintragen.');
+      $('neu-text').focus();
+      return;
+    }
+    const menge = Math.max(1, Math.min(99, Number($('neu-menge').value) || 1));
+    const gebinde = $('neu-gebinde').value.trim() || '—';
+    const preis = Number(($('neu-preis').value || '').replace(',', '.')) || null;
+    const dauerhaft = $('neu-dauer').checked;
+    const nr = $('neu-nr').value.trim() || ('NEU-' + (++neuZaehler));
+
+    S.neu.push({
+      nr: nr,
+      name: text,
+      gebinde: gebinde,
+      preis: preis,
+      gruppe: $('neu-gruppe').value,
+      bestelltext: text,
+      textquelle: 'neu',
+      zuletzt: null,
+      bestellt: 0,
+      quote: 0,
+      ueblich: null,
+      spanne: null,
+      belegt: false,
+      neu: true,
+      dauerhaft: dauerhaft
+    });
+    S.menge[nr] = menge;
+
+    $('neu-overlay').hidden = true;
+    // Damit die frische Zeile sicher sichtbar ist — unter „Übliche Artikel"
+    // fiele ein Artikel mit Menge 0 sonst durch den Filter.
+    S.suche = '';
+    $('q').value = '';
+    zeichne();
+    const ziel = document.querySelector('[data-menge="' + CSS.escape(nr) + '"]');
+    if (ziel) ziel.closest('.row').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    melde(dauerhaft
+      ? '„' + text + '" angelegt und dauerhaft in die Artikelliste übernommen.'
+      : '„' + text + '" hinzugefügt — gilt nur für diese Bestellung.');
+  }
+
+  // ── Mailtext ─────────────────────────────────────────────────────────
+  // Aufbau exakt wie in den bisherigen Mails an bestellung@getraenke-kratzer.de:
+  // Betreffzeile, dann je Warengruppe ein Block „<n> Kisten <Bezeichnung>",
+  // getrennt durch eine Leerzeile. Die Bezeichnung ist die Schreibweise, die
+  // der Laden bisher benutzt hat — nicht die Rechnungsbezeichnung.
+  function betreff() {
+    const kw = kalenderwoche(S.datum);
+    return 'Bestellung für Dorfladen Oberornau' + (kw ? ' KW ' + kw : '');
+  }
+
+  function mailtext() {
+    const zeilen = [betreff(), ''];
+    const alle = katalog();
+    for (const g of D.gruppen) {
+      const block = alle
+        .filter((a) => a.gruppe === g && S.menge[a.nr])
+        .map((a) => {
+          const n = S.menge[a.nr];
+          return n + (n === 1 ? ' Kiste ' : ' Kisten ') + a.bestelltext;
+        });
+      if (block.length) zeilen.push(...block, '');
+    }
+    zeilen.push('Liefertermin: ' + deutsch(S.datum), '',
+      'Mit freundlichen Grüßen', 'Dorfladen Oberornau');
+    return zeilen.join('\n');
+  }
+
+  function vorschau() {
+    const s = summen();
+    $('dlg-sub').textContent =
+      'An ' + D.lieferant.mail + ' · ' + s.positionen + ' Positionen · ' +
+      s.kisten + ' Kisten · Warenwert ca. ' + eur(s.wert);
+    $('dlg-text').textContent = mailtext();
+    $('overlay').hidden = false;
+  }
+
+  function senden() {
+    $('overlay').hidden = true;
+    S.gesendet = true;
+    const einmalig = S.neu.filter((a) => !a.dauerhaft).length;
+    melde('Bestellung an ' + D.lieferant.name + ' gesendet (Mockup — ' +
+      'es wird nichts verschickt).' +
+      (einmalig ? ' ' + einmalig + ' einmalige(r) Artikel fällt wieder weg.' : ''));
+    S.menge = {};
+    S.neu = S.neu.filter((a) => a.dauerhaft);
+    zeichne();
+  }
+
+  let toastTimer = null;
+  function melde(text) {
+    const t = $('toast');
+    t.textContent = text;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+  }
+
+  // ── Beiwerk ──────────────────────────────────────────────────────────
+  function verlauf() {
+    $('verlauf').innerHTML = D.verlauf.map((v) =>
+      '<div>' + esc(v.datum) +
+      '<span>' + v.kisten + ' Kisten · ' + v.positionen + ' Positionen</span>' +
+      '</div>').join('');
+  }
+
+  function kopftext() {
+    const q = D.quellen;
+    $('sub').innerHTML =
+      'Mockup mit <b>Live-Daten</b>: ' + D.artikel.length + ' Artikel aus ' +
+      q.rechnungen + ' Rechnungen und ' + q.bestellungen + ' Bestellmails (' +
+      q.zeitraum[0] + ' – ' + q.zeitraum[1] + ') an <b>' + esc(D.lieferant.mail) +
+      '</b>, Kd-Nr. ' + esc(D.lieferant.kundennummer) + '.';
+
+    const ohne = D.artikel.filter((a) => !a.belegt).length;
+    const rech = D.artikel.filter((a) => a.textquelle === 'rechnung').length;
+    $('note').innerHTML =
+      '<b>Woher die Zahlen kommen.</b> Der Katalog stammt aus den ' +
+      q.rechnungen + ' Rechnungs-PDFs; Preis und Pfandsatz sind jeweils der ' +
+      'häufigste Wert daraus und deshalb als „ca." ausgewiesen. Der Warenwert ' +
+      'der übernommenen Bestellung trifft die zugehörige Rechnung 2008520 ' +
+      '(553,22 € netto) auf den Cent. <code>Pfand max.</code> rechnet alle ' +
+      'Kisten; berechnet wird nur, was nicht als Leergut zurückgeht. ' +
+      '<code>üblich</code> ist der Median der bisherigen Bestellmengen, ' +
+      '<code>letzte</code> die Menge aus <b>' + esc(D.letzteBestellung.betreff) +
+      '</b> vom ' + D.letzteBestellung.datum + '.<br>' +
+      '<b>Warum kein Bestelltag.</b> Bei Kratzer wird unregelmäßig bestellt — ' +
+      'statt fester Liefertage wie beim Bäcker gibt es einen freien ' +
+      'Liefertermin, aus dem die Kalenderwoche für den Betreff entsteht.<br>' +
+      '<b>Der Mailtext bleibt gewohnt.</b> Jede Zeile benutzt die Schreibweise, ' +
+      'die der Laden bisher getippt hat (z. B. <code>8 Kisten Adelh. MIWA ' +
+      'sanft Glas 0,75l</code>) — bei Kratzer kommt also nichts Ungewohntes an. ' +
+      'Nur ' + rech + ' Artikel kamen bisher ausschließlich in Sammelzeilen vor; ' +
+      'sie sind mit <b>Rechnungstext</b> markiert.<br>' +
+      '<b>Neue Sorten.</b> Über <code>+ Artikel anlegen</code> lässt sich eine ' +
+      'Sorte aufnehmen, die auf keiner Rechnung steht — etwa eine ' +
+      'Adelholzener-Saisonsorte. Ohne Haken gilt sie <b>nur für diese ' +
+      'Bestellung</b>, mit Haken wandert sie <b>dauerhaft</b> in die ' +
+      'Artikelliste. Gleiche Bezeichnungen werden als Dublette gemeldet, weil ' +
+      'zwei gleich benannte Artikel in Vorbelegung und Verlauf verschmelzen ' +
+      'würden.<br>' +
+      '<b>' + ohne + ' Artikel ohne Preis.</b> Sie wurden bestellt, aber in ' +
+      'keiner der vorliegenden Rechnungen abgerechnet — die Artikelnummer ' +
+      'muss noch bei Kratzer erfragt werden.';
+  }
+
+  const esc = (s) => String(s).replace(/[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  // ── Ereignisse ───────────────────────────────────────────────────────
+  function start() {
+    S.vorbelegt = Object.assign({}, D.letzteBestellung.positionen);
+    S.datum = naechsterMontag();
+    $('datum').value = S.datum;
+
+    $('datum').addEventListener('change', (e) => {
+      S.datum = e.target.value;
+      kopfzeile();
+    });
+    $('uebernehmen').addEventListener('click', uebernimmLetzte);
+    $('q').addEventListener('input', (e) => {
+      S.suche = e.target.value.trim();
+      zeichne();
+    });
+    document.querySelectorAll('.tgl button').forEach((b) => {
+      b.addEventListener('click', () => {
+        S.filter = b.dataset.filter;
+        document.querySelectorAll('.tgl button')
+          .forEach((x) => x.classList.toggle('on', x === b));
+        zeichne();
+      });
+    });
+
+    // Ein Zuhörer für die ganze Liste: Die Zeilen werden bei jeder Änderung
+    // neu gezeichnet, einzeln gebundene Zuhörer gingen dabei verloren.
+    $('liste').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.plus) setze(b.dataset.plus, (S.menge[b.dataset.plus] || 0) + 1);
+      else if (b.dataset.minus) setze(b.dataset.minus, (S.menge[b.dataset.minus] || 0) - 1);
+      else if (b.dataset.set) {
+        const nr = b.dataset.set, n = Number(b.dataset.n);
+        setze(nr, S.menge[nr] === n ? 0 : n);   // Nochmal tippen nimmt zurück.
+      }
+    });
+    $('liste').addEventListener('change', (e) => {
+      if (e.target.dataset.menge) setze(e.target.dataset.menge, Number(e.target.value));
+    });
+
+    $('dlg-zu').addEventListener('click', () => { $('overlay').hidden = true; });
+    $('dlg-senden').addEventListener('click', senden);
+    $('overlay').addEventListener('click', (e) => {
+      if (e.target === $('overlay')) $('overlay').hidden = true;
+    });
+
+    $('neu-zu').addEventListener('click', () => { $('neu-overlay').hidden = true; });
+    $('neu-ok').addEventListener('click', anlegen);
+    $('neu-overlay').addEventListener('click', (e) => {
+      if (e.target === $('neu-overlay')) $('neu-overlay').hidden = true;
+    });
+    ['neu-text', 'neu-menge'].forEach((id) => {
+      $(id).addEventListener('input', neuVorschau);
+    });
+    $('neu-text').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') anlegen();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      $('overlay').hidden = true;
+      $('neu-overlay').hidden = true;
+    });
+
+    kopftext();
+    verlauf();
+    zeichne();
+  }
+
+  document.addEventListener('DOMContentLoaded', start);
+  return { setze, mailtext, summen, anlegenOeffnen, katalog, S, D };
+})();
+</script>
+</body>
+</html>
