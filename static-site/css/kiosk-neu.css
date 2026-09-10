@@ -2987,7 +2987,7 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
    sehen. Erlaubt sind jetzt 45 % oben und 25 % unten (F2).
    ═══════════════════════════════════════════════════════════════════════ */
 
-.k-panel.k-geteilt{
+.k-panel.k-geteilt.active{
   display:flex;
   flex-direction:column;
   overflow:hidden;                 /* nur .k-liste rollt */

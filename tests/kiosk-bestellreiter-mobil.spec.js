@@ -312,6 +312,24 @@ test.describe('Bestellreiter auf dem Telefon', () => {
     });
   }
 
+  test('TC-F7-01: Beim Reiterwechsel bleibt nur ein Panel sichtbar', async ({ page }) => {
+    // Regression: Ein Reiter mit geteiltem Aufbau (.k-geteilt) trug die
+    // Anzeige frueher unabhaengig vom aktiven Tab (display:flex schlug das
+    // display:none inaktiver Panels). Beim Wechsel ueberlagerten sich dann
+    // zwei Reiter. Sichtbar darf immer nur das aktive Panel sein.
+    await page.setViewportSize(KLEIN);
+    await oeffne(page, 'getraenke');                 // setzt k-geteilt auf Getraenke
+    await page.evaluate(() => window.K.switchTab('metzgerbest'));
+    await page.waitForTimeout(2600);
+    await page.evaluate(() => window.K.switchTab('baecker'));
+    await page.waitForTimeout(2600);
+    const sichtbar = await page.evaluate(() => [...document.querySelectorAll('.k-panel')]
+      .filter((p) => getComputedStyle(p).display !== 'none')
+      .map((p) => p.id));
+    expect(sichtbar,
+      `Sichtbare Panels: ${sichtbar.join(', ') || 'keins'}`).toEqual(['panel-baecker']);
+  });
+
   test('TC-F3-01: Die Sendeschaltfläche gibt es genau einmal', async ({ page }) => {
     await page.setViewportSize(KLEIN);
     await oeffne(page, 'baecker');
