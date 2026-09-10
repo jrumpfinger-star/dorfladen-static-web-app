@@ -299,10 +299,10 @@ window.KGetraenke = (function () {
   //  Zeichnen
   // ══════════════════════════════════════════════════
 
-  function subs() {
+  function subs(extra) {
     var eintraege = [['bestellung', 'Bestellung'], ['artikel', 'Artikel'],
                      ['verlauf', 'Verlauf']];
-    return '<div class="gk-subs">' + eintraege.map(function (e) {
+    return '<div class="gk-subs' + (extra ? ' ' + extra : '') + '">' + eintraege.map(function (e) {
       return '<button class="gk-sub' + (_sub === e[0] ? ' on' : '') + '" '
         + 'data-sub="' + e[0] + '">' + e[1] + '</button>';
     }).join('') + '</div>';
@@ -312,42 +312,102 @@ window.KGetraenke = (function () {
     var h = host();
     if (!h) return;
     h.className = 'gk';
+    // Nur die Bestellansicht ist in festen Kopf, Liste und Fußzeile geteilt.
+    var panel = document.getElementById('panel-getraenke');
+    if (panel) panel.classList.toggle('k-geteilt', _sub !== 'artikel' && _sub !== 'verlauf');
     if (_sub === 'artikel') { h.innerHTML = subs() + artikelAnsicht(); bindeAllgemein(); return; }
     if (_sub === 'verlauf') { h.innerHTML = subs() + verlaufAnsicht(); bindeAllgemein(); return; }
 
     var kw = kalenderwoche(_datum);
-    h.innerHTML = subs()
-      + (_testbetrieb ? '<div class="gk-test">Testbetrieb: Die Bestellung geht an '
-          + esc(_cfg.empfaenger || '') + ', nicht an ' + esc(_cfg.name || 'den Lieferanten')
-          + '. Die echte Adresse wird im CMS eingetragen, sobald sie freigegeben ist.</div>' : '')
-      + (_status ? '<div class="gk-status gesendet">Diese Bestellung ist bereits '
-          + (_status === 2 ? 'korrigiert' : 'gesendet')
-          + '. \u00c4nderungen gehen als Korrektur hinaus.</div>' : '')
-      + '<div class="gk-head">'
-      +   '<div class="gk-termin">'
-      +     '<label for="gk-datum">Liefertermin</label>'
-      +     '<input type="date" id="gk-datum" value="' + esc(_datum) + '">'
-      +     '<span class="gk-kw" id="gk-kw">' + (kw ? 'KW ' + kw + ' \u00b7 ' + deutsch(_datum) : '\u2014') + '</span>'
-      +     '<button class="gk-take" id="gk-take">' + esc(takeText()) + '</button>'
-      +   '</div>'
+    /* Aufteilung wie beim Bäcker: fester Kopf, scrollende Liste, Fußzeile
+       (Spec kiosk-bestellreiter-mobil, F1/F6). Vorher gab dieser Reiter
+       alles als einen 5276 px hohen Block aus — die erste Artikelzeile lag
+       unterhalb des Bildschirms, und der Kopf scrollte mit weg. */
+    h.innerHTML = '<div class="gk-fest">' + subs()
+      + kontextZeile(kw)
       +   '<div class="gk-bar">'
       +     '<input type="search" id="gk-q" placeholder="Getr\u00e4nk oder Gebinde suchen \u2026" value="' + esc(_suche) + '">'
-      +     '<div class="gk-tgl">'
-      +       '<button data-filter="ueblich"' + (_filter === 'ueblich' ? ' class="on"' : '') + '>\u00dcbliche Artikel</button>'
-      +       '<button data-filter="alle"' + (_filter === 'alle' ? ' class="on"' : '') + '>Alle Artikel</button>'
-      +       '<button data-filter="best"' + (_filter === 'best' ? ' class="on"' : '') + '>Nur bestellte</button>'
-      +     '</div>'
       +   '</div>'
-      +   '<div class="gk-jump" id="gk-jump">' + _gruppen.map(function (g) {
-              return '<button data-jump="' + esc(slug(g)) + '">' + esc(g) + '</button>';
-            }).join('') + '</div>'
       + '</div>'
-      + '<div class="gk-list" id="gk-list"></div>'
-      + '<div class="gk-foot" id="gk-foot"></div>';
+      + '<div class="gk-list k-liste" id="gk-list"></div>'
+      + '<div class="gk-foot" id="gk-foot"></div>'
+      + detailBlatt(kw);
 
     bindeAllgemein();
     bindeBestellung();
     zeichneListe();
+  }
+
+  /* ── Kontextzeile und Detailblatt (Spec kiosk-bestellreiter-mobil) ──────
+     Eine Zeile trägt den Zustand: Termin, Kalenderwoche und ob schon
+     gesendet wurde. Terminwahl, Übernahme der letzten Bestellung, Filter
+     und Sprungmarken stehen im Blatt dahinter — sie werden je Bestellung
+     einmal gebraucht, nicht dauernd. */
+  function kontextZeile(kw) {
+    var cls = 'gk-kontext' + (_status ? ' gesendet' : '') + (_testbetrieb ? ' test' : '');
+    var z2;
+    if (_status) z2 = 'Bereits ' + (_status === 2 ? 'korrigiert' : 'gesendet');
+    else if (_testbetrieb) z2 = 'Testbetrieb \u2013 geht nicht an ' + esc(_cfg.name || 'den Lieferanten');
+    else z2 = 'Noch nicht gesendet';
+    return '<div class="' + cls + '">'
+      + '<div class="ico">' + ikone(_status ? 'check-circle' : 'cup-soda') + '</div>'
+      + '<div class="txt">'
+      + '<div class="z1">' + (kw ? 'KW ' + kw + ' \u00b7 ' + esc(deutsch(_datum)) : '\u2014') + '</div>'
+      + '<div class="z2">' + z2 + '</div></div>'
+      + '<button class="gk-mehr" id="gk-mehr" title="Termin, Filter und weitere Schritte">'
+      + ikone('info') + '</button></div>';
+  }
+
+  function ikone(name) {
+    return '<i data-lucide="' + name + '"></i>';
+  }
+
+  function detailBlatt(kw) {
+    var h = '<div class="gk-blatt" id="gk-blatt" hidden>';
+    h += '<div class="gk-blatt-kopf"><h4>Zur Bestellung</h4>'
+      + '<div class="gk-blatt-sub">' + esc(_cfg.name || 'Lieferant')
+      + (kw ? ' \u00b7 KW ' + kw : '') + '</div></div>';
+
+    h += '<div class="gk-blatt-z"><label for="gk-datum">Liefertermin</label>'
+      + '<input type="date" id="gk-datum" value="' + esc(_datum) + '"></div>';
+    h += '<button class="gk-take" id="gk-take">' + esc(takeText()) + '</button>';
+
+    h += '<div class="gk-blatt-t">Zur Bestellung</div>';
+    h += '<div class="gk-blatt-z" id="gk-blatt-summen"></div>';
+
+    /* Auf dem Telefon steht der Bereichswechsel nur hier, damit der feste
+       Kopf der Bestellansicht schmal bleibt (Spec F1). */
+    h += '<div class="gk-blatt-t gk-nur-tel">Bereich</div>';
+    h += subs('im-blatt');
+
+    h += '<div class="gk-blatt-t">Welche Artikel zeigen?</div>';
+    h += '<div class="gk-tgl">'
+      + '<button data-filter="ueblich"' + (_filter === 'ueblich' ? ' class="on"' : '') + '>\u00dcbliche</button>'
+      + '<button data-filter="alle"' + (_filter === 'alle' ? ' class="on"' : '') + '>Alle</button>'
+      + '<button data-filter="best"' + (_filter === 'best' ? ' class="on"' : '') + '>Nur bestellte</button>'
+      + '</div>';
+
+    if (_gruppen.length) {
+      h += '<div class="gk-blatt-t">Zur Warengruppe springen</div>';
+      h += '<div class="gk-jump" id="gk-jump">' + _gruppen.map(function (g) {
+        return '<button data-jump="' + esc(slug(g)) + '">' + esc(g) + '</button>';
+      }).join('') + '</div>';
+    }
+    if (_testbetrieb) {
+      h += '<div class="gk-blatt-z klein">Testbetrieb: Die Bestellung geht an '
+        + esc(_cfg.empfaenger || '') + ', nicht an ' + esc(_cfg.name || 'den Lieferanten')
+        + '. Die echte Adresse wird im CMS eingetragen, sobald sie freigegeben ist.</div>';
+    }
+    h += '<button class="gk-blatt-zu" id="gk-blatt-zu">Schlie\u00dfen</button>';
+    return h + '</div>';
+  }
+
+  function blatt(auf) {
+    var el = $('gk-blatt');
+    if (!el) return;
+    el.hidden = !auf;
+    if (auf && window.dlLockScroll) dlLockScroll();
+    else if (!auf && window.dlUnlockScroll) dlUnlockScroll();
   }
 
   function takeText() {
@@ -438,7 +498,9 @@ window.KGetraenke = (function () {
       '<div class="gk-geb">' + esc(a.gebinde || '\u2014') + '</div>'
       + '<div class="gk-zeile">'
       +   '<div class="gk-nm">' + esc(a.name) + tags
-      +     '<span class="gk-pr">' + (a.preis ? eur(a.preis) + ' / Kiste' : 'Preis nicht belegt') + '</span>'
+      +     '<span class="gk-pr">'
+      +       '<span class="gk-geb-klein">' + esc(a.gebinde || '\u2014') + ' \u00b7 </span>'
+      +       (a.preis ? eur(a.preis) + ' / Kiste' : 'Preis nicht belegt') + '</span>'
       +   '</div>'
       +   '<div class="gk-chips">'
       +     '<div class="gk-step">'
@@ -464,23 +526,45 @@ window.KGetraenke = (function () {
     var foot = $('gk-foot');
     if (!foot) return;
     var kann = s.positionen > 0 && inZukunft(_datum);
+    /* „Alles leeren" und „Artikel anlegen" standen hier und schoben die
+       Fußzeile auf 181 px — fast ein Drittel des Telefonbildschirms. Sie
+       stehen jetzt am Listenende, wo man sie sucht (Spec F2). In der
+       Fußzeile bleibt, was die Bestellung abschließt. */
     foot.innerHTML =
       '<span class="gk-st"><b>' + s.kisten + '</b> Kisten</span>'
       + '<span class="gk-st"><b>' + s.positionen + '</b> Positionen</span>'
-      + '<span class="gk-st">Warenwert ca. <b>' + eur(s.wert) + '</b>'
+      + '<span class="gk-st extra">Warenwert ca. <b>' + eur(s.wert) + '</b>'
       +   (s.ohnePreis ? ' <span title="Positionen ohne belegten Preis">(+' + s.ohnePreis
           + ' ohne Preis)</span>' : '') + '</span>'
-      + '<span class="gk-st" title="Kistenpfand f\u00fcr alle Kisten. Berechnet wird nur, '
+      + '<span class="gk-st extra" title="Kistenpfand f\u00fcr alle Kisten. Berechnet wird nur, '
       +   'was nicht als Leergut zur\u00fcckgeht.">Pfand max. <b>' + eur(s.pfand) + '</b></span>'
-      + (s.positionen ? '<button class="gk-leeren" id="gk-leeren">Alles leeren</button>' : '')
-      + '<button class="gk-neuknopf" id="gk-neu">+ Artikel anlegen</button>'
       + '<button class="gk-send" id="gk-send"' + (kann ? '' : ' disabled') + '>'
       +   (_status ? 'Korrektur pr\u00fcfen &amp; senden' : 'Bestellung pr\u00fcfen &amp; senden') + '</button>'
       + (inZukunft(_datum) ? '' : '<span class="gk-st" style="flex:1 1 100%;color:#b91c1c">'
           + 'Dieser Liefertermin liegt nicht in der Zukunft. Bitte einen sp\u00e4teren Termin w\u00e4hlen.</span>');
-    if ($('gk-leeren')) $('gk-leeren').onclick = leeren;
-    $('gk-neu').onclick = anlegenOeffnen;
     $('gk-send').onclick = vorschau;
+
+    /* Warenwert und Pfand stehen auf dem Telefon nicht in der Fußzeile —
+       sie sind Zusatzinfo und kosteten dort eine ganze Zeile. Im Blatt
+       stehen sie vollständig. */
+    var sum = $('gk-blatt-summen');
+    if (sum) {
+      sum.innerHTML = 'Warenwert ca. <b>' + eur(s.wert) + '</b>'
+        + (s.ohnePreis ? ' (+' + s.ohnePreis + ' ohne Preis)' : '')
+        + ' \u00b7 Pfand max. <b>' + eur(s.pfand) + '</b>';
+    }
+
+    // Am Listenende: anlegen und leeren.
+    var liste = $('gk-list');
+    if (liste) {
+      var ende = document.createElement('div');
+      ende.className = 'gk-listenende';
+      ende.innerHTML = '<button class="gk-neuknopf" id="gk-neu">+ Artikel anlegen</button>'
+        + (s.positionen ? '<button class="gk-leeren" id="gk-leeren">Alles leeren</button>' : '');
+      liste.appendChild(ende);
+      $('gk-neu').onclick = anlegenOeffnen;
+      if ($('gk-leeren')) $('gk-leeren').onclick = leeren;
+    }
   }
 
   // ══════════════════════════════════════════════════
@@ -522,12 +606,20 @@ window.KGetraenke = (function () {
         zeichneListe();
       };
     });
-    $('gk-jump').addEventListener('click', function (e) {
+    var sprung = $('gk-jump');
+    if (sprung) sprung.addEventListener('click', function (e) {
       var b = e.target.closest('button');
       if (!b || !b.dataset.jump) return;
       var ziel = $('gk-grp-' + b.dataset.jump);
+      blatt(false);
       if (ziel) ziel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+
+    // Termin, Filter und Sprungmarken stehen im Blatt hinter dem „i".
+    var mehr = $('gk-mehr');
+    if (mehr) mehr.addEventListener('click', function () { blatt(true); });
+    var zu = $('gk-blatt-zu');
+    if (zu) zu.addEventListener('click', function () { blatt(false); });
 
     // Ein Zuhoerer fuer die ganze Liste: Die Zeilen werden bei jeder Aenderung
     // neu gezeichnet, einzeln gebundene Zuhoerer gingen dabei verloren.

@@ -209,6 +209,16 @@ function zeile(page, name) {
 }
 
 /**
+ * Der umgebaute Reiter (Spec kiosk-bestellreiter-mobil) legt Termin-Details,
+ * Filter, Sprungmarken und den Bereichswechsel ins Blatt hinter dem „i".
+ * Dieser Helfer öffnet es.
+ */
+async function oeffneBlatt(page) {
+  await page.locator('#panel-metzgerbest .mb-mehr').click();
+  await page.locator('#mb-blatt').waitFor({ state: 'visible', timeout: 5000 });
+}
+
+/**
  * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
  * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
  * Kiosk kennt sie nicht. Damit dieselbe Datei gegen beide laeuft, wird sie
@@ -349,12 +359,13 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
   test('TC-F10-06: „Übliche Artikel" ist die Vorgabe', async ({ page }) => {
     await oeffneTab(page);
     // Vorgabe ist die kurze Liste – nur was der Metzger schon geliefert hat.
-    await expect(page.locator('.mb-tgl button.on')).toContainText('Übliche Artikel');
+    // Der Umfang-Umschalter steht jetzt am Listenende (Spec kiosk-bestellreiter-mobil).
+    await expect(page.locator('.mb-umfang button.on')).toContainText('Übliche Artikel');
     const ueblich = await page.locator('.mb-row').count();
     const aktive = ARTIKEL.filter((a) => a.aktiv !== false).length;
     expect(ueblich).toBe(aktive);
     // „Alle Artikel" zeigt zusätzlich die ausgeblendeten.
-    await page.locator('.mb-tgl button', { hasText: 'Alle Artikel' }).click();
+    await page.locator('.mb-umfang button', { hasText: 'Alle Artikel' }).click();
     await expect(page.locator('.mb-row')).toHaveCount(ARTIKEL.length);
   });
 
@@ -401,7 +412,8 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
 
   test('TC-F12-01: Nach dem Versand ist alles gesperrt', async ({ page }) => {
     await oeffneTab(page, { status: 1 });
-    await expect(page.locator('.mb-status')).toContainText('Gesendet');
+    // Die Zustandszeile ersetzt die frühere Statuskarte.
+    await expect(page.locator('#panel-metzgerbest .mb-kontext')).toContainText('Gesendet');
     await expect(page.locator('.mb-add')).toHaveCount(0);
     // Der Knopf eröffnet die Korrektur, er sendet noch nichts.
     await expect(page.locator('.mb-btn', { hasText: 'Korrigieren' })).toBeVisible();
@@ -475,13 +487,16 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
 
   test('TC-F14-04: Leerer Verlauf erklärt sich', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('.mb-sub', { hasText: 'Verlauf' }).click();
+    // Der Bereichswechsel steht jetzt im Blatt hinter dem „i".
+    await oeffneBlatt(page);
+    await page.locator('#mb-blatt .mb-sub', { hasText: 'Verlauf' }).click();
     await expect(page.locator('#metzgerbest-body')).toContainText('Noch keine gesendete Bestellung');
   });
 
   test('TC-F9-01: Artikelverwaltung listet den Katalog', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('.mb-sub', { hasText: 'Artikel' }).click();
+    await oeffneBlatt(page);
+    await page.locator('#mb-blatt .mb-sub', { hasText: 'Artikel' }).click();
     await expect(page.locator('.mb-arow')).toHaveCount(ARTIKEL.length);
     // Ausgeblendete Artikel bleiben sichtbar, nur gedimmt.
     await expect(page.locator('.mb-arow.aus')).toHaveCount(1);
@@ -509,9 +524,16 @@ test.describe('Metzger-Bestellung – Liefertag und stille Sicherung (F30)', () 
     await expect(page.locator('#panel-metzgerbest .mb-days-lbl')).toContainText('Liefertag wählen');
   });
 
-  test('TC-M-F30-02: Statuszeile sagt „Lieferung am"', async ({ page }) => {
+  test('TC-M-F30-02: Der Liefertag wird benannt', async ({ page }) => {
     await oeffneTab(page);
-    await expect(page.locator('#panel-metzgerbest .mb-status')).toContainText('Lieferung am');
+    // Die frühere Statuskarte ist einer Zustandszeile gewichen; der Liefertag
+    // steht in der gewählten Tageskachel und ausführlich im Blatt hinter dem
+    // „i" (Spec kiosk-bestellreiter-mobil, F3).
+    await expect(page.locator('#panel-metzgerbest .mb-day.on')).toBeVisible();
+    await oeffneBlatt(page);
+    const sub = page.locator('#mb-blatt .mb-blatt-sub');
+    await expect(sub).toContainText(/Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag/);
+    await expect(sub).toContainText('Mair');
   });
 
   test('TC-M-F30-03: Eine Portion wird ohne Zutun gesichert', async ({ page }) => {

@@ -1028,6 +1028,13 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   align-items:flex-start;
   padding-top:13px;
 }
+/* Ab Tablet-Breite zwei Spalten: einspaltig passten die zweizeiligen
+   Metzger-Zeilen (Name + Portionen) nicht in ausreichender Zahl auf den
+   Schirm. Die Metzger-Spec will ohnehin, dass die Breite die Spaltenzahl
+   bestimmt (F17). */
+@container liste (min-width:600px){
+  .mb-liste{ --mb-sp:300px }
+}
 @container liste (min-width:960px){
   .mb-liste{ --mb-sp:470px }
 }
@@ -2968,3 +2975,511 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
   .k-main, .k-panel, .k-panel.active{ position:static; overflow:visible; display:block !important }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   15  Bestellreiter auf dem Telefon
+   Spec: specs/kiosk-bestellreiter-mobil/spec.md
+
+   Der Reiter zerfällt in drei Teile: ein fester Kopf, die scrollende
+   Arbeitsliste und die Fußzeile. Nur der mittlere Teil bewegt sich.
+   Gemessen wurde vorher: 710 px Kopfbereich auf einem 640 px hohen
+   Bildschirm — die erste Artikelzeile begann bei y = 810 und war nie zu
+   sehen. Erlaubt sind jetzt 45 % oben und 25 % unten (F2).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.k-panel.k-geteilt{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;                 /* nur .k-liste rollt */
+  padding:0;
+}
+/* Die Fachmodule hängen ihren Inhalt in einen eigenen Behälter
+   (#baecker-body, #getraenke-body, …). Er muss die Aufteilung
+   durchreichen, sonst bliebe die Liste unbegrenzt und die Fußzeile legte
+   sich über die letzte Artikelzeile. */
+.k-panel.k-geteilt > div[id$="-body"]{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+}
+.k-panel.k-geteilt .bk-fest,
+.k-panel.k-geteilt .gk-fest,
+.k-panel.k-geteilt .mb-fest{
+  flex:0 0 auto;
+  padding:6px calc(var(--pad) + var(--sar)) 0 calc(var(--pad) + var(--sal));
+  background:var(--flaeche);
+}
+.k-panel.k-geteilt .k-liste{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:4px calc(var(--pad) + var(--sar)) 8px calc(var(--pad) + var(--sal));
+}
+.k-panel.k-geteilt .bk-foot,
+.k-panel.k-geteilt .gk-foot,
+.k-panel.k-geteilt .mb-foot{
+  flex:0 0 auto;
+  position:static;                 /* im Fluss, nicht mehr klebend */
+  margin:0;
+  padding:6px calc(var(--pad) + var(--sar)) calc(6px + var(--sab)) calc(var(--pad) + var(--sal));
+}
+
+/* ── 15.1  Kontextzeile statt Infokasten (F3) ─────────────────────────
+   Sie trägt zwei Textzeilen: wer liefert und in welchem Zustand die
+   Bestellung ist. Der Liefertag steht in der markierten Kachel darüber. */
+.bk-kontext{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:5px 0 0;
+  padding:5px 8px;
+  border:1px solid var(--bk-line, #fde68a);
+  border-radius:var(--r-m);
+  background:var(--bk-bg, #fefce8);
+}
+.bk-kontext .ico{
+  width:28px; height:28px; flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px;
+  background:var(--karte, #fff);
+  border:1px solid var(--bk-line, #fde68a);
+  color:var(--bk, #a16207);
+}
+.bk-kontext .ico svg{ width:17px; height:17px }
+.bk-kontext .txt{ flex:1; min-width:0 }
+.bk-kontext .z1{
+  font-size:13.5px; font-weight:700; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.bk-kontext .z2{
+  font-size:12px; line-height:1.25; color:var(--mut, #688073);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.bk-kontext.done{ background:var(--gr-t, #f5faf7); border-color:var(--line, #e1ebe5) }
+.bk-kontext.done .ico{ border-color:var(--line, #e1ebe5); color:var(--gr, #2e7d4f) }
+.bk-kontext.late{ background:#fdeeed; border-color:#f3c8c5 }
+.bk-kontext.late .ico{ border-color:#f3c8c5; color:#b91c1c }
+.bk-kontext.late .z2{ color:#b91c1c; font-weight:700 }
+.bk-kontext.test:not(.late){ background:#eaf1ff; border-color:#c3d8fb }
+.bk-kontext.test:not(.late) .ico{ border-color:#c3d8fb; color:#1d4ed8 }
+.bk-kontext.test:not(.late) .z2{ color:#1d4ed8 }
+/* Der i-Knopf öffnet das Blatt mit allem Weiteren. */
+.bk-mehr{
+  width:var(--tap-min, 44px); height:var(--tap-min, 44px); flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:var(--r-s);
+  border:1px solid var(--bk-line, #fde68a);
+  background:var(--karte, #fff);
+  color:var(--bk-dark, #713f12);
+  cursor:pointer;
+}
+.bk-mehr svg{ width:19px; height:19px }
+.bk-kontext.done .bk-mehr{ border-color:var(--line, #e1ebe5); color:var(--ink, #132a1e) }
+
+/* ── 15.2  Das Blatt hinter dem i ─────────────────────────────────────── */
+.bk-blatt{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:60;
+  max-height:80%;
+  overflow-y:auto;
+  padding:14px calc(14px + var(--sar)) calc(14px + var(--sab)) calc(14px + var(--sal));
+  border-radius:18px 18px 0 0;
+  background:var(--karte, #fff);
+  box-shadow:var(--schatten-blatt, 0 -8px 32px rgba(16,24,40,.18));
+}
+.bk-blatt[hidden]{ display:none }
+.bk-blatt-kopf h4{ margin:0; font-size:16px }
+.bk-blatt-sub{ margin:2px 0 10px; font-size:13px; color:var(--mut, #688073) }
+.bk-blatt-z{
+  display:flex; gap:9px; align-items:flex-start;
+  padding:8px 0;
+  border-top:1px solid var(--line, #e1ebe5);
+  font-size:13.5px; line-height:1.4;
+}
+.bk-blatt-z svg{ width:16px; height:16px; flex:0 0 auto; margin-top:2px; color:var(--mut, #688073) }
+.bk-blatt-wz{ display:flex; flex-direction:column; gap:8px; margin-top:12px }
+.bk-blatt-wz > button,
+.bk-blatt-wz > .kn-knopf{
+  min-height:var(--tap, 48px);
+  justify-content:flex-start;
+  gap:9px;
+  padding:0 12px;
+  text-align:left;
+}
+.bk-blatt-zu{
+  width:100%;
+  min-height:var(--tap, 48px);
+  margin-top:12px;
+  border-radius:var(--r-s);
+  border:1px solid var(--line, #e1ebe5);
+  background:var(--karte, #fff);
+  font:inherit; font-weight:600; cursor:pointer;
+}
+
+/* ── 15.3  Umfang-Umschalter am Listenende (F1) ───────────────────────── */
+.bk-umfang{ display:flex; gap:8px; margin:8px 0 2px }
+.bk-umfang > button{ flex:1; min-height:var(--tap, 48px); justify-content:center }
+
+.bk-foot-note{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12.5px; color:var(--mut, #688073);
+}
+.bk-foot-note svg{ width:14px; height:14px }
+
+/* ── 15.4  Nur auf dem Telefon: Kopfzeile und Kacheln straffen ────────── */
+@media (max-width:559px){
+  /* Sechs Symbole und der Titel passen nicht in eine Zeile — deshalb standen
+     sie in zweien (92 px). Vier passen, die drei selteneren klappen aus.
+     Damit die Zeile nicht doch umbricht, darf die Marke schrumpfen und die
+     Knopfreihe behält ihre Breite. */
+  .k-header{ flex-wrap:nowrap; gap:8px; padding-top:4px; padding-bottom:4px }
+  .k-header-brand{ flex:1 1 auto; min-width:0 }
+  .k-header-acts{ flex:0 0 auto; flex-wrap:nowrap }
+  .k-header #k-sparkline{ display:none }
+  .k-header .k-header-acts > .k-head-extra{ display:none }
+  .k-header .k-header-acts.mehr-auf > .k-head-extra{ display:inline-flex }
+  /* Aufgeklappt sind es sieben — dann darf die Reihe umbrechen. */
+  .k-header .k-header-acts.mehr-auf{ flex-wrap:wrap; justify-content:flex-end }
+  .k-header-when{ display:none }
+
+  /* Die Kachel trug vier gestapelte Zeilen. Jetzt zwei: Wochentag, Datum
+     und Punkte oben, der Status darunter — und nur, wenn er etwas sagt. */
+  #panel-baecker .bk-day{
+    display:grid;
+    grid-template-columns:auto auto auto;
+    place-content:center;
+    column-gap:4px;
+    row-gap:1px;
+    min-height:var(--tap, 48px);
+    padding:4px;
+  }
+  #panel-baecker .bk-day > span:first-child{ grid-area:1 / 1 }
+  #panel-baecker .bk-day .d{ grid-area:1 / 2; display:inline; margin:0 }
+  #panel-baecker .bk-day .bk-who{ grid-area:1 / 3; margin:0; gap:2px }
+  #panel-baecker .bk-day .st{ grid-area:2 / 1 / 2 / 4; font-size:11.5px; margin:0 }
+  #panel-baecker .bk-days{ gap:4px; padding:5px 0 }
+  #panel-baecker .kneu-bk-fest{ padding-top:4px; padding-bottom:2px }
+
+  /* Die Gruppenüberschrift kostete mit Rändern rund 40 px — eine dreiviertel
+     Artikelzeile. Schrift und Farbe bleiben, nur die Luft weicht. */
+  #panel-baecker .bk-grp{ margin:5px 0 3px; padding:3px 10px }
+  /* Die Zeile bleibt 44 px bedienbar; nur die Luft um sie herum gibt nach.
+     Vier vollständige Zeilen passen dadurch auch auf 640 px Höhe (F1). */
+  #panel-baecker .bk-row{ margin-bottom:3px; padding:4px 9px }
+  /* Ein langer Artikelname („Roggensemmel mit Kümmel") brach zweizeilig um
+     und machte gerade die vierte Zeile so hoch, dass sie unter den
+     Listenrand rutschte. Auf dem Telefon bleibt der Name einzeilig — wie bei
+     Getränke und Metzger —, damit vier Zeilen sicher ganz sichtbar sind (F1). */
+  #panel-baecker .bk-row .nm{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    overflow-wrap:normal;
+  }
+  .k-panel.k-geteilt .k-liste{ padding-top:3px; padding-bottom:4px }
+
+  /* „An Bäckerei senden" brach auf zwei Zeilen um und machte den Knopf
+     76 px hoch statt 48 — die Fußzeile kostete dadurch eine ganze
+     Artikelzeile. Auf dem Telefon stehen die Kurzformen. */
+  #panel-baecker .bk-foot .bk-btn .lang,
+  #panel-baecker .bk-foot .bk-send .lang{ display:none }
+  #panel-baecker .bk-foot .bk-send,
+  #panel-baecker .bk-foot .bk-btn{ white-space:nowrap }
+
+  /* Die Fußzeile trug noch die Maße ihres klebenden Zustands: negative
+     Ränder und 29 px Innenabstand unten, damit sie über den Panelrand
+     hinausragte. Im geteilten Aufbau steht sie im Fluss und braucht das
+     nicht — 109 px werden so zu 76. */
+  #panel-baecker.k-geteilt .bk-foot{
+    margin:0;
+    padding:6px var(--pad) calc(6px + var(--sab));
+    bottom:auto;
+    box-shadow:none;
+  }
+}
+/* Ab Tablet stehen wieder alle Symbole nebeneinander. */
+@media (min-width:560px){
+  .k-header .k-head-mehr{ display:none }
+}
+
+/* ── 15.5  Dunkles Schema ─────────────────────────────────────────────── */
+html[data-theme="dark"] .bk-kontext{ background:#2a2410; border-color:#5c4a12 }
+html[data-theme="dark"] .bk-kontext .ico{ background:#1f2933; border-color:#5c4a12 }
+html[data-theme="dark"] .bk-kontext .z1{ color:var(--c-text, #e5e7eb) }
+html[data-theme="dark"] .bk-kontext.done{ background:#16281e; border-color:#245038 }
+html[data-theme="dark"] .bk-blatt{ background:var(--c-surf, #111827) }
+html[data-theme="dark"] .bk-blatt-zu,
+html[data-theme="dark"] .bk-mehr{ background:var(--c-surf2, #1f2933); color:var(--c-text, #e5e7eb) }
+.gk-subs.im-blatt, .gk-nur-tel{ display:none }
+
+/* ── 15.6  Getränke: dieselbe Gliederung wie beim Bäcker ────────────────
+   Der Reiter gab bisher alles als einen 5276 px hohen Block aus. Jetzt:
+   fester Kopf, scrollende Liste, Fußzeile (Spec F6). */
+.gk-kontext{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:5px 0 0;
+  padding:5px 8px;
+  border:1px solid var(--line, #e1ebe5);
+  border-radius:var(--r-m);
+  background:var(--karte, #fff);
+}
+.gk-kontext .ico{
+  width:28px; height:28px; flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px;
+  border:1px solid var(--line, #e1ebe5);
+  background:var(--gr-t, #f5faf7);
+  color:var(--gr, #2e7d4f);
+}
+.gk-kontext .ico svg{ width:17px; height:17px }
+.gk-kontext .txt{ flex:1; min-width:0 }
+.gk-kontext .z1{ font-size:13.5px; font-weight:700; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.gk-kontext .z2{ font-size:12px; line-height:1.25; color:var(--mut, #688073);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.gk-kontext.test .z2{ color:#1d4ed8 }
+.gk-kontext.gesendet{ background:var(--gr-t, #f5faf7) }
+.gk-mehr{
+  width:var(--tap-min, 44px); height:var(--tap-min, 44px); flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:var(--r-s);
+  border:1px solid var(--line, #e1ebe5);
+  background:var(--karte, #fff);
+  color:var(--ink, #132a1e);
+  cursor:pointer;
+}
+.gk-mehr svg{ width:19px; height:19px }
+
+.gk-blatt{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:60;
+  max-height:80%;
+  overflow-y:auto;
+  padding:14px calc(14px + var(--sar)) calc(14px + var(--sab)) calc(14px + var(--sal));
+  border-radius:18px 18px 0 0;
+  background:var(--karte, #fff);
+  box-shadow:var(--schatten-blatt, 0 -8px 32px rgba(16,24,40,.18));
+}
+.gk-blatt[hidden]{ display:none }
+.gk-blatt-kopf h4{ margin:0; font-size:16px }
+.gk-blatt-sub{ margin:2px 0 10px; font-size:13px; color:var(--mut, #688073) }
+.gk-blatt-t{ margin:12px 0 5px; font-size:12.5px; font-weight:700; color:var(--mut, #688073) }
+.gk-blatt-z{ display:flex; align-items:center; gap:9px; padding:8px 0;
+  border-top:1px solid var(--line, #e1ebe5); font-size:13.5px }
+.gk-blatt-z.klein{ font-size:12.5px; color:var(--mut, #688073) }
+.gk-blatt-z label{ flex:0 0 auto; font-weight:600 }
+.gk-blatt-z input[type="date"]{ flex:1; min-height:var(--tap-min, 44px);
+  border:1px solid var(--line, #e1ebe5); border-radius:var(--r-s); padding:0 10px; font:inherit }
+.gk-blatt .gk-take{ width:100%; min-height:var(--tap, 48px); margin-top:8px }
+.gk-blatt .gk-tgl{ display:flex; gap:6px }
+.gk-blatt .gk-tgl button{ flex:1; min-height:var(--tap-min, 44px) }
+.gk-blatt .gk-jump{ display:flex; flex-wrap:wrap; gap:6px }
+.gk-blatt .gk-jump button{ min-height:var(--tap-min, 44px); padding:0 12px }
+.gk-blatt-zu{
+  width:100%; min-height:var(--tap, 48px); margin-top:14px;
+  border-radius:var(--r-s); border:1px solid var(--line, #e1ebe5);
+  background:var(--karte, #fff); font:inherit; font-weight:600; cursor:pointer;
+}
+html[data-theme="dark"] .gk-blatt{ background:var(--c-surf, #111827) }
+html[data-theme="dark"] .gk-kontext{ background:var(--c-surf2, #1f2933) }
+
+/* ── 15.7  Metzger: dieselbe Gliederung wie Bäcker und Getränke ─────────
+   Der Reiter gab bisher alles (Statuskarte, Werkzeugleiste, lange Liste)
+   als einen hohen Block aus. Jetzt: fester Kopf (Liefertag, Zustandszeile,
+   Suche), scrollende Liste, Fußzeile; alles Übrige im Blatt (Spec F1/F3). */
+.mb-kontext{
+  display:flex; align-items:center; gap:8px; margin:5px 0 0; padding:5px 8px;
+  border:1px solid var(--line, #e1ebe5); border-radius:var(--r-m);
+  background:var(--karte, #fff);
+}
+.mb-kontext .ico{
+  width:28px; height:28px; flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center; border-radius:8px;
+  border:1px solid var(--line, #e1ebe5); background:var(--gr-t, #f5faf7);
+  color:var(--gr, #2e7d4f);
+}
+.mb-kontext .ico svg{ width:17px; height:17px }
+.mb-kontext .txt{ flex:1; min-width:0 }
+.mb-kontext .z1{ font-size:13.5px; font-weight:700; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.mb-kontext .z2{ font-size:12px; line-height:1.25; color:var(--mut, #688073);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.mb-kontext.test .z2{ color:#1d4ed8 }
+.mb-kontext.gesendet{ background:var(--gr-t, #f5faf7) }
+.mb-mehr{
+  width:var(--tap-min, 44px); height:var(--tap-min, 44px); flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center; border-radius:var(--r-s);
+  border:1px solid var(--line, #e1ebe5); background:var(--karte, #fff);
+  color:var(--ink, #132a1e); cursor:pointer;
+}
+.mb-mehr svg{ width:19px; height:19px }
+#panel-metzgerbest .mb-fest .mb-bar{ margin:5px 0 0 }
+#panel-metzgerbest .mb-fest .mb-bar input{
+  width:100%; min-height:var(--tap-min, 44px); box-sizing:border-box;
+  border:1px solid var(--line, #e1ebe5); border-radius:var(--r-s);
+  padding:0 12px; font:inherit;
+}
+/* Umfang-Umschalter und Zusatzartikel am Listenende. */
+.mb-umfang{ display:flex; gap:8px; margin:10px 2px 4px }
+.mb-umfang .mb-btn{ flex:1; min-height:var(--tap-min, 44px) }
+.mb-umfang .mb-btn.on{ border-color:var(--gr, #2e7d4f); color:var(--gr, #2e7d4f);
+  font-weight:600 }
+.mb-addrow{
+  display:block; width:100%; min-height:var(--tap-min, 44px); margin:10px 0 0;
+  border:1px dashed var(--gr, #2e7d4f); border-radius:var(--r-s);
+  background:var(--gr-t, #f5faf7); color:var(--gr, #2e7d4f); font:inherit;
+  font-weight:600; cursor:pointer;
+}
+/* Fußzeile im geteilten Layout: die ID-Regel oben zieht die Fußzeile
+   full-width mit Negativrändern — im Flexlayout würde das überlaufen. */
+#panel-metzgerbest.k-geteilt .mb-foot{ margin:0 }
+
+.mb-blatt{
+  position:fixed; left:0; right:0; bottom:0; z-index:60; max-height:80%;
+  overflow-y:auto;
+  padding:14px calc(14px + var(--sar)) calc(14px + var(--sab)) calc(14px + var(--sal));
+  border-radius:18px 18px 0 0; background:var(--karte, #fff);
+  box-shadow:var(--schatten-blatt, 0 -8px 32px rgba(16,24,40,.18));
+}
+.mb-blatt[hidden]{ display:none }
+.mb-blatt-kopf h4{ margin:0; font-size:16px }
+.mb-blatt-sub{ margin:2px 0 10px; font-size:13px; color:var(--mut, #688073) }
+.mb-blatt-t{ margin:12px 0 5px; font-size:12.5px; font-weight:700; color:var(--mut, #688073) }
+.mb-blatt-z{ display:flex; align-items:center; gap:9px; padding:8px 0;
+  border-top:1px solid var(--line, #e1ebe5); font-size:13.5px }
+.mb-blatt .mb-tgl{ display:flex; gap:6px }
+.mb-blatt .mb-tgl button{ flex:1; min-height:var(--tap-min, 44px);
+  border:1px solid var(--line, #e1ebe5); border-radius:var(--r-s);
+  background:var(--karte, #fff); font:inherit; cursor:pointer }
+.mb-blatt .mb-tgl button.on{ border-color:var(--gr, #2e7d4f);
+  color:var(--gr, #2e7d4f); font-weight:600 }
+.mb-blatt .mb-jump{ display:flex; flex-wrap:wrap; gap:6px; overflow:visible }
+.mb-blatt .mb-jump button{ min-height:var(--tap-min, 44px); padding:0 12px }
+.mb-blatt .mb-subs.im-blatt{ display:flex; gap:6px }
+.mb-blatt .mb-subs.im-blatt button{ flex:1; min-height:var(--tap-min, 44px) }
+.mb-blatt-wz{ display:flex; flex-direction:column; gap:6px; margin-top:10px }
+.mb-blatt-wz .mb-btn{ width:100%; min-height:var(--tap-min, 44px) }
+.mb-blatt-zu{
+  width:100%; min-height:var(--tap, 48px); margin-top:14px; border-radius:var(--r-s);
+  border:1px solid var(--line, #e1ebe5); background:var(--karte, #fff);
+  font:inherit; font-weight:600; cursor:pointer;
+}
+.mb-subs.im-blatt, .mb-nur-tel{ display:none }
+.mb-blatt .mb-nur-tel{ display:block }
+
+/* Auf dem Telefon: Kopf schmal halten und Zeilen straffen, damit vier
+   Artikelzeilen ganz sichtbar sind (Spec F1). Antippflächen bleiben ≥44 px. */
+@media (max-width:559px){
+  #panel-metzgerbest .mb-days-lbl{ display:none }
+  #panel-metzgerbest .mb-fest .mb-bar{ margin:5px 0 0 }
+  #panel-metzgerbest .mb-kontext{ margin-top:4px }
+  #panel-metzgerbest .mb-liste{ gap:2px 10px }
+  #panel-metzgerbest .mb-grp{ margin:4px 0 1px; padding-bottom:2px }
+  #panel-metzgerbest .mb-row{ padding:1px 8px; gap:0 8px }
+  #panel-metzgerbest .mb-nr{ min-height:32px; padding-top:7px }
+  #panel-metzgerbest .mb-nm{ line-height:1.1 }
+  #panel-metzgerbest .mb-chip{ margin-top:1px; min-height:32px }
+  #panel-metzgerbest .mb-chip .lab{ min-height:32px }
+  #panel-metzgerbest .mb-chip .x{ min-height:32px }
+  /* Der „+"-Knopf (Portion hinzufügen) stand auf der Namenszeile und machte
+     sie 44 px hoch. Auf dem Telefon rückt er neben die Badges — die
+     Namenszeile bleibt einzeilig, die Zeile insgesamt niedriger, ohne dass
+     eine Antippfläche schrumpft (Spec F1, F5). */
+  #panel-metzgerbest .mb-add:not(.del){ order:5; margin-top:1px }
+  /* Die Zähler sind auf dem Telefon ausgeblendet; ohne sie soll die Fußzeile
+     nicht noch eine leere erste Zeile führen. Speichern und Senden stehen so
+     in einer Zeile statt in zweien (spart ~40 px für die Liste). */
+  #panel-metzgerbest .mb-foot::before{ display:none }
+  #panel-metzgerbest .mb-foot{ flex-wrap:nowrap; align-items:center }
+  #panel-metzgerbest .mb-foot .mb-btn,
+  #panel-metzgerbest .mb-foot .mb-send{ order:0 }
+  #panel-metzgerbest .mb-foot .mb-send .lang{ display:none }
+}
+html[data-theme="dark"] .mb-blatt{ background:var(--c-surf, #111827) }
+html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
+
+/* Auf dem Tablet bleibt der Kopf mit seinen Zählern, aber die Zeilen werden
+   ebenso gestrafft wie auf dem Telefon: Der „+"-Knopf rückt neben die
+   Badges, sodass die Namenszeile einzeilig bleibt. Zusammen mit den zwei
+   Spalten passen so genügend Zeilen auf den Schirm (Spec F1, F17). */
+@media (min-width:560px) and (max-width:1100px){
+  #panel-metzgerbest .mb-liste{ gap:3px 10px }
+  #panel-metzgerbest .mb-grp{ margin:6px 0 2px; padding-bottom:2px }
+  #panel-metzgerbest .mb-row{ padding:2px 8px; gap:0 8px }
+  #panel-metzgerbest .mb-add:not(.del){ order:5; margin-top:1px }
+}
+
+@media (max-width:559px){
+  /* Die Artikelzeile war 136 px hoch — knapp drei Bäckerzeilen für einen
+     Artikel. Gebinde, Preis und Pfand rücken unter den Namen statt in
+     eigene Blöcke; die Mengenbedienung bleibt 44 px. */
+  #panel-getraenke .gk-row{ padding:5px 8px; margin-bottom:4px; gap:0 8px }
+  #panel-getraenke .gk-grp{ margin:5px 0 3px; padding:3px 10px }
+  #panel-getraenke .gk-fest{ padding-bottom:4px }
+  #panel-getraenke .gk-bar{ margin:5px 0 0 }
+  #panel-getraenke .gk-bar input[type="search"]{ width:100%; min-height:var(--tap-min, 44px) }
+
+  /* Auch hier trug die Fußzeile noch die Maße ihres klebenden Zustands. */
+  #panel-getraenke.k-geteilt .gk-foot{
+    margin:0;
+    padding:6px var(--pad) calc(6px + var(--sab));
+    bottom:auto;
+    box-shadow:none;
+    border-radius:0;
+    gap:6px;
+  }
+  #panel-getraenke.k-geteilt .gk-foot .gk-send,
+  #panel-getraenke.k-geteilt .gk-foot .gk-btn{ white-space:nowrap }
+  /* Warenwert und Pfand stehen im Blatt, nicht in der Fußzeile. */
+  #panel-getraenke.k-geteilt .gk-foot .gk-st.extra{ display:none }
+
+  /* Die Zeile war 146 px hoch — fast drei Bäckerzeilen für einen Artikel.
+     Das Gebinde stand in einer eigenen Spalte, Name, Preis und Schnellwahl
+     darunter. Auf dem Telefon steht das Gebinde jetzt in der Preiszeile,
+     und die Vorschlagsknöpfe erscheinen nur dort, wo sie helfen: solange
+     noch nichts erfasst ist. Der Schrittzähler bleibt 44 px. */
+  #panel-getraenke .gk-row{ grid-template-columns:minmax(0,1fr); padding:5px 8px }
+  #panel-getraenke .gk-geb{ display:none }
+  /* Name, Vorschläge und Schrittzähler teilen sich ein Raster: Der Zähler
+     steht rechts über beide Textzeilen, die Vorschläge unter dem Namen.
+     Vorher stand jedes in einer eigenen Zeile — 146 px je Artikel. */
+  #panel-getraenke .gk-zeile{
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:0 6px;
+    align-items:center;
+  }
+  #panel-getraenke .gk-chips{ display:contents }
+  #panel-getraenke .gk-step{ align-self:center }
+  #panel-getraenke .gk-sugg{ display:flex; gap:5px }
+  /* Zwei Vorschlagsknöpfe passen neben den Zähler nicht in eine Zeile.
+     Der übliche bleibt; die zuletzt bestellte Menge steht ohnehin als
+     Marke am Namen („letzte: 3"), sodass nichts verlorengeht. */
+  #panel-getraenke .gk-sugg button:nth-child(n+2){ display:none }
+  #panel-getraenke .gk-sugg button{ min-height:var(--tap-min, 44px); padding:0 9px }
+  #panel-getraenke .gk-kisteninfo{ align-self:center }
+  #panel-getraenke .gk-row.has .gk-sugg{ display:none }
+  #panel-getraenke .gk-fest > .gk-subs{ display:none }
+  #panel-getraenke .gk-grp{ padding:3px 10px; font-size:12px; line-height:1.2 }
+  #panel-getraenke .gk-row{ padding:3px 10px }
+  #panel-getraenke .gk-nm{ line-height:1.25 }
+  /* Die Preiszeile darf die Zeile nicht auf drei Zeilen aufblaehen. */
+  #panel-getraenke .gk-pr{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  #panel-getraenke .gk-sugg button{ white-space:nowrap; font-size:12px }
+  #panel-getraenke .gk-subs.im-blatt,
+  #panel-getraenke .gk-nur-tel{ display:flex }
+}
+/* Ab Tablet steht das Gebinde wieder in seiner eigenen Spalte. */
+@media (min-width:560px){
+  .gk-geb-klein{ display:none }
+}
+/* Am Listenende: anlegen und leeren (Spec kiosk-bestellreiter-mobil, F2). */
+.gk-listenende{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px }
+.gk-listenende > button{ flex:1 1 140px; min-height:var(--tap, 48px) }

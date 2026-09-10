@@ -231,19 +231,6 @@
   }
 
   // Zeile im Kopf, die den Grund fürs Blinken benennt.
-  function offenHinweis() {
-    var e = (_uebersicht && _uebersicht.erinnerung) || {};
-    var offen = (_uebersicht && _uebersicht.offen_gesamt) || 0;
-    if (!offen) return '';
-    var text = offenText();
-    if (text === 'Nichts offen') return '';
-    return '<div class="bk-offen' + (e.blinkt ? ' dringend' : '') + '">'
-      + luc(e.blinkt ? 'alarm-clock' : 'info', 14) + ' ' + esc(text)
-      + (e.blinkt && e.bestellschluss
-         ? ' – Bestellschluss war um ' + esc(e.bestellschluss) + ' Uhr' : '')
-      + '</div>';
-  }
-
   // ══════════════════════════════════════════════════
   //  Darstellung
   // ══════════════════════════════════════════════════
@@ -256,6 +243,11 @@
     else if (_sub === 'verlauf') html = renderVerlauf();
     else html = renderBestellung();
     h.innerHTML = html;
+    // Nur die Bestellansicht ist in festen Kopf, scrollende Liste und
+    // Fußzeile geteilt. Artikel- und Verlaufsansicht scrollen wie bisher
+    // als Ganzes (Spec kiosk-bestellreiter-mobil, F1).
+    var panel = document.getElementById('panel-baecker');
+    if (panel) panel.classList.toggle('k-geteilt', _sub !== 'artikel' && _sub !== 'verlauf');
     leitfarbe();
     icons();
     kopfhoehe();
@@ -278,7 +270,7 @@
   function kopfhoehe() {
     var panel = document.getElementById('panel-baecker');
     if (!panel) return;
-    var kopf = panel.querySelector('.bk-sticky');
+    var kopf = panel.querySelector('.bk-fest') || panel.querySelector('.bk-sticky');
     var fuss = panel.querySelector('.bk-foot');
     panel.style.setProperty('--bk-kopf', (kopf ? kopf.offsetHeight : 0) + 10 + 'px');
     panel.style.setProperty('--bk-fuss', (fuss && getComputedStyle(fuss).position === 'sticky'
@@ -377,98 +369,143 @@
     return h + '</div>';
   }
 
-  function statusKarte() {
+  /* ── Kontextzeile statt Infokasten (Spec kiosk-bestellreiter-mobil, F3) ──
+     Der frühere Kasten war 250 px hoch und trug Angaben, die man einmal
+     liest und dann nicht mehr braucht: Herkunft der Vorbelegung,
+     Bestellschluss, Sortierung. Sie stehen jetzt im Blatt hinter dem „i".
+     Hier bleibt, was den Zustand beschreibt — und der Liefertag steht nicht
+     mehr doppelt, denn die markierte Kachel darüber nennt ihn bereits. */
+  function kontextZeile() {
     var gesendet = _b.gesperrt && !_korrektur;
     var druckOffen = gesendet && _b.druck_offen;
     var e = (_uebersicht && _uebersicht.erinnerung) || {};
     var ueberfaellig = e.blinkt && e.datum === _datum;
-    var cls = 'bk-stat bk-stat-' + esc(_bk)
-      + (gesendet ? ' done' : (ueberfaellig ? ' late' : ''));
-    // Der Versandeintrag, nicht irgendeiner: Ein Druckvermerk wird VORNE in
-    // das Protokoll gestellt und trägt weder Positionen noch Stückzahl. Wer
-    // stumpf [0] nimmt, schreibt nach dem Drucken „undefined Positionen“ an.
-    var letzte = ((_b.protokoll || []).filter(function (e) {
-      return e && (e.art === 'gesendet' || e.art === 'korrektur');
-    })[0]) || null;
-    var wer = esc(_b.baeckerei_name || '');
 
-    var h = '<div class="' + cls + '">';
-    h += '<div class="ico">' + luc(druckOffen ? 'printer'
-      : gesendet ? 'check-circle' : (ueberfaellig ? 'alarm-clock' : 'croissant'), 22) + '</div>';
-    h += '<div class="txt">';
+    var cls = 'bk-kontext bk-kontext-' + esc(_bk)
+      + (gesendet ? ' done' : (ueberfaellig ? ' late' : ''))
+      + (_b.testbetrieb ? ' test' : '');
+    var ico = druckOffen ? 'printer'
+      : gesendet ? 'check-circle' : (ueberfaellig ? 'alarm-clock' : 'croissant');
+
+    var letzte = ((_b.protokoll || []).filter(function (p) {
+      return p && (p.art === 'gesendet' || p.art === 'korrektur');
+    })[0]) || null;
+
+    var z1 = esc(_b.baeckerei_name || 'Bäckerei');
+    var z2;
     if (_korrektur) {
-      h += '<div class="t1">Korrektur – Lieferung am ' + esc(_b.wochentag) + ', '
-        + esc(_b.datum_de) + ' · ' + wer + '</div>';
-      h += '<div class="t2">Mengen jetzt ändern, dann senden'
-        + (letzte ? ' · Original gesendet ' + esc(zeitKurz(letzte.zeit)) : '')
-        + ' · Änderungen werden markiert</div>';
+      z2 = 'Korrektur – Mengen ändern, dann senden';
     } else if (gesendet) {
-      // „Gesendet – Dienstag" las sich wie „am Dienstag gesendet". Gemeint ist
-      // der LIEFERtag; abgeschickt wurde am Tag davor. Beides steht jetzt da.
-      h += '<div class="t1">Gesendet – Lieferung am ' + esc(_b.wochentag) + ', '
-        + esc(_b.datum_de) + ' · ' + wer + '</div>';
-      var basis = letzte
-        ? 'abgeschickt ' + esc(zeitKurz(letzte.zeit)) + ' von ' + esc(letzte.wer) + ' · '
-          + letzte.positionen + ' Positionen · ' + letzte.stueck + ' Stück'
-        : 'Bereits gesendet';
-      h += '<div class="t2">' + basis
-        + (druckOffen ? ' · <b>Papierausdruck steht noch aus</b>'
-           : _b.gedruckt_am ? ' · gedruckt' : '') + '</div>';
+      z2 = druckOffen ? 'Papierausdruck steht noch aus'
+        : ('Gesendet' + (letzte ? ' ' + esc(zeitKurz(letzte.zeit)) : ''));
+    } else if (_b.bestellbar === false) {
+      z2 = 'Dieser Tag ist geliefert';
+    } else if (ueberfaellig) {
+      z2 = 'Bestellschluss war um ' + esc(e.bestellschluss || '') + ' Uhr';
+    } else if (_b.testbetrieb) {
+      z2 = 'Testbetrieb – geht nicht an die Bäckerei';
     } else {
-      h += '<div class="t1">Lieferung am ' + esc(_b.wochentag) + ', ' + esc(_b.datum_de) + ' · ' + wer + '</div>';
-      var herkunft = _b.vorlage_datum_de
-        ? (_b.hat_entwurf
-            ? ' · gespeicherter Entwurf, vorbelegt vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')'
-            : ' · vorbelegt mit den Werten vom letzten ' + esc(_b.wochentag) + ' (' + esc(_b.vorlage_datum_de) + ')')
-        : (_b.hat_entwurf
-            ? ' · gespeicherter Entwurf'
-            : (_b.aus_startwerten
-                // Noch keine eigene Bestellung für diesen Wochentag: der
-                // Durchschnitt aus den Rechnungen dient als Starthilfe.
-                ? ' · Startwerte aus ' + esc(String((_b.startwerte_meta || {}).rechnungen || '')) +
-                  ' Rechnungen (Durchschnitt je Liefertag) – bitte prüfen'
-                : ' · keine Vorlage vorhanden, alle Mengen starten bei 0'));
-      h += '<div class="t2">' + (ueberfaellig
-        ? '<b>Bestellschluss war um ' + esc(e.bestellschluss || '') + ' Uhr</b> – bitte zeitnah senden'
-        : 'Noch nicht gesendet') + bestellschlussText() + herkunft + '</div>';
+      z2 = 'Noch nicht gesendet';
+    }
+
+    return '<div class="' + cls + '">'
+      + '<div class="ico">' + luc(ico, 18) + '</div>'
+      + '<div class="txt"><div class="z1">' + z1 + '</div>'
+      + '<div class="z2">' + z2 + '</div></div>'
+      + '<button class="bk-mehr" onclick="KBaecker.blatt(true)" '
+      + 'title="Angaben und weitere Schritte">' + luc('info', 19) + '</button>'
+      + '</div>';
+  }
+
+  /* Das Blatt hinter dem „i": alles, was den Kopf nicht dauerhaft belasten
+     muss, aber erreichbar bleiben soll. */
+  function detailBlatt() {
+    var gesendet = _b.gesperrt && !_korrektur;
+    var e = (_uebersicht && _uebersicht.erinnerung) || {};
+    var z = function (ic, text) {
+      return '<div class="bk-blatt-z">' + luc(ic, 16) + '<div>' + text + '</div></div>';
+    };
+
+    var h = '<div class="bk-blatt" id="bk-blatt" hidden>';
+    h += '<div class="bk-blatt-kopf"><h4>Zur Bestellung</h4>'
+      + '<div class="bk-blatt-sub">' + esc(_b.wochentag || '') + ', '
+      + esc(_b.datum_de || '') + ' · ' + esc(_b.baeckerei_name || '') + '</div></div>';
+
+    // Herkunft der Mengen – früher die dritte Zeile des Infokastens.
+    var herkunft = _b.vorlage_datum_de
+      ? (_b.hat_entwurf
+          ? 'Gespeicherter Entwurf, vorbelegt vom letzten ' + esc(_b.wochentag)
+            + ' (' + esc(_b.vorlage_datum_de) + ')'
+          : 'Vorbelegt mit den Werten vom letzten ' + esc(_b.wochentag)
+            + ' (' + esc(_b.vorlage_datum_de) + ')')
+      : (_b.hat_entwurf ? 'Gespeicherter Entwurf'
+          : (_b.aus_startwerten
+              ? 'Startwerte aus ' + esc(String((_b.startwerte_meta || {}).rechnungen || ''))
+                + ' Rechnungen (Durchschnitt je Liefertag) – bitte prüfen'
+              : 'Keine Vorlage vorhanden, alle Mengen starten bei 0'));
+    h += z('rotate-ccw', herkunft);
+
+    if (_b.bestellschluss_datum_de) {
+      h += z('clock', 'Bestellschluss: ' + esc(_b.bestellschluss_wochentag || '')
+        + ', ' + esc(_b.bestellschluss_datum_de));
+    }
+    h += z('arrow-down-up', 'Sortiert nach Artikelnummer – genau wie im Formular der Bäckerei');
+    if (_b.testbetrieb) {
+      h += z('flask-conical', '<b>Testbetrieb</b> – die Bestellung geht an '
+        + esc(_b.empfaenger) + ', nicht an die Bäckerei.');
+    }
+    var offen = offenText();
+    if ((_uebersicht && _uebersicht.offen_gesamt) && offen !== 'Nichts offen') {
+      h += z(e.blinkt ? 'alarm-clock' : 'info', esc(offen));
+    }
+    if (gesendet && _b.gedruckt_am) h += z('printer', 'Bereits gedruckt');
+
+    /* Der Versandeintrag stand früher in der Statuskarte. Er beantwortet die
+       Frage „wer hat wann was geschickt" und darf nicht verlorengehen —
+       ein Druckvermerk steht vorne im Protokoll und trägt keine Stückzahl,
+       deshalb wird gezielt der Sende- oder Korrektureintrag gesucht. */
+    var letzte = ((_b.protokoll || []).filter(function (p) {
+      return p && (p.art === 'gesendet' || p.art === 'korrektur');
+    })[0]) || null;
+    if (letzte) {
+      h += z('send', 'Abgeschickt ' + esc(zeitKurz(letzte.zeit))
+        + (letzte.wer ? ' von ' + esc(letzte.wer) : '')
+        + (letzte.positionen != null
+            ? ' · ' + letzte.positionen + ' Positionen · ' + letzte.stueck + ' Stück' : ''));
+    }
+
+    // Selten gebrauchte Handlungen – im Kopf kosteten sie zwei Zeilen.
+    h += '<div class="bk-blatt-wz">';
+    h += notizKnopf();
+    if (!gesendet && _b.vorlage_datum_de && _b.bestellbar !== false) {
+      h += '<button class="bk-btn" onclick="KBaecker.blatt(false);KBaecker.reset()">'
+        + luc('rotate-ccw', 16) + ' Auf letzten ' + esc(_b.wochentag) + ' zurücksetzen</button>';
+    }
+    if (_b.papierausdruck || gesendet) {
+      h += '<button class="bk-btn" onclick="KBaecker.blatt(false);KBaecker.drucken()">'
+        + luc('printer', 16) + ' Drucken</button>';
+    }
+    h += '<button class="bk-btn" onclick="KBaecker.blatt(false);KBaecker.sub(\'artikel\')">'
+      + luc('list', 16) + ' Artikel verwalten</button>';
+    h += '<button class="bk-btn" onclick="KBaecker.blatt(false);KBaecker.sub(\'verlauf\')">'
+      + luc('history', 16) + ' Verlauf ansehen</button>';
+    if (_korrektur) {
+      h += '<button class="bk-btn" onclick="KBaecker.blatt(false);KBaecker.verwerfen()">'
+        + luc('x', 16) + ' Korrektur verwerfen</button>';
     }
     h += '</div>';
-    h += notizKnopf();
-    if (druckOffen) {
-      // Der Ausdruck geht vor: erst danach gilt der Tag als erledigt.
-      h += '<button class="bk-cta" onclick="KBaecker.drucken()">' + luc('printer', 15) + ' Jetzt drucken</button>';
-    } else if (_b.bestellbar === false) {
-      // Bestellt wird immer für einen künftigen Liefertag – für heute ist die
-      // Ware längst da. Ohne diesen Riegel wurde versehentlich eine Bestellung
-      // für den laufenden Tag abgeschickt.
-      h += '<div class="bk-cta-note">' + luc('lock', 14)
-        + ' Dieser Tag ist geliefert – bestellt wird immer für einen künftigen Liefertag</div>';
-    } else if (gesendet) {
-      // Korrigieren lässt sich nur der nächste Liefertag – für bereits
-      // gelieferte Tage käme die Änderung zu spät.
-      if (_b.korrektur_moeglich) {
-        h += '<button class="bk-cta ghost" onclick="KBaecker.korrektur()">' + luc('pencil', 15) + ' Korrigieren</button>';
-      } else {
-        h += '<div class="bk-cta-note">' + luc('lock', 14) + ' Abgeschlossen – eine Korrektur ist nur für den nächsten Liefertag möglich</div>';
-      }
-      // Nachdruck: Der Ausdruck kann schieflaufen oder das Blatt verloren
-      // gehen. Solange die Bestellung existiert, muss sie erneut aufs Papier
-      // gebracht werden können – auch Tage später.
-      if (_b.papierausdruck) {
-        h += '<button class="bk-cta ghost" onclick="KBaecker.drucken()">'
-          + luc('printer', 15) + ' Noch einmal drucken</button>';
-      }
-    } else {
-      h += '<button class="bk-cta" onclick="KBaecker.vorschau()">' + luc('mail', 15) + ' '
-        + (_korrektur ? 'Korrektur senden' : 'An Bäckerei senden') + '</button>';
-      // Ausstieg direkt neben dem Senden – so wie beim Metzger. Sonst steht
-      // „Verwerfen" nur unten in der Fußzeile und wird übersehen.
-      if (_korrektur) {
-        h += '<button class="bk-cta-note" onclick="KBaecker.verwerfen()" '
-          + 'style="cursor:pointer">Verwerfen</button>';
-      }
-    }
+    h += '<button class="bk-blatt-zu" onclick="KBaecker.blatt(false)">Schließen</button>';
     return h + '</div>';
+  }
+
+  function blatt(auf) {
+    var el = document.getElementById('bk-blatt');
+    if (!el) return;
+    el.hidden = !auf;
+    // Der Hintergrund darf nicht mitscrollen, solange das Blatt offen ist
+    // (Konvention 6).
+    if (auf && window.dlLockScroll) dlLockScroll();
+    else if (!auf && window.dlUnlockScroll) dlUnlockScroll();
   }
 
   /* ── Hinweis zur Bestellung (Spec bestell-freitext) ──────────────────
@@ -536,12 +573,12 @@
 
   function renderBestellung() {
     if (!_b) {
-      return '<div class="bk-sticky">' + subTabs() + tagesleiste() + '</div>'
-        + '<div class="k-empty">'
+      return '<div class="bk-fest">' + subTabs() + tagesleiste() + '</div>'
+        + '<div class="k-liste"><div class="k-empty">'
         + (_uebersicht
             ? 'Kein anstehender Liefertag. Die Bestelltage lassen sich im CMS einstellen.'
             : 'Laden…')
-        + '</div>';
+        + '</div></div>';
     }
     var gesperrt = _b.gesperrt && !_korrektur;
     // Ein gelieferter Tag lässt sich nur noch ansehen – die Eingabefelder
@@ -551,35 +588,15 @@
     var liste = alle.filter(sichtbar);
     var zusatz = alle.filter(function (p) { return p.zusatz; });
 
-    var h = '<div class="bk-sticky">' + subTabs();
+    var h = '<div class="bk-fest">';
     h += tagesleiste();
-    h += offenHinweis();
     h += baeckerReiter();
-    if (_b.testbetrieb) {
-      h += '<div class="bk-test">' + luc('flask-conical', 14)
-        + ' <b>Testbetrieb</b> – die Bestellung geht an ' + esc(_b.empfaenger) + ', nicht an die Bäckerei.</div>';
-    }
-    h += statusKarte();
+    h += kontextZeile();
+    h += '</div>';                                  // bk-fest
 
-    // Werkzeugleiste
-    h += '<div class="bk-tools">';
-    h += '<button class="bk-btn' + (!_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
-      + luc('croissant', 14) + ' Übliche Artikel</button>';
-    h += '<button class="bk-btn' + (_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(true)">'
-      + 'Alle Artikel <span class="c">' + alle.filter(function (p) { return !p.zusatz; }).length + '</span></button>';
-    h += '<span class="sp"></span>';
-    if (!gesperrt && _b.vorlage_datum_de) {
-      h += '<button class="bk-btn" onclick="KBaecker.reset()">' + luc('rotate-ccw', 14)
-        + ' Auf letzten ' + esc(_b.wochentag) + ' zurücksetzen</button>';
-    }
-    if (_korrektur) {
-      h += '<button class="bk-btn" onclick="KBaecker.verwerfen()">Verwerfen</button>';
-    }
-    h += '</div>';
-
-    h += '<div class="bk-sortnote">' + luc('arrow-down-up', 12)
-      + ' Sortiert nach Artikelnummer – genau wie im Formular der Bäckerei</div>';
-    h += '</div>';   // bk-sticky
+    // Ab hier die Arbeitsfläche. Sie ist der einzige Bereich, der scrollt
+    // (Spec kiosk-bestellreiter-mobil, F1/F2).
+    h += '<div class="k-liste">';
 
     // Artikel, nach Warengruppe gegliedert
     if (!liste.length) {
@@ -614,6 +631,18 @@
         + luc('plus', 15) + ' Weiteren Artikel für diesen Tag hinzufügen</button>';
     }
 
+    /* Der Umfang-Umschalter stand früher im Kopf und kostete dort eine ganze
+       Zeile. Am Listenende steht er da, wo man ihn sucht: wenn man einen
+       Artikel vermisst und bis unten gescrollt hat. */
+    h += '<div class="bk-umfang">';
+    h += '<button class="bk-btn' + (!_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
+      + luc('croissant', 15) + ' Übliche Artikel</button>';
+    h += '<button class="bk-btn' + (_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(true)">'
+      + 'Alle Artikel <span class="c">'
+      + alle.filter(function (p) { return !p.zusatz; }).length + '</span></button>';
+    h += '</div>';
+    h += '</div>';   // k-liste
+
     // Fusszeile
     var pos = 0, stk = 0;
     alle.forEach(function (p) {
@@ -627,12 +656,32 @@
       + '<b>' + pos + ' Positionen</b> · <b>' + stk + ' Stück</b>'
       + (geaendert ? ' · ' + geaendert + ' Änderung' + (geaendert === 1 ? '' : 'en') : '')
       + '</div><span class="bk-autosave"></span><span class="sp"></span>';
-    if (!nurAnsehen) {
-      h += '<button class="bk-btn" onclick="KBaecker.speichern()">Entwurf speichern</button>';
+    /* Die Fußzeile trägt jetzt jede nächste Handlung — auch die, die früher
+       im Infokasten standen. So gibt es genau einen Ort dafür, und er bleibt
+       beim Scrollen sichtbar (Spec kiosk-bestellreiter-mobil, F3). */
+    if (gesperrt && _b.druck_offen) {
+      h += '<button class="bk-send" onclick="KBaecker.drucken()">'
+        + luc('printer', 16) + ' Jetzt drucken</button>';
+    } else if (_b.bestellbar === false) {
+      h += '<span class="bk-foot-note">' + luc('lock', 14)
+        + ' Geliefert – bestellt wird für einen künftigen Liefertag</span>';
+    } else if (gesperrt) {
+      if (_b.korrektur_moeglich) {
+        h += '<button class="bk-send ghost" onclick="KBaecker.korrektur()">'
+          + luc('pencil', 16) + ' Korrigieren</button>';
+      } else {
+        h += '<span class="bk-foot-note">' + luc('lock', 14)
+          + ' Abgeschlossen – Korrektur nur für den nächsten Liefertag</span>';
+      }
+    } else {
+      h += '<button class="bk-btn" onclick="KBaecker.speichern()">Entwurf'
+        + '<span class="lang"> speichern</span></button>';
       h += '<button class="bk-send" onclick="KBaecker.vorschau()">' + luc('mail', 16) + ' '
-        + (_korrektur ? 'Korrektur senden' : 'An Bäckerei senden') + '</button>';
+        + (_korrektur ? 'Korrektur senden' : 'An <span class="lang">Bäckerei </span>senden')
+        + '</button>';
     }
     h += '</div>';
+    h += detailBlatt();
     return h;
   }
 
@@ -1649,7 +1698,8 @@
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,
     bearbeiten: bearbeiten, aendernSpeichern: aendernSpeichern,
     tagAusVerlauf: tagAusVerlauf, dlgZu: dlgZu,
-    notizOeffnen: notizOeffnen
+    notizOeffnen: notizOeffnen,
+    blatt: blatt
   };
 
   if (document.readyState === 'loading') {

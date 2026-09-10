@@ -43,12 +43,17 @@
   </div>
   <div id="k-sparkline" title="Bestellungen heute"></div>
   <div class="k-header-acts">
-    <button class="k-hbtn" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden verwalten" aria-label="Stammkunden verwalten"><i data-lucide="users"></i></button>
-    <a class="k-hbtn" href="/index.html" title="Zur Website" aria-label="Zur Website"><i data-lucide="house"></i></a>
-    <a class="k-hbtn" href="/cms.html" title="Zum CMS" aria-label="Zum CMS"><i data-lucide="settings"></i></a>
+    <button class="k-hbtn k-head-extra" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden verwalten" aria-label="Stammkunden verwalten"><i data-lucide="users"></i></button>
+    <a class="k-hbtn k-head-extra" href="/index.html" title="Zur Website" aria-label="Zur Website"><i data-lucide="house"></i></a>
+    <a class="k-hbtn k-head-extra" href="/cms.html" title="Zum CMS" aria-label="Zum CMS"><i data-lucide="settings"></i></a>
     <button class="k-hbtn" id="k-mute-btn" onclick="K.toggleMute()" title="Ton ein/aus" aria-label="Ton ein oder aus"><i data-lucide="volume-2"></i></button>
     <button class="k-hbtn" onclick="K.openModal('modal-help')" title="Hilfe" aria-label="Hilfe"><i data-lucide="help-circle"></i></button>
     <button class="k-hbtn" onclick="K.refresh()" title="Aktualisieren" aria-label="Aktualisieren"><i data-lucide="refresh-cw"></i></button>
+    <!-- Auf dem Telefon passen Titel und sechs Symbole nicht in eine Zeile.
+         Die drei selteneren stehen dann hier drin; ab 560 px ist dieser
+         Knopf ausgeblendet und alle sechs stehen wieder direkt da.
+         (Spec kiosk-bestellreiter-mobil, F2) -->
+    <button class="k-hbtn k-head-mehr" onclick="K.kopfMenue()" title="Weitere Bereiche" aria-label="Weitere Bereiche" aria-expanded="false"><i data-lucide="more-horizontal"></i></button>
   </div>
 </header>
 
@@ -741,6 +746,28 @@ var K = (function(){
     localStorage.setItem('k_muted', _soundMuted ? '1' : '0');
     _initMuteBtn();
     toast(_soundMuted ? 'Ton stumm geschaltet' : 'Ton aktiviert');
+  }
+
+  /* Auf dem Telefon stehen nur die täglich gebrauchten Symbole in der
+     Kopfzeile; Stammkunden, Website und CMS klappen hier auf. Ab 560 px
+     ist dieser Knopf ausgeblendet und alle stehen wieder direkt da.
+     (Spec kiosk-bestellreiter-mobil, F2) */
+  function kopfMenue(){
+    var kopf = document.querySelector('.k-header-acts');
+    if(!kopf) return;
+    var offen = kopf.classList.toggle('mehr-auf');
+    var knopf = kopf.querySelector('.k-head-mehr');
+    if(knopf) knopf.setAttribute('aria-expanded', offen ? 'true' : 'false');
+    if(!offen) return;
+    // Ein Tipp daneben schließt wieder.
+    setTimeout(function(){
+      document.addEventListener('click', function zu(ev){
+        if(kopf.contains(ev.target)) return;
+        kopf.classList.remove('mehr-auf');
+        if(knopf) knopf.setAttribute('aria-expanded','false');
+        document.removeEventListener('click', zu);
+      });
+    }, 0);
   }
   function _initAlertSound(){
     if(_alertSound) return;
@@ -4872,6 +4899,7 @@ var K = (function(){
     markFmRead: markFmRead,
     markAllFmRead: markAllFmRead,
     toggleMute: toggleMute,
+    kopfMenue: kopfMenue,
     refresh: refresh
   };
 })();

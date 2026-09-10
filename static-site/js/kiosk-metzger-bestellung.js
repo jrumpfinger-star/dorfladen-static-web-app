@@ -326,25 +326,145 @@ window.KMetzgerBest = (function () {
     var el = host();
     if (!el) return;
     if (!_b) { el.innerHTML = '<div class="k-empty">Laden\u2026</div>'; return; }
-    var h = '<div class="mb">' + subTabs();
-    if (_sub === 'bestellung') h += tagesleiste() + statusKarte() + werkzeuge() + liste();
-    else if (_sub === 'verlauf') h += verlaufAnsicht();
-    else if (_sub === 'artikel') h += artikelAnsicht();
-    else h += hinweisEinstellungen();
-    h += '</div>';
+    var h;
+    if (_sub === 'bestellung') {
+      // Wie beim Bäcker: fester Kopf, scrollende Liste, Fußzeile. Vorher gab
+      // dieser Reiter alles als einen hohen Block aus — auf dem Telefon lag
+      // die erste Artikelzeile weit unter dem Bildschirm (Spec
+      // kiosk-bestellreiter-mobil, F1).
+      h = renderBestellung();
+    } else {
+      h = '<div class="mb">' + subTabs();
+      if (_sub === 'verlauf') h += verlaufAnsicht();
+      else if (_sub === 'artikel') h += artikelAnsicht();
+      else h += hinweisEinstellungen();
+      h += '</div>';
+    }
     el.innerHTML = h;
+    var panel = document.getElementById('panel-metzgerbest');
+    if (panel) panel.classList.toggle('k-geteilt', _sub === 'bestellung');
+    icons();
     if (_sub === 'bestellung') fuss();
   }
 
-  function subTabs() {
+  function icons() { if (window.lucide) try { lucide.createIcons(); } catch (e) {} }
+
+  function ikone(name) { return '<i data-lucide="' + name + '"></i>'; }
+
+  /* Fester Kopf, scrollende Liste, Fußzeile (Spec F1). Der Kopf trägt nur
+     noch Liefertag, Zustandszeile und Suche; Termin-Details, Bereichswechsel,
+     Filter, Sprungmarken und selten gebrauchte Schritte stehen im Blatt
+     hinter dem „i". */
+  function renderBestellung() {
+    var h = '<div class="mb-fest">';
+    h += tagesleiste();
+    h += kontextZeile();
+    h += '<div class="mb-bar">'
+      + '<input type="search" id="mb-q" placeholder="Artikel oder Nummer suchen \u2026"'
+      + ' value="' + esc(_suche) + '" oninput="KMetzgerBest.such(this.value)"></div>';
+    h += '</div>';                                   // mb-fest
+    h += liste();
+    h += '<div class="mb-foot" id="mb-foot"></div>';
+    h += detailBlatt();
+    return h;
+  }
+
+  /* ── Kontextzeile statt Statuskarte (Spec F3) ──────────────────────────
+     Zwei Textzeilen: wer liefert und in welchem Zustand die Bestellung ist.
+     Der Liefertag steht in der markierten Kachel darüber, nicht doppelt. */
+  function kontextZeile() {
+    var s = _b.status || 0;
+    var gesendet = s && !_korrektur;
+    var prot = (_b.protokoll || []);
+    var letzte = prot.length ? prot[prot.length - 1] : null;
+    var cls = 'mb-kontext' + (gesendet ? ' gesendet' : '') + (_testbetrieb ? ' test' : '');
+    var z1 = esc(_cfg.name || 'Metzgerei');
+    var z2;
+    if (_korrektur) z2 = 'Korrektur \u2013 Mengen \u00e4ndern, dann senden';
+    else if (gesendet) z2 = (s === 2 ? 'Korrigiert' : 'Gesendet')
+      + (letzte ? ' ' + esc(zeitKurz(letzte.zeit)) : '');
+    else if (_b.bestellbar === false) z2 = 'Dieser Tag ist geliefert';
+    else if (_testbetrieb) z2 = 'Testbetrieb \u2013 geht nicht an die Metzgerei';
+    else z2 = 'Noch nicht gesendet';
+    return '<div class="' + cls + '">'
+      + '<div class="ico">' + ikone(gesendet ? 'check-circle' : 'beef') + '</div>'
+      + '<div class="txt"><div class="z1">' + z1 + '</div>'
+      + '<div class="z2">' + z2 + '</div></div>'
+      + '<button class="mb-mehr" onclick="KMetzgerBest.blatt(true)"'
+      + ' title="Liefertag, Vorbelegung und weitere Schritte">' + ikone('info')
+      + '</button></div>';
+  }
+
+  /* Das Blatt hinter dem „i": alles, was den Kopf nicht dauerhaft belasten
+     muss, aber erreichbar bleiben soll (Spec F3). */
+  function detailBlatt() {
+    var s = _b.status || 0;
+    var gesendet = s && !_korrektur;
+    var prot = (_b.protokoll || []);
+    var letzte = prot.length ? prot[prot.length - 1] : null;
+    var z = function (text) { return '<div class="mb-blatt-z"><div>' + text + '</div></div>'; };
+
+    var h = '<div class="mb-blatt" id="mb-blatt" hidden>';
+    h += '<div class="mb-blatt-kopf"><h4>Zur Bestellung</h4>'
+      + '<div class="mb-blatt-sub">' + esc(wochentagVon(_datum)) + ', '
+      + esc(datumDe(_datum)) + ' \u00b7 ' + esc(_cfg.name || 'Metzgerei') + '</div></div>';
+
+    if (s === 0) {
+      h += z(_vorbelegtAus
+        ? 'Vorbelegt aus der Bestellung vom ' + esc(datumDe(_vorbelegtAus))
+        : 'Keine fr\u00fchere Bestellung f\u00fcr diesen Wochentag \u2013 die Liste startet leer');
+    } else {
+      h += z('<b>' + (s === 2 ? 'Korrigiert' : 'Gesendet') + '</b>'
+        + (letzte ? ' am ' + esc(zeitKurz(letzte.zeit)) + ' an ' + esc(letzte.an || '')
+          + (letzte.wer ? ' durch ' + esc(letzte.wer) : '') : ''));
+    }
+    if (_testbetrieb) {
+      h += z('<b>Testbetrieb</b> \u2013 die Bestellung geht an '
+        + esc(_cfg.empfaenger || '') + ', nicht an die Metzgerei.');
+    }
+
+    // Bereichswechsel: auf dem Telefon nur hier, damit der Kopf schmal bleibt.
+    h += '<div class="mb-blatt-t mb-nur-tel">Bereich</div>';
+    h += subTabs('im-blatt');
+
+    h += '<div class="mb-blatt-t">Welche Artikel zeigen?</div>';
+    h += '<div class="mb-tgl">'
+      + '<button' + (!_alleArtikel ? ' class="on"' : '')
+      + ' onclick="KMetzgerBest.blatt(false);KMetzgerBest.filter(false)">\u00dcbliche</button>'
+      + '<button' + (_alleArtikel ? ' class="on"' : '')
+      + ' onclick="KMetzgerBest.blatt(false);KMetzgerBest.filter(true)">Alle Artikel</button></div>';
+
+    var jump = sprungleiste();
+    if (jump) h += '<div class="mb-blatt-t">Zur Warengruppe springen</div>' + jump;
+
+    h += '<div class="mb-blatt-wz">';
+    h += notizKnopf();
+    if (!gesperrt()) {
+      h += '<button class="mb-btn" onclick="KMetzgerBest.blatt(false);KMetzgerBest.zusatz()">'
+        + 'Weiteren Artikel</button>';
+    }
+    h += '</div>';
+    h += '<button class="mb-blatt-zu" onclick="KMetzgerBest.blatt(false)">Schlie\u00dfen</button>';
+    return h + '</div>';
+  }
+
+  function blatt(auf) {
+    var el = document.getElementById('mb-blatt');
+    if (!el) return;
+    el.hidden = !auf;
+    if (auf && window.dlLockScroll) dlLockScroll();
+    else if (!auf && window.dlUnlockScroll) dlUnlockScroll();
+  }
+
+  function subTabs(extra) {
     function b(id, label) {
       return '<button class="mb-sub' + (_sub === id ? ' on' : '') + '"'
-        + ' onclick="KMetzgerBest.sub(\'' + id + '\')">' + label + '</button>';
+        + ' onclick="KMetzgerBest.blatt(false);KMetzgerBest.sub(\'' + id + '\')">' + label + '</button>';
     }
     // Kein „Einstellungen"-Reiter mehr: Stammdaten (Empfänger, Bestelltage,
     // Kunden-Nr.) werden im CMS gepflegt – so wie beim Bäcker. Der Kiosk ist
     // die Arbeitsfläche der Verkäuferinnen, nicht die Verwaltung.
-    return '<div class="mb-subs">' + b('bestellung', 'Bestellung')
+    return '<div class="mb-subs' + (extra ? ' ' + extra : '') + '">' + b('bestellung', 'Bestellung')
       + b('verlauf', 'Verlauf') + b('artikel', 'Artikel') + '</div>';
   }
 
@@ -371,60 +491,6 @@ window.KMetzgerBest = (function () {
         + '<span class="d2">' + d + '</span></button>';
     });
     return h + '</div>';
-  }
-
-  function statusKarte() {
-    var s = _b.status || 0;
-    var prot = (_b.protokoll || []);
-    var letzte = prot.length ? prot[prot.length - 1] : null;
-    var h = '<div class="mb-status' + (s ? ' gesendet' : '') + '">';
-    if (s === 0) {
-      h += '<b>Entwurf</b> \u2014 Lieferung am ' + esc(wochentagVon(_datum)) + ', den '
-        + esc(datumDe(_datum));
-      if (_vorbelegtAus) {
-        h += ' <span class="mb-quelle">vorbelegt aus der Bestellung vom '
-          + esc(datumDe(_vorbelegtAus)) + '</span>';
-      } else {
-        h += ' <span class="mb-quelle">keine fr\u00fchere Bestellung f\u00fcr '
-          + 'diesen Wochentag \u2014 die Liste startet leer</span>';
-      }
-    } else {
-      h += '<b>' + (s === 2 ? 'Korrigiert' : 'Gesendet') + '</b>';
-      if (letzte) {
-        h += ' am ' + esc(zeitKurz(letzte.zeit)) + ' an ' + esc(letzte.an || '')
-          + ' durch ' + esc(letzte.wer || '');
-      }
-      if (_korrektur) {
-        // Im Korrekturmodus sind die Felder frei. Erst danach geht die
-        // geaenderte Bestellung raus.
-        h += ' <span class="mb-quelle">Korrektur: Mengen jetzt ändern, '
-          + 'dann senden</span>';
-        h += ' <button class="mb-send" onclick="KMetzgerBest.korrekturSenden()">'
-          + 'Korrektur senden</button>';
-        h += ' <button class="mb-btn" onclick="KMetzgerBest.verwerfen()">'
-          + 'Verwerfen</button>';
-      } else {
-        h += ' <button class="mb-btn" onclick="KMetzgerBest.korrektur()">'
-          + 'Korrigieren</button>';
-      }
-    }
-    if (_testbetrieb) h += ' <span class="mb-test">Testbetrieb</span>';
-    return h + '</div>';
-  }
-
-  function werkzeuge() {
-    return '<div class="mb-bar">'
-      + '<input type="search" id="mb-q" placeholder="Artikel oder Nummer suchen …"'
-      + ' value="' + esc(_suche) + '" oninput="KMetzgerBest.such(this.value)">'
-      + '<div class="mb-tgl">'
-      + '<button class="' + (_alleArtikel ? '' : 'on') + '"'
-      + ' title="Was der Metzger uns schon geliefert hat"'
-      + ' onclick="KMetzgerBest.filter(false)">Übliche Artikel</button>'
-      + '<button class="' + (_alleArtikel ? 'on' : '') + '"'
-      + ' onclick="KMetzgerBest.filter(true)">Alle Artikel</button>'
-      + '</div>'
-      + '<button class="mb-btn" onclick="KMetzgerBest.zusatz()">Weiteren Artikel</button>'
-      + '</div>' + sprungleiste();
   }
 
   function sprungleiste() {
@@ -468,7 +534,7 @@ window.KMetzgerBest = (function () {
   }
 
   function liste() {
-    var h = '<div class="mb-liste" id="mb-liste">';
+    var h = '<div class="mb-liste k-liste" id="mb-liste">';
     var gruppe = null, gi = -1, treffer = 0;
     _artikel.forEach(function (a) {
       var p = positionVon(a);
@@ -497,7 +563,19 @@ window.KMetzgerBest = (function () {
       h += '<div class="k-empty">Dazu findet sich kein Artikel. '
         + 'Andere Schreibweise probieren?</div>';
     }
-    return h + '</div><div class="mb-foot" id="mb-foot"></div>';
+    /* Umfang-Umschalter und Zusatzartikel stehen am Listenende — dort, wo man
+       sie sucht: wenn ein Artikel fehlt und man bis unten gescrollt hat. So
+       bleibt der feste Kopf schmal (Spec F1). */
+    if (!gesperrt()) {
+      h += '<button class="mb-addrow" onclick="KMetzgerBest.zusatz()">'
+        + '+ Weiteren Artikel f\u00fcr diesen Tag</button>';
+    }
+    h += '<div class="mb-umfang">'
+      + '<button class="mb-btn' + (!_alleArtikel ? ' on' : '') + '"'
+      + ' onclick="KMetzgerBest.filter(false)">\u00dcbliche Artikel</button>'
+      + '<button class="mb-btn' + (_alleArtikel ? ' on' : '') + '"'
+      + ' onclick="KMetzgerBest.filter(true)">Alle Artikel</button></div>';
+    return h + '</div>';
   }
 
   function zeile(a, p, istExtra) {
@@ -662,17 +740,16 @@ window.KMetzgerBest = (function () {
     if (_korrektur) {
       // Korrektur: kein Entwurfs-Speichern, sonst wuerde die gesendete
       // Bestellung ueberschrieben.
-      h += notizKnopf();
       h += '<button class="mb-btn" onclick="KMetzgerBest.verwerfen()">Verwerfen</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.korrekturSenden()">Korrektur senden</button>';
     } else if (!gesperrt()) {
-      h += notizKnopf();
       h += '<span class="mb-autosave"></span>';
       h += '<button class="mb-btn" onclick="KMetzgerBest.speichern()">Speichern</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.senden()">Bestellung senden</button>';
     } else {
-      // Gesendet und keine Korrektur offen: Der Hinweis ist nur noch lesbar.
-      h += notizKnopf();
+      // Gesendet und keine Korrektur offen: nur noch lesbar, aber die
+      // Korrektur muss von hier aus erreichbar sein (F32).
+      h += '<button class="mb-btn" onclick="KMetzgerBest.korrektur()">Korrigieren</button>';
     }
     el.innerHTML = h;
   }
@@ -774,19 +851,18 @@ window.KMetzgerBest = (function () {
     inSicht();
   }
 
-  // Der Editor darf weder hinter dem klebenden Reiterband noch hinter der
-  // Fusszeile liegen - beide ueberlagern die Liste, weshalb window.innerHeight
-  // als Untergrenze zu gross ist. Passt er nicht ganz, wird die Oberkante
-  // angelegt, damit die Eingabe von oben nach unten lesbar bleibt (F17).
+  // Der Editor öffnet sich in der scrollenden Liste (`.k-liste`). Er darf
+  // nicht hinter der Fußzeile liegen. Gescrollt wird deshalb die Liste selbst
+  // — das Panel ist im geteilten Aufbau overflow:hidden und bewegt sich nicht
+  // (Spec kiosk-bestellreiter-mobil, F1/F17).
   function inSicht() {
     var ed = document.querySelector('.mb-ed');
-    var box = document.getElementById('panel-metzgerbest');
-    if (!ed || !box) return;
-    var rahmen = box.getBoundingClientRect();
-    var oben = rahmen.top;
-    var unten = rahmen.bottom;
-    var band = box.querySelector('.k-filter-bar');
-    if (band) oben = Math.max(oben, band.getBoundingClientRect().bottom);
+    var scroller = document.querySelector('#panel-metzgerbest .k-liste')
+      || document.getElementById('panel-metzgerbest');
+    if (!ed || !scroller) return;
+    var srect = scroller.getBoundingClientRect();
+    var oben = srect.top;
+    var unten = srect.bottom;
     var fuss = document.getElementById('mb-foot');
     if (fuss) unten = Math.min(unten, fuss.getBoundingClientRect().top);
 
@@ -798,7 +874,7 @@ window.KMetzgerBest = (function () {
     } else if (b.bottom > unten - luft) {
       weg = b.bottom - unten + luft;        // gerade so weit wie noetig
     }
-    if (weg) box.scrollBy({ top: weg, behavior: 'smooth' });
+    if (weg) scroller.scrollBy({ top: weg, behavior: 'smooth' });
   }
 
   function feld(k, v) {
@@ -1000,6 +1076,7 @@ window.KMetzgerBest = (function () {
   function filter(alle) { _alleArtikel = !!alle; render(); }
 
   function spring(i) {
+    blatt(false);
     var el = document.getElementById('mb-g' + i);
     if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
@@ -1310,6 +1387,7 @@ window.KMetzgerBest = (function () {
 
   return {
     onShow: onShow, sub: sub, tag: tag, such: such, filter: filter, spring: spring,
+    blatt: blatt,
     edit: edit, feld: feld, anz: anz, einheit: einheit, kachel: kachel,
     vakAn: vakAn, pad: pad, nimm: nimm, vorschau: vorschau, kurz: kurz,
     weg: weg, allesWeg: allesWeg, loeschen: loeschen,

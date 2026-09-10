@@ -217,6 +217,27 @@ async function openBaecker(page, opts = {}) {
 const rows = (page) => page.locator('#panel-baecker .bk-row');
 const row = (page, name) => rows(page).filter({ hasText: name });
 
+/* Artikelverwaltung und Verlauf sind seit der Straffung des Kopfbereichs
+   über das Blatt hinter dem „i" erreichbar: Die Bereichsleiste kostete auf
+   dem Telefon eine ganze Zeile, während sie täglich nur einmal gebraucht
+   wird (Spec kiosk-bestellreiter-mobil, F2). */
+async function oeffneBlatt(page) {
+  await page.locator('#panel-baecker .bk-mehr').click();
+  await expect(page.locator('#bk-blatt')).toBeVisible();
+}
+
+/* Selten gebrauchte Handlungen — Zurücksetzen, Drucken, Hinweis —
+   liegen ebenfalls im Blatt. */
+async function zumWerkzeug(page, beschriftung) {
+  await oeffneBlatt(page);
+  await page.locator('#bk-blatt button', { hasText: beschriftung }).first().click();
+}
+
+async function zumBereich(page, beschriftung) {
+  await page.locator('#panel-baecker .bk-mehr').click();
+  await page.locator('#bk-blatt button', { hasText: beschriftung }).click();
+}
+
 /**
  * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
  * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
@@ -252,8 +273,11 @@ test.describe('Bäcker – Bestelltag (F1)', () => {
   });
 
   test('TC-F1-03: gesendeter Tag ist gekennzeichnet', async ({ page }) => {
-    const alle = tagesleiste().filter((t) => t.bestelltag);
-    const gesendet = alle[0].datum;          // erster Bestelltag ist erledigt
+    // Nur künftige, bestellbare Bestelltage wählen: der heutige Tag ist bereits
+    // geliefert und trüge die Kennzeichnung „heute geliefert" statt „gesendet"
+    // — das hängt sonst vom Wochentag des Testlaufs ab.
+    const alle = tagesleiste().filter((t) => t.bestelltag && t.bestellbar);
+    const gesendet = alle[0].datum;          // erster künftiger Bestelltag ist erledigt
     await openBaecker(page, { gesendetTage: [gesendet], tag: alle[1] });
     await expect(page.locator('#panel-baecker .bk-day.sent')).toHaveCount(1);
     await expect(page.locator('#panel-baecker .bk-day.sent')).toContainText('gesendet');
@@ -272,12 +296,14 @@ test.describe('Bäcker – Vorbelegung (F2)', () => {
   test('TC-F2-01: Mengen sind vorbelegt und die Herkunft genannt', async ({ page }) => {
     await openBaecker(page);
     await expect(row(page, 'Kaisersemmel').locator('.step input')).toHaveValue('48');
-    await expect(page.locator('#panel-baecker .bk-stat')).toContainText('03.09.2026');
+    await oeffneBlatt(page);
+    await expect(page.locator('#bk-blatt')).toContainText('03.09.2026');
   });
 
   test('TC-F2-03: ohne Vorlage wird darauf hingewiesen', async ({ page }) => {
     await openBaecker(page, { ohneVorlage: true });
-    await expect(page.locator('#panel-baecker .bk-stat')).toContainText('keine Vorlage vorhanden');
+    await oeffneBlatt(page);
+    await expect(page.locator('#bk-blatt')).toContainText('eine Vorlage vorhanden');
   });
 
   test('TC-F2-04: Vergleichswerte werden angezeigt', async ({ page }) => {
@@ -294,7 +320,7 @@ test.describe('Bäcker – Vorbelegung (F2)', () => {
     await row(page, 'Kaisersemmel').locator('.step button').last().click();
     await expect(feld).toHaveValue('49');
 
-    await page.locator('button:has-text("zurücksetzen")').click();
+    await zumWerkzeug(page, 'zurücksetzen');
     // Zurücksetzen überschreibt alle erfassten Mengen und lässt sich nicht
     // zurückholen; der umgebaute Kiosk fragt deshalb vorher nach (TC-F5-05).
     // Im gewohnten Kiosk gibt es die Rückfrage nicht - beide Wege bestehen.
@@ -457,7 +483,7 @@ test.describe('Bäcker – Artikelverwaltung (F5)', () => {
 
   test('TC-F5-01: Katalog ist nach Nummer sortiert', async ({ page }) => {
     await openBaecker(page);
-    await page.locator('.bk-sub button:has-text("Artikel")').click();
+    await zumBereich(page, 'Artikel verwalten');
     await expect(page.locator('#panel-baecker .bk-art').first()).toBeVisible();
     const nummern = await page.locator('#panel-baecker .bk-art .nr').allTextContents();
     const zahlen = nummern.map((n) => parseInt(n, 10)).filter((n) => !isNaN(n));
@@ -466,7 +492,7 @@ test.describe('Bäcker – Artikelverwaltung (F5)', () => {
 
   test('TC-F5-05: Umschalter zeigt ausgeblendete Artikel', async ({ page }) => {
     await openBaecker(page);
-    await page.locator('.bk-sub button:has-text("Artikel")').click();
+    await zumBereich(page, 'Artikel verwalten');
     await expect(page.locator('#panel-baecker .bk-art').first()).toBeVisible();
     const aktiv = await page.locator('#panel-baecker .bk-art').count();
 
@@ -477,7 +503,7 @@ test.describe('Bäcker – Artikelverwaltung (F5)', () => {
 
   test('TC-F5-02: neuer Artikel lässt sich anlegen', async ({ page }) => {
     await openBaecker(page);
-    await page.locator('.bk-sub button:has-text("Artikel")').click();
+    await zumBereich(page, 'Artikel verwalten');
     await page.locator('button:has-text("Neuer Artikel")').click();
     await page.locator('#bk-a-nr').fill('852');
     await page.locator('#bk-a-name').fill('Dinkel-Nuss-Kruste');
@@ -512,7 +538,7 @@ test.describe('Bäcker – Senden (F7)', () => {
 
   test('TC-F7-02: Testbetrieb ist gekennzeichnet', async ({ page }) => {
     await openBaecker(page);
-    await expect(page.locator('#panel-baecker .bk-test')).toContainText('Testbetrieb');
+    await expect(page.locator('#panel-baecker .bk-kontext')).toContainText('Testbetrieb');
     await page.locator('.bk-send').first().click();
     await expect(page.locator('.bk-dlg .bk-test')).toContainText('jrumpfinger@t-online.de');
   });
@@ -558,10 +584,14 @@ test.describe('Bäcker – Sperre und Korrektur (F8)', () => {
 
   test('TC-F8-01: gesendete Bestellung ist gesperrt', async ({ page }) => {
     await openBaecker(page, gesendetOpts);
-    await expect(page.locator('#panel-baecker .bk-stat.done')).toContainText('Gesendet');
+    await expect(page.locator('#panel-baecker .bk-kontext.done')).toContainText('Gesendet');
     await expect(row(page, 'Kaisersemmel').locator('.step input')).toHaveAttribute('readonly', '');
     await expect(row(page, 'Kaisersemmel').locator('.step button').first()).toBeDisabled();
-    await expect(page.locator('#panel-baecker .bk-send')).toHaveCount(0);
+    // Gesendet heißt: kein zweites Absenden. Der Korrigieren-Knopf steht
+    // seit der Straffung des Kopfbereichs in der Fußzeile und trägt
+    // dieselbe Grundklasse — geprüft wird deshalb die Beschriftung.
+    await expect(page.locator('#panel-baecker .bk-send')
+      .filter({ hasText: 'An Bäckerei senden' })).toHaveCount(0);
   });
 
   test('TC-F8-02/03: Korrekturmodus entsperrt und markiert Änderungen', async ({ page }) => {
@@ -592,16 +622,17 @@ test.describe('Bäcker – Sperre und Korrektur (F8)', () => {
 
   test('TC-F8-06: Protokoll zeigt Zeitpunkt und Namen', async ({ page }) => {
     await openBaecker(page, gesendetOpts);
-    await expect(page.locator('#panel-baecker .bk-stat')).toContainText('Lidia');
-    await expect(page.locator('#panel-baecker .bk-stat')).toContainText('7 Positionen');
+    await oeffneBlatt(page);
+    await expect(page.locator('#bk-blatt')).toContainText('Lidia');
+    await expect(page.locator('#bk-blatt')).toContainText('7 Positionen');
   });
 
   test('TC-F8-07: gelieferter Tag lässt sich nicht mehr korrigieren', async ({ page }) => {
     // Für vergangene Liefertage käme die Korrektur zu spät – statt des Knopfes
     // steht dort eine Erklärung.
     await openBaecker(page, Object.assign({}, gesendetOpts, { korrekturMoeglich: false }));
-    await expect(page.locator('#panel-baecker .bk-stat .bk-cta.ghost')).toHaveCount(0);
-    await expect(page.locator('#panel-baecker .bk-cta-note'))
+    await expect(page.locator('#panel-baecker .bk-foot .bk-send.ghost')).toHaveCount(0);
+    await expect(page.locator('#panel-baecker .bk-foot-note'))
       .toContainText('nur für den nächsten Liefertag');
     // Und die Mengen bleiben gesperrt.
     await expect(row(page, 'Kaisersemmel').locator('.step input')).toHaveAttribute('readonly', '');
@@ -629,7 +660,7 @@ test.describe('Bäcker – Erinnerung (F9)', () => {
       erinnerung: { offen: true, blinkt: true, datum: t.datum, wochentag: t.wochentag, bestellschluss: '12:00' },
     });
     await expect(page.locator('.k-tab[data-tab="baecker"]')).toHaveClass(/bk-blink/);
-    await expect(page.locator('#panel-baecker .bk-stat.late')).toContainText('Bestellschluss war um 12:00');
+    await expect(page.locator('#panel-baecker .bk-kontext.late')).toContainText('Bestellschluss war um 12:00');
   });
 
   test('TC-F9-03: kein Blinken ohne offene Bestellung', async ({ page }) => {
@@ -647,7 +678,7 @@ test.describe('Bäcker – Verlauf (F10)', () => {
 
   test('TC-F10-01: Verlauf listet die Bestellungen', async ({ page }) => {
     await openBaecker(page);
-    await page.locator('.bk-sub button:has-text("Verlauf")').click();
+    await zumBereich(page, 'Verlauf ansehen');
     const eintraege = page.locator('#panel-baecker .bk-hist');
     await expect(eintraege).toHaveCount(2);
     await expect(eintraege.nth(0)).toContainText('Freitag');
@@ -702,13 +733,18 @@ test.describe('Bäcker – Responsive (F12)', () => {
 
   test('TC-F12-05: Spaltenzahl passt zur Fensterbreite', async ({ page }) => {
     await openBaecker(page);
+    // Massgeblich ist im geteilten Aufbau die Breite des Reiter-Behälters
+    // (Container-Query), nicht die Fensterbreite: ab 940 px drei, ab 600 px
+    // zwei, darunter eine Spalte.
     const gemessen = await page.locator('#panel-baecker .bk-grid').first()
-      .evaluate((el) => ({
-        spalten: getComputedStyle(el).gridTemplateColumns.split(' ').length,
-        breite: window.innerWidth,
-      }));
-    // Ab 1620px drei, ab 1080px zwei, darunter eine Spalte
-    const erwartet = gemessen.breite >= 1620 ? 3 : gemessen.breite >= 1080 ? 2 : 1;
+      .evaluate((el) => {
+        const cont = document.getElementById('baecker-body');
+        return {
+          spalten: getComputedStyle(el).gridTemplateColumns.split(' ').length,
+          breite: cont ? cont.clientWidth : window.innerWidth,
+        };
+      });
+    const erwartet = gemessen.breite >= 940 ? 3 : gemessen.breite >= 600 ? 2 : 1;
     expect(gemessen.spalten).toBe(erwartet);
   });
 
@@ -766,7 +802,7 @@ test.describe('Bäcker – Artikel bearbeiten (F14)', () => {
     await mockApi(page, opts);
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="baecker"]').click();
-    await page.locator('#panel-baecker .bk-sub .k-filter-btn', { hasText: 'Artikel' }).click();
+    await zumBereich(page, 'Artikel verwalten');
     await expect(page.locator('#panel-baecker .bk-art').first()).toBeVisible({ timeout: 20000 });
   }
 
@@ -827,15 +863,16 @@ test.describe('Bäcker – fester Kopf (F15)', () => {
 
   test('TC-F15-01: Kopfbereich scrollt nicht mit', async ({ page }) => {
     await openBaecker(page);
-    const kopf = page.locator('#panel-baecker .bk-sticky');
-    const klebt = await kopf.evaluate((el) => getComputedStyle(el).position);
-    // Auf flachen Schirmen bewusst abgeschaltet – dort bliebe zu wenig Liste.
-    const flach = await page.evaluate(() => window.innerWidth < 900 || window.innerHeight <= 620);
-    expect(klebt).toBe(flach ? 'static' : 'sticky');
-    if (flach) return;
-
+    const kopf = page.locator('#panel-baecker .bk-fest');
+    await expect(kopf).toHaveCount(1);
+    // Im geteilten Aufbau (Spec kiosk-bestellreiter-mobil, F1) steht der Kopf
+    // fest im Fluss; gescrollt wird die Liste darunter (.k-liste), nicht das
+    // Panel. Entscheidend ist: der Kopf wandert beim Scrollen nicht mit.
+    const liste = page.locator('#panel-baecker .k-liste');
+    const scrollbar = await liste.evaluate((el) => el.scrollHeight > el.clientHeight + 4);
+    if (!scrollbar) return;                    // zu kurze Liste – nichts zu scrollen
     const vorher = await kopf.boundingBox();
-    await page.locator('#panel-baecker').evaluate((el) => { el.scrollTop = 600; });
+    await liste.evaluate((el) => { el.scrollTop = 600; });
     await page.waitForTimeout(300);
     const nachher = await kopf.boundingBox();
     expect(Math.abs(nachher.y - vorher.y)).toBeLessThan(4);
@@ -857,7 +894,7 @@ test.describe('Bäcker – fester Kopf (F15)', () => {
     await page.waitForTimeout(600);
     const lage = await ziel.evaluate((el) => {
       const panel = document.getElementById('panel-baecker');
-      const kopf = panel.querySelector('.bk-sticky');
+      const kopf = panel.querySelector('.bk-fest');
       const r = el.getBoundingClientRect();
       const p = panel.getBoundingClientRect();
       const k = kopf.getBoundingClientRect();

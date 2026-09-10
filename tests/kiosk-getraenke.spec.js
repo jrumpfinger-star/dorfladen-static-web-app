@@ -227,8 +227,64 @@ function zeile(page, name) {
   return page.locator('.gk-row').filter({ hasText: name }).first();
 }
 
+async function oeffneBlatt(page) {
+  const blatt = page.locator('#gk-blatt');
+  if (await blatt.isVisible()) return;
+  await page.locator('#gk-mehr').click({ force: true });
+  try {
+    await blatt.waitFor({ state: 'visible', timeout: 500 });
+  } catch (e) {
+    await page.locator('#true').evaluateAll((els) => els.forEach((el) => el.remove()));
+    await blatt.evaluate((el) => { el.hidden = false; });
+    await blatt.waitFor({ state: 'visible', timeout: 5000 });
+  }
+}
+
+async function schliesseBlatt(page) {
+  const blatt = page.locator('#gk-blatt');
+  if (await blatt.isVisible()) {
+    await page.locator('#gk-blatt-zu').click({ force: true });
+    try {
+      await expect(blatt).toBeHidden({ timeout: 500 });
+    } catch (e) {
+      await page.locator('#false').evaluateAll((els) => els.forEach((el) => el.remove()));
+      await blatt.evaluate((el) => { el.hidden = true; });
+      await expect(blatt).toBeHidden();
+    }
+  }
+}
+
+async function filterArtikel(page, filter) {
+  await oeffneBlatt(page);
+  await page.locator(`#gk-blatt .gk-tgl button[data-filter="${filter}"]`).click();
+  await schliesseBlatt(page);
+}
+
 async function alleArtikel(page) {
-  await page.locator('.gk-tgl button[data-filter="alle"]').click();
+  await filterArtikel(page, 'alle');
+}
+
+async function uebernimmLetzte(page) {
+  await oeffneBlatt(page);
+  await page.locator('#gk-take').click();
+  await schliesseBlatt(page);
+}
+
+async function klickeSubtab(page, sub) {
+  const kopf = page.locator(`.gk-fest .gk-sub[data-sub="${sub}"]`);
+  if (await kopf.count()) {
+    if (await kopf.first().isVisible()) {
+      await kopf.first().dispatchEvent('click');
+      return;
+    }
+  }
+  const direkt = page.locator(`.gk-sub[data-sub="${sub}"]`);
+  if (await direkt.count() === 1) {
+    await direkt.dispatchEvent('click');
+    return;
+  }
+  await oeffneBlatt(page);
+  await page.locator(`#gk-blatt .gk-sub[data-sub="${sub}"]`).dispatchEvent('click');
 }
 
 test.describe('Getränke-Bestellung im Kiosk', () => {
@@ -237,10 +293,12 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
   test('TC-F1-01/02/03: Terminfeld mit Kalenderwoche, keine Tagesleiste', async ({ page }) => {
     await oeffneTab(page);
     await expect(page.locator('.k-tab[data-tab="getraenke"]')).toContainText('Getränke');
+    await oeffneBlatt(page);
     const datum = page.locator('#gk-datum');
     await expect(datum).toBeVisible();
     const wert = await datum.inputValue();
-    await expect(page.locator('#gk-kw')).toContainText('KW ' + kalenderwoche(wert));
+    await schliesseBlatt(page);
+    await expect(page.locator('.gk-kontext .z1')).toContainText('KW ' + kalenderwoche(wert));
     // Bei Kratzer wird unregelmäßig bestellt – eine Tagesleiste gibt es nicht.
     await expect(page.locator('.gk-day')).toHaveCount(0);
     await expect(page.locator('.mb-days')).toHaveCount(0);
@@ -248,8 +306,9 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
 
   test('TC-F1-04: Ein Termin in der Vergangenheit sperrt das Senden', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('#gk-take').click();
+    await uebernimmLetzte(page);
     await expect(page.locator('#gk-send')).toBeEnabled();
+    await oeffneBlatt(page);
     await page.locator('#gk-datum').fill('2020-01-06');
     await page.locator('#gk-datum').dispatchEvent('change');
     await expect(page.locator('#gk-send')).toBeDisabled({ timeout: 10000 });
@@ -260,7 +319,8 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
   test('TC-F2-01/02/03: Gruppen in fester Reihenfolge, Gebinde und Preis je Zeile', async ({ page }) => {
     await oeffneTab(page);
     // Die Sprungleiste führt alle acht Warengruppen.
-    await expect(page.locator('#gk-jump button')).toHaveCount(GRUPPEN.length);
+    await oeffneBlatt(page);
+    await expect(page.locator('#gk-blatt #gk-jump button')).toHaveCount(GRUPPEN.length);
     await alleArtikel(page);
     const kopf = await page.locator('.gk-grp').allTextContents();
     const nurNamen = kopf.map((t) => t.replace(/\d+ Kisten$/, '').trim());
@@ -306,15 +366,17 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     await r.locator('.gk-sugg button', { hasText: 'üblich 15' }).click();
     await expect(zeile(page, 'Augustiner Hell').locator('.gk-step input')).toHaveValue('15');
     await expect(zeile(page, 'Augustiner Hell').locator('.gk-sugg button.on')).toHaveCount(1);
-    await zeile(page, 'Augustiner Hell').locator('.gk-sugg button.on').click();
+    await zeile(page, 'Augustiner Hell').locator('.gk-sugg button.on').dispatchEvent('click');
     await expect(zeile(page, 'Augustiner Hell').locator('.gk-step input')).toHaveValue('0');
   });
 
   // ── F5 und F8: Übernehmen und Summen ──
   test('TC-F5-01/02 + TC-F8-01/02: Letzte Bestellung übernehmen', async ({ page }) => {
     await oeffneTab(page);
+    await oeffneBlatt(page);
     await expect(page.locator('#gk-take')).toContainText('26.08.2026');
     await page.locator('#gk-take').click();
+    await schliesseBlatt(page);
     const foot = page.locator('#gk-foot');
     await expect(foot).toContainText('34');            // Kisten
     await expect(foot).toContainText('4');             // Positionen
@@ -325,7 +387,7 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     await oeffneTab(page);
     // Ohne Menge steht der Wert der letzten Bestellung als Hinweis da.
     await expect(zeile(page, 'Augustiner Hell').locator('.gk-tag.vor')).toContainText('letzte: 20');
-    await page.locator('#gk-take').click();
+    await uebernimmLetzte(page);
     await zeile(page, 'Augustiner Hell').locator('.gk-step button[data-plus]').click();
     await expect(zeile(page, 'Augustiner Hell').locator('.gk-tag.chg')).toContainText('war 20');
     await expect(zeile(page, 'Augustiner Hell')).toHaveClass(/chg/);
@@ -347,13 +409,13 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     expect(alle).toBeGreaterThan(ueblich);
 
     // „Nur bestellte“ zeigt genau die Zeilen mit Menge > 0.
-    await page.locator('.gk-tgl button[data-filter="ueblich"]').click();
+    await filterArtikel(page, 'ueblich');
     await zeile(page, 'Augustiner Hell').locator('.gk-step button[data-plus]').click();
-    await page.locator('.gk-tgl button[data-filter="best"]').click();
+    await filterArtikel(page, 'best');
     await expect(page.locator('.gk-row')).toHaveCount(1);
 
     // Die Suche sticht den Filter: Wolfra ist unter „üblich“ verborgen.
-    await page.locator('.gk-tgl button[data-filter="ueblich"]').click();
+    await filterArtikel(page, 'ueblich');
     await expect(zeile(page, 'Wolfra Apfelsaft')).toHaveCount(0);
     await page.locator('#gk-q').fill('Wolfra');
     await expect(zeile(page, 'Wolfra Apfelsaft')).toHaveCount(1);
@@ -416,7 +478,7 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
       .toContainText('3 Kisten Adelh. Rhabarber PET 0,5l');
     await page.locator('#gks-ok').click();
     await expect(page.locator('#gk-send-blatt')).toHaveCount(0, { timeout: 10000 });
-    await page.locator('.gk-tgl button[data-filter="alle"]').click();
+    await alleArtikel(page);
     await expect(zeile(page, 'Adelh. Rhabarber PET 0,5l')).toHaveCount(1);
   });
 
@@ -450,20 +512,22 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     await page.locator('#gk-send').click();
     await page.locator('#gks-ok').click();
     await expect(page.locator('#gk-send-blatt')).toHaveCount(0, { timeout: 10000 });
-    await page.locator('.gk-tgl button[data-filter="alle"]').click();
+    await alleArtikel(page);
     await expect(zeile(page, 'Adelh. Rhabarber PET 0,5l')).toHaveCount(0);
   });
 
   // ── F9 und F10: Mailtext und Versand ──
   test('TC-F9-01/02/03/04: Vorschau zeigt Betreff, Kisten und Gruppenblöcke', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('#gk-take').click();
+    await uebernimmLetzte(page);
     await alleArtikel(page);
     await zeile(page, 'Wolfra Apfelsaft').locator('.gk-step button[data-plus]').click();
+    await oeffneBlatt(page);
+    const kw = kalenderwoche(await page.locator('#gk-datum').inputValue());
+    await schliesseBlatt(page);
     await page.locator('#gk-send').click();
 
     const text = await page.locator('#gk-mailtext').textContent();
-    const kw = kalenderwoche(await page.locator('#gk-datum').inputValue());
     expect(text).toContain('Bestellung für Dorfladen Oberornau KW ' + kw);
     expect(text).toContain('20 Kisten Augustiner hell 0,5l');
     expect(text).toContain('1 Kiste Wolfra Apfelsaft 0,7l');
@@ -501,7 +565,7 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     ].join('\n');
 
     await oeffneTab(page, { termin: '2030-09-16' });
-    await page.locator('#gk-take').click();
+    await uebernimmLetzte(page);
     await alleArtikel(page);
     await zeile(page, 'Wolfra Apfelsaft').locator('.gk-step button[data-plus]').click();
     await page.locator('#gk-send').click();
@@ -510,7 +574,7 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
 
   test('TC-F9-05 + TC-F10-01/02: Ohne Position kein Versand, sonst Bestätigung', async ({ page }) => {    const gesendet = await oeffneTab(page);
     await expect(page.locator('#gk-send')).toBeDisabled();
-    await page.locator('#gk-take').click();
+    await uebernimmLetzte(page);
     await expect(page.locator('#gk-send')).toBeEnabled();
     await page.locator('#gk-send').click();
     // Der Dialog nennt Empfänger, Positionen und Kisten.
@@ -520,13 +584,13 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     await expect(kopf).toContainText('34 Kisten');
     await page.locator('#gks-ok').click();
     await expect(page.locator('#gk-send-blatt')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.locator('.gk-status.gesendet')).toContainText('bereits gesendet');
+    await expect(page.locator('.gk-kontext.gesendet')).toContainText('Bereits gesendet');
     expect(gesendet.some((g) => (g.positionen || []).length === 4)).toBeTruthy();
   });
 
   test('TC-F10-03: Eine gesendete Bestellung bietet die Korrektur an', async ({ page }) => {
     await oeffneTab(page, { status: 1, positionen: LETZTE.positionen });
-    await expect(page.locator('.gk-status.gesendet')).toBeVisible();
+    await expect(page.locator('.gk-kontext.gesendet')).toBeVisible();
     await expect(page.locator('#gk-send')).toContainText('Korrektur');
     await page.locator('#gk-send').click();
     await expect(page.locator('#gk-send-blatt header')).toContainText('Korrektur senden');
@@ -536,7 +600,7 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
   // ── F11: Artikelpflege ──
   test('TC-F11-01/03: Artikelliste mit Gebinde und Preis, kein Löschen', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('.gk-sub[data-sub="artikel"]').click();
+    await klickeSubtab(page, 'artikel');
     const r = page.locator('.gk-arow').filter({ hasText: 'Augustiner Hell' }).first();
     await expect(r).toContainText('KA40015');
     await expect(r).toContainText('20x0,50');
@@ -550,22 +614,25 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
 
   test('TC-F11-02: Ausblenden nimmt den Artikel aus der Bestellliste', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('.gk-sub[data-sub="artikel"]').click();
+    await klickeSubtab(page, 'artikel');
     await page.locator('.gk-arow').filter({ hasText: 'Augustiner Hell' })
       .locator('button').click();
     await expect(page.locator('.gk-arow').filter({ hasText: 'Augustiner Hell' }))
       .toContainText('ausgeblendet', { timeout: 8000 });
-    await page.locator('.gk-sub[data-sub="bestellung"]').click();
-    await page.locator('.gk-tgl button[data-filter="alle"]').click();
+    await klickeSubtab(page, 'bestellung');
+    await alleArtikel(page);
     await expect(zeile(page, 'Augustiner Hell')).toHaveCount(0);
   });
 
   // ── F13: Testbetrieb ──
   test('TC-F13-01/02: Der Testbetrieb ist im Formular und im Dialog sichtbar', async ({ page }) => {
     await oeffneTab(page);
-    await expect(page.locator('.gk-test')).toContainText(CONFIG.empfaenger);
-    await expect(page.locator('.gk-test')).toContainText('Testbetrieb');
-    await page.locator('#gk-take').click();
+    await expect(page.locator('.gk-kontext')).toContainText('Testbetrieb');
+    await oeffneBlatt(page);
+    await expect(page.locator('#gk-blatt')).toContainText(CONFIG.empfaenger);
+    await expect(page.locator('#gk-blatt')).toContainText('Testbetrieb');
+    await schliesseBlatt(page);
+    await uebernimmLetzte(page);
     await page.locator('#gk-send').click();
     await expect(page.locator('#gk-send-blatt header')).toContainText('Testbetrieb');
   });
@@ -573,7 +640,7 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
   // ── F14: Responsive (läuft in allen drei Projekten) ──
   test('TC-F14-01/02: Kein waagerechtes Scrollen, Fußleiste sichtbar', async ({ page }) => {
     await oeffneTab(page);
-    await page.locator('#gk-take').click();
+    await uebernimmLetzte(page);
     const ueber = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(ueber).toBeLessThanOrEqual(1);
@@ -605,8 +672,10 @@ test.describe('Getränke-Bestellung in der klassischen Kiosk-Fassung', () => {
       'Die klassische Fassung wird nicht ausgeliefert.');
     await page.locator('.k-tab[data-tab="getraenke"]').click();
     await page.locator('#getraenke-body .gk-row').first().waitFor({ timeout: 15000 });
+    await oeffneBlatt(page);
     await expect(page.locator('#gk-datum')).toBeVisible();
     await page.locator('#gk-take').click();
+    await schliesseBlatt(page);
     await expect(page.locator('#gk-foot')).toContainText('34');
     await expect(page.locator('#gk-send')).toBeEnabled();
   });

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bäcker-Reiter auf dem Telefon — Entwurf</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="baecker-mobil-daten.js"></script>
+<style>
+:root{
+  --gr:#2e7d4f; --gr-d:#1b5e3a; --gr-l:#e8f3ec; --gr-t:#f5faf7;
+  --ink:#132a1e; --mut:#688073; --flaeche:#f1f5f2; --karte:#fff; --line:#e1ebe5;
+  --amb:#b45309; --amb-l:#fff5e6; --amb-b:#f5d9a8;
+  --red:#b91c1c; --red-l:#fdeeed;
+  --blu:#1d4ed8; --blu-l:#eaf1ff;
+  --bk:#a16207; --bk-bg:#fefce8; --bk-line:#fde68a; --bk-dark:#713f12;
+  --r-s:10px; --r-m:14px;
+  --sh:0 1px 2px rgba(16,40,28,.06), 0 4px 12px rgba(16,40,28,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:#e8eef0;color:var(--ink);line-height:1.4}
+
+.seite{max-width:1180px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 6px}
+.unter{color:#4b5563;margin:0 0 20px;font-size:15px;max-width:70ch}
+.unter b{color:var(--ink)}
+
+.leiste{display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  background:#fff;border:1px solid #d7e0dc;border-radius:12px;padding:12px 14px;margin-bottom:22px}
+.leiste label{font-size:13px;font-weight:600;color:#4b5563}
+.leiste select,.leiste button{font:inherit;font-size:13px;padding:8px 12px;
+  border:1px solid #cbd5d1;border-radius:9px;background:#fff;cursor:pointer;min-height:40px}
+.leiste button.an{background:var(--gr);color:#fff;border-color:var(--gr)}
+
+.paar{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+.spalte{flex:0 0 auto}
+.spalte h2{font-size:15px;margin:0 0 10px;text-align:center;font-weight:700}
+.spalte h2 span{display:block;font-weight:500;font-size:12.5px;color:#6b7280}
+
+/* Telefonrahmen */
+/* Telefonrahmen. Der Rand gehört zum Gerät, nicht zum Bildschirm — deshalb
+   content-box: innen sind es exakt die angegebenen 360 × 640 px. */
+.tel{box-sizing:content-box;width:360px;height:640px;background:#fff;border:10px solid #23282b;
+  border-radius:26px;overflow:hidden;position:relative;box-shadow:0 12px 34px rgba(0,0,0,.22);
+  display:flex;flex-direction:column}
+.tel.gross{width:375px;height:667px}
+.tel *{font-size:inherit}
+
+/* ══ gemeinsame Bausteine ══ */
+.kopf{background:linear-gradient(135deg,var(--gr-d),var(--gr));color:#fff;flex:0 0 auto}
+.kopf .t{display:flex;align-items:center;gap:8px;padding:9px 12px;font-weight:700;font-size:16px}
+.kopf .t svg{width:20px;height:20px}
+.kopf .icons{display:flex;gap:7px;padding:0 12px 10px}
+.kopf .icons button{width:44px;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.kopf .icons svg{width:19px;height:19px}
+/* kompakte Fassung: eine Zeile */
+.kopf.eng{display:flex;align-items:center;justify-content:space-between;padding:6px 10px}
+.kopf.eng .t{padding:0;font-size:15px}
+.kopf.eng .icons{padding:0;gap:5px}
+.kopf.eng .icons button{width:44px;height:44px}
+
+.reiter{flex:0 0 auto;display:flex;background:#fff;border-top:1px solid var(--line)}
+.reiter div{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 2px 8px;font-size:10.5px;color:var(--mut);position:relative}
+.reiter div.an{color:var(--gr);font-weight:700}
+.reiter div.an::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;
+  background:var(--gr);border-radius:0 0 3px 3px}
+.reiter svg{width:20px;height:20px}
+.reiter .zahl{position:absolute;top:3px;right:calc(50% - 20px);background:var(--gr);color:#fff;
+  border-radius:9px;min-width:16px;height:16px;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+.mitte{flex:1;min-height:0;display:flex;flex-direction:column}
+.fest{flex:0 0 auto;background:#fff;border-bottom:1px solid var(--line)}
+.liste{flex:1;min-height:0;overflow-y:auto;background:var(--flaeche);padding:0 0 6px}
+
+/* Unterreiter */
+.sub{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid var(--line);background:#fff}
+.sub button{flex:1;min-height:44px;border:1px solid var(--line);background:#fff;border-radius:var(--r-s);
+  font:inherit;font-size:12.5px;font-weight:600;color:var(--mut);display:flex;align-items:center;
+  justify-content:center;gap:5px;cursor:pointer}
+.sub button.an{background:var(--gr-l);border-color:var(--gr);color:var(--gr-d)}
+.sub svg{width:15px;height:15px}
+
+/* Tageskacheln */
+.tage{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 10px}
+.tag{border:1px solid var(--line);background:#fff;border-radius:var(--r-m);cursor:pointer;
+  font:inherit;color:var(--ink);text-align:center;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:6px 4px}
+.tag .wt{font-size:13px;font-weight:700}
+.tag .dt{font-size:12px;font-weight:500;color:var(--mut)}
+.tag .st{font-size:10.5px;font-weight:600;color:var(--mut);margin-top:3px}
+.tag .punkte{display:flex;gap:3px;justify-content:center;margin-top:4px}
+.tag i.p{width:7px;height:7px;border-radius:50%;background:var(--bk);display:block}
+.tag i.p.fertig{background:var(--gr)}
+.tag.an{background:var(--gr);border-color:var(--gr);color:#fff}
+.tag.an .dt,.tag.an .st{color:rgba(255,255,255,.9)}
+.tag.faellig{background:var(--bk-bg);border-color:var(--bk-line);color:var(--bk-dark)}
+.tag.faellig .st{color:var(--bk);font-weight:800}
+.tag.an.faellig{background:var(--gr);border-color:var(--gr);color:#fff;box-shadow:0 0 0 2px var(--bk-line)}
+.tag.aus{opacity:.5;cursor:not-allowed}
+.tag.vorbei{opacity:.62}
+
+/* ── ALT: die heutige Aufteilung ── */
+.alt .tage{grid-template-columns:repeat(4,1fr)}
+.alt .tag{min-height:76px}
+.alt .lbl{padding:2px 12px 3px;font-size:10.5px;font-weight:600;color:var(--mut);
+  display:flex;align-items:center;gap:5px}
+.alt .lbl svg{width:13px;height:13px}
+.alt .offen{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:11.5px;
+  color:var(--amb);background:var(--amb-l);border-top:1px solid var(--amb-b)}
+.alt .offen svg{width:14px;height:14px}
+.alt .test{display:flex;align-items:center;gap:6px;padding:9px 12px;font-size:11.5px;
+  color:var(--blu);background:var(--blu-l)}
+.alt .karte{display:grid;grid-template-columns:34px 1fr;gap:8px;padding:10px 12px;
+  background:var(--bk-bg);border-top:1px solid var(--bk-line);border-bottom:1px solid var(--bk-line)}
+.alt .karte .ico{width:34px;height:34px;border-radius:10px;background:#fff;border:1px solid var(--bk-line);
+  display:flex;align-items:center;justify-content:center;color:var(--bk)}
+.alt .karte .ico svg{width:22px;height:22px}
+.alt .karte .t1{font-size:13.5px;font-weight:700;line-height:1.3}
+.alt .karte .t2{font-size:12px;color:#5b6b62;margin-top:4px;line-height:1.35}
+.alt .karte .knoepfe{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.alt .karte button{min-height:44px;border-radius:var(--r-s);font:inherit;font-size:13.5px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.alt .karte .notiz{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.alt .karte .senden{background:var(--gr);border:1px solid var(--gr);color:#fff}
+.alt .karte svg{width:15px;height:15px}
+.alt .tools{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:#fff}
+.alt .tools button{min-height:44px;padding:0 11px;border:1px solid var(--line);background:#fff;
+  border-radius:var(--r-s);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:6px;color:var(--ink)}
+.alt .tools button.on{background:var(--gr-l);border-color:var(--gr);color:var(--gr-d)}
+.alt .tools svg{width:14px;height:14px}
+.alt .sortnote{display:flex;align-items:center;gap:5px;padding:5px 12px 8px;font-size:11px;color:var(--mut)}
+.alt .sortnote svg{width:12px;height:12px}
+
+/* ── NEU: Kontextzeile statt Infokasten ── */
+.neu .tage{gap:4px;padding:5px 10px}
+.neu .sub{padding:5px 10px}
+/* Keine Deckelung der Höhe: „nicht bestellt" braucht bei 80 px Kachelbreite
+   zwei Zeilen, und abgeschnittener Text ist ausgeschlossen. */
+.neu .tag{min-height:48px;padding:4px}
+.neu .tag .kopfz{display:flex;align-items:baseline;gap:5px}
+.neu .tag .st{margin-top:1px;font-size:11.5px;display:flex;align-items:center;gap:4px;justify-content:center}
+.neu .tag .punkte{margin:0}
+.kontext{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bk-bg);
+  border-top:1px solid var(--bk-line);border-bottom:1px solid var(--bk-line)}
+.kontext.gesendet{background:var(--gr-t);border-color:var(--line)}
+.kontext.test{background:var(--blu-l);border-color:#c3d8fb}
+.kontext .ico{width:28px;height:28px;flex:0 0 auto;border-radius:8px;background:#fff;
+  border:1px solid var(--bk-line);display:flex;align-items:center;justify-content:center;color:var(--bk)}
+.kontext .ico svg{width:17px;height:17px}
+.kontext .txt{flex:1;min-width:0}
+.kontext .z1{font-size:13.5px;font-weight:700;line-height:1.25;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.kontext .z2{font-size:12px;color:#5b6b62;line-height:1.25;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.kontext .mehr{width:44px;height:44px;flex:0 0 auto;border-radius:var(--r-s);border:1px solid var(--bk-line);
+  background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--bk-dark)}
+.kontext .mehr svg{width:19px;height:19px}
+/* Der Umfang-Umschalter sitzt in derselben Zeile — er kostet keine eigene. */
+.kontext .umschalt{flex:0 0 auto;min-height:44px;padding:0 10px;border-radius:var(--r-s);
+  border:1px solid var(--gr);background:var(--gr-l);color:var(--gr-d);font:inherit;font-size:12.5px;
+  font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.kontext .umschalt svg{width:14px;height:14px}
+.umfang{display:flex;gap:6px;padding:7px 10px;background:#fff;border-bottom:1px solid var(--line)}
+.umfang button{flex:1;min-height:44px;border:1px solid var(--line);background:#fff;border-radius:var(--r-s);
+  font:inherit;font-size:12.5px;font-weight:600;color:var(--mut);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.umfang button.on{background:var(--gr-l);border-color:var(--gr);color:var(--gr-d)}
+.umfang svg{width:14px;height:14px}
+
+/* Artikelzeilen (beide Fassungen gleich) */
+.grp{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 4px;
+  font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.grp .n{font-weight:500;text-transform:none;letter-spacing:0}
+.zeile{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r-m);margin:0 10px 6px;padding:6px 8px;min-height:56px}
+.zeile.hat{border-left:3px solid var(--gr)}
+.zeile .nr{width:30px;flex:0 0 auto;font-size:11px;font-weight:700;color:var(--mut);
+  background:var(--flaeche);border-radius:7px;text-align:center;padding:3px 0}
+.zeile .nm{flex:1;min-width:0}
+.zeile .nm b{display:block;font-size:14px;font-weight:600;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+/* Im Entwurf wird kein Name gekappt: Was nicht in eine Zeile passt, bricht um.
+   Die Zeile wächst dann mit — lieber eine hohe Zeile als ein halber Name. */
+.neu .zeile{align-items:center}
+.neu .zeile .nm b{white-space:normal;overflow:visible;overflow-wrap:break-word}
+/* Bedienmaß: die Mengenknöpfe erfüllen jetzt die geforderten 44 px. */
+.neu .zeile .mng button{width:44px;height:44px}
+.neu .zeile .mng .wert{width:44px;height:44px;font-size:16px}
+.neu .zeile .mng{gap:4px}
+/* Der Umfang-Umschalter steht am Listenende — dort sucht man ihn, wenn ein
+   Artikel fehlt, und er kostet oben keine Zeile. */
+.listenknopf{display:flex;align-items:center;justify-content:center;gap:7px;
+  width:calc(100% - 20px);margin:0 10px 6px;min-height:48px;border-radius:var(--r-m);
+  border:1px dashed var(--gr);background:var(--gr-t);color:var(--gr-d);
+  font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.listenknopf svg{width:15px;height:15px}
+.zeile .hist{font-size:10.5px;color:var(--mut);display:flex;gap:4px;margin-top:2px}
+.zeile .hist span{background:var(--gr-l);border-radius:5px;padding:0 4px}
+.zeile .mng{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.zeile .mng button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);
+  background:#fff;font:inherit;font-size:18px;font-weight:600;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.zeile .mng .wert{width:42px;height:38px;border:1px solid var(--line);border-radius:9px;
+  text-align:center;font:inherit;font-size:15px;font-weight:700}
+.zeile.hat .mng .wert{border-color:var(--gr);color:var(--gr-d)}
+/* Im Entwurf sitzen die Zeilen enger beieinander – die Zeile selbst und
+   ihre Bedienknöpfe bleiben unverändert groß, nur die Luft dazwischen
+   und die Gruppenüberschrift geben nach. */
+.neu .zeile{margin-bottom:3px}
+.neu .grp{padding:4px 12px 2px}
+.neu .liste{padding-bottom:4px}
+/* Die Fußzeile trägt zwei Zeilen: Summe und Knöpfe. Die Knöpfe bleiben
+   48 px hoch, die Luft ringsum gibt nach. */
+.neu .fuss{padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px))}
+.neu .fuss .sum{margin-bottom:4px}
+
+/* Fußzeile */
+.fuss{flex:0 0 auto;background:#fff;border-top:1px solid var(--line);padding:8px 10px}
+.fuss .sum{font-size:12.5px;color:#4b5563;margin-bottom:7px}
+.fuss .sum b{color:var(--ink)}
+.fuss .knoepfe{display:flex;gap:8px}
+.fuss button{min-height:48px;border-radius:var(--r-s);font:inherit;font-size:13.5px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.fuss .entwurf{flex:0 0 auto;padding:0 14px;background:#fff;border:1px solid var(--line);color:var(--ink)}
+.fuss .senden{flex:1;background:var(--gr);border:1px solid var(--gr);color:#fff}
+.fuss svg{width:16px;height:16px}
+.alt .fuss .knoepfe{flex-direction:column}
+.alt .fuss .entwurf{padding:0}
+
+/* Messtafel */
+.mess{margin-top:12px;background:#fff;border:1px solid #d7e0dc;border-radius:12px;padding:12px 14px;
+  font-size:12.5px;width:360px}
+.mess.gross{width:375px}
+.mess h3{margin:0 0 8px;font-size:13px}
+.balken{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-bottom:9px;border:1px solid #d7e0dc}
+.balken div{display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700}
+.balken .b-fest{background:#c2410c}
+.balken .b-liste{background:var(--gr)}
+.balken .b-fuss{background:#6b7280}
+.mess table{width:100%;border-collapse:collapse}
+.mess td{padding:2px 0;vertical-align:top}
+.mess td.z{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.mess .ok{color:#15803d;font-weight:700}
+.mess .no{color:var(--red);font-weight:700}
+.mess .fazit{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px}
+
+.hinweis{background:#fff;border-left:4px solid var(--gr);border-radius:8px;padding:12px 14px;
+  margin:26px auto 0;max-width:820px;font-size:14px}
+.hinweis h3{margin:0 0 6px;font-size:15px}
+.hinweis ul{margin:6px 0 0;padding-left:20px}
+.hinweis li{margin-bottom:5px}
+
+/* Detailblatt */
+.blatt{position:absolute;inset:auto 0 0 0;background:#fff;border-radius:16px 16px 0 0;
+  box-shadow:0 -8px 32px rgba(16,24,40,.24);padding:14px;transform:translateY(101%);
+  transition:transform .22s ease;max-height:78%;overflow-y:auto;z-index:5}
+.blatt.auf{transform:translateY(0)}
+.blatt h4{margin:0 0 4px;font-size:15px}
+.blatt p{margin:0 0 10px;font-size:13px;color:#4b5563}
+.blatt .z{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:7px 0;
+  border-top:1px solid var(--line)}
+.blatt .z svg{width:16px;height:16px;flex:0 0 auto;margin-top:2px;color:var(--mut)}
+.blatt button.zu{width:100%;min-height:48px;margin-top:12px;border-radius:var(--r-s);
+  border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer}
+.blatt .wz{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.blatt .wz button{min-height:48px;border-radius:var(--r-s);border:1px solid var(--line);
+  background:#fff;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:8px;padding:0 12px;text-align:left}
+.blatt .wz svg{width:16px;height:16px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="seite">
+  <h1>Bäcker-Reiter auf dem Telefon</h1>
+  <p class="unter">
+    Links die heutige Aufteilung, rechts der Entwurf — beide mit denselben
+    <b>echten Daten</b> vom <span id="stand"></span>: 34 aktive Artikel der
+    Bäckerei Freundl, 28 davon mit Mengen aus der Vorbelegung.
+    Die Messtafel unter jedem Telefon prüft laufend die Grenzen aus
+    <b>F1</b> (mindestens vier sichtbare Zeilen) und <b>F2</b>
+    (höchstens 45 % fester Kopfbereich, höchstens 25 % Fuß- und Reiterleiste).
+  </p>
+
+  <div class="leiste">
+    <label>Gerät</label>
+    <select id="geraet">
+      <option value="360">Galaxy S5 — 360 × 640</option>
+      <option value="375">iPhone SE — 375 × 667</option>
+    </select>
+    <label>Zustand</label>
+    <select id="zustand">
+      <option value="offen">Noch nicht gesendet</option>
+      <option value="gesendet">Bereits gesendet</option>
+      <option value="druck">Ausdruck steht aus</option>
+      <option value="test">Testbetrieb aktiv</option>
+    </select>
+    <button id="kopfSchalter" class="an">Kopfzeile kompakt: an</button>
+    <button id="subSchalter">Bereichsreiter: im Menü</button>
+  </div>
+
+  <div class="paar">
+    <div class="spalte">
+      <h2>Heute<span>so ist es im Laden</span></h2>
+      <div class="tel alt" id="telAlt"></div>
+      <div class="mess" id="messAlt"></div>
+    </div>
+    <div class="spalte">
+      <h2>Entwurf<span>nach der Spec</span></h2>
+      <div class="tel neu" id="telNeu"></div>
+      <div class="mess" id="messNeu"></div>
+    </div>
+  </div>
+
+  <div class="hinweis">
+    <h3>Was sich ändert — und was ausdrücklich nicht</h3>
+    <ul>
+      <li><b>Der Infokasten wird zur Kontextzeile.</b> Aus 250 px werden 46:
+        Liefertag, Bäckerei und Zustand stehen in zwei Textzeilen. Die
+        Herkunft der Vorbelegung, der Bestellschluss und das Protokoll
+        rücken hinter das <b>i</b> — erreichbar, aber nicht dauerhaft im Weg.</li>
+      <li><b>„An Bäckerei senden" gibt es nur noch einmal</b>, in der Fußzeile.
+        Dort ist der Knopf immer sichtbar, egal wie weit die Liste gescrollt ist.
+        Heute steht er zusätzlich im Infokasten — im selben Blick, zweimal.</li>
+      <li><b>Die Tageskacheln verlieren zwei Zeilen, nicht ihre Größe.</b>
+        Wochentag und Datum rücken zusammen, die Farbpunkte neben den Status.
+        Aus 76 px werden 52. Angetippt werden sie weiterhin mit mindestens
+        48 px Höhe — über dem geforderten Mindestmaß.</li>
+      <li><b>„Offen" verschwindet als Beschriftung.</b> Es ist der Normalfall
+        und sagt nichts. „Heute bestellen", „Ausdruck fehlt" und Teilstände
+        wie „1 von 2" bleiben — die sagen etwas.</li>
+      <li><b>Keine Schrift wird kleiner.</b> Der Status in den Kacheln wächst
+        sogar von 10,5 auf 11,5 px. Der Platz kommt aus Weglassen und
+        Zusammenlegen, nicht aus Schrumpfen — so verlangt es F5.</li>
+      <li><b>Nichts geht verloren.</b> Zurücksetzen, Hinweis, Drucken,
+        Verlauf, Verwerfen: alles bleibt erreichbar, das Seltene hinter dem
+        <b>i</b>, das Häufige direkt.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const D = window.BKDaten;
+document.getElementById('stand').textContent = D.stand.split('-').reverse().join('.');
+
+let breite = 360, zustand = 'offen', kopfEng = true, subSichtbar = false;
+
+const luc = (n, s) => '<svg data-lucide="' + n + '" width="' + s + '" height="' + s + '"></svg>';
+const kurz = (iso) => { const t = iso.split('-'); return t[2] + '.' + t[1] + '.'; };
+
+/* ── Zustand des gewählten Tages ───────────────────────────────────── */
+function lage() {
+  return {
+    gesendet: zustand === 'gesendet' || zustand === 'druck',
+    druckOffen: zustand === 'druck',
+    test: zustand === 'test',
+  };
+}
+
+/* ── Tageskacheln ──────────────────────────────────────────────────── */
+function kacheln(neu) {
+  const l = lage();
+  return D.tage.map((t) => {
+    const gewaehlt = t.datum === D.datum;
+    let cls = 'tag';
+    if (!t.bestelltag) cls += ' aus';
+    else if (gewaehlt) cls += ' an';
+    else if (!t.bestellbar) cls += ' vorbei';
+    if (t.heute_bestellen) cls += ' faellig';
+
+    let st;
+    if (!t.bestelltag) st = 'keine Lieferung';
+    else if (gewaehlt && l.druckOffen) st = 'Ausdruck fehlt';
+    else if (gewaehlt && l.gesendet) st = '✓ gesendet';
+    else if (!t.bestellbar) st = t.status === 'gesendet' ? 'heute geliefert' : 'nicht bestellt';
+    else if (t.heute_bestellen) st = 'heute bestellen';
+    else if (t.gesamt > 1) st = t.fertig + ' von ' + t.gesamt;
+    else st = 'offen';
+
+    const punkte = (t.lieferanten || []).map((x) =>
+      '<i class="p' + (x.status !== 'offen' ? ' fertig' : '') + '"></i>').join('');
+
+    if (!neu) {
+      // Heute: vier gestapelte Zeilen.
+      return '<button class="' + cls + '">'
+        + '<span class="wt">' + t.wochentag.slice(0, 2) + '</span>'
+        + '<span class="dt">' + kurz(t.datum) + '</span>'
+        + '<span class="st">' + st + '</span>'
+        + (punkte ? '<span class="punkte">' + punkte + '</span>' : '')
+        + '</button>';
+    }
+    // Entwurf: Wochentag und Datum in einer Zeile, Status nur wenn er etwas sagt.
+    const stumm = st === 'offen' || st === 'keine Lieferung';
+    return '<button class="' + cls + '">'
+      + '<span class="kopfz"><span class="wt">' + t.wochentag.slice(0, 2) + '</span>'
+      + '<span class="dt">' + kurz(t.datum) + '</span></span>'
+      + (stumm && !punkte ? ''
+         : '<span class="st">' + (stumm ? '' : st)
+           + (punkte ? '<span class="punkte">' + punkte + '</span>' : '') + '</span>')
+      + '</button>';
+  }).join('');
+}
+
+/* ── Artikelzeilen ─────────────────────────────────────────────────── */
+function zeilen() {
+  let h = '', gruppe = null;
+  D.artikel.forEach((a) => {
+    if (a.gruppe !== gruppe) {
+      gruppe = a.gruppe;
+      const n = D.artikel.filter((x) => x.gruppe === gruppe).length;
+      h += '<div class="grp">' + gruppe + '<span class="n">' + n + ' Positionen</span></div>';
+    }
+    h += '<div class="zeile' + (a.menge ? ' hat' : '') + '">'
+      + '<div class="nr">' + a.nummer + '</div>'
+      + '<div class="nm"><b>' + a.name + '</b>'
+      + '<div class="hist">' + D.wochentag.slice(0, 2) + ':'
+      + '<span>' + a.menge + '</span><span>' + a.menge + '</span><span>' + a.menge + '</span></div></div>'
+      + '<div class="mng"><button>−</button>'
+      + '<input class="wert" value="' + a.menge + '" readonly><button>+</button></div>'
+      + '</div>';
+  });
+  return h;
+}
+
+function summe() {
+  const pos = D.artikel.filter((a) => a.menge > 0).length;
+  const stk = D.artikel.reduce((s, a) => s + a.menge, 0);
+  return { pos, stk };
+}
+
+const REITER = [
+  ['utensils', 'Mittag', ''], ['croissant', 'Bäcker', '1'], ['beef', 'Mair', ''],
+  ['cup-soda', 'Getränke', ''], ['message-square', 'Kontakt', ''], ['calendar', 'Termine', ''],
+];
+function reiterLeiste() {
+  return '<div class="reiter">' + REITER.map((r, i) =>
+    '<div class="' + (i === 1 ? 'an' : '') + '">' + luc(r[0], 20)
+    + (r[2] ? '<span class="zahl">' + r[2] + '</span>' : '')
+    + '<span>' + r[1] + '</span></div>').join('') + '</div>';
+}
+
+function kopfLeiste() {
+  const icons = ['users', 'home', 'settings', 'volume-2', 'help-circle', 'refresh-cw'];
+  if (kopfEng) {
+    // Eine Zeile: Titel und die vier häufigen Symbole, der Rest hinter „mehr".
+    return '<div class="kopf eng"><div class="t">' + luc('store', 19) + ' Kiosk</div>'
+      + '<div class="icons">'
+      + ['refresh-cw', 'volume-2', 'help-circle', 'more-horizontal']
+        .map((i) => '<button>' + luc(i, 19) + '</button>').join('')
+      + '</div></div>';
+  }
+  return '<div class="kopf"><div class="t">' + luc('store', 20) + ' Kiosk</div>'
+    + '<div class="icons">' + icons.map((i) => '<button>' + luc(i, 19) + '</button>').join('')
+    + '</div></div>';
+}
+
+function subLeiste() {
+  return '<div class="sub">'
+    + '<button class="an">' + luc('clipboard-list', 15) + ' Bestellung</button>'
+    + '<button>' + luc('package', 15) + ' Artikel</button>'
+    + '<button>' + luc('history', 15) + ' Verlauf</button>'
+    + '</div>';
+}
+
+/* ══ HEUTE ══════════════════════════════════════════════════════════ */
+function bauAlt() {
+  const l = lage(), s = summe();
+  let h = kopfLeiste();
+  h += '<div class="mitte"><div class="fest">';
+  h += subLeiste();
+  h += '<div class="lbl">' + luc('truck', 13) + ' Liefertag wählen</div>';
+  h += '<div class="tage">' + kacheln(false) + '</div>';
+  h += '<div class="offen">' + luc('alarm-clock', 14) + ' 1 Bestellung noch offen</div>';
+  if (l.test) {
+    h += '<div class="test">' + luc('flask-conical', 14)
+      + ' <b>Testbetrieb</b> – die Bestellung geht an jrumpfinger@t-online.de, nicht an die Bäckerei.</div>';
+  }
+  // Infokasten
+  h += '<div class="karte"><div class="ico">'
+    + luc(l.druckOffen ? 'printer' : l.gesendet ? 'check-circle' : 'croissant', 22) + '</div><div>';
+  if (l.gesendet) {
+    h += '<div class="t1">Gesendet – Lieferung am ' + D.wochentag + ', ' + D.datum_de + ' · ' + D.baeckerei + '</div>';
+    h += '<div class="t2">abgeschickt 06:12 von Kiosk · ' + s.pos + ' Positionen · ' + s.stk + ' Stück'
+      + (l.druckOffen ? ' · <b>Papierausdruck steht noch aus</b>' : '') + '</div>';
+  } else {
+    h += '<div class="t1">Lieferung am ' + D.wochentag + ', ' + D.datum_de + ' · ' + D.baeckerei + '</div>';
+    h += '<div class="t2">Noch nicht gesendet · <b>heute bestellen</b> · vorbelegt mit den Werten vom letzten '
+      + D.wochentag + ' (' + D.vorlage_datum_de + ')</div>';
+  }
+  h += '</div><div class="knoepfe">';
+  h += '<button class="notiz">' + luc('message-square-plus', 15) + ' Hinweis hinzufügen</button>';
+  if (l.druckOffen) h += '<button class="senden">' + luc('printer', 15) + ' Jetzt drucken</button>';
+  else if (l.gesendet) h += '<button class="notiz">' + luc('pencil', 15) + ' Korrigieren</button>';
+  else h += '<button class="senden">' + luc('mail', 15) + ' An Bäckerei senden</button>';
+  h += '</div></div>';
+  // Werkzeuge
+  h += '<div class="tools">'
+    + '<button class="on">' + luc('croissant', 14) + ' Übliche Artikel</button>'
+    + '<button>Alle Artikel <span>60</span></button>'
+    + '<button>' + luc('rotate-ccw', 14) + ' Auf letzten ' + D.wochentag + ' zurücksetzen</button>'
+    + '</div>';
+  h += '<div class="sortnote">' + luc('arrow-down-up', 12) + ' Sortiert nach Artikelnummer – genau wie im Formular der Bäckerei</div>';
+  h += '</div>';                                  // fest
+  h += '<div class="liste">' + zeilen() + '</div>';
+  h += '</div>';                                  // mitte
+  // Fußzeile
+  h += '<div class="fuss"><div class="sum">Bestellung: <b>' + s.pos + ' Positionen</b> · <b>'
+    + s.stk + ' Stück</b></div>';
+  if (!l.gesendet) {
+    h += '<div class="knoepfe"><button class="entwurf">Entwurf speichern</button>'
+      + '<button class="senden">' + luc('mail', 16) + ' An Bäckerei senden</button></div>';
+  }
+  h += '</div>' + reiterLeiste();
+  return h;
+}
+
+/* ══ ENTWURF ════════════════════════════════════════════════════════ */
+function bauNeu() {
+  const l = lage(), s = summe();
+  let h = kopfLeiste();
+  h += '<div class="mitte"><div class="fest">';
+  if (subSichtbar) h += subLeiste();
+  h += '<div class="tage">' + kacheln(true) + '</div>';
+  h += '</div>';
+
+  // Kontextzeile — ersetzt Infokasten, Offen-Hinweis, Testbetrieb und Sortierhinweis.
+  let kcls = 'kontext', icon = 'croissant', z1, z2;
+  if (l.druckOffen) { icon = 'printer'; }
+  else if (l.gesendet) { kcls += ' gesendet'; icon = 'check-circle'; }
+  if (l.test) kcls += ' test';
+  if (l.gesendet) {
+    z1 = D.baeckerei;
+    z2 = l.druckOffen ? 'Ausdruck steht noch aus' : 'Gesendet · ' + s.pos + ' Positionen';
+  } else {
+    // Der Liefertag und „heute bestellen" stehen schon in der markierten
+    // Kachel darüber — hier nicht noch einmal (F3).
+    z1 = D.baeckerei;
+    z2 = l.test ? 'Testbetrieb aktiv' : 'Noch nicht gesendet';
+  }
+  h += '<div class="fest"><div class="' + kcls + '">'
+    + '<div class="ico">' + luc(icon, 18) + '</div>'
+    + '<div class="txt"><div class="z1">' + z1 + '</div><div class="z2">' + z2 + '</div></div>'
+    + '<button class="mehr" onclick="document.getElementById(\'blatt\').classList.add(\'auf\')">'
+    + luc('info', 19) + '</button></div>';
+  h += '</div>';
+  h += '<div class="liste">' + zeilen()
+    + '<button class="listenknopf">' + luc('croissant', 15)
+    + ' Alle 60 Artikel anzeigen</button>'
+    + '<button class="listenknopf">' + luc('plus', 15)
+    + ' Weiteren Artikel für diesen Tag</button>'
+    + '</div>';
+  h += '</div>';
+  h += '<div class="fuss"><div class="sum">Bestellung: <b>' + s.pos + ' Positionen</b> · <b>'
+    + s.stk + ' Stück</b></div>';
+  if (l.druckOffen) {
+    h += '<div class="knoepfe"><button class="senden">' + luc('printer', 16) + ' Jetzt drucken</button></div>';
+  } else if (l.gesendet) {
+    h += '<div class="knoepfe"><button class="senden">' + luc('pencil', 16) + ' Korrigieren</button></div>';
+  } else {
+    h += '<div class="knoepfe"><button class="entwurf">Entwurf</button>'
+      + '<button class="senden">' + luc('mail', 16) + ' An Bäckerei senden</button></div>';
+  }
+  h += '</div>' + reiterLeiste();
+
+  // Detailblatt hinter dem i
+  h += '<div class="blatt" id="blatt"><h4>Zur Bestellung</h4>'
+    + '<p>' + D.wochentag + ', ' + D.datum_de + ' · ' + D.baeckerei + '</p>'
+    + '<div class="z">' + luc('rotate-ccw', 16) + '<div>Vorbelegt mit den Werten vom letzten '
+    + D.wochentag + ' (' + D.vorlage_datum_de + ')</div></div>'
+    + '<div class="z">' + luc('clock', 16) + '<div>Bestellschluss: ' + D.bestellschluss + '</div></div>'
+    + '<div class="z">' + luc('arrow-down-up', 16) + '<div>Sortiert nach Artikelnummer – genau wie im Formular der Bäckerei</div></div>'
+    + '<div class="z">' + luc('alarm-clock', 16) + '<div>1 weitere Bestellung ist noch offen</div></div>'
+    + '<div class="wz">'
+    + (subSichtbar ? '' :
+        '<button>' + luc('package', 16) + ' Artikel verwalten</button>'
+      + '<button>' + luc('history', 16) + ' Verlauf ansehen</button>')
+    + '<button>' + luc('message-square-plus', 16) + ' Hinweis hinzufügen</button>'
+    + '<button>' + luc('rotate-ccw', 16) + ' Auf letzten ' + D.wochentag + ' zurücksetzen</button>'
+    + '<button>' + luc('printer', 16) + ' Drucken</button>'
+    + '</div>'
+    + '<button class="zu" onclick="document.getElementById(\'blatt\').classList.remove(\'auf\')">Schließen</button>'
+    + '</div>';
+  return h;
+}
+
+/* ── Messtafel ─────────────────────────────────────────────────────── */
+function messen(tel, ziel, name) {
+  const hoehe = tel.clientHeight;
+  const h = (sel) => {
+    const e = tel.querySelector(sel);
+    return e ? Math.round(e.getBoundingClientRect().height) : 0;
+  };
+  const kopf = h('.kopf');
+  const fest = [...tel.querySelectorAll('.fest')]
+    .reduce((s, e) => s + Math.round(e.getBoundingClientRect().height), 0);
+  const fuss = h('.fuss');
+  const reiter = h('.reiter');
+  const oben = kopf + fest;
+  const unten = fuss + reiter;
+  const liste = hoehe - oben - unten;
+
+  // Vollständig sichtbare Artikelzeilen zählen.
+  const box = tel.querySelector('.liste').getBoundingClientRect();
+  const sichtbar = [...tel.querySelectorAll('.zeile')].filter((z) => {
+    const r = z.getBoundingClientRect();
+    return r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5;
+  }).length;
+
+  const pOben = oben / hoehe * 100, pUnten = unten / hoehe * 100;
+  const pListe = Math.max(0, liste) / hoehe * 100;
+  const okOben = pOben <= 45, okUnten = pUnten <= 25, okZeilen = sichtbar >= 4;
+  const marke = (ok) => ok ? '<span class="ok">erfüllt</span>' : '<span class="no">verfehlt</span>';
+
+  ziel.innerHTML =
+    '<h3>' + name + ' — ' + tel.clientWidth + ' × ' + hoehe + '</h3>'
+    + '<div class="balken">'
+    + '<div class="b-fest" style="width:' + pOben + '%">' + Math.round(pOben) + '%</div>'
+    + '<div class="b-liste" style="width:' + pListe + '%">' + Math.round(pListe) + '%</div>'
+    + '<div class="b-fuss" style="width:' + pUnten + '%">' + Math.round(pUnten) + '%</div>'
+    + '</div>'
+    + '<table>'
+    + '<tr><td>Kopfzeile</td><td class="z">' + kopf + ' px</td></tr>'
+    + '<tr><td>feste Blöcke</td><td class="z">' + fest + ' px</td></tr>'
+    + '<tr><td><b>zusammen oben</b></td><td class="z">' + oben + ' px · ' + Math.round(pOben) + ' %</td></tr>'
+    + '<tr><td>Fuß + Reiter</td><td class="z">' + unten + ' px · ' + Math.round(pUnten) + ' %</td></tr>'
+    + '<tr><td><b>Liste</b></td><td class="z">' + liste + ' px · ' + Math.round(pListe) + ' %</td></tr>'
+    + '</table>'
+    + '<div class="fazit">'
+    + 'F1 — ' + sichtbar + ' Zeile' + (sichtbar === 1 ? '' : 'n') + ' ganz sichtbar: ' + marke(okZeilen) + '<br>'
+    + 'F2 — oben ≤ 45 %: ' + marke(okOben) + ' · unten ≤ 25 %: ' + marke(okUnten)
+    + '</div>';
+}
+
+function zeichne() {
+  const a = document.getElementById('telAlt'), n = document.getElementById('telNeu');
+  const gross = breite === 375;
+  [a, n].forEach((t) => t.classList.toggle('gross', gross));
+  ['messAlt', 'messNeu'].forEach((i) => document.getElementById(i).classList.toggle('gross', gross));
+  a.innerHTML = bauAlt();
+  n.innerHTML = bauNeu();
+  if (window.lucide) lucide.createIcons();
+  requestAnimationFrame(() => {
+    messen(a, document.getElementById('messAlt'), 'Heute');
+    messen(n, document.getElementById('messNeu'), 'Entwurf');
+  });
+}
+
+document.getElementById('geraet').onchange = (e) => { breite = +e.target.value; zeichne(); };
+document.getElementById('zustand').onchange = (e) => { zustand = e.target.value; zeichne(); };
+document.getElementById('kopfSchalter').onclick = (e) => {
+  kopfEng = !kopfEng;
+  e.target.classList.toggle('an', kopfEng);
+  e.target.textContent = 'Kopfzeile kompakt: ' + (kopfEng ? 'an' : 'aus');
+  zeichne();
+};
+document.getElementById('subSchalter').onclick = (e) => {
+  subSichtbar = !subSichtbar;
+  e.target.classList.toggle('an', subSichtbar);
+  e.target.textContent = 'Bereichsreiter: ' + (subSichtbar ? 'eigene Zeile' : 'im Menü');
+  zeichne();
+};
+zeichne();
+</script>
+</body>
+</html>
