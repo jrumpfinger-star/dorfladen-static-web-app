@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Erfassung &amp; Filter — Entwurf zur Abnahme</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
 :root{
   --gr:#2e7d4f; --gr-d:#245f3c; --gr-t:#f5faf7;
@@ -195,10 +196,7 @@ p{margin:0 0 10px}
 .kach button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:9px;
   min-width:40px;min-height:38px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .kach button.on{border-color:var(--blau);background:var(--blau-t);color:var(--blau)}
-.frei{flex:0 0 auto;width:68px;min-height:38px;border:1.5px solid var(--line);
-  border-radius:9px;text-align:center;font:inherit;font-size:13.5px;font-weight:600}
-.zusatz{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
-.zusatz .feld{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.zusatz{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}.zusatz .feld{display:flex;gap:6px;align-items:center;margin-bottom:5px}
 .zusatz input{flex:1;min-width:0;min-height:36px;border:1.5px solid var(--line);
   border-radius:9px;padding:0 9px;font:inherit;font-size:13px}
 .edakt{display:flex;gap:6px;margin-top:6px}
@@ -222,6 +220,26 @@ p{margin:0 0 10px}
 .frage b{color:var(--blau)}
 .hinweisbox{position:relative}
 code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
+/* ── Symbole: dieselbe Lucide-Familie wie im Kiosk ───────── */
+svg.lucide{stroke-width:2;vertical-align:middle}
+.k-head .hbtn svg{width:16px;height:16px}
+.k-tabs svg{display:block;margin:0 auto 2px;width:17px;height:17px}
+.kontext .ico svg{width:15px;height:15px}
+.kontext .mehr svg{width:19px;height:19px}
+.filterknopf svg{width:19px;height:19px}
+.vakbox .box svg{width:12px;height:12px}
+.chip .x svg{width:13px;height:13px}
+.pop .hak svg{width:16px;height:16px;color:var(--gr)}
+/* ── Freies Maß: der Knopf erscheint erst, wenn etwas dasteht ── */
+.freiwrap{position:relative;flex:0 0 auto}
+.frei{width:92px;min-height:38px;border:1.5px solid var(--line);border-radius:9px;
+  text-align:center;font:inherit;font-size:13.5px;font-weight:600;padding:0 30px 0 8px}
+.frei:focus{outline:2px solid var(--blau);outline-offset:-1px;border-color:var(--blau)}
+.freiok{position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  width:28px;height:28px;border-radius:7px;border:0;background:var(--gr);color:#fff;
+  display:none;align-items:center;justify-content:center;cursor:pointer}
+.freiwrap.bereit .freiok{display:flex}
+.freiwrap.bereit .frei{border-color:var(--gr)}
 </style>
 </head>
 <body>
@@ -256,8 +274,10 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
           und Artikel&nbsp;+&nbsp;Erfassung sind <b>immer zusammen sichtbar</b>.</li>
         <li>Reihenfolge wie gefordert: <b>Anzahl → vak → Einheit → Menge</b>.
           „vakuumieren“ ist ein Kästchen neben der Anzahl.</li>
-        <li><b>Kein „Hinzufügen“:</b> Kachel tippen fügt hinzu, im Freifeld genügt
-          Eingabetaste oder das Feld verlassen.</li>
+        <li><b>Kein „Hinzufügen“:</b> Kachel tippen fügt hinzu. Für ein Maß, das
+          es als Kachel nicht gibt, tippen Sie es ins Feld <i>frei</i> — dort
+          erscheint dann ein grüner Haken zum Übernehmen (die Eingabetaste tut
+          dasselbe).</li>
         <li><b>Kein „Fertig“:</b> <code>+</code> öffnet, <code>−</code> schließt.</li>
         <li>Die Liste bleibt stehen, wo sie war.</li>
         <li>Ist der Schirm niedrig, entfallen <b>Kurzeingabe</b> und <b>Hinweis</b>;
@@ -279,15 +299,18 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
           <div class="schirm">
             <div class="k-head">
               <span class="titel">Metzger Mair</span>
-              <button class="hbtn">🔔</button><button class="hbtn">⟳</button>
+              <button class="hbtn"><i data-lucide="bell"></i></button>
+              <button class="hbtn"><i data-lucide="refresh-cw"></i></button>
             </div>
             <div class="k-fest" id="festErf"></div>
             <div class="k-liste" id="listeErf"></div>
             <div class="k-foot" id="footErf"></div>
             <div class="k-tabs">
-              <div><i>🍽</i>Mittag</div><div><i>🥐</i>Bäcker</div>
-              <div class="on"><i>🥩</i>Mair</div><div><i>🥤</i>Getränke</div>
-              <div><i>📅</i>Termine</div>
+              <div><i data-lucide="utensils"></i>Mittag</div>
+              <div><i data-lucide="croissant"></i>Bäcker</div>
+              <div class="on"><i data-lucide="ham"></i>Mair</div>
+              <div><i data-lucide="cup-soda"></i>Getränke</div>
+              <div><i data-lucide="calendar-days"></i>Termine</div>
             </div>
           </div>
         </div>
@@ -358,7 +381,8 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
     <ul class="check">
       <li><b>Erfassung unter dem Artikel</b>, Artikel und Eingabe immer zusammen sichtbar.</li>
       <li>Reihenfolge <b>Anzahl → vak → Einheit → Menge</b>, „vak“ als Kästchen.</li>
-      <li><b>„+ Hinzufügen“ entfällt</b> — Kachel, Eingabetaste oder Feld verlassen genügt.</li>
+      <li><b>„+ Hinzufügen“ entfällt</b> — Kachel tippen legt an; ein freies Maß
+        wird mit dem grünen Haken im Feld oder der Eingabetaste übernommen.</li>
       <li><b>„Fertig“ entfällt</b> — <code>+</code> öffnet, <code>−</code> schließt.</li>
       <li>Die Liste <b>springt nicht mehr</b> nach dem Erfassen.</li>
       <li>Niedriger Schirm: <b>Kurzeingabe und Hinweisfeld entfallen</b>.</li>
@@ -366,10 +390,8 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
         Höhe, sonst Filtersymbol mit Auswahlblatt.</li>
     </ul>
     <div class="frage">
-      <b>Offen:</b> Beim Bäcker gibt es nur zwei Umfänge („Übliche“ / „Alle“), bei
-      Getränken drei („Übliche“ / „Alle“ / „Nur bestellte“). Soll „Nur bestellte“ auch
-      bei Bäcker und Mair angeboten werden? Das wäre einheitlich, bringt dort aber
-      nur bei langen Listen etwas.
+      <b>Entschieden:</b> „Nur erfasste“ wird in allen drei Reitern angeboten —
+      einheitlich, und bei den langen Listen (102 Artikel bei Mair) hilft es spürbar.
     </div>
   </div>
 
@@ -392,6 +414,12 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
     });
   };
   var $ = function (id) { return document.getElementById(id); };
+  /* Symbole wie im Kiosk: Lucide, nicht Emoji. Nach jedem Neuzeichnen
+     muessen die <i data-lucide> in SVG verwandelt werden. */
+  var ikone = function (name) { return '<i data-lucide="' + name + '"></i>'; };
+  var ikonen = function () {
+    if (window.lucide) { try { lucide.createIcons(); } catch (e) { /* offline */ } }
+  };
 
   var KAT = (window.METZGER_KATALOG || { artikel: [], gruppen: [] });
   var VOR = (window.METZGER_VORSCHLAEGE || { artikel: {} });
@@ -480,16 +508,16 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
     var h = '';
     h += '<div class="subs"><button class="on">Bestellung</button>'
       + '<button>Verlauf</button><button>Artikel</button></div>';
-    h += '<div class="kontext"><div class="ico">🥩</div><div class="txt">'
+    h += '<div class="kontext"><div class="ico">' + ikone('ham') + '</div><div class="txt">'
       + '<div class="z1">Mo., 14.09.2026 · Metzgerei Mair</div>'
       + '<div class="z2">Noch nicht gesendet</div></div>'
-      + '<button class="mehr" title="Auskunft zur Bestellung">ⓘ</button></div>';
+      + '<button class="mehr" title="Auskunft zur Bestellung">' + ikone('info') + '</button></div>';
     var inline = erf.hoehe >= H_FILTER;
     h += '<div class="suchzeile"><input type="search" placeholder="Artikel oder Nummer suchen …"'
       + ' value="' + esc(erf.suche) + '" id="sucheErf">';
     if (!inline) {
       h += '<button class="filterknopf' + (erf.filter !== 'ueblich' ? ' aktiv' : '') + '"'
-        + ' id="filterKnopfErf" title="Welche Artikel zeigen?">⛭'
+        + ' id="filterKnopfErf" title="Welche Artikel zeigen?">' + ikone('list-filter')
         + (erf.filter !== 'ueblich' ? '<span class="punkt"></span>' : '') + '</button>';
     }
     h += '</div>';
@@ -499,6 +527,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       ['best', 'Nur erfasste', trefferErf('best')]
     ], 'erf');
     $('festErf').innerHTML = h;
+    ikonen();
 
     var s = $('sucheErf');
     s.addEventListener('input', function () {
@@ -534,9 +563,10 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       + liste.map(function (f) {
           return '<button data-pf="' + f[0] + '"' + (erf.filter === f[0] ? ' class="on"' : '')
             + '>' + esc(f[1]) + '<span class="anz">' + f[2] + '</span>'
-            + (erf.filter === f[0] ? '<span class="hak">✓</span>' : '') + '</button>';
+            + (erf.filter === f[0] ? '<span class="hak">' + ikone('check') + '</span>' : '') + '</button>';
         }).join('') + '</div>';
     $('geraetErf').querySelector('.schirm').appendChild(d);
+    ikonen();
     d.style.position = 'absolute';
     $('geraetErf').style.position = 'relative';
     d.onclick = function (e) {
@@ -567,6 +597,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
     });
     liste.innerHTML = h;
     liste.scrollTop = merk;
+    ikonen();
     bindeListe();
     zeichneFuss();
   }
@@ -585,7 +616,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
     bl.forEach(function (b, i) {
       h += '<span class="chip"><button class="lab" data-edit="' + i + '">' + esc(blockText(b))
         + (b.vakuum ? '<span class="vak">vak</span>' : '') + '</button>'
-        + '<button class="x" data-weg="' + i + '">✕</button></span>';
+        + '<button class="x" data-weg="' + i + '">' + ikone('x') + '</button></span>';
     });
     if (!bl.length && !auf) {
       var v = vorschlaegeFuer(a)[0];
@@ -623,7 +654,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       + '<input id="anzErf" type="number" min="1" value="' + e.anzahl + '">'
       + '<button data-anz="1">+</button></div>';
     h += '<label class="vakbox' + (e.vakuum ? ' on' : '') + '" data-vak="1">'
-      + '<span class="box">✓</span>vak</label>';
+      + '<span class="box">' + ikone('check') + '</span>vak</label>';
     h += '<div class="einh">' + EINHEITEN.map(function (u) {
       var on = u[0] === 'groesse' ? istGroesse(e.einheit) : e.einheit === u[0];
       return '<button data-einh="' + u[0] + '"' + (on ? ' class="on"' : '') + '>'
@@ -636,8 +667,15 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       return '<button data-kach="' + t[0] + '"' + (on ? ' class="on"' : '') + '>'
         + esc(t[1]) + '</button>';
     }).join('') + '</div>'
-      + '<input class="frei" id="freiErf" placeholder="frei" value="'
-      + (e.menge == null ? '' : zahl(e.menge)) + '"></div>';
+      /* Freies Maß: Sobald eine Zahl darin steht, erscheint rechts im Feld
+         ein grüner Haken. Ein Tipp darauf legt die Portion an — die
+         Eingabetaste tut dasselbe. Ohne Zahl ist der Haken unsichtbar. */
+      + '<span class="freiwrap" id="freiWrapErf">'
+      + '<input class="frei" id="freiErf" inputmode="decimal" placeholder="'
+      + esc(e.einheit === 'g' ? 'z. B. 233' : 'frei') + '" value="'
+      + (e.menge == null ? '' : zahl(e.menge)) + '">'
+      + '<button class="freiok" id="freiOkErf" title="Diese Menge hinzufügen">'
+      + ikone('check') + '</button></span></div>';
 
     if (erf.hoehe >= H_ZUSATZ) {
       h += '<div class="zusatz">'
@@ -738,17 +776,25 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       });
       var frei = row.querySelector('#freiErf');
       if (frei) {
-        var uebernehmen = function () {
+        var wrap = row.querySelector('#freiWrapErf');
+        var wert = function () {
           var n = parseFloat(String(frei.value).replace(',', '.'));
-          if (!isFinite(n) || n <= 0) return;
+          return (isFinite(n) && n > 0) ? n : null;
+        };
+        var pruefe = function () { wrap.classList.toggle('bereit', wert() !== null); };
+        var uebernehmen = function () {
+          var n = wert();
+          if (n === null) { frei.focus(); return; }
           e.menge = n;
           uebernimm(k, false);
         };
+        frei.addEventListener('input', pruefe);
         frei.addEventListener('keydown', function (ev) {
           if (ev.key === 'Enter') { ev.preventDefault(); uebernehmen(); }
         });
-        frei.addEventListener('blur', uebernehmen);   // Feld verlassen genügt
         frei.addEventListener('focus', function () { frei.select(); });
+        row.querySelector('#freiOkErf').addEventListener('click', uebernehmen);
+        pruefe();
       }
       var alle = row.querySelector('[data-alle]');
       if (alle) alle.onclick = function () {
@@ -846,7 +892,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
 
   var REITER = [
     {
-      id: 'bk', name: 'Bäcker', symbol: '🥐',
+      id: 'bk', name: 'Bäcker', symbol: 'croissant',
       z1: 'Fr., 11.09.2026 · Bäckerei Freundl', z2: 'Noch nicht gesendet',
       filter: 'ueblich',
       such: 'Artikel oder Nummer suchen …',
@@ -860,7 +906,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       })
     },
     {
-      id: 'mb', name: 'Mair', symbol: '🥩',
+      id: 'mb', name: 'Mair', symbol: 'ham',
       z1: 'Mo., 14.09.2026 · Metzgerei Mair', z2: 'Noch nicht gesendet',
       filter: 'ueblich',
       such: 'Artikel oder Nummer suchen …',
@@ -874,7 +920,7 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
       })
     },
     {
-      id: 'gk', name: 'Getränke', symbol: '🥤',
+      id: 'gk', name: 'Getränke', symbol: 'cup-soda',
       z1: 'KW 38 · Mo., 14.09.2026', z2: 'Noch nicht gesendet',
       filter: 'ueblich',
       such: 'Getränk oder Gebinde suchen …',
@@ -899,14 +945,14 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
         + '<div class="geraet" style="width:338px;height:' + (fHoehe * .62 + 18) + 'px;position:relative">'
         + '<div class="schirm">'
         + '<div class="k-head"><span class="titel">' + esc(r.name) + '</span>'
-        + '<button class="hbtn">⟳</button></div>'
+        + '<button class="hbtn">' + ikone('refresh-cw') + '</button></div>'
         + '<div class="k-fest">'
-        + '<div class="kontext"><div class="ico">' + r.symbol + '</div><div class="txt">'
+        + '<div class="kontext"><div class="ico">' + ikone(r.symbol) + '</div><div class="txt">'
         + '<div class="z1">' + esc(r.z1) + '</div><div class="z2">' + esc(r.z2) + '</div></div>'
-        + '<button class="mehr">ⓘ</button></div>'
+        + '<button class="mehr">' + ikone('info') + '</button></div>'
         + '<div class="suchzeile"><input type="search" placeholder="' + esc(r.such) + '">'
         + (inline ? '' : '<button class="filterknopf' + (r.filter !== 'ueblich' ? ' aktiv' : '')
-            + '" data-fpop="' + r.id + '">⛭'
+            + '" data-fpop="' + r.id + '">' + ikone('list-filter')
             + (r.filter !== 'ueblich' ? '<span class="punkt"></span>' : '') + '</button>')
         + '</div>'
         + (inline ? filterzeileHtml(r.filter, r.optionen, r.id) : '')
@@ -925,12 +971,13 @@ code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
               return '<button data-set="' + r.id + '|' + o[0] + '"'
                 + (r.filter === o[0] ? ' class="on"' : '') + '>' + esc(o[1])
                 + '<span class="anz">' + o[2] + '</span>'
-                + (r.filter === o[0] ? '<span class="hak">✓</span>' : '') + '</button>';
+                + (r.filter === o[0] ? '<span class="hak">' + ikone('check') + '</span>' : '') + '</button>';
             }).join('')
           + '</div></div>';
       }
       return h + '</div></div>';
     }).join('');
+    ikonen();
 
     document.querySelectorAll('[data-fpop]').forEach(function (b) {
       b.onclick = function () { fOffen = b.dataset.fpop; zeichneFilterReihe(); };
