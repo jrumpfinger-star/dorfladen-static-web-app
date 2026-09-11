@@ -374,7 +374,9 @@ test.describe('Bäcker – Erfassung (F3)', () => {
   test('TC-F3-05: Umschalter ändert die Reihenfolge nicht', async ({ page }) => {
     await openBaecker(page);
     const vorher = await rows(page).count();
-    await page.locator('button:has-text("Alle Artikel")').click();
+    // Der Umfang steht seit dem Umbau in der Filterzeile neben dem „i"
+    // (Spec kiosk-erfassung-filter, F7).
+    await page.locator('#panel-baecker .k-filterzeile [data-umfang="alle"]').click();
     await expect(rows(page)).toHaveCount(vorher + 1); // ausgeblendeter Artikel kommt dazu
     const nummern = await page.locator('#panel-baecker .bk-row .nr').allTextContents();
     const zahlen = nummern.map((n) => parseInt(n, 10)).filter((n) => !isNaN(n));

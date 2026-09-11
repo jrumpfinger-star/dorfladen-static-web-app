@@ -242,10 +242,14 @@ async function schliesseBlatt(page) {
   }
 }
 
+/* Der Umfang steht seit dem Umbau neben der Suche, nicht mehr im „i"-Blatt
+   (Spec kiosk-erfassung-filter, F7). Auf dem Desktop ist die Filterzeile
+   sichtbar, auf niedrigen Schirmen führt das Trichter-Symbol zum Blatt. */
 async function filterArtikel(page, filter) {
-  await oeffneBlatt(page);
-  await page.locator(`#gk-blatt .gk-tgl button[data-filter="${filter}"]`).click();
-  await schliesseBlatt(page);
+  const zeile = page.locator(`#panel-getraenke .k-filterzeile button[data-umfang="${filter}"]`);
+  if (await zeile.isVisible()) { await zeile.click(); return; }
+  await page.locator('#panel-getraenke .k-filterknopf').click();
+  await page.locator(`#panel-getraenke .k-filterblatt button[data-umfang="${filter}"]`).click();
 }
 
 async function alleArtikel(page) {

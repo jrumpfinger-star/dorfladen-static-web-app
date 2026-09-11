@@ -348,17 +348,40 @@ window.KGetraenke = (function () {
        unterhalb des Bildschirms, und der Kopf scrollte mit weg. */
     h.innerHTML = '<div class="gk-fest">' + subs()
       + kontextZeile(kw)
-      +   '<div class="gk-bar">'
+      +   '<div class="gk-bar k-suchzeile">'
       +     '<input type="search" id="gk-q" placeholder="Getr\u00e4nk oder Gebinde suchen \u2026" value="' + esc(_suche) + '">'
+      +     KFilter.markup(umfaenge(), _filter)
+      +     KFilter.zeile(umfaenge(), _filter)
       +   '</div>'
       + '</div>'
       + '<div class="gk-list k-liste" id="gk-list"></div>'
       + '<div class="gk-foot" id="gk-foot"></div>'
-      + detailBlatt(kw);
+      + detailBlatt(kw)
+      + KFilter.blatt(umfaenge(), _filter);
 
     bindeAllgemein();
     bindeBestellung();
     zeichneListe();
+    var panel = document.getElementById('panel-getraenke');
+    if (panel && window.KFilter) {
+      KFilter.binde(panel, function (wahl) { _filter = wahl; zeichne(); });
+    }
+  }
+
+  /** Die drei Umfänge samt Trefferzahlen (Spec kiosk-erfassung-filter, F7). */
+  function umfaenge() {
+    var alt = _filter, altSuche = _suche;
+    var zaehle = function (u) {
+      _filter = u; _suche = '';
+      var n = katalog().filter(sichtbar).length;
+      _filter = alt; _suche = altSuche;
+      return n;
+    };
+    return [
+      ['ueblich', '\u00dcbliche', zaehle('ueblich'), '\u00dcbliche Artikel'],
+      ['alle', 'Alle', zaehle('alle'), 'Alle Artikel'],
+      ['best', 'Nur erfasste', zaehle('best'), 'Nur erfasste']
+    ];
   }
 
   /* ── Kontextzeile und Detailblatt (Spec kiosk-bestellreiter-mobil) ──────
@@ -413,12 +436,9 @@ window.KGetraenke = (function () {
     h += '<div class="gk-blatt-t gk-nur-tel">Bereich</div>';
     h += subs('im-blatt');
 
-    h += '<div class="gk-blatt-t">Welche Artikel zeigen?</div>';
-    h += '<div class="gk-tgl">'
-      + '<button data-filter="ueblich"' + (_filter === 'ueblich' ? ' class="on"' : '') + '>\u00dcbliche</button>'
-      + '<button data-filter="alle"' + (_filter === 'alle' ? ' class="on"' : '') + '>Alle</button>'
-      + '<button data-filter="best"' + (_filter === 'best' ? ' class="on"' : '') + '>Nur bestellte</button>'
-      + '</div>';
+    /* Die Umfänge standen hier im Blatt. Sie sind Bedienung, nicht Auskunft,
+       und stehen deshalb jetzt neben der Suche (Spec kiosk-erfassung-filter,
+       F7). */
 
     if (_gruppen.length) {
       h += '<div class="gk-blatt-t">Zur Warengruppe springen</div>';
@@ -728,10 +748,7 @@ window.KGetraenke = (function () {
     host().querySelectorAll('.gk-tgl button').forEach(function (b) {
       b.onclick = function () {
         _filter = b.dataset.filter;
-        host().querySelectorAll('.gk-tgl button').forEach(function (x) {
-          x.classList.toggle('on', x === b);
-        });
-        zeichneListe();
+        zeichne();
       };
     });
     var sprung = $('gk-jump');

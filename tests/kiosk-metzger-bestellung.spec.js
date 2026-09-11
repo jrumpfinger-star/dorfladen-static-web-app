@@ -268,8 +268,8 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await expect(page.locator('.mb-ed')).toBeVisible();
     // Keine Auswahlliste – auf dem Tablet muss ein Tipp genügen.
     expect(await page.locator('.mb-ed select').count()).toBe(0);
-    await page.locator('.mb-quick button', { hasText: '½' }).first().click();
-    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-kach button', { hasText: '½' }).first().click();
+    await page.locator('.mb-kach button', { hasText: /^1$/ }).first().click();
     await expect(zeile(page, 'Weißwurst').locator('.mb-chip')).toHaveCount(2);
   });
 
@@ -277,7 +277,7 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await oeffneTab(page);
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
     await page.locator('.mb-einh button', { hasText: 'Größe' }).click();
-    await page.locator('.mb-quick button', { hasText: 'klein' }).click();
+    await page.locator('.mb-kach button', { hasText: 'klein' }).click();
     await expect(zeile(page, 'Weißwurst').locator('.mb-chip .lab').first())
       .toContainText('1 × klein');
     // Der Vakuumschalter bleibt davon unberührt.
@@ -290,7 +290,7 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await expect(page.locator('.mb-vak')).toHaveCount(1);
     await page.locator('.mb-vak').click();
     await expect(page.locator('.mb-vak.on')).toHaveCount(1);
-    await page.locator('.mb-quick button', { hasText: '½' }).first().click();
+    await page.locator('.mb-kach button', { hasText: '½' }).first().click();
     await expect(zeile(page, 'Weißwurst').locator('.mb-chip .vak')).toHaveCount(1);
   });
 
@@ -360,12 +360,12 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await oeffneTab(page);
     // Vorgabe ist die kurze Liste – nur was der Metzger schon geliefert hat.
     // Der Umfang-Umschalter steht jetzt am Listenende (Spec kiosk-bestellreiter-mobil).
-    await expect(page.locator('.mb-umfang button.on')).toContainText('Übliche Artikel');
+    await expect(page.locator('#panel-metzgerbest .k-filterzeile button.on')).toContainText('Übliche');
     const ueblich = await page.locator('.mb-row').count();
     const aktive = ARTIKEL.filter((a) => a.aktiv !== false).length;
     expect(ueblich).toBe(aktive);
     // „Alle Artikel" zeigt zusätzlich die ausgeblendeten.
-    await page.locator('.mb-umfang button', { hasText: 'Alle Artikel' }).click();
+    await page.locator('#panel-metzgerbest .k-filterzeile button', { hasText: 'Alle' }).click();
     await expect(page.locator('.mb-row')).toHaveCount(ARTIKEL.length);
   });
 
@@ -452,27 +452,29 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     expect(mass.klein).toEqual([]);
   });
 
-  test('TC-F17-04: „Hinzufügen" liegt nicht hinter der Fußzeile', async ({ page }) => {
+  test('TC-F17-04: Die Mengenreihe liegt nicht hinter der Fußzeile', async ({ page }) => {
+    // Früher wurde hier der Knopf „+ Hinzufügen" geprüft. Den gibt es nicht
+    // mehr — eine Kachel legt sofort an (Spec kiosk-erfassung-filter, F4).
+    // Geprüft wird jetzt die Reihe, die an seine Stelle getreten ist.
     await oeffneTab(page);
     await zeile(page, 'Putenschnitzel').locator('.mb-add').first().click();
-    // Das Scrollen laeuft weich - erst danach messen.
     await page.waitForTimeout(900);
     const m = await page.evaluate(() => {
       const box = document.getElementById('panel-metzgerbest');
-      const ok = box.querySelector('.mb-quick .mb-ok');
+      const mengen = box.querySelector('.mb-mengen');
+      const liste = box.querySelector('.k-liste');
       const fuss = document.getElementById('mb-foot');
-      const band = box.querySelector('.k-filter-bar');
-      const r = box.getBoundingClientRect();
+      const r = (liste || box).getBoundingClientRect();
       return {
-        ok: ok ? ok.getBoundingClientRect().bottom : null,
-        okTop: ok ? ok.getBoundingClientRect().top : null,
+        unterkante: mengen ? mengen.getBoundingClientRect().bottom : null,
+        oberkante: mengen ? mengen.getBoundingClientRect().top : null,
         unten: fuss ? fuss.getBoundingClientRect().top : r.bottom,
-        oben: band ? band.getBoundingClientRect().bottom : r.top,
+        oben: r.top,
       };
     });
-    expect(m.ok).not.toBeNull();
-    expect(m.ok).toBeLessThanOrEqual(m.unten);
-    expect(m.okTop).toBeGreaterThanOrEqual(m.oben);
+    expect(m.unterkante, 'Keine Mengenreihe gefunden').not.toBeNull();
+    expect(m.unterkante).toBeLessThanOrEqual(m.unten + 1);
+    expect(m.oberkante).toBeGreaterThanOrEqual(m.oben - 1);
   });
 
   test('TC-F17-07: Keine nativen Dialoge', async ({ page }) => {
@@ -544,7 +546,7 @@ test.describe('Metzger-Bestellung – Liefertag und stille Sicherung (F30)', () 
       if (r.method() === 'POST' && /\/speichern$/.test(r.url())) posts.push(r.url());
     });
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
-    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-kach button', { hasText: /^1$/ }).first().click();
     // 1,5 s Ruhe, dann geht der Entwurf raus – niemand muss etwas drücken.
     await page.waitForTimeout(2600);
     expect(posts.length).toBeGreaterThan(0);
@@ -558,8 +560,8 @@ test.describe('Metzger-Bestellung – Liefertag und stille Sicherung (F30)', () 
       if (r.method() === 'POST' && /\/speichern$/.test(r.url())) posts.push(r.url());
     });
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
-    await page.locator('.mb-quick button', { hasText: '½' }).first().click();
-    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-kach button', { hasText: '½' }).first().click();
+    await page.locator('.mb-kach button', { hasText: /^1$/ }).first().click();
     await page.waitForTimeout(2600);
     expect(posts.length).toBe(1);
   });
@@ -569,7 +571,7 @@ test.describe('Metzger-Bestellung – Liefertag und stille Sicherung (F30)', () 
     await oeffneTab(page);
     expect(await page.evaluate(() => window.KMetzgerBest.istGeaendert())).toBe(false);
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
-    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-kach button', { hasText: /^1$/ }).first().click();
     expect(await page.evaluate(() => window.KMetzgerBest.istGeaendert())).toBe(true);
   });
 });
@@ -624,7 +626,7 @@ test.describe('Metzger-Bestellung – Korrektur ist zweistufig (F32)', () => {
     });
     await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
-    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-kach button', { hasText: /^1$/ }).first().click();
     await page.locator('.mb-send', { hasText: 'Korrektur senden' }).first().click();
     await expect(page.locator('.mb-dlg')).toBeVisible();
     await page.locator('.mb-dlg-acts button', { hasText: 'Korrektur absenden' }).click();
@@ -641,7 +643,7 @@ test.describe('Metzger-Bestellung – Korrektur ist zweistufig (F32)', () => {
     });
     await page.locator('.mb-btn', { hasText: 'Korrigieren' }).click();
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
-    await page.locator('.mb-quick button', { hasText: /^1$/ }).first().click();
+    await page.locator('.mb-kach button', { hasText: /^1$/ }).first().click();
     await page.waitForTimeout(2600);
     expect(posts.length).toBe(0);
   });

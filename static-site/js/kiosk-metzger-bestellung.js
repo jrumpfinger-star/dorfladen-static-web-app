@@ -27,7 +27,7 @@ window.KMetzgerBest = (function () {
   var _suche = '';
   // Vorgabe ist die kurze Liste: nur was der Metzger uns schon geliefert hat.
   // Von 84 Formularzeilen sind das 57 - der Rest steht nur auf dem Papier.
-  var _alleArtikel = false;
+  var _umfang = 'ueblich';        // ueblich | alle | best (Spec F7)
   var _offen = null;      // Schluessel der Zeile mit offenem Editor
   var _entwurf = null;    // Block im Portionspad
   var _dirty = false;
@@ -326,6 +326,12 @@ window.KMetzgerBest = (function () {
     var el = host();
     if (!el) return;
     if (!_b) { el.innerHTML = '<div class="k-empty">Laden\u2026</div>'; return; }
+    /* Der Rollstand der Liste muss das Neuzeichnen überleben. Vorher fiel er
+       auf 0, weil `.k-liste` neu entstand — danach verschob `inSicht()` um
+       einen Betrag aus den neuen Maßen, und die Liste sprang nach jeder
+       Portion irgendwohin (Spec kiosk-erfassung-filter, F2). */
+    var alt = el.querySelector('.k-liste');
+    var stand = alt ? alt.scrollTop : 0;
     var h;
     if (_sub === 'bestellung') {
       // Wie beim Bäcker: fester Kopf, scrollende Liste, Fußzeile. Vorher gab
@@ -341,10 +347,12 @@ window.KMetzgerBest = (function () {
       h += '</div>';
     }
     el.innerHTML = h;
+    var neu = el.querySelector('.k-liste');
+    if (neu && stand) neu.scrollTop = stand;
     var panel = document.getElementById('panel-metzgerbest');
     if (panel) panel.classList.toggle('k-geteilt', _sub === 'bestellung');
     icons();
-    if (_sub === 'bestellung') fuss();
+    if (_sub === 'bestellung') { fuss(); bindeFilter(); }
   }
 
   function icons() { if (window.lucide) try { lucide.createIcons(); } catch (e) {} }
@@ -364,15 +372,48 @@ window.KMetzgerBest = (function () {
     h += subTabs('nur-breit');
     h += tagesleiste();
     h += kontextZeile();
-    h += '<div class="mb-bar">'
+    /* Suche und Filter stehen nebeneinander. Der Filter war im Blatt hinter
+       dem „i" gelandet, wo ihn niemand sucht (Spec kiosk-erfassung-filter,
+       F7). Je nach Bildschirmhöhe erscheint die Filterzeile oder das
+       Trichter-Symbol — beides steht im Markup, CSS entscheidet. */
+    h += '<div class="mb-bar k-suchzeile">'
       + '<input type="search" id="mb-q" placeholder="Artikel oder Nummer suchen \u2026"'
-      + ' value="' + esc(_suche) + '" oninput="KMetzgerBest.such(this.value)"></div>';
+      + ' value="' + esc(_suche) + '" oninput="KMetzgerBest.such(this.value)">'
+      + KFilter.markup(umfaenge(), _umfang)
+      + KFilter.zeile(umfaenge(), _umfang) + '</div>';
     h += '</div>';                                   // mb-fest
     h += liste();
     h += '<div class="mb-foot" id="mb-foot"></div>';
     h += detailBlatt();
+    h += KFilter.blatt(umfaenge(), _umfang);
     return h;
   }
+
+  /** Die drei Umfänge samt Trefferzahlen (Spec kiosk-erfassung-filter, F7). */
+  function umfaenge() {
+    var alt = _umfang;
+    var zaehle = function (u) {
+      _umfang = u;
+      var n = 0;
+      _artikel.forEach(function (a) { if (sichtbar(a, positionVon(a))) n++; });
+      return n;
+    };
+    var werte = [
+      ['ueblich', '\u00dcbliche', zaehle('ueblich'), '\u00dcbliche Artikel'],
+      ['alle', 'Alle', zaehle('alle'), 'Alle Artikel'],
+      ['best', 'Nur erfasste', zaehle('best'), 'Nur erfasste']
+    ];
+    _umfang = alt;
+    return werte;
+  }
+
+  function bindeFilter() {
+    var panel = document.getElementById('panel-metzgerbest');
+    if (!panel || !window.KFilter) return;
+    KFilter.binde(panel, function (wahl) { umfang(wahl); });
+  }
+
+  function umfang(u) { _umfang = u; render(); }
 
   /* ── Kontextzeile statt Statuskarte (Spec F3) ──────────────────────────
      Zwei Textzeilen: wer liefert und in welchem Zustand die Bestellung ist.
@@ -432,12 +473,8 @@ window.KMetzgerBest = (function () {
     h += '<div class="mb-blatt-t mb-nur-tel">Bereich</div>';
     h += subTabs('im-blatt');
 
-    h += '<div class="mb-blatt-t">Welche Artikel zeigen?</div>';
-    h += '<div class="mb-tgl">'
-      + '<button' + (!_alleArtikel ? ' class="on"' : '')
-      + ' onclick="KMetzgerBest.blatt(false);KMetzgerBest.filter(false)">\u00dcbliche</button>'
-      + '<button' + (_alleArtikel ? ' class="on"' : '')
-      + ' onclick="KMetzgerBest.blatt(false);KMetzgerBest.filter(true)">Alle Artikel</button></div>';
+    /* Die Umfänge standen früher hier. Sie sind Bedienung, nicht Auskunft,
+       und gehören deshalb neben die Suche (Spec kiosk-erfassung-filter, F7). */
 
     var jump = sprungleiste();
     if (jump) h += '<div class="mb-blatt-t">Zur Warengruppe springen</div>' + jump;
@@ -524,11 +561,14 @@ window.KMetzgerBest = (function () {
   }
 
   function sichtbar(a, p) {
+    // Die Suche sticht den Umfang: gesucht wird im Gesamtbestand.
+    if (_suche) return passtZurSuche(a);
     // Bereits Erfasstes bleibt immer sichtbar, auch wenn der Artikel sonst
     // nicht zu den ueblichen zaehlt - sonst verschwaende die eigene Eingabe.
-    if (bestellt(p)) return _suche ? passtZurSuche(a) : true;
-    if (!_alleArtikel && a.aktiv === false) return false;
-    return passtZurSuche(a);
+    if (bestellt(p)) return true;
+    if (_umfang === 'best') return false;      // nur was erfasst ist
+    if (_umfang === 'alle') return true;
+    return a.aktiv !== false;                  // "ueblich"
   }
 
   function passtZurSuche(a) {
@@ -568,18 +608,14 @@ window.KMetzgerBest = (function () {
       h += '<div class="k-empty">Dazu findet sich kein Artikel. '
         + 'Andere Schreibweise probieren?</div>';
     }
-    /* Umfang-Umschalter und Zusatzartikel stehen am Listenende — dort, wo man
-       sie sucht: wenn ein Artikel fehlt und man bis unten gescrollt hat. So
-       bleibt der feste Kopf schmal (Spec F1). */
+    /* Zusatzartikel am Listenende — dort, wo man ihn sucht: wenn ein Artikel
+       fehlt und man bis unten gescrollt hat. Der Umfang-Umschalter stand hier
+       ebenfalls und war damit an zwei Orten; er steht jetzt nur noch neben
+       der Suche (Spec kiosk-erfassung-filter, F7.4). */
     if (!gesperrt()) {
       h += '<button class="mb-addrow" onclick="KMetzgerBest.zusatz()">'
         + '+ Weiteren Artikel f\u00fcr diesen Tag</button>';
     }
-    h += '<div class="mb-umfang">'
-      + '<button class="mb-btn' + (!_alleArtikel ? ' on' : '') + '"'
-      + ' onclick="KMetzgerBest.filter(false)">\u00dcbliche Artikel</button>'
-      + '<button class="mb-btn' + (_alleArtikel ? ' on' : '') + '"'
-      + ' onclick="KMetzgerBest.filter(true)">Alle Artikel</button></div>';
     return h + '</div>';
   }
 
@@ -619,8 +655,10 @@ window.KMetzgerBest = (function () {
         + ' onclick="KMetzgerBest.hinweisWeg(\'' + esc(key) + '\')">✕</button></span>';
     }
     if (!lock) {
-      h += '<button class="mb-add" title="Portion hinzufügen"'
-        + ' onclick="KMetzgerBest.edit(\'' + esc(key) + '\',-1)">+</button>';
+      h += '<button class="mb-add" type="button" title="'
+        + (_offen === key ? 'Erfassung schlie\u00dfen' : 'Portionen erfassen') + '"'
+        + ' onclick="KMetzgerBest.umschalten(\'' + esc(key) + '\')">'
+        + (_offen === key ? '\u2212' : '+') + '</button>';
     }
     // Anhalt beim Neuerfassen: Was zuletzt bestellt wurde, steht blass daneben,
     // solange die Zeile leer ist. Ein Tipp übernimmt es.
@@ -642,88 +680,98 @@ window.KMetzgerBest = (function () {
     return h + '</div>';
   }
 
+  /* ── Die Erfassung (Spec kiosk-erfassung-filter, F3–F6) ────────────────
+     Zwei Reihen statt vier Gruppen: oben Anzahl · vak · Einheit, darunter
+     die Mengen. Kein Bestätigungsknopf — eine Kachel legt an, ein freies Maß
+     der Haken im Feld oder die Eingabetaste. „Fertig" entfällt, das „−" an
+     der Zeile schließt. Kurzeingabe und Hinweisfeld erscheinen nur, wenn der
+     Schirm hoch genug ist; sonst führt ein Knopf zum Hinweis-Blatt. */
   function editor(key, p) {
     var b = _entwurf;
-    var h = '<div class="mb-ed"><div class="mb-edgrid">';
+    var h = '<div class="mb-ed">';
 
     var vs = vorschlaegeFuer(p);
     if (vs.length) {
-      h += '<div class="mb-g vor"><div class="mb-lbl">Häufig bei „' + esc(p.name)
-        + '" — mehrere möglich, nochmal tippen wählt ab</div><div class="mb-sugg">';
+      h += '<div class="mb-sugg">';
       vs.forEach(function (v, i) {
         var aktiv = drin(p, v);
         var herkunft = (v.quelle === 'bestellung'
-          ? v.belege + '× so bestellt'
+          ? v.belege + '\u00d7 so bestellt'
           : 'aus ' + v.belege + ' Lieferung' + (v.belege > 1 ? 'en' : ''))
-          + (aktiv ? ' — ist enthalten, Tippen entfernt' : '');
-        h += '<button class="' + esc(v.quelle) + (aktiv ? ' on' : '') + '"'
+          + (aktiv ? ' \u2014 ist enthalten, Tippen entfernt' : '');
+        h += '<button type="button" class="' + esc(v.quelle) + (aktiv ? ' on' : '') + '"'
           + ' title="' + esc(herkunft) + '"'
           + ' onclick="KMetzgerBest.nimm(\'' + esc(key) + '\',' + i + ')">'
-          + (aktiv ? '<span class="hak">✓</span>' : '')
+          + (aktiv ? '<span class="hak">\u2713</span>' : '')
           + esc((v.portionen || []).map(blockText).join(' + '))
           + ((v.portionen || []).some(function (x) { return x.vakuum; })
             ? '<span class="vak">vak</span>' : '')
           + '</button>';
       });
-      h += '</div></div>';
+      h += '</div>';
     }
 
+    // Reihe 1: Anzahl → vak → Einheit
+    h += '<div class="mb-erf">';
+    h += '<div class="mb-step">'
+      + '<button type="button" tabindex="-1" onclick="KMetzgerBest.anz(-1)">\u2212</button>'
+      + '<input id="mb-a" type="number" min="1" inputmode="numeric" value="' + b.anzahl + '"'
+      + ' aria-label="Anzahl" onfocus="this.select()" onclick="this.select()"'
+      + ' oninput="KMetzgerBest.feld(\'a\',this.value)">'
+      + '<button type="button" tabindex="-1" onclick="KMetzgerBest.anz(1)">+</button></div>';
+    h += '<button type="button" class="mb-vak' + (b.vakuum ? ' on' : '') + '" id="mb-vak"'
+      + ' title="vakuumieren" onclick="KMetzgerBest.vakAn()">'
+      + '<span class="box"><i data-lucide="check"></i></span>vak</button>';
+    h += '<div class="mb-einh">';
+    EINHEITEN.forEach(function (e) {
+      h += '<button type="button" class="' + (istEinheit(b.einheit, e[0]) ? 'on' : '') + '"'
+        + ' onclick="KMetzgerBest.einheit(\'' + e[0] + '\')">' + esc(e[1]) + '</button>';
+    });
+    h += '</div></div>';
+
+    // Reihe 2: Mengen — Kacheln und freies Maß
+    h += '<div class="mb-mengen"><div class="mb-kach">';
+    kacheln(b.einheit).forEach(function (k) {
+      var aktiv = b.i >= 0 && (b.menge === k[0] || (b.menge === null && b.einheit === k[0]));
+      var arg = (typeof k[0] === 'number') ? k[0] : "'" + k[0] + "'";
+      h += '<button type="button" class="' + (aktiv ? 'on' : '') + '"'
+        + ' onclick="KMetzgerBest.kachel(' + arg + ')">' + esc(k[1]) + '</button>';
+    });
+    h += '</div>';
+    h += '<span class="mb-frei" id="mb-frei">'
+      + '<input class="mb-mg" id="mb-m" type="text" inputmode="decimal" placeholder="frei"'
+      + ' aria-label="Eigenes Ma\u00df" value="'
+      + (b.menge === null ? '' : zahl(b.menge)) + '"'
+      + ' onfocus="this.select()" onclick="this.select()"'
+      + ' oninput="KMetzgerBest.freiTipp(this)"'
+      + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();'
+      + 'KMetzgerBest.frei(\'' + esc(key) + '\')}">'
+      + '<button type="button" class="mb-frei-ok" id="mb-frei-ok" hidden'
+      + ' title="Diese Menge hinzuf\u00fcgen"'
+      + ' onclick="KMetzgerBest.frei(\'' + esc(key) + '\')">'
+      + '<i data-lucide="check"></i></button></span></div>';
+
+    // Nur auf hohen Schirmen (CSS blendet sie darunter aus)
     h += '<div class="mb-g kurz"><div class="mb-lbl">Kurzeingabe wie auf dem Zettel</div>'
       + '<div class="mb-inner">'
-      + '<input class="txt kurz" id="mb-pf" placeholder="z. B. 2x500g V + 6x250g"'
+      + '<input class="txt mono" id="mb-pf" placeholder="z. B. 2x500g V + 6x250g"'
       + ' oninput="KMetzgerBest.vorschau(this.value)"'
       + ' onkeydown="if(event.key===\'Enter\')KMetzgerBest.kurz(\'' + esc(key) + '\')">'
       + '<button class="mb-take" onclick="KMetzgerBest.kurz(\'' + esc(key) + '\')">'
-      + 'Übernehmen</button>'
+      + '\u00dcbernehmen</button>'
       + '<span class="mb-prev" id="mb-prev"></span></div></div>';
-
-    var aendern = b.i >= 0;
-    h += '<div class="mb-g pad' + (aendern ? ' aendern' : '') + '"><div class="mb-lbl">'
-      + (aendern ? 'Portion ' + (b.i + 1) + ' ändern'
-                 : 'Portion hinzufügen — Kachel tippen genügt')
-      + '</div><div class="mb-inner">';
-    h += '<div class="mb-step"><button onclick="KMetzgerBest.anz(-1)">−</button>'
-      + '<input id="mb-a" type="number" min="1" value="' + b.anzahl + '"'
-      + ' oninput="KMetzgerBest.feld(\'a\',this.value)">'
-      + '<button onclick="KMetzgerBest.anz(1)">+</button></div>';
-    h += '<span class="mb-mal">×</span><div class="mb-einh">';
-    EINHEITEN.forEach(function (e) {
-      h += '<button class="' + (istEinheit(b.einheit, e[0]) ? 'on' : '') + '"'
-        + ' onclick="KMetzgerBest.einheit(\'' + e[0] + '\')">' + esc(e[1]) + '</button>';
-    });
-    h += '</div><button class="mb-vak' + (b.vakuum ? ' on' : '') + '" id="mb-vak"'
-      + ' onclick="KMetzgerBest.vakAn()"><span class="box">✓</span>vakuumieren</button>';
-    h += '</div><div class="mb-quick"><div class="mb-kach">';
-    kacheln(b.einheit).forEach(function (k) {
-      var aktiv = aendern && (b.menge === k[0] || (b.menge === null && b.einheit === k[0]));
-      var arg = (typeof k[0] === 'number') ? k[0] : "'" + k[0] + "'";
-      h += '<button class="' + (aktiv ? 'on' : '') + '"'
-        + ' onclick="KMetzgerBest.kachel(' + arg + ')">' + esc(k[1]) + '</button>';
-    });
-    h += '<input class="mb-mg" id="mb-m" type="text" placeholder="frei" value="'
-      + (b.menge === null ? '' : zahl(b.menge)) + '"'
-      + ' oninput="KMetzgerBest.feld(\'m\',this.value)"'
-      + ' onkeydown="if(event.key===\'Enter\')KMetzgerBest.pad(\'' + esc(key) + '\')">';
-    h += '</div>';
-    h += '<button class="mb-ok" onclick="KMetzgerBest.pad(\'' + esc(key) + '\')">'
-      + (aendern ? 'Ändern' : '+ Hinzufügen') + '</button>';
-    if (aendern) {
-      h += '<button class="mb-del" onclick="KMetzgerBest.loeschen(\'' + esc(key)
-        + '\')">Löschen</button>';
-    }
-    h += '</div></div>';
-
     h += '<div class="mb-g hinweis"><div class="mb-lbl">Hinweis</div><div class="mb-inner">'
       + '<input class="txt" id="mb-h" placeholder="z. B. Kräuter" value="'
       + esc(p.hinweis) + '" oninput="KMetzgerBest.hinweis(\'' + esc(key)
       + '\',this.value)"></div></div>';
 
-    h += '</div><div class="mb-acts">'
-      + '<button class="mb-ok" onclick="KMetzgerBest.zu()">Fertig</button>'
+    h += '<div class="mb-acts">'
+      /* Ohne Hinweisfeld wäre der Hinweis auf dem Telefon unerreichbar. */
+      + '<button class="mb-btn mb-hw-knopf" onclick="KMetzgerBest.hinweisBlatt(\''
+      + esc(key) + '\')">Hinweis \u2026</button>'
       + ((p.portionen || []).length
         ? '<button class="mb-del" onclick="KMetzgerBest.allesWeg(\'' + esc(key)
           + '\')">Alle Portionen löschen</button>' : '')
-      + '<span class="mb-hint">Mehrere Größen: einfach nacheinander tippen</span>'
       + '</div>';
     return h + '</div>';
   }
@@ -844,6 +892,12 @@ window.KMetzgerBest = (function () {
     return t;
   }
 
+  /** `+` öffnet, `−` schließt — ein Knopf statt zweier (Spec F5). */
+  function umschalten(key) {
+    if (_offen === key) { zu(); return; }
+    edit(key, -1);
+  }
+
   function edit(key, i) {
     if (gesperrt()) return;
     _offen = key;
@@ -853,33 +907,28 @@ window.KMetzgerBest = (function () {
       ? { i: i, anzahl: b.anzahl, menge: b.menge, einheit: b.einheit, vakuum: b.vakuum }
       : { i: -1, anzahl: 1, menge: null, einheit: 'kg', vakuum: false };
     render();
-    inSicht();
+    zeigeGanz(key);
   }
 
-  // Der Editor öffnet sich in der scrollenden Liste (`.k-liste`). Er darf
-  // nicht hinter der Fußzeile liegen. Gescrollt wird deshalb die Liste selbst
-  // — das Panel ist im geteilten Aufbau overflow:hidden und bewegt sich nicht
-  // (Spec kiosk-bestellreiter-mobil, F1/F17).
-  function inSicht() {
-    var ed = document.querySelector('.mb-ed');
-    var scroller = document.querySelector('#panel-metzgerbest .k-liste')
-      || document.getElementById('panel-metzgerbest');
-    if (!ed || !scroller) return;
-    var srect = scroller.getBoundingClientRect();
-    var oben = srect.top;
-    var unten = srect.bottom;
-    var fuss = document.getElementById('mb-foot');
-    if (fuss) unten = Math.min(unten, fuss.getBoundingClientRect().top);
-
-    var b = ed.getBoundingClientRect();
-    var luft = 8;
+  /* Artikel UND Erfassung zusammen ins Bild holen — der Artikel zuerst.
+     Vorher wurde die Oberkante des EDITORS angelegt; dadurch wanderte der
+     Artikelname aus dem Bild und man erfasste blind (Spec F1). */
+  function zeigeGanz(key) {
+    var liste = document.querySelector('#panel-metzgerbest .k-liste');
+    if (!liste || !key) return;
+    var row = liste.querySelector('.mb-row[data-key="'
+      + String(key).replace(/"/g, '\\"') + '"]');
+    if (!row) return;
+    var l = liste.getBoundingClientRect();
+    var r = row.getBoundingClientRect();
+    var luft = 4;
     var weg = 0;
-    if (b.height > unten - oben - 2 * luft || b.top < oben + luft) {
-      weg = b.top - oben - luft;            // Oberkante anlegen
-    } else if (b.bottom > unten - luft) {
-      weg = b.bottom - unten + luft;        // gerade so weit wie noetig
+    if (r.height > l.height - 2 * luft || r.top < l.top + luft) {
+      weg = r.top - l.top - luft;            // Oberkante der Zeile anlegen
+    } else if (r.bottom > l.bottom - luft) {
+      weg = r.bottom - l.bottom + luft;
     }
-    if (weg) scroller.scrollBy({ top: weg, behavior: 'smooth' });
+    if (weg) liste.scrollTop += weg;
   }
 
   function feld(k, v) {
@@ -890,31 +939,89 @@ window.KMetzgerBest = (function () {
     }
   }
 
+  /* Ohne Bestätigungsknopf muss jede Änderung an einer bereits erfassten
+     Portion sofort durchschreiben — sonst ginge sie verloren (Spec F4). */
+  function schreibeDurch() {
+    if (!_entwurf || _entwurf.i < 0) return false;
+    var p = finde(_offen);
+    if (!p || !p.portionen[_entwurf.i]) return false;
+    if (_entwurf.menge === null && !ist_groesse(_entwurf.einheit)) return false;
+    p.portionen[_entwurf.i] = {
+      anzahl: _entwurf.anzahl,
+      menge: ist_groesse(_entwurf.einheit) ? null : _entwurf.menge,
+      einheit: _entwurf.einheit,
+      vakuum: !!_entwurf.vakuum
+    };
+    markiereGeaendert();
+    return true;
+  }
+
   function anz(d) {
     _entwurf.anzahl = Math.max(1, _entwurf.anzahl + d);
     var el = document.getElementById('mb-a');
     if (el) el.value = _entwurf.anzahl;
+    if (schreibeDurch()) { render(); zeigeGanz(_offen); }
   }
 
   function einheit(e) {
     if (e === 'groesse') { _entwurf.einheit = 'klein'; _entwurf.menge = null; }
     else { if (ist_groesse(_entwurf.einheit)) _entwurf.menge = null; _entwurf.einheit = e; }
+    schreibeDurch();
     render();
+    zeigeGanz(_offen);
   }
 
   // Kachel tippen legt sofort eine Portion an - so entstehen mehrere
-  // verschiedene Groessen mit je einem Tipp.
+  // verschiedene Groessen mit je einem Tipp. Auch beim Ändern wirkt sie
+  // sofort; einen Knopf „Ändern" gibt es nicht mehr (Spec F4).
   function kachel(wert) {
     if (typeof wert === 'string') { _entwurf.einheit = wert; _entwurf.menge = null; }
     else _entwurf.menge = wert;
-    if (_entwurf.i >= 0) render();
-    else pad(_offen);
+    pad(_offen);
   }
 
   function vakAn() {
     _entwurf.vakuum = !_entwurf.vakuum;
     var el = document.getElementById('mb-vak');
     if (el) el.className = 'mb-vak' + (_entwurf.vakuum ? ' on' : '');
+    if (schreibeDurch()) { render(); zeigeGanz(_offen); }
+  }
+
+  /* Freies Maß: Der Haken erscheint erst, wenn eine gültige Zahl dasteht.
+     Vorher gab es „+ Hinzufügen" — irreführend, weil eine Kachel bereits
+     anlegt (Spec F4). */
+  function freiTipp(el) {
+    feld('m', el.value);
+    var wrap = document.getElementById('mb-frei');
+    var ok = document.getElementById('mb-frei-ok');
+    var gut = _entwurf.menge !== null;
+    if (ok) ok.hidden = !gut;
+    if (wrap) wrap.classList.toggle('bereit', gut);
+  }
+
+  function frei(key) {
+    var el = document.getElementById('mb-m');
+    if (el) feld('m', el.value);
+    if (_entwurf.menge === null) {
+      toast('Bitte eine Menge eintippen oder eine Kachel w\u00e4hlen.');
+      if (el) el.focus();
+      return;
+    }
+    pad(key);
+  }
+
+  /** Hinweis-Blatt, wenn das Feld auf niedrigen Schirmen entfällt (F6). */
+  function hinweisBlatt(key) {
+    var p = finde(key);
+    if (!p || gesperrt()) return;
+    dialogEingabe1('Hinweis zu \u201e' + p.name + '\u201c', p.hinweis || '',
+      function (wert) {
+        p.hinweis = (wert || '').trim();
+        p.pruef = false;
+        markiereGeaendert();
+        render();
+        zeigeGanz(key);
+      });
   }
 
   function pad(key) {
@@ -941,7 +1048,7 @@ window.KMetzgerBest = (function () {
     p.pruef = false;
     markiereGeaendert();
     render();
-    inSicht();
+    zeigeGanz(key);
   }
 
   function nimm(key, i) {
@@ -966,7 +1073,7 @@ window.KMetzgerBest = (function () {
     p.pruef = false;
     markiereGeaendert();
     render();
-    inSicht();
+    zeigeGanz(key);
   }
 
   function vorschau(text) {
@@ -1076,9 +1183,13 @@ window.KMetzgerBest = (function () {
     });
   }
 
-  function zu() { _offen = null; _entwurf = null; render(); }
+  function zu() {
+    // Offene Änderungen an einer bestehenden Portion nicht verlieren (F4).
+    schreibeDurch();
+    _offen = null; _entwurf = null; render();
+  }
   function such(v) { _suche = v; render(); }
-  function filter(alle) { _alleArtikel = !!alle; render(); }
+  function filter(alle) { umfang(alle ? 'alle' : 'ueblich'); }
 
   function spring(i) {
     blatt(false);
@@ -1371,6 +1482,26 @@ window.KMetzgerBest = (function () {
     };
   }
 
+  /** Ein einzelnes Textfeld im gewohnten Blatt — für den Positions-Hinweis,
+   *  wenn das Feld auf niedrigen Schirmen entfällt (Spec F6). */
+  function dialogEingabe1(titel, wert, ja) {
+    var w = huelle('<div class="mb-dlg-kopf">' + esc(titel) + '</div>'
+      + '<div class="mb-dlg-form">'
+      + '<label>Hinweis<input id="mb-hw-feld" placeholder="z. B. Kräuter" value="'
+      + esc(wert) + '" autofocus></label>'
+      + '</div><div class="mb-dlg-acts">'
+      + '<button class="mb-btn" data-ab>Abbrechen</button>'
+      + '<button class="mb-send" data-ok>Übernehmen</button></div>');
+    w.querySelector('[data-ab]').onclick = function () { w.remove(); };
+    w.querySelector('[data-ok]').onclick = function () {
+      var v = (document.getElementById('mb-hw-feld') || {}).value || '';
+      w.remove();
+      ja(v);
+    };
+    var f = document.getElementById('mb-hw-feld');
+    if (f) { f.focus(); f.select(); }
+  }
+
   // ══════════════════════════════════════════════════
 
   function datumDe(iso) {
@@ -1392,7 +1523,8 @@ window.KMetzgerBest = (function () {
 
   return {
     onShow: onShow, sub: sub, tag: tag, such: such, filter: filter, spring: spring,
-    blatt: blatt,
+    blatt: blatt, umfang: umfang, umschalten: umschalten,
+    freiTipp: freiTipp, frei: frei, hinweisBlatt: hinweisBlatt,
     edit: edit, feld: feld, anz: anz, einheit: einheit, kachel: kachel,
     vakAn: vakAn, pad: pad, nimm: nimm, vorschau: vorschau, kurz: kurz,
     weg: weg, allesWeg: allesWeg, loeschen: loeschen,

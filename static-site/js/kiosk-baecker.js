@@ -19,7 +19,7 @@
   var _datum = '';        // gewählter Liefertag
   var _bk = '';           // gewählte Bäckerei (ergibt sich aus dem Tag)
   var _ladeId = 0;        // laufende Nummer, damit überholte Antworten zählen
-  var _alleArtikel = false;
+  var _umfang = 'ueblich';        // ueblich | alle | best (Spec F7)
   var _korrektur = false;
   var _korrekturBasis = null;  // Stand bei Beginn der Korrektur
   var _dirty = {};        // key -> true, wenn gegenueber Vorbelegung geaendert
@@ -238,11 +238,17 @@
   function render() {
     var h = host();
     if (!h) return;
+    /* Der Rollstand der Liste muss das Neuzeichnen überleben — sonst springt
+       die Liste beim Filtern an den Anfang (Spec kiosk-erfassung-filter, F2). */
+    var alt = h.querySelector('.k-liste');
+    var stand = alt ? alt.scrollTop : 0;
     var html;
     if (_sub === 'artikel') html = renderArtikel();
     else if (_sub === 'verlauf') html = renderVerlauf();
     else html = renderBestellung();
     h.innerHTML = html;
+    var neu = h.querySelector('.k-liste');
+    if (neu && stand) neu.scrollTop = stand;
     // Nur die Bestellansicht ist in festen Kopf, scrollende Liste und
     // Fußzeile geteilt. Artikel- und Verlaufsansicht scrollen wie bisher
     // als Ganzes (Spec kiosk-bestellreiter-mobil, F1).
@@ -251,6 +257,9 @@
     leitfarbe();
     icons();
     kopfhoehe();
+    if (panel && window.KFilter && _sub !== 'artikel' && _sub !== 'verlauf') {
+      KFilter.binde(panel, function (wahl) { umfang(wahl); });
+    }
   }
 
   /* Die Leitfarbe folgt der gewählten Bäckerei: Freundl petrol, Martin's
@@ -412,6 +421,7 @@
       + '<div class="ico">' + luc(ico, 18) + '</div>'
       + '<div class="txt"><div class="z1">' + z1 + '</div>'
       + '<div class="z2">' + z2 + '</div></div>'
+      + KFilter.markup(umfaenge(), _umfang)
       + '<button class="bk-mehr" onclick="KBaecker.blatt(true)" '
       + 'title="Angaben und weitere Schritte">' + luc('info', 19) + '</button>'
       + '</div>';
@@ -561,14 +571,33 @@
 
   function sichtbar(p) {
     if (p.zusatz) return false;                 // eigener Abschnitt
-    if (_alleArtikel) return true;
-    if (p.aktiv === false) return (p.menge || 0) > 0 || (p.retoure || 0) > 0;
+    var hat = (p.menge || 0) > 0 || (p.retoure || 0) > 0;
+    if (_umfang === 'best') return hat;         // nur was erfasst ist (F7)
+    if (_umfang === 'alle') return true;
+    if (p.aktiv === false) return hat;
     if (p.nur_wochentag != null && _b) {
       var wd = new Date(_b.datum + 'T12:00:00').getDay();
       wd = (wd + 6) % 7;                        // Montag = 0
       if (String(p.nur_wochentag) !== String(wd)) return (p.menge || 0) > 0;
     }
     return true;
+  }
+
+  /** Die drei Umfänge samt Trefferzahlen (Spec kiosk-erfassung-filter, F7). */
+  function umfaenge() {
+    var alle = (_b && _b.positionen) || [];
+    var alt = _umfang;
+    var zaehle = function (u) {
+      _umfang = u;
+      var n = alle.filter(sichtbar).length;
+      _umfang = alt;
+      return n;
+    };
+    return [
+      ['ueblich', '\u00dcbliche', zaehle('ueblich'), '\u00dcbliche Artikel'],
+      ['alle', 'Alle', zaehle('alle'), 'Alle Artikel'],
+      ['best', 'Nur erfasste', zaehle('best'), 'Nur erfasste']
+    ];
   }
 
   function renderBestellung() {
@@ -596,6 +625,12 @@
     h += tagesleiste();
     h += baeckerReiter();
     h += kontextZeile();
+    /* Der Umfang stand am Listenende und zusätzlich im Blatt. Er steht jetzt
+       oben: ab 700 px Höhe als eigene Zeile, darunter als Trichter-Symbol —
+       und zwar in der Kontextzeile neben dem „i", weil der Bäcker kein
+       Suchfeld hat und eine eigene Zeile den Kopf 44 px höher machen würde
+       (Spec kiosk-erfassung-filter, F7/F8; kiosk-bestellreiter-mobil F2). */
+    h += KFilter.zeile(umfaenge(), _umfang);
     h += '</div>';                                  // bk-fest
 
     // Ab hier die Arbeitsfläche. Sie ist der einzige Bereich, der scrollt
@@ -635,16 +670,9 @@
         + luc('plus', 15) + ' Weiteren Artikel für diesen Tag hinzufügen</button>';
     }
 
-    /* Der Umfang-Umschalter stand früher im Kopf und kostete dort eine ganze
-       Zeile. Am Listenende steht er da, wo man ihn sucht: wenn man einen
-       Artikel vermisst und bis unten gescrollt hat. */
-    h += '<div class="bk-umfang">';
-    h += '<button class="bk-btn' + (!_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
-      + luc('croissant', 15) + ' Übliche Artikel</button>';
-    h += '<button class="bk-btn' + (_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(true)">'
-      + 'Alle Artikel <span class="c">'
-      + alle.filter(function (p) { return !p.zusatz; }).length + '</span></button>';
-    h += '</div>';
+    /* Der Umfang-Umschalter stand hier am Listenende und zusätzlich im Blatt
+       hinter dem „i" — zwei Orte für dieselbe Sache. Er steht jetzt nur noch
+       oben neben der Suche (Spec kiosk-erfassung-filter, F7.4). */
     h += '</div>';   // k-liste
 
     // Fusszeile
@@ -686,6 +714,7 @@
     }
     h += '</div>';
     h += detailBlatt();
+    h += KFilter.blatt(umfaenge(), _umfang);
     return h;
   }
 
@@ -849,7 +878,12 @@
     toast('Auf die Werte vom letzten ' + _b.wochentag + ' zurückgesetzt.');
   }
 
-  function umfang(alle) { _alleArtikel = !!alle; render(); }
+  /* Der Umfang kann aus der Filterzeile (Zeichenkette) oder aus der
+     Artikelverwaltung (Wahrheitswert) kommen. */
+  function umfang(u) {
+    _umfang = (u === true) ? 'alle' : (u === false ? 'ueblich' : u);
+    render();
+  }
   function sub(id) {
     _sub = id;
     if (id === 'artikel' && !_artikel.length) return ladeArtikel();
@@ -1348,9 +1382,9 @@
     if (!_artikel.length) return '<div class="bk-sticky">' + subTabs() + '</div><div class="k-empty">Laden…</div>';
     var aktive = _artikel.filter(function (a) { return a.aktiv; });
     var h = '<div class="bk-sticky">' + subTabs() + '<div class="bk-tools">';
-    h += '<button class="bk-btn' + (!_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
+    h += '<button class="bk-btn' + (_umfang !== 'alle' ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
       + 'Aktiv <span class="c">' + aktive.length + '</span></button>';
-    h += '<button class="bk-btn' + (_alleArtikel ? ' on' : '') + '" onclick="KBaecker.umfang(true)">'
+    h += '<button class="bk-btn' + (_umfang === 'alle' ? ' on' : '') + '" onclick="KBaecker.umfang(true)">'
       + 'Alle <span class="c">' + _artikel.length + '</span></button>';
     h += '<span class="sp"></span>';
     h += '<button class="bk-btn primary" onclick="KBaecker.neuDialog()">' + luc('plus', 14) + ' Neuer Artikel</button>';
@@ -1359,7 +1393,7 @@
       + ' Die Artikelnummer bestimmt die Position – in der Erfassung wie im Formular</div>';
     h += '</div>';
 
-    var liste = _alleArtikel ? _artikel : aktive;
+    var liste = _umfang === 'alle' ? _artikel : aktive;
     var letzte = null;
     var offen = false;
     liste.forEach(function (a) {

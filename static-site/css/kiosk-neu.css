@@ -3520,3 +3520,136 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
 /* Am Listenende: anlegen und leeren (Spec kiosk-bestellreiter-mobil, F2). */
 .gk-listenende{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px }
 .gk-listenende > button{ flex:1 1 140px; min-height:var(--tap, 48px) }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   16  Erfassung und Filter (Spec specs/kiosk-erfassung-filter)
+
+   Zwei Beschwerden: Die Portions-Erfassung bei Mair war auf dem Telefon
+   nicht ganz sichtbar und die Liste sprang danach; die Filter steckten im
+   Blatt hinter dem „i", wo sie niemand sucht.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 16.1  Gemeinsamer Filter-Baustein (F7, F8) ───────────────────────── */
+.k-suchzeile{ display:flex; gap:6px; align-items:center; flex-wrap:wrap }
+.k-suchzeile > input{ flex:1 1 160px; min-width:0 }
+/* Suche und Filterzeile teilen sich eine Reihe, sobald der Platz reicht —
+   eine eigene Zeile kostete den Kopf sonst rund 50 px (Spec F2 des
+   Mobil-Umbaus verlangt höchstens 45 % Kopfbereich). */
+.k-suchzeile .k-filterzeile{ margin:0; flex:1 1 100% }
+@media (min-width:620px){
+  .k-suchzeile .k-filterzeile{ flex:0 1 auto }
+  .k-suchzeile .k-filterzeile button{ flex:0 0 auto }
+}
+.k-filterknopf{
+  position:relative; flex:0 0 auto;
+  width:var(--tap-min, 44px); height:var(--tap-min, 44px);
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px solid var(--line, #e1ebe5); border-radius:var(--r-s);
+  background:var(--karte, #fff); color:var(--ink, #132a1e); cursor:pointer;
+}
+.k-filterknopf.aktiv{ border-color:var(--gr, #2e7d4f); background:var(--gr-t, #f5faf7);
+  color:var(--gr, #2e7d4f) }
+.k-filterknopf svg{ width:19px; height:19px }
+.k-filterknopf .punkt{
+  position:absolute; top:5px; right:5px; width:8px; height:8px;
+  border-radius:50%; background:var(--gr, #2e7d4f);
+}
+.k-filterzeile{ display:flex; gap:5px; margin:5px 0 0 }
+.k-filterzeile button{
+  flex:1; min-height:var(--tap-min, 44px); padding:0 6px;
+  border:1.5px solid var(--line, #e1ebe5); border-radius:var(--r-s);
+  background:var(--karte, #fff); color:var(--mut, #688073);
+  font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.k-filterzeile button.on{ border-color:var(--gr, #2e7d4f); background:var(--gr, #2e7d4f);
+  color:#fff }
+.k-filterzeile .anz{ font-weight:700; opacity:.75 }
+.k-filterblatt{
+  position:fixed; inset:0; z-index:70;
+  display:flex; align-items:flex-start; justify-content:flex-end;
+  padding:calc(76px + var(--sat, 0px)) 10px 10px;
+  background:rgba(16,24,40,.34);
+}
+.k-filterblatt[hidden]{ display:none }
+.k-filterblatt-karte{
+  width:min(280px, 82%);
+  background:var(--karte, #fff); border-radius:14px; padding:11px;
+  box-shadow:0 12px 32px rgba(16,24,40,.28);
+}
+.k-filterblatt-karte h4{ margin:0 0 8px; font-size:12px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.4px; color:var(--mut, #688073) }
+.k-filterblatt-karte button{
+  display:flex; width:100%; align-items:center; gap:8px;
+  min-height:var(--tap-min, 44px); margin-bottom:5px; padding:0 11px;
+  border:1.5px solid var(--line, #e1ebe5); border-radius:var(--r-s);
+  background:var(--karte, #fff); color:var(--ink, #132a1e);
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; text-align:left;
+}
+.k-filterblatt-karte button.on{ border-color:var(--gr, #2e7d4f);
+  background:var(--gr-t, #f5faf7); color:var(--gr, #2e7d4f) }
+.k-filterblatt-karte .anz{ margin-left:auto; font-weight:700; opacity:.75 }
+
+/* Die Höhe entscheidet, welche Form erscheint — beide stehen im Markup. */
+@media (min-height:700px){
+  .k-filterknopf{ display:none }
+}
+@media (max-height:699px){
+  .k-filterzeile{ display:none }
+}
+
+/* ── 16.2  Erfassung bei Mair (F3, F4, F6) ────────────────────────────── */
+/* Erste Reihe: Anzahl · vak · Einheit. Zweite Reihe: Mengen. */
+.mb-erf{ display:flex; gap:6px; align-items:center; margin-bottom:5px }
+.mb-erf .mb-step{ flex:0 0 auto }
+#panel-metzgerbest .mb-vak{
+  flex:0 0 auto; gap:5px; min-height:36px; padding:0 9px; font-size:12.5px;
+}
+/* Der Haken im Kästchen ist ein Symbol, kein Textzeichen — sonst läse sich
+   die Beschriftung als „✓vak". `color:transparent` blendet ihn aus, solange
+   nicht vakuumiert wird. */
+#panel-metzgerbest .mb-vak .box svg{ width:12px; height:12px }
+.mb-erf .mb-einh{ flex:1 1 auto; min-width:0; flex-wrap:nowrap;
+  overflow-x:auto; scrollbar-width:none }
+.mb-erf .mb-einh::-webkit-scrollbar{ display:none }
+.mb-erf .mb-einh button{ flex:0 0 auto; min-height:36px }
+.mb-mengen{ display:flex; gap:5px; align-items:center }
+.mb-mengen .mb-kach{ flex:1 1 auto; min-width:0; flex-wrap:nowrap;
+  overflow-x:auto; scrollbar-width:none; gap:4px }
+.mb-mengen .mb-kach::-webkit-scrollbar{ display:none }
+.mb-mengen .mb-kach button{ flex:0 0 auto; min-width:40px; min-height:38px }
+
+/* Freies Maß: Der Haken erscheint erst, wenn eine gültige Zahl dasteht —
+   so kostet er keinen Platz und ist trotzdem sichtbar (F4). Das frühere
+   „+ Hinzufügen" belegte dauerhaft eine Zeile und war irreführend, weil
+   eine Kachel bereits anlegt. */
+.mb-frei{ position:relative; flex:0 0 auto }
+#panel-metzgerbest .mb-frei .mb-mg{
+  width:92px; min-height:38px; padding:0 32px 0 8px; margin:0;
+  -moz-appearance:textfield;
+}
+#panel-metzgerbest .mb-frei .mb-mg::-webkit-outer-spin-button,
+#panel-metzgerbest .mb-frei .mb-mg::-webkit-inner-spin-button{
+  -webkit-appearance:none; margin:0 }
+.mb-frei-ok{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  width:28px; height:28px; border:0; border-radius:7px;
+  background:var(--gr, #2e7d4f); color:#fff; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.mb-frei-ok[hidden]{ display:none }
+.mb-frei-ok svg{ width:15px; height:15px }
+.mb-frei.bereit .mb-mg{ border-color:var(--gr, #2e7d4f) }
+
+/* Kurzeingabe und Hinweisfeld kosten zusammen rund 120 px. Sie entfallen nur
+   dort, wo es wirklich eng ist: auf schmalen UND niedrigen Schirmen, also auf
+   Telefonen. Auf dem Tablet und am Rechner bleiben sie — dort ist die Liste
+   mehrspaltig und der Platz reicht, auch bei 800 px Fensterhöhe. */
+.mb-hw-knopf{ display:none }
+@media (max-height:819px) and (max-width:619px){
+  #panel-metzgerbest .mb-g.kurz,
+  #panel-metzgerbest .mb-g.hinweis{ display:none }
+  #panel-metzgerbest .mb-hw-knopf{ display:inline-flex; align-items:center }
+}
+
+html[data-theme="dark"] .k-filterblatt-karte{ background:var(--c-surf, #111827) }
+html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
