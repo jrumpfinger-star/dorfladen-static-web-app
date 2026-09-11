@@ -104,6 +104,12 @@ F1 ist erlaubt.
 - `render()` stellt den `scrollTop` der `.k-liste` wieder her.
 - Nach dem Anlegen einer Portion über eine Kachel bleibt die geöffnete Zeile
   an derselben Stelle im Bild (Toleranz 4 px).
+- Die Erfassung steht **im Fluss der Liste** (`position:static`). Sie ist
+  kein klebendes Blatt und überdeckt darum keine andere Artikelzeile.
+- Beim **Öffnen** wird die Oberkante der Zeile angelegt (F1). Damit ist der
+  Platz darunter am größten, und eine hinzukommende Portion braucht kein
+  weiteres Nachrollen. Nach einer Eingabe wird nur noch nachgefasst, wenn
+  der Artikelname über den oberen Rand gerutscht ist.
 
 #### F2 Test Cases
 
@@ -119,6 +125,22 @@ F1 ist erlaubt.
 - **Setup:** Liste weit nach unten gerollt.
 - **Action:** `+` bei einem sichtbaren Artikel tippen.
 - **Expected:** Der Rollstand ist nicht auf 0 gefallen.
+
+**TC-F2-03: Die Erfassung überdeckt keine andere Zeile**
+
+- **Setup:** Mair-Reiter bei 360 × 640, 390 × 900 und 820 × 1180.
+- **Action:** Erfassung bei einem Artikel öffnen.
+- **Expected:** `.mb-ed` hat `position:static`, und keine andere `.mb-row`
+  überschneidet sich mit ihrem Rechteck.
+
+**TC-F2-04: Der Öffnen-Knopf steht rechts oben in eigener Spalte**
+
+- **Setup:** Mair-Reiter bei 360, 820 und 1440 px Breite, Artikel mit
+  bereits erfassten Portionen.
+- **Action:** Lage von `.mb-akt > .mb-add` messen.
+- **Expected:** Der Knopf liegt rechts neben dem Artikelnamen, oben
+  ausgerichtet (≤ 22 px Versatz zur Oberkante des Namens) und **nie**
+  unterhalb der Portions-Badges — auf jeder Breite dieselbe Stelle.
 
 ### F3: Reihenfolge Anzahl → vak → Einheit → Menge
 
@@ -327,7 +349,7 @@ keine Emoji und kein Zahnrad für den Filter.
 | Requirement | Test Cases | Tasks |
 | --- | --- | --- |
 | F1 | TC-F1-01, TC-F1-02 | T2, T3 |
-| F2 | TC-F2-01, TC-F2-02 | T3 |
+| F2 | TC-F2-01 … TC-F2-04 | T3 |
 | F3 | TC-F3-01, TC-F3-02 | T2 |
 | F4 | TC-F4-01 … TC-F4-04 | T2 |
 | F5 | TC-F5-01, TC-F5-02 | T2 |

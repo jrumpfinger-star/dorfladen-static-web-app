@@ -55,11 +55,12 @@ window.KFilter = (function () {
     return '<div class="k-filterzeile">' + knoepfe(umfaenge, aktiv) + '</div>';
   }
 
-  function blatt(umfaenge, aktiv) {
+  function blatt(umfaenge, aktiv, extra) {
     return '<div class="k-filterblatt" hidden>'
       + '<div class="k-filterblatt-karte">'
       + '<h4>Welche Artikel zeigen?</h4>'
       + knoepfe(umfaenge, aktiv, true)
+      + (extra || '')
       + '</div></div>';
   }
 

@@ -436,53 +436,18 @@
     feld.classList.toggle('k-tag-jetzt-aus', leisteNochZuSehen);
   }
 
-  // ── Metzger: der Mengeneditor muss zu sehen sein ────────────────────
+  // ── Metzger: das Nachschieben liegt im Fachmodul ────────────────────
   //
-  // Der Editor ist als Blatt am unteren Rand gestaltet (`position:sticky`).
-  // Ein solches Blatt klebt aber erst, wenn seine Zeile im Bild ist — tippt
-  // man weit unten in der Liste auf „+", bleibt es unterhalb des Bildschirms
-  // stehen. Das Fachmodul hat dafür ein eigenes Nachschieben, das mit dem
-  // klebenden Blatt nicht mehr greift.
+  // Hier stand einmal ein zweites Nachschieben für den Mengeneditor. Es war
+  // nötig, solange der Editor als klebendes Blatt gestaltet war. Der Editor
+  // steht inzwischen im Fluss der Liste unter seinem Artikel, und
+  // zeigeGanz() in js/kiosk-metzger-bestellung.js holt Artikel samt
+  // Erfassung ins Bild.
   //
-  // Deshalb wird der Editor hier ins Bild geholt, sobald er erscheint —
-  // einmal je Öffnung, damit das Blättern danach frei bleibt.
-  var editorGesehen = null;
-  function metzgerEditorInsBild() {
-    var ed = document.querySelector('#panel-metzgerbest .mb-ed');
-    if (!ed) { editorGesehen = null; return; }
-    if (editorGesehen === ed) return;
-    editorGesehen = ed;
-    KNeu.editorLaeufe = (KNeu.editorLaeufe || 0) + 1;
-
-    // Ein klebendes Element haelt sich selbst fuer sichtbar - `scrollIntoView`
-    // auf dem Blatt bewirkt deshalb nichts, und „mittig" laesst den unteren
-    // Rand ueberstehen. Gerechnet wird deshalb der genaue Versatz: so weit,
-    // dass das ganze Blatt im Reiter steht. Unmittelbar nach dem Neuaufbau
-    // stehen die Hoehen der Liste noch nicht fest, deshalb wird nachgefasst.
-    var reiter = document.getElementById('panel-metzgerbest');
-    var versuche = 0;
-    (function holen() {
-      var blatt = document.querySelector('#panel-metzgerbest .mb-ed');
-      if (!blatt || !reiter) return;
-
-      // Die Fußleiste klebt ebenfalls am unteren Rand des Reiters. Ihre Höhe
-      // wechselt mit dem Inhalt, deshalb wird sie gemessen und dem
-      // Gestaltungsblatt gemeldet - sonst läge das Blatt darunter.
-      var fuss = document.getElementById('mb-foot');
-      var fh = fuss ? Math.round(fuss.getBoundingClientRect().height) : 0;
-      reiter.style.setProperty('--mb-fuss', fh + 'px');
-
-      var p = reiter.getBoundingClientRect();
-      var b = blatt.getBoundingClientRect();
-      var unten = p.bottom - fh;
-      var luft = 8;
-      var weg = 0;
-      if (b.bottom > unten - luft) weg = b.bottom - unten + luft;
-      if (b.top - weg < p.top + luft) weg = b.top - p.top - luft;
-      if (Math.abs(weg) > 1) reiter.scrollTop += weg;
-      if (++versuche < 6) setTimeout(holen, 120);
-    })();
-  }
+  // Die Hilfe hier hing an einem Beobachter und feuerte deshalb bei JEDEM
+  // Neuaufbau der Liste — also auch nach jedem Tippen auf eine Mengenkachel.
+  // Zwei Stellen rollten dann gegeneinander, und die Liste sprang. Sie ist
+  // ersatzlos entfallen.
 
 
   // ── Mittagstisch: „Alle" stand zweimal nebeneinander ────────────────
@@ -717,7 +682,7 @@
       // Jede Hilfe fuer sich: Steigt eine aus, sollen die uebrigen trotzdem
       // laufen. Vorher haette ein einziger Fehler die ganze Kette angehalten.
       [
-        metzgerEditorInsBild, symboleNachziehen, baeckerWerkzeuge,
+        symboleNachziehen, baeckerWerkzeuge,
         baeckerKopfOrdnen, mittagTagFeld, mittagUmschalterBenennen,
         socialKatalog, kalenderDatumswahl,
       ].forEach(function (hilfe) {

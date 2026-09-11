@@ -320,8 +320,11 @@ html.k-embed .k-tabs{display:none!important}
   letter-spacing:.4px;color:#6b7280;margin:12px 0 2px;border-bottom:1px solid var(--c-border,#e5e7eb);
   padding-bottom:4px}
 .mb-row{background:#fff;border-radius:8px;padding:4px 8px;box-shadow:0 1px 2px rgba(0,0,0,.05);
-  border-left:4px solid transparent;display:grid;grid-template-columns:46px minmax(0,1fr);
+  border-left:4px solid transparent;display:grid;grid-template-columns:46px minmax(0,1fr) auto;
   gap:4px 8px;align-items:center;scroll-margin-top:120px;scroll-margin-bottom:90px}
+/* Eigene Spalte für den Öffnen-/Schließen-Knopf, oben ausgerichtet: Er bleibt
+   damit unabhängig von der Zahl der erfassten Portionen an derselben Stelle. */
+.mb-akt{align-self:start;display:flex;align-items:flex-start;gap:4px}
 .mb-row.has{border-left-color:#2e7d4f}
 .mb-row.extra{border-left-color:#1d4ed8}
 .mb-row.pruef{border-left-color:#dc2626;background:#fef2f2}

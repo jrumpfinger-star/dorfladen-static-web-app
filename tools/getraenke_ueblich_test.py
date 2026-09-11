@@ -137,6 +137,53 @@ store.statistik_aktualisieren(kat, [])
 pruefe("Ohne Historie ueblich None",
        kat[0]["ueblich"] is None and kat[0]["bestellungen"] == 0)
 
+# ── Die E-Mail-Auswertung darf nicht verlorengehen ─────────────────────
+# Live passiert: Nach dem ersten Versand stand bei „Augustiner Hell" 0/None
+# statt 4/25 - die Auswertung von sieben Bestellmails war weg, und der Filter
+# „Uebliche Artikel" zeigte nur noch drei von fuenfzig Artikeln.
+print("Basis aus der E-Mail-Auswertung")
+
+basis = store.basis_statistik()
+pruefe("Startbestand traegt Zahlen", len(basis) > 20, f"-> {len(basis)} Artikel")
+
+# Einen echten Artikel aus dem Startbestand nehmen.
+name_mit_basis = None
+for k, v in basis.items():
+    if (v.get("bestellungen") or 0) >= 2 and v.get("ueblich"):
+        name_mit_basis = (k, v)
+        break
+pruefe("Ein Artikel mit Basiswerten gefunden", name_mit_basis is not None)
+
+if name_mit_basis:
+    k, v = name_mit_basis
+    echt = [a for a in store.vorlage_katalog()
+            if store._stat_schluessel(a.get("nummer"), a.get("name")) == k][0]
+    kat = [dict(echt)]
+    # Eine einzige, fremde Bestellung im Store - der Artikel kommt darin nicht vor.
+    store.statistik_aktualisieren(kat, [bestellung("2026-09-01", [pos("XX999", 5)])])
+    pruefe("Basis bleibt erhalten, wenn der Artikel nicht im Store steht",
+           kat[0]["bestellungen"] == v["bestellungen"] and kat[0]["ueblich"] == v["ueblich"],
+           f"-> {kat[0]['bestellungen']}/{kat[0]['ueblich']} statt "
+           f"{v['bestellungen']}/{v['ueblich']}")
+
+    # Eine einzelne neue Bestellung zaehlt dazu, ueberschreibt aber nicht.
+    kat = [dict(echt)]
+    store.statistik_aktualisieren(kat, [bestellung("2026-09-01", [pos(str(echt.get('nummer') or ''), 99,
+                                                                     name=echt.get('name'))])])
+    pruefe("Eine neue Bestellung zaehlt dazu",
+           kat[0]["bestellungen"] == v["bestellungen"] + 1,
+           f"-> {kat[0]['bestellungen']} statt {v['bestellungen'] + 1}")
+    pruefe("Ein einzelner Ausreisser kippt ueblich nicht",
+           kat[0]["ueblich"] == v["ueblich"],
+           f"-> {kat[0]['ueblich']} statt {v['ueblich']}")
+
+# Ab zwei eigenen Bestellungen zaehlt die gelebte Praxis.
+kat = [artikel("A", bestellungen=9, ueblich=25)]
+store.statistik_aktualisieren(kat, [bestellung("2026-01-01", [pos("A", 4)]),
+                                    bestellung("2026-02-01", [pos("A", 4)])])
+pruefe("Ab zwei eigenen Bestellungen zaehlt die Praxis (4)",
+       kat[0]["ueblich"] == 4, f"-> {kat[0]['ueblich']}")
+
 
 # ── Ebene 2: Verdrahtung ueber _senden ─────────────────────────────────
 print("_senden schreibt den Katalog nach")

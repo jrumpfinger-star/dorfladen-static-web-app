@@ -153,6 +153,65 @@ test.describe('Erfassung bei Mair', () => {
 
   /* ══════════ F3 — Reihenfolge ══════════ */
 
+  for (const gr of [KLEIN, HOCH, { width: 820, height: 1180 }]) {
+    test(`TC-F2-03: Die Erfassung legt sich über keine andere Zeile (${gr.width}×${gr.height})`,
+      async ({ page }) => {
+        await page.setViewportSize(gr);
+        await oeffne(page, 'metzgerbest', { metzgerLeer: true });
+        const row = await erfassungOeffnen(page, ARTIKEL_LANG[1].name);
+
+        const befund = await row.evaluate((el) => {
+          const ed = el.querySelector('.mb-ed');
+          const s = getComputedStyle(ed);
+          const e = ed.getBoundingClientRect();
+          // Jede andere Zeile, die sich mit der Erfassung überschneidet.
+          const stoerer = [...el.closest('.k-liste').querySelectorAll('.mb-row')]
+            .filter((r) => r !== el)
+            .filter((r) => {
+              const b = r.getBoundingClientRect();
+              return b.height > 0 && b.bottom > e.top + 1 && b.top < e.bottom - 1;
+            })
+            .map((r) => r.dataset.key);
+          return { pos: s.position, stoerer: stoerer };
+        });
+        expect(befund.pos,
+          'Die Erfassung klebt (position:sticky/fixed) und schiebt sich damit über '
+          + 'die Liste statt unter ihrem Artikel zu stehen.').toBe('static');
+        expect(befund.stoerer,
+          `Die Erfassung überdeckt diese Zeilen: ${befund.stoerer.join(', ')}`).toEqual([]);
+      });
+  }
+
+  for (const gr of [KLEIN, { width: 820, height: 1180 }, { width: 1440, height: 900 }]) {
+    test(`TC-F2-04: Der Öffnen-Knopf steht rechts oben in eigener Spalte (${gr.width})`,
+      async ({ page }) => {
+        await page.setViewportSize(gr);
+        await oeffne(page, 'metzgerbest');
+        const row = page.locator('.mb-row.has').first();
+        await expect(row).toBeVisible({ timeout: 5000 });
+
+        const lage = await row.evaluate((el) => {
+          const add = el.querySelector('.mb-akt .mb-add');
+          const nm = el.querySelector('.mb-nm');
+          const chip = el.querySelector('.mb-chip');
+          if (!add || !nm) return { fehlt: !add ? '.mb-akt > .mb-add' : '.mb-nm' };
+          const a = add.getBoundingClientRect(), n = nm.getBoundingClientRect();
+          return {
+            rechtsVomNamen: a.left >= n.right - 1,
+            obenAmNamen: Math.abs(a.top - n.top) <= 22,
+            unterDenMengen: chip ? a.top >= chip.getBoundingClientRect().bottom : false,
+          };
+        });
+        expect(lage.fehlt, `Baustein fehlt: ${lage.fehlt}`).toBeUndefined();
+        expect(lage.rechtsVomNamen,
+          'Der Knopf steht nicht rechts neben dem Artikel.').toBe(true);
+        expect(lage.unterDenMengen,
+          'Der Knopf ist unter die Mengen gerutscht.').toBe(false);
+        expect(lage.obenAmNamen,
+          'Der Knopf ist nicht am oberen Rand ausgerichtet.').toBe(true);
+      });
+  }
+
   test('TC-F3-01: Reihenfolge Anzahl → vak → Einheit → Menge', async ({ page }) => {
     await page.setViewportSize(KLEIN);
     await oeffne(page, 'metzgerbest', { metzgerLeer: true });
@@ -326,6 +385,14 @@ test.describe('Filter in allen Bestellreitern', () => {
       expect(treffer,
         `${r.name}: Im Info-Blatt stehen noch Filter: ${treffer.join(' · ')}`)
         .toEqual([]);
+      // Auch die Sprungmarken zu den Warengruppen gehören nicht ins „i" —
+      // sie sehen dort wie Filter aus und waren genau deshalb verwirrend.
+      await expect(blatt.locator('.gk-jump, .mb-jump'),
+        `${r.name}: „Zur Warengruppe springen" steht noch im Info-Blatt`)
+        .toHaveCount(0);
+      await expect(blatt,
+        `${r.name}: Das Info-Blatt spricht noch von Warengruppen-Sprüngen`)
+        .not.toContainText('Warengruppe springen');
     });
 
     test(`TC-F7-02 + TC-F8-01: Filtersymbol auf dem Telefon (${r.name})`, async ({ page }) => {

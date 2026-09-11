@@ -309,6 +309,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         _, order = _entwurf(url, hdrs, datum)
         _, artikel = store.load_artikel(url, hdrs)
         alle = store.bestellungen(url, hdrs)
+        # Statistik beim Lesen frisch berechnen (nicht speichern): So stimmen
+        # „üblich" und der Filter „Übliche Artikel" auch dann, wenn im
+        # gespeicherten Katalog noch alte Werte stehen.
+        store.statistik_aktualisieren(artikel, alle)
         positionen = [store.normalisiere_position(p)
                       for p in order.get("positionen", [])]
         return _ok({

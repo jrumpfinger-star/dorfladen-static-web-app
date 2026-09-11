@@ -252,6 +252,23 @@ async function filterArtikel(page, filter) {
   await page.locator(`#panel-getraenke .k-filterblatt button[data-umfang="${filter}"]`).click();
 }
 
+/* Im Filterblatt stehen auch die Sprungmarken zu den Warengruppen. Auf
+   hohen Schirmen ist der Trichter ausgeblendet — dann wird das Blatt
+   unmittelbar aufgedeckt. */
+async function oeffneFilterblatt(page) {
+  const blatt = page.locator('#panel-getraenke .k-filterblatt');
+  if (await blatt.isVisible()) return;
+  const knopf = page.locator('#panel-getraenke .k-filterknopf');
+  if (await knopf.isVisible()) { await knopf.click(); }
+  else { await blatt.evaluate((el) => { el.hidden = false; }); }
+  await blatt.waitFor({ state: 'visible', timeout: 5000 });
+}
+
+async function schliesseFilterblatt(page) {
+  const blatt = page.locator('#panel-getraenke .k-filterblatt');
+  if (await blatt.isVisible()) await blatt.evaluate((el) => { el.hidden = true; });
+}
+
 async function alleArtikel(page) {
   await filterArtikel(page, 'alle');
 }
@@ -308,11 +325,14 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
   });
 
   // ── F2: Warengruppen und Gebinde ──
-  test('TC-F2-01/02/03: Gruppen in fester Reihenfolge, Gebinde und Preis je Zeile', async ({ page }) => {
+  test('TC-F2-01/02/03: Gruppen in fester Reihenfolge, Gebinde je Zeile', async ({ page }) => {
     await oeffneTab(page);
-    // Die Sprungleiste führt alle acht Warengruppen.
-    await oeffneBlatt(page);
-    await expect(page.locator('#gk-blatt #gk-jump button')).toHaveCount(GRUPPEN.length);
+    // Die Sprungleiste steht beim Trichter, nicht mehr im „i"
+    // (Spec kiosk-erfassung-filter, F7).
+    await oeffneFilterblatt(page);
+    await expect(page.locator('#panel-getraenke .k-filterblatt #gk-jump button'))
+      .toHaveCount(GRUPPEN.length);
+    await schliesseFilterblatt(page);
     await alleArtikel(page);
     const kopf = await page.locator('.gk-grp').allTextContents();
     const nurNamen = kopf.map((t) => t.replace(/\d+ Kisten$/, '').trim());
@@ -320,11 +340,14 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     const erwartet = GRUPPEN.filter((g) => nurNamen.indexOf(g) >= 0);
     expect(nurNamen).toEqual(erwartet);
 
+    // Das Gebinde bleibt; Preise werden nicht mehr gezeigt, weil sie schnell
+    // veralten (Kratzer passt laufend an).
     const r = zeile(page, 'Augustiner Hell');
     await expect(r.locator('.gk-geb')).toHaveText('20x0,50');
-    await expect(r.locator('.gk-pr')).toContainText('13,75');
-    // Ein Artikel ohne belegten Preis wird gekennzeichnet, nicht versteckt.
-    await expect(zeile(page, 'Wolfra Apfelsaft').locator('.gk-tag.ohne')).toBeVisible();
+    await expect(r, 'In der Zeile steht noch ein Preis').not.toContainText('€');
+    await expect(zeile(page, 'Wolfra Apfelsaft').locator('.gk-tag.ohne'),
+      'Die Marke „ohne Preis" ist eine Preisaussage und sollte weg sein')
+      .toHaveCount(0);
   });
 
   // ── F3: Kisten-Schrittzähler ──

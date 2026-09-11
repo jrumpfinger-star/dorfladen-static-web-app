@@ -316,7 +316,14 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
     await expect(page.locator('.mb-sugg button').first()).toHaveClass(/bestellung/);
   });
 
+  /* Kurzeingabe und Hinweisfeld entfallen auf niedrigen Telefonschirmen
+     (Spec kiosk-erfassung-filter, F6); die ausgeschriebene Filterzeile
+     weicht dort dem Trichter (F8). Wer sie prüfen will, braucht einen
+     Schirm, auf dem es sie laut Spec gibt. */
+  const HOHER_SCHIRM = { width: 390, height: 900 };
+
   test('TC-F5-01/07/11: Kurzeingabe löst auf, Rest wird zum Hinweis', async ({ page }) => {
+    await page.setViewportSize(HOHER_SCHIRM);
     await oeffneTab(page);
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
     const feld = page.locator('#mb-pf');
@@ -337,6 +344,7 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
   });
 
   test('TC-F5-08: Unlesbares landet sichtbar im Hinweis-Badge', async ({ page }) => {
+    await page.setViewportSize(HOHER_SCHIRM);
     await oeffneTab(page);
     await zeile(page, 'Weißwurst').locator('.mb-add').click();
     await page.locator('#mb-pf').fill('wie letzte Woche');
@@ -357,6 +365,7 @@ test.describe('Metzger-Bestellung im Kiosk', () => {
   });
 
   test('TC-F10-06: „Übliche Artikel" ist die Vorgabe', async ({ page }) => {
+    await page.setViewportSize(HOHER_SCHIRM);
     await oeffneTab(page);
     // Vorgabe ist die kurze Liste – nur was der Metzger schon geliefert hat.
     // Der Umfang-Umschalter steht jetzt am Listenende (Spec kiosk-bestellreiter-mobil).

@@ -323,19 +323,41 @@ def _stat_schluessel(nummer, name):
     return nr if nr else (name or "").strip().lower()
 
 
+def basis_statistik():
+    """Der Startbestand aus der E-Mail-Auswertung als Grundlage.
+
+    ``tools/getraenke_katalog_build.py`` hat aus sieben echten Bestellmails
+    Haeufigkeit und uebliche Menge je Artikel gewonnen. Diese Zahlen sind die
+    **Basis**; was seither im Kiosk bestellt wird, kommt obendrauf.
+
+    Sie duerfen nicht ueberschrieben werden: Die Mailbestellungen liegen nicht
+    im Order-Store, also faellt die ganze Auswertung weg, sobald man allein
+    aus dem Store ableitet - genau das ist beim ersten Versand passiert
+    (``Augustiner Hell`` fiel von 4/25 auf 0/None).
+    """
+    basis = {}
+    for a in vorlage_katalog():
+        key = _stat_schluessel(a.get("nummer"), a.get("name"))
+        if not key:
+            continue
+        basis[key] = {"bestellungen": int(a.get("bestellungen") or 0),
+                      "ueblich": a.get("ueblich")}
+    return basis
+
+
 def statistik_aktualisieren(artikel, alle_bestellungen):
-    """`bestellungen` und `ueblich` je Artikel aus der Historie neu ableiten.
+    """`bestellungen` und `ueblich` je Artikel fortschreiben.
 
-    Abgeleitet wird aus dem Order-Store, nicht als loser Zaehler (Spec F6):
-    So bleibt der Wert nach Korrekturen korrekt (ein Termin zaehlt genau
-    einmal, Spec F5) und der erste Lauf fuellt zugleich den Bestand (Backfill,
-    Spec F7).
+    Grundlage ist die E-Mail-Auswertung (``basis_statistik``); die im Kiosk
+    gesendeten Bestellungen kommen hinzu. Abgeleitet wird aus dem Order-Store,
+    nicht als loser Zaehler (Spec F6): So zaehlt ein Termin auch nach einer
+    Korrektur genau einmal (Spec F5).
 
-    - ``bestellungen``: Zahl verschiedener gesendeter/korrigierter Termine, in
-      denen der Artikel mit Menge > 0 vorkam.
-    - ``ueblich``: kaufmaennisch auf ganze Kisten gerundeter Median der Mengen
-      aus den juengsten ``UEBLICH_FENSTER`` dieser Termine; ``None``, wenn
-      keiner vorliegt.
+    - ``bestellungen``: Basis + Zahl verschiedener gesendeter/korrigierter
+      Termine, in denen der Artikel mit Menge > 0 vorkam.
+    - ``ueblich``: Sobald **zwei** Termine im Store vorliegen, zaehlt die
+      gelebte Praxis - der Median der juengsten ``UEBLICH_FENSTER`` Mengen.
+      Darunter bleibt der Wert aus der E-Mail-Auswertung stehen.
 
     Einmalige Zusatzpositionen (``zusatz``) zaehlen nicht (Spec F4).
     Gibt die (in place) veraenderte Artikelliste zurueck.
@@ -359,14 +381,22 @@ def statistik_aktualisieren(artikel, alle_bestellungen):
             counts[key] = counts.get(key, 0) + 1
             werte.setdefault(key, []).append(p["menge"])
 
+    basis = basis_statistik()
     for a in artikel:
         if a.get("zusatz"):
             continue
         key = _stat_schluessel(a.get("nummer"), a.get("name"))
+        b = basis.get(key) or {}
         reihe = werte.get(key, [])[:UEBLICH_FENSTER]
-        a["bestellungen"] = counts.get(key, 0)
+        a["bestellungen"] = int(b.get("bestellungen") or 0) + counts.get(key, 0)
         # Kaufmaennisch runden (round-half-up); Mengen sind stets positiv.
-        a["ueblich"] = int(statistics.median(reihe) + 0.5) if reihe else None
+        median = int(statistics.median(reihe) + 0.5) if reihe else None
+        if len(reihe) >= 2:
+            a["ueblich"] = median              # gelebte Praxis schlaegt die Altdaten
+        elif b.get("ueblich"):
+            a["ueblich"] = b["ueblich"]
+        else:
+            a["ueblich"] = median
     return artikel
 
 

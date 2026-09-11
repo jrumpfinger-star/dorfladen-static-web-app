@@ -766,50 +766,24 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   }
 }
 
-/* Der eingebettete Mengeneditor des Metzger-Reiters lag bisher außerhalb
-   des Bildschirms und wurde per inSicht() nachgeschoben. Er wird jetzt
-   ebenfalls zum Blatt und braucht kein Nachschieben mehr. */
+/* Die Erfassung steht unter dem Artikel — im Fluss der Liste, nicht als
+   Blatt darüber. Sie war zuvor `position:sticky; bottom:…` und klebte am
+   unteren Rand: Sobald man die Liste bewegte, schob sie sich über den
+   Artikel, zu dem sie gehört, und über die Zeilen darunter. Artikel und
+   Erfassung müssen zusammen sichtbar bleiben (Spec kiosk-bestellreiter-
+   mobil, F1). Dafür sorgt zeigeGanz() in js/kiosk-metzger-bestellung.js. */
 .mb-ed{
-  position:sticky;
-  /* Die Fußleiste klebt ebenfalls am unteren Rand. Ohne diesen Abstand läge
-     das Blatt darunter und die Abschlusszeile wäre verdeckt. Die Höhe der
-     Fußleiste wechselt mit ihrem Inhalt und wird von der Hilfeschicht
-     gemessen (js/kiosk-neu-shell.js). */
-  bottom:var(--mb-fuss, 0px);
-  z-index:30;
   grid-column:1 / -1;
-  margin:6px calc(var(--pad) * -1) 0;
-  padding:12px var(--pad) calc(12px + var(--sab));
+  margin:6px 0 0;
+  padding:10px 12px calc(10px + var(--sab));
   background:var(--c-card);
   border-top:2px solid var(--c-green);
-  border-radius:var(--r-m) var(--r-m) 0 0;
-  box-shadow:var(--schatten-blatt);
-  max-height:calc(64dvh - var(--mb-fuss, 0px));
-  overflow-y:auto;
-}
-@media (min-width:1180px){
-  .mb-ed{
-    position:static;
-    max-height:none;
-    box-shadow:none;
-    border-radius:var(--r-s);
-    margin-inline:0;
-    padding-inline:12px;
-  }
+  border-radius:var(--r-s);
 }
 
-/* Das Blatt rollt bei vielen Vorschlägen innen (max-height). Der Abschluss
-   „Übernehmen" lag dadurch unterhalb seines eigenen Randes — man musste im
-   Blatt weiterscrollen, um den Vorgang zu beenden. Die Abschlusszeile bleibt
-   deshalb am unteren Rand des Blattes stehen. */
-.mb-ed .mb-quick{
-  position:sticky;
-  bottom:0;
-  z-index:2;
-  background:var(--c-card);
-  padding-top:8px;
-  box-shadow:0 -6px 8px -6px rgba(16,24,40,.18);
-}
+/* Die Erfassung rollt nicht mehr innen — sie steht im Fluss der Liste.
+   Die Abschlusszeile braucht deshalb kein Kleben mehr. */
+.mb-ed .mb-quick{ padding-top:8px }
 
 /* Fußleisten der Reiter bleiben stehen. */
 .mb-foot, .bk-foot{
@@ -951,11 +925,10 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   #panel-metzgerbest .mb-nm{ min-width:118px; max-width:var(--mb-np,200px) }
 }
 
-/* Der Knopf „Portion hinzufügen" stand bisher unmittelbar hinter der letzten
-   Portion — je nach Anzahl der Badges an einer anderen Stelle — und war als
-   blassgraue gestrichelte Fläche kaum zu erkennen. Er sitzt jetzt immer am
-   rechten Rand der Zeile und ist in der Hausfarbe gezeichnet. Die Reihenfolge
-   stellt sicher, dass auch die blassen Vorschlagswerte davor liegen. */
+/* Der Knopf zum Öffnen der Erfassung steht in einer eigenen Spalte am rechten
+   Rand der Zeile (`.mb-akt`) und ist in der Hausfarbe gezeichnet. Früher lag
+   er im Fluss der Portions-Badges und wanderte je nach Bildschirmbreite
+   einmal neben, einmal unter den Namen. */
 #panel-metzgerbest .mb-chips{ align-items:center }
 /* Der Vorschlag „so war es zuletzt" trug `white-space:nowrap` und wurde
    dadurch am Rand abgeschnitten, sobald die letzte Bestellung mehrere
@@ -970,8 +943,6 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   padding:6px 11px;
 }
 #panel-metzgerbest .mb-add:not(.del){
-  order:1;
-  margin-left:auto;
   border:2px solid var(--gr);
   border-style:solid;
   background:#fff;
@@ -995,9 +966,10 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
    keine Bestellung, also darf er die Zeile auch nicht höher machen. Die
    Zeile wächst nur, wenn wirklich etwas erfasst ist.
 
-   `.mb-chips` wird dafür aufgelöst (display:contents), damit Name, Anhalt,
-   Plus-Knopf und Badges in einem gemeinsamen Fluss liegen; ein leerer
-   Umbruchpunkt (::after) trennt Kopfzeile und Badges. */
+   `.mb-chips` wird dafür aufgelöst (display:contents), damit Name, Anhalt
+   und Badges in einem gemeinsamen Fluss liegen; ein leerer Umbruchpunkt
+   (::after) trennt Kopfzeile und Badges. Der Öffnen-Knopf gehört nicht in
+   diesen Fluss, er steht in der eigenen Spalte `.mb-akt`. */
 #panel-metzgerbest .mb-zeile{
   display:flex;
   flex-wrap:wrap;
@@ -1012,7 +984,6 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   max-width:none;
 }
 #panel-metzgerbest .mb-frueher{ order:1 }
-#panel-metzgerbest .mb-add:not(.del){ order:2 }
 #panel-metzgerbest .mb-add.del{ order:3 }
 #panel-metzgerbest .mb-zeile::after{
   content:'';
@@ -3422,11 +3393,9 @@ html[data-theme="dark"] .gk-kontext{ background:var(--c-surf2, #1f2933) }
   #panel-metzgerbest .mb-chip{ margin-top:1px; min-height:32px }
   #panel-metzgerbest .mb-chip .lab{ min-height:32px }
   #panel-metzgerbest .mb-chip .x{ min-height:32px }
-  /* Der „+"-Knopf (Portion hinzufügen) stand auf der Namenszeile und machte
-     sie 44 px hoch. Auf dem Telefon rückt er neben die Badges — die
-     Namenszeile bleibt einzeilig, die Zeile insgesamt niedriger, ohne dass
-     eine Antippfläche schrumpft (Spec F1, F5). */
-  #panel-metzgerbest .mb-add:not(.del){ order:5; margin-top:1px }
+  /* Der Knopf steht in der eigenen Spalte; auf dem Telefon rückt er nur
+     ein wenig nach unten, damit er auf Höhe des Namens sitzt. */
+  #panel-metzgerbest .mb-akt{ padding-top:2px }
   /* Die Zähler sind auf dem Telefon ausgeblendet; ohne sie soll die Fußzeile
      nicht noch eine leere erste Zeile führen. Speichern und Senden stehen so
      in einer Zeile statt in zweien (spart ~40 px für die Liste). */
@@ -3440,14 +3409,13 @@ html[data-theme="dark"] .mb-blatt{ background:var(--c-surf, #111827) }
 html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
 
 /* Auf dem Tablet bleibt der Kopf mit seinen Zählern, aber die Zeilen werden
-   ebenso gestrafft wie auf dem Telefon: Der „+"-Knopf rückt neben die
-   Badges, sodass die Namenszeile einzeilig bleibt. Zusammen mit den zwei
-   Spalten passen so genügend Zeilen auf den Schirm (Spec F1, F17). */
+   ebenso gestrafft wie auf dem Telefon. Zusammen mit den zwei Spalten passen
+   so genügend Zeilen auf den Schirm (Spec F1, F17). */
 @media (min-width:560px) and (max-width:1100px){
   #panel-metzgerbest .mb-liste{ gap:3px 10px }
   #panel-metzgerbest .mb-grp{ margin:6px 0 2px; padding-bottom:2px }
   #panel-metzgerbest .mb-row{ padding:2px 8px; gap:0 8px }
-  #panel-metzgerbest .mb-add:not(.del){ order:5; margin-top:1px }
+  #panel-metzgerbest .mb-akt{ padding-top:2px }
 }
 
 @media (max-width:559px){
@@ -3497,7 +3465,6 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
      Marke am Namen („letzte: 3"), sodass nichts verlorengeht. */
   #panel-getraenke .gk-sugg button:nth-child(n+2){ display:none }
   #panel-getraenke .gk-sugg button{ min-height:var(--tap-min, 44px); padding:0 9px }
-  #panel-getraenke .gk-kisteninfo{ align-self:center }
   #panel-getraenke .gk-row.has .gk-sugg{ display:none }
   #panel-getraenke .gk-fest > .gk-subs{ display:none }
   #panel-getraenke .gk-grp{ padding:3px 10px; font-size:12px; line-height:1.2 }
@@ -3513,9 +3480,11 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
   #panel-getraenke .gk-subs.im-blatt,
   #panel-getraenke .gk-nur-tel{ display:flex }
 }
-/* Ab Tablet steht das Gebinde wieder in seiner eigenen Spalte. */
+/* Ab Tablet steht das Gebinde in seiner eigenen Spalte — dann entfällt die
+   Zeile darunter, sonst stünde es doppelt. */
 @media (min-width:560px){
   .gk-geb-klein{ display:none }
+  #panel-getraenke .gk-nm .gk-pr{ display:none }
 }
 /* Am Listenende: anlegen und leeren (Spec kiosk-bestellreiter-mobil, F2). */
 .gk-listenende{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px }
@@ -3588,6 +3557,19 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
 .k-filterblatt-karte button.on{ border-color:var(--gr, #2e7d4f);
   background:var(--gr-t, #f5faf7); color:var(--gr, #2e7d4f) }
 .k-filterblatt-karte .anz{ margin-left:auto; font-weight:700; opacity:.75 }
+/* Zweiter Abschnitt im Blatt: Sprungmarken zu den Warengruppen. Sie standen
+   im „i" und sahen dort wie Filter aus. */
+.k-filterblatt-t{ margin:12px 0 6px; font-size:12px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.4px; color:var(--mut, #688073) }
+.k-filterblatt-karte .gk-jump,
+.k-filterblatt-karte .mb-jump{
+  display:flex; flex-wrap:wrap; gap:6px; overflow:visible; margin:0;
+}
+.k-filterblatt-karte .gk-jump button,
+.k-filterblatt-karte .mb-jump button{
+  flex:0 1 auto; width:auto; min-height:var(--tap-min, 44px); padding:0 12px;
+  margin:0; text-align:center;
+}
 
 /* Die Höhe entscheidet, welche Form erscheint — beide stehen im Markup. */
 @media (min-height:700px){

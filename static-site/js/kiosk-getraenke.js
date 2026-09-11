@@ -357,7 +357,7 @@ window.KGetraenke = (function () {
       + '<div class="gk-list k-liste" id="gk-list"></div>'
       + '<div class="gk-foot" id="gk-foot"></div>'
       + detailBlatt(kw)
-      + KFilter.blatt(umfaenge(), _filter);
+      + KFilter.blatt(umfaenge(), _filter, sprungHtml());
 
     bindeAllgemein();
     bindeBestellung();
@@ -366,6 +366,17 @@ window.KGetraenke = (function () {
     if (panel && window.KFilter) {
       KFilter.binde(panel, function (wahl) { _filter = wahl; zeichne(); });
     }
+  }
+
+  /** Sprungmarken zu den Warengruppen — sie stehen beim Trichter, nicht im
+   *  „i": Dort sahen sie wie Filter aus (Spec kiosk-erfassung-filter, F7). */
+  function sprungHtml() {
+    if (!_gruppen.length) return '';
+    return '<h4 class="k-filterblatt-t">Zur Warengruppe springen</h4>'
+      + '<div class="gk-jump" id="gk-jump">' + _gruppen.map(function (g) {
+        return '<button type="button" data-jump="' + esc(slug(g)) + '">'
+          + esc(g) + '</button>';
+      }).join('') + '</div>';
   }
 
   /** Die drei Umfänge samt Trefferzahlen (Spec kiosk-erfassung-filter, F7). */
@@ -437,15 +448,10 @@ window.KGetraenke = (function () {
     h += subs('im-blatt');
 
     /* Die Umfänge standen hier im Blatt. Sie sind Bedienung, nicht Auskunft,
-       und stehen deshalb jetzt neben der Suche (Spec kiosk-erfassung-filter,
-       F7). */
+       und stehen deshalb jetzt neben der Suche. Die Sprungmarken zu den
+       Warengruppen sind ebenfalls gewandert — sie sahen im „i" wie Filter
+       aus und stehen nun beim Trichter (Spec kiosk-erfassung-filter, F7). */
 
-    if (_gruppen.length) {
-      h += '<div class="gk-blatt-t">Zur Warengruppe springen</div>';
-      h += '<div class="gk-jump" id="gk-jump">' + _gruppen.map(function (g) {
-        return '<button data-jump="' + esc(slug(g)) + '">' + esc(g) + '</button>';
-      }).join('') + '</div>';
-    }
     if (_testbetrieb) {
       h += '<div class="gk-blatt-z klein">Testbetrieb: Die Bestellung geht an '
         + esc(_cfg.empfaenger || '') + ', nicht an ' + esc(_cfg.name || 'den Lieferanten')
@@ -529,12 +535,9 @@ window.KGetraenke = (function () {
     var tags = '';
     if (!menge && letzte) tags += '<span class="gk-tag vor">letzte: ' + letzte + '</span>';
     if (menge && letzte && menge !== letzte) tags += '<span class="gk-tag chg">war ' + letzte + '</span>';
-    // Sechs Sorten wurden bestellt, aber in keiner Rechnung abgerechnet:
-    // Preis und Artikelnummer fehlen (Spec F2.3).
-    if (!a.preis && !a.neu) {
-      tags += '<span class="gk-tag ohne" title="In keiner vorliegenden Rechnung '
-        + 'abgerechnet \u2014 Preis unbekannt">ohne Preis</span>';
-    }
+    /* Die Marke „ohne Preis" ist entfallen: Preise werden hier nicht mehr
+       gezeigt, weil sie schnell veralten — dann hilft auch der Hinweis nicht
+       weiter, dass einer fehlt. */
     if (a.neu) {
       tags += a.dauerhaft
         ? '<span class="gk-tag dauer" title="Bleibt in der Artikelliste">neu \u00b7 dauerhaft</span>'
@@ -574,9 +577,11 @@ window.KGetraenke = (function () {
       + '<div class="gk-zeile">'
       +   '<div class="gk-nm">' + esc(a.name)
       +     '<span class="gk-tags">' + tagsHtml(a, menge, letzte) + '</span>'
-      +     '<span class="gk-pr">'
-      +       '<span class="gk-geb-klein">' + esc(a.gebinde || '\u2014') + ' \u00b7 </span>'
-      +       (a.preis ? eur(a.preis) + ' / Kiste' : 'Preis nicht belegt') + '</span>'
+      /* Kein Preis in der Bestellliste: Kratzer passt die Preise laufend an,
+         die Zahlen stammen aus alten Rechnungen und veralten schnell. Ein
+         falscher Preis ist schlechter als gar keiner. Bleibt das Gebinde —
+         das entscheidet beim Bestellen. */
+      +     '<span class="gk-pr">' + esc(a.gebinde || '\u2014') + '</span>'
       +   '</div>'
       +   '<div class="gk-chips">'
       +     '<div class="gk-step">'
@@ -594,7 +599,6 @@ window.KGetraenke = (function () {
       +       '<button type="button" tabindex="-1" data-plus="' + esc(k) + '" aria-label="Eine Kiste mehr">+</button>'
       +     '</div>'
       +     '<div class="gk-sugg">' + suggHtml(a, k, menge, letzte) + '</div>'
-      +     (menge && a.preis ? '<span class="gk-kisteninfo">' + eur(menge * a.preis) + '</span>' : '')
       +   '</div>'
       + '</div>';
     return row;
@@ -631,18 +635,6 @@ window.KGetraenke = (function () {
 
     var sugg = row.querySelector('.gk-sugg');
     if (sugg) sugg.innerHTML = suggHtml(a, k, menge, letzte);
-
-    var info = row.querySelector('.gk-kisteninfo');
-    if (menge && a.preis) {
-      if (!info) {
-        info = document.createElement('span');
-        info.className = 'gk-kisteninfo';
-        row.querySelector('.gk-chips').appendChild(info);
-      }
-      info.textContent = eur(menge * a.preis);
-    } else if (info) {
-      info.remove();
-    }
 
     frischeGruppe(a.gruppe);
     fusszeile();
@@ -757,6 +749,9 @@ window.KGetraenke = (function () {
       if (!b || !b.dataset.jump) return;
       var ziel = $('gk-grp-' + b.dataset.jump);
       blattZeigen(false);
+      // Die Sprungmarken stehen jetzt im Filterblatt — das schliesst sich hier.
+      var fb = document.querySelector('#panel-getraenke .k-filterblatt');
+      if (fb) fb.hidden = true;
       if (ziel) ziel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 

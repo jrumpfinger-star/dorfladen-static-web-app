@@ -385,8 +385,15 @@ window.KMetzgerBest = (function () {
     h += liste();
     h += '<div class="mb-foot" id="mb-foot"></div>';
     h += detailBlatt();
-    h += KFilter.blatt(umfaenge(), _umfang);
+    h += KFilter.blatt(umfaenge(), _umfang, sprungAbschnitt());
     return h;
+  }
+
+  /** Sprungmarken zu den Warengruppen — beim Trichter, nicht im „i". */
+  function sprungAbschnitt() {
+    var jump = sprungleiste();
+    if (!jump) return '';
+    return '<h4 class="k-filterblatt-t">Zur Warengruppe springen</h4>' + jump;
   }
 
   /** Die drei Umfänge samt Trefferzahlen (Spec kiosk-erfassung-filter, F7). */
@@ -474,10 +481,9 @@ window.KMetzgerBest = (function () {
     h += subTabs('im-blatt');
 
     /* Die Umfänge standen früher hier. Sie sind Bedienung, nicht Auskunft,
-       und gehören deshalb neben die Suche (Spec kiosk-erfassung-filter, F7). */
-
-    var jump = sprungleiste();
-    if (jump) h += '<div class="mb-blatt-t">Zur Warengruppe springen</div>' + jump;
+       und gehören neben die Suche. Die Sprungmarken zu den Warengruppen sind
+       ebenfalls gewandert — sie sahen im „i" wie Filter aus und stehen nun
+       beim Trichter (Spec kiosk-erfassung-filter, F7). */
 
     h += '<div class="mb-blatt-wz">';
     h += notizKnopf();
@@ -654,12 +660,6 @@ window.KMetzgerBest = (function () {
         + '<button class="x" title="Hinweis entfernen"' + (lock ? ' disabled' : '')
         + ' onclick="KMetzgerBest.hinweisWeg(\'' + esc(key) + '\')">✕</button></span>';
     }
-    if (!lock) {
-      h += '<button class="mb-add" type="button" title="'
-        + (_offen === key ? 'Erfassung schlie\u00dfen' : 'Portionen erfassen') + '"'
-        + ' onclick="KMetzgerBest.umschalten(\'' + esc(key) + '\')">'
-        + (_offen === key ? '\u2212' : '+') + '</button>';
-    }
     // Anhalt beim Neuerfassen: Was zuletzt bestellt wurde, steht blass daneben,
     // solange die Zeile leer ist. Ein Tipp übernimmt es.
     var frueher = !lock && !bestellt(p) ? letzteWerte(a) : null;
@@ -675,6 +675,16 @@ window.KMetzgerBest = (function () {
         + ' onclick="KMetzgerBest.zusatzWeg(\'' + esc(key) + '\')">✕</button>';
     }
     h += '</div></div>';
+
+    // Der Öffnen-/Schließen-Knopf steht in einer eigenen Spalte am rechten
+    // Rand und oben ausgerichtet. Innerhalb der Zeile wanderte er je nach
+    // Bildschirmbreite mal neben den Namen, mal unter ihn zu den Mengen.
+    if (!lock) {
+      h += '<div class="mb-akt"><button class="mb-add" type="button" title="'
+        + (_offen === key ? 'Erfassung schlie\u00dfen' : 'Portionen erfassen') + '"'
+        + ' onclick="KMetzgerBest.umschalten(\'' + esc(key) + '\')">'
+        + (_offen === key ? '\u2212' : '+') + '</button></div>';
+    }
 
     if (_offen === key && !lock) h += editor(key, p);
     return h + '</div>';
@@ -912,23 +922,47 @@ window.KMetzgerBest = (function () {
 
   /* Artikel UND Erfassung zusammen ins Bild holen — der Artikel zuerst.
      Vorher wurde die Oberkante des EDITORS angelegt; dadurch wanderte der
-     Artikelname aus dem Bild und man erfasste blind (Spec F1). */
+     Artikelname aus dem Bild und man erfasste blind (Spec F1).
+
+     Je nach Breite rollt mal die Liste, mal der Reiter. Deshalb wird die
+     tatsächlich rollende Fläche gesucht statt eine feste angenommen —
+     sonst lief `scrollTop` ins Leere und die Liste sprang unkontrolliert. */
+  function rollflaeche(el) {
+    for (var n = el.parentElement; n; n = n.parentElement) {
+      var s = window.getComputedStyle(n);
+      if (/auto|scroll/.test(s.overflowY) && n.scrollHeight > n.clientHeight + 1) return n;
+    }
+    return null;
+  }
+
   function zeigeGanz(key) {
-    var liste = document.querySelector('#panel-metzgerbest .k-liste');
-    if (!liste || !key) return;
-    var row = liste.querySelector('.mb-row[data-key="'
+    if (!key) return;
+    var row = document.querySelector('#panel-metzgerbest .mb-row[data-key="'
       + String(key).replace(/"/g, '\\"') + '"]');
     if (!row) return;
-    var l = liste.getBoundingClientRect();
+    var box = rollflaeche(row);
+    if (!box) return;
+    var k = box.getBoundingClientRect();
     var r = row.getBoundingClientRect();
-    var luft = 4;
-    var weg = 0;
-    if (r.height > l.height - 2 * luft || r.top < l.top + luft) {
-      weg = r.top - l.top - luft;            // Oberkante der Zeile anlegen
-    } else if (r.bottom > l.bottom - luft) {
-      weg = r.bottom - l.bottom + luft;
-    }
-    if (weg) liste.scrollTop += weg;
+    var weg = r.top - (k.top + 6);
+    if (Math.abs(weg) > 1) box.scrollTop += weg;
+  }
+
+  /* Nach dem Erfassen darf die Liste nicht springen (Spec F2): Eine neue
+     Portion macht die Zeile höher, aber die Zeile bleibt, wo sie ist. Weil
+     das Anlegen die Zeile nur nach unten wachsen lässt und beim Öffnen
+     oben angelegt wurde, bleibt trotzdem alles im Bild. Nachgefasst wird
+     nur, wenn der Artikelname über den oberen Rand gerutscht ist. */
+  function haltePlatz(key) {
+    if (!key) return;
+    var row = document.querySelector('#panel-metzgerbest .mb-row[data-key="'
+      + String(key).replace(/"/g, '\\"') + '"]');
+    if (!row) return;
+    var box = rollflaeche(row);
+    if (!box) return;
+    var k = box.getBoundingClientRect();
+    var r = row.getBoundingClientRect();
+    if (r.top < k.top + 5) box.scrollTop += r.top - (k.top + 6);
   }
 
   function feld(k, v) {
@@ -960,7 +994,7 @@ window.KMetzgerBest = (function () {
     _entwurf.anzahl = Math.max(1, _entwurf.anzahl + d);
     var el = document.getElementById('mb-a');
     if (el) el.value = _entwurf.anzahl;
-    if (schreibeDurch()) { render(); zeigeGanz(_offen); }
+    if (schreibeDurch()) { render(); haltePlatz(_offen); }
   }
 
   function einheit(e) {
@@ -968,7 +1002,7 @@ window.KMetzgerBest = (function () {
     else { if (ist_groesse(_entwurf.einheit)) _entwurf.menge = null; _entwurf.einheit = e; }
     schreibeDurch();
     render();
-    zeigeGanz(_offen);
+    haltePlatz(_offen);
   }
 
   // Kachel tippen legt sofort eine Portion an - so entstehen mehrere
@@ -984,7 +1018,7 @@ window.KMetzgerBest = (function () {
     _entwurf.vakuum = !_entwurf.vakuum;
     var el = document.getElementById('mb-vak');
     if (el) el.className = 'mb-vak' + (_entwurf.vakuum ? ' on' : '');
-    if (schreibeDurch()) { render(); zeigeGanz(_offen); }
+    if (schreibeDurch()) { render(); haltePlatz(_offen); }
   }
 
   /* Freies Maß: Der Haken erscheint erst, wenn eine gültige Zahl dasteht.
@@ -1020,7 +1054,7 @@ window.KMetzgerBest = (function () {
         p.pruef = false;
         markiereGeaendert();
         render();
-        zeigeGanz(key);
+        haltePlatz(key);
       });
   }
 
@@ -1048,7 +1082,7 @@ window.KMetzgerBest = (function () {
     p.pruef = false;
     markiereGeaendert();
     render();
-    zeigeGanz(key);
+    haltePlatz(key);
   }
 
   function nimm(key, i) {
@@ -1073,7 +1107,7 @@ window.KMetzgerBest = (function () {
     p.pruef = false;
     markiereGeaendert();
     render();
-    zeigeGanz(key);
+    haltePlatz(key);
   }
 
   function vorschau(text) {
@@ -1193,6 +1227,9 @@ window.KMetzgerBest = (function () {
 
   function spring(i) {
     blatt(false);
+    // Die Sprungmarken stehen jetzt im Filterblatt — das schliesst sich hier.
+    var fb = document.querySelector('#panel-metzgerbest .k-filterblatt');
+    if (fb) fb.hidden = true;
     var el = document.getElementById('mb-g' + i);
     if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
