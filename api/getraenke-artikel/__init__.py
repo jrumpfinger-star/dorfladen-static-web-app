@@ -12,6 +12,7 @@ und duerfen fehlen - sechs Artikel wurden nie abgerechnet und haben deshalb
 keine Nummer.
 """
 import json
+import logging
 import os
 import sys
 
@@ -101,6 +102,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     rec_id, artikel = store.load_artikel(url, hdrs)
 
     if req.method == "GET":
+        # Statistik beim Lesen frisch berechnen (nicht speichern): Im
+        # gespeicherten Katalog koennen noch Nullen stehen, weil eine
+        # aeltere Fassung die Auswertung der Bestellmails ueberschrieben
+        # hat. So heilt sich der Filter „Uebliche Artikel" beim naechsten
+        # Aufruf selbst. Faellt der Verlauf aus, bleibt der Seed-Wert.
+        try:
+            store.statistik_aktualisieren(artikel, store.bestellungen(url, hdrs))
+        except Exception as e:
+            logging.warning(f"[getraenke] Statistik nicht berechnet: {e}")
         return _ok({"artikel": artikel, "gruppen": store.gruppen(),
                     "pfand": store.pfandsaetze()})
 
