@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Erfassung &amp; Filter — Entwurf zur Abnahme</title>
+<style>
+:root{
+  --gr:#2e7d4f; --gr-d:#245f3c; --gr-t:#f5faf7;
+  --ink:#132a1e; --mut:#688073; --line:#e1ebe5; --karte:#fff;
+  --blau:#1d4ed8; --blau-t:#eff6ff; --rot:#dc2626;
+  --tap:48px; --tap-min:44px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#eef2f0;color:var(--ink);
+  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 18px 70px}
+h1{font-size:23px;margin:0 0 6px}
+h2{font-size:18px;margin:0 0 4px}
+h3{font-size:14px;margin:18px 0 8px;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.5px}
+p{margin:0 0 10px}
+.lead{color:var(--mut);margin-bottom:18px}
+.karte{background:var(--karte);border:1px solid var(--line);border-radius:14px;
+  padding:18px;margin-bottom:20px}
+.stand{display:inline-block;background:var(--gr-t);color:var(--gr);border:1px solid var(--line);
+  border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600;margin-left:8px}
+.warum{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;
+  margin:0 0 16px;font-size:13.5px}
+.warum b{color:#9a3412}
+.warum ul{margin:6px 0 0;padding-left:18px}
+.warum li{margin:3px 0}
+.loesung{background:var(--gr-t);border:1px solid #cfe6d9;border-radius:10px;
+  padding:12px 14px;margin:0 0 16px;font-size:13.5px}
+.loesung ul{margin:6px 0 0;padding-left:18px}
+.loesung li{margin:3px 0}
+.reihe{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.spalte{flex:1 1 330px;min-width:0}
+/* ── Steuerung ───────────────────────────────────────────── */
+.steuer{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.steuer span.lbl{font-size:12px;font-weight:700;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.4px}
+.steuer button{border:1.5px solid var(--line);background:#fff;border-radius:9px;
+  min-height:38px;padding:0 13px;font:inherit;font-size:13px;font-weight:600;
+  color:var(--mut);cursor:pointer}
+.steuer button.on{border-color:var(--gr);background:var(--gr);color:#fff}
+/* ── Telefonrahmen ───────────────────────────────────────── */
+.geraet{border:9px solid #22303c;border-radius:26px;overflow:hidden;
+  box-shadow:0 12px 34px rgba(16,24,40,.22);background:#fff;
+  display:flex;flex-direction:column}
+.geraet .schirm{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
+.masse{font-size:12px;color:var(--mut);font-weight:600;margin:6px 0 10px}
+/* ── Kiosk-Nachbau ───────────────────────────────────────── */
+.k-head{background:var(--gr);color:#fff;display:flex;align-items:center;gap:8px;
+  padding:7px 10px;flex:0 0 auto}
+.k-head .titel{font-size:14.5px;font-weight:700;flex:1;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.k-head .hbtn{width:30px;height:30px;border-radius:8px;border:0;
+  background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.k-fest{flex:0 0 auto;padding:6px 10px 0;background:#fff}
+.k-liste{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 10px 8px;
+  background:#f7faf8;scroll-behavior:smooth}
+.k-foot{flex:0 0 auto;background:#fff;border-top:1px solid var(--line);
+  padding:6px 10px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.k-tabs{flex:0 0 auto;display:flex;background:#fff;border-top:1px solid var(--line)}
+.k-tabs div{flex:1;text-align:center;padding:5px 0 6px;font-size:10px;font-weight:600;
+  color:var(--mut)}
+.k-tabs div.on{color:var(--gr)}
+.k-tabs div i{display:block;font-size:15px;font-style:normal;margin-bottom:1px}
+/* Bereichsreiter */
+.subs{display:flex;gap:5px;padding:2px 0 5px}
+.subs button{border:1.5px solid var(--line);background:#fff;border-radius:9px;
+  min-height:33px;padding:0 11px;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--mut);cursor:pointer}
+.subs button.on{border-color:var(--gr);background:var(--gr);color:#fff}
+/* Kontextzeile */
+.kontext{display:flex;align-items:center;gap:8px;margin:3px 0 0;padding:4px 8px;
+  border:1px solid var(--line);border-radius:11px;background:#fff}
+.kontext .ico{width:26px;height:26px;flex:0 0 auto;display:flex;align-items:center;
+  justify-content:center;border-radius:8px;border:1px solid var(--line);
+  background:var(--gr-t);color:var(--gr);font-size:14px}
+.kontext .txt{flex:1;min-width:0}
+.kontext .z1{font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.kontext .z2{font-size:11.5px;line-height:1.2;color:var(--mut);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.kontext .mehr{width:var(--tap-min);height:var(--tap-min);flex:0 0 auto;border-radius:9px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);font-size:15px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* Suchzeile + Filter */
+.suchzeile{display:flex;gap:6px;margin:5px 0 0;align-items:center}
+.suchzeile input{flex:1;min-width:0;min-height:var(--tap-min);border:1.5px solid var(--line);
+  border-radius:10px;padding:0 11px;font:inherit;font-size:13.5px}
+.filterknopf{position:relative;flex:0 0 auto;width:var(--tap-min);height:var(--tap-min);
+  border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ink)}
+.filterknopf.aktiv{border-color:var(--gr);background:var(--gr-t);color:var(--gr)}
+.filterknopf .punkt{position:absolute;top:5px;right:5px;width:8px;height:8px;
+  border-radius:50%;background:var(--gr)}
+.filterzeile{display:flex;gap:5px;margin:5px 0 0}
+.filterzeile button{flex:1;min-height:var(--tap-min);border:1.5px solid var(--line);
+  background:#fff;border-radius:10px;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--mut);cursor:pointer;padding:0 6px;white-space:nowrap}
+.filterzeile button.on{border-color:var(--gr);background:var(--gr);color:#fff}
+.filterzeile .anz{font-weight:700;opacity:.75;margin-left:4px}
+/* Filter-Popup */
+.pop-hg{position:absolute;inset:0;background:rgba(16,24,40,.34);z-index:40;
+  display:flex;align-items:flex-start;justify-content:flex-end;padding:10px}
+.pop{background:#fff;border-radius:13px;box-shadow:0 12px 32px rgba(16,24,40,.28);
+  padding:11px;width:max(190px,74%);margin-top:96px}
+.pop h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--mut)}
+.pop button{display:flex;width:100%;align-items:center;gap:8px;min-height:var(--tap-min);
+  border:1.5px solid var(--line);background:#fff;border-radius:10px;margin-bottom:5px;
+  padding:0 11px;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink);
+  cursor:pointer;text-align:left}
+.pop button.on{border-color:var(--gr);background:var(--gr-t);color:var(--gr)}
+.pop button .hak{margin-left:auto;font-weight:700}
+/* Gruppenkopf + Zeile */
+.grp{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--mut);margin:7px 0 2px;padding-bottom:2px;border-bottom:1px solid var(--line);
+  display:flex}
+.grp .n{margin-left:auto;color:var(--gr);text-transform:none;letter-spacing:0}
+.row{background:#fff;border-radius:9px;padding:3px 8px;margin-bottom:3px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);border-left:4px solid transparent;
+  display:grid;grid-template-columns:40px minmax(0,1fr);gap:0 8px;align-items:start}
+.row.has{border-left-color:var(--gr)}
+.row.offen{border-left-color:var(--blau);box-shadow:0 3px 14px rgba(0,0,0,.13)}
+.row .nr{font-size:12px;font-weight:600;color:var(--mut);text-align:right;
+  font-family:ui-monospace,Consolas,monospace;border-right:1px solid var(--line);
+  padding:9px 8px 0 0;align-self:stretch}
+.zeile{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px;min-width:0}
+.nm{font-size:13.5px;font-weight:600;line-height:1.2;flex:1 1 auto;min-width:0;
+  padding:5px 0 3px}
+.nm .preis{display:block;font-size:10.5px;font-weight:600;color:var(--mut)}
+.chips{display:contents}
+.chip{order:5;display:inline-flex;align-items:center;overflow:hidden;min-height:30px;
+  border:1.5px solid var(--gr);background:#dcfce7;border-radius:16px;margin:0 4px 3px 0}
+.chip .lab{border:0;background:transparent;color:#166534;font-size:12.5px;font-weight:600;
+  padding:0 3px 0 10px;min-height:30px;cursor:pointer;display:inline-flex;align-items:center;
+  gap:5px;white-space:nowrap;font-family:inherit}
+.chip .x{border:0;background:transparent;color:#166534;font-size:13px;font-weight:600;
+  width:26px;min-height:30px;cursor:pointer;opacity:.5}
+.chip .vak{background:#166534;color:#fff;border-radius:5px;font-size:8.5px;padding:1px 4px;
+  font-weight:600}
+.frueher{order:1;border:1.5px dashed #cbd5e1;background:#f9fafb;color:#6b7280;
+  border-radius:9px;min-height:30px;padding:0 9px;font:inherit;font-size:12px;
+  font-weight:600;cursor:pointer;margin:0 0 3px;
+  /* Ein langer Vorschlag („1 × 3,75 kg") darf das + nicht in die zweite
+     Zeile druecken - er weicht zurueck. */
+  flex:0 1 auto;min-width:0;max-width:46%;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.knAdd{order:2;margin-left:auto;width:36px;min-height:36px;border:2px solid var(--gr);
+  background:#fff;color:var(--gr);border-radius:9px;font-size:20px;line-height:1;
+  cursor:pointer;font-family:inherit}
+.row.offen .knAdd{border-color:var(--blau);color:var(--blau);background:var(--blau-t)}
+.umbruch{order:4;flex:0 0 100%;height:0}
+/* ── Editor ──────────────────────────────────────────────── */
+.ed{grid-column:1/-1;margin-top:4px;padding-top:6px;
+  border-top:1px dashed var(--line)}
+.ed .vorz{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:5px}
+.ed .vorz::-webkit-scrollbar{display:none}
+.ed .vorz button{flex:0 0 auto;border:1.5px solid #c7d2fe;background:var(--blau-t);
+  color:var(--blau);border-radius:9px;min-height:34px;padding:0 10px;font:inherit;
+  font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ed .vorz button.on{border-color:var(--gr);background:#dcfce7;color:#166534}
+.ed .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--mut);margin:0 0 3px}
+.erf{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.step{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:9px;
+  overflow:hidden;background:#fff;flex:0 0 auto}
+.step button{border:0;background:#f9fafb;min-width:34px;min-height:36px;font-size:17px;
+  font-weight:600;color:var(--mut);cursor:pointer;font-family:inherit}
+.step input{border:0;width:38px;min-height:36px;text-align:center;font-size:15px;
+  font-weight:600;font-family:inherit;-moz-appearance:textfield}
+.step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0}
+.vakbox{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--line);
+  background:#fff;border-radius:9px;min-height:36px;padding:0 9px;font-size:12.5px;
+  font-weight:600;color:var(--mut);cursor:pointer;flex:0 0 auto;user-select:none}
+.vakbox .box{width:16px;height:16px;border:2px solid #cbd5e1;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.vakbox.on{border-color:var(--gr);background:#dcfce7;color:#166534}
+.vakbox.on .box{border-color:var(--gr);background:var(--gr);color:#fff}
+.einh{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;min-width:0}
+.einh::-webkit-scrollbar{display:none}
+.einh button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;color:var(--mut);
+  border-radius:8px;min-height:36px;padding:0 10px;font:inherit;font-size:12.5px;
+  font-weight:600;cursor:pointer}
+.einh button.on{border-color:var(--gr-d);background:var(--gr-d);color:#fff}
+.mengen{display:flex;gap:4px;align-items:center}
+.kach{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;min-width:0}
+.kach::-webkit-scrollbar{display:none}
+.kach button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:9px;
+  min-width:40px;min-height:38px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.kach button.on{border-color:var(--blau);background:var(--blau-t);color:var(--blau)}
+.frei{flex:0 0 auto;width:68px;min-height:38px;border:1.5px solid var(--line);
+  border-radius:9px;text-align:center;font:inherit;font-size:13.5px;font-weight:600}
+.zusatz{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.zusatz .feld{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.zusatz input{flex:1;min-width:0;min-height:36px;border:1.5px solid var(--line);
+  border-radius:9px;padding:0 9px;font:inherit;font-size:13px}
+.edakt{display:flex;gap:6px;margin-top:6px}
+.edakt button{border:1.5px solid var(--line);background:#fff;border-radius:9px;
+  min-height:36px;padding:0 11px;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--mut);cursor:pointer}
+.edakt button.weg{color:var(--rot);border-color:#fca5a5}
+/* Fußzeile */
+.st{font-size:11.5px;color:var(--mut);font-weight:600}
+.st b{color:var(--ink)}
+.senden{margin-left:auto;background:var(--gr);color:#fff;border:0;border-radius:10px;
+  min-height:38px;padding:0 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+/* Abnahme */
+.check{list-style:none;padding:0;margin:0}
+.check li{padding:7px 0 7px 26px;position:relative;border-bottom:1px solid var(--line);
+  font-size:14px}
+.check li:before{content:"✓";position:absolute;left:4px;color:var(--gr);font-weight:700}
+.check li b{font-weight:700}
+.frage{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;
+  font-size:13.5px;margin-top:12px}
+.frage b{color:var(--blau)}
+.hinweisbox{position:relative}
+code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Erfassung &amp; Filter — Entwurf zur Abnahme
+    <span class="stand" id="stand">Live-Daten</span></h1>
+  <p class="lead">Alle Artikel, Preise, Warengruppen und Vorschläge unten sind die
+    echten Daten aus dem Kiosk. Der Entwurf ist bedienbar: Antippen, Menge erfassen,
+    Filter umschalten. Nichts davon ist bisher umgesetzt.</p>
+
+  <!-- ══════════════ 1. Erfassung ══════════════ -->
+  <div class="karte">
+    <h2>1 · Portionen erfassen (Mair)</h2>
+
+    <div class="warum">
+      <b>Was heute schiefgeht</b>
+      <ul>
+        <li>Beim Öffnen rutscht der Artikelname aus dem Bild — man sieht nicht mehr,
+          wofür man gerade erfasst.</li>
+        <li>Der Erfassungsblock ist höher als der Platz darunter, also nie ganz sichtbar.</li>
+        <li>Nach jeder Portion springt die Liste an eine andere Stelle.</li>
+        <li>„+ Hinzufügen“ ist irreführend: Eine Kachel fügt bereits hinzu.</li>
+        <li>„Fertig“ kostet eine eigene Zeile, obwohl das <code>+</code> am Artikel genügt.</li>
+      </ul>
+    </div>
+
+    <div class="loesung">
+      <b>Was der Entwurf ändert</b>
+      <ul>
+        <li>Die Erfassung steht <b>unter dem Artikel</b> — wie auf dem breiten Bildschirm —
+          und Artikel&nbsp;+&nbsp;Erfassung sind <b>immer zusammen sichtbar</b>.</li>
+        <li>Reihenfolge wie gefordert: <b>Anzahl → vak → Einheit → Menge</b>.
+          „vakuumieren“ ist ein Kästchen neben der Anzahl.</li>
+        <li><b>Kein „Hinzufügen“:</b> Kachel tippen fügt hinzu, im Freifeld genügt
+          Eingabetaste oder das Feld verlassen.</li>
+        <li><b>Kein „Fertig“:</b> <code>+</code> öffnet, <code>−</code> schließt.</li>
+        <li>Die Liste bleibt stehen, wo sie war.</li>
+        <li>Ist der Schirm niedrig, entfallen <b>Kurzeingabe</b> und <b>Hinweis</b>;
+          der Hinweis bleibt über einen kleinen Knopf erreichbar.</li>
+      </ul>
+    </div>
+
+    <div class="steuer">
+      <span class="lbl">Bildschirmhöhe</span>
+      <button data-h="640" class="on">360 × 640 — kleines Telefon</button>
+      <button data-h="740">390 × 740 — großes Telefon</button>
+      <button data-h="900">390 × 900 — sehr hoch</button>
+    </div>
+    <div class="masse" id="masseErf"></div>
+
+    <div class="reihe">
+      <div style="flex:0 0 auto">
+        <div class="geraet" id="geraetErf" style="width:378px;height:658px">
+          <div class="schirm">
+            <div class="k-head">
+              <span class="titel">Metzger Mair</span>
+              <button class="hbtn">🔔</button><button class="hbtn">⟳</button>
+            </div>
+            <div class="k-fest" id="festErf"></div>
+            <div class="k-liste" id="listeErf"></div>
+            <div class="k-foot" id="footErf"></div>
+            <div class="k-tabs">
+              <div><i>🍽</i>Mittag</div><div><i>🥐</i>Bäcker</div>
+              <div class="on"><i>🥩</i>Mair</div><div><i>🥤</i>Getränke</div>
+              <div><i>📅</i>Termine</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spalte">
+        <h3>Zum Ausprobieren</h3>
+        <p style="font-size:13.5px">Tippen Sie bei einem Artikel auf <code>+</code>.
+          Die Erfassung klappt darunter auf, der Artikelname bleibt oben stehen.
+          Eine Kachel (¼, ½, 1 …) legt die Portion sofort an — es gibt keinen
+          Bestätigungsknopf mehr. Mehrere Größen: einfach nacheinander tippen.</p>
+        <p style="font-size:13.5px">Mit <code>−</code> schließen Sie die Erfassung wieder.
+          Über die blauen Knöpfe ganz oben im Editor übernehmen Sie in einem Tipp,
+          was bei diesem Artikel üblich ist (echte Werte aus den bisherigen
+          Bestellungen und Lieferscheinen).</p>
+        <h3>Höhe entscheidet</h3>
+        <p style="font-size:13.5px">Ab <b>820 px</b> Bildschirmhöhe blendet der Entwurf
+          zusätzlich <b>Kurzeingabe</b> („2x500g V + 6x250g“) und das <b>Hinweisfeld</b> ein.
+          Darunter bleiben sie weg — schalten Sie oben auf „sehr hoch“, um den
+          Unterschied zu sehen.</p>
+        <div class="frage">
+          <b>Bitte prüfen:</b> Reicht Ihnen der kleine Knopf „Hinweis“ in der
+          Erfassungszeile, wenn das Hinweisfeld auf niedrigen Schirmen entfällt?
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 2. Filter ══════════════ -->
+  <div class="karte">
+    <h2>2 · Filter raus aus dem „i“ — in allen drei Reitern</h2>
+
+    <div class="warum">
+      <b>Was heute schiefgeht</b>
+      <ul>
+        <li>Die Filter („Übliche / Alle / Nur bestellte“) stecken im Info-Blatt hinter
+          dem <code>i</code>. Dort sucht sie niemand — das <code>i</code> verspricht
+          Auskunft, nicht Bedienung.</li>
+        <li>Beim Bäcker und bei Mair stehen sie zusätzlich am Listenende: zwei Orte
+          für dieselbe Sache.</li>
+      </ul>
+    </div>
+
+    <div class="loesung">
+      <b>Was der Entwurf ändert</b>
+      <ul>
+        <li>Die Filter verlassen das Info-Blatt <b>vollständig</b> — in allen drei Reitern.</li>
+        <li><b>Genug Höhe</b> (ab 700 px): eigene Filterzeile direkt unter der Suche,
+          mit Trefferzahl.</li>
+        <li><b>Wenig Höhe</b>: ein <b>Filtersymbol</b> neben der Suche öffnet ein kleines
+          Auswahlblatt. Ein Punkt am Symbol zeigt, dass gefiltert wird.</li>
+        <li>Im <code>i</code> bleibt nur noch Auskunft: Liefertag, Herkunft der Mengen,
+          Bestellschluss, Testbetrieb.</li>
+      </ul>
+    </div>
+
+    <div class="steuer">
+      <span class="lbl">Bildschirmhöhe</span>
+      <button data-hf="640" class="on">640 — Filtersymbol + Blatt</button>
+      <button data-hf="820">820 — Filterzeile sichtbar</button>
+    </div>
+
+    <div class="reihe" id="filterReihe"></div>
+  </div>
+
+  <!-- ══════════════ 3. Abnahme ══════════════ -->
+  <div class="karte">
+    <h2>3 · Das steht zur Abnahme</h2>
+    <ul class="check">
+      <li><b>Erfassung unter dem Artikel</b>, Artikel und Eingabe immer zusammen sichtbar.</li>
+      <li>Reihenfolge <b>Anzahl → vak → Einheit → Menge</b>, „vak“ als Kästchen.</li>
+      <li><b>„+ Hinzufügen“ entfällt</b> — Kachel, Eingabetaste oder Feld verlassen genügt.</li>
+      <li><b>„Fertig“ entfällt</b> — <code>+</code> öffnet, <code>−</code> schließt.</li>
+      <li>Die Liste <b>springt nicht mehr</b> nach dem Erfassen.</li>
+      <li>Niedriger Schirm: <b>Kurzeingabe und Hinweisfeld entfallen</b>.</li>
+      <li>Filter <b>raus aus dem „i“</b>, in allen drei Reitern — Filterzeile bei genug
+        Höhe, sonst Filtersymbol mit Auswahlblatt.</li>
+    </ul>
+    <div class="frage">
+      <b>Offen:</b> Beim Bäcker gibt es nur zwei Umfänge („Übliche“ / „Alle“), bei
+      Getränken drei („Übliche“ / „Alle“ / „Nur bestellte“). Soll „Nur bestellte“ auch
+      bei Bäcker und Mair angeboten werden? Das wäre einheitlich, bringt dort aber
+      nur bei langen Listen etwas.
+    </div>
+  </div>
+
+</div>
+
+<script src="metzger-katalog.js"></script>
+<script src="metzger-vorschlaege.js"></script>
+<script src="baecker-mobil-daten.js"></script>
+<script src="getraenke-katalog.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════
+   Entwurf: Erfassung beim Metzger + Filter in allen Reitern
+   Live-Daten aus den vier Dateien oben.
+   ══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var $ = function (id) { return document.getElementById(id); };
+
+  var KAT = (window.METZGER_KATALOG || { artikel: [], gruppen: [] });
+  var VOR = (window.METZGER_VORSCHLAEGE || { artikel: {} });
+  document.getElementById('stand').textContent =
+    'Live-Daten · ' + KAT.artikel.length + ' Artikel · Vorschläge vom ' + (VOR.stand || '—');
+
+  /* ── Konstanten wie im Kiosk ──────────────────────────── */
+  var EINHEITEN = [['kg', 'kg'], ['g', 'g'], ['St', 'Stück'], ['cm', 'cm'],
+                   ['groesse', 'Größe'], ['Schale', 'Schale'], ['Beutel', 'Beutel']];
+  var GROESSEN = ['klein', 'mittel', 'groß'];
+  var KACHELN = {
+    kg: [[.25, '¼'], [.5, '½'], [.75, '¾'], [1, '1'], [1.5, '1½'], [2, '2'], [3, '3'], [5, '5']],
+    g: [[100, '100'], [125, '125'], [200, '200'], [250, '250'], [500, '500'], [750, '750']],
+    St: [[2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8'], [10, '10'], [12, '12'], [30, '30']],
+    cm: [[10, '10'], [20, '20'], [30, '30'], [50, '50'], [65, '65']],
+    Schale: [[1, '1'], [2, '2'], [5, '5'], [10, '10'], [20, '20']],
+    Beutel: [[1, '1'], [2, '2'], [5, '5'], [10, '10']],
+    groesse: [['klein', 'klein'], ['mittel', 'mittel'], ['groß', 'groß']]
+  };
+  var istGroesse = function (e) { return GROESSEN.indexOf(e) >= 0; };
+  var kacheln = function (e) { return KACHELN[istGroesse(e) ? 'groesse' : e] || []; };
+  var zahl = function (n) {
+    if (n == null) return '';
+    if (n === .25) return '¼'; if (n === .5) return '½'; if (n === .75) return '¾';
+    if (n === 1.5) return '1½';
+    return String(n).replace('.', ',');
+  };
+  var blockText = function (b) {
+    var kern = (b.menge == null) ? b.einheit : zahl(b.menge) + ' ' + b.einheit;
+    return b.anzahl + ' × ' + kern;
+  };
+
+  /* Schwellen — dieselben Zahlen wie in den geplanten Media-Queries. */
+  var H_ZUSATZ = 820;   // ab hier Kurzeingabe + Hinweisfeld
+  var H_FILTER = 700;   // ab hier Filterzeile statt Filtersymbol
+
+  /* ══════════ 1. Erfassung ══════════ */
+  var erf = {
+    hoehe: 640,
+    offen: null,
+    entwurf: null,
+    filter: 'ueblich',
+    suche: '',
+    filterAuf: false,
+    portionen: {}      // key -> [bloecke]
+  };
+
+  // Ein realistischer Startbestand aus echten Artikeln.
+  (function startbestand() {
+    var vorbelegt = [['Lende Schwein', 1, 1.5, 'kg', true],
+                     ['Hackfleisch gemischt', 2, 500, 'g', false]];
+    vorbelegt.forEach(function (v) {
+      var a = KAT.artikel.filter(function (x) { return x.name === v[0]; })[0];
+      if (a) erf.portionen[skey(a)] = [{ anzahl: v[1], menge: v[2], einheit: v[3], vakuum: v[4] }];
+    });
+  })();
+
+  function skey(a) { return a.nummer ? 'n' + a.nummer : 'x' + a.name; }
+  function findeArtikel(k) {
+    return KAT.artikel.filter(function (a) { return skey(a) === k; })[0] || null;
+  }
+  function vorschlaegeFuer(a) {
+    var l = (VOR.artikel && VOR.artikel[a.name]) || [];
+    return l.slice(0, 4);
+  }
+  function sichtbarErf(a) {
+    if (erf.suche) {
+      var s = erf.suche.toLowerCase();
+      return (a.name || '').toLowerCase().indexOf(s) >= 0
+        || String(a.nummer || '').indexOf(s) >= 0;
+    }
+    var hat = (erf.portionen[skey(a)] || []).length > 0;
+    if (erf.filter === 'best') return hat;
+    if (erf.filter === 'alle') return true;
+    return a.aktiv !== false || hat;
+  }
+  function trefferErf(f) {
+    var alt = erf.filter, alt2 = erf.suche;
+    erf.filter = f; erf.suche = '';
+    var n = KAT.artikel.filter(sichtbarErf).length;
+    erf.filter = alt; erf.suche = alt2;
+    return n;
+  }
+
+  function zeichneErfFest() {
+    var h = '';
+    h += '<div class="subs"><button class="on">Bestellung</button>'
+      + '<button>Verlauf</button><button>Artikel</button></div>';
+    h += '<div class="kontext"><div class="ico">🥩</div><div class="txt">'
+      + '<div class="z1">Mo., 14.09.2026 · Metzgerei Mair</div>'
+      + '<div class="z2">Noch nicht gesendet</div></div>'
+      + '<button class="mehr" title="Auskunft zur Bestellung">ⓘ</button></div>';
+    var inline = erf.hoehe >= H_FILTER;
+    h += '<div class="suchzeile"><input type="search" placeholder="Artikel oder Nummer suchen …"'
+      + ' value="' + esc(erf.suche) + '" id="sucheErf">';
+    if (!inline) {
+      h += '<button class="filterknopf' + (erf.filter !== 'ueblich' ? ' aktiv' : '') + '"'
+        + ' id="filterKnopfErf" title="Welche Artikel zeigen?">⛭'
+        + (erf.filter !== 'ueblich' ? '<span class="punkt"></span>' : '') + '</button>';
+    }
+    h += '</div>';
+    if (inline) h += filterzeileHtml(erf.filter, [
+      ['ueblich', 'Übliche', trefferErf('ueblich')],
+      ['alle', 'Alle', trefferErf('alle')],
+      ['best', 'Nur erfasste', trefferErf('best')]
+    ], 'erf');
+    $('festErf').innerHTML = h;
+
+    var s = $('sucheErf');
+    s.addEventListener('input', function () {
+      erf.suche = this.value.trim();
+      zeichneErfListe();
+    });
+    var fk = $('filterKnopfErf');
+    if (fk) fk.onclick = function () { erf.filterAuf = true; zeichnePopupErf(); };
+    document.querySelectorAll('#festErf [data-f]').forEach(function (b) {
+      b.onclick = function () { erf.filter = b.dataset.f; zeichneErf(); };
+    });
+  }
+
+  function filterzeileHtml(aktiv, liste, ns) {
+    return '<div class="filterzeile">' + liste.map(function (f) {
+      return '<button data-f="' + f[0] + '" data-ns="' + ns + '"'
+        + (aktiv === f[0] ? ' class="on"' : '') + '>' + esc(f[1])
+        + '<span class="anz">' + f[2] + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  function zeichnePopupErf() {
+    var alt = $('popErf');
+    if (alt) alt.remove();
+    if (!erf.filterAuf) return;
+    var liste = [['ueblich', 'Übliche Artikel', trefferErf('ueblich')],
+                 ['alle', 'Alle Artikel', trefferErf('alle')],
+                 ['best', 'Nur erfasste', trefferErf('best')]];
+    var d = document.createElement('div');
+    d.className = 'pop-hg';
+    d.id = 'popErf';
+    d.innerHTML = '<div class="pop"><h4>Welche Artikel zeigen?</h4>'
+      + liste.map(function (f) {
+          return '<button data-pf="' + f[0] + '"' + (erf.filter === f[0] ? ' class="on"' : '')
+            + '>' + esc(f[1]) + '<span class="anz">' + f[2] + '</span>'
+            + (erf.filter === f[0] ? '<span class="hak">✓</span>' : '') + '</button>';
+        }).join('') + '</div>';
+    $('geraetErf').querySelector('.schirm').appendChild(d);
+    d.style.position = 'absolute';
+    $('geraetErf').style.position = 'relative';
+    d.onclick = function (e) {
+      if (e.target === d) { erf.filterAuf = false; zeichnePopupErf(); return; }
+      var b = e.target.closest('[data-pf]');
+      if (!b) return;
+      erf.filter = b.dataset.pf;
+      erf.filterAuf = false;
+      zeichneErf();
+    };
+  }
+
+  function zeichneErfListe() {
+    var liste = $('listeErf');
+    var merk = liste.scrollTop;                 // Stand merken — nie springen
+    var sicht = KAT.artikel.filter(sichtbarErf);
+    var h = '';
+    if (!sicht.length) h = '<div style="padding:18px;text-align:center;color:#688073">'
+      + 'Kein Artikel gefunden.</div>';
+    var gruppe = null;
+    sicht.forEach(function (a) {
+      if (a.gruppe !== gruppe) {
+        gruppe = a.gruppe;
+        var n = sicht.filter(function (x) { return x.gruppe === gruppe; }).length;
+        h += '<div class="grp">' + esc(gruppe) + '<span class="n">' + n + '</span></div>';
+      }
+      h += zeileHtml(a);
+    });
+    liste.innerHTML = h;
+    liste.scrollTop = merk;
+    bindeListe();
+    zeichneFuss();
+  }
+
+  function zeileHtml(a) {
+    var k = skey(a);
+    var bl = erf.portionen[k] || [];
+    var auf = erf.offen === k;
+    var h = '<div class="row' + (bl.length ? ' has' : '') + (auf ? ' offen' : '')
+      + '" data-key="' + esc(k) + '">';
+    h += '<div class="nr">' + esc(a.nummer || '–') + '</div>';
+    h += '<div class="zeile"><div class="nm">' + esc(a.name)
+      + '<span class="preis">' + (a.preis ? String(a.preis).replace('.', ',') + ' € / '
+        + esc(a.einheit || 'kg') : 'Preis offen') + '</span></div>';
+    h += '<div class="chips">';
+    bl.forEach(function (b, i) {
+      h += '<span class="chip"><button class="lab" data-edit="' + i + '">' + esc(blockText(b))
+        + (b.vakuum ? '<span class="vak">vak</span>' : '') + '</button>'
+        + '<button class="x" data-weg="' + i + '">✕</button></span>';
+    });
+    if (!bl.length && !auf) {
+      var v = vorschlaegeFuer(a)[0];
+      if (v) h += '<button class="frueher" data-vor="0">'
+        + esc((v.portionen || []).map(blockText).join(' + ')) + '</button>';
+    }
+    /* Ein Knopf statt zweier: öffnet und schließt die Erfassung. */
+    h += '<button class="knAdd" data-auf="1" title="'
+      + (auf ? 'Erfassung schließen' : 'Portionen erfassen') + '">'
+      + (auf ? '−' : '+') + '</button>';
+    h += '<span class="umbruch"></span>';
+    h += '</div></div>';
+    if (auf) h += editorHtml(a, k);
+    return h + '</div>';
+  }
+
+  function editorHtml(a, k) {
+    var e = erf.entwurf;
+    var bl = erf.portionen[k] || [];
+    var h = '<div class="ed">';
+
+    var vs = vorschlaegeFuer(a);
+    if (vs.length) {
+      h += '<div class="vorz">' + vs.map(function (v, i) {
+        return '<button data-nimm="' + i + '">'
+          + esc((v.portionen || []).map(blockText).join(' + '))
+          + ((v.portionen || []).some(function (x) { return x.vakuum; }) ? ' vak' : '')
+          + '</button>';
+      }).join('') + '</div>';
+    }
+
+    /* Reihenfolge wie gefordert: Anzahl → vak → Einheit → Menge */
+    h += '<div class="erf">';
+    h += '<div class="step"><button data-anz="-1">−</button>'
+      + '<input id="anzErf" type="number" min="1" value="' + e.anzahl + '">'
+      + '<button data-anz="1">+</button></div>';
+    h += '<label class="vakbox' + (e.vakuum ? ' on' : '') + '" data-vak="1">'
+      + '<span class="box">✓</span>vak</label>';
+    h += '<div class="einh">' + EINHEITEN.map(function (u) {
+      var on = u[0] === 'groesse' ? istGroesse(e.einheit) : e.einheit === u[0];
+      return '<button data-einh="' + u[0] + '"' + (on ? ' class="on"' : '') + '>'
+        + esc(u[1]) + '</button>';
+    }).join('') + '</div>';
+    h += '</div>';
+
+    h += '<div class="mengen"><div class="kach">' + kacheln(e.einheit).map(function (t) {
+      var on = e.i >= 0 && (e.menge === t[0] || (e.menge == null && e.einheit === t[0]));
+      return '<button data-kach="' + t[0] + '"' + (on ? ' class="on"' : '') + '>'
+        + esc(t[1]) + '</button>';
+    }).join('') + '</div>'
+      + '<input class="frei" id="freiErf" placeholder="frei" value="'
+      + (e.menge == null ? '' : zahl(e.menge)) + '"></div>';
+
+    if (erf.hoehe >= H_ZUSATZ) {
+      h += '<div class="zusatz">'
+        + '<div class="lbl">Kurzeingabe wie auf dem Zettel</div>'
+        + '<div class="feld"><input placeholder="z. B. 2x500g V + 6x250g"></div>'
+        + '<div class="lbl">Hinweis</div>'
+        + '<div class="feld"><input placeholder="z. B. Kräuter"></div></div>';
+    }
+
+    h += '<div class="edakt">';
+    if (erf.hoehe < H_ZUSATZ) h += '<button data-hw="1">Hinweis …</button>';
+    if (bl.length) h += '<button class="weg" data-alle="1">Alle löschen</button>';
+    h += '</div>';
+
+    return h + '</div>';
+  }
+
+  function bindeListe() {
+    var liste = $('listeErf');
+    liste.querySelectorAll('.row').forEach(function (row) {
+      var k = row.dataset.key;
+      var a = findeArtikel(k);
+
+      var auf = row.querySelector('[data-auf]');
+      if (auf) auf.onclick = function () {
+        if (erf.offen === k) { erf.offen = null; erf.entwurf = null; }
+        else {
+          erf.offen = k;
+          erf.entwurf = { i: -1, anzahl: 1, menge: null, einheit: 'kg', vakuum: false };
+        }
+        zeichneErfListe();
+        if (erf.offen === k) zeigeGanz(k);
+      };
+
+      row.querySelectorAll('[data-weg]').forEach(function (b) {
+        b.onclick = function () {
+          erf.portionen[k].splice(+b.dataset.weg, 1);
+          if (!erf.portionen[k].length) delete erf.portionen[k];
+          zeichneErfListe();
+        };
+      });
+      row.querySelectorAll('[data-edit]').forEach(function (b) {
+        b.onclick = function () {
+          var i = +b.dataset.edit, bb = erf.portionen[k][i];
+          erf.offen = k;
+          erf.entwurf = { i: i, anzahl: bb.anzahl, menge: bb.menge,
+                          einheit: bb.einheit, vakuum: bb.vakuum };
+          zeichneErfListe();
+          zeigeGanz(k);
+        };
+      });
+      var vorknopf = row.querySelector('[data-vor]');
+      if (vorknopf) vorknopf.onclick = function () {
+        var v = vorschlaegeFuer(a)[0];
+        erf.portionen[k] = (v.portionen || []).map(function (x) { return Object.assign({}, x); });
+        zeichneErfListe();
+      };
+
+      if (erf.offen !== k) return;
+      var e = erf.entwurf;
+
+      row.querySelectorAll('[data-nimm]').forEach(function (b) {
+        b.onclick = function () {
+          var v = vorschlaegeFuer(a)[+b.dataset.nimm];
+          erf.portionen[k] = (erf.portionen[k] || [])
+            .concat((v.portionen || []).map(function (x) { return Object.assign({}, x); }));
+          zeichneErfListe();
+          zeigeGanz(k);
+        };
+      });
+      row.querySelectorAll('[data-anz]').forEach(function (b) {
+        b.onclick = function () {
+          e.anzahl = Math.max(1, e.anzahl + (+b.dataset.anz));
+          var f = $('anzErf'); if (f) f.value = e.anzahl;
+          if (e.i >= 0) uebernimm(k, true);
+        };
+      });
+      var vak = row.querySelector('[data-vak]');
+      if (vak) vak.onclick = function () {
+        e.vakuum = !e.vakuum;
+        vak.className = 'vakbox' + (e.vakuum ? ' on' : '');
+        if (e.i >= 0) uebernimm(k, true);
+      };
+      row.querySelectorAll('[data-einh]').forEach(function (b) {
+        b.onclick = function () {
+          var u = b.dataset.einh;
+          if (u === 'groesse') { e.einheit = 'klein'; e.menge = null; }
+          else { if (istGroesse(e.einheit)) e.menge = null; e.einheit = u; }
+          if (e.i >= 0) uebernimm(k, true); else { zeichneErfListe(); zeigeGanz(k); }
+        };
+      });
+      row.querySelectorAll('[data-kach]').forEach(function (b) {
+        b.onclick = function () {
+          var w = b.dataset.kach;
+          if (isNaN(+w)) { e.einheit = w; e.menge = null; } else e.menge = +w;
+          uebernimm(k, false);          // Kachel legt sofort an — kein Knopf nötig
+        };
+      });
+      var frei = row.querySelector('#freiErf');
+      if (frei) {
+        var uebernehmen = function () {
+          var n = parseFloat(String(frei.value).replace(',', '.'));
+          if (!isFinite(n) || n <= 0) return;
+          e.menge = n;
+          uebernimm(k, false);
+        };
+        frei.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter') { ev.preventDefault(); uebernehmen(); }
+        });
+        frei.addEventListener('blur', uebernehmen);   // Feld verlassen genügt
+        frei.addEventListener('focus', function () { frei.select(); });
+      }
+      var alle = row.querySelector('[data-alle]');
+      if (alle) alle.onclick = function () {
+        delete erf.portionen[k];
+        zeichneErfListe(); zeigeGanz(k);
+      };
+      var hw = row.querySelector('[data-hw]');
+      if (hw) hw.onclick = function () {
+        alert('Im Kiosk öffnet sich hier das gewohnte Eingabeblatt für den Hinweis.');
+      };
+    });
+  }
+
+  /** Portion anlegen oder die bearbeitete ersetzen. */
+  function uebernimm(k, bleib) {
+    var e = erf.entwurf;
+    if (e.menge == null && !istGroesse(e.einheit)) return;
+    var b = { anzahl: e.anzahl, menge: istGroesse(e.einheit) ? null : e.menge,
+              einheit: e.einheit, vakuum: !!e.vakuum };
+    erf.portionen[k] = erf.portionen[k] || [];
+    if (e.i >= 0) {
+      erf.portionen[k][e.i] = b;
+      if (!bleib) erf.entwurf = { i: -1, anzahl: e.anzahl, menge: null,
+                                  einheit: e.einheit, vakuum: e.vakuum };
+    } else {
+      erf.portionen[k].push(b);
+      e.menge = null;
+    }
+    zeichneErfListe();
+    zeigeGanz(k);
+  }
+
+  /** Artikel UND Erfassung zusammen ins Bild holen — Artikel zuerst. */
+  function zeigeGanz(k) {
+    var liste = $('listeErf');
+    var row = liste.querySelector('.row[data-key="' + k.replace(/"/g, '\\"') + '"]');
+    if (!row) return;
+    var lr = liste.getBoundingClientRect(), rr = row.getBoundingClientRect();
+    var weg = 0;
+    if (rr.height > lr.height - 8 || rr.top < lr.top + 4) {
+      weg = rr.top - lr.top - 4;                 // Oberkante des Artikels anlegen
+    } else if (rr.bottom > lr.bottom - 4) {
+      weg = rr.bottom - lr.bottom + 4;
+    }
+    if (weg) liste.scrollTop += weg;
+  }
+
+  function zeichneFuss() {
+    var n = 0, kg = 0, st = 0, vak = 0;
+    Object.keys(erf.portionen).forEach(function (k) {
+      var bl = erf.portionen[k];
+      if (!bl.length) return;
+      n++;
+      bl.forEach(function (b) {
+        if (b.vakuum) vak += b.anzahl;
+        if (b.einheit === 'kg') kg += b.anzahl * b.menge;
+        else if (b.einheit === 'g') kg += b.anzahl * b.menge / 1000;
+        else if (b.einheit === 'St' && b.menge != null) st += b.anzahl * b.menge;
+      });
+    });
+    $('footErf').innerHTML = '<span class="st"><b>' + n + '</b> Pos.</span>'
+      + '<span class="st"><b>' + kg.toFixed(1).replace('.', ',') + '</b> kg</span>'
+      + '<span class="st"><b>' + st + '</b> St</span>'
+      + '<span class="st"><b>' + vak + '</b> vak</span>'
+      + '<button class="senden">Senden</button>';
+  }
+
+  function zeichneErf() {
+    zeichnePopupErf();
+    zeichneErfFest();
+    zeichneErfListe();
+  }
+
+  document.querySelectorAll('[data-h]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('[data-h]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      erf.hoehe = +b.dataset.h;
+      erf.filterAuf = false;          // Blatt schliessen, wenn die Hoehe wechselt
+      var breit = erf.hoehe === 640 ? 360 : 390;
+      var g = $('geraetErf');
+      g.style.width = (breit + 18) + 'px';
+      g.style.height = (erf.hoehe + 18) + 'px';
+      $('masseErf').textContent = 'Bildschirm ' + breit + ' × ' + erf.hoehe + ' px — '
+        + (erf.hoehe >= H_ZUSATZ ? 'Kurzeingabe und Hinweis werden eingeblendet'
+                                 : 'Kurzeingabe und Hinweis entfallen')
+        + ' · ' + (erf.hoehe >= H_FILTER ? 'Filterzeile sichtbar' : 'Filter über das Symbol');
+      zeichneErf();
+    };
+  });
+
+  /* ══════════════ 2. Filter in allen drei Reitern ══════════════ */
+  var BK = window.BKDaten || { artikel: [] };
+  var GK = window.GETRAENKE_DATEN || { artikel: [] };
+
+  var REITER = [
+    {
+      id: 'bk', name: 'Bäcker', symbol: '🥐',
+      z1: 'Fr., 11.09.2026 · Bäckerei Freundl', z2: 'Noch nicht gesendet',
+      filter: 'ueblich',
+      such: 'Artikel oder Nummer suchen …',
+      optionen: [
+        ['ueblich', 'Übliche', (BK.artikel || []).filter(function (a) { return a.aktiv !== false; }).length],
+        ['alle', 'Alle', (BK.artikel || []).length],
+        ['best', 'Nur erfasste', (BK.artikel || []).filter(function (a) { return (a.menge || 0) > 0; }).length]
+      ],
+      zeilen: (BK.artikel || []).slice(0, 9).map(function (a) {
+        return { nr: a.nummer, name: a.name, sub: a.gruppe || '', menge: a.menge || 0 };
+      })
+    },
+    {
+      id: 'mb', name: 'Mair', symbol: '🥩',
+      z1: 'Mo., 14.09.2026 · Metzgerei Mair', z2: 'Noch nicht gesendet',
+      filter: 'ueblich',
+      such: 'Artikel oder Nummer suchen …',
+      optionen: [
+        ['ueblich', 'Übliche', KAT.artikel.filter(function (a) { return a.aktiv !== false; }).length],
+        ['alle', 'Alle', KAT.artikel.length],
+        ['best', 'Nur erfasste', 2]
+      ],
+      zeilen: KAT.artikel.slice(0, 9).map(function (a) {
+        return { nr: a.nummer, name: a.name, sub: a.gruppe || '', menge: 0 };
+      })
+    },
+    {
+      id: 'gk', name: 'Getränke', symbol: '🥤',
+      z1: 'KW 38 · Mo., 14.09.2026', z2: 'Noch nicht gesendet',
+      filter: 'ueblich',
+      such: 'Getränk oder Gebinde suchen …',
+      optionen: [
+        ['ueblich', 'Übliche', (GK.artikel || []).filter(function (a) { return (a.bestellungen || 0) >= 2; }).length],
+        ['alle', 'Alle', (GK.artikel || []).length],
+        ['best', 'Nur erfasste', 0]
+      ],
+      zeilen: (GK.artikel || []).slice(0, 9).map(function (a) {
+        return { nr: a.nummer, name: a.name, sub: a.gebinde || '', menge: 0 };
+      })
+    }
+  ];
+  var fHoehe = 640;
+  var fOffen = null;
+
+  function zeichneFilterReihe() {
+    $('filterReihe').innerHTML = REITER.map(function (r) {
+      var inline = fHoehe >= H_FILTER;
+      var h = '<div style="flex:0 0 auto"><div class="masse">' + esc(r.name)
+        + ' — ' + (inline ? 'Filterzeile' : 'Filtersymbol') + '</div>'
+        + '<div class="geraet" style="width:338px;height:' + (fHoehe * .62 + 18) + 'px;position:relative">'
+        + '<div class="schirm">'
+        + '<div class="k-head"><span class="titel">' + esc(r.name) + '</span>'
+        + '<button class="hbtn">⟳</button></div>'
+        + '<div class="k-fest">'
+        + '<div class="kontext"><div class="ico">' + r.symbol + '</div><div class="txt">'
+        + '<div class="z1">' + esc(r.z1) + '</div><div class="z2">' + esc(r.z2) + '</div></div>'
+        + '<button class="mehr">ⓘ</button></div>'
+        + '<div class="suchzeile"><input type="search" placeholder="' + esc(r.such) + '">'
+        + (inline ? '' : '<button class="filterknopf' + (r.filter !== 'ueblich' ? ' aktiv' : '')
+            + '" data-fpop="' + r.id + '">⛭'
+            + (r.filter !== 'ueblich' ? '<span class="punkt"></span>' : '') + '</button>')
+        + '</div>'
+        + (inline ? filterzeileHtml(r.filter, r.optionen, r.id) : '')
+        + '</div>'
+        + '<div class="k-liste">' + r.zeilen.map(function (z) {
+            return '<div class="row"><div class="nr">' + esc(z.nr || '–') + '</div>'
+              + '<div class="zeile"><div class="nm">' + esc(z.name)
+              + '<span class="preis">' + esc(z.sub) + '</span></div>'
+              + '<button class="knAdd">+</button><span class="umbruch"></span></div></div>';
+          }).join('') + '</div>'
+        + '</div>';
+      if (fOffen === r.id) {
+        h += '<div class="pop-hg" data-zu="' + r.id + '"><div class="pop">'
+          + '<h4>Welche Artikel zeigen?</h4>'
+          + r.optionen.map(function (o) {
+              return '<button data-set="' + r.id + '|' + o[0] + '"'
+                + (r.filter === o[0] ? ' class="on"' : '') + '>' + esc(o[1])
+                + '<span class="anz">' + o[2] + '</span>'
+                + (r.filter === o[0] ? '<span class="hak">✓</span>' : '') + '</button>';
+            }).join('')
+          + '</div></div>';
+      }
+      return h + '</div></div>';
+    }).join('');
+
+    document.querySelectorAll('[data-fpop]').forEach(function (b) {
+      b.onclick = function () { fOffen = b.dataset.fpop; zeichneFilterReihe(); };
+    });
+    document.querySelectorAll('[data-zu]').forEach(function (d) {
+      d.onclick = function (e) { if (e.target === d) { fOffen = null; zeichneFilterReihe(); } };
+    });
+    document.querySelectorAll('[data-set]').forEach(function (b) {
+      b.onclick = function () {
+        var t = b.dataset.set.split('|');
+        REITER.forEach(function (r) { if (r.id === t[0]) r.filter = t[1]; });
+        fOffen = null;
+        zeichneFilterReihe();
+      };
+    });
+    document.querySelectorAll('#filterReihe [data-f]').forEach(function (b) {
+      b.onclick = function () {
+        REITER.forEach(function (r) { if (r.id === b.dataset.ns) r.filter = b.dataset.f; });
+        zeichneFilterReihe();
+      };
+    });
+  }
+
+  document.querySelectorAll('[data-hf]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('[data-hf]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      fHoehe = +b.dataset.hf;
+      fOffen = null;
+      zeichneFilterReihe();
+    };
+  });
+
+  /* Start */
+  document.querySelector('[data-h]').click();
+  zeichneFilterReihe();
+})();
+</script>
+</body>
+</html>
