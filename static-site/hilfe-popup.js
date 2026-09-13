@@ -13,8 +13,13 @@
     '#hilfe-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);',
     'display:none;align-items:flex-start;justify-content:center;box-sizing:border-box;}',
     '#hilfe-overlay.open{display:flex;}',
+    // Der Dialog braucht eine eigene Hoehe. Er hatte nur `max-height`, und
+    // ein Flex-Kind mit `flex:1` erbt daraus nichts: Der iframe fiel auf
+    // seine Standardhoehe von 150 px zurueck, der Dialog war am Rechner
+    // nur gut 200 px hoch und der Inhalt abgeschnitten.
     '#hilfe-dialog-inner{position:relative;margin:24px auto;width:min(94vw,980px);',
-    'max-height:calc(100vh - 48px);background:#fff;border-radius:14px;',
+    'height:min(calc(100vh - 48px),880px);height:min(calc(100dvh - 48px),880px);',
+    'max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);background:#fff;border-radius:14px;',
     'box-shadow:0 24px 80px rgba(0,0,0,.35);display:flex;flex-direction:column;',
     'overflow:hidden;animation:hilfeSlideUp .25s ease-out;box-sizing:border-box;}',
     '@keyframes hilfeSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}',
@@ -51,8 +56,15 @@
 
     var topbar = document.createElement('div');
     topbar.id = 'hilfe-dialog-topbar';
-    topbar.innerHTML = '<span style="font-size:1.4em">\u2753</span>' +
-      '<h2>Online-Hilfe \u2013 Dorfladen Oberornau</h2>';
+    // Strichsymbol statt Emoji-Fragezeichen: Das rote „?" sah auf jedem
+    // Geraet anders aus und passte nicht zu den Symbolen in der Hilfe.
+    topbar.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"'
+      + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+      + ' stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto">'
+      + '<circle cx="12" cy="12" r="10"/>'
+      + '<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>'
+      + '<path d="M12 17h.01"/></svg>'
+      + '<h2>Online-Hilfe \u2013 Dorfladen Oberornau</h2>';
 
     var closeBtn = document.createElement('button');
     closeBtn.id = 'hilfe-close-btn';

@@ -4,597 +4,659 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online-Hilfe – Dorfladen Oberornau</title>
+<meta name="description" content="Antworten auf die häufigsten Fragen zur
+Website des Dorfladens Oberornau: bestellen, abholen, Benachrichtigungen,
+Preisliste und mehr.">
+<script src="/js/theme.js"></script>
+<link rel="icon" href="/favicon.ico">
 <style>
-  :root {
-    --green:#2d5016; --green-l:#4a7c27; --green-bg:#f0f7e8;
-    --accent:#e65100; --text:#1a1a1a; --muted:#6b7280;
-    --border:#e5e7eb; --shadow:0 2px 8px rgba(0,0,0,.08); --r:10px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f9fafb;color:var(--text);min-height:100vh}
+:root{
+  --gr:#2d5016; --gr-h:#4a7c27; --gr-bg:#f0f7e8;
+  --text:#1f2937; --muted:#6b7280; --linie:#e5e7eb;
+  --warn-bg:#fffbeb; --warn-li:#d97706; --warn-tx:#92400e;
+  --schatten:0 2px 8px rgba(0,0,0,.07); --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f9fafb;
+  color:var(--text);min-height:100vh;line-height:1.6;-webkit-text-size-adjust:100%}
 
-  /* HEADER */
-  .hdr{background:linear-gradient(135deg,var(--green) 0%,var(--green-l) 100%);color:#fff;padding:22px 20px 36px;text-align:center}
-  .hdr .back{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,.8);font-size:.85em;text-decoration:none;margin-bottom:14px;transition:color .15s}
-  .hdr .back:hover{color:#fff}
-  .hdr h1{font-size:1.8em;font-weight:700;margin-bottom:6px}
-  .hdr p{font-size:.95em;opacity:.85}
+.ic{width:1.15em;height:1.15em;flex:0 0 auto;vertical-align:-.16em}
+.ic.klein{width:1em;height:1em}
 
-  /* SUCHBOX */
-  .search-wrap{max-width:680px;margin:-22px auto 0;padding:0 16px;position:relative;z-index:10}
-  .search-box{display:flex;align-items:center;background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.18);padding:4px 10px 4px 18px;gap:8px}
-  .search-box input{flex:1;border:none;outline:none;font-size:1.05em;padding:13px 0;color:var(--text);background:transparent}
-  .search-box input::placeholder{color:#9ca3af}
-  .si{color:var(--green);font-size:1.3em;flex-shrink:0}
-  #clearBtn{background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.2em;padding:4px;display:none}
-  #clearBtn.show{display:block}
+/* Kopf */
+.hdr{background:linear-gradient(135deg,var(--gr),var(--gr-h));color:#fff;
+  padding:20px 20px 34px;text-align:center}
+.hdr .back{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,.85);
+  font-size:.85rem;text-decoration:none;margin-bottom:12px}
+.hdr .back:hover{color:#fff}
+.hdr h1{font-size:1.65rem;font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;justify-content:center;gap:10px}
+.hdr p{font-size:.95rem;opacity:.9}
 
-  /* CONTAINER */
-  .wrap{max-width:900px;margin:0 auto;padding:34px 16px 70px}
+/* Suche */
+.search-wrap{max-width:680px;margin:-22px auto 0;padding:0 16px;position:relative;z-index:10}
+.search-box{display:flex;align-items:center;background:#fff;border-radius:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.16);padding:4px 10px 4px 16px;gap:10px}
+.search-box input{flex:1;border:0;outline:none;font:inherit;font-size:1.02rem;
+  padding:13px 0;background:transparent;color:var(--text);min-width:0}
+.search-box input::placeholder{color:#9ca3af}
+.si{color:var(--gr)}
+#clearBtn{background:none;border:0;cursor:pointer;color:#9ca3af;font-size:1.2rem;
+  padding:8px;display:none;min-width:40px;min-height:40px}
+#clearBtn.show{display:block}
 
-  /* SUCHERGEBNISSE */
-  #sr{display:none}
-  #sr.show{display:block}
-  .rc{font-size:.88em;color:var(--muted);margin-bottom:12px}
-  .rcard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:14px 18px;margin-bottom:10px;border-left:4px solid var(--green);cursor:pointer;transition:box-shadow .15s,transform .15s}
-  .rcard:hover{box-shadow:0 4px 16px rgba(0,0,0,.13);transform:translateY(-1px)}
-  .rcard .tag{display:inline-block;background:var(--green-bg);color:var(--green);font-size:.75em;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:5px}
-  .rcard .rtitle{font-weight:700;font-size:.97em;margin-bottom:4px}
-  .rcard .rsnip{font-size:.86em;color:var(--muted);line-height:1.4}
-  .rcard mark{background:#fef08a;border-radius:2px;padding:0 2px}
-  .nores{text-align:center;padding:48px 20px;color:var(--muted)}
-  .nores .ni{font-size:2.5em;margin-bottom:12px}
+.wrap{max-width:900px;margin:0 auto;padding:30px 16px 70px}
 
-  /* ABSCHNITT-KOPF */
-  .sh{font-size:1.05em;font-weight:700;color:var(--green);margin:32px 0 14px;display:flex;align-items:center;gap:8px}
-  .sh::after{content:'';flex:1;height:1px;background:var(--border)}
+/* Treffer */
+#sr{display:none}
+#sr.show{display:block}
+.rc{font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.rcard{background:#fff;border-radius:var(--r);box-shadow:var(--schatten);
+  padding:13px 16px;margin-bottom:9px;border-left:4px solid var(--gr);
+  cursor:pointer;display:flex;gap:12px;align-items:flex-start;width:100%;
+  text-align:left;border-top:0;border-right:0;border-bottom:0;font:inherit;color:inherit}
+.rcard:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.rcard .rs{color:var(--gr);margin-top:2px}
+.rcard .tag{display:inline-block;background:var(--gr-bg);color:var(--gr);
+  font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:4px}
+.rcard .rtitle{font-weight:700;font-size:.97rem}
+.rcard .rsnip{font-size:.86rem;color:var(--muted)}
+.rcard mark{background:#fef08a;border-radius:2px;padding:0 2px}
+.nores{text-align:center;padding:44px 20px;color:var(--muted)}
+.nores .ic{width:34px;height:34px;color:#cbd5e1;margin-bottom:10px}
 
-  /* QUICK-LINKS */
-  .ql{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:4px}
-  .ql a{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green);padding:7px 13px;border-radius:20px;font-size:.86em;font-weight:600;text-decoration:none;transition:background .15s}
-  .ql a:hover{background:#d4edba}
+/* Abschnittskopf */
+.sh{font-size:1.06rem;font-weight:700;color:var(--gr);margin:34px 0 14px;
+  display:flex;align-items:center;gap:9px;scroll-margin-top:14px}
+.sh::after{content:'';flex:1;height:1px;background:var(--linie)}
 
-  /* KARTEN-GRID */
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-  .hcard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;text-decoration:none;color:var(--text);display:flex;flex-direction:column;gap:5px;border-top:3px solid transparent;transition:box-shadow .15s,transform .15s,border-color .15s;cursor:pointer}
-  .hcard:hover{box-shadow:0 6px 20px rgba(0,0,0,.12);transform:translateY(-2px);border-top-color:var(--green)}
-  .hcard .ci{font-size:1.6em}
-  .hcard .ct{font-weight:700;font-size:.95em}
-  .hcard .cd{font-size:.82em;color:var(--muted);line-height:1.4}
+/* Schnellzugriff */
+.ql{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.qlb{display:inline-flex;align-items:center;gap:6px;background:var(--gr-bg);
+  color:var(--gr);padding:9px 14px;border-radius:20px;font:inherit;font-size:.87rem;
+  font-weight:600;border:0;cursor:pointer;min-height:40px}
+.qlb:hover{background:#dcecca}
 
-  /* FAQ AKKORDEON */
-  .faq{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden}
-  .faq-q{width:100%;text-align:left;padding:15px 18px;background:none;border:none;cursor:pointer;font-size:.96em;font-weight:600;color:var(--text);display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .faq-q .arr{transition:transform .25s;flex-shrink:0;color:var(--green);font-size:.9em}
-  .faq.open .faq-q .arr{transform:rotate(180deg)}
-  .faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .3s ease;padding:0 18px;font-size:.9em;color:#374151;line-height:1.65}
-  .faq.open .faq-a{max-height:600px;padding:0 18px 16px}
-  .faq-a a{color:var(--green)}
-  .faq-a code{background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:.9em}
-  .faq-a ul{padding-left:18px;margin-top:6px}
-  .faq-a li{margin-bottom:5px}
-  .faq-a strong{color:var(--text)}
+/* Karten */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.hcard{background:#fff;border-radius:var(--r);box-shadow:var(--schatten);
+  padding:15px 16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;
+  border:0;border-top:3px solid transparent;cursor:pointer;font:inherit;
+  color:var(--text);text-align:left;width:100%}
+.hcard:hover{box-shadow:0 6px 20px rgba(0,0,0,.12);border-top-color:var(--gr)}
+.hc-sym{width:38px;height:38px;border-radius:10px;background:var(--gr-bg);
+  color:var(--gr);display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+.hc-sym .ic{width:20px;height:20px}
+.hc-t{font-weight:700;font-size:.95rem;line-height:1.35}
+.hc-k{font-size:.85rem;color:var(--muted);line-height:1.45}
 
-  /* HANDBUCH-BUTTONS */
-  .mbts{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
-  .mbt{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;padding:11px 20px;border-radius:8px;font-size:.93em;font-weight:600;text-decoration:none;transition:background .15s}
-  .mbt:hover{background:var(--green-l)}
-  .mbt.sec{background:#fff;color:var(--green);border:2px solid var(--green)}
-  .mbt.sec:hover{background:var(--green-bg)}
+/* Aufklappbare Abschnitte */
+.faq{background:#fff;border-radius:var(--r);box-shadow:var(--schatten);
+  margin-bottom:9px;overflow:hidden;scroll-margin-top:14px}
+.faq-q{width:100%;display:flex;align-items:flex-start;gap:11px;padding:14px 16px;
+  background:none;border:0;font:inherit;color:var(--text);cursor:pointer;
+  text-align:left;min-height:56px}
+.fq-sym{width:34px;height:34px;border-radius:9px;background:var(--gr-bg);color:var(--gr);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+.fq-sym .ic{width:18px;height:18px}
+.fq-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fq-f{font-weight:700;font-size:.97rem;line-height:1.35}
+/* Der Kurztext sagt schon zugeklappt, worum es geht - dafuer gab es
+   frueher ein eigenes Kartenraster mit denselben 27 Themen. */
+.fq-k{font-size:.85rem;color:var(--muted);line-height:1.45}
+.faq.open .fq-k{display:none}
+.fq-pf{width:10px;height:10px;border-right:2px solid var(--muted);
+  border-bottom:2px solid var(--muted);transform:rotate(45deg);
+  transition:transform .2s;flex:0 0 auto;margin:9px 4px 0 0}
+.faq.open .fq-pf{transform:rotate(-135deg)}
+.faq.open .fq-f{color:var(--gr)}
+.faq-a{display:none;padding:0 18px 18px 61px;font-size:.94rem}
+.faq.open .faq-a{display:block;animation:auf .2s ease-out}
+@media(max-width:560px){.faq-a{padding-left:18px}}
+@keyframes auf{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.faq-a p{margin-bottom:11px}
+.faq-a ul,.faq-a ol{margin:0 0 12px 20px}
+.faq-a li{margin-bottom:6px}
+.faq-a a{color:var(--gr);font-weight:600}
+.faq-a b{font-weight:700}
+.schritte{counter-reset:s;list-style:none;margin-left:0!important}
+.schritte li{counter-increment:s;position:relative;padding-left:34px;margin-bottom:9px}
+.schritte li::before{content:counter(s);position:absolute;left:0;top:1px;
+  width:23px;height:23px;border-radius:50%;background:var(--gr);color:#fff;
+  font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
 
-  .tip-box{background:#fff3e0;border-left:4px solid #ff9800;padding:12px 16px;border-radius:4px;font-size:.9em;margin-top:12px}
-  .flow{
-    margin-top:10px;
-    background:#f8fafc;
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:10px 12px;
-    font-size:.86em;
-    line-height:1.5;
-    white-space:pre-line;
-  }
-  .flow strong{color:var(--green)}
+.hinweis{background:var(--warn-bg);border-left:4px solid var(--warn-li);
+  border-radius:9px;padding:12px 15px;margin:12px 0;color:var(--warn-tx);font-size:.92rem}
+.hinweis.gross{background:var(--gr-bg);border-left-color:var(--gr);color:var(--text)}
+.hinweis a{color:inherit}
+.knopf{display:inline-block;margin-top:9px;background:var(--gr);color:#fff!important;
+  padding:11px 18px;border-radius:9px;text-decoration:none;font-weight:700;font-size:.9rem}
+.knopf:hover{background:var(--gr-h)}
 
-  footer{text-align:center;color:var(--muted);font-size:.83em;padding:22px 16px;border-top:1px solid var(--border)}
+.tab{width:100%;border-collapse:collapse;margin:4px 0 13px;font-size:.92rem}
+.tab td{padding:8px 10px;border-bottom:1px solid var(--linie);vertical-align:top}
+.tab td:first-child{white-space:nowrap;width:1%;color:var(--gr)}
+.klein{display:block;font-size:.82rem;color:var(--muted);margin-top:2px}
 
-  /* Prevent horizontal overflow in iframe */
-  html,body{max-width:100%;overflow-x:hidden}
+/* Fuss */
+.fuss{margin-top:34px;padding:18px;background:#fff;border-radius:var(--r);
+  box-shadow:var(--schatten);font-size:.92rem}
+.fuss h3{font-size:1rem;margin-bottom:7px;display:flex;align-items:center;gap:8px;color:var(--gr)}
+.fuss p{margin-bottom:8px}
+.fuss a{color:var(--gr);font-weight:600}
+.intern{margin-top:12px;padding-top:12px;border-top:1px dashed var(--linie);
+  font-size:.86rem;color:var(--muted)}
 
-  @media(max-width:768px){
-    .hdr h1{font-size:1.35em}
-    .grid{grid-template-columns:1fr}
-    .mbts{flex-direction:column}
-    .wrap{padding:24px 12px 50px}
-    .search-wrap{padding:0 12px}
-  }
+@media(max-width:560px){
+  .hdr h1{font-size:1.4rem}
+  .grid{grid-template-columns:1fr}
+  .wrap{padding:24px 13px 60px}
+  .tab td:first-child{white-space:normal}
+}
+html[data-theme="dark"] body{background:#0f172a;color:#e2e8f0}
+html[data-theme="dark"] .faq,html[data-theme="dark"] .hcard,
+html[data-theme="dark"] .rcard,html[data-theme="dark"] .fuss,
+html[data-theme="dark"] .search-box{background:#1f2933;color:#e2e8f0}
+html[data-theme="dark"] .faq-q{color:#e2e8f0}
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="ic-uhr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="ic-essen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
+<symbol id="ic-schild" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+<symbol id="ic-kamera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="ic-liste" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></symbol>
+<symbol id="ic-punkt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></symbol>
+<symbol id="ic-handy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="ic-glocke" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></symbol>
+<symbol id="ic-bild" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="ic-zeitung" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></symbol>
+<symbol id="ic-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></symbol>
+<symbol id="ic-funk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></symbol>
+<symbol id="ic-schloss" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="ic-drucker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3h12v6"/><rect width="12" height="8" x="6" y="14"/></symbol>
+<symbol id="ic-lupe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="ic-warnung" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="ic-korb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></symbol>
+<symbol id="ic-nachricht" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="ic-tuete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+<symbol id="ic-haken" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></symbol>
+<symbol id="ic-verbot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+<symbol id="ic-fleisch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 2a7.5 7.5 0 0 1 7.5 7.5c0 3-2 5.5-4 7.5l-3 3-3-3c-2-2-4-4.5-4-7.5A7.5 7.5 0 0 1 12.5 2z"/><circle cx="12.5" cy="9" r="2.5"/></symbol>
+<symbol id="ic-kalender" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+<symbol id="ic-buch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></symbol>
+<symbol id="ic-zurueck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+<symbol id="ic-schere" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+<symbol id="ic-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="ic-geld" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+</svg>
 
 <div class="hdr">
-  <a href="/" class="back">← Zurück zur Startseite</a>
-  <h1>❓ Online-Hilfe</h1>
-  <p>Wie funktioniert was? – Geben Sie Ihr Thema ein und finden Sie sofort die Antwort.</p>
+  <a href="/" class="back" target="_top"><svg class="ic klein" aria-hidden="true"><use href="#ic-zurueck"/></svg> Zurück zur Startseite</a>
+  <h1><svg class="ic" aria-hidden="true"><use href="#ic-buch"/></svg> Online-Hilfe</h1>
+  <p>Wie funktioniert was? – Suchen Sie Ihr Thema oder blättern Sie unten.</p>
 </div>
 
-<!-- SUCHFELD -->
 <div class="search-wrap">
   <div class="search-box">
-    <span class="si">🔍</span>
-    <input type="text" id="hs" placeholder="Ich suche… z.B. „Barcode", „App installieren", „Angebote nächste Woche"" autocomplete="off" spellcheck="false">
-    <button id="clearBtn" onclick="clearSearch()" title="Löschen">✕</button>
+    <svg class="ic si" aria-hidden="true"><use href="#ic-lupe"/></svg>
+    <input type="search" id="hs" placeholder="Suchen – z. B. bestellen, Barcode, App"
+           autocomplete="off" aria-label="In der Hilfe suchen">
+    <button id="clearBtn" onclick="clearSearch()" title="Suche leeren"
+            aria-label="Suche leeren">&#10005;</button>
   </div>
 </div>
 
 <div class="wrap">
 
-  <!-- SUCHERGEBNISSE -->
   <div id="sr">
     <div class="rc" id="rc"></div>
     <div id="rl"></div>
   </div>
 
-  <!-- HAUPTINHALT -->
   <div id="mc">
 
-    <!-- HANDBUCH-BANNER (prominent, sofort sichtbar) -->
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;padding:14px 16px;background:linear-gradient(135deg,#f0f7e8 0%,#e8f5e0 100%);border-radius:12px;border:1px solid #c8e6b0;align-items:center">
-      <span style="font-size:1.4em;flex-shrink:0">📖</span>
-      <span style="flex:1;min-width:140px;font-size:.88em;color:#374151;line-height:1.35"><strong>Ausf&uuml;hrliche Handb&uuml;cher</strong> mit Schritt-f&uuml;r-Schritt-Anleitungen zu allen Funktionen.</span>
-      <a href="homepage-anwenderhandbuch.html" class="mbt" style="font-size:.82em;padding:8px 14px;border-radius:8px;white-space:nowrap">📖 Handbuch &ouml;ffnen</a>
-      <a href="homepage-anwenderhandbuch.pdf" class="mbt sec" style="font-size:.82em;padding:8px 14px;border-radius:8px;white-space:nowrap" target="_blank">⬇️ PDF</a>
-    </div>
-
-    <div class="sh">🚀 Beliebte Themen</div>
+    <h2 class="sh"><svg class="ic" aria-hidden="true"><use href="#ic-haken"/></svg> Häufig gesucht</h2>
     <div class="ql">
-      <a href="#" onclick="openFaq('faq-oez')">🕐 Öffnungszeiten</a>
-      <a href="#" onclick="openFaq('faq-mittag')">🍽️ Mittagstisch</a>
-      <a href="#" onclick="openFaq('faq-angebote')">🏷️ Angebote</a>
-      <a href="#" onclick="openFaq('faq-barcode')">📷 Barcode-Scanner</a>
-      <a href="#" onclick="openFaq('faq-preisliste')">📋 Preisliste</a>
-      <a href="#" onclick="openFaq('faq-app')">📱 App installieren</a>
-      <a href="#" onclick="openFaq('faq-push')">🔔 Push-Benachrichtigungen</a>
-      <a href="#" onclick="openFaq('faq-galerie')">🖼️ Galerie</a>
-      <a href="#" onclick="openFaq('faq-preisabweichung')">💬 Preisabweichung</a>
-      <a href="#" onclick="openFaq('faq-drucken')">🖨️ Drucken</a>
-      <a href="#" onclick="openFaq('faq-datenschutz')">🔒 Datenschutz</a>
-      <a href="#" onclick="openFaq('faq-kiosk-ablauf')">🗓️ Kiosk Tagesablauf</a>
-      <a href="#" onclick="openFaq('faq-kiosk-eintrag')">➕ Kiosk Eintrag</a>
-      <a href="#" onclick="openFaq('faq-kiosk-serie')">🔁 Kiosk Serie löschen</a>
-      <a href="#" onclick="openFaq('faq-laden-fehler')">⚠️ Fehler beheben</a>
+<button type="button" class="qlb" onclick="openFaq('faq-mittag-bestellen')"><svg class="ic klein" aria-hidden="true"><use href="#ic-essen"/></svg> Essen vorbestellen</button>
+<button type="button" class="qlb" onclick="openFaq('faq-bestellstatus')"><svg class="ic klein" aria-hidden="true"><use href="#ic-haken"/></svg> Wo ist meine Bestellung?</button>
+<button type="button" class="qlb" onclick="openFaq('faq-storno')"><svg class="ic klein" aria-hidden="true"><use href="#ic-verbot"/></svg> Stornieren</button>
+<button type="button" class="qlb" onclick="openFaq('faq-oez')"><svg class="ic klein" aria-hidden="true"><use href="#ic-uhr"/></svg> Öffnungszeiten</button>
+<button type="button" class="qlb" onclick="openFaq('faq-app')"><svg class="ic klein" aria-hidden="true"><use href="#ic-handy"/></svg> App einrichten</button>
+<button type="button" class="qlb" onclick="openFaq('faq-push')"><svg class="ic klein" aria-hidden="true"><use href="#ic-glocke"/></svg> Benachrichtigungen</button>
+<button type="button" class="qlb" onclick="openFaq('faq-preisliste')"><svg class="ic klein" aria-hidden="true"><use href="#ic-liste"/></svg> Preise suchen</button>
+<button type="button" class="qlb" onclick="openFaq('faq-kontakt')"><svg class="ic klein" aria-hidden="true"><use href="#ic-nachricht"/></svg> Uns schreiben</button>
     </div>
 
-    <div class="sh">📖 Alle Hilfethemen</div>
-    <div class="grid">
-      <div class="hcard" onclick="openFaq('faq-oez')"><span class="ci">🕐</span><span class="ct">Öffnungszeiten &amp; Status</span><span class="cd">Wann hat der Laden auf? Feiertage, Live-Status, Wochentabelle.</span></div>
-      <div class="hcard" onclick="openFaq('faq-mittag')"><span class="ci">🍽️</span><span class="ct">Mittagstisch / Wochenplan</span><span class="cd">Wochenplan aufrufen, drucken oder per WhatsApp teilen.</span></div>
-      <div class="hcard" onclick="openFaq('faq-angebote')"><span class="ci">🏷️</span><span class="ct">Angebote &amp; Aktionen</span><span class="cd">Diese Woche / Nächste Woche, Rabattbadges, Aktionspreise.</span></div>
-      <div class="hcard" onclick="openFaq('faq-barcode')"><span class="ci">📷</span><span class="ct">Barcode-Scanner</span><span class="cd">EAN-Code eines Artikels per Kamera scannen und Preis nachschlagen.</span></div>
-      <div class="hcard" onclick="openFaq('faq-preisliste')"><span class="ci">📋</span><span class="ct">Preisliste &amp; Sortiment</span><span class="cd">Artikel suchen, filtern, Warengruppen, UVP-Vergleich.</span></div>
-      <div class="hcard" onclick="openFaq('faq-roterpunkt')"><span class="ci">🔴</span><span class="ct">Roter Punkt (Dauertiefpreise)</span><span class="cd">Was bedeutet der Rote Punkt? Günstige Grundnahrungsmittel finden.</span></div>
-      <div class="hcard" onclick="openFaq('faq-app')"><span class="ci">📱</span><span class="ct">App installieren (PWA)</span><span class="cd">Die Homepage als App auf Android oder iPhone speichern.</span></div>
-      <div class="hcard" onclick="openFaq('faq-push')"><span class="ci">🔔</span><span class="ct">Push-Benachrichtigungen</span><span class="cd">Automatisch informiert werden bei neuen Angeboten oder Wochenplan.</span></div>
-      <div class="hcard" onclick="openFaq('faq-galerie')"><span class="ci">🖼️</span><span class="ct">Galerie &amp; Impressionen</span><span class="cd">Bilder in Vollbild betrachten, Kategorien filtern, Lightbox.</span></div>
-      <div class="hcard" onclick="openFaq('faq-news')"><span class="ci">📰</span><span class="ct">Neuigkeiten &amp; News-Ticker</span><span class="cd">Aktuelle Meldungen lesen, Laufband-Ticker, Artikel-Overlay.</span></div>
-      <div class="hcard" onclick="openFaq('faq-gestures')"><span class="ci">👆</span><span class="ct">Wischgesten &amp; Navigation</span><span class="cd">Popups wegwischen, Android Zurück-Geste, Scroll-Verhalten.</span></div>
-      <div class="hcard" onclick="openFaq('faq-offline')"><span class="ci">📶</span><span class="ct">Offline &amp; schlechtes WLAN</span><span class="cd">Was funktioniert ohne Internet? Caching, Service Worker.</span></div>
-      <div class="hcard" onclick="openFaq('faq-preisabweichung')"><span class="ci">💬</span><span class="ct">Preisabweichung Flyer/Website</span><span class="cd">Warum weicht der Mittagstisch-Preis auf der Website vom Flyer ab?</span></div>
-      <div class="hcard" onclick="openFaq('faq-sortiment-veraltet')"><span class="ci">🛒</span><span class="ct">Artikel im Laden nicht da</span><span class="cd">Preisliste zeigt Artikel, der im Regal fehlt – was stimmt?</span></div>
-      <div class="hcard" onclick="openFaq('faq-datenschutz')"><span class="ci">🔒</span><span class="ct">Datenschutz &amp; Cookies</span><span class="cd">Welche Daten werden gespeichert? Tracking, Push, Kamera.</span></div>
-      <div class="hcard" onclick="openFaq('faq-whatsapp')"><span class="ci">📲</span><span class="ct">Per WhatsApp teilen</span><span class="cd">Wochenplan oder Angebote direkt per WhatsApp weiterleiten.</span></div>
-      <div class="hcard" onclick="openFaq('faq-kamera-gesperrt')"><span class="ci">🚫</span><span class="ct">Kamera gesperrt (Scanner)</span><span class="cd">Barcode-Scanner zeigt „Kamera gesperrt" – Berechtigung freigeben.</span></div>
-      <div class="hcard" onclick="openFaq('faq-laden-fehler')"><span class="ci">⚠️</span><span class="ct">Seite lädt nicht / Fehler</span><span class="cd">Weiße Fläche, Absturz oder Ladefehler beheben.</span></div>
-      <div class="hcard" onclick="openFaq('faq-drucken')"><span class="ci">🖨️</span><span class="ct">Drucken (Wochenplan / Flyer)</span><span class="cd">Wochenplan oder Angebotsflyer sauber auf A4 ausdrucken.</span></div>
-      <div class="hcard" onclick="openFaq('faq-schrift')"><span class="ci">🔎</span><span class="ct">Text zu klein – Zoom</span><span class="cd">Schriftgröße und Darstellung im Browser oder Smartphone anpassen.</span></div>
-      <div class="hcard" onclick="openFaq('faq-kiosk-ablauf')"><span class="ci">🗓️</span><span class="ct">Kiosk-Tagesablauf für Verkäuferinnen</span><span class="cd">Vom Schichtstart bis Schichtende: Kalender schnell und sicher bedienen.</span></div>
-      <div class="hcard" onclick="openFaq('faq-kiosk-eintrag')"><span class="ci">➕</span><span class="ct">Kiosk-Eintrag anlegen (Touch)</span><span class="cd">Neuen Termin mit Uhrzeit, Kategorie, Kunde und Wiederholung erfassen.</span></div>
-      <div class="hcard" onclick="openFaq('faq-kiosk-serie')"><span class="ci">🔁</span><span class="ct">Dauereintrag/Serie löschen</span><span class="cd">Nur einen Tag oder gleich die komplette Serie sauber entfernen.</span></div>
-    </div>
 
-    <div class="sh">🧑‍🍳 Kiosk-Kalender für Verkäuferinnen</div>
 
-    <div class="faq" id="faq-kiosk-ablauf" data-kw="kiosk kalender tagesablauf schicht start ende erledigt ganztägig uhrzeit verkäuferin">
-      <button class="faq-q" onclick="toggleFaq(this)">🗓️ Wie sieht der typische Tagesablauf im Kiosk-Kalender aus?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        So arbeiten Sie im Alltag am schnellsten:
-        <ol>
-          <li><strong>Schichtstart:</strong> Kiosk öffnen und den aktuellen Tag prüfen.</li>
-          <li><strong>Aufgaben lesen:</strong> Links stehen Termine mit Uhrzeit, rechts ganztägige Hinweise.</li>
-          <li><strong>Neue Punkte erfassen:</strong> Über <strong>„+ Neuer Eintrag“</strong> neue Infos oder Termine anlegen.</li>
-          <li><strong>Erledigen:</strong> Nach Ausführung den Eintrag auf <strong>Erledigt</strong> setzen.</li>
-          <li><strong>Schichtende:</strong> Kurz kontrollieren, ob noch offene Einträge vorhanden sind.</li>
-        </ol>
-        <div class="flow"><strong>Ablaufdiagramm (Tagesroutine)</strong>
-Schicht starten
-↓
-Kiosk-Kalender öffnen
-↓
-Einträge lesen (mit Uhrzeit | ganztägig)
-↓
-Neue Einträge bei Bedarf anlegen
-↓
-Erledigte Einträge abhaken
-↓
-Offene Punkte an nächste Schicht übergeben</div>
+<h2 class="sh" id="gr-bestellen"><svg class="ic" aria-hidden="true"><use href="#ic-korb"/></svg> Bestellen und abholen</h2>
+<div class="faq" id="faq-mittag-bestellen" data-kw="mittagessen bestellen vorbestellen mittagstisch reservieren essen vormerken online bestellung aufgeben portion abholen bestellschluss"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-essen"/></svg></span><span class="fq-t"><span class="fq-f">Wie bestelle ich das Mittagessen vor?</span><span class="fq-k">Gericht aussuchen, Namen eintragen, fertig - ohne Anmeldung.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Sie brauchen kein Konto und kein Passwort. Auf der Startseite tippen Sie
+auf „Mittagstisch“ und dort auf den Knopf zum Bestellen - oder Sie rufen
+gleich <a href="/mittagstisch-bestellen" target="_blank">dorfladen-oberornau.de/mittagstisch-bestellen</a>
+auf.</p>
+
+<ol class="schritte">
+  <li><b>Gericht auswählen.</b> Sie sehen die Gerichte des Tages mit Preis.
+      Über die Menge bestellen Sie mehrere Portionen desselben Gerichts.</li>
+  <li><b>Namen eintragen.</b> Mehr ist nicht nötig - der Name ist das
+      einzige Pflichtfeld. Damit finden wir Ihre Bestellung bei der Abholung.</li>
+  <li><b>Wenn Sie möchten:</b> E-Mail oder Telefonnummer angeben. Beides ist
+      freiwillig und nur dafür da, Sie zu benachrichtigen, sobald das Essen
+      fertig ist.</li>
+  <li><b>Auf „Jetzt bestellen“ tippen.</b> Danach erscheint
+      „Bestellung aufgenommen!“ samt Bestellnummer.</li>
+</ol>
+
+<div class="hinweis">
+  <b>Bis wann kann ich bestellen?</b> Für denselben Tag gilt ein
+  Bestellschluss am Vormittag. Die genaue Uhrzeit steht als Countdown oben
+  auf der Bestellseite - dort ist sie immer aktuell, auch wenn wir sie
+  einmal ändern.
+</div>
+
+<p><b>Abholen:</b> Ihr Essen steht für Sie bereit - in der Regel zwischen
+11:30 und 13:00 Uhr. Sie bezahlen bei der Abholung im Laden; eine
+Online-Zahlung gibt es nicht. Sie können das Essen mitnehmen oder bei uns
+im Laden essen.</p></div></div>
+<div class="faq" id="faq-bestellstatus" data-kw="bestellstatus bestellung status verfolgen wo ist meine bestellung angekommen bestätigt abgeholt bestellnummer nachsehen prüfen"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-haken"/></svg></span><span class="fq-t"><span class="fq-f">Wo sehe ich, ob meine Bestellung angekommen ist?</span><span class="fq-k">Bestellnummer eingeben und den Stand verfolgen.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Direkt nach dem Bestellen führt der Knopf „Bestellstatus ansehen“
+zur Übersicht. Später finden Sie sie so wieder:</p>
+
+<ul>
+  <li>Auf der Startseite unter <b>„Meine Vorbestellungen“</b>.</li>
+  <li>Über die Benachrichtigung, falls Sie eine bekommen haben - ein Tippen
+      darauf öffnet genau Ihre Bestellung.</li>
+  <li>Von Hand: Sie brauchen die <b>Bestellnummer</b> und die E-Mail-Adresse,
+      mit der Sie bestellt haben. Ohne E-Mail erkennt die Seite Ihre
+      Bestellung am Gerät - dann klappt es nur auf demselben Handy oder
+      Rechner.</li>
+</ul>
+
+<p><b>Diese Angaben sehen Sie beim Mittagstisch:</b></p>
+<table class="tab">
+  <tr><td><b>Eingegangen</b></td><td>Wir haben Ihre Bestellung erhalten, aber
+      noch nicht bearbeitet.</td></tr>
+  <tr><td><b>Bestätigt</b></td><td>Die Küche hat die Bestellung angenommen.</td></tr>
+  <tr><td><b>Abgeholt</b></td><td>Sie haben Ihr Essen bekommen. Damit ist die
+      Bestellung erledigt.</td></tr>
+  <tr><td><b>Storniert</b></td><td>Die Bestellung wurde zurückgezogen.</td></tr>
+</table>
+
+<p>Bei Fleisch- und Shop-Bestellungen heißt der erste Schritt
+<b>„Neu“</b> statt „Eingegangen“ - sonst ist es dasselbe.</p></div></div>
+<div class="faq" id="faq-storno" data-kw="stornieren storno abbestellen absagen rückgängig löschen abbrechen doch nicht bestellung zurückziehen ändern"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-verbot"/></svg></span><span class="fq-t"><span class="fq-f">Wie storniere ich eine Bestellung?</span><span class="fq-k">Solange wir sie noch nicht bestätigt haben, geht das selbst.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Öffnen Sie Ihre Bestellung (siehe „Wo sehe ich, ob meine Bestellung angekommen ist?“)
+und tippen Sie auf <b>„Stornieren“</b>. Sie werden nach einem <b>Grund</b>
+gefragt - ohne Angabe wird nicht storniert. Ein Wort genügt; es hilft uns,
+die Planung zu verbessern.</p>
+
+<div class="hinweis">
+  <b>Nur solange „Eingegangen“ dasteht.</b> Sobald die Küche die
+  Bestellung bestätigt hat, wird bereits für Sie gekocht. Dann geht das
+  Stornieren nicht mehr von selbst - rufen Sie uns bitte kurz an unter
+  <a href="tel:+4980826229991">08082 / 622 99 91</a>. Wir finden eine Lösung.
+</div>
+
+<p><b>Etwas ändern</b> - andere Menge, anderes Gericht - geht nicht direkt.
+Stornieren Sie die Bestellung und geben Sie eine neue auf, solange der
+Bestellschluss nicht vorbei ist.</p></div></div>
+<div class="faq" id="faq-fleisch" data-kw="fleisch wurst metzger mair vorbestellen bestellen braten schnitzel vakuum grillen rabatt kilo kg liefertag bestellschluss"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-fleisch"/></svg></span><span class="fq-t"><span class="fq-f">Wie bestelle ich Fleisch und Wurst vor?</span><span class="fq-k">Frisch vom Metzger Mair - mit Mengenrabatt.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Wir bestellen für Sie beim Metzger Mair mit. Die Seite heißt
+<b>„Fleisch &amp; Wurst vorbestellen“</b> und ist über die Kachel
+„Fleisch &amp; Wurst“ auf der Startseite erreichbar.</p>
+
+<ol class="schritte">
+  <li>Artikel aussuchen und Menge eintragen, dann „In den Warenkorb“.</li>
+  <li>Namen und Telefonnummer angeben - damit wir Sie erreichen, falls es
+      Rückfragen gibt.</li>
+  <li>Bestellung abschicken.</li>
+</ol>
+
+<div class="hinweis">
+  <b>Ab einer bestimmten Menge wird es günstiger.</b> Für größere
+  Bestellungen gibt es einen Rabatt. Wie hoch er ist und ab welcher Menge er
+  gilt, steht oben auf der Bestellseite - dort ist der Stand immer aktuell.
+</div>
+
+<p><b>Wann wird geliefert?</b> Der Metzger liefert an festen Tagen in der
+Woche; bestellt werden muss am Werktag davor bis vormittags. Den nächsten
+Liefertag und den Bestellschluss zeigt die Seite oben an. Bezahlt wird bei
+der Abholung im Laden.</p></div></div>
+<div class="faq" id="faq-shop" data-kw="shop online einkauf einkaufen warenkorb bestellen abholen abholtermin konto anmelden lieferung liefern"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-korb"/></svg></span><span class="fq-t"><span class="fq-f">Was ist der Online-Einkauf?</span><span class="fq-k">Waren zusammenstellen, Abholtermin wählen, im Laden abholen.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Über die Kachel <b>„Online-Einkauf“</b> stellen Sie sich Ihren Einkauf
+in Ruhe zusammen und holen ihn dann fertig gepackt im Laden ab. Es gibt
+keine Lieferung nach Hause - „Abholen im Dorfladen“ ist der Weg.</p>
+
+<ol class="schritte">
+  <li>Artikel in den Warenkorb legen.</li>
+  <li>Einen <b>Abholtermin</b> wählen.</li>
+  <li>Bestellung abschicken und im Laden abholen. Bezahlt wird dort.</li>
+</ol>
+
+<p>Wenn Sie öfter bestellen, lohnt sich ein Konto unter
+„Anmelden / Konto“: Dann sehen Sie unter „Meine Bestellungen“ alles
+auf einen Blick und müssen Ihre Angaben nicht jedes Mal neu eintippen.
+Pflicht ist das nicht.</p></div></div>
+<h2 class="sh" id="gr-heute"><svg class="ic" aria-hidden="true"><use href="#ic-essen"/></svg> Was es heute gibt</h2>
+<div class="faq" id="faq-tagesinfo" data-kw="tagesinfo tages info heute aktuell theke kuchen frisch aushang was gibt es heute teilen whatsapp"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-zeitung"/></svg></span><span class="fq-t"><span class="fq-f">Was ist die TagesInfo?</span><span class="fq-k">Eine Seite mit allem, was es heute frisch gibt.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Die <b>TagesInfo</b> ist unser Aushang für den Tag: Was es mittags zu
+essen gibt, was frisch an der Theke liegt und welcher Kuchen da ist. Sie
+erreichen sie über die Kachel „TagesInfo“ auf der Startseite oder
+direkt unter <a href="/tagesinfo" target="_blank">dorfladen-oberornau.de/tagesinfo</a>.</p>
+
+<p>Die Seite ist bewusst kurz gehalten und lässt sich gut per WhatsApp
+weitergeben - etwa in der Nachbarschaft oder in der Familie.</p>
+
+<p>Wenn Sie möchten, meldet sich die TagesInfo von selbst bei Ihnen:
+Schalten Sie dafür die Benachrichtigung <b>TagesInfo</b> ein
+(siehe „Welche Benachrichtigungen gibt es?“).</p></div></div>
+<div class="faq" id="faq-mittag" data-kw="mittagstisch wochenplan speiseplan essensplan gericht woche menü mittag drucken teilen whatsapp preis"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-essen"/></svg></span><span class="fq-t"><span class="fq-f">Wo sehe ich den Mittagstisch der ganzen Woche?</span><span class="fq-k">Wochenplan ansehen, ausdrucken oder weitergeben.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Auf der Startseite tippen Sie auf die Kachel <b>„Mittagstisch“</b>.
+Es öffnet sich der Wochenplan von Montag bis Freitag mit allen Gerichten
+und Preisen.</p>
+
+<ul>
+  <li><b>Weitergeben:</b> Der Knopf zum Teilen öffnet WhatsApp mit einem
+      fertigen Text.</li>
+  <li><b>Ausdrucken:</b> Der Druckknopf bereitet den Plan sauber für ein
+      Blatt Papier auf.</li>
+  <li><b>Vorbestellen:</b> Aus dem Plan heraus kommen Sie direkt zur
+      Bestellung (siehe „Wie bestelle ich das Mittagessen vor?“).</li>
+</ul>
+
+<p>Auf dem Handy schließen Sie den Plan, indem Sie ihn nach unten wischen
+oder die Zurück-Geste verwenden.</p></div></div>
+<div class="faq" id="faq-angebote" data-kw="angebote aktion rabatt sonderangebot woche nächste woche reduziert prozent sparen günstig aktionspreis flyer"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-schild"/></svg></span><span class="fq-t"><span class="fq-f">Wo finde ich die Angebote dieser Woche?</span><span class="fq-k">Diese und nächste Woche, mit Ersparnis auf einen Blick.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Die Kachel <b>„Angebote“</b> auf der Startseite zeigt alle Aktionen.
+Mit dem Umschalter wechseln Sie zwischen <b>dieser</b> und <b>nächster
+Woche</b> - so können Sie Ihren Einkauf vorausplanen.</p>
+
+<p>Bei jedem Artikel steht der Aktionspreis, daneben der normale Preis und
+wie viel Sie sparen. Angebote gelten, solange der Vorrat reicht.</p>
+
+<p>Damit Sie nichts verpassen, können Sie sich benachrichtigen lassen,
+sobald neue Angebote online sind - siehe
+„Welche Benachrichtigungen gibt es?“.</p></div></div>
+<div class="faq" id="faq-oez" data-kw="öffnungszeiten offen geschlossen auf zu wann feiertag urlaub ruhetag sonntag samstag geöffnet stunden zeiten"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-uhr"/></svg></span><span class="fq-t"><span class="fq-f">Hat der Dorfladen gerade geöffnet?</span><span class="fq-k">Live-Anzeige, Wochenübersicht und Feiertage.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Ganz oben auf der Startseite steht, ob wir <b>gerade</b> geöffnet haben.
+Die Anzeige rechnet mit der tatsächlichen Uhrzeit und berücksichtigt auch
+Feiertage und besondere Tage.</p>
+
+<p>Die vollständige Übersicht finden Sie unter
+<a href="/öffnungszeiten" target="_blank">Öffnungszeiten</a>: alle Wochentage,
+dazu abweichende Zeiten an Feiertagen.</p>
+
+<p>Ändern sich die Zeiten kurzfristig - etwa vor einem Feiertag -, erfahren
+Sie es über die Benachrichtigung <b>News</b>.</p></div></div>
+<h2 class="sh" id="gr-sortiment"><svg class="ic" aria-hidden="true"><use href="#ic-liste"/></svg> Sortiment und Preise</h2>
+<div class="faq" id="faq-preisliste" data-kw="preisliste sortiment artikel suchen finden preis kosten was kostet warengruppe kategorie filter liste produkte"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-liste"/></svg></span><span class="fq-t"><span class="fq-f">Wie suche ich einen Artikel in der Preisliste?</span><span class="fq-k">Nach Namen suchen oder nach Warengruppe blättern.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Über die Kachel <b>„Preisliste“</b> kommen Sie zum vollständigen
+Sortiment. Tippen Sie einfach in das Suchfeld - die Liste wird schon beim
+Schreiben kürzer.</p>
+
+<ul>
+  <li><b>Nach Warengruppe:</b> Die Abschnitte lassen sich auf- und zuklappen,
+      etwa „Molkereiprodukte“ oder „Getränke“.</li>
+  <li><b>Nur günstige Grundnahrungsmittel:</b> Der Filter „Roter Punkt“
+      zeigt ausschließlich diese Artikel.</li>
+  <li><b>Mit dem Strichcode suchen:</b> siehe
+      „Kann ich den Strichcode einer Packung scannen?“.</li>
+</ul>
+
+<p>Die Preise kommen unmittelbar aus unserer Kasse. Trotzdem kann es
+vorkommen, dass ein Artikel gerade ausverkauft ist.</p></div></div>
+<div class="faq" id="faq-barcode" data-kw="barcode strichcode scannen scanner ean kamera code artikel preis abfotografieren einlesen produkt"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-kamera"/></svg></span><span class="fq-t"><span class="fq-f">Kann ich den Strichcode einer Packung scannen?</span><span class="fq-k">Kamera auf den Strichcode halten - der Artikel erscheint.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Ja. In der Preisliste gibt es neben dem Suchfeld ein Kamerasymbol. Tippen
+Sie darauf und halten Sie die Kamera auf den Strichcode - erkannt wird er
+von selbst, Sie müssen nichts auslösen.</p>
+
+<p>Beim ersten Mal fragt Ihr Browser, ob die Seite die Kamera verwenden darf.
+Das müssen Sie erlauben, sonst bleibt das Bild schwarz. Es wird nichts
+gespeichert und nichts übertragen - die Erkennung passiert auf Ihrem Gerät.</p>
+
+<p>Klappt es nicht, hilft meist: Packung ruhig halten, etwas mehr Abstand,
+und für Licht sorgen. Wenn der Browser die Kamera blockiert, lesen Sie
+„Der Scanner sagt, die Kamera sei gesperrt“.</p></div></div>
+<div class="faq" id="faq-roterpunkt" data-kw="roter punkt rot dauertiefpreis günstig billig grundnahrungsmittel preiswert sozial discounter vergleich"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-punkt"/></svg></span><span class="fq-t"><span class="fq-f">Was bedeutet der Rote Punkt?</span><span class="fq-k">Günstige Grundnahrungsmittel zum Dauertiefpreis.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Artikel mit dem <b>Roten Punkt</b> sind Grundnahrungsmittel, die wir
+dauerhaft günstig halten - keine Wochenaktion, sondern ein
+Dauertiefpreis. Sie sollen sicherstellen, dass der tägliche Einkauf im
+Dorfladen bezahlbar bleibt.</p>
+
+<p>Im Laden erkennen Sie sie am roten Punkt am Regal. Auf der Website gibt es
+die eigene Seite <a href="/roter-punkt" target="_blank">Roter Punkt</a> mit
+allen Artikeln; in der Preisliste können Sie danach filtern.</p></div></div>
+<div class="faq" id="faq-preisabweichung" data-kw="preis falsch abweichung unterschied flyer aushang plakat teurer billiger stimmt nicht kasse anders"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-geld"/></svg></span><span class="fq-t"><span class="fq-f">Der Preis auf der Website stimmt nicht mit dem Laden überein</span><span class="fq-k">Was gilt, wenn Aushang und Website sich unterscheiden.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Das kann vorkommen, wenn ein gedruckter Aushang älter ist als die Seite
+oder wenn wir einen Preis kurzfristig angepasst haben.</p>
+
+<p><b>Sprechen Sie uns an der Kasse einfach darauf an.</b> Wir schauen es uns
+gemeinsam an und finden eine Lösung, die für Sie in Ordnung ist. Wenn Ihnen
+etwas auffällt, sagen Sie es uns gerne - so bekommen wir Fehler schnell aus
+der Welt.</p></div></div>
+<div class="faq" id="faq-sortiment-veraltet" data-kw="artikel nicht da ausverkauft leer regal fehlt vergriffen nicht vorrätig bestellen nachbestellen lieferung"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-korb"/></svg></span><span class="fq-t"><span class="fq-f">Ein Artikel steht in der Liste, ist aber nicht im Regal</span><span class="fq-k">Woran das liegt und was Sie tun können.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Die Preisliste zeigt unser Sortiment - nicht den Lagerbestand von diesem
+Augenblick. Ein Artikel kann also gerade ausverkauft sein oder auf die
+nächste Lieferung warten.</p>
+
+<p>Fragen Sie uns im Laden: Oft haben wir Nachschub im Lager oder können den
+Artikel mit der nächsten Lieferung für Sie mitbestellen. Als kleiner Laden
+können wir nicht alles vorrätig halten - mitbestellen geht fast immer.</p></div></div>
+<h2 class="sh" id="gr-app"><svg class="ic" aria-hidden="true"><use href="#ic-handy"/></svg> App und Nachrichten</h2>
+<div class="faq" id="faq-app" data-kw="app installieren startbildschirm homebildschirm home icon symbol handy iphone android pwa hinzufügen verknüpfung"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-handy"/></svg></span><span class="fq-t"><span class="fq-f">Wie lege ich den Dorfladen als App auf mein Handy?</span><span class="fq-k">Bebilderte Anleitung für jedes Gerät.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Sie können unsere Seite wie eine App auf den Startbildschirm legen: ein
+Symbol, ein Tippen, ohne Umweg über den Browser. Aus einem App-Store wird
+nichts geladen, es kostet nichts und braucht so gut wie keinen Speicher.</p>
+
+<div class="hinweis groß">
+  <b>Es gibt eine eigene Anleitung dafür</b> - mit Bildern und passend zu
+  Ihrem Gerät, egal ob iPhone, Android-Handy oder Rechner. Sie erkennt von
+  selbst, welchen Weg Sie brauchen.<br>
+  <a class="knopf" href="/app" target="_blank">Zur Anleitung: dorfladen-oberornau.de/app</a>
+</div>
+
+<p><b>Kurzfassung:</b> Auf dem <b>iPhone</b> die Seite in <i>Safari</i>
+öffnen, unten auf das Teilen-Symbol tippen und „Zum Home-Bildschirm“
+wählen. Mit anderen Browsern klappt es auf dem iPhone nicht zuverlässig.
+Auf einem <b>Android-Handy</b> bietet der Browser die Installation meist von
+selbst an; sonst finden Sie sie im Menü mit den drei Punkten unter
+„App installieren“.</p></div></div>
+<div class="faq" id="faq-push" data-kw="benachrichtigung push mitteilung meldung nachricht erlauben aktivieren abschalten ausschalten stumm glocke abonnieren"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-glocke"/></svg></span><span class="fq-t"><span class="fq-f">Welche Benachrichtigungen gibt es?</span><span class="fq-k">Vier Arten - jede einzeln an- und abschaltbar.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Wenn Sie möchten, meldet sich der Dorfladen von selbst - etwa morgens mit
+dem Mittagstisch. Sie entscheiden dabei genau, worüber. Es gibt vier Arten,
+die Sie <b>einzeln</b> ein- und ausschalten können:</p>
+
+<table class="tab">
+  <tr>
+    <td><b>TagesInfo</b></td>
+    <td>Was es heute zu essen gibt, was frisch an der Theke liegt.
+        <span class="klein">An Werktagen &middot; an alle</span></td>
+  </tr>
+  <tr>
+    <td><b>News &amp; Aktuelles</b></td>
+    <td>Geänderte Öffnungszeiten, Aktionen, Veranstaltungen.
+        <span class="klein">Selten &middot; an alle</span></td>
+  </tr>
+  <tr>
+    <td><b>Meine Bestellungen</b></td>
+    <td>Ihre Bestellung ist angenommen oder abholbereit; Rückfragen der Küche.
+        <span class="klein">Nur bei eigener Bestellung &middot; <b>nur an Sie</b></span></td>
+  </tr>
+  <tr>
+    <td><b>Antwort auf meine Nachricht</b></td>
+    <td>Wenn wir auf Ihre Nachricht antworten.
+        <span class="klein">Nur nach eigener Anfrage &middot; <b>nur an Sie</b></span></td>
+  </tr>
+</table>
+
+<p><b>Einschalten:</b> Im Menü auf „Benachrichtigungen aktivieren“
+tippen. Der Browser fragt einmal nach - mit „Erlauben“ bestätigen.
+Danach wählen Sie aus, welche der vier Arten Sie bekommen möchten. Das
+lässt sich jederzeit wieder ändern.</p>
+
+<div class="hinweis">
+  <b>Auf dem iPhone</b> geht es erst, wenn der Dorfladen als App auf dem
+  Startbildschirm liegt <i>und</i> von dort geöffnet wird - so will es Apple.
+  Wie das geht, steht in der <a href="/app" target="_blank">App-Anleitung</a>.
+</div>
+
+<p><b>Versehentlich abgelehnt?</b> Dann fragt der Browser nicht noch einmal.
+Sie geben es in den Einstellungen Ihres Browsers für diese Seite wieder
+frei - meist über das Symbol links in der Adresszeile unter
+„Berechtigungen“.</p>
+
+<p>Wir brauchen dafür keinen Namen und keine E-Mail-Adresse, sondern nur
+eine anonyme Kennung Ihres Geräts. Schalten Sie die Benachrichtigungen ab,
+ist auch die wieder weg.</p></div></div>
+<div class="faq" id="faq-kontakt" data-kw="kontakt nachricht schreiben fragen antwort chat melden anfrage email schreib uns rückmeldung kritik lob"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-nachricht"/></svg></span><span class="fq-t"><span class="fq-f">Wie schreibe ich dem Dorfladen eine Nachricht?</span><span class="fq-k">Kurz schreiben - die Antwort kommt in dasselbe Fenster.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Unten rechts finden Sie den Knopf <b>„Schreib uns“</b>. Darüber
+erreichen Sie uns direkt - ohne E-Mail-Programm und ohne Anmeldung.</p>
+
+<ol class="schritte">
+  <li><b>Namen eintragen.</b> Das ist das einzige Pflichtfeld.</li>
+  <li>Nachricht schreiben und abschicken.</li>
+  <li>Unsere Antwort erscheint <b>im selben Fenster</b>. Schauen Sie einfach
+      später noch einmal hinein.</li>
+</ol>
+
+<p>Damit Sie die Antwort nicht verpassen, gibt es zwei Wege:</p>
+<ul>
+  <li><b>Benachrichtigung:</b> Haben Sie Benachrichtigungen eingeschaltet,
+      sagen wir Ihnen Bescheid, sobald die Antwort da ist. Das sieht nur Sie.</li>
+  <li><b>Per E-Mail:</b> Setzen Sie den Haken bei
+      „Antworten auch per E-Mail“ und tragen Sie Ihre Adresse ein.</li>
+</ul>
+
+<p>Eilt es? Dann rufen Sie uns lieber an:
+<a href="tel:+4980826229991">08082 / 622 99 91</a>.</p></div></div>
+<h2 class="sh" id="gr-seite"><svg class="ic" aria-hidden="true"><use href="#ic-buch"/></svg> Rund um die Seite</h2>
+<div class="faq" id="faq-galerie" data-kw="galerie bilder fotos impressionen ansehen groß vollbild blättern lightbox kategorie filter"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-bild"/></svg></span><span class="fq-t"><span class="fq-f">Wie sehe ich die Bilder groß an?</span><span class="fq-k">Bild antippen, blättern, mit Wischen schließen.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Unter <a href="/bilder" target="_blank">Impressionen</a> sehen Sie Bilder
+aus dem Laden. Ein Tippen auf ein Bild zeigt es groß.</p>
+
+<ul>
+  <li><b>Blättern:</b> nach links oder rechts wischen, am Rechner mit den
+      Pfeiltasten.</li>
+  <li><b>Schließen:</b> nach unten wischen, auf das Kreuz tippen oder die
+      Escape-Taste drücken.</li>
+  <li><b>Filtern:</b> Über die Knöpfe oben sehen Sie nur eine Kategorie,
+      etwa den Laden oder Veranstaltungen.</li>
+</ul></div></div>
+<div class="faq" id="faq-news" data-kw="news ticker laufband aktuelles neuigkeiten meldung nachricht schlagzeile oben lesen artikel"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-zeitung"/></svg></span><span class="fq-t"><span class="fq-f">Was ist das Laufband ganz oben?</span><span class="fq-k">Kurzmeldungen - antippen für den ganzen Text.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Ganz oben läuft ein schmales Band mit unseren aktuellen Kurzmeldungen -
+etwa geänderte Öffnungszeiten oder Veranstaltungen. Ein Tippen darauf
+öffnet den vollständigen Text.</p>
+
+<p>Alle Meldungen gesammelt finden Sie unter
+<a href="/aktuelles" target="_blank">Aktuelles</a>. Wenn Sie nichts verpassen
+möchten, schalten Sie die Benachrichtigung <b>News</b> ein.</p></div></div>
+<div class="faq" id="faq-whatsapp" data-kw="whatsapp teilen weitergeben senden schicken weiterleiten verschicken link freunde nachbarn familie"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-nachricht"/></svg></span><span class="fq-t"><span class="fq-f">Wie gebe ich etwas per WhatsApp weiter?</span><span class="fq-k">Wochenplan, TagesInfo oder Angebot in einem Schritt teilen.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Beim Wochenplan, bei der TagesInfo und bei den Angeboten gibt es einen
+Knopf zum <b>Teilen</b>. Ein Tippen öffnet WhatsApp mit einem fertigen Text -
+Sie wählen nur noch den Empfänger aus.</p>
+
+<p>Am Rechner öffnet sich WhatsApp Web. Alternativ kopieren Sie die Adresse
+aus der Adresszeile und fügen sie irgendwo ein.</p>
+
+<p>Die App-Anleitung lässt sich übrigens genauso weitergeben - dort gibt es
+zusätzlich einen QR-Code zum Abfotografieren:
+<a href="/app" target="_blank">dorfladen-oberornau.de/app</a>.</p></div></div>
+<div class="faq" id="faq-drucken" data-kw="drucken ausdrucken drucker papier a4 wochenplan speiseplan angebote aushang pdf blatt"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-drucker"/></svg></span><span class="fq-t"><span class="fq-f">Wie drucke ich den Wochenplan aus?</span><span class="fq-k">Sauber auf ein Blatt - ohne Menüs und Knöpfe.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Beim Wochenplan und beim Angebotsflyer gibt es einen <b>Druckknopf</b>.
+Er bereitet die Seite für Papier auf: Menüs, Knöpfe und Hintergründe
+fallen weg, es bleibt der Inhalt.</p>
+
+<p>Damit die Farben mitgedruckt werden, schalten Sie im Druckfenster
+„Hintergrundgrafiken“ ein - bei Chrome unter „Weitere Einstellungen“.</p>
+
+<p>Kein Drucker zur Hand? Wählen Sie im Druckfenster
+„Als PDF speichern“ - dann können Sie die Datei weitergeben oder
+später drucken.</p></div></div>
+<div class="faq" id="faq-datenschutz" data-kw="datenschutz daten dsgvo cookie tracking speichern anonym werbung weitergabe sicher privat löschen"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-schloss"/></svg></span><span class="fq-t"><span class="fq-f">Welche Daten speichert die Website über mich?</span><span class="fq-k">So wenig wie möglich - und nichts für Werbung.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Wir verwenden nur technisch notwendige Cookies. Es gibt keine
+Werbenetzwerke, kein Weiterverkaufen von Daten und keine Auswertung Ihres
+Verhaltens für Werbung.</p>
+
+<ul>
+  <li><b>Benachrichtigungen:</b> Wir speichern eine anonyme Kennung Ihres
+      Geräts - keinen Namen, keine E-Mail. Schalten Sie sie ab, wird die
+      Kennung gelöscht.</li>
+  <li><b>Bestellungen:</b> Was Sie eintragen - Name und, falls angegeben,
+      E-Mail oder Telefon. Wir brauchen es, um Ihre Bestellung zuzuordnen.</li>
+  <li><b>Kamera (Strichcode):</b> Das Bild bleibt auf Ihrem Gerät. Es wird
+      nichts übertragen und nichts gespeichert.</li>
+</ul>
+
+<p>Ausführlich steht alles in der
+<a href="/datenschutzerklärung" target="_blank">Datenschutzerklärung</a>.</p></div></div>
+<h2 class="sh" id="gr-klemmt"><svg class="ic" aria-hidden="true"><use href="#ic-warnung"/></svg> Wenn etwas klemmt</h2>
+<div class="faq" id="faq-laden-fehler" data-kw="fehler lädt nicht weiß leer hängt kaputt geht nicht absturz funktioniert nicht neu laden aktualisieren"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-warnung"/></svg></span><span class="fq-t"><span class="fq-f">Die Seite lädt nicht oder bleibt weiß</span><span class="fq-k">Drei Handgriffe, die fast immer helfen.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><ol class="schritte">
+  <li><b>Neu laden.</b> Auf dem Handy von oben nach unten ziehen, am Rechner
+      F5 drücken.</li>
+  <li><b>Ganz schließen und neu öffnen.</b> Das hilft, wenn die Seite als
+      App auf dem Startbildschirm liegt.</li>
+  <li><b>Verbindung prüfen.</b> Kurz zwischen WLAN und Mobilfunk wechseln.</li>
+</ol>
+
+<p>Bleibt es dabei, ist womöglich eine alte Fassung zwischengespeichert.
+Leeren Sie in den Browsereinstellungen den Zwischenspeicher (Cache) für
+diese Seite.</p>
+
+<p>Hilft alles nichts, sagen Sie uns bitte Bescheid - mit dem Knopf
+<b>Schreib uns</b> oder telefonisch unter
+<a href="tel:+4980826229991">08082 / 622 99 91</a>. Beschreiben Sie kurz, was
+Sie getan haben und was passiert ist; das hilft uns beim Suchen.</p></div></div>
+<div class="faq" id="faq-kamera-gesperrt" data-kw="kamera gesperrt blockiert verweigert erlauben berechtigung zugriff scanner barcode schwarz kein bild"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-verbot"/></svg></span><span class="fq-t"><span class="fq-f">Der Scanner sagt, die Kamera sei gesperrt</span><span class="fq-k">Berechtigung im Browser wieder freigeben.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Sie haben die Kamera-Anfrage vermutlich einmal abgelehnt. Danach fragt der
+Browser nicht noch einmal - Sie müssen es von Hand freigeben.</p>
+
+<ul>
+  <li><b>Android (Chrome):</b> Auf das Symbol links in der Adresszeile tippen
+      &rarr; „Berechtigungen“ &rarr; „Kamera“ &rarr; zulassen.</li>
+  <li><b>iPhone (Safari):</b> „Einstellungen“ &rarr; „Safari“ &rarr;
+      „Kamera“ &rarr; „Fragen“ oder „Erlauben“.</li>
+  <li><b>Rechner:</b> Auf das Schloss- oder Kamerasymbol in der Adresszeile
+      klicken und die Kamera zulassen.</li>
+</ul>
+
+<p>Danach die Seite einmal neu laden. Bleibt das Bild schwarz, verwendet
+möglicherweise eine andere App gerade die Kamera - diese bitte schließen.</p></div></div>
+<div class="faq" id="faq-offline" data-kw="offline kein internet funkloch langsam verbindung netz wlan mobilfunk cache gespeichert"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-funk"/></svg></span><span class="fq-t"><span class="fq-f">Was geht ohne Internet?</span><span class="fq-k">Zuletzt Gesehenes bleibt lesbar - Neues braucht Netz.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Die Seite merkt sich, was Sie zuletzt angesehen haben. Ohne Verbindung
+können Sie das weiter lesen - zum Beispiel den Wochenplan von vorhin.</p>
+
+<p>Nicht möglich sind Dinge, die aktuelle Daten brauchen: bestellen,
+stornieren, eine Nachricht schreiben oder den Bestellstatus abrufen. Sobald
+Sie wieder Netz haben, funktioniert alles von selbst - Sie müssen nichts
+nachholen.</p>
+
+<p>Bei schwacher Verbindung erscheinen Inhalte manchmal verzögert. Ziehen
+Sie die Seite von oben nach unten, um sie neu zu laden.</p></div></div>
+<div class="faq" id="faq-schrift" data-kw="schrift klein groß lesen zoom vergrößern lupe augen schriftgröße darstellung barrierefrei"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-lupe"/></svg></span><span class="fq-t"><span class="fq-f">Die Schrift ist mir zu klein</span><span class="fq-k">Größer stellen - dauerhaft oder nur kurz.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p><b>Schnell:</b> Auf dem Handy mit zwei Fingern auseinanderziehen. Am
+Rechner Strg und + drücken (am Mac Befehlstaste und +).</p>
+
+<p><b>Dauerhaft:</b></p>
+<ul>
+  <li><b>Android:</b> „Einstellungen“ &rarr; „Anzeige“ &rarr;
+      „Schriftgröße“.</li>
+  <li><b>iPhone:</b> „Einstellungen“ &rarr; „Anzeige &amp; Helligkeit“
+      &rarr; „Textgröße“.</li>
+  <li><b>Rechner:</b> In den Browsereinstellungen unter „Darstellung“
+      die Schriftgröße erhöhen.</li>
+</ul>
+
+<p>Die Seite passt sich an - es wird nichts abgeschnitten.</p></div></div>
+<div class="faq" id="faq-gestures" data-kw="popup schließen wegwischen wischen geste zurück fenster overlay zu weg bedienen"><button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false"><span class="fq-sym"><svg class="ic" aria-hidden="true"><use href="#ic-hand"/></svg></span><span class="fq-t"><span class="fq-f">Wie schließe ich ein Fenster auf dem Handy?</span><span class="fq-k">Wegwischen, Zurück-Geste oder das Kreuz.</span></span><span class="fq-pf" aria-hidden="true"></span></button><div class="faq-a"><p>Fenster wie der Wochenplan oder diese Hilfe lassen sich auf drei Arten
+schließen:</p>
+
+<ul>
+  <li><b>Nach unten wischen</b> - am oberen Rand des Fensters ansetzen.</li>
+  <li><b>Zurück-Geste</b> des Handys: vom linken Rand nach rechts wischen.
+      Damit wird nur das Fenster geschlossen, die Seite bleibt.</li>
+  <li><b>Auf das Kreuz</b> oben rechts tippen.</li>
+</ul>
+
+<p>Am Rechner genügt die Escape-Taste oder ein Klick neben das Fenster.</p></div></div>
+
+    <div class="fuss">
+      <h3><svg class="ic" aria-hidden="true"><use href="#ic-nachricht"/></svg> Nicht gefunden, was Sie suchen?</h3>
+      <p>Schreiben Sie uns über den Knopf <b>„Schreib uns“</b> unten rechts
+         auf der Startseite – oder rufen Sie an:
+         <a href="tel:+4980826229991">08082 / 622 99 91</a>.</p>
+      <p>Kommen Sie gerne auch einfach im Laden vorbei. Wir richten Ihnen die App
+         und die Benachrichtigungen auf Wunsch direkt auf Ihrem Handy ein.</p>
+      <div class="intern">
+        Sie arbeiten im Dorfladen? Das Handbuch für den Kiosk – Kalender,
+        Bestellungen und Tagesablauf – steht unter
+        <a href="/help-workflows.html" target="_blank">help-workflows.html</a>.
       </div>
     </div>
 
-    <div class="faq" id="faq-kiosk-eintrag" data-kw="kiosk eintrag anlegen neuer eintrag uhrzeit picker ganztägig kategorie kunde wiederholung">
-      <button class="faq-q" onclick="toggleFaq(this)">➕ Wie lege ich im Kiosk einen neuen Eintrag an?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Schritt für Schritt:
-        <ol>
-          <li>Auf <strong>+ Neuer Eintrag</strong> tippen.</li>
-          <li><strong>Titel</strong> eintragen (mehrzeilig möglich, bei Bedarf längerer Text).</li>
-          <li><strong>Zeitpunkt</strong> wählen:
-            <ul>
-              <li>Für Tagesinfos: <strong>Ganztägig</strong> aktivieren.</li>
-              <li>Für feste Uhrzeit: Uhrzeit per <strong>+/- Tasten</strong> oder Schnellzeiten setzen.</li>
-            </ul>
-          </li>
-          <li><strong>Kategorie</strong> wählen (z. B. Aufgabe, Lieferung, Info).</li>
-          <li>Optional: <strong>Kunde</strong> und <strong>Wiederholung</strong> setzen.</li>
-          <li>Mit <strong>Speichern</strong> abschließen.</li>
-        </ol>
-        <div class="flow"><strong>Ablaufdiagramm (Neuer Eintrag)</strong>
-+ Neuer Eintrag
-↓
-Titel eingeben
-↓
-Ganztägig ODER Uhrzeit setzen
-↓
-Kategorie wählen
-↓
-Optional: Kunde + Wiederholung
-↓
-Speichern</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-kiosk-serie" data-kw="kiosk serie dauereintrag löschen wiederholung nur diesen tag ganze serie kalender">
-      <button class="faq-q" onclick="toggleFaq(this)">🔁 Wie lösche ich einen Dauereintrag (Serie) richtig?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Beim Löschen eines Serieneintrags fragt der Kiosk gezielt nach der gewünschten Aktion:
-        <ul>
-          <li><strong>Nur diesen Tag löschen:</strong> Der Termin wird nur am aktuellen Datum entfernt.</li>
-          <li><strong>Ganze Serie löschen:</strong> Die Serie wird ab dem gewählten Tag beendet – dieser und alle künftigen Termine entfallen. Vergangene (auch bereits bearbeitete) Termine bleiben sichtbar.</li>
-          <li><strong>Abbrechen:</strong> Es wird nichts gelöscht.</li>
-        </ul>
-        <div class="tip-box">💡 Wenn Sie unsicher sind, wählen Sie zuerst „Nur diesen Tag löschen“.</div>
-        <div class="flow"><strong>Ablaufdiagramm (Serie löschen)</strong>
-Löschen antippen
-↓
-Ist es eine Serie?
-↓ Ja
-Auswahl anzeigen
-├─ Nur diesen Tag → nur dieser Termin gelöscht
-├─ Ganze Serie → ab hier gelöscht, Vergangenes bleibt
-└─ Abbrechen → keine Änderung
-↓ Nein
-Einzeltermin direkt löschen</div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════ FAQ ═══════════════════════════════ -->
-    <div class="sh">❓ Häufige Fragen</div>
-
-    <div class="faq" id="faq-oez" data-kw="öffnungszeiten offen geschlossen status feiertag urlaub wann auf zu schließt stunden geöffnet">
-      <button class="faq-q" onclick="toggleFaq(this)">🕐 Wie sehe ich, ob der Dorfladen gerade geöffnet hat?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Auf der <strong>Startseite</strong> zeigt die farbige Statusleiste direkt an: <strong>🟢 GEÖFFNET</strong> oder <strong>🔴 GESCHLOSSEN</strong>.
-        Bei geöffnet sehen Sie die Restzeit bis zur Schließung (z.&nbsp;B. „Schließt in 2 Stunden"). Bei geschlossen erscheint der nächste Öffnungstermin.<br><br>
-        Tippen Sie auf die Statusleiste – es öffnet sich eine <strong>vollständige Wochentabelle</strong> mit allen regulären Öffnungszeiten.<br><br>
-        <strong>Feiertage:</strong> Das System kennt alle bayerischen gesetzlichen Feiertage automatisch (Ostern, Pfingsten, Allerheiligen usw.) – kein manuelles Eintragen nötig.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-mittag" data-kw="mittagstisch wochenplan mittag essen speiseplan tagesgericht gericht drucken teilen whatsapp preis">
-      <button class="faq-q" onclick="toggleFaq(this)">🍽️ Wie rufe ich den aktuellen Mittagstisch auf?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Tippen Sie auf der Startseite auf die Kachel <strong>„Mittagstisch"</strong> oder im Menü auf <strong>„🍽️ Wochenplan"</strong>. Es öffnet sich ein Popup mit allen Tagesgerichten und Preisen von Montag bis Freitag.<br><br>
-        <ul>
-          <li><strong>Teilen:</strong> „Teilen"-Button öffnet WhatsApp mit fertig formuliertem Text inkl. Gerichte.</li>
-          <li><strong>Drucken:</strong> „🖨️ Drucken" öffnet den Druckdialog für einen sauberen A4-Ausdruck.</li>
-          <li><strong>Schließen (Mobile):</strong> Das Popup lässt sich nach unten wegwischen oder per Zurück-Geste schließen.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-angebote" data-kw="angebote aktion rabatt sonderangebot diese woche nächste woche preis reduziert aktionspreis statt sparen badge">
-      <button class="faq-q" onclick="toggleFaq(this)">🏷️ Wo sehe ich die Wochenangebote? Kann ich auch nächste Woche sehen?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Tippen Sie auf der Startseite auf die Kachel <strong>„Angebote"</strong>. Die Aktionsartikel werden als Kacheln mit Aktionspreis, durchgestrichenem Normalpreis und Rabatt-Badge angezeigt.<br><br>
-        <strong>Nächste Woche vorschauen:</strong> Über die Schaltflächen <code>Diese Woche</code> / <code>Nächste Woche</code> oben im Popup können Sie bereits vorab die kommenden Aktionen einsehen. Der genaue Zeitraum (z.&nbsp;B. 02.06.–08.06.) wird dabei angezeigt.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-barcode" data-kw="barcode scanner ean strichcode kamera scan artikel preis suchen code produkt">
-      <button class="faq-q" onclick="toggleFaq(this)">📷 Wie funktioniert der Barcode-Scanner in der Preisliste?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Auf der <strong>Sortimentsseite</strong> befindet sich rechts neben dem Suchfeld ein <strong>Kamera-Symbol 📷</strong>.<br><br>
-        <ul>
-          <li>Tippen Sie darauf – der Browser fragt einmalig nach der <strong>Kameraberechtigung</strong>.</li>
-          <li>Halten Sie die Kamera auf den <strong>EAN-Strichcode</strong> eines Produkts (Joghurt, Nudelpackung, Konserve…).</li>
-          <li>Der Scanner erkennt EAN-13, EAN-8, UPC-A und Code-128 automatisch. Bei über 85 % Erkennungssicherheit wird das Ergebnis sofort angezeigt: Produktname, Preis, Rabattbadge.</li>
-          <li>Scanner schließen: Klick auf <code>× Scanner schließen</code>.</li>
-        </ul>
-        <div class="tip-box">💡 Funktioniert am besten auf dem Smartphone im hellen Licht. Halten Sie den Code ruhig und mittig im Kamerafenster.</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-preisliste" data-kw="preisliste sortiment artikel suchen filter warengruppe abteilung uvp preis vergleich sonderangebot akkordeon kategorie">
-      <button class="faq-q" onclick="toggleFaq(this)">📋 Wie suche und filtere ich in der Preisliste?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Preisliste finden Sie unter dem Menüpunkt <strong>„Sortiment"</strong>.<br><br>
-        <ul>
-          <li><strong>Suche:</strong> Tippen Sie in das Feld „Produkt suchen…" – die Liste filtert sofort mit jedem Buchstaben.</li>
-          <li><strong>Roter-Punkt-Filter 🔴:</strong> Zeigt nur Artikel, die günstiger als die UVP sind.</li>
-          <li><strong>Sonderangebot-Filter ★:</strong> Zeigt nur aktuelle Wochenaktion-Artikel.</li>
-          <li><strong>Akkordeon-Gruppen:</strong> Artikel sind nach Warengruppen gruppiert. Klicken Sie auf die Gruppenüberschrift zum Auf-/Zuklappen. Bei aktiver Suche klappen passende Gruppen automatisch auf.</li>
-          <li><strong>UVP-Vergleich:</strong> Viele Artikel zeigen den durchgestrichenen UVP-Preis und eine farbige Ersparnis-Angabe.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-roterpunkt" data-kw="roter punkt dauertiefpreis günstig grundnahrungsmittel sozial versorgung discounter liste rabatt">
-      <button class="faq-q" onclick="toggleFaq(this)">🔴 Was bedeutet „Roter Punkt"?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Der <strong>Rote Punkt</strong> ist ein Programm des Dorfladens für dauerhaft extrem günstige Grundnahrungsmittel und Drogerieartikel – oft auf Discounter-Niveau oder knapp über Selbstkosten.<br><br>
-        Die Roter-Punkt-Liste finden Sie über die <strong>rote Kachel auf der Startseite</strong> oder im Menü unter <strong>„🔴 Roter Punkt"</strong>.<br><br>
-        Die Liste zeigt alle Eckartikel mit dem aktuellen Preis, dem UVP-Vergleich, der Ersparnis in Euro und Prozent. Artikel sind nach Warengruppen als Akkordeon gruppiert – tippen Sie auf eine Gruppe zum Aufklappen.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-app" data-kw="app installieren pwa homescreen startbildschirm android iphone ios safari chrome hinzufügen">
-      <button class="faq-q" onclick="toggleFaq(this)">📱 Wie installiere ich den Dorfladen als App auf meinem Smartphone?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Homepage ist eine <strong>Progressive Web App (PWA)</strong> – sie verhält sich wie eine echte App, braucht aber keinen App-Store.<br><br>
-        <strong>Android (Chrome):</strong>
-        <ul>
-          <li>Am unteren Rand erscheint automatisch ein Banner „Dorfladen zum Startbildschirm hinzufügen" – einfach antippen.</li>
-          <li>Oder: Chrome-Menü (⋮) → <strong>„App installieren"</strong>.</li>
-        </ul>
-        <strong>iPhone / iPad (Safari):</strong>
-        <ul>
-          <li>Teilen-Symbol 📤 in der unteren Leiste antippen.</li>
-          <li>→ <strong>„Zum Home-Bildschirm"</strong> → „Hinzufügen".</li>
-        </ul>
-        Nach der Installation öffnet die App im Vollbild, ohne Adresszeile, und lädt dank Caching auch bei schwacher Verbindung schnell.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-push" data-kw="push benachrichtigung notification anmelden abmelden aktivieren blockiert alarm mitteilung angebot mittag testphase">
-      <button class="faq-q" onclick="toggleFaq(this)">🔔 Wie aktiviere ich Push-Benachrichtigungen?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        <div class="tip-box">⚠️ <strong>Hinweis – Testphase:</strong> Die Push-Benachrichtigungen befinden sich derzeit noch in der optionalen Testphase und stehen noch nicht offiziell im Live-Betrieb zur Verfügung. Die Funktion kann vorübergehend eingeschränkt verfügbar sein.</div><br>
-        Push-Benachrichtigungen informieren Sie automatisch, wenn z.&nbsp;B. der neue Wochenplan oder frische Angebote online sind.<br><br>
-        <strong>Aktivieren:</strong>
-        <ul>
-          <li>Menü öffnen → Button <strong>„🔔 Benachrichtigungen aktivieren"</strong> antippen.</li>
-          <li>Der Browser fragt: „Darf die Seite Benachrichtigungen senden?" → <strong>„Erlauben"</strong> wählen.</li>
-          <li>Der Button wechselt auf „Benachrichtigungen aktiv" – fertig!</li>
-        </ul>
-        <strong>Versehentlich blockiert?</strong> Tippen Sie auf das Schloss-Symbol 🔒 in der Browser-Adressleiste → Berechtigungen → Benachrichtigungen → „Zulassen".
-        <div class="tip-box">💡 Es werden keine persönlichen Daten gespeichert – nur eine anonyme Browser-ID.</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-galerie" data-kw="galerie impressionen bilder fotos lightbox vollbild kategorie filter bild anzeigen">
-      <button class="faq-q" onclick="toggleFaq(this)">🖼️ Wie betrachte ich die Galerie in Vollbild?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Galerie finden Sie unter dem Menüpunkt <strong>„Impressionen"</strong>.<br><br>
-        <ul>
-          <li><strong>Vollbild (Lightbox):</strong> Einfach auf ein Bild tippen/klicken. Es öffnet sich eine Vollbild-Ansicht.</li>
-          <li><strong>Weiterblättern:</strong> Pfeiltasten ← / → (Desktop) oder die Pfeil-Buttons in der Lightbox. Am letzten Bild springt es automatisch zum Anfang.</li>
-          <li><strong>Schließen:</strong> Außerhalb des Bilds klicken, das ×-Symbol oder <code>Escape</code>-Taste.</li>
-          <li><strong>Kategorien filtern:</strong> Falls vorhanden, erscheinen Filter-Tabs oben (z.&nbsp;B. „Laden", „Mittagstisch"). Tippen Sie auf eine Kategorie, um nur deren Bilder zu sehen.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-news" data-kw="news neuigkeit ticker laufband aktuelles beitrag meldung artikel lesen overlay">
-      <button class="faq-q" onclick="toggleFaq(this)">📰 Was ist der News-Ticker auf der Startseite?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Wenn aktuelle Neuigkeiten als „Laufband" gekennzeichnet sind, läuft oben auf der Startseite ein animierter Schlagzeilen-Ticker von rechts nach links.<br><br>
-        <ul>
-          <li>Tippen Sie auf einen Ticker-Eintrag → der vollständige Artikel öffnet sich als <strong>Overlay</strong> (ohne Seitenwechsel).</li>
-          <li>Das Overlay schließen: Tippen außerhalb des Dialogs oder auf das ×-Symbol.</li>
-          <li>Alle Beiträge finden Sie im <strong>News-Archiv</strong> unter <a href="/aktuelles.html">Aktuelles</a>.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-gestures" data-kw="wischen swipe geste popup schließen zurück android back button navigation touch mobile">
-      <button class="faq-q" onclick="toggleFaq(this)">👆 Wie schließe ich Popups auf dem Smartphone?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Dorfladen-App bietet zwei native Gesten zum Schließen von Popups und Bottom-Sheets:<br><br>
-        <ul>
-          <li><strong>Nach unten wischen:</strong> Greifen Sie das Popup am oberen Rand (am Handlebar-Streifen) und ziehen Sie es nach unten. Ab ca. 40 % der Höhe schnappt es zu.</li>
-          <li><strong>Android Zurück-Geste:</strong> Die Zurück-Taste bzw. der Zurück-Swipe vom Rand schließt das aktive Popup – die App selbst bleibt offen.</li>
-          <li><strong>Klick außerhalb:</strong> Tippen Sie auf den abgedunkelten Hintergrund hinter dem Popup.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-offline" data-kw="offline kein internet verbindung langsam cache laden fehler service worker netz funkloch">
-      <button class="faq-q" onclick="toggleFaq(this)">📶 Was funktioniert ohne Internetverbindung?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Dank des integrierten <strong>Service Workers</strong> bleiben bereits geladene Seiten auch offline verfügbar:<br><br>
-        <ul>
-          <li>✅ Reguläre Öffnungszeiten (zuletzt geladen)</li>
-          <li>✅ Preisliste (gecacht)</li>
-          <li>✅ App-Oberfläche, Navigation, Logos</li>
-          <li>❌ Frische Wochenpläne, neue Angebote, aktuelle News – diese benötigen eine kurze Verbindung zur Synchronisation.</li>
-        </ul>
-        Bei schlechtem Netz: Seite neu laden mit der <strong>Zieh-Geste nach unten</strong> (Pull-to-Refresh) oder <code>F5</code> am PC.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-preisabweichung" data-kw="preis abweichung flyer plakat mittagstisch website unterschied falsch veraltet stimmt nicht">
-      <button class="faq-q" onclick="toggleFaq(this)">💬 Die Mittagstisch-Preise auf der Website weichen vom Flyer ab – warum?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Es gibt zwei häufige Ursachen:<br><br>
-        <strong>1. Der Flyer wurde vor einer Preiskorrektur gedruckt.</strong><br>
-        Gedruckte Flyer spiegeln immer den Stand zum Druckzeitpunkt wider. Die Website wird danach noch aktiv vom CMS-Team gepflegt – daher kann die Website-Version aktueller sein als der Papierflyer.<br><br>
-        <strong>2. Kurzfristige Preisanpassung nach Lieferantennachkalkulation.</strong><br>
-        Lieferkostenänderungen können nach dem Druckdatum zu einer Preiskorrektur führen. In diesem Fall gilt stets <strong>der auf der Website angezeigte Preis</strong> als verbindlich.<br><br>
-        <strong>Was gilt an der Kasse?</strong> Sprechen Sie im Zweifelsfall das Kassenpersonal direkt an – im Dorfladen Oberornau wird immer kulant entschieden. In der Regel gilt der günstigere Preis für Sie.
-        <div class="tip-box" style="margin-top:10px">💡 Die Website ist stets aktueller als gedruckte Materialien. Bei Unsicherheiten einfach vor Ort nachfragen.</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-sortiment-veraltet" data-kw="sortiment preisliste veraltet artikel nicht mehr da ausverkauft neu fehlt">
-      <button class="faq-q" onclick="toggleFaq(this)">🛒 Ein Artikel aus der Preisliste ist im Laden nicht erhältlich – was stimmt?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Online-Preisliste wird manuell gepflegt. Es kann vorkommen, dass:<br><br>
-        <ul>
-          <li>Ein Artikel <strong>vorübergehend ausverkauft</strong> ist – noch in der Liste, aber nicht im Regal.</li>
-          <li>Ein Artikel <strong>dauerhaft ausgelistet</strong> wurde – die Liste wird regelmäßig bereinigt, aber mit leichter Verzögerung.</li>
-          <li>Ein <strong>Neuzugang</strong> noch nicht eingetragen ist – neue Produkte erscheinen meist innerhalb weniger Tage.</li>
-        </ul>
-        Sprechen Sie das Kassenpersonal an – die aktuellste Bestandsinfo ist immer im Laden selbst vorhanden.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-datenschutz" data-kw="datenschutz dsgvo daten speichern tracking cookie personenbezogen anonym sicher">
-      <button class="faq-q" onclick="toggleFaq(this)">🔒 Welche Daten speichert die Website über mich?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Dorfladen-Homepage ist bewusst <strong>datenschutzfreundlich</strong> konzipiert:<br><br>
-        <ul>
-          <li><strong>Kein Tracking:</strong> Keine Analyse-Tools (Google Analytics, Facebook-Pixel o.&nbsp;ä.).</li>
-          <li><strong>Kein Login:</strong> Keine Registrierung oder Anmeldung erforderlich.</li>
-          <li><strong>Push (optional):</strong> Nur eine anonyme Browser-ID – kein Name, keine E-Mail. Jederzeit abbestellbar.</li>
-          <li><strong>Barcode-Scanner:</strong> Kamera wird nur lokal genutzt – kein Bild verlässt Ihr Gerät.</li>
-          <li><strong>Service Worker / Cache:</strong> Seiteninhalte für schnelles Laden – keine personenbezogenen Daten.</li>
-        </ul>
-        Weitere Details: <a href="/datenschutzerklaerung">Datenschutzerklärung</a>.
-      </div>
-    </div>
-
-    <div class="faq" id="faq-whatsapp" data-kw="whatsapp teilen wochenplan mittagstisch link freunde senden weitergeben">
-      <button class="faq-q" onclick="toggleFaq(this)">📲 Wie teile ich den Wochenplan oder ein Angebot per WhatsApp?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        An mehreren Stellen gibt es direkte <strong>„Teilen"-Buttons</strong>:<br><br>
-        <ul>
-          <li><strong>Wochenplan-Popup:</strong> Button <code>📲 Teilen</code> öffnet WhatsApp mit fertig formuliertem Nachrichtentext inkl. Gerichte und Preise.</li>
-          <li><strong>Angebotsflyer:</strong> Teilen-Button gibt den Flyer als Bild + Link weiter.</li>
-          <li><strong>Allgemein:</strong> Browser-Teilen-Symbol 📤 in der Adressleiste → WhatsApp, SMS oder E-Mail wählen.</li>
-        </ul>
-        <div class="tip-box">💡 Auf dem iPhone funktioniert WhatsApp-Teilen am besten, wenn die WhatsApp-App installiert ist.</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-kamera-gesperrt" data-kw="kamera gesperrt barcode scanner erlauben berechtigung zugriff verweigert blockiert">
-      <button class="faq-q" onclick="toggleFaq(this)">📷 Der Barcode-Scanner sagt „Kamera gesperrt" – wie behebe ich das?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Die Kameraberechtigung wurde versehentlich <strong>blockiert</strong>. So setzen Sie sie zurück:<br><br>
-        <strong>Chrome / Edge (Android &amp; Desktop):</strong>
-        <ul>
-          <li>Adressleiste antippen → <strong>🔒 Schloss-Symbol</strong> → <strong>„Berechtigungen"</strong> → Kamera → <strong>„Zulassen"</strong>.</li>
-          <li>Seite neu laden (F5 / Pull-to-Refresh).</li>
-        </ul>
-        <strong>Safari (iPhone / iPad):</strong>
-        <ul>
-          <li>Einstellungen → Safari → Datenschutz → <strong>„Kamera"</strong> → <strong>„Fragen"</strong> oder <strong>„Erlauben"</strong>.</li>
-          <li>Dorfladen-Seite neu laden und Scanner erneut öffnen.</li>
-        </ul>
-        <div class="tip-box">💡 Der Scanner fragt nur einmalig nach Berechtigung – danach bleibt die Einstellung gespeichert.</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-laden-fehler" data-kw="seite lädt nicht fehler weiß leer kaputt absturz funktioniert nicht neu laden cache leeren">
-      <button class="faq-q" onclick="toggleFaq(this)">⚠️ Die Seite lädt nicht richtig oder zeigt eine weiße Fläche – was tun?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        Schnelle Lösungen Schritt für Schritt:<br><br>
-        <ol>
-          <li><strong>Harter Neu-Laden:</strong> <code>Strg&nbsp;+&nbsp;Shift&nbsp;+&nbsp;R</code> (Windows) bzw. <code>Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;R</code> (Mac/iPhone).</li>
-          <li><strong>Cache leeren:</strong> Browser-Menü → Verlauf → Browserdaten löschen → „Bilder und Dateien im Cache".</li>
-          <li><strong>Browser aktualisieren:</strong> Chrome, Edge oder Firefox auf aktuelle Version bringen.</li>
-          <li><strong>Internetverbindung prüfen:</strong> Andere Website aufrufen – wenn die auch nicht lädt, liegt es am Netz.</li>
-          <li><strong>PWA neu installieren:</strong> App vom Homescreen löschen, aus Browser neu hinzufügen.</li>
-        </ol>
-        <div class="tip-box">⚠️ Wenn nichts hilft – einfach kurz im Laden Bescheid geben!</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-drucken" data-kw="drucken ausdrucken wochenplan angebot pdf a4 drucker papier hintergrundgrafiken">
-      <button class="faq-q" onclick="toggleFaq(this)">🖨️ Wie drucke ich den Wochenplan oder den Angebotsflyer aus?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        <strong>Wochenplan drucken:</strong>
-        <ol>
-          <li>Kachel <strong>„Mittagstisch"</strong> antippen → Popup öffnet sich.</li>
-          <li>Button <code>🖨️ Drucken</code> klicken → Browser-Druckdialog erscheint.</li>
-          <li>Papierformat A4, Hochformat, Ränder Minimal/Keine.</li>
-          <li><strong>„Hintergrundgrafiken drucken"</strong> aktivieren – sonst fehlen Farben und Logos!</li>
-        </ol>
-        <strong>Angebotsflyer drucken:</strong>
-        <ol>
-          <li>Angebote öffnen → Plakat-Button → <code>⬇️ PNG herunterladen</code>.</li>
-          <li>Heruntergeladenes PNG im Bildbetrachtungsprogramm öffnen und von dort drucken.</li>
-        </ol>
-        <div class="tip-box">💡 PNG-Export empfohlen für Aushänge – beste Druckqualität auf A4.</div>
-      </div>
-    </div>
-
-    <div class="faq" id="faq-schrift" data-kw="schrift schriftgröße text klein groß lesbarkeit zoom vergrößern barrierefreiheit">
-      <button class="faq-q" onclick="toggleFaq(this)">🔎 Der Text ist zu klein – wie vergrößere ich die Darstellung?<span class="arr">▼</span></button>
-      <div class="faq-a">
-        <strong>Desktop (Windows/Mac):</strong>
-        <ul>
-          <li><code>Strg&nbsp;+&nbsp;+</code> vergrößert, <code>Strg&nbsp;+&nbsp;−</code> verkleinert, <code>Strg&nbsp;+&nbsp;0</code> setzt zurück.</li>
-          <li>Oder: Browser-Menü (⋮ / ☰) → <strong>„Zoom"</strong> → Prozent wählen.</li>
-        </ul>
-        <strong>Smartphone:</strong>
-        <ul>
-          <li><strong>Zwei-Finger-Spreiz-Geste</strong> (Pinch-to-Zoom) direkt auf der Seite.</li>
-          <li>Geräte-Einstellungen → <strong>Barrierefreiheit → Schriftgröße</strong> systemweit anpassen.</li>
-        </ul>
-        <div class="tip-box">💡 Zoom bis 150 % beeinträchtigt die Navigation nicht.</div>
-      </div>
-    </div>
-
-    <!-- HANDBÜCHER -->
-    <div class="sh">📄 Ausführliche Handbücher</div>
-    <p style="font-size:.92em;color:var(--muted);margin-bottom:14px">Für detaillierte Beschreibungen aller Funktionen stehen die vollständigen Handbücher zur Verfügung:</p>
-    <div class="mbts">
-      <a href="homepage-anwenderhandbuch.html" class="mbt">📖 Besucher-Handbuch (HTML)</a>
-      <a href="homepage-anwenderhandbuch.pdf" class="mbt sec" target="_blank">⬇️ Als PDF herunterladen</a>
-    </div>
-
-  </div><!-- end #mc -->
-</div><!-- end .wrap -->
-
-<footer>
-  Dorfladen Oberornau Genossenschaft · <a href="/impressum.html" style="color:var(--muted)">Impressum</a> · <a href="/datenschutzerklaerung.html" style="color:var(--muted)">Datenschutz</a>
-</footer>
+  </div>
+</div>
 
 <script>
-// ── SUCHDATEN ──────────────────────────────────────────────────────────────────
-const DATA = [
-  {id:'faq-oez',  tag:'Öffnungszeiten', title:'Wie sehe ich, ob der Dorfladen geöffnet hat?',        kw:'öffnungszeiten offen geschlossen status feiertag urlaub wann auf zu schließt stunden geöffnet live echtzeit'},
-  {id:'faq-mittag',tag:'Mittagstisch',  title:'Wie rufe ich den aktuellen Mittagstisch auf?',         kw:'mittagstisch wochenplan mittag essen speiseplan tagesgericht gericht drucken teilen whatsapp preis bistro'},
-  {id:'faq-angebote',tag:'Angebote',    title:'Wochenangebote & nächste Woche vorschauen',             kw:'angebote aktion rabatt sonderangebot diese woche nächste woche preis reduziert aktionspreis statt sparen badge kachel'},
-  {id:'faq-barcode',tag:'Preisliste',   title:'Barcode-Scanner: EAN-Code per Kamera suchen',           kw:'barcode scanner ean strichcode kamera scan artikel preis suchen code produkt quagga fotografieren'},
-  {id:'faq-preisliste',tag:'Preisliste',title:'Suchen & Filtern in der Preisliste',                   kw:'preisliste sortiment artikel suchen filter warengruppe abteilung uvp preis vergleich sonderangebot akkordeon kategorie echtzeit live'},
-  {id:'faq-roterpunkt',tag:'Roter Punkt',title:'Was bedeutet der Rote Punkt (Dauertiefpreise)?',       kw:'roter punkt dauertiefpreis günstig grundnahrungsmittel sozial versorgung discounter liste rabatt eckartikel'},
-  {id:'faq-app',   tag:'PWA / App',     title:'App auf Smartphone installieren (Android & iPhone)',    kw:'app installieren pwa homescreen startbildschirm android iphone ios safari chrome hinzufügen vollbild icon'},
-  {id:'faq-push',  tag:'Benachrichtigungen', title:'Push-Benachrichtigungen aktivieren & deaktivieren',kw:'push benachrichtigung notification anmelden abmelden aktivieren blockiert alarm mitteilung angebot mittag erlauben'},
-  {id:'faq-galerie',tag:'Galerie',      title:'Galerie in Vollbild & Kategorien filtern',             kw:'galerie impressionen bilder fotos lightbox vollbild kategorie filter bild anzeigen blättern pfeil'},
-  {id:'faq-news',  tag:'News',          title:'News-Ticker & Artikel als Overlay lesen',               kw:'news neuigkeit ticker laufband aktuelles beitrag meldung artikel lesen overlay schlagzeile'},
-  {id:'faq-gestures',tag:'Navigation',  title:'Popups wischen & Android Zurück-Geste',                kw:'wischen swipe geste popup schließen zurück android back button navigation touch mobile handlebar'},
-  {id:'faq-offline',     tag:'Offline',          title:'Was funktioniert ohne Internet / schlechtes WLAN?',         kw:'offline kein internet verbindung langsam cache laden fehler service worker netz funkloch pull refresh'},
-  {id:'faq-preisabweichung', tag:'Preise',       title:'Mittagstisch-Preise weichen vom Flyer ab – warum?',         kw:'preis abweichung flyer plakat mittagstisch website unterschied falsch veraltet stimmt nicht kasse kulant'},
-  {id:'faq-sortiment-veraltet', tag:'Sortiment', title:'Artikel aus Preisliste im Laden nicht erhältlich',          kw:'sortiment preisliste veraltet artikel nicht mehr da ausverkauft neu fehlt regal'},
-  {id:'faq-datenschutz', tag:'Datenschutz',      title:'Welche Daten speichert die Website über mich?',             kw:'datenschutz dsgvo daten speichern tracking cookie personenbezogen anonym sicher push kamera'},
-  {id:'faq-whatsapp',    tag:'Teilen',           title:'Wochenplan oder Angebot per WhatsApp teilen',               kw:'whatsapp teilen wochenplan mittagstisch link freunde senden weitergeben angebot flyer'},
-  {id:'faq-kamera-gesperrt', tag:'Barcode',      title:'Barcode-Scanner: Kamera gesperrt – Berechtigung freigeben', kw:'kamera gesperrt barcode scanner erlauben berechtigung zugriff verweigert blockiert safari chrome'},
-  {id:'faq-laden-fehler',tag:'Fehler',           title:'Seite lädt nicht / weiße Fläche – Schnellhilfe',           kw:'seite lädt nicht fehler weiß leer kaputt absturz funktioniert nicht neu laden cache leeren pwa'},
-  {id:'faq-drucken',     tag:'Drucken',          title:'Wochenplan oder Angebotsflyer ausdrucken',                  kw:'drucken ausdrucken wochenplan angebot pdf a4 drucker papier hintergrundgrafiken png export'},
-  {id:'faq-schrift',     tag:'Barrierefreiheit', title:'Text zu klein – Darstellung vergrößern (Zoom)',             kw:'schrift schriftgröße text klein groß lesbarkeit zoom vergrößern barrierefreiheit pinch strg'},
-  {id:'faq-kiosk-ablauf',tag:'Kiosk',            title:'Kiosk-Tagesablauf für Verkäuferinnen',                      kw:'kiosk kalender tagesablauf schicht start ende erledigt ganztägig uhrzeit verkäuferin aufgabe'},
-  {id:'faq-kiosk-eintrag',tag:'Kiosk',           title:'Kiosk: Neuen Eintrag anlegen (Touch)',                      kw:'kiosk eintrag anlegen neuer eintrag uhrzeit picker ganztägig kategorie kunde wiederholung speichern'},
-  {id:'faq-kiosk-serie', tag:'Kiosk',            title:'Kiosk: Dauereintrag/Serie löschen',                         kw:'kiosk serie dauereintrag löschen wiederholung nur diesen tag ganze serie kalender'},
-];
+
+const THEMEN = [{"id": "faq-mittag-bestellen","sym": "essen","tag": "Mittagstisch","titel": "Wie bestelle ich das Mittagessen vor?","kurz": "Gericht aussuchen, Namen eintragen, fertig - ohne Anmeldung.","kw": "mittagessen bestellen vorbestellen mittagstisch reservieren essen vormerken online bestellung aufgeben portion abholen bestellschluss"},{"id": "faq-bestellstatus","sym": "haken","tag": "Bestellung","titel": "Wo sehe ich, ob meine Bestellung angekommen ist?","kurz": "Bestellnummer eingeben und den Stand verfolgen.","kw": "bestellstatus bestellung status verfolgen wo ist meine bestellung angekommen bestätigt abgeholt bestellnummer nachsehen prüfen"},{"id": "faq-storno","sym": "verbot","tag": "Bestellung","titel": "Wie storniere ich eine Bestellung?","kurz": "Solange wir sie noch nicht bestätigt haben, geht das selbst.","kw": "stornieren storno abbestellen absagen rückgängig löschen abbrechen doch nicht bestellung zurückziehen ändern"},{"id": "faq-fleisch","sym": "fleisch","tag": "Metzger","titel": "Wie bestelle ich Fleisch und Wurst vor?","kurz": "Frisch vom Metzger Mair - mit Mengenrabatt.","kw": "fleisch wurst metzger mair vorbestellen bestellen braten schnitzel vakuum grillen rabatt kilo kg liefertag bestellschluss"},{"id": "faq-shop","sym": "korb","tag": "Online-Einkauf","titel": "Was ist der Online-Einkauf?","kurz": "Waren zusammenstellen, Abholtermin wählen, im Laden abholen.","kw": "shop online einkauf einkaufen warenkorb bestellen abholen abholtermin konto anmelden lieferung liefern"},{"id": "faq-tagesinfo","sym": "zeitung","tag": "TagesInfo","titel": "Was ist die TagesInfo?","kurz": "Eine Seite mit allem, was es heute frisch gibt.","kw": "tagesinfo tages info heute aktuell theke kuchen frisch aushang was gibt es heute teilen whatsapp"},{"id": "faq-mittag","sym": "essen","tag": "Mittagstisch","titel": "Wo sehe ich den Mittagstisch der ganzen Woche?","kurz": "Wochenplan ansehen, ausdrucken oder weitergeben.","kw": "mittagstisch wochenplan speiseplan essensplan gericht woche menü mittag drucken teilen whatsapp preis"},{"id": "faq-angebote","sym": "schild","tag": "Angebote","titel": "Wo finde ich die Angebote dieser Woche?","kurz": "Diese und nächste Woche, mit Ersparnis auf einen Blick.","kw": "angebote aktion rabatt sonderangebot woche nächste woche reduziert prozent sparen günstig aktionspreis flyer"},{"id": "faq-oez","sym": "uhr","tag": "Öffnungszeiten","titel": "Hat der Dorfladen gerade geöffnet?","kurz": "Live-Anzeige, Wochenübersicht und Feiertage.","kw": "öffnungszeiten offen geschlossen auf zu wann feiertag urlaub ruhetag sonntag samstag geöffnet stunden zeiten"},{"id": "faq-preisliste","sym": "liste","tag": "Preisliste","titel": "Wie suche ich einen Artikel in der Preisliste?","kurz": "Nach Namen suchen oder nach Warengruppe blättern.","kw": "preisliste sortiment artikel suchen finden preis kosten was kostet warengruppe kategorie filter liste produkte"},{"id": "faq-barcode","sym": "kamera","tag": "Preisliste","titel": "Kann ich den Strichcode einer Packung scannen?","kurz": "Kamera auf den Strichcode halten - der Artikel erscheint.","kw": "barcode strichcode scannen scanner ean kamera code artikel preis abfotografieren einlesen produkt"},{"id": "faq-roterpunkt","sym": "punkt","tag": "Roter Punkt","titel": "Was bedeutet der Rote Punkt?","kurz": "Günstige Grundnahrungsmittel zum Dauertiefpreis.","kw": "roter punkt rot dauertiefpreis günstig billig grundnahrungsmittel preiswert sozial discounter vergleich"},{"id": "faq-preisabweichung","sym": "geld","tag": "Preise","titel": "Der Preis auf der Website stimmt nicht mit dem Laden überein","kurz": "Was gilt, wenn Aushang und Website sich unterscheiden.","kw": "preis falsch abweichung unterschied flyer aushang plakat teurer billiger stimmt nicht kasse anders"},{"id": "faq-sortiment-veraltet","sym": "korb","tag": "Sortiment","titel": "Ein Artikel steht in der Liste, ist aber nicht im Regal","kurz": "Woran das liegt und was Sie tun können.","kw": "artikel nicht da ausverkauft leer regal fehlt vergriffen nicht vorrätig bestellen nachbestellen lieferung"},{"id": "faq-app","sym": "handy","tag": "App","titel": "Wie lege ich den Dorfladen als App auf mein Handy?","kurz": "Bebilderte Anleitung für jedes Gerät.","kw": "app installieren startbildschirm homebildschirm home icon symbol handy iphone android pwa hinzufügen verknüpfung"},{"id": "faq-push","sym": "glocke","tag": "Benachrichtigungen","titel": "Welche Benachrichtigungen gibt es?","kurz": "Vier Arten - jede einzeln an- und abschaltbar.","kw": "benachrichtigung push mitteilung meldung nachricht erlauben aktivieren abschalten ausschalten stumm glocke abonnieren"},{"id": "faq-kontakt","sym": "nachricht","tag": "Kontakt","titel": "Wie schreibe ich dem Dorfladen eine Nachricht?","kurz": "Kurz schreiben - die Antwort kommt in dasselbe Fenster.","kw": "kontakt nachricht schreiben fragen antwort chat melden anfrage email schreib uns rückmeldung kritik lob"},{"id": "faq-galerie","sym": "bild","tag": "Galerie","titel": "Wie sehe ich die Bilder groß an?","kurz": "Bild antippen, blättern, mit Wischen schließen.","kw": "galerie bilder fotos impressionen ansehen groß vollbild blättern lightbox kategorie filter"},{"id": "faq-news","sym": "zeitung","tag": "Aktuelles","titel": "Was ist das Laufband ganz oben?","kurz": "Kurzmeldungen - antippen für den ganzen Text.","kw": "news ticker laufband aktuelles neuigkeiten meldung nachricht schlagzeile oben lesen artikel"},{"id": "faq-whatsapp","sym": "nachricht","tag": "Teilen","titel": "Wie gebe ich etwas per WhatsApp weiter?","kurz": "Wochenplan, TagesInfo oder Angebot in einem Schritt teilen.","kw": "whatsapp teilen weitergeben senden schicken weiterleiten verschicken link freunde nachbarn familie"},{"id": "faq-drucken","sym": "drucker","tag": "Drucken","titel": "Wie drucke ich den Wochenplan aus?","kurz": "Sauber auf ein Blatt - ohne Menüs und Knöpfe.","kw": "drucken ausdrucken drucker papier a4 wochenplan speiseplan angebote aushang pdf blatt"},{"id": "faq-datenschutz","sym": "schloss","tag": "Datenschutz","titel": "Welche Daten speichert die Website über mich?","kurz": "So wenig wie möglich - und nichts für Werbung.","kw": "datenschutz daten dsgvo cookie tracking speichern anonym werbung weitergabe sicher privat löschen"},{"id": "faq-laden-fehler","sym": "warnung","tag": "Fehler","titel": "Die Seite lädt nicht oder bleibt weiß","kurz": "Drei Handgriffe, die fast immer helfen.","kw": "fehler lädt nicht weiß leer hängt kaputt geht nicht absturz funktioniert nicht neu laden aktualisieren"},{"id": "faq-kamera-gesperrt","sym": "verbot","tag": "Barcode","titel": "Der Scanner sagt, die Kamera sei gesperrt","kurz": "Berechtigung im Browser wieder freigeben.","kw": "kamera gesperrt blockiert verweigert erlauben berechtigung zugriff scanner barcode schwarz kein bild"},{"id": "faq-offline","sym": "funk","tag": "Offline","titel": "Was geht ohne Internet?","kurz": "Zuletzt Gesehenes bleibt lesbar - Neues braucht Netz.","kw": "offline kein internet funkloch langsam verbindung netz wlan mobilfunk cache gespeichert"},{"id": "faq-schrift","sym": "lupe","tag": "Darstellung","titel": "Die Schrift ist mir zu klein","kurz": "Größer stellen - dauerhaft oder nur kurz.","kw": "schrift klein groß lesen zoom vergrößern lupe augen schriftgröße darstellung barrierefrei"},{"id": "faq-gestures","sym": "hand","tag": "Bedienung","titel": "Wie schließe ich ein Fenster auf dem Handy?","kurz": "Wegwischen, Zurück-Geste oder das Kreuz.","kw": "popup schließen wegwischen wischen geste zurück fenster overlay zu weg bedienen"}];
 
 const inp = document.getElementById('hs');
 const srDiv = document.getElementById('sr');
@@ -603,95 +665,112 @@ const rcDiv = document.getElementById('rc');
 const mcDiv = document.getElementById('mc');
 const clrBtn = document.getElementById('clearBtn');
 
-inp.addEventListener('input', () => {
-  const q = inp.value.trim().toLowerCase();
+function sym(name, extra){
+  return '<svg class="ic ' + (extra || '') + '" aria-hidden="true"><use href="#ic-'
+    + name + '"/></svg>';
+}
+
+// Umlaute vereinheitlichen: Am Handy tippt kaum jemand „Öffnungszeiten“ aus.
+// Gesucht und durchsucht wird deshalb in einer Form, in der ö, oe und o
+// dasselbe sind — so findet auch „offnungszeiten“ ans Ziel.
+function norm(s){
+  return String(s).toLowerCase()
+    .replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss')
+    .replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u');
+}
+
+inp.addEventListener('input', function(){
+  var q = inp.value.trim().toLowerCase();
   clrBtn.classList.toggle('show', q.length > 0);
   if (!q) { showMain(); return; }
-  search(q);
+  suche(q);
 });
 
-function search(q) {
-  const tokens = q.split(/\s+/).filter(t => t.length > 1);
-  const results = DATA.filter(d => {
-    const hay = (d.title + ' ' + d.kw).toLowerCase();
-    return tokens.every(t => hay.includes(t));
+function suche(q){
+  var teile = norm(q).split(/\s+/).filter(function(t){ return t.length > 1; });
+  // Gesucht wird in Titel, Kurztext UND Schlagworten: Wer „essen bestellen"
+  // eingibt, soll die Bestellhilfe finden, auch wenn sie anders heisst.
+  var treffer = THEMEN.filter(function(d){
+    var heu = norm(d.titel + ' ' + d.kurz + ' ' + d.tag + ' ' + d.kw);
+    return teile.every(function(t){ return heu.indexOf(t) >= 0; });
   });
 
   srDiv.classList.add('show');
   mcDiv.style.display = 'none';
-  rcDiv.textContent = results.length
-    ? results.length + ' Ergebnis' + (results.length > 1 ? 'se' : '') + ' für „' + inp.value.trim() + '"'
+  rcDiv.textContent = treffer.length
+    ? treffer.length + (treffer.length > 1 ? ' Treffer' : ' Treffer') + ' für „' + inp.value.trim() + '“'
     : '';
 
-  if (!results.length) {
-    rlDiv.innerHTML = '<div class="nores"><div class="ni">🔎</div><strong>Keine Treffer für „' + esc(inp.value.trim()) + '"</strong><br><span style="font-size:.9em">Versuchen Sie ein anderes Stichwort oder blättern Sie durch die Hilfethemen unten.</span></div>';
+  if (!treffer.length){
+    rlDiv.innerHTML = '<div class="nores">' + sym('lupe')
+      + '<br><strong>Nichts gefunden für „' + esc(inp.value.trim()) + '“</strong>'
+      + '<br><span style="font-size:.9em">Versuchen Sie ein anderes Wort — oder '
+      + 'blättern Sie unten durch die Themen. Sie erreichen uns auch unter '
+      + '<a href="tel:+4980826229991" style="color:#2d5016;font-weight:600">08082 / 622 99 91</a>.</span></div>';
     return;
   }
 
-  rlDiv.innerHTML = results.map(r => {
-    const snip = highlight(r.title, tokens);
-    return `<div class="rcard" onclick="openFaqFromSearch('${r.id}')">
-      <div class="tag">${r.tag}</div>
-      <div class="rtitle">${snip}</div>
-      <div class="rsnip">${r.kw.split(' ').slice(0,8).join(' · ')}</div>
-    </div>`;
+  rlDiv.innerHTML = treffer.map(function(r){
+    return '<button type="button" class="rcard" onclick="openFaqAusSuche(\'' + r.id + '\')">'
+      + '<span class="rs">' + sym(r.sym) + '</span><span>'
+      + '<span class="tag">' + r.tag + '</span>'
+      + '<span class="rtitle" style="display:block">' + hervor(r.titel, teile) + '</span>'
+      + '<span class="rsnip" style="display:block">' + esc(r.kurz) + '</span>'
+      + '</span></button>';
   }).join('');
 }
 
-function highlight(text, tokens) {
-  let out = esc(text);
-  tokens.forEach(t => {
-    const re = new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+function hervor(text, teile){
+  var out = esc(text);
+  teile.forEach(function(t){
+    var re = new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
     out = out.replace(re, '<mark>$1</mark>');
   });
   return out;
 }
 
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s){
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function showMain() {
+function showMain(){
   srDiv.classList.remove('show');
   mcDiv.style.display = '';
 }
 
-function clearSearch() {
+function clearSearch(){
   inp.value = '';
   clrBtn.classList.remove('show');
   showMain();
   inp.focus();
 }
 
-function openFaq(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
+function openFaq(id){
+  var el = document.getElementById(id);
+  if (!el) return false;
   el.classList.add('open');
-  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  var b = el.querySelector('.faq-q');
+  if (b) b.setAttribute('aria-expanded', 'true');
+  setTimeout(function(){ el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 40);
   return false;
 }
 
-function openFaqFromSearch(id) {
+function openFaqAusSuche(id){
   clearSearch();
-  setTimeout(() => openFaq(id), 120);
+  setTimeout(function(){ openFaq(id); }, 110);
 }
 
-function scrollToFaq(id) {
-  openFaq(id);
-  return false;
+function toggleFaq(btn){
+  var item = btn.closest('.faq');
+  var auf = item.classList.toggle('open');
+  btn.setAttribute('aria-expanded', auf ? 'true' : 'false');
 }
 
-function toggleFaq(btn) {
-  const item = btn.closest('.faq');
-  const wasOpen = item.classList.contains('open');
-  item.classList.toggle('open', !wasOpen);
+// Aufruf mit Anker: openHilfePopup('faq-push') oder /handbuch/hilfe.html#faq-push
+if (location.hash){
+  setTimeout(function(){ openFaq(location.hash.slice(1)); }, 150);
 }
 
-// Aus URL-Hash direkt öffnen
-if (location.hash) {
-  const id = location.hash.slice(1);
-  setTimeout(() => openFaq(id), 200);
-}
 </script>
 </body>
 </html>
