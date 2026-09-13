@@ -40,6 +40,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f9faf
 .search-box input{flex:1;border:0;outline:none;font:inherit;font-size:1.02rem;
   padding:13px 0;background:transparent;color:var(--text);min-width:0}
 .search-box input::placeholder{color:#9ca3af}
+/* Das Suchfeld bringt in Chrome und Safari ein eigenes Kreuz mit. Neben
+   dem eigenen Knopf standen dadurch zwei davon nebeneinander. */
+.search-box input::-webkit-search-cancel-button,
+.search-box input::-webkit-search-decoration{-webkit-appearance:none;appearance:none}
 .si{color:var(--gr)}
 #clearBtn{background:none;border:0;cursor:pointer;color:#9ca3af;font-size:1.2rem;
   padding:8px;display:none;min-width:40px;min-height:40px}
