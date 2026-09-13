@@ -439,9 +439,6 @@ window.KGetraenke = (function () {
       + '<input type="date" id="gk-datum" value="' + esc(_datum) + '"></div>';
     h += '<button class="gk-take" id="gk-take">' + esc(takeText()) + '</button>';
 
-    h += '<div class="gk-blatt-t">Zur Bestellung</div>';
-    h += '<div class="gk-blatt-z" id="gk-blatt-summen"></div>';
-
     /* Auf dem Telefon steht der Bereichswechsel nur hier, damit der feste
        Kopf der Bestellansicht schmal bleibt (Spec F1). */
     h += '<div class="gk-blatt-t gk-nur-tel">Bereich</div>';
@@ -670,29 +667,19 @@ window.KGetraenke = (function () {
        Fußzeile auf 181 px — fast ein Drittel des Telefonbildschirms. Sie
        stehen jetzt am Listenende, wo man sie sucht (Spec F2). In der
        Fußzeile bleibt, was die Bestellung abschließt. */
+    /* Warenwert und Pfand standen hier als Schätzung. Sie rechneten mit
+       Preisen, die beim Getränkelieferanten schnell veralten - die Zahl
+       wirkte genauer, als sie war, und lud zum Nachrechnen ein. Kisten und
+       Positionen sind dagegen exakt und für die Bestellung das, worauf es
+       ankommt. */
     foot.innerHTML =
       '<span class="gk-st"><b>' + s.kisten + '</b> Kisten</span>'
       + '<span class="gk-st"><b>' + s.positionen + '</b> Positionen</span>'
-      + '<span class="gk-st extra">Warenwert ca. <b>' + eur(s.wert) + '</b>'
-      +   (s.ohnePreis ? ' <span title="Positionen ohne belegten Preis">(+' + s.ohnePreis
-          + ' ohne Preis)</span>' : '') + '</span>'
-      + '<span class="gk-st extra" title="Kistenpfand f\u00fcr alle Kisten. Berechnet wird nur, '
-      +   'was nicht als Leergut zur\u00fcckgeht.">Pfand max. <b>' + eur(s.pfand) + '</b></span>'
       + '<button class="gk-send" id="gk-send"' + (kann ? '' : ' disabled') + '>'
       +   (_status ? 'Korrektur pr\u00fcfen &amp; senden' : 'Bestellung pr\u00fcfen &amp; senden') + '</button>'
       + (inZukunft(_datum) ? '' : '<span class="gk-st" style="flex:1 1 100%;color:#b91c1c">'
           + 'Dieser Liefertermin liegt nicht in der Zukunft. Bitte einen sp\u00e4teren Termin w\u00e4hlen.</span>');
     $('gk-send').onclick = vorschau;
-
-    /* Warenwert und Pfand stehen auf dem Telefon nicht in der Fußzeile —
-       sie sind Zusatzinfo und kosteten dort eine ganze Zeile. Im Blatt
-       stehen sie vollständig. */
-    var sum = $('gk-blatt-summen');
-    if (sum) {
-      sum.innerHTML = 'Warenwert ca. <b>' + eur(s.wert) + '</b>'
-        + (s.ohnePreis ? ' (+' + s.ohnePreis + ' ohne Preis)' : '')
-        + ' \u00b7 Pfand max. <b>' + eur(s.pfand) + '</b>';
-    }
 
     // Am Listenende: anlegen und leeren.
     var liste = $('gk-list');
@@ -1105,8 +1092,8 @@ window.KGetraenke = (function () {
       + '<p>An ' + esc(_cfg.empfaenger || '') + (_testbetrieb
           ? ' <b>(Testbetrieb \u2014 nicht an ' + esc(_cfg.name || 'den Lieferanten') + ')</b>'
           : '')
-      + ' \u00b7 ' + s.positionen + ' Positionen \u00b7 ' + s.kisten + ' Kisten \u00b7 '
-      + 'Warenwert ca. ' + eur(s.wert) + '</p></header>'
+      + ' \u00b7 ' + s.positionen + ' Positionen \u00b7 ' + s.kisten + ' Kisten'
+      + '</p></header>'
       + '<div class="gk-body"><pre id="gk-mailtext">' + esc(betreff() + '\n\n' + mailtext()) + '</pre></div>'
       + '<footer><button class="ok" id="gks-ok">Jetzt senden</button>'
       + '<button class="zu" id="gks-zu">Zur\u00fcck</button></footer>');
@@ -1219,7 +1206,7 @@ window.KGetraenke = (function () {
       + _verlauf.map(function (v) {
           return '<div>' + esc(v.datum_de || v.datum) + ' \u00b7 KW ' + (v.kw || '')
             + '<span>' + (v.summen ? v.summen.kisten + ' Kisten \u00b7 '
-              + v.summen.positionen + ' Positionen \u00b7 ' + eur(v.summen.wert) : '')
+              + v.summen.positionen + ' Positionen' : '')
             + '</span>'
             + (v.status === 2 ? '<span>zuletzt korrigiert</span>' : '')
             + '</div>';

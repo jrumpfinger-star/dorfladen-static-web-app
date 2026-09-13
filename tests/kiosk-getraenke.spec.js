@@ -395,7 +395,12 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     const foot = page.locator('#gk-foot');
     await expect(foot).toContainText('34');            // Kisten
     await expect(foot).toContainText('4');             // Positionen
-    await expect(foot).toContainText('412,20');        // Warenwert
+    // Der Warenwert stand hier einmal als Schätzung. Er rechnete mit
+    // Preisen, die beim Getränkelieferanten schnell veralten — die Zahl
+    // wirkte genauer, als sie war.
+    await expect(foot, 'In der Fußzeile steht wieder ein geschätzter Warenwert.')
+      .not.toContainText('Warenwert');
+    await expect(foot).not.toContainText('Pfand max');
   });
 
   test('TC-F5-03: Eine geänderte Menge zeigt den Vorlagewert', async ({ page }) => {
@@ -408,11 +413,24 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     await expect(zeile(page, 'Augustiner Hell')).toHaveClass(/chg/);
   });
 
-  test('TC-F8-03: Eine Position ohne Preis wird gesondert ausgewiesen', async ({ page }) => {
+  test('TC-F8-03: Im Bereich Artikel steht der Preis weiterhin', async ({ page }) => {
     await oeffneTab(page);
-    await alleArtikel(page);
-    await zeile(page, 'Wolfra Apfelsaft').locator('.gk-step button[data-plus]').click();
-    await expect(page.locator('#gk-foot')).toContainText('ohne Preis');
+    // In der Bestellansicht sind Preise verschwunden - dort veralten sie.
+    // Im Bereich „Artikel“ werden sie gepflegt, also müssen sie dort stehen.
+    // Den Umschalter gibt es zweimal: im festen Kopf und im Blatt für das
+    // Telefon. Dort ist der Kopf schmal, also steht er nur im Blatt.
+    const oben = page.locator('#panel-getraenke .gk-sub[data-sub="artikel"]:visible');
+    if (!(await oben.count())) await oeffneBlatt(page);
+    await page.locator('#panel-getraenke .gk-sub[data-sub="artikel"]:visible')
+      .first().click();
+    await page.waitForTimeout(800);
+    await expect(page.locator('#panel-getraenke .gk-arow').first())
+      .toBeVisible({ timeout: 5000 });
+
+    const texte = await page.locator('#panel-getraenke .gk-arow .gk-anr').allInnerTexts();
+    expect(texte.some((t) => /€/.test(t) || /ohne Preis/.test(t)),
+      'Im Bereich Artikel fehlt die Preisspalte — dort wird der Preis gepflegt.')
+      .toBe(true);
   });
 
   // ── F6: Suchen und Filtern ──

@@ -196,17 +196,22 @@ greifen.
 
 ### F8: Summen
 
-- F8.1 Fußzeile zeigt Kisten, Positionen, Warenwert und Pfand.
-- F8.2 Der Warenwert summiert `Menge × Preis` und ist als Schätzung
-  gekennzeichnet — Kratzer passt Preise laufend an.
-- F8.3 Positionen ohne Preis werden gesondert ausgewiesen, nicht verschwiegen.
-- F8.4 Pfand heißt „max.", weil nur berechnet wird, was nicht als Leergut
-  zurückgeht.
+- F8.1 Die Fußzeile zeigt **Kisten und Positionen** — beides exakt.
+- F8.2 **Keine Geldbeträge in der Bestellansicht.** Zuvor standen dort ein
+  geschätzter Warenwert und ein maximales Pfand. Beide rechneten mit
+  Preisen, die Kratzer laufend anpasst; die Zahl wirkte damit genauer, als
+  sie war, und lud zum Nachrechnen ein. Für die Bestellung zählen Kisten,
+  nicht Euro. Das gilt ebenso für die Versandvorschau und den Verlauf.
+- F8.3 Der Preis eines Artikels bleibt im Bereich **Artikel** sichtbar —
+  dort wird er gepflegt, dort gehört er hin. Fehlt er, steht „ohne Preis".
+- F8.4 Die Bestellmail an Kratzer enthält ohnehin keine Preise.
 
 **TC-F8:**
 - `TC-F8-01`: Kisten- und Positionszahl stimmen mit den erfassten Mengen überein.
-- `TC-F8-02`: Der Warenwert entspricht der Summe aus Menge × Preis.
-- `TC-F8-03`: Eine Position ohne Preis erscheint als gesonderter Hinweis.
+- `TC-F8-02`: Die Fußzeile nennt weder „Warenwert" noch „Pfand max." und
+  enthält keinen Eurobetrag.
+- `TC-F8-03`: Im Bereich Artikel steht der Preis, bei fehlendem Preis der
+  Hinweis „ohne Preis".
 
 ### F9: Bestellmail in gewohnter Schreibweise
 
