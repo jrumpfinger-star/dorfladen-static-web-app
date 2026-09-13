@@ -2,783 +2,632 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Dorfladen Homepage – Anwenderhandbuch für Besucher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anleitung für Besucher – Dorfladen Oberornau</title>
+<meta name="description" content="Anleitung zur Website des Dorfladens
+Oberornau: bestellen und abholen, Benachrichtigungen, Preisliste,
+App einrichten.">
+<link rel="icon" href="/favicon.ico">
 <style>
-  @page { size: A4; margin: 20mm 18mm; }
-  @media print {
-    .no-print { display: none !important; }
-    body { font-size: 11pt; }
-    h1 { font-size: 22pt; }
-    h2 { font-size: 16pt; break-before: page; break-after: avoid; page-break-before: always; page-break-after: avoid; }
-    h2:first-of-type { break-before: auto; page-break-before: auto; }
-    h3 { font-size: 13pt; break-after: avoid; page-break-after: avoid; }
-    h2 + *, h3 + * { break-before: avoid; page-break-before: avoid; }
-    img.screenshot { max-width: 100%; border: 1px solid #ccc; page-break-inside: avoid; break-inside: avoid; }
-    .tip, .info, .warn { page-break-inside: avoid; break-inside: avoid; }
-    table { page-break-inside: avoid; break-inside: avoid; }
-    div { break-inside: avoid; }
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 950px; margin: 0 auto; padding: 24px;
-    color: #1a1a1a; line-height: 1.6;
-  }
-  h1 { color: #2d5016; border-bottom: 3px solid #2d5016; padding-bottom: 8px; margin-top: 30px; }
-  h2 { color: #3a6b1e; border-bottom: 2px solid #a3e635; padding-bottom: 6px; margin-top: 45px; }
-  h3 { color: #1e3a1e; margin-top: 28px; border-left: 3px solid #3a6b1e; padding-left: 10px; }
-  img.screenshot {
-    display: block; max-width: 100%; height: auto;
-    border: 1.5px solid #ddd; border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 16px 0;
-  }
-  .image-caption {
-    font-size: 0.9em; color: #555; font-style: italic; text-align: center; margin-top: -8px; margin-bottom: 24px;
-  }
-  .tip {
-    background: #f0fdf4; border-left: 4px solid #4ade80; padding: 12px 16px;
-    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
-  }
-  .tip::before { content: "💡 Tipp: "; font-weight: 700; color: #166534; }
-  .info {
-    background: #e0f2fe; border-left: 4px solid #38bdf8; padding: 12px 16px;
-    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
-  }
-  .info::before { content: "ℹ️ Hinweis: "; font-weight: 700; color: #0369a1; }
-  .warn {
-    background: #fef2f2; border-left: 4px solid #f87171; padding: 12px 16px;
-    border-radius: 4px; margin: 18px 0; font-size: 0.95em;
-  }
-  .warn::before { content: "⚠️ Wichtig: "; font-weight: 700; color: #991b1b; }
-  code { background: #f4f4f5; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; font-family: Consolas, monospace; }
-  table { border-collapse: collapse; width: 100%; margin: 16px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; }
-  th { background: #f1f5f9; font-weight: 600; color: #334155; }
-  ol, ul { padding-left: 24px; }
-  li { margin-bottom: 8px; }
-  .toc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px 28px; margin: 24px 0; }
-  .toc h3 { border: none; padding: 0; margin-bottom: 12px; }
-  .toc a { text-decoration: none; color: #3a6b1e; font-weight: 500; }
-  .toc a:hover { text-decoration: underline; }
-  .toc ol { counter-reset: toc-counter; list-style: none; padding-left: 0; }
-  .toc li { counter-increment: toc-counter; margin-bottom: 6px; }
-  .toc li::before { content: counter(toc-counter) ". "; font-weight: 600; color: #2d5016; }
-  .print-btn {
-    position: fixed; bottom: 20px; right: 20px; background: #2d5016; color: #fff;
-    border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px;
-    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; transition: all 0.2s;
-  }
-  .print-btn:hover { background: #3a6b1e; transform: translateY(-2px); }
-  .cover { text-align: center; padding: 60px 0 40px; border-bottom: 2px solid #eaeaea; }
-  .cover h1 { font-size: 34pt; border: none; margin-bottom: 10px; }
-  .cover .subtitle { font-size: 18pt; color: #555; margin-top: 8px; font-weight: 300; }
-  .cover .version { font-size: 12pt; color: #888; margin-top: 24px; font-family: monospace; }
-  .badge-icon { vertical-align: middle; margin-right: 4px; }
+:root{--gr:#2d5016;--gr-h:#4a7c27;--gr-bg:#f0f7e8;--text:#1f2937;
+  --muted:#6b7280;--linie:#e5e7eb;--warn-bg:#fffbeb;--warn-li:#d97706;--warn-tx:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f9fafb;
+  color:var(--text);line-height:1.65}
+.ic{width:1.05em;height:1.05em;flex:0 0 auto;vertical-align:-.14em;color:var(--gr)}
+
+.titel{background:linear-gradient(135deg,var(--gr),var(--gr-h));color:#fff;
+  padding:52px 24px;text-align:center}
+.titel h1{font-size:2rem;font-weight:700;margin-bottom:8px}
+.titel p{opacity:.9}
+.titel .stand{margin-top:16px;font-size:.85rem;opacity:.75}
+
+.blatt{max-width:860px;margin:0 auto;padding:34px 22px 80px}
+
+.ivz{background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:36px;
+  box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.ivz h2{font-size:1.05rem;color:var(--gr);margin-bottom:12px;border:0;padding:0}
+.ivz ul{list-style:none;margin:0}
+.ivz>ul>li{margin-bottom:7px;font-weight:600}
+.ivz ul ul{margin:5px 0 10px 16px}
+.ivz ul ul li{font-weight:400;font-size:.92rem;margin-bottom:3px}
+.ivz a{color:var(--text);text-decoration:none}
+.ivz a:hover{color:var(--gr);text-decoration:underline}
+
+h2{font-size:1.35rem;color:var(--gr);margin:40px 0 16px;padding-bottom:8px;
+  border-bottom:2px solid var(--gr-bg);scroll-margin-top:12px}
+h2 .nr{display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:50%;background:var(--gr);color:#fff;
+  font-size:.9rem;margin-right:10px;vertical-align:-5px}
+h3{font-size:1.05rem;margin:22px 0 8px;display:flex;align-items:center;gap:8px}
+
+.thema{background:#fff;border-radius:12px;padding:18px 22px;margin-bottom:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);scroll-margin-top:12px}
+.thema h3{margin-top:0;color:var(--text)}
+.kurz{color:var(--muted);font-size:.92rem;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--linie)}
+
+p{margin-bottom:11px}
+ul,ol{margin:0 0 12px 22px}
+li{margin-bottom:6px}
+a{color:var(--gr)}
+b{font-weight:700}
+
+.schritte{counter-reset:s;list-style:none;margin-left:0}
+.schritte li{counter-increment:s;position:relative;padding-left:34px;margin-bottom:9px}
+.schritte li::before{content:counter(s);position:absolute;left:0;top:2px;
+  width:23px;height:23px;border-radius:50%;background:var(--gr);color:#fff;
+  font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+.hinweis,.kasten{background:var(--warn-bg);border-left:4px solid var(--warn-li);
+  border-radius:9px;padding:12px 15px;margin:12px 0;color:var(--warn-tx);font-size:.94rem}
+.hinweis.gross,.kasten{background:var(--gr-bg);border-left-color:var(--gr);color:var(--text)}
+.knopf{display:inline-block;margin-top:8px;background:var(--gr);color:#fff!important;
+  padding:9px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:.9rem}
+
+.tab{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:.93rem}
+.tab td{padding:8px 10px;border-bottom:1px solid var(--linie);vertical-align:top}
+.tab td:first-child{white-space:nowrap;width:1%;color:var(--gr)}
+.klein{display:block;font-size:.84rem;color:var(--muted);margin-top:2px}
+.pfad{font-family:ui-monospace,Consolas,monospace;font-size:.9em}
+
+@media(max-width:560px){
+  .titel{padding:34px 18px}.titel h1{font-size:1.5rem}
+  .blatt{padding:24px 14px 60px}
+  .tab td:first-child{white-space:normal}
+}
+
+@media print{
+  @page{margin:16mm}
+  body{background:#fff;font-size:10.5pt}
+  .titel{background:none;color:var(--gr);padding:0 0 18mm;text-align:left;
+    border-bottom:3px solid var(--gr)}
+  .titel h1{font-size:20pt}
+  .titel p,.titel .stand{opacity:1;color:var(--muted)}
+  .blatt{max-width:none;padding:0}
+  .ivz{box-shadow:none;border:1px solid var(--linie);break-after:page}
+  h2{break-before:page;break-after:avoid;page-break-after:avoid}
+  h2:first-of-type{break-before:auto}
+  h3{break-after:avoid;page-break-after:avoid}
+  .thema{box-shadow:none;border:1px solid var(--linie);break-inside:avoid;
+    page-break-inside:avoid;margin-bottom:5mm}
+  .hinweis,.kasten,.tab{break-inside:avoid;page-break-inside:avoid}
+  a{color:inherit;text-decoration:none}
+  .knopf{border:1px solid var(--gr);color:var(--gr)!important;background:none}
+}
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="ic-uhr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="ic-essen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></symbol>
+<symbol id="ic-schild" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+<symbol id="ic-kamera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="ic-liste" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></symbol>
+<symbol id="ic-punkt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></symbol>
+<symbol id="ic-handy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="ic-glocke" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></symbol>
+<symbol id="ic-bild" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="ic-zeitung" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></symbol>
+<symbol id="ic-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></symbol>
+<symbol id="ic-funk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></symbol>
+<symbol id="ic-schloss" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="ic-drucker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3h12v6"/><rect width="12" height="8" x="6" y="14"/></symbol>
+<symbol id="ic-lupe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="ic-warnung" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="ic-korb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></symbol>
+<symbol id="ic-nachricht" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="ic-tuete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+<symbol id="ic-haken" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></symbol>
+<symbol id="ic-verbot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+<symbol id="ic-fleisch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 2a7.5 7.5 0 0 1 7.5 7.5c0 3-2 5.5-4 7.5l-3 3-3-3c-2-2-4-4.5-4-7.5A7.5 7.5 0 0 1 12.5 2z"/><circle cx="12.5" cy="9" r="2.5"/></symbol>
+<symbol id="ic-kalender" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+<symbol id="ic-buch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></symbol>
+<symbol id="ic-zurueck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+<symbol id="ic-schere" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+<symbol id="ic-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="ic-geld" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+</svg>
 
-<button class="print-btn no-print" onclick="window.print()">🖨️ Als PDF drucken</button>
+<header class="titel">
+  <h1>Die Website des Dorfladens</h1>
+  <p>Eine Anleitung für Besucherinnen und Besucher</p>
+  <div class="stand">Stand: September 2026 · dorfladen-oberornau.de</div>
+</header>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- DECKBLATT -->
-<!-- ═══════════════════════════════════════════ -->
-<div class="cover">
-  <h1>🌿 Dorfladen Homepage</h1>
-  <div class="subtitle">Anwenderhandbuch für die Homepage &amp; PWA</div>
-  <div class="version">System-Version 1.3 • Stand: Mai 2026</div>
-  <p style="margin-top:35px; color:#555; font-size:1.1em">Erläuterung aller Funktionen für Bürger, Genossen und das Ladenpersonal auf der Webseite</p>
-  <p style="color:#888; font-size:0.9em">Dorfladen Oberornau • https://kind-pebble-072605b03.7.azurestaticapps.net</p>
-</div>
+<div class="blatt">
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- INHALTSVERZEICHNIS -->
-<!-- ═══════════════════════════════════════════ -->
-<div class="toc">
-  <h3 style="margin-top:0; color:#2d5016">📑 Inhaltsverzeichnis</h3>
-  <ol>
-    <li><a href="#einleitung">Einleitung &amp; Zielsetzung</a></li>
-    <li><a href="#oberflaeche">Die Benutzeroberfläche: Desktop vs. Mobile</a></li>
-    <li><a href="#menustruktur">Menüstruktur &amp; Unterseiten der Homepage</a></li>
-    <li><a href="#status">Echtzeit-Öffnungszeiten &amp; Statusanzeige</a></li>
-    <li><a href="#ticker">Der Aktuelles-Ticker &amp; News-Archiv</a></li>
-    <li><a href="#quickactions">Die Schnellwahl-Aktionen (Popups)</a></li>
-    <li><a href="#preisliste">Interaktive Sortiments- und Preisliste (inkl. Barcode-Scanner)</a></li>
-    <li><a href="#galerie">Foto-Galerie &amp; Impressionen (mit Lightbox)</a></li>
-    <li><a href="#pwa">PWA: Die Homepage als App auf dem Smartphone installieren</a></li>
-    <li><a href="#push">Push-Benachrichtigungen aktivieren (Abendangebote/Mittagstisch)</a></li>
-    <li><a href="#datenschutz">Impressum, Datenschutz &amp; Cookie-Richtlinien</a></li>
-    <li><a href="#faq">Häufige Fragen &amp; Problemlösungen (FAQ)</a></li>
-  </ol>
-</div>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 1. EINLEITUNG -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="einleitung">1. Einleitung &amp; Zielsetzung</h2>
-<p>
-  Die Webseite des Dorfladens Oberornau ist nicht nur eine schlichte Informationsseite, sondern eine interaktive Informationsplattform, die auf modernsten Webtechnologien basiert. Sie wurde als **Progressive Web App (PWA)** entwickelt, um Bürgern und Kunden der Genossenschaft ein App-ähnliches Erlebnis auf ihren Mobilgeräten zu bieten. 
-</p>
-<p>
-  Dieses Handbuch beschreibt ausführlich die Funktionen der Webseite aus Sicht der Besucher und erklärt Schritt für Schritt, wie man die Seite auf dem Smartphone installiert, Benachrichtigungen empfängt und alle digitalen Services wie den Wochen-Mittagstisch oder die Sonderpreisliste optimal nutzt.
-</p>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 2. OBERFLAECHE -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="oberflaeche">2. Die Benutzeroberfläche: Desktop vs. Mobile</h2>
-<p>
-  Die Webseite wurde nach dem Prinzip des <strong>Responsive Designs</strong> entwickelt, passt sich also vollkommen automatisch an das genutzte Endgerät an.
-</p>
-
-<h3>Desktop-Ansicht (Computer &amp; Laptop)</h3>
-<ul>
-  <li><strong>Sidebar-Navigation:</strong> Am linken Bildschirmrand befindet sich die feste Menüleiste. Diese ermöglicht den blitzschnellen Wechsel zwischen Startseite, Angeboten, Mittagstisch, Aktuelles, Sortiment und Impressionen.</li>
-  <li><strong>Offene Statusanzeige:</strong> Oben rechts wird stets gut sichtbar angezeigt, ob das Geschäft im Moment geöffnet hat, inklusive eines detaillierten Blicks auf die regulären Zeiten des Tages.</li>
-  <li><strong>Zwei-Spalten-Layout:</strong> Große Bildflächen und strukturierte Tabellen sorgen für beste Übersicht auf breiten Monitoren.</li>
-</ul>
-
-<img src="hp-desktop.png" alt="Homepage Desktop-Ansicht" class="screenshot">
-<div class="image-caption">Abb. 1: Die Dorfladen-Homepage in der übersichtlichen Desktop-Ansicht</div>
-
-<h3>Mobile-Ansicht (Smartphones &amp; Tablets)</h3>
-<p>
-  Da über 85% der täglichen Zugriffe von mobilen Endgeräten erfolgen, wurde die mobile Ansicht extrem optimiert:
-</p>
-<ul>
-  <li><strong>Headerbar mit Hamburger-Menü:</strong> Ein platzsparendes Kopfelement zeigt den Ladenamen und öffnet über das Symbol mit den drei Strichen <code>☰</code> (Hamburger-Menü) eine ausziehbare Navigationsleiste (Navigation Drawer).</li>
-  <li><strong>News-Ticker:</strong> Ganz oben läuft ein dezent schiebendes Band mit den aktuellsten Schlagzeilen durchs Bild.</li>
-  <li><strong>Quick-Actions:</strong> Auf der Startseite befinden sich große, fingerfreundliche Kacheln, die Popups öffnen – ideal für die Einhandbedienung unterwegs.</li>
-</ul>
-
-<img src="hp-mobile.png" alt="Homepage Mobile-Ansicht" class="screenshot" style="max-width:420px; margin:16px auto; display:block">
-<div class="image-caption">Abb. 2: Die für Mobilgeräte optimierte PWA-Ansicht mit Newsticker</div>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 3. MENUSTRUKTUR -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="menustruktur">3. Menüstruktur &amp; Unterseiten der Homepage</h2>
-<p>
-  Die Homepage des Dorfladens Oberornau bietet eine klare und gut strukturierte Navigation, um Besuchern, Genossen und Kunden schnellen Zugriff auf alle relevanten Informationen zu ermöglichen.
-</p>
-
-<h3>Das Navigationskonzept: Desktop vs. Mobile</h3>
-<p>
-  Die Navigation auf der Homepage unterscheidet sich grundlegend zwischen Desktop- und Mobile-Endgeräten, um für beide Bildschirmgrößen das bestmögliche Nutzererlebnis zu bieten:
-</p>
-
-<!-- DESKTOP NAV -->
-<div style="background:#e8f5e9; border-left:4px solid #2e7d32; border-radius:4px; padding:12px; margin-bottom:16px">
-  <strong style="color:#1b5e20; font-size:1.1em">💻 Desktop-Version (Computer, Laptop &amp; große Tablets)</strong>
-  <ul style="margin:8px 0 0; padding-left:20px; line-height:1.5; font-size:13px">
-    <li><strong>Aussehen (Look):</strong> Eine feste, vertikale Sidebar am linken Bildschirmrand. Sie zeigt oben das Dorfladen-Logo und darunter die Navigationsschaltflächen mitsamt eingerückten Submenüs unter „Genossenschaft“ und „Kulinarisches“.</li>
-    <li><strong>Funktionsweise (Function):</strong> Das Menü bleibt beim Scrollen permanent links im Bild fixiert (sticky), so dass die Navigation zu jeder Zeit sofort erreichbar ist.</li>
-    <li><strong>Ausführung (Execution):</strong> Ein einfacher Linksklick auf einen Menüpunkt wechselt augenblicklich zur entsprechenden Seite.</li>
-    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Der Hauptinhalt wird rechts daneben großflächig dargestellt. Alle Menüpunkte und ihre Unterseiten sind direkt sichtbar, ohne dass vorher ein Menü geöffnet werden muss.</li>
-  </ul>
-</div>
-
-<!-- MOBILE NAV -->
-<div style="background:#fff3e0; border-left:4px solid #ef6c00; border-radius:4px; padding:12px; margin-bottom:16px">
-  <strong style="color:#e65100; font-size:1.1em">📱 Mobile-Version (Smartphones &amp; schmale Tablets)</strong>
-  <ul style="margin:8px 0 0; padding-left:20px; line-height:1.5; font-size:13px">
-    <li><strong>Aussehen (Look):</strong> Am oberen Rand befindet sich eine schlanke, grüne Header-Bar mit dem Laden-Schriftzug und dem Hamburger-Symbol (drei waagerechte Striche <code>☰</code>) in der linken Ecke. Die Navigation selbst ist unsichtbar.</li>
-    <li><strong>Funktionsweise (Function):</strong> Das Menü ist in einem platzsparenden, linksseitig ausziehbaren Seitenmenü (Navigation Drawer) verborgen, um den gesamten Bildschirm für den eigentlichen Inhalt freizuhalten.</li>
-    <li><strong>Ausführung (Execution):</strong> Der Anwender tippt auf das Hamburger-Symbol <code>☰</code> (oder wischt vom linken Bildschirmrand nach rechts). Daraufhin schiebt sich das Menü elegant über den Inhalt. Ein Fingertipp auf eine Seite lädt den Inhalt und schließt das Menü vollkommen automatisch.</li>
-    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Im ausgezogenen Drawer sind alle Hauptmenüpunkte sowie ausklappbare Akkordeon-Untermenüs für die Genossenschafts-Seiten sauber vertikal untereinander gelistet.</li>
-  </ul>
-</div>
-
-<h3>Das Hauptmenü (Kernseiten)</h3>
-<p>
-  Das Hauptmenü führt zu den am häufigsten genutzten Informationsbereichen:
-</p>
-<ul>
-  <li>
-    <strong>Startseite (<code>index.html</code>):</strong> 
-    Die Schaltzentrale für Besucher. Sie zeigt sofort den aktuellen Öffnungsstatus (Grün/Rot) an, lässt den Newsticker mit den neuesten Eilnachrichten durchlaufen und bietet direkten Zugriff auf die Schnellwahl-Kacheln (Mittagstisch, Angebote, Roter Punkt).
-  </li>
-  <li>
-    <strong>Öffnungszeiten (<code>oeffnungszeiten.html</code>):</strong> 
-    Hier sind alle regulären Ladenöffnungszeiten von Montag bis Sonntag übersichtlich in einer großen Wochentabelle aufgeführt, ergänzt durch eventuelle Feiertagsregelungen oder Sonder-Öffnungszeiten.
-  </li>
-  <li>
-    <strong>Aktuelles (<code>aktuelles.html</code>):</strong> 
-    Das digitale schwarze Brett unseres Dorfes. Hier erscheinen alle wichtigen Neuigkeiten chronologisch sortiert mit ansprechenden Bildern und ausführlichen Texten.
-  </li>
-  <li>
-    <strong>Sortiment &amp; Preise (<code>sortiment.html</code>):</strong> 
-    Ein moderner, durchsuchbarer Produktkatalog. Kunden können gezielt nach Produkten suchen (z.B. „Milch“ eintippen) oder Kategorien filtern (Tiefkühl, Obst &amp; Gemüse, etc.), um Preise und Füllmengen vorab zu prüfen.
-  </li>
-  <li>
-    <strong>Impressionen (<code>bilder.html</code>):</strong> 
-    Eine interaktive Galerie mit hochauflösenden Fotos unseres Dorfladens. Sie zeigt das Geschäft von innen, die Frischetheke, das Team und das lebendige Miteinander vor Ort.
-  </li>
-</ul>
-
-<h3>Das Genossenschafts-Untermenü (Submenüs)</h3>
-<p>
-  Da der Dorfladen ein genossenschaftlich getragenes Gemeinschaftsprojekt der Bürger ist, widmet sich ein eigener Bereich der Organisation und den Beteiligungsmöglichkeiten:
-</p>
-<ul>
-  <li>
-    <strong>Geschäftsführung (<code>geschaeftsfuehrung.html</code>):</strong> 
-    Stellt die Personen vor, die den Dorfladen ehrenamtlich und hauptberuflich leiten. Es beschreibt deren Aufgabenbereiche, Verantwortungen und Kontaktdaten.
-  </li>
-  <li>
-    <strong>Beirat (<code>beirat.html</code>):</strong> 
-    Zeigt die Mitglieder des Beirats, die die Geschäftsführung beratend unterstützen und die Interessen der Genossen im täglichen Ladenbetrieb vertreten.
-  </li>
-  <li>
-    <strong>Stille Gesellschafter (<code>stille-gesellschafter.html</code>):</strong> 
-    Erklärt detailliert das Beteiligungsmodell für stille Gesellschafter. Bürger erfahren hier, wie sie Anteile zeichnen können, wie das Genossenschaftskapital verwendet wird und welche Rechte und Pflichten damit verbunden sind.
-  </li>
-  <li>
-    <strong>Konzept &amp; Entstehung (<code>konzept.html</code>):</strong> 
-    Die spannende Gründungsgeschichte unseres Dorfladens – von der ersten Bürgerversammlung über die Planungsphasen bis hin zur Eröffnung. Zudem wird hier das dahinterstehende Nahversorgungskonzept erläutert.
-  </li>
-</ul>
-
-<h3>Kulinarische Sonderseiten</h3>
-<ul>
-  <li>
-    <strong>Essen im Dorfladen (<code>essen-im-dorfladen.html</code>):</strong> 
-    Beschreibt unser gemütliches Bistro-Café im Herzen des Ladens. Besucher erfahren alles über den Mittagstisch, die angebotenen Kaffeespezialitäten, Kuchen und Snack-Möglichkeiten sowie Vorbestellungsoptionen für Mittagessen.
-  </li>
-  <li>
-    <strong>Roter Punkt (<code>roter-punkt.html</code>):</strong> 
-    Unter dem Slogan „Roter Punkt“ werden Grundnahrungsmittel und Drogerieartikel des täglichen Bedarfs dauerhaft extrem günstig angeboten, um eine bezahlbare Grundversorgung im ländlichen Raum abzusichern. Diese Seite listet all diese Eckartikel und deren Preise auf.
-  </li>
-</ul>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 4. STATUS -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="status">4. Echtzeit-Öffnungszeiten &amp; Statusanzeige</h2>
-<p>
-  Das Herzstück der Startseite ist das dynamische Öffnungszeiten-System.
-</p>
-<ul>
-  <li><strong>Die Statusleiste:</strong> Ein farbiger Punkt signalisiert auf einen Blick den aktuellen Zustand:
+  <nav class="ivz" aria-label="Inhalt">
+    <h2>Inhalt</h2>
     <ul>
-      <li>🟢 <strong style="color:#166534">GEÖFFNET:</strong> Der Laden ist geöffnet. Zusätzlich erscheint eine Anzeige wie: <i>„Schließt um 18:00 Uhr • Schließt in 2 Stunden“</i>.</li>
-      <li>🔴 <strong style="color:#991b1b">GESCHLOSSEN:</strong> Das Geschäft hat geschlossen. Es erscheint z. B.: <i>„Öffnet morgen um 07:30 Uhr“</i>.</li>
+<li><a href="#kap-start">1 &middot; Über diese Anleitung</a></li>
+<li><a href="#kap-aufbau">2 &middot; Die Seite im Überblick</a></li>
+<li><a href="#kap-bestellen">3 &middot; Bestellen und abholen</a><ul><li><a href="#faq-mittag-bestellen">Wie bestelle ich das Mittagessen vor?</a></li><li><a href="#faq-bestellstatus">Wo sehe ich, ob meine Bestellung angekommen ist?</a></li><li><a href="#faq-storno">Wie storniere ich eine Bestellung?</a></li><li><a href="#faq-fleisch">Wie bestelle ich Fleisch und Wurst vor?</a></li><li><a href="#faq-shop">Was ist der Online-Einkauf?</a></li></ul></li>
+<li><a href="#kap-heute">4 &middot; Was es heute gibt</a><ul><li><a href="#faq-tagesinfo">Was ist die TagesInfo?</a></li><li><a href="#faq-mittag">Wo sehe ich den Mittagstisch der ganzen Woche?</a></li><li><a href="#faq-angebote">Wo finde ich die Angebote dieser Woche?</a></li><li><a href="#faq-oez">Hat der Dorfladen gerade geöffnet?</a></li></ul></li>
+<li><a href="#kap-sortiment">5 &middot; Sortiment und Preise</a><ul><li><a href="#faq-preisliste">Wie suche ich einen Artikel in der Preisliste?</a></li><li><a href="#faq-barcode">Kann ich den Strichcode einer Packung scannen?</a></li><li><a href="#faq-roterpunkt">Was bedeutet der Rote Punkt?</a></li><li><a href="#faq-preisabweichung">Der Preis auf der Website stimmt nicht mit dem Laden überein</a></li><li><a href="#faq-sortiment-veraltet">Ein Artikel steht in der Liste, ist aber nicht im Regal</a></li></ul></li>
+<li><a href="#kap-app">6 &middot; App und Nachrichten</a><ul><li><a href="#faq-app">Wie lege ich den Dorfladen als App auf mein Handy?</a></li><li><a href="#faq-push">Welche Benachrichtigungen gibt es?</a></li><li><a href="#faq-kontakt">Wie schreibe ich dem Dorfladen eine Nachricht?</a></li></ul></li>
+<li><a href="#kap-seite">7 &middot; Rund um die Seite</a><ul><li><a href="#faq-galerie">Wie sehe ich die Bilder groß an?</a></li><li><a href="#faq-news">Was ist das Laufband ganz oben?</a></li><li><a href="#faq-whatsapp">Wie gebe ich etwas per WhatsApp weiter?</a></li><li><a href="#faq-drucken">Wie drucke ich den Wochenplan aus?</a></li><li><a href="#faq-datenschutz">Welche Daten speichert die Website über mich?</a></li></ul></li>
+<li><a href="#kap-klemmt">8 &middot; Wenn etwas klemmt</a><ul><li><a href="#faq-laden-fehler">Die Seite lädt nicht oder bleibt weiß</a></li><li><a href="#faq-kamera-gesperrt">Der Scanner sagt, die Kamera sei gesperrt</a></li><li><a href="#faq-offline">Was geht ohne Internet?</a></li><li><a href="#faq-schrift">Die Schrift ist mir zu klein</a></li><li><a href="#faq-gestures">Wie schließe ich ein Fenster auf dem Handy?</a></li></ul></li>
+<li><a href="#kap-kontakt">9 &middot; Wenn Sie nicht weiterkommen</a></li>
     </ul>
-  </li>
-  <li><strong>Interaktive Klick-Funktion:</strong> Tippt der Besucher auf die Statusleiste, öffnet sich ein übersichtliches Popup-Fenster mit der detaillierten Wochentabelle aller regulären Öffnungszeiten von Montag bis Sonntag.</li>
-</ul>
+  </nav>
 
-<div class="info">
-  Die Zeitzonen- und Feiertagsberechnungen basieren vollautomatisch auf der lokalen Systemzeit des Dorfladens Oberornau, um Fehlberechnungen bei Zeitumstellungen zuverlässig zu vermeiden.
+
+<h2 id="kap-start"><span class="nr">1</span> Über diese Anleitung</h2>
+
+<p>Diese Anleitung beschreibt, was Sie auf der Website des Dorfladens
+Oberornau tun können — vom Nachsehen der Öffnungszeiten bis zum Vorbestellen
+des Mittagessens. Sie ist zum Nachschlagen gedacht: Über das
+Inhaltsverzeichnis kommen Sie direkt zu Ihrem Thema.</p>
+
+<p>Alles hier Beschriebene funktioniert ohne Anmeldung und ohne Konto. Sie
+brauchen nichts zu installieren — wenn Sie möchten, können Sie die Seite
+aber wie eine App auf Ihren Startbildschirm legen (siehe Abschnitt
+<i>App und Nachrichten</i>).</p>
+
+<div class="kasten">
+  <b>Lieber kurz und schnell?</b> Dieselben Antworten stehen auch in der
+  Online-Hilfe auf der Website — dort mit Suchfeld. Sie erreichen sie über
+  den Knopf <b>Hilfe</b> im Menü.
 </div>
 
-<div style="background:#f0f9ff; border-left:4px solid #0284c7; border-radius:4px; padding:12px; margin:12px 0 0">
-  <strong style="color:#0369a1">🗓️ Automatische Bayern-Feiertagsberechnung</strong>
-  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
-    Die Statusanzeige berücksichtigt vollautomatisch alle <strong>bayerischen gesetzlichen Feiertage</strong> – ohne manuelle Pflege! Das System berechnet die beweglichen Feiertage (Ostern, Pfingsten, Fronleichnam usw.) mathematisch korrekt aus dem aktuellen Kalenderjahr. Folgende Feiertage werden erkannt:
-  </p>
-  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
-    <li>Neujahr, Heilige Drei Könige (6.1.), Karfreitag, Ostersonntag &amp; -montag</li>
-    <li>Tag der Arbeit (1.5.), Christi Himmelfahrt, Pfingstsonntag &amp; -montag, Fronleichnam</li>
-    <li>Mariä Himmelfahrt (15.8.), Tag der Deutschen Einheit (3.10.), Allerheiligen (1.11.)</li>
-    <li>1. und 2. Weihnachtstag (25./26.12.)</li>
-  </ul>
-  <p style="margin:6px 0 0; font-size:12px; color:#555">An Feiertagen zeigt die Statusleiste <span style="background:#fee2e2; color:#991b1b; padding:1px 6px; border-radius:4px; font-size:11px">● Geschlossen – Feiertag</span> an, anstatt wie sonst den nächsten Öffnungszeitpunkt zu berechnen.</p>
-</div>
+<h2 id="kap-aufbau"><span class="nr">2</span> Die Seite im Überblick</h2>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- 5. TICKER -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="ticker">5. Der Aktuelles-Ticker &amp; News-Archiv</h2>
-<p>
-  Der News-Bereich hält Kunden über Neuigkeiten auf dem Laufenden.
-</p>
-<ul>
-  <li><strong>Der Laufband-Ticker (Scrolling Ticker):</strong> Wenn Neuigkeiten als „Laufband" markiert sind, erscheint oberhalb des Startseiten-Heroes ein animiertes Laufband. Die Schlagzeilen gleiten kontinuierlich von rechts nach links. Ein Klick auf einen Titel öffnet sofort den vollständigen Artikel als Overlay – ohne Seitenwechsel.</li>
-  <li><strong>News-Overlay (Artikel-Vollansicht):</strong> Ein Klick auf einen Ticker-Eintrag öffnet einen eleganten, halbtransparenten Overlay-Dialog mit dem vollständigen Artikel inkl. Datum, Titel und formatiertem Inhalt. Ein Klick außerhalb des Dialogs oder auf das &times;-Symbol schließt ihn. Unten befindet sich ein Link <i>„Alle Neuigkeiten →"</i> zur vollständigen Archivseite.</li>
-  <li><strong>News-Karten auf der Startseite:</strong> Die letzten fünf Beiträge werden als Karten mit Datum, Titel und Kurztext dargestellt. Hat ein Beitrag einen längeren Inhalt, erscheint eine <strong>„Weiterlesen"</strong>-Schaltfläche, die den vollständigen Text direkt in der Karte aufklappt – kein extra Seitenaufruf nötig.</li>
-  <li><strong>News-Archiv (<code>/aktuelles.html</code>):</strong> Alle Beiträge chronologisch sortiert. Jeder Post verfügt über Datum und ausführlichen Textkörper.</li>
-</ul>
-<img src="hp-news-section.png" alt="News-Bereich Startseite" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-<div class="image-caption">Abb.: News-Karten auf der Startseite mit Datum, Titel, Kurztext und „Weiterlesen"-Schaltfläche</div>
+<h3>Am Rechner</h3>
+<p>Oben läuft eine Leiste mit den Hauptbereichen: <b>Aktuelles</b>,
+<b>Dorfladen</b>, <b>Online bestellen</b>, <b>Essen</b>, <b>Über uns</b> und
+<b>Hilfe</b>. Hinter <b>Dorfladen</b> und <b>Über uns</b> klappt jeweils ein
+Untermenü auf — dort finden Sie Konzept, Sortiment, Preisliste,
+Öffnungszeiten, Impressionen und den Roten Punkt beziehungsweise Beirat,
+Geschäftsführung und Stille Gesellschafter.</p>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- 6. QUICKACTIONS -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="quickactions">6. Die Schnellwahl-Aktionen (Popups &amp; Bottom-Sheets)</h2>
-<p>
-  Auf dem Smartphone-Display müssen die wichtigsten Infos mit nur einem Daumen-Tipp erreichbar sein. Dafür wurden die <strong>Schnellwahl-Aktionen</strong> entwickelt. Sie sind als moderne Bottom-Sheets (Einschub-Karten von unten) konzipiert, die über herausragende native Steuerungs-Gesten verfügen:
-</p>
+<p>Ganz oben steht außerdem, ob der Laden <b>gerade geöffnet</b> hat.</p>
 
-<!-- GESTURES COMPONENT -->
-<div style="background:#f4f6f9; border-left:4px solid #475569; border-radius:4px; padding:12px; margin-bottom:16px; font-size:13px; line-height:1.5">
-  <strong style="color:#1e293b; font-size:1.05em">📱 High-End-Gestensteuerung auf Mobilgeräten:</strong>
-  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
-    <li><strong>Wischgeste nach unten (Swipe-down-to-dismiss):</strong> Jedes mobile Popup besitzt oben einen schmalen, abgerundeten **Haltegriff (Handlebar)**. Sie können das Popup ganz natürlich mit dem Daumen am Griff packen und nach unten ziehen, um es zu schließen. Die Abdunkelung des Hintergrunds verblasst dabei stufenlos mitsamt Ihrer Zugbewegung. Bei über 80 Pixeln Zugweg schließt sich das Fenster komplett; andernfalls federt es elastisch (Bounce-Effekt) in seine Ausgangsposition zurück.</li>
-    <li><strong>Physische Zurück-Taste (Android Back-Gesture Integration):</strong> PWAs schlossen sich bisher beim Drücken der physischen Zurück-Taste des Handys unschön komplett. Unsere Seite integriert einen intelligenten **History-Guard**! Das Öffnen eines Popups erzeugt eine unsichtbare Zwischenstation im Browserverlauf. Wischen Sie auf Ihrem Handy „Zurück“, wird nur das geöffnete Popup geschlossen, und Sie bleiben ohne App-Absturz sicher auf der Startseite!</li>
-  </ul>
-</div>
+<h3>Auf dem Handy</h3>
+<p>Dort ist die Leiste platzsparend zusammengefasst: Eine schmale grüne
+Kopfzeile zeigt den Ladennamen, rechts daneben ein Symbol mit drei Strichen.
+Ein Tippen darauf öffnet die Liste aller Bereiche.</p>
 
-<h3>🍽️ Mittagstisch (Wochenplan)</h3>
-<p>
-  Öffnet den aktuellen Mittagstisch-Plan als elegantes, mobiles Popup-Fenster.
-</p>
-<ul>
-  <li>Es zeigt den Plan wochentagsweise an (z. B. Montag: <i>Spargel im Knuspermantel mit Pommes • 9,80 €</i>).</li>
-  <li><strong>Schnittstellen:</strong> Über den Button <strong>„🖨️ Drucken“</strong> kann das Dokument direkt an einen heimischen AirPrint- oder Google-Print-Drucker gesendet werden. Der Button <strong>„Teilen“</strong> öffnet WhatsApp, um das Gericht des Tages mit Freunden oder Kollegen zu teilen.</li>
-</ul>
+<p>Darunter liegen große Kacheln für das, was am häufigsten gebraucht wird:</p>
 
-<img src="hp-mittagstisch.png" alt="Mittagstisch Popup" class="screenshot" style="max-width:390px; margin:16px auto; display:block">
-<div class="image-caption">Abb. 3: Das Mittagstisch-Popup auf dem Smartphone mit Druck- und Teilfunktion</div>
+<table class="tab">
+  <tr><td><b>Mittagstisch</b></td><td>Wochenplan und Vorbestellung</td></tr>
+  <tr><td><b>TagesInfo</b></td><td>Was es heute frisch gibt</td></tr>
+  <tr><td><b>Online-Einkauf</b></td><td>Waren zusammenstellen und abholen</td></tr>
+  <tr><td><b>Fleisch &amp; Wurst</b></td><td>Vorbestellung beim Metzger</td></tr>
+  <tr><td><b>Angebote</b></td><td>Aktionen dieser und nächster Woche</td></tr>
+  <tr><td><b>Preisliste</b></td><td>Das ganze Sortiment mit Preisen</td></tr>
+  <tr><td><b>Roter Punkt</b></td><td>Dauerhaft günstige Grundnahrungsmittel</td></tr>
+</table>
 
-<h3>🏷️ Angebote (Aktions-Flyer)</h3>
-<p>
-  Dieses Popup lädt die aktuellen Wochen-Sonderangebote direkt auf das Display. Jedes Produkt wird als bildstarke Karte mit rotem Preis-Aktionsschild (z.&nbsp;B. <code>1,35 € statt 1,65 €</code>) und dem berechneten Rabatt (z.&nbsp;B. <code>-18%</code>) dargestellt.
-</p>
-<ul>
-  <li><strong>Wochenumschalter (Diese Woche / Nächste Woche):</strong> Über der Angebotsliste befinden sich zwei Schaltflächen <code>Diese Woche</code> und <code>Nächste Woche</code>. So können Kunden bereits vorab die Aktionen der kommenden Woche einsehen und ihre Einkäufe planen. Darunter erscheint der genaue Zeitraum (z.&nbsp;B. <i>02.06. – 08.06.</i>).</li>
-  <li><strong>Produktbild automatisch nachgeladen:</strong> Für Aktionsartikel mit Artikelnummer werden Produktbilder automatisch aus der Dataverse-Datenbank nachgeladen und als visuelle Kacheln angezeigt. Ist kein Bild vorhanden, bleibt der Bildplatzhalter dezent leer.</li>
-  <li><strong>Rabatt-Badge:</strong> Bei Artikeln mit bekanntem Statt-Preis wird automatisch der prozentuale Rabatt berechnet und als farbiges Abzeichen (z.&nbsp;B. <span style="background:#c62828;color:#fff;padding:1px 6px;border-radius:4px;font-size:11px">-18%</span>) oben links auf der Karte angezeigt.</li>
-</ul>
-<img src="hp-angebote.png" alt="Angebote Popup" class="screenshot" style="max-width:390px; margin:16px auto; display:block">
-<div class="image-caption">Abb. 4: Das wöchentliche Sonderangebote-Popup auf dem Smartphone</div>
-<img src="hp-angebote-week.png" alt="Angebote Wochenumschalter" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-<div class="image-caption">Abb.: Angebote-Kacheln auf der Startseite mit Wochenumschalter „Diese Woche / Nächste Woche"</div>
+<p>Ganz oben läuft ein schmales Band mit den neuesten Meldungen; unten rechts
+erreichen Sie uns über <b>Schreib uns</b>.</p>
 
-<h3>🔴 Roter Punkt (Dauertiefpreise zur sozialen Nahversorgung)</h3>
-<p>
-  Die Rubrik <strong>„Roter Punkt“</strong> (erreichbar über die rote Kachel auf der Startseite, die Menüleiste oder direkt unter <code>/roter-punkt.html</code>) ist ein zentraler Eckpfeiler unseres genossenschaftlichen Versorgungsauftrags. Hier listen wir Grundnahrungsmittel, Hygiene- und Haushaltsartikel des täglichen Bedarfs, die dauerhaft extrem günstig – oft auf Discounter-Niveau oder knapp über Selbstkosten – angeboten werden, um allen Bürgern im ländlichen Raum eine preisgünstige Grundversorgung zu sichern.
-</p>
 
-<h4>Die 3 Kernfunktionen der interaktiven Liste</h4>
-<p>
-  Die Rote-Punkt-Seite arbeitet mit einer hochmodernen, live-synchronisierten Client-Schnittstelle, die folgende Steuerungs- und Informationsfunktionen bietet:
-</p>
+<h2 id="kap-bestellen"><span class="nr">3</span> Bestellen und abholen</h2>
+<section class="thema" id="faq-mittag-bestellen"><h3><svg class="ic" aria-hidden="true"><use href="#ic-essen"/></svg> Wie bestelle ich das Mittagessen vor?</h3><p class="kurz">Gericht aussuchen, Namen eintragen, fertig - ohne Anmeldung.</p><p>Sie brauchen kein Konto und kein Passwort. Auf der Startseite tippen Sie
+auf „Mittagstisch“ und dort auf den Knopf zum Bestellen - oder Sie rufen
+gleich <a href="/mittagstisch-bestellen" target="_blank">dorfladen-oberornau.de/mittagstisch-bestellen</a>
+auf.</p>
 
-<div style="background:#fff5f5; border-left:4px solid #c62828; border-radius:4px; padding:12px; margin-bottom:16px">
-  <strong style="color:#c62828; font-size:1.1em">📂 1. Interaktive Akkordeon-Gruppierung nach Warengruppen</strong>
-  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
-    Um die Vielzahl an Dauertiefpreis-Artikeln übersichtlich zu gliedern, sind alle Produkte nach ihren Warengruppen (z. B. <i>Teigwaren, Milchprodukte, Hygieneartikel</i>) sortiert.
-  </p>
-  <ul style="margin:6px 0 12px; padding-left:20px; line-height:1.5; font-size:12px">
-    <li><strong>Aussehen (Look):</strong> Jede Warengruppe bildet eine graue, abgerundete Kopfzeile. Diese zeigt links den Kategorienamen, in der Mitte ein rotes Abzeichen mit der Artikelanzahl (z. B. <span style="background:#c62828; color:#fff; padding:1px 6px; border-radius:10px; font-size:10px">12 Artikel</span>), rechts die durchschnittliche Ersparnis (z. B. <span style="color:#c62828; font-weight:700">im Schnitt -23%</span>) und ganz außen ein Pfeilsymbol <code>▼</code>.</li>
-    <li><strong>Funktionsweise &amp; Ausführung (Function &amp; Execution):</strong> Die Liste startet standardmäßig im eingeklappten Zustand, um scrollfreundlich zu bleiben. Ein einfacher Klick oder Fingertipp auf die Gruppen-Kopfzeile klappt die Tabelle mit den Produkten weich nach unten auf. Das Pfeilsymbol wechselt dabei dynamisch auf <code>▲</code>.</li>
-  </ul>
-  <img src="rp-accordion-header.png" alt="Akkordeon Kopfzeile" class="screenshot" style="max-width:100%; width:500px; margin:4px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-</div>
-
-<div style="background:#fff5f5; border-left:4px solid #c62828; border-radius:4px; padding:12px; margin-bottom:16px">
-  <strong style="color:#c62828; font-size:1.1em">⚡ 2. Echtzeit-Volltextsuche mit Auto-Expand (Suchfilter)</strong>
-  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
-    Ein leistungsstarkes Suchfeld am Kopf der Seite ermöglicht die sofortige Filterung aller gelisteten Artikel.
-  </p>
-  <ul style="margin:6px 0 12px; padding-left:20px; line-height:1.5; font-size:12px">
-    <li><strong>Ausführung (Execution):</strong> Tippen Sie einfach einen Suchbegriff (z. B. <code>Zuck</code> oder <code>Nud</code>) in die Suchleiste ein.</li>
-    <li><strong>Intelligente Auto-Ausklappung (Auto-Expand):</strong> Sobald Sie tippen, werden alle Warengruppen, die einen passenden Treffer enthalten, **vollkommen automatisch im Vollbild aufgeklappt**, damit Sie die Suchergebnisse sofort im Blick haben, ohne mühsam alle Akkordeons einzeln anklicken zu müssen!</li>
-    <li><strong>Dynamische Badge-Aktualisierung:</strong> Die rote Badge mit der Artikelanzahl im Akkordeon-Kopf ändert sich in Echtzeit und zeigt live nur noch die Anzahl der Treffer an (z. B. von *12 Artikel* auf *2 Artikel*).</li>
-    <li><strong>No-Results-Logik:</strong> Sollte kein Artikel auf den Suchbegriff passen, wird eine dezente Meldung <i>„Kein Artikel gefunden“</i> eingeblendet.</li>
-  </ul>
-  <img src="rp-search.png" alt="Echtzeit-Volltextsuche" class="screenshot" style="max-width:100%; width:400px; margin:4px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-</div>
-
-<div style="background:#fff5f5; border-left:4px solid #c62828; border-radius:4px; padding:12px; margin-bottom:16px">
-  <strong style="color:#c62828; font-size:1.1em">💰 3. Transparenter Preisvergleich (Unser Preis vs. UVP)</strong>
-  <p style="margin:6px 0 0; font-size:13px; line-height:1.5">
-    Jedes Produkt in der Tabelle bietet Kunden einen glasklaren, ehrlichen Preisvergleich auf einen Blick.
-  </p>
-  <ul style="margin:6px 0 12px; padding-left:20px; line-height:1.5; font-size:12px">
-    <li><strong>UVP-Anzeige (Durchgestrichen):</strong> Zeigt die unverbindliche Preisempfehlung des Herstellers an (grau und durchgestrichen, z. B. <span style="text-decoration:line-through; color:#999">1,89 €</span>).</li>
-    <li><strong>Unser Preis (Fett Grün):</strong> Zeigt den dauerhaft reduzierten Dorfladen-Verkaufspreis an (z. B. <strong style="color:#2d6a30">1,39 €</strong>).</li>
-    <li><strong>Prozentualer Rabatt:</strong> Ein auffälliges rotes Abzeichen am rechten Rand zeigt die Ersparnis in Prozent an (z. B. <span style="background:#c62828; color:#fff; font-weight:700; padding:2px 6px; border-radius:4px">-26%</span>).</li>
-    <li><strong>Absolute Ersparnis:</strong> Direkt neben dem Rabatt-Badge wird zusätzlich der exakte Euro-Betrag angezeigt, den Sie einsparen (z. B. <code>(0,50 €)</code>).</li>
-  </ul>
-  <img src="rp-row.png" alt="Preisvergleich Tabellenzeile" class="screenshot" style="max-width:100%; width:500px; margin:4px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-</div>
-
-<h4>Datenqualität &amp; Filtermechanismus</h4>
-<p>
-  Um Datenübertragungsfehler aus der Microsoft Dataverse Warenwirtschaft (ERP) auszuschließen, ist das System mit einem automatischen Filtermechanismus ausgestattet: Rabatte unter 5% (keine echte Ersparnis) oder über 70% (Anomalie/Eingabefehler) werden automatisch ausgeblendet, so dass nur seriöse Dauertiefpreise dargestellt werden.
-</p>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 7. PREISLISTE -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="preisliste">7. Interaktive Sortiments- und Preisliste</h2>
-<p>
-  Die digitale Preisliste (erreichbar über die Sidebar-Navigation am PC, das Hamburger-Menü am Smartphone oder direkt über die Kachel <strong>„Sortiment &amp; Preise“</strong> auf der Startseite) ist ein interaktiver Produktkatalog des gesamten Dorfladens. Sie dient Kunden als tagesaktuelle Informationsquelle zur Einkaufsplanung.
-</p>
-
-<h3>Funktionsweise &amp; interaktive Steuerung</h3>
-<p>
-  Der Katalog ist mit hochentwickelten Filter- und Suchfunktionen ausgestattet, die komplett lokal im Browser ausgeführt werden. Dadurch reagiert die Seite blitzschnell und ohne jegliche Ladeverzögerung.
-</p>
-
-<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">🔍 1. Dynamische Echtzeit-Textsuche (Filterfeld)</h4>
-  <p style="margin:0 0 8px">
-    Das Suchfeld befindet sich prominent ganz oben auf der Sortimentsseite. Es ermöglicht das sofortige Auffinden von bestimmten Artikeln aus Hunderten von Einträgen.
-  </p>
-  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
-    <li><strong>Ausführung:</strong> Klicken oder tippen Sie in das Eingabefeld <i>„Produkt suchen...“</i> und beginnen Sie mit der Eingabe (z. B. <code>Butt</code> oder <code>Apf</code>).</li>
-    <li><strong>Ablauf im Hintergrund:</strong> Auf jeden Tastendruck (Keyup-Event) filtert ein optimierter Suchalgorithmus die Produktliste sofort. Es ist kein Klick auf eine Lupe und kein Drücken der Eingabetaste erforderlich.</li>
-    <li><strong>Inhaltsanzeige:</strong> Alle nicht zutreffenden Produktzeilen werden weich ausgeblendet. Nur Zeilen, bei denen der Name den eingegebenen Begriff enthält, bleiben sichtbar. Wird das Suchfeld geleert, erscheint augenblicklich wieder das vollständige Sortiment.</li>
-  </ul>
-</div>
-
-<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📂 2. Akkordeon-Warengruppen mit Live-Zähler</h4>
-  <p style="margin:0 0 8px">
-    Das gesamte Sortiment ist in Warengruppen (z.&nbsp;B. <i>Backwaren, Molkereiprodukte, Drogerie</i>) aufgeteilt. Jede Gruppe wird als klickbarer Akkordeon-Kopf angezeigt.
-  </p>
-  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
-    <li><strong>Aussehen:</strong> Der Kopf zeigt den Gruppenname, die Artikelanzahl sowie einen Pfeil <code>▼</code>. Beim Klick öffnet/schließt sich die Produkttabelle, der Pfeil wechselt auf <code>▲</code>.</li>
-    <li><strong>Live-Zähler:</strong> Sobald eine Suche oder ein Filter aktiv ist, aktualisiert sich die Zahl in der Kopfzeile sofort und zeigt nur noch die Anzahl der sichtbaren Treffer an – nicht mehr die Gesamtmenge.</li>
-    <li><strong>Auto-Aufklappen bei Suche:</strong> Wenn Sie im Suchfeld tippen, klappen alle Gruppen mit passenden Treffern automatisch auf. Gruppen ohne Treffer werden vollständig ausgeblendet.</li>
-  </ul>
-  <img src="so-accordion-open.png" alt="Akkordeon offen" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-  <div style="font-size:0.82em; color:#666; font-style:italic">Abb.: Eine geöffnete Warengruppe – Tabellenzeilen mit Preis, UVP-Vergleich und Rabatt-Badge</div>
-</div>
-
-<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📊 3. Strukturierte Tabellen- &amp; Zeilenanzeige</h4>
-  <p style="margin:0 0 8px">
-    Jedes Produkt wird als separate Zeile innerhalb seiner Abteilung dargestellt. Die Darstellung ist tabellarisch aufgebaut, um maximale Übersichtlichkeit zu garantieren.
-  </p>
-  <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px">
-    <thead>
-      <tr style="background:#e8f5e9; border-bottom:2px solid #b2dfdb">
-        <th style="padding:6px; text-align:left; color:#1b5e20">Spalte / Inhalt</th>
-        <th style="padding:6px; text-align:left; color:#1b5e20">Bedeutung &amp; Anzeige</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-bottom:1px solid #e0e0e0">
-        <td style="padding:6px; font-weight:700">🛒 Produktname</td>
-        <td style="padding:6px">Die genaue, verständliche Artikelbezeichnung (z. B. <code>Frische Vollmilch 3,5%</code>).</td>
-      </tr>
-      <tr style="border-bottom:1px solid #e0e0e0">
-        <td style="padding:6px; font-weight:700">📏 Füllmenge / Einheit</td>
-        <td style="padding:6px">Die Packungsgröße oder Verkaufseinheit (z. B. <code>1,0 Liter</code>, <code>500 g Becher</code> oder <code>1 Stück</code>).</td>
-      </tr>
-      <tr style="border-bottom:1px solid #e0e0e0">
-        <td style="padding:6px; font-weight:700">🏷️ Preis</td>
-        <td style="padding:6px">Der exakte, verbindliche Bruttopreis mitsamt grünem Preisschild-Hintergrund (z. B. <code>1,49 €</code>).</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">🏷️ 4. Schnellfilter: Roter Punkt &amp; Sonderangebote</h4>
-  <p style="margin:0 0 8px">
-    Direkt unter der Preislisten-Überschrift befinden sich zwei Filterknöpfe, die das gesamte Sortiment blitzschnell auf Sparangebote reduzieren:
-  </p>
-  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
-    <li><strong>🔴 Günstiger als UVP (Anzahl):</strong> Ein Klick zeigt ausschließlich alle Artikel, deren Verkaufspreis unter der unverbindlichen Preisempfehlung des Herstellers liegt. Die Zahl in der Klammer zeigt die aktuelle Anzahl solcher Artikel (z.&nbsp;B. 207). Alle passenden Warengruppen klappen sich automatisch auf.</li>
-    <li><strong>★ Sonderangebot (Anzahl):</strong> Filtert auf alle aktuell als Wochenaktion ausgezeichneten Artikel – mit reduziertem Aktionspreis und durchgestrichenem Statt-Preis.</li>
-    <li><strong>Kombinierbar mit Suche:</strong> Filter und Freitextsuche arbeiten gleichzeitig. Z.&nbsp;B. „Bio" eintippen bei aktivem Roter-Punkt-Filter zeigt nur Bio-Artikel unterhalb der UVP.</li>
-    <li><strong>Deaktivieren:</strong> Erneuter Klick auf den aktiven Filterknopf hebt ihn wieder auf und zeigt das vollständige Sortiment.</li>
-  </ul>
-  <img src="so-filter-rp-active.png" alt="Roter-Punkt-Filter aktiv" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-  <div style="font-size:0.82em; color:#666; font-style:italic">Abb.: Aktiver Roter-Punkt-Filter – nur UVP-günstigere Artikel mit auto-ausgeklappten Gruppen und Live-Zähler</div>
-</div>
-
-<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin-bottom:16px">
-  <h4 style="margin:0 0 8px; color:#2d5016; font-size:1.15em">📷 5. Barcode-Scanner (EAN-Suche per Smartphone-Kamera)</h4>
-  <p style="margin:0 0 8px">
-    Rechts neben dem Suchfeld befindet sich ein kleines <strong>Kamera-Symbol 📷</strong>. Dahinter verbirgt sich ein vollwertiger Barcode-Scanner direkt im Browser – ohne App-Installation!
-  </p>
-  <ul style="margin:0 0 8px; padding-left:20px; line-height:1.5">
-    <li><strong>Ausführung:</strong> Tippen Sie auf das Kamera-Symbol 📷. Der Browser fragt einmalig nach der Kamera-Erlaubnis. Nach Bestätigung öffnet sich ein Live-Kamera-Sucher direkt auf der Seite.</li>
-    <li><strong>Ablauf:</strong> Halten Sie die Kamera auf den EAN-Strichcode eines Produkts (z.&nbsp;B. Joghurtbecher, Nudelpackung). Das System scannt mit 15 Bildern/Sekunde und erkennt EAN-13, EAN-8, UPC-A, UPC-E und Code-128 Codes. Nur Scans mit über 85% Erkennungssicherheit werden ausgewertet – das verhindert Fehllesungen.</li>
-    <li><strong>Ergebnis:</strong> Sobald ein Code erkannt wird, schließt sich der Scanner automatisch. Das Ergebnis erscheint sofort darunter: Produktname, Warengruppe, aktueller Preis, und falls vorhanden Rabatt-Badge und UVP-Vergleich.</li>
-    <li><strong>Fallback-API:</strong> Findet die Seite einen EAN-Code nicht im angezeigten Sortiment, fragt sie automatisch die Cloud-Datenbank ab und zeigt das Ergebnis trotzdem an.</li>
-    <li><strong>Scanner schließen:</strong> Klick auf <code>× Scanner schließen</code> beendet die Kamera sofort.</li>
-  </ul>
-  <img src="so-preisliste-header.png" alt="Preisliste Suchleiste mit Barcode-Scanner" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-  <div style="font-size:0.82em; color:#666; font-style:italic">Abb.: Die Suchleiste der Preisliste – Suchfeld, Filter-Buttons und das Barcode-Scanner-Symbol 📷 rechts außen</div>
-</div>
-
-<img src="so-search-active.png" alt="Volltextsuche aktiv" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-<div class="image-caption">Abb.: Echtzeit-Suche nach „Butter" – passende Gruppen klappen automatisch auf, Artikelzähler aktualisieren sich live</div>
-
-<!-- COMPARISON PORTION -->
-<div style="background:#e8f5e9; border-left:4px solid #2e7d32; border-radius:4px; padding:12px; margin-bottom:12px">
-  <strong style="color:#1b5e20; font-size:13px">� Die Preisliste in der Desktop-Version</strong>
-  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
-    <li><strong>Aussehen (Look):</strong> Große, breite und glasklar strukturierte Tabelle. Jede Abteilung bildet einen eigenen Block mit einer dunkelgrünen Überschrift.</li>
-    <li><strong>Funktionen &amp; Ausführung (Functions &amp; Execution):</strong> Die Kategorie-Schaltflächen oben sind nebeneinander aufgereiht. Ein Mausklick löst einen flüssigen Bildlauf direkt zum entsprechenden Block aus. Die Textsuche ist eine breite, markante Eingabezeile.</li>
-    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Der Produktname, die exakte Füllmenge und der Preis stehen sauber nebeneinander in separaten, hochauflösenden Tabellenspalten. Die Preise sind mitsamt grüner Plaketten-Hintergründe hervorgehoben.</li>
-  </ul>
-</div>
-
-<div style="background:#fff3e0; border-left:4px solid #ef6c00; border-radius:4px; padding:12px; margin-bottom:16px">
-  <strong style="color:#e65100; font-size:13px">📱 Die Preisliste in der Mobile-Version (Smartphone)</strong>
-  <ul style="margin:6px 0 0; padding-left:20px; font-size:12px; line-height:1.5">
-    <li><strong>Aussehen (Look):</strong> Platzsparendes, kompaktes Ein-Spalten-Listenlayout. Die Zeilen gehen fließend ineinander über, um horizontales Scrollen vollständig zu vermeiden.</li>
-    <li><strong>Funktionen &amp; Ausführung (Functions &amp; Execution):</strong> Die Kategorie-Schnellwahlknöpfe über der Liste sind als **horizontales, swipebares Karussell** angeordnet. Der Nutzer kann die Leiste einfach mit dem Daumen nach links/rechts schieben und Kategorien anwählen. Die Suche nimmt die gesamte Breite ein und blendet Tastaturen auf Mobilgeräten fehlerfrei ein.</li>
-    <li><strong>Angezeigte Inhalte (Displayed Content):</strong> Die Spalten werden vertikal gestapelt: Der Produktname steht oben in fetter Schrift. Direkt darunter steht eingerückt und kleiner die Füllmenge (z. B. <code>500g Becher</code>) in dezentem Grau. Der Preis steht rechtsbündig in einer für die Daumenbedienung vergrößerten, auffälligen grünen Preisbox.</li>
-  </ul>
-</div>
-
-<h3>Datenpflege &amp; Echtzeit-Aktualisierung</h3>
-<p>
-  Die Preisliste ist direkt mit dem Cloud-Datenbestand des Dorfladens verknüpft:
-</p>
-<ul style="line-height:1.6">
-  <li><strong>Kein manueller Export nötig:</strong> Jede Änderung, die das Ladenpersonal im CMS im Reiter <strong>„Sortiment“</strong> vornimmt und speichert, aktualisiert sofort die zentrale Microsoft Dataverse Cloud.</li>
-  <li><strong>Echtzeit-Synchronisation:</strong> Die Homepage liest diese Daten beim Laden der Seite direkt als JSON-Datenstruktur ein. Kunden sehen somit immer haargenau dieselben Preise wie an den physischen Ladenregalen.</li>
-</ul>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 8. GALERIE -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="galerie">8. Foto-Galerie &amp; Impressionen (mit Lightbox)</h2>
-<p>
-  Die Seite <strong>Impressionen</strong> (<code>/bilder.html</code>) zeigt eine lebendige Bildergalerie aus dem Dorfladen-Alltag. Sie ist mit zwei hochwertigen Funktionen ausgestattet:
-</p>
-
-<h3>🗂️ Kategorie-Filter</h3>
-<p>
-  Wenn Bilder verschiedenen Kategorien (z.&nbsp;B. <i>Laden, Mittagstisch, Veranstaltungen</i>) zugeordnet sind, erscheint oberhalb der Galerie eine Reihe von Filter-Schaltflächen.
-</p>
-<ul>
-  <li><strong>Ausführung:</strong> Klicken/tippen Sie auf eine Kategorie-Schaltfläche (z.&nbsp;B. <code>Mittagstisch (12)</code>). Sofort werden nur noch die Bilder dieser Kategorie angezeigt. Die Zahl in Klammern zeigt immer die genaue Anzahl der Bilder je Kategorie.</li>
-  <li><strong>Alle:</strong> Mit der Schaltfläche <code>Alle</code> sehen Sie wieder das vollständige Bildarchiv. Die aktive Kategorie ist optisch hervorgehoben.</li>
-  <li>Gibt es nur eine Kategorie oder weniger als zwei Kategorien, werden die Filter-Tabs automatisch ausgeblendet.</li>
-</ul>
-<img src="gallery-filters.png" alt="Galerie mit Kategorie-Filter" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-<div class="image-caption">Abb.: Die Impressionen-Galerie mit Kategorie-Filter-Tabs oben und Bildraster darunter</div>
-
-<h3>🔍 Lightbox (Vollbild-Bildbetrachtung)</h3>
-<p>
-  Ein Klick auf ein beliebiges Bild in der Galerie öffnet es als elegante <strong>Vollbild-Lightbox</strong>.
-</p>
-<ul>
-  <li><strong>Ausführung:</strong> Klicken oder tippen Sie auf ein Bild.</li>
-  <li><strong>Navigation:</strong> Mit den Pfeiltasten <code>←</code> / <code>→</code> der Tastatur (Desktop) oder den Pfeil-Schaltflächen in der Lightbox können Sie bequem durch alle Bilder der aktuellen Kategorie blättern. Am Ende der Galerie springt die Ansicht automatisch zum ersten Bild zurück.</li>
-  <li><strong>Bildunterschrift:</strong> Wenn für ein Bild eine Beschreibung hinterlegt ist, erscheint sie als halbtransparenter Text am unteren Bildrand.</li>
-  <li><strong>Schließen:</strong> Klicken Sie außerhalb des Bilds, auf das <code>×</code>-Symbol oder drücken Sie die <code>Escape</code>-Taste.</li>
-  <li><strong>Lazy Loading:</strong> Bilder werden erst geladen wenn sie im sichtbaren Bereich erscheinen – das hält die Seite auch bei vielen Fotos schnell.</li>
-</ul>
-<img src="gallery-lightbox.png" alt="Galerie Lightbox" class="screenshot" style="max-width:100%; margin:8px 0; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,0.1); display:block">
-<div class="image-caption">Abb.: Lightbox-Vollansicht eines Galeriebildes mit Navigationspfeilen</div>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- 9. PWA -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="pwa">9. PWA: Die Homepage als App auf dem Smartphone installieren</h2>
-<p>
-  Da die Dorfladen-Homepage eine Progressive Web App ist, können Sie diese wie eine vollwertige App auf Ihrem Mobiltelefon installieren – ohne den Google Play Store oder Apple App Store aufrufen zu müssen!
-</p>
-
-<h3>Vorteile der Installation</h3>
-<ol>
-  <li>Ein schickes <strong>Dorfladen-App-Icon</strong> erscheint direkt auf Ihrem Startbildschirm.</li>
-  <li>Die Seite öffnet sich im Vollbildmodus (ohne die störende Adresszeile des Webbrowsers).</li>
-  <li>Die App lädt durch fortschrittliche Zwischenspeicherung (Caching) auch bei sehr schlechter Internetverbindung im ländlichen Raum blitzschnell.</li>
+<ol class="schritte">
+  <li><b>Gericht auswählen.</b> Sie sehen die Gerichte des Tages mit Preis.
+      Über die Menge bestellen Sie mehrere Portionen desselben Gerichts.</li>
+  <li><b>Namen eintragen.</b> Mehr ist nicht nötig - der Name ist das
+      einzige Pflichtfeld. Damit finden wir Ihre Bestellung bei der Abholung.</li>
+  <li><b>Wenn Sie möchten:</b> E-Mail oder Telefonnummer angeben. Beides ist
+      freiwillig und nur dafür da, Sie zu benachrichtigen, sobald das Essen
+      fertig ist.</li>
+  <li><b>Auf „Jetzt bestellen“ tippen.</b> Danach erscheint
+      „Bestellung aufgenommen!“ samt Bestellnummer.</li>
 </ol>
 
-<h3>Anleitung für Android (Samsung, Xiaomi, Google Pixel, etc.)</h3>
-<p>
-  Öffnen Sie die Homepage im <strong>Google Chrome Browser</strong>.
-</p>
-<ul>
-  <li>In der Regel erscheint am unteren Bildschirmrand automatisch ein Banner: <strong>„Dorfladen zum Startbildschirm hinzufügen“</strong>. Tippen Sie darauf.</li>
-  <li>Sollte das Banner nicht erscheinen: Öffnen Sie das Menü des Browsers (die drei Punkte <code>⋮</code> oben rechts) und wählen Sie <strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.</li>
-</ul>
-
-<h3>Anleitung für iOS (Apple iPhone &amp; iPad)</h3>
-<p>
-  Öffnen Sie die Homepage im integrierten <strong>Safari Webbrowser</strong>.
-</p>
-<ul>
-  <li>Tippen Sie in der unteren Funktionsleiste auf das <strong>„Teilen“-Symbol</strong> (ein Viereck mit einem Pfeil, der nach oben zeigt: <span style="font-size:1.1em">📤</span>).</li>
-  <li>Scrollen Sie im sich öffnenden Menü nach unten und tippen Sie auf den Eintrag: <strong>„Zum Home-Bildschirm“</strong>.</li>
-  <li>Bestätigen Sie den Namen mit „Dorfladen“ und tippen Sie oben rechts auf <strong>„Hinzufügen“</strong>.</li>
-</ul>
-
-<div class="tip">
-  Sobald Sie die App installiert haben, verhält sie sich exakt wie eine klassische App aus dem App-Store, benötigt aber nahezu keinen Speicherplatz auf Ihrem Telefon!
+<div class="hinweis">
+  <b>Bis wann kann ich bestellen?</b> Für denselben Tag gilt ein
+  Bestellschluss am Vormittag. Die genaue Uhrzeit steht als Countdown oben
+  auf der Bestellseite - dort ist sie immer aktuell, auch wenn wir sie
+  einmal ändern.
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- 10. PUSH -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="push">10. Push-Benachrichtigungen aktivieren</h2>
+<p><b>Abholen:</b> Ihr Essen steht für Sie bereit - in der Regel zwischen
+11:30 und 13:00 Uhr. Sie bezahlen bei der Abholung im Laden; eine
+Online-Zahlung gibt es nicht. Sie können das Essen mitnehmen oder bei uns
+im Laden essen.</p></section>
+<section class="thema" id="faq-bestellstatus"><h3><svg class="ic" aria-hidden="true"><use href="#ic-haken"/></svg> Wo sehe ich, ob meine Bestellung angekommen ist?</h3><p class="kurz">Bestellnummer eingeben und den Stand verfolgen.</p><p>Direkt nach dem Bestellen führt der Knopf „Bestellstatus ansehen“
+zur Übersicht. Später finden Sie sie so wieder:</p>
 
-<div class="warn">
-  ⚠️ <strong>Hinweis – Funktion in der Testphase:</strong> Die Push-Benachrichtigungen befinden sich derzeit noch in der optionalen Testphase und stehen noch nicht offiziell im Live-Betrieb zur Verfügung. Die Funktion kann daher eingeschränkt verfügbar sein oder vorübergehend nicht zuverlässig arbeiten. Sobald der Regelbetrieb startet, wird an dieser Stelle informiert.
+<ul>
+  <li>Auf der Startseite unter <b>„Meine Vorbestellungen“</b>.</li>
+  <li>Über die Benachrichtigung, falls Sie eine bekommen haben - ein Tippen
+      darauf öffnet genau Ihre Bestellung.</li>
+  <li>Von Hand: Sie brauchen die <b>Bestellnummer</b> und die E-Mail-Adresse,
+      mit der Sie bestellt haben. Ohne E-Mail erkennt die Seite Ihre
+      Bestellung am Gerät - dann klappt es nur auf demselben Handy oder
+      Rechner.</li>
+</ul>
+
+<p><b>Diese Angaben sehen Sie beim Mittagstisch:</b></p>
+<table class="tab">
+  <tr><td><b>Eingegangen</b></td><td>Wir haben Ihre Bestellung erhalten, aber
+      noch nicht bearbeitet.</td></tr>
+  <tr><td><b>Bestätigt</b></td><td>Die Küche hat die Bestellung angenommen.</td></tr>
+  <tr><td><b>Abgeholt</b></td><td>Sie haben Ihr Essen bekommen. Damit ist die
+      Bestellung erledigt.</td></tr>
+  <tr><td><b>Storniert</b></td><td>Die Bestellung wurde zurückgezogen.</td></tr>
+</table>
+
+<p>Bei Fleisch- und Shop-Bestellungen heißt der erste Schritt
+<b>„Neu“</b> statt „Eingegangen“ - sonst ist es dasselbe.</p></section>
+<section class="thema" id="faq-storno"><h3><svg class="ic" aria-hidden="true"><use href="#ic-verbot"/></svg> Wie storniere ich eine Bestellung?</h3><p class="kurz">Solange wir sie noch nicht bestätigt haben, geht das selbst.</p><p>Öffnen Sie Ihre Bestellung (siehe „Wo sehe ich, ob meine Bestellung angekommen ist?“)
+und tippen Sie auf <b>„Stornieren“</b>. Sie werden nach einem <b>Grund</b>
+gefragt - ohne Angabe wird nicht storniert. Ein Wort genügt; es hilft uns,
+die Planung zu verbessern.</p>
+
+<div class="hinweis">
+  <b>Nur solange „Eingegangen“ dasteht.</b> Sobald die Küche die
+  Bestellung bestätigt hat, wird bereits für Sie gekocht. Dann geht das
+  Stornieren nicht mehr von selbst - rufen Sie uns bitte kurz an unter
+  <a href="tel:+4980826229991">08082 / 622 99 91</a>. Wir finden eine Lösung.
 </div>
 
-<p>
-  Wenn Sie immer sofort informiert werden möchten, sobald der Mittagstisch für die neue Woche bereitsteht oder frische Sonderangebote eintreffen, können Sie die Push-Benachrichtigungen aktivieren.
-</p>
+<p><b>Etwas ändern</b> - andere Menge, anderes Gericht - geht nicht direkt.
+Stornieren Sie die Bestellung und geben Sie eine neue auf, solange der
+Bestellschluss nicht vorbei ist.</p></section>
+<section class="thema" id="faq-fleisch"><h3><svg class="ic" aria-hidden="true"><use href="#ic-fleisch"/></svg> Wie bestelle ich Fleisch und Wurst vor?</h3><p class="kurz">Frisch vom Metzger Mair - mit Mengenrabatt.</p><p>Wir bestellen für Sie beim Metzger Mair mit. Die Seite heißt
+<b>„Fleisch &amp; Wurst vorbestellen“</b> und ist über die Kachel
+„Fleisch &amp; Wurst“ auf der Startseite erreichbar.</p>
 
-<h3>Aktivierungsschritte</h3>
-<ol>
-  <li>Öffnen Sie das Menü (Hamburger-Menü) auf dem Smartphone oder betrachten Sie das Desktop-Menü.</li>
-  <li>Klicken Sie auf den Button: <strong>„🔔 Benachrichtigungen aktivieren“</strong>.</li>
-  <li>Es öffnet sich ein systemseitiges Browserfenster, das Sie fragt: <i>„kind-pebble-... möchte Ihnen Benachrichtigungen senden“</i>. Wählen Sie unbedingt <strong>„Erlauben“</strong>.</li>
-  <li>Der Button im Menü ändert sich daraufhin zu: <strong>„🔔 Benachrichtigungen aktiv“</strong> (oder <strong>„Deaktivieren“</strong>). Sie sind nun erfolgreich angemeldet!</li>
+<ol class="schritte">
+  <li>Artikel aussuchen und Menge eintragen, dann „In den Warenkorb“.</li>
+  <li>Namen und Telefonnummer angeben - damit wir Sie erreichen, falls es
+      Rückfragen gibt.</li>
+  <li>Bestellung abschicken.</li>
 </ol>
 
-<h3>Fehlerbehebung bei Blockierung</h3>
-<p>
-  Sollten Sie versehentlich einmal auf „Blockieren“ geklickt haben, sendet der Browser keine Benachrichtigungen mehr. Um dies zu korrigieren:
-</p>
+<div class="hinweis">
+  <b>Ab einer bestimmten Menge wird es günstiger.</b> Für größere
+  Bestellungen gibt es einen Rabatt. Wie hoch er ist und ab welcher Menge er
+  gilt, steht oben auf der Bestellseite - dort ist der Stand immer aktuell.
+</div>
+
+<p><b>Wann wird geliefert?</b> Der Metzger liefert an festen Tagen in der
+Woche; bestellt werden muss am Werktag davor bis vormittags. Den nächsten
+Liefertag und den Bestellschluss zeigt die Seite oben an. Bezahlt wird bei
+der Abholung im Laden.</p></section>
+<section class="thema" id="faq-shop"><h3><svg class="ic" aria-hidden="true"><use href="#ic-korb"/></svg> Was ist der Online-Einkauf?</h3><p class="kurz">Waren zusammenstellen, Abholtermin wählen, im Laden abholen.</p><p>Über die Kachel <b>„Online-Einkauf“</b> stellen Sie sich Ihren Einkauf
+in Ruhe zusammen und holen ihn dann fertig gepackt im Laden ab. Es gibt
+keine Lieferung nach Hause - „Abholen im Dorfladen“ ist der Weg.</p>
+
+<ol class="schritte">
+  <li>Artikel in den Warenkorb legen.</li>
+  <li>Einen <b>Abholtermin</b> wählen.</li>
+  <li>Bestellung abschicken und im Laden abholen. Bezahlt wird dort.</li>
+</ol>
+
+<p>Wenn Sie öfter bestellen, lohnt sich ein Konto unter
+„Anmelden / Konto“: Dann sehen Sie unter „Meine Bestellungen“ alles
+auf einen Blick und müssen Ihre Angaben nicht jedes Mal neu eintippen.
+Pflicht ist das nicht.</p></section>
+<h2 id="kap-heute"><span class="nr">4</span> Was es heute gibt</h2>
+<section class="thema" id="faq-tagesinfo"><h3><svg class="ic" aria-hidden="true"><use href="#ic-zeitung"/></svg> Was ist die TagesInfo?</h3><p class="kurz">Eine Seite mit allem, was es heute frisch gibt.</p><p>Die <b>TagesInfo</b> ist unser Aushang für den Tag: Was es mittags zu
+essen gibt, was frisch an der Theke liegt und welcher Kuchen da ist. Sie
+erreichen sie über die Kachel „TagesInfo“ auf der Startseite oder
+direkt unter <a href="/tagesinfo" target="_blank">dorfladen-oberornau.de/tagesinfo</a>.</p>
+
+<p>Die Seite ist bewusst kurz gehalten und lässt sich gut per WhatsApp
+weitergeben - etwa in der Nachbarschaft oder in der Familie.</p>
+
+<p>Wenn Sie möchten, meldet sich die TagesInfo von selbst bei Ihnen:
+Schalten Sie dafür die Benachrichtigung <b>TagesInfo</b> ein
+(siehe „Welche Benachrichtigungen gibt es?“).</p></section>
+<section class="thema" id="faq-mittag"><h3><svg class="ic" aria-hidden="true"><use href="#ic-essen"/></svg> Wo sehe ich den Mittagstisch der ganzen Woche?</h3><p class="kurz">Wochenplan ansehen, ausdrucken oder weitergeben.</p><p>Auf der Startseite tippen Sie auf die Kachel <b>„Mittagstisch“</b>.
+Es öffnet sich der Wochenplan von Montag bis Freitag mit allen Gerichten
+und Preisen.</p>
+
 <ul>
-  <li><strong>Am Smartphone:</strong> Tippen Sie auf das Schloss-Symbol 🔒 links neben der Internetadresse (URL) im Browser. Wählen Sie „Berechtigungen“ und setzen Sie den Schalter bei „Benachrichtigungen“ wieder auf „Zulassen“.</li>
-  <li><strong>Am PC:</strong> Klicken Sie ebenfalls auf das Schloss-Symbol in der Adresszeile und schalten Sie die Berechtigung für Benachrichtigungen wieder ein.</li>
+  <li><b>Weitergeben:</b> Der Knopf zum Teilen öffnet WhatsApp mit einem
+      fertigen Text.</li>
+  <li><b>Ausdrucken:</b> Der Druckknopf bereitet den Plan sauber für ein
+      Blatt Papier auf.</li>
+  <li><b>Vorbestellen:</b> Aus dem Plan heraus kommen Sie direkt zur
+      Bestellung (siehe „Wie bestelle ich das Mittagessen vor?“).</li>
 </ul>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- 11. DATENSCHUTZ -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="datenschutz">11. Impressum, Datenschutz &amp; Cookie-Richtlinien</h2>
-<p>
-  Als Genossenschaft legt der Dorfladen Oberornau höchsten Wert auf Datensparsamkeit und Rechtskonformität.
-</p>
+<p>Auf dem Handy schließen Sie den Plan, indem Sie ihn nach unten wischen
+oder die Zurück-Geste verwenden.</p></section>
+<section class="thema" id="faq-angebote"><h3><svg class="ic" aria-hidden="true"><use href="#ic-schild"/></svg> Wo finde ich die Angebote dieser Woche?</h3><p class="kurz">Diese und nächste Woche, mit Ersparnis auf einen Blick.</p><p>Die Kachel <b>„Angebote“</b> auf der Startseite zeigt alle Aktionen.
+Mit dem Umschalter wechseln Sie zwischen <b>dieser</b> und <b>nächster
+Woche</b> - so können Sie Ihren Einkauf vorausplanen.</p>
+
+<p>Bei jedem Artikel steht der Aktionspreis, daneben der normale Preis und
+wie viel Sie sparen. Angebote gelten, solange der Vorrat reicht.</p>
+
+<p>Damit Sie nichts verpassen, können Sie sich benachrichtigen lassen,
+sobald neue Angebote online sind - siehe
+„Welche Benachrichtigungen gibt es?“.</p></section>
+<section class="thema" id="faq-oez"><h3><svg class="ic" aria-hidden="true"><use href="#ic-uhr"/></svg> Hat der Dorfladen gerade geöffnet?</h3><p class="kurz">Live-Anzeige, Wochenübersicht und Feiertage.</p><p>Ganz oben auf der Startseite steht, ob wir <b>gerade</b> geöffnet haben.
+Die Anzeige rechnet mit der tatsächlichen Uhrzeit und berücksichtigt auch
+Feiertage und besondere Tage.</p>
+
+<p>Die vollständige Übersicht finden Sie unter
+<a href="/öffnungszeiten" target="_blank">Öffnungszeiten</a>: alle Wochentage,
+dazu abweichende Zeiten an Feiertagen.</p>
+
+<p>Ändern sich die Zeiten kurzfristig - etwa vor einem Feiertag -, erfahren
+Sie es über die Benachrichtigung <b>News</b>.</p></section>
+<h2 id="kap-sortiment"><span class="nr">5</span> Sortiment und Preise</h2>
+<section class="thema" id="faq-preisliste"><h3><svg class="ic" aria-hidden="true"><use href="#ic-liste"/></svg> Wie suche ich einen Artikel in der Preisliste?</h3><p class="kurz">Nach Namen suchen oder nach Warengruppe blättern.</p><p>Über die Kachel <b>„Preisliste“</b> kommen Sie zum vollständigen
+Sortiment. Tippen Sie einfach in das Suchfeld - die Liste wird schon beim
+Schreiben kürzer.</p>
+
 <ul>
-  <li><strong>Rechtssicherheit:</strong> Impressum (<code>/impressum.html</code>) und Datenschutzerklärung (<code>/datenschutzerklaerung.html</code>) sind jederzeit mit einem Klick erreichbar.</li>
-  <li><strong>Anonymes Push:</strong> Für den Empfang von Push-Benachrichtigungen werden keinerlei persönliche Daten wie E-Mail-Adressen, Namen oder Standorte erfasst. Das System registriert lediglich eine anonyme, kryptografische Geräte-ID des Webbrowsers.</li>
-  <li><strong>Cookie-Banner:</strong> Die Seite nutzt ausschließlich technisch notwendige Cookies, um Ihre Einstellungen (wie das gewählte Design-Template oder den Push-Zustand) lokal auf Ihrem Gerät zu speichern. Es findet kein Tracking durch Drittanbieter statt.</li>
+  <li><b>Nach Warengruppe:</b> Die Abschnitte lassen sich auf- und zuklappen,
+      etwa „Molkereiprodukte“ oder „Getränke“.</li>
+  <li><b>Nur günstige Grundnahrungsmittel:</b> Der Filter „Roter Punkt“
+      zeigt ausschließlich diese Artikel.</li>
+  <li><b>Mit dem Strichcode suchen:</b> siehe
+      „Kann ich den Strichcode einer Packung scannen?“.</li>
 </ul>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- 12. FAQ -->
-<!-- ═══════════════════════════════════════════ -->
-<h2 id="faq">12. Häufige Fragen &amp; Problemlösungen (FAQ)</h2>
+<p>Die Preise kommen unmittelbar aus unserer Kasse. Trotzdem kann es
+vorkommen, dass ein Artikel gerade ausverkauft ist.</p></section>
+<section class="thema" id="faq-barcode"><h3><svg class="ic" aria-hidden="true"><use href="#ic-kamera"/></svg> Kann ich den Strichcode einer Packung scannen?</h3><p class="kurz">Kamera auf den Strichcode halten - der Artikel erscheint.</p><p>Ja. In der Preisliste gibt es neben dem Suchfeld ein Kamerasymbol. Tippen
+Sie darauf und halten Sie die Kamera auf den Strichcode - erkannt wird er
+von selbst, Sie müssen nichts auslösen.</p>
 
-<!-- 1 -->
-<h4>Die Mittagstisch-Preise auf der Seite weichen von den Flyern ab &ndash; woran liegt das?</h4>
-<p>
-  Gedruckte Flyer spiegeln immer den Stand zum Druckzeitpunkt wider. Die Website wird danach noch aktiv vom CMS-Team gepflegt &ndash; daher kann die Website-Version aktueller sein als der Papierflyer. Kurzfristige Preisanpassungen nach Lieferantennachkalkulation sind ebenfalls m&ouml;glich. Es gilt stets der auf der Website angezeigte Preis als verbindlich. Sprechen Sie im Zweifelsfall das Kassenpersonal an &ndash; im Dorfladen wird immer kulant entschieden.
-</p>
+<p>Beim ersten Mal fragt Ihr Browser, ob die Seite die Kamera verwenden darf.
+Das müssen Sie erlauben, sonst bleibt das Bild schwarz. Es wird nichts
+gespeichert und nichts übertragen - die Erkennung passiert auf Ihrem Gerät.</p>
 
-<!-- 2 -->
-<h4>Funktioniert die PWA auch ohne Internetverbindung?</h4>
-<p>
-  Ja, teilweise! Bereits geladene Seiten, wie die regul&auml;ren &Ouml;ffnungszeiten oder die Preisliste, k&ouml;nnen Sie dank des integrierten Service Workers auch dann aufrufen, wenn Sie im Funkloch stehen. F&uuml;r frische Wochenpl&auml;ne oder Neuigkeiten ist jedoch eine kurze Internetverbindung zur Synchronisation erforderlich.
-</p>
+<p>Klappt es nicht, hilft meist: Packung ruhig halten, etwas mehr Abstand,
+und für Licht sorgen. Wenn der Browser die Kamera blockiert, lesen Sie
+„Der Scanner sagt, die Kamera sei gesperrt“.</p></section>
+<section class="thema" id="faq-roterpunkt"><h3><svg class="ic" aria-hidden="true"><use href="#ic-punkt"/></svg> Was bedeutet der Rote Punkt?</h3><p class="kurz">Günstige Grundnahrungsmittel zum Dauertiefpreis.</p><p>Artikel mit dem <b>Roten Punkt</b> sind Grundnahrungsmittel, die wir
+dauerhaft günstig halten - keine Wochenaktion, sondern ein
+Dauertiefpreis. Sie sollen sicherstellen, dass der tägliche Einkauf im
+Dorfladen bezahlbar bleibt.</p>
 
-<!-- 3 -->
-<h4>Kostet der Push-Service Geld?</h4>
-<p>
-  Nein. Die Benachrichtigungen sind ein vollkommen kostenloser Service der Genossenschaft Dorfladen Oberornau f&uuml;r alle B&uuml;rger und Kunden. Es werden keine pers&ouml;nlichen Daten gespeichert &ndash; nur eine anonyme Browser-ID.
-</p>
+<p>Im Laden erkennen Sie sie am roten Punkt am Regal. Auf der Website gibt es
+die eigene Seite <a href="/roter-punkt" target="_blank">Roter Punkt</a> mit
+allen Artikeln; in der Preisliste können Sie danach filtern.</p></section>
+<section class="thema" id="faq-preisabweichung"><h3><svg class="ic" aria-hidden="true"><use href="#ic-geld"/></svg> Der Preis auf der Website stimmt nicht mit dem Laden überein</h3><p class="kurz">Was gilt, wenn Aushang und Website sich unterscheiden.</p><p>Das kann vorkommen, wenn ein gedruckter Aushang älter ist als die Seite
+oder wenn wir einen Preis kurzfristig angepasst haben.</p>
 
-<!-- 4 -->
-<h4>Wie sehe ich, ob der Dorfladen gerade ge&ouml;ffnet hat?</h4>
-<p>
-  Auf der Startseite zeigt die farbige Statusleiste direkt an: <strong>&bdquo;GE&Ouml;FFNET&ldquo;</strong> (gr&uuml;n) oder <strong>&bdquo;GESCHLOSSEN&ldquo;</strong> (rot). Bei ge&ouml;ffnet sehen Sie die Restzeit bis zur Schlie&szlig;ung. Tippen Sie auf die Statusleiste &ndash; es &ouml;ffnet sich eine vollst&auml;ndige Wochentabelle mit allen regul&auml;ren &Ouml;ffnungszeiten. Feiertage werden automatisch erkannt.
-</p>
+<p><b>Sprechen Sie uns an der Kasse einfach darauf an.</b> Wir schauen es uns
+gemeinsam an und finden eine Lösung, die für Sie in Ordnung ist. Wenn Ihnen
+etwas auffällt, sagen Sie es uns gerne - so bekommen wir Fehler schnell aus
+der Welt.</p></section>
+<section class="thema" id="faq-sortiment-veraltet"><h3><svg class="ic" aria-hidden="true"><use href="#ic-korb"/></svg> Ein Artikel steht in der Liste, ist aber nicht im Regal</h3><p class="kurz">Woran das liegt und was Sie tun können.</p><p>Die Preisliste zeigt unser Sortiment - nicht den Lagerbestand von diesem
+Augenblick. Ein Artikel kann also gerade ausverkauft sein oder auf die
+nächste Lieferung warten.</p>
 
-<!-- 5 -->
-<h4>Wie installiere ich die Dorfladen-App auf meinem Smartphone?</h4>
-<p>
-  <strong>Android (Chrome):</strong> Am unteren Rand erscheint automatisch ein Banner &bdquo;Zum Startbildschirm hinzuf&uuml;gen&ldquo;. Alternativ: Chrome-Men&uuml; (&vellip;) &rarr; &bdquo;App installieren&ldquo;.<br>
-  <strong>iPhone/iPad (Safari):</strong> Teilen-Symbol (&#x1F4E4;) in der unteren Leiste &rarr; &bdquo;Zum Home-Bildschirm&ldquo; &rarr; &bdquo;Hinzuf&uuml;gen&ldquo;.<br>
-  Nach der Installation &ouml;ffnet die App im Vollbild und l&auml;dt dank Caching auch bei schwacher Verbindung schnell.
-</p>
+<p>Fragen Sie uns im Laden: Oft haben wir Nachschub im Lager oder können den
+Artikel mit der nächsten Lieferung für Sie mitbestellen. Als kleiner Laden
+können wir nicht alles vorrätig halten - mitbestellen geht fast immer.</p></section>
+<h2 id="kap-app"><span class="nr">6</span> App und Nachrichten</h2>
+<section class="thema" id="faq-app"><h3><svg class="ic" aria-hidden="true"><use href="#ic-handy"/></svg> Wie lege ich den Dorfladen als App auf mein Handy?</h3><p class="kurz">Bebilderte Anleitung für jedes Gerät.</p><p>Sie können unsere Seite wie eine App auf den Startbildschirm legen: ein
+Symbol, ein Tippen, ohne Umweg über den Browser. Aus einem App-Store wird
+nichts geladen, es kostet nichts und braucht so gut wie keinen Speicher.</p>
 
-<!-- 6 -->
-<h4>Wie funktioniert der Barcode-Scanner?</h4>
-<p>
-  Auf der Sortimentsseite befindet sich rechts neben dem Suchfeld ein Kamera-Symbol. Tippen Sie darauf und erlauben Sie den Kamerazugriff. Halten Sie die Kamera auf den EAN-Strichcode eines Produkts &ndash; der Scanner erkennt EAN-13, EAN-8, UPC-A und Code-128 automatisch. Bei Erkennung wird sofort Produktname, Preis und ggf. ein Rabattbadge angezeigt.
-</p>
+<div class="hinweis groß">
+  <b>Es gibt eine eigene Anleitung dafür</b> - mit Bildern und passend zu
+  Ihrem Gerät, egal ob iPhone, Android-Handy oder Rechner. Sie erkennt von
+  selbst, welchen Weg Sie brauchen.<br>
+  <a class="knopf" href="/app" target="_blank">Zur Anleitung: dorfladen-oberornau.de/app</a>
+</div>
 
-<!-- 7 -->
-<h4>Der Barcode-Scanner sagt &bdquo;Kamera gesperrt&ldquo; &ndash; was tun?</h4>
-<p>
-  <strong>Chrome/Edge (Android &amp; Desktop):</strong> Adressleiste antippen &rarr; Schloss-Symbol &rarr; &bdquo;Berechtigungen&ldquo; &rarr; Kamera &rarr; &bdquo;Zulassen&ldquo;. Seite neu laden.<br>
-  <strong>Safari (iPhone/iPad):</strong> Einstellungen &rarr; Safari &rarr; Datenschutz &rarr; &bdquo;Kamera&ldquo; &rarr; &bdquo;Erlauben&ldquo;. Seite neu laden und Scanner erneut &ouml;ffnen.
-</p>
+<p><b>Kurzfassung:</b> Auf dem <b>iPhone</b> die Seite in <i>Safari</i>
+öffnen, unten auf das Teilen-Symbol tippen und „Zum Home-Bildschirm“
+wählen. Mit anderen Browsern klappt es auf dem iPhone nicht zuverlässig.
+Auf einem <b>Android-Handy</b> bietet der Browser die Installation meist von
+selbst an; sonst finden Sie sie im Menü mit den drei Punkten unter
+„App installieren“.</p></section>
+<section class="thema" id="faq-push"><h3><svg class="ic" aria-hidden="true"><use href="#ic-glocke"/></svg> Welche Benachrichtigungen gibt es?</h3><p class="kurz">Vier Arten - jede einzeln an- und abschaltbar.</p><p>Wenn Sie möchten, meldet sich der Dorfladen von selbst - etwa morgens mit
+dem Mittagstisch. Sie entscheiden dabei genau, worüber. Es gibt vier Arten,
+die Sie <b>einzeln</b> ein- und ausschalten können:</p>
 
-<!-- 8 -->
-<h4>Wie teile ich den Wochenplan per WhatsApp?</h4>
-<p>
-  &Ouml;ffnen Sie den Wochenplan &uuml;ber die Kachel &bdquo;Mittagstisch&ldquo; auf der Startseite. Im Popup finden Sie den Button &bdquo;Teilen&ldquo;, der WhatsApp mit einem fertig formulierten Nachrichtentext inkl. Gerichte und Preise &ouml;ffnet. Auf dem iPhone funktioniert dies am besten, wenn die WhatsApp-App installiert ist.
-</p>
+<table class="tab">
+  <tr>
+    <td><b>TagesInfo</b></td>
+    <td>Was es heute zu essen gibt, was frisch an der Theke liegt.
+        <span class="klein">An Werktagen &middot; an alle</span></td>
+  </tr>
+  <tr>
+    <td><b>News &amp; Aktuelles</b></td>
+    <td>Geänderte Öffnungszeiten, Aktionen, Veranstaltungen.
+        <span class="klein">Selten &middot; an alle</span></td>
+  </tr>
+  <tr>
+    <td><b>Meine Bestellungen</b></td>
+    <td>Ihre Bestellung ist angenommen oder abholbereit; Rückfragen der Küche.
+        <span class="klein">Nur bei eigener Bestellung &middot; <b>nur an Sie</b></span></td>
+  </tr>
+  <tr>
+    <td><b>Antwort auf meine Nachricht</b></td>
+    <td>Wenn wir auf Ihre Nachricht antworten.
+        <span class="klein">Nur nach eigener Anfrage &middot; <b>nur an Sie</b></span></td>
+  </tr>
+</table>
 
-<!-- 9 -->
-<h4>Wie drucke ich den Wochenplan aus?</h4>
-<p>
-  Kachel &bdquo;Mittagstisch&ldquo; antippen &rarr; Popup &ouml;ffnet sich &rarr; Button &bdquo;Drucken&ldquo; klicken. Im Browser-Druckdialog: Papierformat A4, Hochformat, R&auml;nder Minimal/Keine. <strong>Wichtig:</strong> &bdquo;Hintergrundgrafiken drucken&ldquo; aktivieren &ndash; sonst fehlen Farben und Logos!
-</p>
+<p><b>Einschalten:</b> Im Menü auf „Benachrichtigungen aktivieren“
+tippen. Der Browser fragt einmal nach - mit „Erlauben“ bestätigen.
+Danach wählen Sie aus, welche der vier Arten Sie bekommen möchten. Das
+lässt sich jederzeit wieder ändern.</p>
 
-<!-- 10 -->
-<h4>Wie drucke ich den Angebotsflyer aus?</h4>
-<p>
-  Angebote &ouml;ffnen &rarr; Plakat-Button &rarr; &bdquo;PNG herunterladen&ldquo;. Das heruntergeladene PNG im Bildbetrachtungsprogramm &ouml;ffnen und von dort drucken. PNG-Export wird empfohlen f&uuml;r Aush&auml;nge &ndash; beste Druckqualit&auml;t auf A4.
-</p>
+<div class="hinweis">
+  <b>Auf dem iPhone</b> geht es erst, wenn der Dorfladen als App auf dem
+  Startbildschirm liegt <i>und</i> von dort geöffnet wird - so will es Apple.
+  Wie das geht, steht in der <a href="/app" target="_blank">App-Anleitung</a>.
+</div>
 
-<!-- 11 -->
-<h4>Kann ich auch die Angebote der n&auml;chsten Woche sehen?</h4>
-<p>
-  Ja! &Ouml;ffnen Sie die Angebote und nutzen Sie die Schaltfl&auml;chen &bdquo;Diese Woche&ldquo; / &bdquo;N&auml;chste Woche&ldquo; oben im Popup. Der genaue Zeitraum (z.&thinsp;B. 02.06.&ndash;08.06.) wird dabei angezeigt.
-</p>
+<p><b>Versehentlich abgelehnt?</b> Dann fragt der Browser nicht noch einmal.
+Sie geben es in den Einstellungen Ihres Browsers für diese Seite wieder
+frei - meist über das Symbol links in der Adresszeile unter
+„Berechtigungen“.</p>
 
-<!-- 12 -->
-<h4>Was bedeutet der &bdquo;Rote Punkt&ldquo;?</h4>
-<p>
-  Der Rote Punkt ist ein Programm des Dorfladens f&uuml;r dauerhaft extrem g&uuml;nstige Grundnahrungsmittel und Drogerieartikel &ndash; oft auf Discounter-Niveau. Die Roter-Punkt-Liste finden Sie &uuml;ber die rote Kachel auf der Startseite oder im Men&uuml; unter &bdquo;Roter Punkt&ldquo;. Dort sehen Sie den aktuellen Preis, den UVP-Vergleich und die Ersparnis.
-</p>
+<p>Wir brauchen dafür keinen Namen und keine E-Mail-Adresse, sondern nur
+eine anonyme Kennung Ihres Geräts. Schalten Sie die Benachrichtigungen ab,
+ist auch die wieder weg.</p></section>
+<section class="thema" id="faq-kontakt"><h3><svg class="ic" aria-hidden="true"><use href="#ic-nachricht"/></svg> Wie schreibe ich dem Dorfladen eine Nachricht?</h3><p class="kurz">Kurz schreiben - die Antwort kommt in dasselbe Fenster.</p><p>Unten rechts finden Sie den Knopf <b>„Schreib uns“</b>. Darüber
+erreichen Sie uns direkt - ohne E-Mail-Programm und ohne Anmeldung.</p>
 
-<!-- 13 -->
-<h4>Wie schlie&szlig;e ich Popups auf dem Smartphone?</h4>
-<p>
-  Sie haben drei M&ouml;glichkeiten: (1) Nach unten wischen am oberen Rand des Popups. (2) Die Android-Zur&uuml;ck-Geste verwenden. (3) Auf den abgedunkelten Hintergrund tippen. Alle Popups lassen sich so schnell schlie&szlig;en, ohne die App zu verlassen.
-</p>
+<ol class="schritte">
+  <li><b>Namen eintragen.</b> Das ist das einzige Pflichtfeld.</li>
+  <li>Nachricht schreiben und abschicken.</li>
+  <li>Unsere Antwort erscheint <b>im selben Fenster</b>. Schauen Sie einfach
+      später noch einmal hinein.</li>
+</ol>
 
-<!-- 14 -->
-<h4>Die Seite l&auml;dt nicht richtig oder zeigt eine wei&szlig;e Fl&auml;che &ndash; was tun?</h4>
-<p>
-  Probieren Sie folgende Schritte der Reihe nach: (1) Harter Neu-Laden mit <code>Strg+Shift+R</code> (Windows) bzw. <code>Cmd+Shift+R</code> (Mac). (2) Browser-Cache leeren: Men&uuml; &rarr; Verlauf &rarr; Browserdaten l&ouml;schen &rarr; &bdquo;Bilder und Dateien im Cache&ldquo;. (3) Browser aktualisieren. (4) Internetverbindung pr&uuml;fen. (5) PWA vom Homescreen l&ouml;schen und neu hinzuf&uuml;gen. Wenn nichts hilft &ndash; einfach kurz im Laden Bescheid geben!
-</p>
+<p>Damit Sie die Antwort nicht verpassen, gibt es zwei Wege:</p>
+<ul>
+  <li><b>Benachrichtigung:</b> Haben Sie Benachrichtigungen eingeschaltet,
+      sagen wir Ihnen Bescheid, sobald die Antwort da ist. Das sieht nur Sie.</li>
+  <li><b>Per E-Mail:</b> Setzen Sie den Haken bei
+      „Antworten auch per E-Mail“ und tragen Sie Ihre Adresse ein.</li>
+</ul>
 
-<!-- 15 -->
-<h4>Der Text ist zu klein &ndash; wie vergr&ouml;&szlig;ere ich die Darstellung?</h4>
-<p>
-  <strong>Desktop:</strong> <code>Strg + +</code> vergr&ouml;&szlig;ert, <code>Strg + &minus;</code> verkleinert, <code>Strg + 0</code> setzt zur&uuml;ck.<br>
-  <strong>Smartphone:</strong> Zwei-Finger-Spreiz-Geste (Pinch-to-Zoom) direkt auf der Seite. Alternativ: Ger&auml;te-Einstellungen &rarr; Barrierefreiheit &rarr; Schriftgr&ouml;&szlig;e systemweit anpassen. Zoom bis 150&thinsp;% beeintr&auml;chtigt die Navigation nicht.
-</p>
+<p>Eilt es? Dann rufen Sie uns lieber an:
+<a href="tel:+4980826229991">08082 / 622 99 91</a>.</p></section>
+<h2 id="kap-seite"><span class="nr">7</span> Rund um die Seite</h2>
+<section class="thema" id="faq-galerie"><h3><svg class="ic" aria-hidden="true"><use href="#ic-bild"/></svg> Wie sehe ich die Bilder groß an?</h3><p class="kurz">Bild antippen, blättern, mit Wischen schließen.</p><p>Unter <a href="/bilder" target="_blank">Impressionen</a> sehen Sie Bilder
+aus dem Laden. Ein Tippen auf ein Bild zeigt es groß.</p>
 
-<!-- 16 -->
-<h4>Welche Daten speichert die Website &uuml;ber mich?</h4>
-<p>
-  Die Dorfladen-Homepage ist bewusst datenschutzfreundlich konzipiert: Kein Tracking (kein Google Analytics, kein Facebook-Pixel), kein Login erforderlich. Push-Benachrichtigungen nutzen nur eine anonyme Browser-ID &ndash; kein Name, keine E-Mail. Der Barcode-Scanner verwendet die Kamera nur lokal, kein Bild verl&auml;sst Ihr Ger&auml;t. Weitere Details finden Sie in der <a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a>.
-</p>
+<ul>
+  <li><b>Blättern:</b> nach links oder rechts wischen, am Rechner mit den
+      Pfeiltasten.</li>
+  <li><b>Schließen:</b> nach unten wischen, auf das Kreuz tippen oder die
+      Escape-Taste drücken.</li>
+  <li><b>Filtern:</b> Über die Knöpfe oben sehen Sie nur eine Kategorie,
+      etwa den Laden oder Veranstaltungen.</li>
+</ul></section>
+<section class="thema" id="faq-news"><h3><svg class="ic" aria-hidden="true"><use href="#ic-zeitung"/></svg> Was ist das Laufband ganz oben?</h3><p class="kurz">Kurzmeldungen - antippen für den ganzen Text.</p><p>Ganz oben läuft ein schmales Band mit unseren aktuellen Kurzmeldungen -
+etwa geänderte Öffnungszeiten oder Veranstaltungen. Ein Tippen darauf
+öffnet den vollständigen Text.</p>
 
-<!-- 17 -->
-<h4>Ein Artikel aus der Preisliste ist im Laden nicht erh&auml;ltlich &ndash; was stimmt?</h4>
-<p>
-  Die Online-Preisliste wird manuell gepflegt. Es kann vorkommen, dass ein Artikel vor&uuml;bergehend ausverkauft, dauerhaft ausgelistet oder ein Neuzugang noch nicht eingetragen ist. Sprechen Sie das Kassenpersonal an &ndash; die aktuellste Bestandsinfo ist immer im Laden selbst vorhanden.
-</p>
+<p>Alle Meldungen gesammelt finden Sie unter
+<a href="/aktuelles" target="_blank">Aktuelles</a>. Wenn Sie nichts verpassen
+möchten, schalten Sie die Benachrichtigung <b>News</b> ein.</p></section>
+<section class="thema" id="faq-whatsapp"><h3><svg class="ic" aria-hidden="true"><use href="#ic-nachricht"/></svg> Wie gebe ich etwas per WhatsApp weiter?</h3><p class="kurz">Wochenplan, TagesInfo oder Angebot in einem Schritt teilen.</p><p>Beim Wochenplan, bei der TagesInfo und bei den Angeboten gibt es einen
+Knopf zum <b>Teilen</b>. Ein Tippen öffnet WhatsApp mit einem fertigen Text -
+Sie wählen nur noch den Empfänger aus.</p>
 
-<!-- 18 -->
-<h4>Wie aktiviere ich Push-Benachrichtigungen?</h4>
-<p>
-  Men&uuml; &ouml;ffnen &rarr; Button &bdquo;Benachrichtigungen aktivieren&ldquo; antippen. Der Browser fragt: &bdquo;Darf die Seite Benachrichtigungen senden?&ldquo; &rarr; &bdquo;Erlauben&ldquo; w&auml;hlen. Der Button wechselt auf &bdquo;Benachrichtigungen aktiv&ldquo;. Falls versehentlich blockiert: Schloss-Symbol in der Adressleiste &rarr; Berechtigungen &rarr; Benachrichtigungen &rarr; &bdquo;Zulassen&ldquo;.
-</p>
+<p>Am Rechner öffnet sich WhatsApp Web. Alternativ kopieren Sie die Adresse
+aus der Adresszeile und fügen sie irgendwo ein.</p>
 
-<!-- 19 -->
-<h4>Wie betrachte ich die Galerie in Vollbild?</h4>
-<p>
-  Die Galerie finden Sie unter &bdquo;Impressionen&ldquo;. Tippen Sie auf ein Bild f&uuml;r die Vollbild-Ansicht (Lightbox). Weiterbl&auml;ttern mit Pfeiltasten oder den Pfeil-Buttons. Schlie&szlig;en: Au&szlig;erhalb des Bilds klicken, das &times;-Symbol oder <code>Escape</code>-Taste. Falls vorhanden, k&ouml;nnen Sie oben nach Kategorien filtern.
-</p>
+<p>Die App-Anleitung lässt sich übrigens genauso weitergeben - dort gibt es
+zusätzlich einen QR-Code zum Abfotografieren:
+<a href="/app" target="_blank">dorfladen-oberornau.de/app</a>.</p></section>
+<section class="thema" id="faq-drucken"><h3><svg class="ic" aria-hidden="true"><use href="#ic-drucker"/></svg> Wie drucke ich den Wochenplan aus?</h3><p class="kurz">Sauber auf ein Blatt - ohne Menüs und Knöpfe.</p><p>Beim Wochenplan und beim Angebotsflyer gibt es einen <b>Druckknopf</b>.
+Er bereitet die Seite für Papier auf: Menüs, Knöpfe und Hintergründe
+fallen weg, es bleibt der Inhalt.</p>
 
-<!-- 20 -->
-<h4>Warum sehe ich auf dem Smartphone eine andere Darstellung als am PC?</h4>
-<p>
-  Die Dorfladen-Homepage ist eine responsive Webanwendung und passt sich automatisch an die Bildschirmgr&ouml;&szlig;e an. Auf dem Smartphone werden Inhalte als Popups und Bottom-Sheets dargestellt, am PC als modale Dialoge. Die Funktionalit&auml;t ist identisch &ndash; nur die Darstellung ist f&uuml;r das jeweilige Ger&auml;t optimiert. Sollte etwas abgeschnitten wirken, versuchen Sie die Seite im Hochformat zu nutzen oder zoomen Sie mit der Zwei-Finger-Geste.
-</p>
+<p>Damit die Farben mitgedruckt werden, schalten Sie im Druckfenster
+„Hintergrundgrafiken“ ein - bei Chrome unter „Weitere Einstellungen“.</p>
 
-<hr style="margin-top:60px; border:none; border-top:2px solid #2d5016">
-<p style="text-align:center; color:#888; font-size:0.9em">
-  Offizielles Homepage-Anwenderhandbuch für Besucher • Version 1.3 • Dorfladen Oberornau Genossenschaft<br>
-  Besuchen Sie uns online unter: <code>https://kind-pebble-072605b03.7.azurestaticapps.net</code>
-</p>
+<p>Kein Drucker zur Hand? Wählen Sie im Druckfenster
+„Als PDF speichern“ - dann können Sie die Datei weitergeben oder
+später drucken.</p></section>
+<section class="thema" id="faq-datenschutz"><h3><svg class="ic" aria-hidden="true"><use href="#ic-schloss"/></svg> Welche Daten speichert die Website über mich?</h3><p class="kurz">So wenig wie möglich - und nichts für Werbung.</p><p>Wir verwenden nur technisch notwendige Cookies. Es gibt keine
+Werbenetzwerke, kein Weiterverkaufen von Daten und keine Auswertung Ihres
+Verhaltens für Werbung.</p>
 
+<ul>
+  <li><b>Benachrichtigungen:</b> Wir speichern eine anonyme Kennung Ihres
+      Geräts - keinen Namen, keine E-Mail. Schalten Sie sie ab, wird die
+      Kennung gelöscht.</li>
+  <li><b>Bestellungen:</b> Was Sie eintragen - Name und, falls angegeben,
+      E-Mail oder Telefon. Wir brauchen es, um Ihre Bestellung zuzuordnen.</li>
+  <li><b>Kamera (Strichcode):</b> Das Bild bleibt auf Ihrem Gerät. Es wird
+      nichts übertragen und nichts gespeichert.</li>
+</ul>
+
+<p>Ausführlich steht alles in der
+<a href="/datenschutzerklärung" target="_blank">Datenschutzerklärung</a>.</p></section>
+<h2 id="kap-klemmt"><span class="nr">8</span> Wenn etwas klemmt</h2>
+<section class="thema" id="faq-laden-fehler"><h3><svg class="ic" aria-hidden="true"><use href="#ic-warnung"/></svg> Die Seite lädt nicht oder bleibt weiß</h3><p class="kurz">Drei Handgriffe, die fast immer helfen.</p><ol class="schritte">
+  <li><b>Neu laden.</b> Auf dem Handy von oben nach unten ziehen, am Rechner
+      F5 drücken.</li>
+  <li><b>Ganz schließen und neu öffnen.</b> Das hilft, wenn die Seite als
+      App auf dem Startbildschirm liegt.</li>
+  <li><b>Verbindung prüfen.</b> Kurz zwischen WLAN und Mobilfunk wechseln.</li>
+</ol>
+
+<p>Bleibt es dabei, ist womöglich eine alte Fassung zwischengespeichert.
+Leeren Sie in den Browsereinstellungen den Zwischenspeicher (Cache) für
+diese Seite.</p>
+
+<p>Hilft alles nichts, sagen Sie uns bitte Bescheid - mit dem Knopf
+<b>Schreib uns</b> oder telefonisch unter
+<a href="tel:+4980826229991">08082 / 622 99 91</a>. Beschreiben Sie kurz, was
+Sie getan haben und was passiert ist; das hilft uns beim Suchen.</p></section>
+<section class="thema" id="faq-kamera-gesperrt"><h3><svg class="ic" aria-hidden="true"><use href="#ic-verbot"/></svg> Der Scanner sagt, die Kamera sei gesperrt</h3><p class="kurz">Berechtigung im Browser wieder freigeben.</p><p>Sie haben die Kamera-Anfrage vermutlich einmal abgelehnt. Danach fragt der
+Browser nicht noch einmal - Sie müssen es von Hand freigeben.</p>
+
+<ul>
+  <li><b>Android (Chrome):</b> Auf das Symbol links in der Adresszeile tippen
+      &rarr; „Berechtigungen“ &rarr; „Kamera“ &rarr; zulassen.</li>
+  <li><b>iPhone (Safari):</b> „Einstellungen“ &rarr; „Safari“ &rarr;
+      „Kamera“ &rarr; „Fragen“ oder „Erlauben“.</li>
+  <li><b>Rechner:</b> Auf das Schloss- oder Kamerasymbol in der Adresszeile
+      klicken und die Kamera zulassen.</li>
+</ul>
+
+<p>Danach die Seite einmal neu laden. Bleibt das Bild schwarz, verwendet
+möglicherweise eine andere App gerade die Kamera - diese bitte schließen.</p></section>
+<section class="thema" id="faq-offline"><h3><svg class="ic" aria-hidden="true"><use href="#ic-funk"/></svg> Was geht ohne Internet?</h3><p class="kurz">Zuletzt Gesehenes bleibt lesbar - Neues braucht Netz.</p><p>Die Seite merkt sich, was Sie zuletzt angesehen haben. Ohne Verbindung
+können Sie das weiter lesen - zum Beispiel den Wochenplan von vorhin.</p>
+
+<p>Nicht möglich sind Dinge, die aktuelle Daten brauchen: bestellen,
+stornieren, eine Nachricht schreiben oder den Bestellstatus abrufen. Sobald
+Sie wieder Netz haben, funktioniert alles von selbst - Sie müssen nichts
+nachholen.</p>
+
+<p>Bei schwacher Verbindung erscheinen Inhalte manchmal verzögert. Ziehen
+Sie die Seite von oben nach unten, um sie neu zu laden.</p></section>
+<section class="thema" id="faq-schrift"><h3><svg class="ic" aria-hidden="true"><use href="#ic-lupe"/></svg> Die Schrift ist mir zu klein</h3><p class="kurz">Größer stellen - dauerhaft oder nur kurz.</p><p><b>Schnell:</b> Auf dem Handy mit zwei Fingern auseinanderziehen. Am
+Rechner Strg und + drücken (am Mac Befehlstaste und +).</p>
+
+<p><b>Dauerhaft:</b></p>
+<ul>
+  <li><b>Android:</b> „Einstellungen“ &rarr; „Anzeige“ &rarr;
+      „Schriftgröße“.</li>
+  <li><b>iPhone:</b> „Einstellungen“ &rarr; „Anzeige &amp; Helligkeit“
+      &rarr; „Textgröße“.</li>
+  <li><b>Rechner:</b> In den Browsereinstellungen unter „Darstellung“
+      die Schriftgröße erhöhen.</li>
+</ul>
+
+<p>Die Seite passt sich an - es wird nichts abgeschnitten.</p></section>
+<section class="thema" id="faq-gestures"><h3><svg class="ic" aria-hidden="true"><use href="#ic-hand"/></svg> Wie schließe ich ein Fenster auf dem Handy?</h3><p class="kurz">Wegwischen, Zurück-Geste oder das Kreuz.</p><p>Fenster wie der Wochenplan oder diese Hilfe lassen sich auf drei Arten
+schließen:</p>
+
+<ul>
+  <li><b>Nach unten wischen</b> - am oberen Rand des Fensters ansetzen.</li>
+  <li><b>Zurück-Geste</b> des Handys: vom linken Rand nach rechts wischen.
+      Damit wird nur das Fenster geschlossen, die Seite bleibt.</li>
+  <li><b>Auf das Kreuz</b> oben rechts tippen.</li>
+</ul>
+
+<p>Am Rechner genügt die Escape-Taste oder ein Klick neben das Fenster.</p></section>
+
+
+<h2 id="kap-kontakt"><span class="nr">9</span> Wenn Sie nicht weiterkommen</h2>
+
+<p>Schreiben Sie uns über den Knopf <b>Schreib uns</b> unten rechts auf der
+Startseite. Sie brauchen dafür nur Ihren Namen; die Antwort erscheint im
+selben Fenster.</p>
+
+<p>Oder rufen Sie an: <b>08082 / 622 99 91</b>. Kommen Sie gerne auch einfach
+im Laden vorbei — wir richten Ihnen die App und die Benachrichtigungen auf
+Wunsch direkt auf Ihrem Handy ein.</p>
+
+<div class="kasten">
+  <b>Sie arbeiten im Dorfladen?</b> Für den Kiosk — Kalender, Bestellungen
+  und Tagesablauf — gibt es ein eigenes Handbuch unter
+  <span class="pfad">help-workflows.html</span>.
+</div>
+
+
+</div>
 </body>
 </html>

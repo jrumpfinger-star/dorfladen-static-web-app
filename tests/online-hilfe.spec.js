@@ -301,3 +301,54 @@ test('Die ausgelieferte Datei stammt aus dem Generator', () => {
     + `${fehlend.join(', ')}. Bitte python tools/hilfe_bauen.py ausführen.`)
     .toEqual([]);
 });
+
+/* ══════════════════════════════════════════════════════════════════════
+   F9 — Das Besucher-Handbuch stammt aus derselben Quelle
+   ══════════════════════════════════════════════════════════════════════ */
+
+const HANDBUCH_URL = `${BASE}/handbuch/homepage-anwenderhandbuch.html`;
+
+test('TC-F9-01: Alle Themen stehen auch im Handbuch', async ({ page }) => {
+  await page.goto(HANDBUCH_URL, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.thema', { timeout: 15000 });
+
+  const inhalt = lies('tools/hilfe_inhalt.py');
+  const ids = [...inhalt.matchAll(/"id":\s*"(faq-[a-z-]+)"/g)].map((m) => m[1]);
+  const imBuch = await page.evaluate(() =>
+    [...document.querySelectorAll('.thema')].map((s) => s.id));
+
+  const fehlend = ids.filter((id) => !imBuch.includes(id));
+  expect(fehlend,
+    `Im Handbuch fehlen: ${fehlend.join(', ')}. Bitte `
+    + 'python tools/handbuch_bauen.py ausführen.').toEqual([]);
+});
+
+test('TC-F9-02: Keine veralteten Aussagen im Handbuch', async ({ page }) => {
+  await page.goto(HANDBUCH_URL, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.thema', { timeout: 15000 });
+  const text = (await page.evaluate(() => document.body.innerText)).toLowerCase();
+
+  // Das Handbuch beschrieb eine „Sidebar am linken Bildschirmrand“ — die
+  // gibt es seit Langem nicht mehr.
+  expect(text, 'Die Beschreibung der Sidebar ist zurück.').not.toContain('sidebar');
+  expect(text, 'Die Benachrichtigungen gelten wieder als Testphase.')
+    .not.toContain('testphase');
+
+  // Und die Bestellfunktionen müssen darin vorkommen.
+  for (const wort of ['vorbestell', 'bestellnummer', 'stornier']) {
+    expect(text, `Im Handbuch fehlt „${wort}“.`).toContain(wort);
+  }
+});
+
+test('TC-F9-03: Das Inhaltsverzeichnis führt überall hin', async ({ page }) => {
+  await page.goto(HANDBUCH_URL, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.ivz a', { timeout: 15000 });
+
+  const tot = await page.evaluate(() => [...document.querySelectorAll('.ivz a')]
+    .map((a) => a.getAttribute('href'))
+    .filter((h) => h && h.startsWith('#') && !document.getElementById(h.slice(1))));
+
+  expect(tot, `Tote Sprungmarken im Inhalt: ${tot.join(', ')}`).toEqual([]);
+  const n = await page.locator('.ivz a').count();
+  expect(n, 'Das Inhaltsverzeichnis ist leer.').toBeGreaterThan(20);
+});

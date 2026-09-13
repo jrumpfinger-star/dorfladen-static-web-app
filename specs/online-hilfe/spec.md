@@ -249,6 +249,44 @@ der eingebettete Rahmen fiel auf seine Standardhöhe von 150 px zurück.
 - **Action:** `openHilfePopup('faq-push')`.
 - **Expected:** Der Abschnitt `faq-push` ist aufgeklappt.
 
+### F9: Das Besucher-Handbuch stammt aus derselben Quelle
+
+#### F9 Description
+
+Das Besucher-Handbuch (`handbuch/homepage-anwenderhandbuch.html`) war aus
+demselben Grund veraltet wie die Hilfe. Es beschrieb unter anderem eine
+„Sidebar am linken Bildschirmrand", die es seit Langem nicht mehr gibt,
+führte keine der Bestellfunktionen und nannte Benachrichtigungen eine
+„Testphase".
+
+Zwei Dokumente mit denselben Inhalten laufen immer auseinander. Das Handbuch
+entsteht deshalb aus **derselben** Themenliste wie die Hilfe und ergänzt nur,
+was ein zusammenhängendes Dokument braucht: Einführung, Aufbau der Seite und
+Inhaltsverzeichnis.
+
+#### F9 Behaviour / Acceptance
+
+- Jedes Thema aus `hilfe_inhalt.py` steht auch im Handbuch.
+- Kein Verweis auf eine Sidebar, keine „Testphase".
+- Das Inhaltsverzeichnis hat keine toten Sprungmarken.
+- Die PDF-Fassung wird aus derselben HTML-Datei gedruckt
+  (`tools/handbuch_pdf.js`); aus dem CMS wird darauf verwiesen.
+
+#### F9 Test Cases
+
+**TC-F9-01: Alle Themen stehen im Handbuch**
+
+- **Expected:** Die Kennungen der Themen aus der Hilfe kommen auch im
+  Handbuch vor.
+
+**TC-F9-02: Keine veralteten Aussagen**
+
+- **Expected:** Der Text enthält weder „Sidebar" noch „Testphase".
+
+**TC-F9-03: Das Inhaltsverzeichnis führt überall hin**
+
+- **Expected:** Jede Sprungmarke im Inhaltsverzeichnis hat ein Ziel.
+
 ## Data & Contracts
 
 **Inhalt:** `tools/hilfe_inhalt.py` — `GRUPPEN` und `THEMEN`
@@ -284,4 +322,5 @@ Keine.
 | F5 | TC-F5-01, TC-F5-02 | Suche |
 | F6 | TC-F6-01 | Inhalt |
 | F7 | TC-F7-01 | Symbole |
-| F8 | TC-F8-01, TC-F8-02 | Popup |
+| F8 | TC-F8-01, TC-F8-02, TC-F8-03 | Popup |
+| F9 | TC-F9-01 … TC-F9-03 | Handbuch |
