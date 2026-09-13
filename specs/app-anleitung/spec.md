@@ -327,7 +327,11 @@ Installationsversuch wird durch den Verweis auf die Seite ersetzt.
 - `pwaInstall()` ohne Installationsangebot führt auf `/app` statt zu einem
   `alert()`.
 - Der iOS-Push-Hinweis verweist auf die Seite.
-- Die Startseite trägt einen sichtbaren Verweis.
+- Die Startseite trägt einen sichtbaren Verweis — im Mobil-Menü und in der
+  Fußzeile.
+- **Jede Inhaltsseite** trägt den Verweis in der Fußzeile. Kunden landen über
+  Suchmaschinen und geteilte Verweise oft auf Unterseiten; ein Einstieg nur
+  auf der Startseite fände sie nicht.
 
 #### F9 Test Cases
 
@@ -336,9 +340,11 @@ Installationsversuch wird durch den Verweis auf die Seite ersetzt.
 - **Expected:** In `js/pwa.js` steht in `pwaInstall()` kein `alert(` mehr; es
   wird auf `/app` geführt.
 
-**TC-F9-02: Verweis auf der Startseite**
+**TC-F9-02: Verweis auf der Startseite und in jeder Fußzeile**
 
-- **Expected:** `index.html` enthält einen Verweis auf `/app`.
+- **Expected:** `index.html` enthält einen Verweis auf `/app`; ebenso jede
+  weitere Inhaltsseite mit Fußzeile. Die Route `/app` steht in
+  `staticwebapp.config.json`.
 
 ## Data & Contracts
 

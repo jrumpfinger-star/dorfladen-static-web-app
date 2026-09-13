@@ -448,12 +448,26 @@ test('TC-F9-01: Der Installationsversuch endet nicht mehr in einem alert', () =>
   expect(code, 'Es fehlt der Weg zur bebilderten Anleitung.').toContain("'/app'");
 });
 
-test('TC-F9-02: Die Startseite verweist auf die Anleitung', () => {
+test('TC-F9-02: Startseite und jede Fußzeile verweisen auf die Anleitung', () => {
   const index = lies('static-site/index.html');
   const treffer = index.match(/href="\/app"/g) || [];
   expect(treffer.length,
     'Auf der Startseite fehlt der Verweis auf die Anleitung.')
     .toBeGreaterThanOrEqual(1);
+
+  // Kunden landen über Suchmaschinen und geteilte Verweise oft auf
+  // Unterseiten. Ein Einstieg nur auf der Startseite fände sie nicht.
+  const verzeichnis = path.join(__dirname, '..', 'static-site');
+  const fussmuster = /<a href="\/impressum">Impressum<\/a>\s*&middot;\s*<a href="\/datenschutzerklaerung">Datenschutz<\/a>/;
+  const ohne = [];
+  for (const datei of fs.readdirSync(verzeichnis).filter((f) => f.endsWith('.html'))) {
+    if (datei === 'app.html') continue;            // kein Selbstverweis
+    const t = fs.readFileSync(path.join(verzeichnis, datei), 'utf8');
+    if (!fussmuster.test(t)) continue;             // Seite ohne diese Fußzeile
+    if (!/href="\/app"/.test(t)) ohne.push(datei);
+  }
+  expect(ohne, `Diesen Seiten fehlt der Verweis auf /app: ${ohne.join(', ')}`)
+    .toEqual([]);
 
   // Die Route muss die Adresse auch bedienen.
   const cfg = JSON.parse(lies('staticwebapp.config.json'));
