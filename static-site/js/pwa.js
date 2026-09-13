@@ -304,12 +304,18 @@ function pwaInstall(){
     });
     return;
   }
-  // No prompt available – show manual instructions
-  if(/iPhone|iPad|iPod/.test(navigator.userAgent)){
-    alert('Tippe auf das Teilen-Symbol (Quadrat mit Pfeil nach oben) und dann auf \u201eZum Home-Bildschirm\u201c.');
-  }else{
-    alert('Klicke im Browser-Men\u00fc auf \u201eApp installieren\u201c oder \u201eZum Startbildschirm hinzuf\u00fcgen\u201c.');
+  // Kein Installationsangebot des Browsers - das ist auf dem iPhone immer
+  // so. Frueher stand hier ein alert() mit einem einzigen Satz; wer nicht
+  // wusste, wie das Teilen-Symbol aussieht, kam damit nicht weiter. Jetzt
+  // fuehrt der Weg auf die bebilderte Anleitung (Spec app-anleitung, F9).
+  // Auf der Anleitungsseite selbst waere die Weiterleitung sinnlos.
+  if(location.pathname.replace(/\/$/,'')==='/app'
+     ||location.pathname==='/app.html'){
+    var ziel=document.getElementById('app-wahl');
+    if(ziel&&ziel.scrollIntoView)ziel.scrollIntoView({behavior:'smooth'});
+    return;
   }
+  location.href='/app';
 }
 function pwaCloseBanner(){
   var b=document.getElementById('pwa-install-banner');
@@ -339,9 +345,13 @@ window.addEventListener('resize',pwaBannerPlatz);
 (function(){
   var pushBtn=document.getElementById('mob-push-toggle');
   var pushBtnDt=document.getElementById('dt-push-toggle');
-  var CAT_LABELS={tagesinfo:'TagesInfo',news:'News / Aktuelles',bestellung:'Meine Bestellungen'};
-  var CAT_ICONS={tagesinfo:'\uD83D\uDCCB',news:'\uD83D\uDCE2',bestellung:'\uD83D\uDECD\uFE0F'};
-  var CAT_DESC={tagesinfo:'T\u00e4glicher Mittagstisch, Theke & Angebote',news:'Neuigkeiten & Infos',bestellung:'Status & Nachrichten zu Ihren Bestellungen'};
+  var CAT_LABELS={tagesinfo:'TagesInfo',news:'News / Aktuelles',bestellung:'Meine Bestellungen',kontakt:'Antwort auf meine Nachricht'};
+  var CAT_ICONS={tagesinfo:'\uD83D\uDCCB',news:'\uD83D\uDCE2',bestellung:'\uD83D\uDECD\uFE0F',kontakt:'\uD83D\uDCAC'};
+  var CAT_DESC={tagesinfo:'T\u00e4glicher Mittagstisch, Theke & Angebote',news:'Neuigkeiten & Infos',bestellung:'Status & Nachrichten zu Ihren Bestellungen',kontakt:'Wenn wir auf Ihre Nachricht antworten'};
+  // Eine Liste statt dreier gleichlautender: Beim Ergaenzen von 'kontakt'
+  // war an drei Stellen dasselbe zu aendern (anzeigen, speichern, laden) -
+  // eine davon zu vergessen haette die Kategorie halb sichtbar gemacht.
+  var PUSH_CATS=['tagesinfo','news','bestellung','kontakt'];
 
   // --- Toast system (replaces ugly alert()) ---
   function showToast(msg,type,duration){
@@ -451,7 +461,10 @@ window.addEventListener('resize',pwaBannerPlatz);
         '<li style="margin-bottom:6px">Den Dorfladen \u00fcber das <b>neue Symbol</b> auf dem Home-Bildschirm \u00f6ffnen.</li>'+
         '<li>Dort erneut auf \u201E<b>Benachrichtigungen aktivieren</b>\u201C tippen.</li>'+
       '</ol>'+
-      '<div style="font-size:.75rem;color:#9ca3af;text-align:center;margin-bottom:14px">Voraussetzung: iOS 16.4 oder neuer.</div>';
+      '<div style="font-size:.75rem;color:#9ca3af;text-align:center;margin-bottom:14px">Voraussetzung: iOS 16.4 oder neuer.</div>'+
+      // Wer hier nicht weiterkommt, findet unter /app dieselben Schritte
+      // bebildert (Spec app-anleitung, F9).
+      '<div style="text-align:center;margin-bottom:14px"><a href="/app" style="font-size:.85rem;color:#2d5016;font-weight:600">Schritt f\u00fcr Schritt mit Bildern ansehen</a></div>';
 
     var btn=document.createElement('button');
     btn.textContent='Verstanden';
@@ -511,7 +524,7 @@ window.addEventListener('resize',pwaBannerPlatz);
 
   function savePushCategories(endpoint){
     var cats=[];
-    ['tagesinfo','news','bestellung'].forEach(function(c){
+    PUSH_CATS.forEach(function(c){
       var cb=document.getElementById('push-cat-'+c);
       if(cb&&cb.checked)cats.push(c);
     });
@@ -579,7 +592,7 @@ window.addEventListener('resize',pwaBannerPlatz);
     dialog.appendChild(hdr);
 
     // Category cards
-    ['tagesinfo','news','bestellung'].forEach(function(c){
+    PUSH_CATS.forEach(function(c){
       var card=document.createElement('label');
       card.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;border-radius:12px;border:2px solid #f0f0f0;cursor:pointer;transition:all .15s ease;background:#fafafa';
       card.onmouseover=function(){card.style.borderColor='#5ea88a';card.style.background='#f0faf4';};
@@ -655,7 +668,7 @@ window.addEventListener('resize',pwaBannerPlatz);
       .then(function(r){return r.json();})
       .then(function(res){
         if(res.categories){
-          ['tagesinfo','news','bestellung'].forEach(function(c){
+          PUSH_CATS.forEach(function(c){
             var cb=document.getElementById('push-cat-'+c);
             if(cb){
               cb.checked=res.categories.indexOf(c)!==-1;

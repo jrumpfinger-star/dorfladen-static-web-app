@@ -7,6 +7,10 @@
       ]
     },
     {
+      "route": "/app",
+      "rewrite": "/app.html"
+    },
+    {
       "route": "/konzept",
       "rewrite": "/konzept.html"
     },

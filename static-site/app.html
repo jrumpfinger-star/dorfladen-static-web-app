@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Als App einrichten – Dorfladen Oberornau</title>
+<meta name="description" content="Schritt für Schritt: Den Dorfladen Oberornau als App auf iPhone, Android-Handy oder Rechner einrichten und Benachrichtigungen aktivieren.">
+<link rel="stylesheet" href="/css/content.css">
+<link rel="stylesheet" href="/css/app-anleitung.css">
+<script src="/js/theme.js"></script>
+<link rel="stylesheet" href="/css/mobile.css">
+<link rel="icon" href="/favicon.ico">
+</head>
+<body>
+<!-- MOBILE HEADER -->
+<div class="mob-only mob-ticker"><a href="/aktuelles" class="mob-ticker-label" style="text-decoration:none;color:#fff"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg> Aktuelles</a><div class="mob-ticker-track"><span class="mob-ticker-content" id="mob-ticker-content"></span></div></div>
+<header class="mob-only mob-header">
+  <a href="/" class="mob-back"><svg width="14" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Start</a>
+  <a href="/" class="mob-header-logo"><img src="" alt="Dorfladen" id="mob-logo-img" style="display:none"><span class="logo-text" id="mob-logo-text"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Dorfladen Oberornau</span></a>
+  <button class="mob-header-menu" aria-label="Men&uuml;" onclick="document.getElementById('mob-nav').classList.add('open');document.getElementById('mob-nav-ov').classList.add('open')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+</header>
+<div class="mob-only mob-nav-overlay" id="mob-nav-ov" onclick="this.classList.remove('open');document.getElementById('mob-nav').classList.remove('open')"></div>
+<nav class="mob-only mob-nav" id="mob-nav">
+  <div class="mob-nav-close"><button onclick="document.getElementById('mob-nav').classList.remove('open');document.getElementById('mob-nav-ov').classList.remove('open')">&times;</button></div>
+  <a href="/"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Start</a>
+  <a href="/aktuelles"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg> Aktuelles</a>
+  <a href="/essen-im-dorfladen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Essen</a>
+  <a href="/konzept"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg> Konzept</a>
+  <a href="/sortiment"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Sortiment &amp; Preisliste</a>
+  <a href="/oeffnungszeiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> &Ouml;ffnungszeiten</a>
+  <a href="/bilder"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Impressionen</a>
+  <a href="/roter-punkt" class="acc"><svg width="18" height="18" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a>
+  <a href="/beirat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Beirat</a>
+  <a href="/geschaeftsfuehrung"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg> Gesch&auml;ftsf&uuml;hrung</a>
+  <a href="javascript:void(0)" id="mob-pwa-install" onclick="pwaInstall()" style="margin-top:12px;display:none;background:linear-gradient(135deg,#2d5016,#3a6b1e);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:.88rem;text-align:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Als App installieren</a>
+  <a href="javascript:void(0)" id="mob-push-toggle" onclick="pushToggle()" style="display:none;background:#f0fdf4;color:#2d5016;border-radius:10px;padding:10px 14px;font-weight:600;font-size:.88rem;text-align:center">&#128276; Benachrichtigungen aktivieren</a>
+</nav>
+<a href="#main" class="skip">Zum Inhalt springen</a>
+<div class="tb" role="complementary" aria-label="Kontaktleiste">
+  <div class="tb-in">
+    <span>Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a> &middot; <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a></span>
+    <div class="tb-legal"><a href="/impressum">Impressum</a> <a href="/datenschutzerklaerung">Datenschutz</a></div>
+  </div>
+</div>
+<nav class="nv" role="navigation" aria-label="Hauptnavigation">
+  <div class="nv-in">
+    <a href="/" class="nv-logo" aria-label="Dorfladen Oberornau Startseite">
+      <span id="nv-logo-fallback" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> Dorfladen Oberornau</span>
+    </a>
+    <button class="nv-burger" aria-label="Navigation ein-/ausklappen" aria-expanded="false" onclick="var n=this.nextElementSibling;var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+    <ul class="nv-links">
+      <li><a href="/aktuelles">Aktuelles</a></li>
+      <li class="act">
+        <a href="/konzept" aria-haspopup="true">Dorfladen</a>
+        <ul class="nv-dd">
+          <li><a href="/konzept">Konzept</a></li>
+          <li><a href="/sortiment">Sortiment</a></li>
+          <li><a href="/sortiment#preisliste"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Preisliste</a></li>
+          <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
+          <li><a href="/bilder">Impressionen</a></li>
+          <li><a href="/roter-punkt" style="color:#b91c1c;font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
+        </ul>
+      </li>
+<li>
+        <a href="/beirat" aria-haspopup="true">&Uuml;ber uns</a>
+        <ul class="nv-dd">
+          <li><a href="/essen-im-dorfladen">Essen im Dorfladen</a></li>
+          <li><a href="/beirat">Beirat</a></li>
+          <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
+          <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+        </ul>
+      </li>
+      <li><a href="/roter-punkt" style="color:var(--c-acc);font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
+    </ul>
+  </div>
+</nav>
+<div class="bc" role="navigation" aria-label="Breadcrumb"><a href="/">Start</a> &rsaquo; Als App einrichten</div>
+<main id="main" class="ct-full app-seite">
+
+  <h1>Der Dorfladen auf Ihrem Startbildschirm</h1>
+  <p class="app-lead">Sie können unsere Seite wie eine App auf Ihr Gerät legen:
+    ein Symbol auf dem Startbildschirm, ein Tippen, fertig — ohne Umweg über den
+    Browser und ohne etwas aus einem App-Store zu laden. Wenn Sie möchten, sagt
+    Ihnen der Dorfladen dann auch Bescheid, was es heute zu essen gibt.</p>
+
+  <!-- Das Statusband füllt js/app-anleitung.js. Ohne Skript bleibt es leer
+       und die Anleitung steht trotzdem vollständig da. -->
+  <div id="app-status" class="app-status" hidden></div>
+
+  <section class="app-wahl" id="app-wahl" hidden>
+    <h2 class="app-wahl-t">Welches Gerät benutzen Sie?</h2>
+    <div class="app-knopfreihe" id="app-geraete">
+      <button type="button" class="app-wk" data-geraet="iphone">iPhone oder iPad</button>
+      <button type="button" class="app-wk" data-geraet="android">Android-Handy</button>
+      <button type="button" class="app-wk" data-geraet="rechner">Rechner</button>
+    </div>
+    <div class="app-knopfreihe app-browserreihe" data-fuer="iphone" hidden>
+      <button type="button" class="app-wk" data-weg="ios-safari">Safari</button>
+      <button type="button" class="app-wk" data-weg="ios-andere">Chrome, Edge, Firefox</button>
+    </div>
+    <div class="app-knopfreihe app-browserreihe" data-fuer="android" hidden>
+      <button type="button" class="app-wk" data-weg="android-chrome">Chrome oder Edge</button>
+      <button type="button" class="app-wk" data-weg="android-samsung">Samsung Internet</button>
+      <button type="button" class="app-wk" data-weg="android-firefox">Firefox</button>
+    </div>
+    <div class="app-knopfreihe app-browserreihe" data-fuer="rechner" hidden>
+      <button type="button" class="app-wk" data-weg="win-chrome">Windows: Chrome oder Edge</button>
+      <button type="button" class="app-wk" data-weg="mac-safari">Mac: Safari</button>
+      <button type="button" class="app-wk" data-weg="mac-chrome">Mac: Chrome oder Edge</button>
+    </div>
+  </section>
+
+  <p class="app-ohne-js">Unten stehen alle Wege untereinander. Sobald Sie
+    JavaScript erlauben, zeigt Ihnen die Seite nur den Weg, der zu Ihrem Gerät
+    passt.</p>
+
+  <!-- ══════════════ Weg 1: iPhone / iPad mit Safari ══════════════ -->
+  <section class="app-weg" data-weg="ios-safari" id="ios-safari">
+    <h2>iPhone oder iPad mit Safari</h2>
+    <p class="app-untertitel">Der übliche Weg auf Apple-Geräten. Drei Schritte,
+      etwa eine halbe Minute.</p>
+
+    <ol class="app-schritte">
+      <li>
+        <div class="app-text">
+          <h3>Diese Seite in Safari öffnen</h3>
+          <p>Tippen Sie unten auf das <strong>Teilen-Symbol</strong> — das
+            Quadrat mit dem Pfeil nach oben. Es sitzt in der Leiste am unteren
+            Rand.</p>
+          <p class="app-wenn">Sehen Sie die Leiste nicht? Tippen Sie einmal
+            kurz auf die Seite und wischen Sie ein Stück nach unten — dann
+            kommt sie wieder hervor.</p>
+        </div>
+        <img src="/images/anleitung/ios-teilen.svg" alt="Safari auf dem iPhone: Das Teilen-Symbol in der unteren Leiste ist rot umkringelt." loading="lazy" width="300" height="560">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>„Zum Home-Bildschirm“ wählen</h3>
+          <p>Es öffnet sich eine Liste. Wischen Sie darin nach unten, bis
+            <strong>„Zum Home-Bildschirm“</strong> erscheint, und tippen Sie
+            darauf.</p>
+        </div>
+        <img src="/images/anleitung/ios-menue.svg" alt="Das Teilen-Menü mit dem hervorgehobenen Eintrag „Zum Home-Bildschirm“." loading="lazy" width="300" height="560">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Oben rechts auf „Hinzufügen“</h3>
+          <p>Sie sehen noch einmal Name und Symbol. Den Namen können Sie ändern
+            — nötig ist das nicht. Tippen Sie oben rechts auf
+            <strong>„Hinzufügen“</strong>.</p>
+        </div>
+        <img src="/images/anleitung/ios-bestaetigen.svg" alt="Der Bestätigungsdialog mit dem Knopf „Hinzufügen“ oben rechts." loading="lazy" width="300" height="400">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Fertig</h3>
+          <p>Das grüne Dorfladen-Symbol liegt jetzt auf Ihrem Startbildschirm.
+            Ein Tippen öffnet den Dorfladen als eigene App — ohne Adresszeile,
+            ohne Suchen.</p>
+        </div>
+        <img src="/images/anleitung/startbildschirm.svg" alt="Der Startbildschirm mit dem neuen grünen Dorfladen-Symbol." loading="lazy" width="300" height="560">
+      </li>
+    </ol>
+
+    <div class="app-kasten app-kasten-wichtig">
+      <h3>Wichtig für Benachrichtigungen</h3>
+      <p>Apple erlaubt Benachrichtigungen nur, wenn der Dorfladen als App auf
+        dem Startbildschirm liegt. Im Safari-Fenster geht es nicht. Machen Sie
+        also zuerst die vier Schritte oben — und öffnen Sie dann den Dorfladen
+        <strong>über das neue Symbol</strong>. Voraussetzung ist iOS 16.4 oder
+        neuer; das haben Geräte ab etwa 2023 ohnehin.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════ Weg 2: iPhone mit anderem Browser ══════════════ -->
+  <section class="app-weg" data-weg="ios-andere" id="ios-andere">
+    <h2>iPhone oder iPad mit Chrome, Edge oder Firefox</h2>
+
+    <div class="app-kasten app-kasten-umleitung">
+      <h3>Auf dem iPhone führt nur Safari zuverlässig zum Ziel</h3>
+      <p>Apple lässt andere Browser zwar seit iOS 16.4 auch Symbole anlegen,
+        aber die meisten bieten es gar nicht erst an — und Benachrichtigungen
+        funktionieren auf diesem Weg nicht. Ersparen Sie sich die Sucherei:</p>
+      <ol class="app-mini">
+        <li>Öffnen Sie <strong>Safari</strong> (das blaue Kompass-Symbol).</li>
+        <li>Geben Sie dort <strong>dorfladen-oberornau.de/app</strong> ein.</li>
+        <li>Folgen Sie der Anleitung, die dann erscheint.</li>
+      </ol>
+      <p class="app-tipp">Noch schneller: Tippen Sie in Ihrem Browser unten auf
+        das Teilen-Symbol und wählen Sie <strong>„In Safari öffnen“</strong>.</p>
+      <p><a class="app-link" href="#ios-safari" data-zeige="ios-safari">Anleitung
+        für Safari ansehen</a></p>
+    </div>
+  </section>
+
+  <!-- ══════════════ Weg 3: Android mit Chrome oder Edge ══════════════ -->
+  <section class="app-weg" data-weg="android-chrome" id="android-chrome">
+    <h2>Android-Handy mit Chrome oder Edge</h2>
+    <p class="app-untertitel">Der häufigste Fall. Oft bietet der Browser die
+      Installation von selbst an — dann genügt ein Tippen.</p>
+
+    <p class="app-knopfzeile" data-knopf="installieren" hidden>
+      <button type="button" class="app-tun" id="app-install">Jetzt installieren</button>
+      <span class="app-knopf-note">Ihr Browser bietet die Installation an —
+        das geht mit einem Tippen.</span>
+    </p>
+
+    <ol class="app-schritte">
+      <li>
+        <div class="app-text">
+          <h3>Das Menü öffnen</h3>
+          <p>Tippen Sie oben rechts auf die <strong>drei Punkte</strong>
+            untereinander.</p>
+        </div>
+        <img src="/images/anleitung/android-menue.svg" alt="Chrome auf Android: Die drei Punkte oben rechts sind rot umkringelt." loading="lazy" width="300" height="560">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>„App installieren“ wählen</h3>
+          <p>Im Menü steht <strong>„App installieren“</strong>. Bei manchen
+            Geräten heißt es <strong>„Zum Startbildschirm hinzufügen“</strong> —
+            das ist dasselbe.</p>
+        </div>
+        <img src="/images/anleitung/android-installieren.svg" alt="Das Chrome-Menü mit dem hervorgehobenen Eintrag „App installieren“." loading="lazy" width="300" height="560">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Bestätigen</h3>
+          <p>Es erscheint eine Nachfrage mit dem Dorfladen-Symbol. Tippen Sie
+            auf <strong>„Installieren“</strong>.</p>
+        </div>
+        <img src="/images/anleitung/android-dialog.svg" alt="Der Installationsdialog mit dem grünen Knopf „Installieren“." loading="lazy" width="300" height="320">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Fertig</h3>
+          <p>Der Dorfladen liegt jetzt bei Ihren Apps und auf dem
+            Startbildschirm.</p>
+        </div>
+        <img src="/images/anleitung/startbildschirm.svg" alt="Der Startbildschirm mit dem neuen grünen Dorfladen-Symbol." loading="lazy" width="300" height="560">
+      </li>
+    </ol>
+  </section>
+
+  <!-- ══════════════ Weg 4: Samsung Internet ══════════════ -->
+  <section class="app-weg" data-weg="android-samsung" id="android-samsung">
+    <h2>Android-Handy mit Samsung Internet</h2>
+    <p class="app-untertitel">Auf Samsung-Geräten ist das der vorinstallierte
+      Browser.</p>
+
+    <ol class="app-schritte">
+      <li>
+        <div class="app-text">
+          <h3>Das Menü öffnen</h3>
+          <p>Tippen Sie unten rechts auf das <strong>Menü-Symbol</strong> — die
+            drei waagerechten Striche.</p>
+          <p class="app-wenn">Manchmal erscheint direkt neben der Adresszeile
+            ein kleines <strong>„+“</strong>. Dann genügt ein Tippen darauf.</p>
+        </div>
+        <img src="/images/anleitung/samsung-menue.svg" alt="Samsung Internet: Das Menü-Symbol unten rechts und der Eintrag „Seite hinzufügen zu“." loading="lazy" width="300" height="560">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>„Seite hinzufügen zu“ → „Startbildschirm“</h3>
+          <p>Wählen Sie <strong>„Seite hinzufügen zu“</strong> und danach
+            <strong>„Startbildschirm“</strong>.</p>
+        </div>
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Bestätigen</h3>
+          <p>Tippen Sie auf <strong>„Hinzufügen“</strong>. Das Dorfladen-Symbol
+            liegt nun auf Ihrem Startbildschirm.</p>
+        </div>
+        <img src="/images/anleitung/startbildschirm.svg" alt="Der Startbildschirm mit dem neuen grünen Dorfladen-Symbol." loading="lazy" width="300" height="560">
+      </li>
+    </ol>
+  </section>
+
+  <!-- ══════════════ Weg 5: Firefox auf Android ══════════════ -->
+  <section class="app-weg" data-weg="android-firefox" id="android-firefox">
+    <h2>Android-Handy mit Firefox</h2>
+
+    <div class="app-kasten app-kasten-umleitung">
+      <h3>Firefox legt nur eine Verknüpfung an</h3>
+      <p>Sie können den Dorfladen über <strong>Menü ⋮ → „Zum Startbildschirm
+        hinzufügen“</strong> ablegen. Das Symbol öffnet dann aber wieder
+        Firefox mit Adresszeile — keine eigene App.</p>
+      <p>Wenn Sie den Dorfladen wie eine richtige App nutzen möchten, öffnen
+        Sie diese Seite einmal in <strong>Chrome</strong> (oder Edge) und
+        installieren ihn von dort. Danach können Sie weiter Firefox als
+        Browser verwenden; die App bleibt bestehen.</p>
+      <p><a class="app-link" href="#android-chrome" data-zeige="android-chrome">Anleitung
+        für Chrome ansehen</a></p>
+    </div>
+
+    <img src="/images/anleitung/firefox-menue.svg" alt="Firefox auf Android: Das Menü mit dem Eintrag „Zum Startbildschirm hinzufügen“." loading="lazy" width="300" height="560" class="app-einzelbild">
+
+    <div class="app-kasten">
+      <h3>Benachrichtigungen gehen trotzdem</h3>
+      <p>Firefox kann Benachrichtigungen auch ohne Installation anzeigen —
+        dafür muss Firefox allerdings gelegentlich laufen.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════ Weg 6: Windows / Linux ══════════════ -->
+  <section class="app-weg" data-weg="win-chrome" id="win-chrome">
+    <h2>Rechner mit Chrome oder Edge</h2>
+    <p class="app-untertitel">Auch am Rechner können Sie den Dorfladen als
+      eigenes Fenster ablegen — ohne Lesezeichen-Suche.</p>
+
+    <p class="app-knopfzeile" data-knopf="installieren" hidden>
+      <button type="button" class="app-tun" id="app-install-pc">Jetzt installieren</button>
+      <span class="app-knopf-note">Ihr Browser bietet die Installation an.</span>
+    </p>
+
+    <ol class="app-schritte">
+      <li>
+        <div class="app-text">
+          <h3>Das Symbol in der Adresszeile</h3>
+          <p>Rechts in der Adresszeile erscheint ein kleines Symbol: ein
+            <strong>Bildschirm mit einem Pfeil nach unten</strong>. Klicken Sie
+            darauf.</p>
+          <p class="app-wenn">Kein Symbol zu sehen? Dann über das Menü:
+            <strong>⋮ → „Streamen, speichern und teilen“ → „Seite als App
+            installieren“</strong> (Chrome) oder <strong>… → „Apps“ → „Diese
+            Website als App installieren“</strong> (Edge).</p>
+        </div>
+        <img src="/images/anleitung/pc-adressleiste.svg" alt="Die Adresszeile mit dem rot umkringelten Installationssymbol." loading="lazy" width="520" height="240">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Bestätigen</h3>
+          <p>Klicken Sie auf <strong>„Installieren“</strong>. Der Dorfladen
+            öffnet sich danach in einem eigenen Fenster und liegt im Startmenü.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ══════════════ Weg 7: Mac mit Safari ══════════════ -->
+  <section class="app-weg" data-weg="mac-safari" id="mac-safari">
+    <h2>Mac mit Safari</h2>
+    <p class="app-untertitel">Safari legt den Dorfladen ins Dock. Dafür braucht
+      es macOS Sonoma oder neuer.</p>
+
+    <ol class="app-schritte">
+      <li>
+        <div class="app-text">
+          <h3>Menü „Ablage“ öffnen</h3>
+          <p>Ganz oben am Bildschirmrand, in der Menüleiste, auf
+            <strong>„Ablage“</strong> klicken.</p>
+        </div>
+        <img src="/images/anleitung/mac-ablage.svg" alt="Die macOS-Menüleiste mit dem geöffneten Menü „Ablage“ und dem Eintrag „Zum Dock hinzufügen“." loading="lazy" width="520" height="260">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>„Zum Dock hinzufügen“</h3>
+          <p>Diesen Eintrag wählen und mit <strong>„Hinzufügen“</strong>
+            bestätigen. Der Dorfladen liegt danach unten im Dock.</p>
+          <p class="app-wenn">Der Eintrag fehlt? Dann ist Ihr macOS älter als
+            Sonoma. Nutzen Sie stattdessen Chrome oder Edge.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ══════════════ Weg 8: Mac mit Chrome / Edge ══════════════ -->
+  <section class="app-weg" data-weg="mac-chrome" id="mac-chrome">
+    <h2>Mac mit Chrome oder Edge</h2>
+
+    <p class="app-knopfzeile" data-knopf="installieren" hidden>
+      <button type="button" class="app-tun" id="app-install-mac">Jetzt installieren</button>
+      <span class="app-knopf-note">Ihr Browser bietet die Installation an.</span>
+    </p>
+
+    <ol class="app-schritte">
+      <li>
+        <div class="app-text">
+          <h3>Das Symbol in der Adresszeile</h3>
+          <p>Rechts in der Adresszeile erscheint ein <strong>Bildschirm mit
+            einem Pfeil nach unten</strong>. Darauf klicken.</p>
+        </div>
+        <img src="/images/anleitung/pc-adressleiste.svg" alt="Die Adresszeile mit dem rot umkringelten Installationssymbol." loading="lazy" width="520" height="240">
+      </li>
+      <li>
+        <div class="app-text">
+          <h3>Bestätigen</h3>
+          <p>Auf <strong>„Installieren“</strong> klicken. Der Dorfladen
+            erscheint im Launchpad und lässt sich ins Dock ziehen.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ══════════════ Benachrichtigungen einschalten ══════════════ -->
+  <section class="app-abschnitt" id="app-melden">
+    <h2>Benachrichtigungen einschalten</h2>
+    <p>Wenn Sie möchten, meldet sich der Dorfladen von selbst — etwa morgens
+      mit dem Mittagstisch. Sie entscheiden dabei genau, worüber.</p>
+
+    <p class="app-knopfzeile">
+      <button type="button" class="app-tun" id="app-push">Benachrichtigungen einschalten</button>
+      <span class="app-knopf-note" id="app-push-note"></span>
+    </p>
+
+    <div class="app-zwei">
+      <div class="app-text">
+        <h3>So läuft es ab</h3>
+        <ol class="app-mini">
+          <li>Auf den Knopf oben tippen.</li>
+          <li>Der Browser fragt einmal nach — mit <strong>„Erlauben“</strong>
+            bestätigen.</li>
+          <li>Danach wählen Sie aus, welche der vier Arten Sie bekommen
+            möchten.</li>
+        </ol>
+        <p class="app-wenn">Sie können das jederzeit wieder ändern oder ganz
+          abschalten — im Menü unter „Benachrichtigungen“.</p>
+      </div>
+      <img src="/images/anleitung/erlaubnis.svg" alt="Die Nachfrage des Browsers mit dem Knopf „Erlauben“." loading="lazy" width="300" height="300">
+    </div>
+  </section>
+
+  <!-- ══════════════ Was bekomme ich? ══════════════ -->
+  <section class="app-abschnitt" id="app-arten">
+    <h2>Was bekomme ich da eigentlich?</h2>
+    <p>Vier Arten, einzeln an- und abschaltbar. Zwei gehen an alle, zwei
+      ausschließlich an Sie persönlich.</p>
+
+    <div class="app-artenliste">
+
+      <article class="app-art" data-art="tagesinfo">
+        <div class="app-art-kopf">
+          <span class="app-art-sym" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+          </span>
+          <div>
+            <h3>TagesInfo</h3>
+            <p class="app-art-kurz">Was es heute gibt</p>
+          </div>
+        </div>
+        <p class="app-art-nutzen">Sie sehen morgens beim Blick aufs Handy, was
+          es heute zum Mittagstisch gibt, was frisch an der Theke liegt und
+          welche Angebote gelten — ohne die Seite zu öffnen. Wer mittags
+          bestellen will, weiß so rechtzeitig Bescheid.</p>
+        <p class="app-beispiel"><span>Beispiel</span> Heute: Kaiserschmarrn mit
+          Apfelmus</p>
+        <dl class="app-art-fakten">
+          <div><dt>Wie oft</dt><dd>an Werktagen, meist vormittags</dd></div>
+          <div><dt>Wer bekommt es</dt><dd>alle, die es eingeschaltet haben</dd></div>
+        </dl>
+      </article>
+
+      <article class="app-art" data-art="news">
+        <div class="app-art-kopf">
+          <span class="app-art-sym" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+          </span>
+          <div>
+            <h3>News &amp; Aktuelles</h3>
+            <p class="app-art-kurz">Was sich ändert</p>
+          </div>
+        </div>
+        <p class="app-art-nutzen">Geänderte Öffnungszeiten vor Feiertagen,
+          Aktionen, Veranstaltungen im Laden, Neues aus dem Sortiment. Damit
+          Sie nicht vor verschlossener Tür stehen.</p>
+        <p class="app-beispiel"><span>Beispiel</span> Am Pfingstmontag bleibt
+          der Laden geschlossen</p>
+        <dl class="app-art-fakten">
+          <div><dt>Wie oft</dt><dd>selten — nur wenn es wirklich etwas gibt</dd></div>
+          <div><dt>Wer bekommt es</dt><dd>alle, die es eingeschaltet haben</dd></div>
+        </dl>
+      </article>
+
+      <article class="app-art app-art-privat" data-art="bestellung">
+        <div class="app-art-kopf">
+          <span class="app-art-sym" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </span>
+          <div>
+            <h3>Meine Bestellungen</h3>
+            <p class="app-art-kurz">Wie es um Ihre Bestellung steht</p>
+          </div>
+        </div>
+        <p class="app-art-nutzen">Wenn Sie Mittagessen bestellt haben: Bescheid,
+          sobald die Bestellung angenommen und wenn sie abholbereit ist. Und
+          falls die Küche eine Rückfrage hat, erfahren Sie es sofort — statt
+          erst beim Abholen.</p>
+        <p class="app-beispiel"><span>Beispiel</span> Ihre Bestellung ist
+          abholbereit</p>
+        <dl class="app-art-fakten">
+          <div><dt>Wie oft</dt><dd>nur wenn Sie selbst bestellt haben</dd></div>
+          <div><dt>Wer bekommt es</dt><dd><strong>Nur Sie.</strong> Diese
+            Nachricht geht an Ihr Gerät, an niemanden sonst.</dd></div>
+        </dl>
+        <p class="app-art-auto">Wird beim Bestellen automatisch eingeschaltet —
+          und lässt sich genauso wieder abschalten.</p>
+      </article>
+
+      <article class="app-art app-art-privat" data-art="kontakt">
+        <div class="app-art-kopf">
+          <span class="app-art-sym" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          <div>
+            <h3>Antwort auf meine Nachricht</h3>
+            <p class="app-art-kurz">Wenn wir zurückschreiben</p>
+          </div>
+        </div>
+        <p class="app-art-nutzen">Haben Sie uns übers Kontaktformular
+          geschrieben, sagt Ihnen diese Nachricht Bescheid, sobald wir
+          geantwortet haben. Sie müssen nicht immer wieder nachsehen.</p>
+        <p class="app-beispiel"><span>Beispiel</span> Wir haben Ihnen
+          geantwortet</p>
+        <dl class="app-art-fakten">
+          <div><dt>Wie oft</dt><dd>nur wenn Sie uns geschrieben haben</dd></div>
+          <div><dt>Wer bekommt es</dt><dd><strong>Nur Sie.</strong> Ihre
+            Anfrage sieht sonst niemand.</dd></div>
+        </dl>
+        <p class="app-art-auto">Wird beim Schreiben einer Nachricht automatisch
+          eingeschaltet — und lässt sich genauso wieder abschalten.</p>
+      </article>
+
+    </div>
+
+    <div class="app-kasten">
+      <h3>Was wir nicht tun</h3>
+      <p>Wir schicken keine Werbung fremder Firmen und geben Ihre Daten nicht
+        weiter. Für Benachrichtigungen brauchen wir keinen Namen und keine
+        E-Mail-Adresse — nur eine anonyme Kennung Ihres Geräts. Schalten Sie
+        die Benachrichtigungen ab, ist auch die wieder weg. Näheres in der
+        <a href="/datenschutzerklaerung">Datenschutzerklärung</a>.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════ Klappt nicht? ══════════════ -->
+  <section class="app-abschnitt" id="app-hilfe">
+    <h2>Klappt etwas nicht?</h2>
+
+    <details class="app-frage">
+      <summary>Ich finde „Zum Home-Bildschirm“ nicht</summary>
+      <p>Dann sind Sie vermutlich nicht in Safari, sondern in Chrome, Firefox
+        oder einer anderen App. Auf dem iPhone funktioniert nur Safari
+        zuverlässig. Öffnen Sie <strong>dorfladen-oberornau.de/app</strong>
+        in Safari und versuchen Sie es dort noch einmal.</p>
+    </details>
+
+    <details class="app-frage">
+      <summary>Der Menüeintrag „App installieren“ fehlt</summary>
+      <p>Meist hilft es, die Seite einmal neu zu laden. Bleibt der Eintrag weg,
+        prüfen Sie, ob Ihr Browser auf dem neuesten Stand ist. Manche Browser
+        nennen es auch <strong>„Zum Startbildschirm hinzufügen“</strong> —
+        das führt zum selben Ergebnis.</p>
+    </details>
+
+    <details class="app-frage">
+      <summary>Ich bekomme keine Benachrichtigungen</summary>
+      <p>Drei häufige Gründe:</p>
+      <ul>
+        <li><strong>Auf dem iPhone:</strong> Der Dorfladen muss als App auf dem
+          Startbildschirm liegen <em>und</em> von dort geöffnet werden. Im
+          Safari-Fenster geht es nicht.</li>
+        <li><strong>Abgelehnt:</strong> Haben Sie die Nachfrage einmal mit
+          „Nicht erlauben“ beantwortet, fragt der Browser nicht wieder. Sie
+          müssen es in den Einstellungen des Browsers für diese Seite wieder
+          freigeben.</li>
+        <li><strong>Ruhemodus:</strong> Prüfen Sie, ob Ihr Gerät gerade auf
+          „Nicht stören“ steht.</li>
+      </ul>
+    </details>
+
+    <details class="app-frage">
+      <summary>Ich möchte die App wieder loswerden</summary>
+      <p>Wie bei jeder anderen App: Symbol gedrückt halten und entfernen. Ihre
+        Daten bleiben davon unberührt, die Seite können Sie weiterhin im
+        Browser aufrufen.</p>
+    </details>
+
+    <details class="app-frage">
+      <summary>Kostet das etwas? Braucht es einen App-Store?</summary>
+      <p>Nein und nein. Es wird nichts geladen und nichts gekauft — es entsteht
+        lediglich eine Verknüpfung auf Ihrem Startbildschirm. Speicherplatz
+        braucht es so gut wie keinen.</p>
+    </details>
+
+    <p class="app-hilfe-fuss">Es klemmt trotzdem? Rufen Sie uns an unter
+      <a href="tel:+4980826229991">08082 / 622 99 91</a> oder kommen Sie im
+      Laden vorbei — wir richten es Ihnen gerne ein.</p>
+  </section>
+
+  <!-- ══════════════ Weitergeben ══════════════ -->
+  <section class="app-abschnitt app-teilen" id="app-teilen">
+    <h2>Anleitung weitergeben</h2>
+    <div class="app-teilen-in">
+      <img src="/images/anleitung/qr-app.svg" alt="QR-Code, der zu dorfladen-oberornau.de/app führt" width="148" height="148" class="app-qr">
+      <div>
+        <p class="app-teilen-t">Mit dem Handy scannen</p>
+        <p>Richten Sie die Kamera Ihres Handys auf den Code — die Anleitung
+          öffnet sich dann dort.</p>
+        <p class="app-adresse">dorfladen-oberornau.de/app</p>
+        <p class="app-nur-schirm">
+          <button type="button" class="app-tun app-tun-leise" onclick="window.print()">Anleitung ausdrucken</button>
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+<footer class="ft" role="contentinfo">
+  <div class="ft-in">
+    <div class="ft-addr">
+      <h4>Dorfladen Oberornau</h4>
+      <p>Dorfladen Oberornau UG<br>(haftungsbeschr&auml;nkt)<br>Dorfplatz 1<br>84419 Obertaufkirchen<br><br>
+      Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a><br>
+      <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a></p>
+    </div>
+    <div>
+      <h4>Unser Angebot</h4>
+      <ul>
+        <li><a href="/konzept">Konzept</a></li>
+        <li><a href="/sortiment">Sortiment</a></li>
+        <li><a href="/essen-im-dorfladen">Essen im Dorfladen</a></li>
+        <li><a href="/oeffnungszeiten">&Ouml;ffnungszeiten</a></li>
+        <li><a href="/roter-punkt" style="color:#ef5350"><svg width="12" height="12" viewBox="0 0 24 24" fill="#b91c1c" stroke="#b91c1c" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/></svg> Roter Punkt</a></li>
+      <li id="dt-pwa-install" style="display:none"><a href="javascript:void(0)" onclick="pwaInstall()" style="color:#2d5016;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> App</a></li>
+      <li id="dt-push-toggle" style="display:none"><a href="javascript:void(0)" onclick="pushToggle()" style="color:#2d5016;font-weight:600">&#128276; Push</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>&Uuml;ber uns</h4>
+      <ul>
+        <li><a href="/beirat">Beirat</a></li>
+        <li><a href="/geschaeftsfuehrung">Gesch&auml;ftsf&uuml;hrung</a></li>
+        <li><a href="/stille-gesellschafter">Stille Gesellschafter</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Rechtliches</h4>
+      <ul>
+        <li><a href="/impressum">Impressum</a></li>
+        <li><a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a></li>
+        <li><a href="/agb">AGB</a></li>
+        <li><a href="/widerrufsrecht">Widerrufsrecht</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    <span>&copy; 2026 Dorfladen Oberornau UG (haftungsbeschr&auml;nkt)</span>
+    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="/handbuch/hilfe.html" style="color:#2d5016;font-weight:600">&#10067; Hilfe</a> &middot; <a href="https://dorfladen-oberornau.powerappsportals.com/cms" target="_blank" rel="noopener" style="opacity:.6">CMS</a></span>
+  </div>
+</footer>
+<div class="cookie-bar" id="cookieBar" role="dialog" aria-label="Cookie-Hinweis">
+  <div class="cookie-inner">
+    <p>Diese Website verwendet ausschlie&szlig;lich technisch notwendige Cookies. Mehr in unserer <a href="/datenschutzerklaerung">Datenschutzerkl&auml;rung</a>.</p>
+    <div class="cookie-btns">
+      <button class="ck-accept" onclick="document.getElementById('cookieBar').classList.remove('show');localStorage.setItem('dl_cookies','1')">Verstanden</button>
+      <button class="ck-decline" onclick="document.getElementById('cookieBar').classList.remove('show');sessionStorage.setItem('dl_cookies_declined','1')">Ablehnen</button>
+    </div>
+  </div>
+</div>
+<script>
+if(!localStorage.getItem('dl_cookies')&&!sessionStorage.getItem('dl_cookies_declined')){
+  document.getElementById('cookieBar').classList.add('show');
+}
+</script>
+
+<script src="/js/app.js?v=5"></script>
+<script src="/js/logo-loader.js"></script>
+<script src="/js/mobile.js"></script>
+<script src="/js/pwa.js?v=14"></script>
+<script src="/js/app-anleitung.js"></script>
+</body>
+</html>
