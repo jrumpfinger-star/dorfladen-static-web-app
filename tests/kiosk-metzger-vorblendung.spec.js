@@ -693,7 +693,7 @@ test.describe('Artikelliste aufgeräumt', () => {
       expect(new Set(flucht.preis).size).toBe(1);
     });
 
-  test('TC-A05: Die Zeile ist flach, die Schaltflächen bleiben antippbar',
+  test('TC-A05: Die Zeile bleibt einreihig, die Antippgröße bleibt gewahrt',
     async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 });
       await oeffneTab(page, { viele: true });
@@ -709,10 +709,13 @@ test.describe('Artikelliste aufgeräumt', () => {
           reihen: new Set(b.map((e) => Math.round(e.getBoundingClientRect().top))).size,
         };
       });
-      expect(mass.knopf).toBeGreaterThanOrEqual(34);   // F5
-      expect(mass.zeile).toBeLessThanOrEqual(64);      // F5: deutlich flacher
+      // TC-A05: die projektweite Antippgröße --tap-min bleibt unangetastet.
+      expect(mass.knopf).toBeGreaterThanOrEqual(44);
       // F2: beide Schaltflächen stehen nebeneinander, nicht untereinander.
+      // Zu wenige Rasterspalten liessen „Ausblenden" in eine zweite Reihe
+      // fallen und bliesen die Zeile auf 110 px auf.
       expect(mass.reihen).toBe(1);
+      expect(mass.zeile).toBeLessThanOrEqual(mass.knopf + 20);
     });
 
   test('TC-A06: Auf schmalem Schirm bleiben die Schaltflächen erreichbar',

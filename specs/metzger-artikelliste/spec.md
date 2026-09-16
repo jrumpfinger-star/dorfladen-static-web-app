@@ -69,3 +69,6 @@ Unruhe und viel verschenkte Höhe.
 | TC-A04 | Preis-Spalte in mehreren Zeilen | alle enden bei **derselben** x-Position |
 | TC-A05 | Schaltflächenhöhe | mindestens 44 px (Antippgröße) |
 | TC-A06 | Schmaler Schirm (390 px) | Schaltflächen bleiben sichtbar und anklickbar |
+
+Wächter: `tests/kiosk-metzger-vorblendung.spec.js`, Block „Artikelliste
+aufgeräumt" (TC-A01 … TC-A06).
