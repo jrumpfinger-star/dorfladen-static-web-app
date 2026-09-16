@@ -798,4 +798,25 @@ test.describe('Artikelliste auf allen Breiten', () => {
     // Vorher standen auf 1600 px genauso viele Artikel wie auf 1280 px.
     expect(breit.imBild).toBeGreaterThan(schmal.imBild);
   });
+
+  test('TC-A09: Bezeichnung und Vorgabe werden nirgends abgeschnitten', async ({ browser }) => {
+    test.setTimeout(180000);
+    /* Rueckmeldung: „Die Vorgaben muessen schon lesbar sein und auch die
+       Bezeichnung." Nebeneinander wurden beide gekappt. Untereinander
+       passen sie — und kosten keine Hoehe, weil die Zeile ohnehin von
+       der 44 px hohen Schaltflaeche bestimmt wird. */
+    for (const w of BREITEN) {
+      const ab = await beiBreite(browser, w, (p) => p.evaluate(() => {
+        const z = [...document.querySelectorAll('#panel-metzgerbest .mb-arow')].slice(0, 12);
+        const gekappt = (sel) => z.filter((r) => {
+          const e = r.querySelector(sel);
+          return e && e.scrollWidth > e.clientWidth + 1;
+        }).length;
+        return { zeilen: z.length, name: gekappt('.mb-atxt'), vorgabe: gekappt('.mb-astd') };
+      }));
+      expect(ab.zeilen, 'Breite ' + w + ': keine Zeilen').toBeGreaterThan(4);
+      expect(ab.name, 'Breite ' + w + ': Bezeichnung abgeschnitten').toBe(0);
+      expect(ab.vorgabe, 'Breite ' + w + ': Vorgabe abgeschnitten').toBe(0);
+    }
+  });
 });

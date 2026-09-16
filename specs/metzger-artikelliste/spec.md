@@ -59,9 +59,11 @@ Unruhe und viel verschenkte Höhe.
 - **F8** Auf schmalen Schirmen bricht die Zeile um; die Schaltflächen
   rutschen in eine eigene Reihe und bleiben erreichbar.
 
-- **F9** Bezeichnung und Vorgabe stehen **nebeneinander**, nicht
-  übereinander. Das füllt den Raum, den die Spalte ohnehin belegt, und
-  macht die Zeile einzeilig.
+- **F9** Bezeichnung und Vorgabe stehen **untereinander** und sind
+  **beide vollständig lesbar**. Nebeneinander wurden sie abgeschnitten
+  („Hackfleisch gemisc…", „6 × 250 g (va…"). Untereinander kostet das
+  keine Höhe: Die Zeile wird ohnehin von der 44 px hohen Schaltfläche
+  bestimmt, zwei Textzeilen passen hinein.
 - **F10** Die verfügbare **Breite wird genutzt statt verschenkt**: Ab
   1500 px stehen zwei Artikel nebeneinander. Bei 1600 px sind dadurch
   rund 30 statt 16 Artikel gleichzeitig zu sehen.
