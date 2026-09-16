@@ -831,6 +831,18 @@
     blatt.addEventListener('click', function (e) {
       if (e.target === blatt) blattSchliessen(blatt);
     });
+
+    // Erst jetzt die Gestaltung freigeben. Die Regeln in kiosk-neu.css
+    // verlangen diese Klasse, weil das Blatt ohne Karte nur noch eine
+    // bildschirmfüllende Schicht auf z-index 9000 wäre — sie verdeckte
+    // den ganzen Kiosk und fing jeden Klick ab.
+    //
+    // Genau das ist beim Ausrollen passiert: Der Service Worker lieferte
+    // diese Datei noch aus seinem Zwischenspeicher, während das
+    // Gestaltungsblatt schon neu war. Nach einem Tipp auf das „i" ließ
+    // sich nichts mehr bedienen. Bei einer PWA ist ein gemischter Stand
+    // kein Sonderfall, sondern der Normalzustand während des Ausrollens.
+    blatt.classList.add('k-blatt-bereit');
   }
 
   function blaetterFormen() {

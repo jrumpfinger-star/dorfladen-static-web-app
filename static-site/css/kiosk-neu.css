@@ -3652,11 +3652,29 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
 
    Der Aufbau bleibt unverändert; nur die Gestaltung ist neu. Damit gilt
    sie für alle drei Reiter, ohne dass drei Fachmodule angefasst werden.
+
+   ── Warum jede Regel `.k-blatt-bereit` verlangt ──────────────────────
+   Diese Gestaltung setzt voraus, dass die Hilfeschicht
+   (js/kiosk-neu-shell.js) das Blatt umgruppiert hat: Karte, Kopf, Körper,
+   Fuß. Ohne diese Umgruppierung wäre das Blatt nur noch eine
+   bildschirmfüllende Schicht auf z-index 9000 — sie verdeckte den ganzen
+   Kiosk und fing jeden Klick ab.
+
+   Genau das ist beim Ausrollen passiert: Der Service Worker lieferte das
+   alte Skript aus seinem Zwischenspeicher, während das Gestaltungsblatt
+   schon neu war. Nach einem Tipp auf das „i" ließ sich nichts mehr
+   bedienen — die Knöpfe der Kopfzeile reagierten nicht mehr, nur
+   „Link in neuem Tab öffnen" ging noch.
+
+   Die Klasse setzt die Hilfeschicht erst, wenn die Karte wirklich steht.
+   Fehlt sie, gilt die alte Gestaltung weiter: unschön, aber bedienbar.
+   Bei einer PWA ist ein gemischter Stand kein Sonderfall, sondern der
+   Normalzustand während des Ausrollens.
    ══════════════════════════════════════════════════════════════════════ */
 
-.bk-blatt, .gk-blatt, .mb-blatt{
-  /* Die Abdunkelung liegt als eigene Schicht hinter dem Blatt. Ohne sie
-     wirkt das Öffnen wie „nichts passiert" — genau die Rückmeldung. */
+.bk-blatt.k-blatt-bereit,
+.gk-blatt.k-blatt-bereit,
+.mb-blatt.k-blatt-bereit{
   position:fixed;
   inset:0;
   /* Auf der Ebene der übrigen Dialoge (.k-modal-bg, .bk-overlay). Mit dem
@@ -3665,8 +3683,9 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
      die Abdunkelung sah aus wie ein Darstellungsfehler. */
   z-index:9000;
   display:flex;
-  align-items:flex-end;
-  justify-content:center;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:center;
   padding:0;
   background:rgba(15,23,42,.55);
   border-radius:0;
@@ -3678,16 +3697,19 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
      blieben Fußzeile und Reiterleiste hell stehen (bei 844 px waren das
      genau die fehlenden 169 px). Die Begrenzung sitzt jetzt an der Karte. */
   max-height:none;
-  /* Der Inhalt wird zum Kind-Kasten: Flex-Elemente bekommen unten eigene
-     Regeln, der Rest fließt in einer Spalte. */
-  flex-direction:column;
-  justify-content:flex-end;
 }
-.bk-blatt[hidden], .gk-blatt[hidden], .mb-blatt[hidden]{ display:none }
 
-/* Die eigentliche Karte. Da das HTML keinen eigenen Rahmen mitbringt,
-   übernimmt ein Kind-Container die Rolle — er wird von der Hilfeschicht
-   (js/kiosk-neu-shell.js) beim Öffnen eingezogen. */
+/* Verborgen heißt verborgen — und das muss stärker wiegen als die Regel
+   oben. Ohne diese Zeile fängt das geschlossene Blatt jeden Klick ab: Es
+   liegt mit `inset:0` über dem ganzen Kiosk, nur eben unsichtbar. Die
+   Regel braucht dieselbe Klasse, sonst gewinnt bei gleicher Spezifität
+   die später notierte. */
+.bk-blatt.k-blatt-bereit[hidden],
+.gk-blatt.k-blatt-bereit[hidden],
+.mb-blatt.k-blatt-bereit[hidden]{ display:none }
+
+/* Die eigentliche Karte. Sie wird von der Hilfeschicht beim Öffnen
+   eingezogen — ohne sie greift die Gestaltung oben gar nicht erst. */
 .k-blatt-karte{
   width:100%;
   max-height:88%;
@@ -3705,20 +3727,24 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
 }
 
 /* ── Kopf: Titel, Untertitel, Schließkreuz ─────────────────────────── */
-.bk-blatt-kopf, .gk-blatt-kopf, .mb-blatt-kopf{
+.k-blatt-bereit .bk-blatt-kopf,
+.k-blatt-bereit .gk-blatt-kopf,
+.k-blatt-bereit .mb-blatt-kopf{
   display:flex;
   align-items:flex-start;
   gap:11px;
   flex:0 0 auto;
-  padding:15px 16px calc(15px) calc(16px + var(--sal, 0px));
+  padding:15px 16px 15px calc(16px + var(--sal, 0px));
   border-bottom:1px solid var(--line, #e1ebe5);
 }
-.bk-blatt-kopf h4, .gk-blatt-kopf h4, .mb-blatt-kopf h4{
-  margin:0; font-size:16px; line-height:1.3; flex:1; min-width:0;
+.k-blatt-bereit .bk-blatt-kopf h4,
+.k-blatt-bereit .gk-blatt-kopf h4,
+.k-blatt-bereit .mb-blatt-kopf h4{
+  margin:0; font-size:16px; line-height:1.3;
 }
-/* Der Untertitel lag als Geschwister neben dem Kopf und rutschte dadurch
-   neben das Schließkreuz. Er gehört unter den Titel. */
-.bk-blatt-sub, .gk-blatt-sub, .mb-blatt-sub{
+.k-blatt-bereit .bk-blatt-sub,
+.k-blatt-bereit .gk-blatt-sub,
+.k-blatt-bereit .mb-blatt-sub{
   margin:0; font-size:13px; color:var(--mut, #688073); line-height:1.35;
 }
 .k-blatt-zu{
@@ -3726,11 +3752,11 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
   width:38px; height:38px;
   display:flex; align-items:center; justify-content:center;
   border:0; border-radius:10px;
-  background:var(--gr-t, #f1f5f9);
+  background:#f1f5f9;
   color:var(--mut, #475569);
   cursor:pointer;
 }
-.k-blatt-zu:hover{ background:var(--line, #e2e8f0) }
+.k-blatt-zu:hover{ background:#e2e8f0 }
 .k-blatt-zu svg{ width:17px; height:17px }
 
 /* ── Körper: rollt, wenn es eng wird ───────────────────────────────── */
@@ -3740,89 +3766,109 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
   overflow-y:auto;
   padding:14px 16px 14px calc(16px + var(--sal, 0px));
 }
+.k-blatt-koerper > *:first-child{ margin-top:0 }
 
 /* ── Abschnittsüberschriften ───────────────────────────────────────── */
-.bk-blatt-t, .gk-blatt-t, .mb-blatt-t{
+.k-blatt-bereit .bk-blatt-t,
+.k-blatt-bereit .gk-blatt-t,
+.k-blatt-bereit .mb-blatt-t{
   margin:14px 0 6px;
   font-size:11.5px; font-weight:700;
   text-transform:uppercase; letter-spacing:.05em;
   color:var(--mut, #688073);
 }
-.k-blatt-koerper > *:first-child{ margin-top:0 }
 
 /* ── Hinweise: gekennzeichnete Kästen statt gleichrangiger Fließtext ──
    Testbetrieb, Vorbelegung und Bestellschluss standen als lose Zeilen
    zwischen allem anderen. Jetzt heben sie sich ab: Blau für Auskunft,
    Bernstein für das, worauf zu achten ist. */
-.gk-blatt-hinweis,
-.bk-blatt-z, .gk-blatt-z, .mb-blatt-z{
+.k-blatt-bereit .gk-blatt-hinweis,
+.k-blatt-bereit .bk-blatt-z,
+.k-blatt-bereit .gk-blatt-z,
+.k-blatt-bereit .mb-blatt-z{
   border-top:0;
   padding:10px 12px;
   margin-bottom:8px;
   border-radius:10px;
   font-size:13px; line-height:1.45;
-  background:var(--blau-t, #eff6ff);
+  background:#eff6ff;
   border-left:3px solid #2563eb;
   color:#1e40af;
 }
-.bk-blatt-z svg, .gk-blatt-z svg, .mb-blatt-z svg{
+.k-blatt-bereit .bk-blatt-z svg,
+.k-blatt-bereit .gk-blatt-z svg,
+.k-blatt-bereit .mb-blatt-z svg{
   width:15px; height:15px; color:currentColor; opacity:.8;
 }
-/* Der Testbetriebs-Hinweis trägt „klein" — er ist eine Warnung. */
-.bk-blatt-z.klein, .gk-blatt-z.klein, .mb-blatt-z.klein{
-  background:var(--warn-t, #fffbeb);
+/* Solange der Testbetrieb läuft, geht die Bestellung nicht an den
+   Lieferanten. Das ist eine Warnung, keine beiläufige Auskunft. */
+.k-blatt-bereit .bk-blatt-z.klein,
+.k-blatt-bereit .gk-blatt-z.klein,
+.k-blatt-bereit .mb-blatt-z.klein{
+  background:#fffbeb;
   border-left-color:#d97706;
   color:#92400e;
   font-size:12.5px;
 }
 
 /* Die Terminzeile ist ein Formularfeld, kein Hinweis. */
-.gk-blatt-z:has(input[type="date"]),
-.bk-blatt-z:has(input[type="date"]){
+.k-blatt-bereit .gk-blatt-z:has(input[type="date"]),
+.k-blatt-bereit .bk-blatt-z:has(input[type="date"]){
   background:none; border-left:0; padding:0; margin-bottom:12px;
   display:flex; flex-direction:column; align-items:stretch; gap:5px;
   color:inherit;
 }
-.gk-blatt-z label, .bk-blatt-z label{
+.k-blatt-bereit .gk-blatt-z label,
+.k-blatt-bereit .bk-blatt-z label{
   flex:0 0 auto;
   font-size:11.5px; font-weight:700;
   text-transform:uppercase; letter-spacing:.05em;
   color:var(--mut, #688073);
 }
-.gk-blatt-z input[type="date"], .bk-blatt-z input[type="date"]{
+.k-blatt-bereit .gk-blatt-z input[type="date"],
+.k-blatt-bereit .bk-blatt-z input[type="date"]{
   width:100%; min-height:var(--tap-min, 44px);
   border:1.5px solid var(--line, #e1ebe5); border-radius:10px;
   padding:0 12px; font:inherit; font-size:15px;
   background:var(--karte, #fff);
 }
-.gk-blatt-z input[type="date"]:focus,
-.bk-blatt-z input[type="date"]:focus{ outline:none; border-color:var(--gr, #2e7d4f) }
+.k-blatt-bereit .gk-blatt-z input[type="date"]:focus,
+.k-blatt-bereit .bk-blatt-z input[type="date"]:focus{
+  outline:none; border-color:var(--gr, #2e7d4f);
+}
 
 /* ── Bereichswechsel: gleich breite Teile in einem Rahmen ──────────── */
-.gk-subs.im-blatt, .mb-subs.im-blatt, .bk-sub.im-blatt{
+.k-blatt-bereit .gk-subs.im-blatt,
+.k-blatt-bereit .mb-subs.im-blatt,
+.k-blatt-bereit .bk-sub.im-blatt{
   display:flex; gap:0;
   border:1.5px solid var(--line, #e1ebe5);
   border-radius:10px; overflow:hidden;
-  background:var(--gr-t, #f8fafc);
+  background:#f8fafc;
   margin:0 0 12px;
 }
-/* Im Dialog ist die Überschrift „Bereich" hilfreich — sie war bisher nur
-   auf dem Telefon vorgesehen (Klasse `gk-nur-tel`), weil der Wechsel dort
-   ausschließlich im Blatt steht. */
-.bk-blatt .gk-nur-tel, .gk-blatt .gk-nur-tel,
-.mb-blatt .mb-nur-tel, .bk-blatt .bk-nur-tel{ display:block }
-.gk-subs.im-blatt button, .mb-subs.im-blatt button, .bk-sub.im-blatt button{
+.k-blatt-bereit .gk-subs.im-blatt button,
+.k-blatt-bereit .mb-subs.im-blatt button,
+.k-blatt-bereit .bk-sub.im-blatt button{
   flex:1; min-height:var(--tap-min, 44px);
   border:0; border-right:1px solid var(--line, #e1ebe5); border-radius:0;
   background:none; color:var(--mut, #475569);
   font:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
 }
-.gk-subs.im-blatt button:last-child,
-.mb-subs.im-blatt button:last-child,
-.bk-sub.im-blatt button:last-child{ border-right:0 }
-.gk-subs.im-blatt button.on, .mb-subs.im-blatt button.on, .bk-sub.im-blatt button.on{
+.k-blatt-bereit .gk-subs.im-blatt button:last-child,
+.k-blatt-bereit .mb-subs.im-blatt button:last-child,
+.k-blatt-bereit .bk-sub.im-blatt button:last-child{ border-right:0 }
+.k-blatt-bereit .gk-subs.im-blatt button.on,
+.k-blatt-bereit .mb-subs.im-blatt button.on,
+.k-blatt-bereit .bk-sub.im-blatt button.on{
   background:var(--gr, #2e7d4f); color:#fff;
 }
+/* Im Dialog ist die Überschrift „Bereich" hilfreich — sie war bisher nur
+   auf dem Telefon vorgesehen, weil der Wechsel dort ausschließlich im
+   Blatt steht. */
+.k-blatt-bereit .gk-nur-tel,
+.k-blatt-bereit .mb-nur-tel,
+.k-blatt-bereit .bk-nur-tel{ display:block }
 
 /* ── Aktionen: Liste mit Symbol statt Wand aus Knöpfen ─────────────── */
 .k-blatt-akt{
@@ -3832,7 +3878,8 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
   border-radius:10px; overflow:hidden;
   margin:0 0 12px;
 }
-.k-blatt-akt > button, .k-blatt-akt > .kn-knopf{
+.k-blatt-akt > button,
+.k-blatt-akt > .kn-knopf{
   display:flex; align-items:center; gap:11px;
   width:100%; min-height:46px; margin:0;
   padding:9px 13px;
@@ -3842,10 +3889,10 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
   font:inherit; font-size:13.5px; font-weight:600;
   text-align:left; cursor:pointer;
 }
-.k-blatt-akt > button:hover, .k-blatt-akt > .kn-knopf:hover{
-  background:var(--gr-t, #f0f7ec);
-}
-.k-blatt-akt > button svg, .k-blatt-akt > .kn-knopf svg{
+.k-blatt-akt > button:hover,
+.k-blatt-akt > .kn-knopf:hover{ background:#f0f7ec }
+.k-blatt-akt > button svg,
+.k-blatt-akt > .kn-knopf svg{
   width:17px; height:17px; flex:0 0 auto; color:var(--gr, #2e7d4f);
 }
 
@@ -3855,9 +3902,11 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
   display:flex; gap:9px; justify-content:flex-end;
   padding:12px 16px calc(12px + var(--sab, 0px));
   border-top:1px solid var(--line, #e1ebe5);
-  background:var(--gr-t, #fafbfc);
+  background:#fafbfc;
 }
-.bk-blatt-zu, .gk-blatt-zu, .mb-blatt-zu{
+.k-blatt-bereit .bk-blatt-zu,
+.k-blatt-bereit .gk-blatt-zu,
+.k-blatt-bereit .mb-blatt-zu{
   width:auto; min-width:120px;
   min-height:var(--tap-min, 44px); margin:0;
   padding:0 22px;
@@ -3866,8 +3915,10 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
   background:var(--karte, #fff);
   font:inherit; font-weight:600; cursor:pointer;
 }
-.bk-blatt-zu:hover, .gk-blatt-zu:hover, .mb-blatt-zu:hover{
-  background:var(--gr-t, #f0f7ec); border-color:var(--gr, #2e7d4f);
+.k-blatt-bereit .bk-blatt-zu:hover,
+.k-blatt-bereit .gk-blatt-zu:hover,
+.k-blatt-bereit .mb-blatt-zu:hover{
+  background:#f0f7ec; border-color:var(--gr, #2e7d4f);
 }
 
 /* ── Ab Tablet: ein Dialog in der Mitte ─────────────────────────────
@@ -3876,12 +3927,14 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
    entscheiden. Auf dem Telefon bleibt das Blatt von unten — dort ist es
    mit dem Daumen erreichbar und deshalb richtig. */
 @media (min-width:700px){
-  .bk-blatt, .gk-blatt, .mb-blatt{
+  .bk-blatt.k-blatt-bereit,
+  .gk-blatt.k-blatt-bereit,
+  .mb-blatt.k-blatt-bereit{
     align-items:center; justify-content:center;
     flex-direction:row;
     padding:24px;
   }
-  .k-blatt-karte{
+  .k-blatt-bereit .k-blatt-karte{
     width:min(100%, 460px);
     max-height:min(100%, 640px);
     border-radius:16px;
@@ -3897,5 +3950,6 @@ html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
 html[data-theme="dark"] .k-blatt-karte{ background:var(--c-surf, #111827) }
 html[data-theme="dark"] .k-blatt-fuss{ background:var(--c-surf2, #1f2933) }
 html[data-theme="dark"] .k-blatt-akt > button,
-html[data-theme="dark"] .k-blatt-akt > .kn-knopf{ background:var(--c-surf, #111827);
-  color:#e2e8f0 }
+html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
+  background:var(--c-surf, #111827); color:#e2e8f0;
+}

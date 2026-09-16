@@ -277,3 +277,132 @@ test('TC-B10: Die Terminwahl bleibt bedienbar', async ({ page }) => {
   const breite = await feld.evaluate((e) => Math.round(e.getBoundingClientRect().width));
   expect(breite, 'Das Terminfeld ist zu schmal zum Bedienen.').toBeGreaterThan(200);
 });
+
+/* ══════════════════════════════════════════════════════════════════════
+   F6 — Ein geschlossenes Blatt darf nichts blockieren
+
+   Aus dem Laden gemeldet: „Die Buttons öffnen im Kiosk nicht die Seite.
+   Open link in new tab funktioniert." Genau dieses Muster — Klick tot,
+   Kontextmenü heil — bedeutet, dass etwas Unsichtbares darüberliegt.
+
+   Das Blatt liegt mit `inset:0` über dem ganzen Kiosk. Greift die Regel
+   `display:none` für den geschlossenen Zustand nicht, fängt es jeden
+   Klick ab, ohne dass man es sieht.
+   ══════════════════════════════════════════════════════════════════════ */
+
+test('TC-B11: Geschlossene Blätter fangen keine Klicks ab', async ({ page }) => {
+  await page.setViewportSize({ width: 1460, height: 900 });
+  await mockApi(page, {});
+  await page.goto(KIOSK, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.K, null, { timeout: 20000 });
+
+  // Alle drei Reiter einmal aufrufen — danach sind alle Blätter im Baum.
+  for (const r of REITER) {
+    await page.evaluate((t) => window.K.switchTab(t), r.tab);
+    await page.waitForTimeout(2600);
+  }
+
+  const z = await page.evaluate(() => {
+    const blaetter = [...document.querySelectorAll('.gk-blatt, .mb-blatt, .bk-blatt')]
+      .map((x) => ({ id: x.id, hidden: x.hidden, display: getComputedStyle(x).display }));
+    const verdeckt = [];
+    document.querySelectorAll('.k-header-acts a, .k-header-acts button').forEach((el) => {
+      if (el.offsetParent === null) return;      // ausgeblendete überspringen
+      const r = el.getBoundingClientRect();
+      const o = document.elementFromPoint(Math.round(r.left + r.width / 2),
+                                          Math.round(r.top + r.height / 2));
+      if (el.contains(o) || o === el) return;
+      const name = o ? (o.id || String(o.className).slice(0, 30)) : 'nichts';
+      // Nur melden, wenn ein Blatt im Weg ist — andere Überdeckungen
+      // (etwa die Reiterleiste bei schmalem Kopf) sind ein anderes Thema.
+      if (/-blatt/.test(name)) {
+        verdeckt.push((el.getAttribute('href') || el.id || el.title) + ' <- ' + name);
+      }
+    });
+    return { blaetter, verdeckt };
+  });
+
+  for (const b of z.blaetter) {
+    expect(b.display,
+      `Das geschlossene Blatt ${b.id} steht auf display:${b.display}. Es liegt `
+      + 'mit inset:0 über dem ganzen Kiosk und fängt jeden Klick ab.')
+      .toBe('none');
+  }
+  expect(z.verdeckt,
+    `Diese Bedienelemente sind von einem Blatt verdeckt: ${z.verdeckt.join(', ')}`)
+    .toEqual([]);
+});
+
+test('TC-B12: Der Knopf zum CMS öffnet die Seite wirklich', async ({ page }) => {
+  await page.setViewportSize({ width: 1460, height: 900 });
+  await mockApi(page, {});
+  await page.goto(KIOSK, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.K, null, { timeout: 20000 });
+  for (const r of REITER) {
+    await page.evaluate((t) => window.K.switchTab(t), r.tab);
+    await page.waitForTimeout(2600);
+  }
+
+  const vorher = page.url();
+  await page.click('.k-header-acts a[href="/cms.html"]');
+  await page.waitForTimeout(1600);
+  expect(page.url(),
+    'Der Klick auf den CMS-Knopf hat die Seite nicht geöffnet — so wurde es '
+    + 'aus dem Laden gemeldet.').not.toBe(vorher);
+});
+
+/* ══════════════════════════════════════════════════════════════════════
+   F7 — Die Gestaltung hängt an der Umgruppierung
+
+   Bei einer PWA liefert der Service Worker beim Ausrollen eine Weile
+   gemischte Stände aus: neues Gestaltungsblatt, altes Skript. Träfe die
+   neue Gestaltung auf ein nicht umgruppiertes Blatt, läge dieses als
+   bildschirmfüllende Schicht über dem Kiosk — unbedienbar.
+
+   Deshalb verlangt jede neue Regel die Klasse `k-blatt-bereit`, die erst
+   nach dem Umgruppieren gesetzt wird.
+   ══════════════════════════════════════════════════════════════════════ */
+
+test('TC-B13: Ohne Umgruppierung bleibt der Kiosk bedienbar', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1460, height: 900 } });
+
+  // Ein altes Skript nachstellen: ohne die Umgruppierung der Blätter.
+  await ctx.route('**/js/kiosk-neu-shell.js*', async (route) => {
+    const a = await route.fetch();
+    let js = await a.text();
+    js = js.replace(/blaetterFormen\(\);/g, ';')
+           .replace(/blaetterBeobachten\(\);/g, ';');
+    await route.fulfill({ status: 200, contentType: 'application/javascript', body: js });
+  });
+
+  const page = await ctx.newPage();
+  await mockApi(page, {});
+  await page.goto(KIOSK, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.K, null, { timeout: 20000 });
+  await page.evaluate(() => window.K.switchTab('metzgerbest'));
+  await page.waitForTimeout(3000);
+  await page.locator('#panel-metzgerbest .mb-mehr').first().click();
+  await page.waitForTimeout(700);
+
+  const z = await page.evaluate(() => {
+    const bl = document.querySelector('.mb-blatt');
+    const s = getComputedStyle(bl);
+    const a = document.querySelector('.k-header-acts a[href="/cms.html"]');
+    const ar = a.getBoundingClientRect();
+    const o = document.elementFromPoint(Math.round(ar.left + ar.width / 2),
+                                        Math.round(ar.top + ar.height / 2));
+    return {
+      bereit: bl.classList.contains('k-blatt-bereit'),
+      zIndex: s.zIndex,
+      cmsFrei: a.contains(o) || o === a,
+    };
+  });
+
+  expect(z.bereit,
+    'Ohne Umgruppierung darf die Klasse nicht gesetzt sein.').toBe(false);
+  expect(z.cmsFrei,
+    'Mit altem Skript und neuem Gestaltungsblatt verdeckt das Blatt den '
+    + 'ganzen Kiosk. Genau so war er nach dem Ausrollen nicht mehr bedienbar.')
+    .toBe(true);
+  await ctx.close();
+});
