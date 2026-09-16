@@ -4016,12 +4016,116 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
    seinem Platz und laesst ihn beim Rollen die ganze obere Kante abdecken,
    sodass darunter nichts durchscheint. */
 .mb-kopffest{
-  position:sticky; top:0; z-index:6;
+  /* `top` muss den negativen Aussenabstand ausgleichen: sticky rechnet
+     ihn mit, sonst klebt die sichtbare Kante um --pad zu tief und der
+     Inhalt rollt durch den Spalt darueber. Nachgemessen waren das 14 px,
+     in denen die Artikelnamen sichtbar vorbeizogen.
+     (Spec metzger-artikelliste, F1) */
+  position:sticky; top:calc(var(--pad) * -1); z-index:20;
   margin:calc(var(--pad) * -1) 0 8px;
   padding:var(--pad) 0 6px;
   background:var(--c-bg,#f1f3f2);
 }
 .mb-kopffest .mb-akopf{ margin:6px 0 0 }
+
+/* ══ Artikelstamm: eine ruhige Liste statt hundert Kaertchen ══════════
+   Rueckmeldung: „So viel Leerraum." Die Zeile war ein Flexbau mit
+   .mb-aname{flex:1} – der Name dehnte sich ueber den freien Platz und
+   drueckte alles Uebrige an den Rand. Warengruppe und Preis sprangen
+   dadurch von Zeile zu Zeile. Jetzt feste Spalten, also eine Flucht.
+   (Spec metzger-artikelliste, F2–F7) */
+#panel-metzgerbest .mb-artikel{
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.07);
+  overflow:hidden;
+}
+#panel-metzgerbest .mb-artikel .mb-arow{
+  display:grid;
+  /* Sechs Kinder, also sechs Spalten: Nummer, Bezeichnung (mit Vorgabe),
+     Warengruppe, Preis und die beiden Schaltflaechen. Mit nur fuenf
+     Spalten fiel „Ausblenden" in eine zweite Rasterreihe und die Zeile
+     wurde 110 statt 48 px hoch. (Spec metzger-artikelliste, F2/F5) */
+  /* Feste Spaltenbreiten statt `auto`: Jede Zeile ist ein EIGENES Raster,
+     `auto` richtet sich also pro Zeile nach dem Inhalt — die Spalten
+     standen dadurch nicht in einer Flucht (gemessen: Warengruppe mal bei
+     875, mal bei 880 px). Feste Breiten halten die Flucht ueber alle
+     102 Zeilen. (Spec metzger-artikelliste, F2/F3) */
+  grid-template-columns:44px minmax(0,1fr) 116px 74px 104px 104px;
+  align-items:center;
+  gap:10px;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  margin:0;
+  padding:6px 12px;
+  border-top:1px solid #eef1f0;
+}
+#panel-metzgerbest .mb-artikel .mb-arow:first-child{ border-top:0 }
+#panel-metzgerbest .mb-artikel .mb-arow:hover{ background:#f7faf8 }
+#panel-metzgerbest .mb-artikel .mb-arow.aus{ opacity:1; background:#fbfcfc }
+#panel-metzgerbest .mb-artikel .mb-arow.aus .mb-aname{ color:#8a9491 }
+
+#panel-metzgerbest .mb-artikel .mb-nr{
+  min-height:0; padding:2px 0;
+  font-size:.75rem; font-variant-numeric:tabular-nums;
+  text-align:center; color:#6b7280;
+}
+#panel-metzgerbest .mb-artikel .mb-aname{
+  flex:none; min-width:0;
+  font-size:.92rem; line-height:1.25;
+}
+#panel-metzgerbest .mb-artikel .mb-astd{
+  font-size:.75rem; line-height:1.2;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* Wichtig: NICHT `justify-self:end` — dann schrumpft die Box auf die
+   Textbreite und die linke Kante wandert mit der Textlaenge. Die Box
+   fuellt die Spalte, nur der Text wird rechts ausgerichtet. So stehen
+   beide Kanten fest. (Spec metzger-artikelliste, F2/F3) */
+#panel-metzgerbest .mb-artikel .mb-agrp{
+  text-align:right;
+  font-size:.72rem; color:#8a9491;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#panel-metzgerbest .mb-artikel .mb-apreis{
+  text-align:right;
+  font-size:.78rem; color:#4b5563;
+  font-variant-numeric:tabular-nums;   /* Betraege stehen untereinander */
+  white-space:nowrap;
+}
+
+/* Die beiden Schaltflaechen als eigene Gruppe, damit sie umbrechen
+   koennen, ohne das Raster zu sprengen. */
+/* Die Schaltflaechen behalten die projektweite Antippgroesse (--tap-min,
+   44 px). Sie zu verkleinern haette die Zeile nur um wenige Pixel
+   gesenkt, aber die Bedienung am Tablet verschlechtert. Der Gewinn
+   liegt ohnehin in der Flucht und der ruhigen Flaeche, nicht in der
+   Zeilenhoehe. (Spec metzger-artikelliste, F5) */
+#panel-metzgerbest .mb-artikel .mb-arow .mb-btn{
+  padding:0 10px;
+  width:100%;
+  font-size:.8rem; border-radius:8px; white-space:nowrap;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+#panel-metzgerbest .mb-artikel .mb-arow .mb-btn:first-of-type{
+  background:#2e7d4f; color:#fff; border-color:#2e7d4f; font-weight:600;
+}
+#panel-metzgerbest .mb-artikel .mb-arow .mb-btn:last-of-type{
+  background:#fff; color:#4b5563;
+}
+
+/* Schmale Schirme: Angaben und Schaltflaechen in eigene Reihen. */
+@media (max-width:640px){
+  #panel-metzgerbest .mb-artikel .mb-arow{
+    grid-template-columns:38px minmax(0,1fr) auto;
+    row-gap:6px; padding:8px 10px;
+  }
+  #panel-metzgerbest .mb-artikel .mb-agrp{ grid-column:2; justify-self:start; text-align:left }
+  #panel-metzgerbest .mb-artikel .mb-apreis{ grid-column:3 }
+  #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:first-of-type{ grid-column:2 }
+  #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:last-of-type{ grid-column:3 }
+}
 
 /* Ein vorgeblendeter Hinweis ist keine Menge, sondern Text — er wird
    kursiv gesetzt, damit er in der Reihe der Mengen-Kacheln nicht als

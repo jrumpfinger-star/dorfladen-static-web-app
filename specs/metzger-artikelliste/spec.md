@@ -49,8 +49,10 @@ Unruhe und viel verschenkte Höhe.
   gesetzt, damit die Beträge untereinander stehen.
 - **F4** Die Liste ist **eine** zusammenhängende Fläche mit feinen
   Trennlinien statt 102 einzelner Kärtchen.
-- **F5** Eine Zeile wird deutlich flacher, ohne dass die Schaltflächen
-  unter die bequeme Antippgröße fallen (mindestens 34 px hoch).
+- **F5** Die Zeile wird ruhiger und verliert die klaffende Lücke. Die
+  projektweite Antippgröße der Schaltflächen (`--tap-min`, 44 px) bleibt
+  dabei **unangetastet** — sie zu verkleinern hätte die Zeile nur um
+  wenige Pixel gesenkt, aber die Bedienung am Tablet verschlechtert.
 - **F6** „Bearbeiten" ist die Hauptaktion und hebt sich ab;
   „Ausblenden"/„Einblenden" steht ruhiger daneben.
 - **F7** Ausgeblendete Artikel bleiben erkennbar gedämpft, aber lesbar.
@@ -65,5 +67,5 @@ Unruhe und viel verschenkte Höhe.
 | TC-A02 | `elementFromPoint` knapp über der Kopf-Oberkante | trifft **nicht** die Liste |
 | TC-A03 | Warengruppen-Spalte in mehreren Zeilen | alle beginnen bei **derselben** x-Position |
 | TC-A04 | Preis-Spalte in mehreren Zeilen | alle enden bei **derselben** x-Position |
-| TC-A05 | Zeilenhöhe | flacher als vorher, aber Schaltflächen ≥ 34 px |
+| TC-A05 | Schaltflächenhöhe | mindestens 44 px (Antippgröße) |
 | TC-A06 | Schmaler Schirm (390 px) | Schaltflächen bleiben sichtbar und anklickbar |

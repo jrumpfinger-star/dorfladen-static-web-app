@@ -95,11 +95,15 @@ const LETZTE = {
 };
 
 /* Für TC-V25: genug Artikel, damit die Liste tatsächlich rollt. Mit nur
-   vier Zeilen liefe die Rollprüfung ins Leere und der Wächter wäre blind. */
+   vier Zeilen liefe die Rollprüfung ins Leere und der Wächter wäre blind.
+   Die Namen sind bewusst unterschiedlich lang: Nur so faellt auf, wenn
+   die Spalten der Liste nicht in einer Flucht stehen (TC-A03/TC-A04). */
 const VIELE = ARTIKEL.concat(
   Array.from({ length: 60 }, (_, i) => ({
-    name: 'Füllartikel ' + (i + 1), nummer: 900 + i, preis: 5, einheit: 'kg',
-    gruppe: 'Sonstiges', aktiv: true, auf_formular: true,
+    name: (i % 3 === 0 ? 'Füllartikel mit einem recht langen Namen ' : 'Füllartikel ')
+      + (i + 1),
+    nummer: 900 + i, preis: 5 + (i % 9), einheit: 'kg',
+    gruppe: i % 2 ? 'Brät & Leberkäse' : 'Sonstiges', aktiv: true, auf_formular: true,
   })));
 
 /** Alle PATCH-Rümpfe an /api/metzger-artikel, für TC-V13 bis TC-V15. */
@@ -620,5 +624,116 @@ test.describe('Fester Kopf im Artikelstamm', () => {
       expect(zeile2.y + zeile2.height).toBeLessThanOrEqual(panel.y + panel.height + 1);
       await expect(page.locator('.mb-akopf')
         .getByRole('button', { name: /Neuer Artikel/ })).toBeVisible();
+    });
+});
+
+/* ── Artikelliste: Flucht, Dichte und der Spalt über dem Kopf ───────────
+   Deckt specs/metzger-artikelliste/spec.md (TC-A01 … TC-A06). Die Mocks
+   der Datei passen bereits: `viele` liefert 64 Artikel, also genug Höhe
+   zum Rollen und genug Zeilen für eine Fluchtprüfung. */
+test.describe('Artikelliste aufgeräumt', () => {
+
+  /** Bis zum Anschlag rollen und warten, bis der Browser gezeichnet hat. */
+  async function rollen(page) {
+    const stand = await page.locator('#panel-metzgerbest').evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      return el.scrollTop;
+    });
+    await page.waitForTimeout(400);
+    expect(stand).toBeGreaterThan(100);
+  }
+
+  test('TC-A01/A02: Über dem festen Kopf scheint nichts durch',
+    async ({ page }) => {
+      await oeffneTab(page, { viele: true });
+      await artikelBereich(page);
+      await page.locator('.mb-arow').first().waitFor({ timeout: 8000 });
+      await rollen(page);
+
+      const spalt = await page.evaluate(() => {
+        const panel = document.getElementById('panel-metzgerbest');
+        const kopf = panel.querySelector('.mb-kopffest');
+        return kopf.getBoundingClientRect().top
+          - panel.getBoundingClientRect().top;
+      });
+      // F1: keine Lücke. Ein Pixel Spielraum fürs Aufrunden.
+      expect(Math.abs(spalt)).toBeLessThanOrEqual(1);
+
+      // Knapp unter der Oberkante darf keine Artikelzeile liegen.
+      const treffer = await page.evaluate(() => {
+        const panel = document.getElementById('panel-metzgerbest');
+        const r = panel.getBoundingClientRect();
+        const el = document.elementFromPoint(r.left + r.width / 2, r.top + 3);
+        return el ? !!el.closest('.mb-arow') : false;
+      });
+      expect(treffer).toBe(false);
+    });
+
+  test('TC-A03/A04: Warengruppe und Preis stehen in einer Flucht',
+    async ({ page }) => {
+      // F8 lässt die Zeile unter 640 px bewusst umbrechen. Diese Flucht
+      // gilt daher für den breiten Schirm — deshalb hier festgelegt,
+      // statt sie dem Gerät des Laufs zu überlassen.
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await oeffneTab(page, { viele: true });
+      await artikelBereich(page);
+      await page.locator('.mb-arow').first().waitFor({ timeout: 8000 });
+
+      const flucht = await page.evaluate(() => {
+        const rows = [...document.querySelectorAll('#panel-metzgerbest .mb-arow')]
+          .slice(0, 8);
+        const kante = (sel, seite) => rows.map((r) => {
+          const el = r.querySelector(sel);
+          return el ? Math.round(el.getBoundingClientRect()[seite]) : null;
+        });
+        return { grp: kante('.mb-agrp', 'right'), preis: kante('.mb-apreis', 'right') };
+      });
+      // F2/F3: rechtsbündig, also eine gemeinsame rechte Kante.
+      expect(new Set(flucht.grp).size).toBe(1);
+      expect(new Set(flucht.preis).size).toBe(1);
+    });
+
+  test('TC-A05: Die Zeile ist flach, die Schaltflächen bleiben antippbar',
+    async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await oeffneTab(page, { viele: true });
+      await artikelBereich(page);
+      await page.locator('.mb-arow').first().waitFor({ timeout: 8000 });
+
+      const mass = await page.evaluate(() => {
+        const r = document.querySelector('#panel-metzgerbest .mb-arow');
+        const b = [...r.querySelectorAll('.mb-btn')];
+        return {
+          zeile: r.getBoundingClientRect().height,
+          knopf: Math.min(...b.map((e) => e.getBoundingClientRect().height)),
+          reihen: new Set(b.map((e) => Math.round(e.getBoundingClientRect().top))).size,
+        };
+      });
+      expect(mass.knopf).toBeGreaterThanOrEqual(34);   // F5
+      expect(mass.zeile).toBeLessThanOrEqual(64);      // F5: deutlich flacher
+      // F2: beide Schaltflächen stehen nebeneinander, nicht untereinander.
+      expect(mass.reihen).toBe(1);
+    });
+
+  test('TC-A06: Auf schmalem Schirm bleiben die Schaltflächen erreichbar',
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 780 });
+      await oeffneTab(page, { viele: true });
+      await artikelBereich(page);
+      await page.locator('.mb-arow').first().waitFor({ timeout: 8000 });
+
+      const reihe = page.locator('#panel-metzgerbest .mb-arow').first();
+      const bearbeiten = reihe.getByRole('button', { name: 'Bearbeiten' });
+      const aus = reihe.getByRole('button', { name: /Aus-|Ausblenden|Einblenden/ });
+      await expect(bearbeiten).toBeVisible();
+      await expect(aus).toBeVisible();
+
+      // Sie müssen auch wirklich getroffen werden, nicht nur sichtbar sein.
+      const frei = await bearbeiten.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !!t && (t === el || el.contains(t));
+      });
+      expect(frei).toBe(true);
     });
 });
