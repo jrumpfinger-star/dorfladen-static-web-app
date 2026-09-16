@@ -146,3 +146,4 @@ Anlegen sonst nach dem ersten Rollen nicht mehr erreichbar.
 | TC-V23 | In der Artikelmaske ist der Hinweis pflegbar und wird gesendet |
 | TC-V24 | Ein geleerter Hinweis schickt `standard_hinweis: null` |
 | TC-V25 | Reiter und Kopfzeile bleiben beim Rollen der Artikelliste stehen |
+| TC-V26 | Die in der Artikelmaske gewählte Einheit bleibt nach dem Entfernen einer Portion stehen |

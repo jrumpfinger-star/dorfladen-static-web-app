@@ -382,6 +382,34 @@ test.describe('Vorgabe im Artikelstamm pflegen', () => {
     expect(patches[0].standard[0].vakuum).toBe(true);
   });
 
+  test('TC-V26: Die gewählte Einheit überlebt das Entfernen einer Portion',
+    async ({ page }) => {
+      await oeffneTab(page);
+      await artikelBereich(page);
+      await page.locator('.mb-arow').filter({ hasText: 'Hackfleisch' })
+        .first().getByRole('button', { name: 'Bearbeiten' }).click();
+      await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+
+      const einheiten = page.locator('#mb-vgbox .mb-einh button');
+      await einheiten.filter({ hasText: /^Stück$/ }).first().click();
+      await page.waitForTimeout(300);
+      await expect(page.locator('#mb-vgbox .mb-einh button.on'))
+        .toHaveText('Stück');
+
+      // Kachel legt an, das ✕ nimmt wieder weg. Dazwischen raeumt weg()
+      // den Entwurf ab - genau dort fiel die Einheit frueher auf kg zurueck.
+      await page.locator('#mb-vgbox .mb-kach button').filter({ hasText: /^2$/ })
+        .first().click();
+      await page.waitForTimeout(400);
+      await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(1);
+      await page.locator('#mb-vgbox .mb-chip .x').first().click();
+      await page.waitForTimeout(400);
+      await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(0);
+
+      await expect(page.locator('#mb-vgbox .mb-einh button.on'))
+        .toHaveText('Stück');
+    });
+
   test('TC-V15: Ohne Portion wird die Vorbelegung entfernt', async ({ page }) => {
     await oeffneTab(page);
     const patches = sammlePatches(page);
