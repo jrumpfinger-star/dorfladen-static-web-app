@@ -3534,7 +3534,10 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
   color:#fff }
 .k-filterzeile .anz{ font-weight:700; opacity:.75 }
 .k-filterblatt{
-  position:fixed; inset:0; z-index:70;
+  position:fixed; inset:0;
+  /* Dieselbe Ebene wie die übrigen Dialoge - sonst bleiben Fußzeile und
+     Reiterleiste über der Abdunkelung stehen. */
+  z-index:9000;
   display:flex; align-items:flex-start; justify-content:flex-end;
   padding:calc(76px + var(--sat, 0px)) 10px 10px;
   background:rgba(16,24,40,.34);
@@ -3635,3 +3638,264 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
 
 html[data-theme="dark"] .k-filterblatt-karte{ background:var(--c-surf, #111827) }
 html[data-theme="dark"] .k-filterknopf{ background:var(--c-surf2, #1f2933) }
+
+/* ══════════════════════════════════════════════════════════════════════
+   17  Das Blatt hinter dem „i" — Bäcker, Mair und Getränke gemeinsam
+   Spec: specs/kiosk-infoblatt/spec.md
+
+   Rückmeldung aus dem Laden: „Info-Button reagiert nicht" und „die
+   Darstellung schaut nach nichts aus". Beides hatte dieselbe Ursache: Das
+   Blatt schob sich ohne jeden Kontrast von unten herein — der Hintergrund
+   blieb hell, nichts hob sich ab. Am Rechner lief es dabei über die volle
+   Breite von 1460 px und wirkte wie ein angehängter Fußbereich, nicht wie
+   ein Dialog.
+
+   Der Aufbau bleibt unverändert; nur die Gestaltung ist neu. Damit gilt
+   sie für alle drei Reiter, ohne dass drei Fachmodule angefasst werden.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bk-blatt, .gk-blatt, .mb-blatt{
+  /* Die Abdunkelung liegt als eigene Schicht hinter dem Blatt. Ohne sie
+     wirkt das Öffnen wie „nichts passiert" — genau die Rückmeldung. */
+  position:fixed;
+  inset:0;
+  /* Auf der Ebene der übrigen Dialoge (.k-modal-bg, .bk-overlay). Mit dem
+     früheren Wert 60 lagen die feste Fußzeile und die Reiterleiste des
+     Telefons darüber: Sie blieben hell, während alles andere abdunkelte —
+     die Abdunkelung sah aus wie ein Darstellungsfehler. */
+  z-index:9000;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+  background:rgba(15,23,42,.55);
+  border-radius:0;
+  box-shadow:none;
+  overflow:hidden;
+  /* Die frühere Regel begrenzte das Blatt auf 80 % der Fensterhöhe — als
+     es selbst die Karte war, ergab das Sinn. Jetzt ist es die
+     abdunkelnde Schicht und muss den ganzen Schirm einnehmen; sonst
+     blieben Fußzeile und Reiterleiste hell stehen (bei 844 px waren das
+     genau die fehlenden 169 px). Die Begrenzung sitzt jetzt an der Karte. */
+  max-height:none;
+  /* Der Inhalt wird zum Kind-Kasten: Flex-Elemente bekommen unten eigene
+     Regeln, der Rest fließt in einer Spalte. */
+  flex-direction:column;
+  justify-content:flex-end;
+}
+.bk-blatt[hidden], .gk-blatt[hidden], .mb-blatt[hidden]{ display:none }
+
+/* Die eigentliche Karte. Da das HTML keinen eigenen Rahmen mitbringt,
+   übernimmt ein Kind-Container die Rolle — er wird von der Hilfeschicht
+   (js/kiosk-neu-shell.js) beim Öffnen eingezogen. */
+.k-blatt-karte{
+  width:100%;
+  max-height:88%;
+  display:flex;
+  flex-direction:column;
+  background:var(--karte, #fff);
+  border-radius:18px 18px 0 0;
+  box-shadow:0 -12px 40px rgba(15,23,42,.3);
+  overflow:hidden;
+  animation:kBlattAuf .22s cubic-bezier(.32,.72,.35,1);
+}
+@keyframes kBlattAuf{
+  from{ transform:translateY(14px); opacity:.6 }
+  to{ transform:none; opacity:1 }
+}
+
+/* ── Kopf: Titel, Untertitel, Schließkreuz ─────────────────────────── */
+.bk-blatt-kopf, .gk-blatt-kopf, .mb-blatt-kopf{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  flex:0 0 auto;
+  padding:15px 16px calc(15px) calc(16px + var(--sal, 0px));
+  border-bottom:1px solid var(--line, #e1ebe5);
+}
+.bk-blatt-kopf h4, .gk-blatt-kopf h4, .mb-blatt-kopf h4{
+  margin:0; font-size:16px; line-height:1.3; flex:1; min-width:0;
+}
+/* Der Untertitel lag als Geschwister neben dem Kopf und rutschte dadurch
+   neben das Schließkreuz. Er gehört unter den Titel. */
+.bk-blatt-sub, .gk-blatt-sub, .mb-blatt-sub{
+  margin:0; font-size:13px; color:var(--mut, #688073); line-height:1.35;
+}
+.k-blatt-zu{
+  flex:0 0 auto;
+  width:38px; height:38px;
+  display:flex; align-items:center; justify-content:center;
+  border:0; border-radius:10px;
+  background:var(--gr-t, #f1f5f9);
+  color:var(--mut, #475569);
+  cursor:pointer;
+}
+.k-blatt-zu:hover{ background:var(--line, #e2e8f0) }
+.k-blatt-zu svg{ width:17px; height:17px }
+
+/* ── Körper: rollt, wenn es eng wird ───────────────────────────────── */
+.k-blatt-koerper{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding:14px 16px 14px calc(16px + var(--sal, 0px));
+}
+
+/* ── Abschnittsüberschriften ───────────────────────────────────────── */
+.bk-blatt-t, .gk-blatt-t, .mb-blatt-t{
+  margin:14px 0 6px;
+  font-size:11.5px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.05em;
+  color:var(--mut, #688073);
+}
+.k-blatt-koerper > *:first-child{ margin-top:0 }
+
+/* ── Hinweise: gekennzeichnete Kästen statt gleichrangiger Fließtext ──
+   Testbetrieb, Vorbelegung und Bestellschluss standen als lose Zeilen
+   zwischen allem anderen. Jetzt heben sie sich ab: Blau für Auskunft,
+   Bernstein für das, worauf zu achten ist. */
+.gk-blatt-hinweis,
+.bk-blatt-z, .gk-blatt-z, .mb-blatt-z{
+  border-top:0;
+  padding:10px 12px;
+  margin-bottom:8px;
+  border-radius:10px;
+  font-size:13px; line-height:1.45;
+  background:var(--blau-t, #eff6ff);
+  border-left:3px solid #2563eb;
+  color:#1e40af;
+}
+.bk-blatt-z svg, .gk-blatt-z svg, .mb-blatt-z svg{
+  width:15px; height:15px; color:currentColor; opacity:.8;
+}
+/* Der Testbetriebs-Hinweis trägt „klein" — er ist eine Warnung. */
+.bk-blatt-z.klein, .gk-blatt-z.klein, .mb-blatt-z.klein{
+  background:var(--warn-t, #fffbeb);
+  border-left-color:#d97706;
+  color:#92400e;
+  font-size:12.5px;
+}
+
+/* Die Terminzeile ist ein Formularfeld, kein Hinweis. */
+.gk-blatt-z:has(input[type="date"]),
+.bk-blatt-z:has(input[type="date"]){
+  background:none; border-left:0; padding:0; margin-bottom:12px;
+  display:flex; flex-direction:column; align-items:stretch; gap:5px;
+  color:inherit;
+}
+.gk-blatt-z label, .bk-blatt-z label{
+  flex:0 0 auto;
+  font-size:11.5px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.05em;
+  color:var(--mut, #688073);
+}
+.gk-blatt-z input[type="date"], .bk-blatt-z input[type="date"]{
+  width:100%; min-height:var(--tap-min, 44px);
+  border:1.5px solid var(--line, #e1ebe5); border-radius:10px;
+  padding:0 12px; font:inherit; font-size:15px;
+  background:var(--karte, #fff);
+}
+.gk-blatt-z input[type="date"]:focus,
+.bk-blatt-z input[type="date"]:focus{ outline:none; border-color:var(--gr, #2e7d4f) }
+
+/* ── Bereichswechsel: gleich breite Teile in einem Rahmen ──────────── */
+.gk-subs.im-blatt, .mb-subs.im-blatt, .bk-sub.im-blatt{
+  display:flex; gap:0;
+  border:1.5px solid var(--line, #e1ebe5);
+  border-radius:10px; overflow:hidden;
+  background:var(--gr-t, #f8fafc);
+  margin:0 0 12px;
+}
+/* Im Dialog ist die Überschrift „Bereich" hilfreich — sie war bisher nur
+   auf dem Telefon vorgesehen (Klasse `gk-nur-tel`), weil der Wechsel dort
+   ausschließlich im Blatt steht. */
+.bk-blatt .gk-nur-tel, .gk-blatt .gk-nur-tel,
+.mb-blatt .mb-nur-tel, .bk-blatt .bk-nur-tel{ display:block }
+.gk-subs.im-blatt button, .mb-subs.im-blatt button, .bk-sub.im-blatt button{
+  flex:1; min-height:var(--tap-min, 44px);
+  border:0; border-right:1px solid var(--line, #e1ebe5); border-radius:0;
+  background:none; color:var(--mut, #475569);
+  font:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+}
+.gk-subs.im-blatt button:last-child,
+.mb-subs.im-blatt button:last-child,
+.bk-sub.im-blatt button:last-child{ border-right:0 }
+.gk-subs.im-blatt button.on, .mb-subs.im-blatt button.on, .bk-sub.im-blatt button.on{
+  background:var(--gr, #2e7d4f); color:#fff;
+}
+
+/* ── Aktionen: Liste mit Symbol statt Wand aus Knöpfen ─────────────── */
+.k-blatt-akt{
+  display:flex; flex-direction:column; gap:1px;
+  background:var(--line, #e1ebe5);
+  border:1px solid var(--line, #e1ebe5);
+  border-radius:10px; overflow:hidden;
+  margin:0 0 12px;
+}
+.k-blatt-akt > button, .k-blatt-akt > .kn-knopf{
+  display:flex; align-items:center; gap:11px;
+  width:100%; min-height:46px; margin:0;
+  padding:9px 13px;
+  border:0; border-radius:0;
+  background:var(--karte, #fff);
+  color:var(--ink, #132a1e);
+  font:inherit; font-size:13.5px; font-weight:600;
+  text-align:left; cursor:pointer;
+}
+.k-blatt-akt > button:hover, .k-blatt-akt > .kn-knopf:hover{
+  background:var(--gr-t, #f0f7ec);
+}
+.k-blatt-akt > button svg, .k-blatt-akt > .kn-knopf svg{
+  width:17px; height:17px; flex:0 0 auto; color:var(--gr, #2e7d4f);
+}
+
+/* ── Fuß: der Schließen-Knopf ──────────────────────────────────────── */
+.k-blatt-fuss{
+  flex:0 0 auto;
+  display:flex; gap:9px; justify-content:flex-end;
+  padding:12px 16px calc(12px + var(--sab, 0px));
+  border-top:1px solid var(--line, #e1ebe5);
+  background:var(--gr-t, #fafbfc);
+}
+.bk-blatt-zu, .gk-blatt-zu, .mb-blatt-zu{
+  width:auto; min-width:120px;
+  min-height:var(--tap-min, 44px); margin:0;
+  padding:0 22px;
+  border-radius:10px;
+  border:1.5px solid var(--line, #e1ebe5);
+  background:var(--karte, #fff);
+  font:inherit; font-weight:600; cursor:pointer;
+}
+.bk-blatt-zu:hover, .gk-blatt-zu:hover, .mb-blatt-zu:hover{
+  background:var(--gr-t, #f0f7ec); border-color:var(--gr, #2e7d4f);
+}
+
+/* ── Ab Tablet: ein Dialog in der Mitte ─────────────────────────────
+   Über die volle Breite eines 1460-px-Schirms sah das Blatt aus wie eine
+   angehängte Fußleiste. Ein Dialog sagt dagegen: Hier ist jetzt etwas zu
+   entscheiden. Auf dem Telefon bleibt das Blatt von unten — dort ist es
+   mit dem Daumen erreichbar und deshalb richtig. */
+@media (min-width:700px){
+  .bk-blatt, .gk-blatt, .mb-blatt{
+    align-items:center; justify-content:center;
+    flex-direction:row;
+    padding:24px;
+  }
+  .k-blatt-karte{
+    width:min(100%, 460px);
+    max-height:min(100%, 640px);
+    border-radius:16px;
+    box-shadow:0 24px 60px rgba(15,23,42,.34);
+    animation:kDialogAuf .2s cubic-bezier(.32,.72,.35,1);
+  }
+  @keyframes kDialogAuf{
+    from{ transform:scale(.97); opacity:0 }
+    to{ transform:none; opacity:1 }
+  }
+}
+
+html[data-theme="dark"] .k-blatt-karte{ background:var(--c-surf, #111827) }
+html[data-theme="dark"] .k-blatt-fuss{ background:var(--c-surf2, #1f2933) }
+html[data-theme="dark"] .k-blatt-akt > button,
+html[data-theme="dark"] .k-blatt-akt > .kn-knopf{ background:var(--c-surf, #111827);
+  color:#e2e8f0 }

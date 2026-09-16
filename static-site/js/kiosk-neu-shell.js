@@ -693,6 +693,171 @@
     beob.observe(haupt, { childList: true, subtree: true });
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  //  Das Blatt hinter dem „i" in Form bringen
+  //  Spec: specs/kiosk-infoblatt/spec.md
+  //
+  //  Rückmeldung aus dem Laden: „Info-Button reagiert nicht" und „die
+  //  Darstellung schaut nach nichts aus". Das Blatt öffnete sich zwar,
+  //  schob sich aber ohne Abdunkelung von unten herein — man übersah es.
+  //  Am Rechner lief es über die volle Breite und wirkte wie eine
+  //  angehängte Fußleiste statt wie ein Dialog.
+  //
+  //  Die Gestaltung liegt in css/kiosk-neu.css. Damit sie greifen kann,
+  //  braucht das Blatt drei Dinge, die im HTML der Fachmodule nicht
+  //  vorgesehen sind: eine Karte als Kind, ein Schließkreuz im Kopf und
+  //  eine Gruppe für die Aktionen. Die zieht diese Hilfe ein — für alle
+  //  drei Reiter gemeinsam, ohne die Fachmodule anzufassen.
+  //
+  //  Sie arbeitet ausschließlich umgruppierend: Kein Element wird
+  //  entfernt, keine Kennung geändert, kein onclick angetastet. Damit
+  //  bleiben sämtliche Bedienwege erhalten.
+  // ══════════════════════════════════════════════════════════════════
+
+  var BLATT_WAHL = '.bk-blatt, .gk-blatt, .mb-blatt';
+
+  function blattKreuz(blatt) {
+    var kopf = blatt.querySelector('.bk-blatt-kopf, .gk-blatt-kopf, .mb-blatt-kopf');
+    if (!kopf || kopf.querySelector('.k-blatt-zu')) return;
+
+    // Der Untertitel steht im HTML als Geschwister neben dem Titel. Im
+    // Kopf mit Schließkreuz gehört er unter den Titel, sonst rutscht er
+    // neben das Kreuz.
+    var titel = kopf.querySelector('h4');
+    var sub = kopf.querySelector('.bk-blatt-sub, .gk-blatt-sub, .mb-blatt-sub');
+    if (titel && sub && sub.parentNode === kopf) {
+      var huelle = document.createElement('div');
+      huelle.style.cssText = 'flex:1;min-width:0';
+      titel.parentNode.insertBefore(huelle, titel);
+      huelle.appendChild(titel);
+      huelle.appendChild(sub);
+    }
+
+    var zu = document.createElement('button');
+    zu.type = 'button';
+    zu.className = 'k-blatt-zu';
+    zu.title = 'Schlie\u00dfen';
+    zu.setAttribute('aria-label', 'Schlie\u00dfen');
+    zu.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+      + ' stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+      + '<path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+    // Denselben Weg nehmen wie der Schließen-Knopf im Fuß: So bleibt es
+    // bei einer Stelle, an der das Schließen wirklich passiert.
+    zu.addEventListener('click', function () { blattSchliessen(blatt); });
+    kopf.appendChild(zu);
+  }
+
+  function blattSchliessen(blatt) {
+    var knopf = blatt.querySelector('.bk-blatt-zu, .gk-blatt-zu, .mb-blatt-zu');
+    if (knopf) { knopf.click(); return; }
+    blatt.hidden = true;
+  }
+
+  /** Aufeinanderfolgende Knöpfe zu einer Aktionsgruppe zusammenfassen. */
+  function blattAktionen(koerper) {
+    var kinder = Array.prototype.slice.call(koerper.children);
+    var lauf = [];
+
+    var abschliessen = function () {
+      if (lauf.length < 1) { lauf = []; return; }
+      var gruppe = document.createElement('div');
+      gruppe.className = 'k-blatt-akt';
+      lauf[0].parentNode.insertBefore(gruppe, lauf[0]);
+      lauf.forEach(function (k) { gruppe.appendChild(k); });
+      lauf = [];
+    };
+
+    kinder.forEach(function (k) {
+      var istAktion = (k.tagName === 'BUTTON' || k.classList.contains('kn-knopf'))
+        && !k.classList.contains('bk-blatt-zu')
+        && !k.classList.contains('gk-blatt-zu')
+        && !k.classList.contains('mb-blatt-zu');
+      if (istAktion) lauf.push(k);
+      else abschliessen();
+    });
+    abschliessen();
+
+    // Die Werkzeugliste des Bäckers ist bereits ein eigener Kasten.
+    var wz = koerper.querySelector('.bk-blatt-wz, .mb-blatt-wz, .gk-blatt-wz');
+    if (wz) wz.classList.add('k-blatt-akt');
+  }
+
+  /* Der Testbetriebs-Hinweis ist eine Warnung, keine Auskunft: Solange er
+     steht, geht die Bestellung nicht an den Lieferanten. Die Fachmodule
+     kennzeichnen ihn unterschiedlich (beim Getränkereiter als „klein", bei
+     den anderen gar nicht) — deshalb wird er am Text erkannt. */
+  function blattWarnungen(koerper) {
+    koerper.querySelectorAll('.bk-blatt-z, .gk-blatt-z, .mb-blatt-z')
+      .forEach(function (z) {
+        if (/testbetrieb/i.test(z.textContent || '')) z.classList.add('klein');
+      });
+  }
+
+  function blattFormen(blatt) {
+    if (blatt.dataset.kneuGeformt === '1') return;
+    blatt.dataset.kneuGeformt = '1';
+
+    var karte = document.createElement('div');
+    karte.className = 'k-blatt-karte';
+    var koerper = document.createElement('div');
+    koerper.className = 'k-blatt-koerper';
+    var fuss = document.createElement('div');
+    fuss.className = 'k-blatt-fuss';
+
+    // Alles Vorhandene einsammeln, dann neu einhängen: Kopf und
+    // Schließen-Knopf bekommen ihren Platz, der Rest wandert in den
+    // rollenden Körper.
+    var inhalt = Array.prototype.slice.call(blatt.childNodes);
+    blatt.appendChild(karte);
+
+    inhalt.forEach(function (k) {
+      if (k.nodeType === 1 && /blatt-kopf$/.test(k.className || '')) {
+        karte.appendChild(k);
+      } else if (k.nodeType === 1 && /blatt-zu$/.test(k.className || '')) {
+        fuss.appendChild(k);
+      } else {
+        koerper.appendChild(k);
+      }
+    });
+
+    karte.appendChild(koerper);
+    karte.appendChild(fuss);
+
+    blattKreuz(blatt);
+    blattAktionen(koerper);
+    blattWarnungen(koerper);
+
+    // Ein Tipp neben die Karte schließt — wie bei jedem Dialog.
+    blatt.addEventListener('click', function (e) {
+      if (e.target === blatt) blattSchliessen(blatt);
+    });
+  }
+
+  function blaetterFormen() {
+    document.querySelectorAll(BLATT_WAHL).forEach(function (b) {
+      try { blattFormen(b); }
+      catch (e) { /* Darstellung darf die Bedienung nie blockieren */ }
+    });
+  }
+
+  // Die Blätter werden beim Zeichnen des Reiters neu aufgebaut. Ein
+  // Beobachter greift jede neue Fassung ab.
+  function blaetterBeobachten() {
+    var haupt = document.querySelector('.k-main');
+    if (!haupt || !window.MutationObserver) return;
+    new MutationObserver(function () {
+      blaetterFormen();
+    }).observe(haupt, { childList: true, subtree: true });
+  }
+
+  // Escape schließt das offene Blatt.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var offen = document.querySelector(BLATT_WAHL.split(', ')
+      .map(function (s) { return s + ':not([hidden])'; }).join(', '));
+    if (offen) blattSchliessen(offen);
+  });
+
   // ── Start ────────────────────────────────────────────────────────────
   function start() {
     reiterBeobachten();
@@ -701,12 +866,14 @@
     meldungenBeobachten();
     mittagScrollBeobachten();
     mittagTagBeobachten();
+    blaetterBeobachten();
     symboleNachziehen();
     baeckerWerkzeuge();
     baeckerKopfOrdnen();
     mittagTagFeld();
     socialKatalog();
     kalenderDatumswahl();
+    blaetterFormen();
     document.documentElement.classList.add('kneu');
   }
 
