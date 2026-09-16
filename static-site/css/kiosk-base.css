@@ -1323,7 +1323,7 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
   @page{margin:1cm}
 }
 /* Lucide inline icons */
-[data-lucide]{display:inline-block;vertical-align:middle}
+[data-lucide],[data-lucide-fertig]{display:inline-block;vertical-align:middle}
 
 /* ═══ Large kiosk screens – 2-column grid ═══ */
 @media(min-width:1200px){

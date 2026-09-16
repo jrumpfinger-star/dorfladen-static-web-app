@@ -1,4 +1,8 @@
-var CACHE_NAME='dorfladen-v32';
+/* Beim Aendern dieser Datei MUSS die Nummer hoch: Der activate-Handler
+   loescht nur Zwischenspeicher, die anders heissen. Bleibt der Name
+   gleich, behaelt jeder Browser seinen alten Inhalt — und damit unter
+   Umstaenden Dateien aus einem Stand, den es laengst nicht mehr gibt. */
+var CACHE_NAME='dorfladen-v33';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',

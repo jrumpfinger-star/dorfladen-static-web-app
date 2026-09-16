@@ -16,13 +16,91 @@
   // Die Module schreiben laufend neues HTML in die Reiter. Lucide ersetzt
   // <i data-lucide> nur beim Aufruf, deshalb nach jeder Änderung nachziehen –
   // gebündelt, damit es nicht bei jedem einzelnen Knoten passiert.
+  //
+  // ACHTUNG, hier lag ein schwerer Fehler: lucide.createIcons() setzt
+  // data-lucide auch auf das erzeugte <svg>. Beim nächsten Lauf fand es
+  // also seine eigenen Ergebnisse wieder und baute sie neu auf. Das löste
+  // den Beobachter in inhalteBeobachten() aus, der rief hierher zurück —
+  // eine Endlosschleife im Takt von requestAnimationFrame. Gemessen auf
+  // der echten Seite: 8253 Austausche in 70 Sekunden, also alle 16 ms.
+  //
+  // Damit gingen Klicks verloren: Ein Klick entsteht nur, wenn mousedown
+  // und mouseup auf DEMSELBEN Element landen. Ein Mensch hält die Taste
+  // rund 120 ms — das Element war längst ersetzt. Gemessen: 12 von 12
+  // Klicks auf „Zum CMS" kamen nie an, während mousedown und mouseup
+  // jedes Mal ankamen. „Link in neuem Tab öffnen" funktionierte weiter,
+  // weil das Kontextmenü kein Klick-Ereignis braucht.
+  // (Spec kiosk-symbolschleife, F1/F2)
   var symbolLauf = null;
+
+  /* createIcons() ist nicht idempotent: Es setzt data-lucide auch auf das
+     erzeugte <svg> und findet beim nächsten Lauf seine eigenen Ergebnisse
+     wieder. Im Kiosk rufen es rund ein Dutzend Stellen in den Modulen
+     direkt auf — jeder dieser Aufrufe hat bisher ALLE Symbole neu
+     aufgebaut, auch die in Knöpfen und Links, und dabei laufende Klicks
+     zerrissen. Deshalb wird es hier einmal zentral abgesichert, statt an
+     jeder Aufrufstelle einzeln. (Spec kiosk-symbolschleife, F3) */
+  var lucideGeschuetzt = false;
+
+  /* Nimmt fertigen Symbolen die Markierung ab. Ohne das findet
+     createIcons() beim naechsten Lauf seine eigenen Ergebnisse wieder
+     und baut sie neu auf — und genau daran sind die Klicks zerbrochen.
+     Der Name bleibt als data-lucide-fertig erhalten, damit die
+     Gestaltungsregel weiter greift. */
+  function symboleEntstempeln() {
+    var fertig = document.querySelectorAll('svg[data-lucide]');
+    for (var i = 0; i < fertig.length; i++) {
+      fertig[i].setAttribute('data-lucide-fertig', fertig[i].getAttribute('data-lucide'));
+      fertig[i].removeAttribute('data-lucide');
+    }
+  }
+
+  function lucideAbsichern() {
+    var l = window.lucide;
+    if (!l || typeof l.createIcons !== 'function' || lucideGeschuetzt) return !!lucideGeschuetzt;
+    var echt = l.createIcons.bind(l);
+    l.createIcons = function (opt) {
+      if (!document.querySelector(':not(svg)[data-lucide]')) return;
+      var r = echt(opt);
+      symboleEntstempeln();
+      return r;
+    };
+    lucideGeschuetzt = true;
+    // Was vor der Absicherung entstand, traegt die Markierung noch.
+    symboleEntstempeln();
+    return true;
+  }
+
+  /* Lucide kommt von einem fremden Server. Wer erst danach nachschaut,
+     laesst eine Luecke: In ihr ruft ein Modul bereits createIcons() —
+     ungeschuetzt. Deshalb wird der Zugriff abgefangen, sobald die
+     Bibliothek sich einträgt. (Spec kiosk-symbolschleife, F3) */
+  function lucideFruehAbsichern() {
+    if (lucideAbsichern()) return;
+    var wert;
+    try {
+      Object.defineProperty(window, 'lucide', {
+        configurable: true,
+        get: function () { return wert; },
+        set: function (v) { wert = v; lucideAbsichern(); },
+      });
+    } catch (e) {
+      var versuche = 0;
+      var t = setInterval(function () {
+        if (lucideAbsichern() || ++versuche > 200) clearInterval(t);
+      }, 50);
+    }
+  }
+
   function symboleNachziehen() {
     if (symbolLauf) return;
+    // Nichts Unbearbeitetes da? Dann gibt es auch nichts zu tun.
+    if (!document.querySelector(':not(svg)[data-lucide]')) return;
     symbolLauf = requestAnimationFrame(function () {
       symbolLauf = null;
       try {
-        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        if (window.lucide && typeof window.lucide.createIcons === 'function'
+            && document.querySelector(':not(svg)[data-lucide]')) {
           window.lucide.createIcons();
         }
       } catch (e) { /* Darstellung darf die Bedienung nie blockieren */ }
@@ -917,6 +995,7 @@
 
   // ── Start ────────────────────────────────────────────────────────────
   function start() {
+    lucideFruehAbsichern();
     reiterBeobachten();
     inhalteBeobachten();
     rueckfragenBeobachten();

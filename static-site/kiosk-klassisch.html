@@ -1338,7 +1338,7 @@
       @page{margin:1cm}
     }
     /* Lucide inline icons */
-    [data-lucide]{display:inline-block;vertical-align:middle}
+    [data-lucide],[data-lucide-fertig]{display:inline-block;vertical-align:middle}
 
     /* ═══ Large kiosk screens – 2-column grid ═══ */
     @media(min-width:1200px){
@@ -2446,7 +2446,18 @@ var K = (function(){
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
   function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
   function luc(name,size){size=size||16;return '<i data-lucide="'+name+'" style="width:'+size+'px;height:'+size+'px"></i>';}
-  function reinitIcons(){if(typeof lucide!=='undefined') lucide.createIcons();}
+  /* lucide.createIcons() setzt data-lucide auch auf das erzeugte <svg>.
+     Ein erneuter Aufruf findet also seine eigenen Ergebnisse wieder und
+     baut alle Symbole neu auf — auch die in Knoepfen und Links. Dabei
+     gehen Klicks verloren, denn ein Klick braucht mousedown UND mouseup
+     auf DEMSELBEN Element.
+     Deshalb nur laufen, wenn wirklich etwas Unbearbeitetes da ist.
+     (Spec kiosk-symbolschleife, F1) */
+  function reinitIcons(){
+    if(typeof lucide==='undefined') return;
+    if(!document.querySelector(':not(svg)[data-lucide]')) return;
+    lucide.createIcons();
+  }
 
   // ── Clock ──
   var _lastCutoffCheck = -1;
@@ -2852,9 +2863,34 @@ var K = (function(){
   }
 
   var _loadOrdersAC = null;
+  var _loadOrdersWach = null;
+
+  /* Bisher blieb der „Laden…"-Platzhalter bei jedem Fehlschlag fuer
+     immer stehen: weder ein abgelehnter fetch noch success:false noch
+     eine verworfene Antwort (Datumswechsel) haben ihn je ersetzt. Im
+     Laden sah das aus, als haenge der Kiosk — ohne jeden Hinweis und
+     ohne Weg zurueck. (Spec kiosk-ladefehler, F1/F2) */
+  function zeigeLadeFehler(elId, grund, nochmal){
+    var el = document.getElementById(elId);
+    if(!el || el.querySelector('.k-order')) return;   // Daten stehen schon
+    el.innerHTML = '<div class="k-empty">'
+      + '<div class="k-empty-icon"><i data-lucide="wifi-off" style="width:24px;height:24px"></i></div>'
+      + '<div>Die Daten konnten nicht geladen werden.</div>'
+      + '<div style="font-size:12px;color:var(--c-muted);margin:6px 0 12px">'+esc(grund)+'</div>'
+      + '<button class="k-btn" type="button">Erneut versuchen</button>'
+      + '</div>';
+    /* Der Handler wird angehaengt statt als onclick geschrieben: Der
+       Kiosk-Code liegt in einer Kapsel, ein onclick="loadOrders()" wuerde
+       im Seitenraum gesucht und liefe ins Leere. */
+    var knopf = el.querySelector('button');
+    if(knopf && typeof nochmal === 'function') knopf.addEventListener('click', nochmal);
+    reinitIcons();
+  }
+
   function loadOrders(){
     // Abort any in-flight request
     if(_loadOrdersAC) try{_loadOrdersAC.abort();}catch(e){}
+    if(_loadOrdersWach) clearTimeout(_loadOrdersWach);
     _loadOrdersAC = new AbortController();
     var sig = _loadOrdersAC.signal;
     var datum = _mittagDatum;
@@ -2866,11 +2902,19 @@ var K = (function(){
       document.getElementById('mittag-orders').innerHTML = '<div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px;animation:kSpin 1s linear infinite"></i></div>Laden…</div>';
       reinitIcons();
     }
+    // Wer nach 15 Sekunden nichts gehoert hat, bekommt einen Ausweg.
+    _loadOrdersWach = setTimeout(function(){
+      zeigeLadeFehler('mittag-orders','Die Antwort dauert ungewöhnlich lange.', loadOrders);
+    }, 15000);
     fetch(API+'/lunch-order?datum='+datum,{signal:sig})
       .then(function(r){return r.json();})
       .then(function(res){
         if(datum!==_mittagDatum) return; // stale response
-        if(!res.success) return;
+        clearTimeout(_loadOrdersWach);
+        if(!res.success){
+          zeigeLadeFehler('mittag-orders','Der Server meldet einen Fehler.', loadOrders);
+          return;
+        }
         var newOrders = (res.orders || []).map(_normOrder);
         // K-02: Check for new orders
         var newCount = newOrders.filter(function(o){return o.status===0;}).length;
@@ -2882,7 +2926,12 @@ var K = (function(){
         renderStats();
         _updateNewOrderBtn();
       })
-      .catch(function(e){if(e.name!=='AbortError') console.error(e);});
+      .catch(function(e){
+        if(e.name==='AbortError') return;   // ein neuer Lauf hat uebernommen
+        clearTimeout(_loadOrdersWach);
+        console.error(e);
+        zeigeLadeFehler('mittag-orders','Keine Verbindung zum Server.', loadOrders);
+      });
     loadMittagBadge();
   }
 
