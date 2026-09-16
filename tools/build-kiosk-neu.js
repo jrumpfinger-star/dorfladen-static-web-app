@@ -27,12 +27,24 @@ const quelle = path.join(wurzel, 'static-site', 'kiosk-klassisch.html');
 const zielLive = path.join(wurzel, 'static-site', 'kiosk.html');
 const zielVorschau = path.join(wurzel, 'static-site', 'kiosk-neu.html');
 
+// Die Reiterleiste, die das Werkzeug erzeugt. Sie muss vollstaendig sein:
+// Fehlt hier ein Reiter, loescht der naechste Lauf ihn aus kiosk.html.
+// Genau das war mit den Getraenken passiert - der Reiter wurde spaeter
+// ergaenzt, diese Liste aber nicht nachgezogen. R3 prueft deshalb unten,
+// dass kein Reiter der Quelle verlorengeht.
+//
+// `aktiv` bestimmt, welcher Bereich beim Laden im HTML steht. Das ist der
+// Mittagstisch: Er ist der Kernbereich und praktisch immer freigeschaltet.
+// Frueher stand hier der Online-Shop - ausgerechnet der Bereich, der im
+// CMS abgeschaltet ist. Sein Inhalt stand deshalb bei jedem Start kurz auf
+// dem Schirm, ohne dass es dazu einen Reiter gab.
 const REITER = [
-  { id: 'mittag', icon: 'utensils', text: 'Mittagstisch', kurz: 'Mittag', badges: true },
-  { id: 'abhol', icon: 'shopping-cart', text: 'Online-Shop', kurz: 'Shop', badges: true, aktiv: true },
+  { id: 'mittag', icon: 'utensils', text: 'Mittagstisch', kurz: 'Mittag', badges: true, aktiv: true },
+  { id: 'abhol', icon: 'shopping-cart', text: 'Online-Shop', kurz: 'Shop', badges: true },
   { id: 'metzger', icon: 'beef', text: 'Metzger', kurz: 'Metzger', badges: true },
   { id: 'baecker', icon: 'croissant', text: 'Bäcker', kurz: 'Bäcker', badges: true },
   { id: 'metzgerbest', icon: 'ham', text: 'Metzger Mair', kurz: 'Mair', badges: true },
+  { id: 'getraenke', icon: 'cup-soda', text: 'Getränke', kurz: 'Getränke', badges: true },
   { id: 'kontakt', icon: 'message-square', text: 'Kontakt', kurz: 'Kontakt', badges: true, aus: true },
   { id: 'social', icon: 'share-2', text: 'Social', kurz: 'Social', badges: false },
   { id: 'kalender', icon: 'calendar-days', text: 'Kalender', kurz: 'Termine', badges: true }
@@ -135,9 +147,34 @@ regel('R1', 'Gestaltungsblatt auslagern', function (t) {
   // Gestaltungsblatt liegt darueber und ueberschreibt gezielt.
   const basis = path.join(wurzel, 'static-site', 'css', 'kiosk-base.css');
   const kopfzeile =
-    '/* ERZEUGT aus static-site/kiosk.html durch tools/build-kiosk-neu.js.\n' +
+    '/* ERZEUGT aus static-site/kiosk-klassisch.html durch tools/build-kiosk-neu.js.\n' +
     '   Nicht von Hand aendern. Grundlage fuer kiosk-neu.css. */\n';
   let css = kopfzeile + inhalt.replace(/^ {4}/gm, '');
+
+  // Die Datei traegt den Hinweis "Nicht von Hand aendern" - trotzdem ist
+  // genau das passiert: Die Gestaltung des Getraenke-Bereichs (rund 200
+  // Zeilen) wurde nur hier gepflegt, nicht in der Quelle. Ein Lauf haette
+  // sie stillschweigend geloescht. Deshalb wird vorher verglichen: Was in
+  // der alten Datei steht, aber nicht in der neuen, muss zuerst in die
+  // Quelle wandern.
+  if (fs.existsSync(basis)) {
+    const alt = fs.readFileSync(basis, 'utf8').replace(/\r\n/g, '\n');
+    const klassen = function (s) {
+      const m = s.match(/(^|[\s,{}])\.[a-zA-Z][\w-]*/gm) || [];
+      return new Set(m.map(function (x) { return x.replace(/^[\s,{}]+/, ''); }));
+    };
+    const vorher = klassen(alt);
+    const nachher = klassen(css);
+    const weg = [...vorher].filter(function (k) { return !nachher.has(k); });
+    if (weg.length > 3) {
+      throw new Error(
+        'R1: Dieser Lauf wuerde ' + weg.length + ' Gestaltungsregeln aus '
+        + 'css/kiosk-base.css loeschen, darunter ' + weg.slice(0, 6).join(', ')
+        + '. Sie stehen nicht in der Quelle kiosk-klassisch.html. Bitte '
+        + 'zuerst dorthin uebertragen - sonst geht die Gestaltung verloren.');
+    }
+  }
+
   if (crlfGlobal) css = css.replace(/\n/g, '\r\n');
   fs.writeFileSync(basis, css, 'utf8');
 
@@ -168,6 +205,21 @@ regel('R2', 'Kopfzeile ersetzen', function (t) {
 });
 
 regel('R3', 'Reiterleiste ersetzen', function (t) {
+  // Vor dem Ersetzen zaehlen, welche Reiter die Quelle fuehrt. Steht einer
+  // davon nicht in REITER, wuerde er hier stillschweigend verschwinden -
+  // genau so ging der Getraenke-Reiter einmal verloren. Ein Abbruch ist
+  // allemal besser als eine Seite, der ein ganzer Bereich fehlt.
+  const inQuelle = [];
+  const re = /<div class="k-tab[^"]*" data-tab="([a-z]+)"/g;
+  let m;
+  while ((m = re.exec(t)) !== null) inQuelle.push(m[1]);
+  const kennt = REITER.map(function (x) { return x.id; });
+  const fehlend = inQuelle.filter(function (id) { return kennt.indexOf(id) < 0; });
+  if (fehlend.length) {
+    throw new Error('R3: Die Quelle führt Reiter, die REITER nicht kennt: '
+      + fehlend.join(', ') + '. Bitte die Liste in diesem Werkzeug ergänzen '
+      + '— sonst löscht der Lauf diese Bereiche aus kiosk.html.');
+  }
   const r = ersetzeEinmal(t, '<!-- ═══ Tab bar ═══ -->\n', '<!-- ═══ Panels ═══ -->', reiterleiste(), 'R3');
   return { text: r.text, info: `${REITER.length} Reiter, davon ${REITER.filter(function (x) { return x.aus; }).length} ausgeblendet` };
 });

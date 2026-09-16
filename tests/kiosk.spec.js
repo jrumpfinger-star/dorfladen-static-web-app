@@ -22,12 +22,15 @@ const KIOSK_URL = `${BASE}/kiosk`;
 
 test.describe('Kiosk – Tab-Navigation', () => {
 
-  test('Online-Shop ist Default-Tab beim Laden', async ({ page }) => {
+  test('Mittagstisch ist der Bereich beim Laden', async ({ page }) => {
+    // Vorher stand hier der Online-Shop. Er ist im CMS aber abgeschaltet -
+    // sein Inhalt blitzte deshalb bei jedem Start kurz auf, ohne dass es
+    // dazu einen Reiter gab (siehe specs/kiosk-start/spec.md).
     await page.goto(KIOSK_URL);
     const activeTab = page.locator('.k-tab.active');
-    await expect(activeTab).toHaveAttribute('data-tab', 'abhol');
+    await expect(activeTab).toHaveAttribute('data-tab', 'mittag');
     const activePanel = page.locator('.k-panel.active');
-    await expect(activePanel).toHaveAttribute('id', 'panel-abhol');
+    await expect(activePanel).toHaveAttribute('id', 'panel-mittag');
   });
 
   test('Tab-Wechsel zeigt korrektes Panel', async ({ page }) => {

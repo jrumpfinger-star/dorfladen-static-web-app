@@ -59,12 +59,12 @@
 
 <!-- ═══ Tab bar ═══ -->
 <nav class="k-tabs" aria-label="Bereiche">
-  <div class="k-tab" data-tab="mittag" onclick="K.switchTab('mittag')">
+  <div class="k-tab active" data-tab="mittag" onclick="K.switchTab('mittag')">
     <span class="k-tab-icon"><i data-lucide="utensils"></i></span>
     <span class="k-tab-lbl"><span class="lang">Mittagstisch</span><span class="kurz">Mittag</span></span>
     <span class="k-tab-badges" id="badges-mittag"></span>
   </div>
-  <div class="k-tab active" data-tab="abhol" onclick="K.switchTab('abhol')">
+  <div class="k-tab" data-tab="abhol" onclick="K.switchTab('abhol')">
     <span class="k-tab-icon"><i data-lucide="shopping-cart"></i></span>
     <span class="k-tab-lbl"><span class="lang">Online-Shop</span><span class="kurz">Shop</span></span>
     <span class="k-tab-badges" id="badges-abhol"></span>
@@ -109,7 +109,7 @@
 <div class="k-main">
 
   <!-- ── Mittagstisch ── -->
-  <div class="k-panel" id="panel-mittag">
+  <div class="k-panel active" id="panel-mittag">
     <!-- Tage-Auswahl -->
     <div id="mittag-day-bar" class="k-day-bar"></div>
     <!-- Zusammenfassung -->
@@ -133,7 +133,7 @@
   </div>
 
   <!-- ── Shop-Abholungen ── -->
-  <div class="k-panel active" id="panel-abhol">
+  <div class="k-panel" id="panel-abhol">
     <div class="k-filter-bar" id="abhol-filter-bar">
       <button class="k-filter-btn active" data-filter="open" onclick="K.setShopFilter('open')"><i data-lucide="package" style="width:14px;height:14px"></i> <span class="k-filter-label">Zu erledigen</span> <span class="k-filter-count" id="fc-open">-</span></button>
       <button class="k-filter-btn" data-filter="today" onclick="K.setShopFilter('today')"><i data-lucide="calendar" style="width:14px;height:14px"></i> <span class="k-filter-label">Heute abholen</span> <span class="k-filter-count" id="fc-today">-</span></button>
@@ -536,6 +536,85 @@
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════
+     Startreiter sofort setzen — noch bevor der Browser zeichnet.
+
+     Vorher lief das so: Im HTML war ein Reiter fest als aktiv markiert,
+     danach holte applyKioskFeatures() die Freigaben per /api/cms-config.
+     Erst mit der Antwort wurde auf den richtigen Reiter gewechselt. Bis
+     dahin — gemessen gut eine Sekunde — stand der Inhalt des fest
+     markierten Reiters auf dem Schirm. Ausgerechnet der Online-Shop, der
+     im CMS abgeschaltet ist: Man sah also den Inhalt eines Bereichs, den
+     es gar nicht mehr gibt, samt „Laden…“.
+
+     Dieses Skript steht bewusst im HTML und nicht am Dateiende: Der
+     Browser hält beim Parsen an, führt es aus und zeichnet erst danach.
+     Es greift auf zwei gemerkte Werte zurück:
+
+       k-active-tab   der zuletzt genutzte Reiter (sessionStorage)
+       k-tab-flags    die zuletzt gesehenen Freigaben (localStorage)
+
+     Beides ist nur eine Vorwegnahme. applyKioskFeatures() fragt weiter
+     beim Server nach und korrigiert, falls sich etwas geändert hat.
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  try{
+    var MAP = {abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',
+               social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',
+               metzgerbest:'kiosk_metzgerbest',getraenke:'kiosk_getraenke'};
+    // Diese bleiben sichtbar, solange sie nicht ausdruecklich abgeschaltet
+    // sind. Bei den ersten drei entspricht das applyKioskFeatures(); der
+    // Mittagstisch steht hier zusaetzlich, weil er der Kernbereich des
+    // Kiosks ist. Beim allerersten Aufruf - wenn noch keine Freigaben
+    // gemerkt sind - ist er die weitaus wahrscheinlichere Wahl. Ist er
+    // ausnahmsweise abgeschaltet, raeumt setTabs() das gleich auf.
+    var STANDARD_AN = {mittag:true,baecker:true,metzgerbest:true,getraenke:true};
+
+    var flags = null;
+    try{ flags = JSON.parse(localStorage.getItem('k-tab-flags') || 'null'); }catch(e){}
+
+    // Ohne gemerkte Freigaben nur das anzeigen, was sicher sichtbar ist.
+    // Lieber ein Reiter zu wenig als einer, der gleich wieder verschwindet.
+    function sichtbar(tab){
+      if(!MAP[tab]) return true;               // Kalender, Stammkunden
+      var f = flags ? flags[MAP[tab]] : undefined;
+      if(!flags) return !!STANDARD_AN[tab];
+      return STANDARD_AN[tab] ? (f !== false) : (f === true);
+    }
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.k-tab'));
+    tabs.forEach(function(t){
+      // Auch einblenden, nicht nur ausblenden: Der Kontakt-Reiter steht im
+      // HTML auf verborgen. Ohne diesen Zweig kaeme er erst mit der Antwort
+      // dazu - die Reiterleiste wuerde also nachtraeglich wachsen.
+      t.style.display = sichtbar(t.dataset.tab) ? '' : 'none';
+    });
+
+    var gemerkt = '';
+    try{ gemerkt = sessionStorage.getItem('k-active-tab') || ''; }catch(e){}
+
+    var ziel = '';
+    if(gemerkt && sichtbar(gemerkt)) ziel = gemerkt;
+    if(!ziel){
+      // Der erste Reiter, den es sicher gibt.
+      for(var i=0;i<tabs.length;i++){
+        if(sichtbar(tabs[i].dataset.tab)){ ziel = tabs[i].dataset.tab; break; }
+      }
+    }
+    if(!ziel) return;   // nichts Sinnvolles zu tun - HTML-Vorgabe bleibt
+
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab === ziel); });
+    document.querySelectorAll('.k-panel').forEach(function(p){
+      p.classList.toggle('active', p.id === 'panel-' + ziel);
+    });
+    // Der Startreiter ist die Wahl fuer diese Sitzung - auch wenn das
+    // Fachmodul erst spaeter hochfaehrt.
+    window._kStartTab = ziel;
+  }catch(e){ /* Im Zweifel bleibt die Vorgabe aus dem HTML stehen. */ }
+})();
+</script>
+
 <!-- ═══ Bottom bar ═══ -->
 <div class="k-bottom" style="display:none">
   <button class="k-btn k-btn-lg k-btn-confirm" id="btn-new-order" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
@@ -872,24 +951,34 @@ var K = (function(){
         var t=document.querySelector('.k-tab[data-tab="'+tab+'"]');
         if(t) t.style.display=on?'':'none';
       });
+      // Ein Reiter kann verschwinden, waehrend sein Inhalt noch dasteht -
+      // dann sieht man einen Bereich, zu dem es keinen Reiter mehr gibt.
+      // Genau so sah der Kiosk beim Start aus. Inhalt und Reiter muessen
+      // daher immer zusammen wandern.
+      var jetzt=document.querySelector('.k-tab.active');
+      if(jetzt && jetzt.style.display==='none'){
+        var frei=Array.prototype.slice.call(document.querySelectorAll('.k-tab'))
+          .filter(function(x){return x.style.display!=='none';});
+        if(frei.length) switchTab(frei[0].dataset.tab);
+      }
       if(pickDefault){
-        // Nach einem Neuladen zurueck zum zuletzt genutzten Tab, sofern er
-        // freigeschaltet ist – sonst der erste sichtbare.
+        // Zurueck zum zuletzt genutzten Reiter, sofern er freigeschaltet
+        // ist - sonst der erste sichtbare.
         var gemerkt='';
         try{ gemerkt = sessionStorage.getItem('k-active-tab') || ''; }catch(e){}
         var vis=Array.prototype.slice.call(document.querySelectorAll('.k-tab')).filter(function(x){return x.style.display!=='none';});
         var wunsch=gemerkt ? vis.filter(function(x){return x.dataset.tab===gemerkt;})[0] : null;
-        if(wunsch){
-          if(!wunsch.classList.contains('active')) switchTab(gemerkt);
-        } else {
-          var active=document.querySelector('.k-tab.active');
-          if(!active || active.style.display==='none'){
-            if(vis.length) switchTab(vis[0].dataset.tab);
-          }
-        }
+        var ziel = wunsch ? gemerkt : (vis.length ? vis[0].dataset.tab : '');
+        // switchTab auch dann aufrufen, wenn der Reiter bereits aktiv ist:
+        // Das Inline-Skript im HTML setzt nur die Klassen - die Fachmodule
+        // (Baecker, Mair, Getraenke, Kalender) fahren erst hier hoch. Ohne
+        // diesen Aufruf bliebe ihr Bereich leer.
+        if(ziel) switchTab(ziel);
       }
     }
-    setTabs({},false); // vorerst alle vier ausblenden (kein Flash), Default-Tab noch nicht wechseln
+    // Der Startreiter steht bereits (Inline-Skript im HTML). Erneutes
+    // Ausblenden vor der Antwort wuerde die Reiterleiste nur flackern
+    // lassen - sie schrumpfte erst und wuechse dann wieder.
     fetch('/api/cms-config').then(function(r){return r.json();}).then(function(res){
       var flags={};
       if(res&&res.success&&res.data){
@@ -897,8 +986,16 @@ var K = (function(){
         if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}}
         if(!flags)flags={};
       }
+      // Fuer den naechsten Start merken: Dann steht die Reiterleiste
+      // sofort richtig da, ohne auf das Netz zu warten.
+      try{ localStorage.setItem('k-tab-flags', JSON.stringify(flags)); }catch(e){}
       setTabs(flags,true);
-    }).catch(function(){ setTabs({},true); });
+    }).catch(function(){
+      // Ohne Antwort bleibt es bei dem, was das Inline-Skript gesetzt hat.
+      var gemerkt=null;
+      try{ gemerkt=JSON.parse(localStorage.getItem('k-tab-flags')||'null'); }catch(e){}
+      setTabs(gemerkt||{},true);
+    });
   }
 
   // ══════════════════════════════════════════════════
