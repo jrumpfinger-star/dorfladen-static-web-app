@@ -281,29 +281,42 @@ test.describe('Bau-Werkzeug des Kiosks', () => {
     }
   });
 
-  test('TC-S8c: Das Werkzeug bricht ab, statt Gestaltung zu löschen', () => {
-    // Die Getränke-Gestaltung steht nur in der erzeugten Datei, nicht in der
-    // Quelle. Solange das so ist, MUSS das Werkzeug abbrechen.
-    const css = path.join(WURZEL, 'static-site', 'css', 'kiosk-base.css');
-    const vorher = fs.readFileSync(css, 'utf8');
+  test('TC-S8c: Quelle und erzeugte Dateien sind deckungsgleich', () => {
+    // Der eigentliche Wächter gegen erneutes Auseinanderlaufen: Ein Lauf
+    // des Werkzeugs darf die ausgelieferten Dateien NICHT verändern. Tut
+    // er es doch, wurde direkt in einer erzeugten Datei gepflegt — genau
+    // so gingen einmal der Getränke-Reiter und 47 Gestaltungsregeln
+    // beinahe verloren.
+    const dateien = ['static-site/kiosk.html', 'static-site/kiosk-neu.html',
+      'static-site/css/kiosk-base.css'];
+    const vorher = {};
+    for (const d of dateien) vorher[d] = fs.readFileSync(path.join(WURZEL, d), 'utf8');
 
     let ausgabe = '';
-    let abgebrochen = false;
+    let fehlgeschlagen = false;
     try {
-      execFileSync('node', ['tools/build-kiosk-neu.js'],
+      ausgabe = execFileSync('node', ['tools/build-kiosk-neu.js'],
         { cwd: WURZEL, encoding: 'utf8', stdio: 'pipe' });
     } catch (e) {
-      abgebrochen = true;
+      fehlgeschlagen = true;
       ausgabe = String(e.stdout || '') + String(e.stderr || '');
     }
 
-    const nachher = fs.readFileSync(css, 'utf8');
-    expect(nachher,
-      'Der Lauf hat css/kiosk-base.css verändert — dort steht Gestaltung, die '
-      + 'in der Quelle fehlt.').toBe(vorher);
-    expect(abgebrochen,
-      'Das Werkzeug lief durch, obwohl Gestaltungsregeln nur in der erzeugten '
-      + 'Datei stehen. Es müsste abbrechen.').toBe(true);
-    expect(ausgabe).toMatch(/Gestaltungsregeln|Reiter/);
+    const geaendert = [];
+    for (const d of dateien) {
+      const jetzt = fs.readFileSync(path.join(WURZEL, d), 'utf8');
+      if (jetzt !== vorher[d]) {
+        geaendert.push(d);
+        fs.writeFileSync(path.join(WURZEL, d), vorher[d]);   // Stand wiederherstellen
+      }
+    }
+
+    expect(fehlgeschlagen,
+      `Das Werkzeug ist abgebrochen:\n${ausgabe.slice(-600)}`).toBe(false);
+    expect(geaendert,
+      `Ein Lauf von tools/build-kiosk-neu.js würde diese Dateien ändern: `
+      + `${geaendert.join(', ')}. Das heißt, es wurde direkt in einer erzeugten `
+      + 'Datei gepflegt — bitte nach static-site/kiosk-klassisch.html übertragen.')
+      .toEqual([]);
   });
 });

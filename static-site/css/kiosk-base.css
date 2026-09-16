@@ -1,4 +1,4 @@
-/* ERZEUGT aus static-site/kiosk.html durch tools/build-kiosk-neu.js.
+/* ERZEUGT aus static-site/kiosk-klassisch.html durch tools/build-kiosk-neu.js.
    Nicht von Hand aendern. Grundlage fuer kiosk-neu.css. */
 :root{--c-pri:var(--dl-green,#2d5016);--c-green:var(--dl-green-action,#2e7d4f);--c-green-light:#dcfce7;--c-red:var(--dl-red,#dc2626);--c-orange:var(--dl-orange,#e65100);--c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--touch-min:56px;--c-surf2:#f9fafb;--c-tint:#f0fdf4}
 html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-border:#2a333a;--c-green:#5cb85f;--c-green-light:#1e2a20;--c-surf2:#161c20;--c-tint:#1e2a20}

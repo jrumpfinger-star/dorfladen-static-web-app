@@ -123,39 +123,57 @@ beim Start stattfinden, auch wenn der Bereich bereits aktiv ist.
 - **Setup:** `/api/cms-config` schlägt fehl.
 - **Expected:** Ein Bereich ist aktiv, und sein Reiter ist sichtbar.
 
-### F4: Das Bau-Werkzeug darf nichts stillschweigend löschen
+### F4: Quelle und erzeugte Dateien bleiben deckungsgleich
 
 #### F4 Description
 
-`kiosk.html` wird aus `kiosk-klassisch.html` erzeugt
-(`tools/build-kiosk-neu.js`). Bei der Arbeit an F1 stellte sich heraus,
-dass dieses Werkzeug **veraltet** war und bei einem Lauf zwei Dinge
-zerstört hätte:
+`kiosk.html`, `kiosk-neu.html` und `css/kiosk-base.css` werden aus
+`kiosk-klassisch.html` erzeugt (`tools/build-kiosk-neu.js`). Bei der Arbeit
+an F1 stellte sich heraus, dass der Bau-Weg **nicht mehr durchgängig** war.
+Ein Lauf hätte drei Dinge zerstört:
 
 1. **Den Getränke-Reiter.** Die Liste `REITER` im Werkzeug kannte ihn
-   nicht — er wurde später ergänzt, die Liste nicht nachgezogen. Ein Lauf
-   löschte ihn aus `kiosk.html`.
-2. **Die Gestaltung des Getränke-Bereichs.** `css/kiosk-base.css` wird aus
-   dem `<style>`-Block der Quelle erzeugt. Die rund 200 Zeilen für `gk-`
-   stehen aber nur in der erzeugten Datei. Ein Lauf löschte 47 Regeln.
+   nicht — er wurde später ergänzt, die Liste nicht nachgezogen.
+2. **Die Gestaltung des Getränke-Bereichs.** 195 Zeilen mit 44 Klassen
+   standen nur in der erzeugten `css/kiosk-base.css`.
+3. **Die Klappfunktion der Kopfzeile** (`kopfMenue()` samt Knopf-Klasse
+   `k-head-extra`). Das Werkzeug erzeugte den Knopf, die Funktion stand
+   aber nur in der erzeugten `kiosk.html` — der Knopf hätte ins Leere
+   gegriffen.
 
-Beides geschah beim Probelauf tatsächlich und wurde rückgängig gemacht.
+Alles ist in die Quelle übertragen. Ein Lauf des Werkzeugs erzeugt jetzt
+Zeichen für Zeichen dieselben Dateien, die im Betrieb laufen.
 
 #### F4 Behaviour / Acceptance
 
 - `REITER` führt alle neun Reiter, `mittag` ist der aktive.
-- **R3** bricht ab, wenn die Quelle einen Reiter führt, den `REITER` nicht
-  kennt.
-- **R1** bricht ab, wenn der Lauf mehr als drei Gestaltungsregeln aus
-  `css/kiosk-base.css` entfernen würde.
+- Der `<style>`-Block der Quelle und `css/kiosk-base.css` enthalten
+  dieselben Klassen (geprüft: 432 = 432).
+- Ein Lauf des Werkzeugs ändert **keine** der drei erzeugten Dateien.
+- Zusätzliche Sicherungen im Werkzeug, falls doch wieder direkt in einer
+  erzeugten Datei gepflegt wird:
+  - **R3** bricht ab, wenn die Quelle einen Reiter führt, den `REITER`
+    nicht kennt.
+  - **R1** bricht ab, wenn der Lauf mehr als drei Gestaltungsregeln aus
+    `css/kiosk-base.css` entfernen würde.
 
 #### F4 Test Cases
 
-**TC-S8: Das Werkzeug bricht ab, statt Gestaltung zu löschen**
+**TC-S8a: Die Reiterliste ist vollständig**
 
-- **Action:** `node tools/build-kiosk-neu.js` im heutigen Stand.
-- **Expected:** Abbruch mit Nennung der fehlenden Regeln;
-  `css/kiosk-base.css` bleibt unverändert.
+- **Expected:** Jeder Reiter der Quelle steht auch in `REITER`.
+
+**TC-S8b: Der Mittagstisch ist der Startbereich**
+
+- **Expected:** In Werkzeug und allen drei Seiten ist `mittag` der aktive
+  Reiter und Bereich.
+
+**TC-S8c: Quelle und erzeugte Dateien sind deckungsgleich**
+
+- **Action:** `node tools/build-kiosk-neu.js`.
+- **Expected:** Das Werkzeug läuft durch, und keine der drei erzeugten
+  Dateien ändert sich. Andernfalls wurde direkt in einer erzeugten Datei
+  gepflegt — der Test nennt sie.
 
 ## Data & Contracts
 
@@ -180,16 +198,15 @@ brauchen ein ausdrückliches `true`.
 | `static-site/kiosk-klassisch.html` | Quelle, hier wird gepflegt |
 | `static-site/kiosk.html` | erzeugt — die Seite für den Betrieb |
 | `static-site/kiosk-neu.html` | erzeugt — Vorschau |
-| `static-site/css/kiosk-base.css` | erzeugt — **enthält zusätzlich handgepflegte `gk-`-Regeln** |
+| `static-site/css/kiosk-base.css` | erzeugt aus dem `<style>`-Block der Quelle |
 | `tools/build-kiosk-neu.js` | Werkzeug |
+
+**Änderungen gehören ausschließlich in die Quelle.** Danach
+`node tools/build-kiosk-neu.js` ausführen. TC-S8c wacht darüber.
 
 ## Open Questions
 
-Der Bau-Weg ist nicht mehr durchgängig: Getränke-Reiter und
-Getränke-Gestaltung wurden nur in den erzeugten Dateien gepflegt. Das
-Werkzeug bricht jetzt sicher ab, statt Schaden anzurichten — die
-Zusammenführung steht aber noch aus. Bis dahin müssen Änderungen an der
-Reiterleiste in `kiosk-klassisch.html` **und** `kiosk.html` erfolgen.
+Keine.
 
 ## Traceability
 
