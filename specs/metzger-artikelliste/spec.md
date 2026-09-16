@@ -59,16 +59,26 @@ Unruhe und viel verschenkte Höhe.
 - **F8** Auf schmalen Schirmen bricht die Zeile um; die Schaltflächen
   rutschen in eine eigene Reihe und bleiben erreichbar.
 
+- **F9** Bezeichnung und Vorgabe stehen **nebeneinander**, nicht
+  übereinander. Das füllt den Raum, den die Spalte ohnehin belegt, und
+  macht die Zeile einzeilig.
+- **F10** Die verfügbare **Breite wird genutzt statt verschenkt**: Ab
+  1500 px stehen zwei Artikel nebeneinander. Bei 1600 px sind dadurch
+  rund 30 statt 16 Artikel gleichzeitig zu sehen.
+
 ## Testfälle
 
 | Nr. | Fall | Erwartung |
 |---|---|---|
 | TC-A01 | Nach dem Rollen die Lücke über dem Kopf messen | **0 px**, kein Inhalt sichtbar |
 | TC-A02 | `elementFromPoint` knapp über der Kopf-Oberkante | trifft **nicht** die Liste |
-| TC-A03 | Warengruppen-Spalte in mehreren Zeilen | alle beginnen bei **derselben** x-Position |
+| TC-A03 | Warengruppen-Spalte in mehreren Zeilen | alle enden bei **derselben** x-Position |
 | TC-A04 | Preis-Spalte in mehreren Zeilen | alle enden bei **derselben** x-Position |
 | TC-A05 | Schaltflächenhöhe | mindestens 44 px (Antippgröße) |
 | TC-A06 | Schmaler Schirm (390 px) | Schaltflächen bleiben sichtbar und anklickbar |
+| TC-A07 | Breiten 390 / 768 / 1024 / 1280 / 1600 / 1920 | **keine** Schaltfläche ragt aus dem Bereich |
+| TC-A08 | Breite 1600 px | **zwei** Spalten, mehr Artikel im Bild als bei 1280 px |
+
 
 Wächter: `tests/kiosk-metzger-vorblendung.spec.js`, Block „Artikelliste
 aufgeräumt" (TC-A01 … TC-A06).

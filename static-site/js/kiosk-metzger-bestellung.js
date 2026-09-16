@@ -1577,7 +1577,13 @@ window.KMetzgerBest = (function () {
       return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
         + '<span class="mb-nr' + (a.nummer ? '' : ' leer') + '">'
         + esc(a.nummer || '–') + '</span>'
-        + '<span class="mb-aname">' + esc(a.name)
+        + '<span class="mb-aname">'
+        /* Der Name braucht ein EIGENES Element: als nackter Textknoten
+           waere er ein anonymes Flex-Element — nicht adressierbar, also
+           ohne `min-width:0` und ohne Auslassungspunkte. Lange Namen
+           waeren hart abgeschnitten worden und haetten die Vorgabe
+           verdraengt. (Spec metzger-artikelliste, F9) */
+        + '<span class="mb-atxt">' + esc(a.name) + '</span>'
         + '<span class="mb-astd' + (st ? '' : ' leer') + '">'
         + (st ? 'Vorgabe: ' + esc(st) : 'keine Vorgabe') + '</span></span>'
         + '<span class="mb-agrp">' + esc(a.gruppe || '') + '</span>'

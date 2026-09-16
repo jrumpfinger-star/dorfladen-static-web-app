@@ -740,3 +740,62 @@ test.describe('Artikelliste aufgeräumt', () => {
       expect(frei).toBe(true);
     });
 });
+
+/* ── Breiten: die Liste muss auf jedem Schirm sitzen ────────────────────
+   Rueckmeldung: „Hast du alle Aufloesungen getestet? Du beruecksichtigst
+   die Breite nicht." Vorher war nur 1280 und 390 geprueft.
+   Deckt specs/metzger-artikelliste/spec.md (TC-A07, TC-A08). */
+test.describe('Artikelliste auf allen Breiten', () => {
+  const BREITEN = [390, 768, 1024, 1280, 1600, 1920];
+
+  /** Zeilen pro Spalte x Spaltenzahl = Artikel, die gleichzeitig dastehen. */
+  async function lage(page) {
+    return page.evaluate(() => {
+      const z = [...document.querySelectorAll('#panel-metzgerbest .mb-arow')].slice(0, 12);
+      if (!z.length) return null;
+      const panel = document.getElementById('panel-metzgerbest');
+      const pr = panel.getBoundingClientRect();
+      const oben = z[0].getBoundingClientRect().top;
+      const spalten = z.filter((r) => Math.abs(r.getBoundingClientRect().top - oben) < 2).length;
+      const hoehe = Math.round(z[0].getBoundingClientRect().height);
+      const raus = z.some((r) => [...r.querySelectorAll('.mb-btn')].some((b) => {
+        const q = b.getBoundingClientRect();
+        return q.right > pr.right + 1 || q.left < pr.left - 1 || q.width < 30;
+      }));
+      return { spalten, hoehe, raus, imBild: Math.floor(pr.height / hoehe) * spalten };
+    });
+  }
+
+  /* Die Fenstergroesse laesst sich im Projektaufbau nicht nachtraeglich
+     aendern („To resize minimized/maximized/fullscreen window"). Also
+     bekommt jede Breite ihren eigenen Kontext. */
+  async function beiBreite(browser, w, was) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 900 } });
+    const p = await ctx.newPage();
+    try {
+      await oeffneTab(p, { viele: true });
+      await artikelBereich(p);
+      return await was(p);
+    } finally { await ctx.close(); }
+  }
+
+  test('TC-A07: auf keiner Breite ragt eine Schaltfläche heraus', async ({ browser }) => {
+    test.setTimeout(180000);
+    for (const w of BREITEN) {
+      const l = await beiBreite(browser, w, lage);
+      expect(l, 'Breite ' + w + ': keine Liste').not.toBeNull();
+      expect(l.raus, 'Breite ' + w + ': Schaltflaeche ausserhalb oder zu schmal').toBe(false);
+    }
+  });
+
+  test('TC-A08: breite Schirme nutzen die Breite für zwei Spalten', async ({ browser }) => {
+    test.setTimeout(180000);
+    const schmal = await beiBreite(browser, 1280, lage);
+    const breit = await beiBreite(browser, 1600, lage);
+
+    expect(schmal.spalten).toBe(1);
+    expect(breit.spalten).toBe(2);
+    // Vorher standen auf 1600 px genauso viele Artikel wie auf 1280 px.
+    expect(breit.imBild).toBeGreaterThan(schmal.imBild);
+  });
+});

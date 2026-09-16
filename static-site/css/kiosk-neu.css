@@ -4074,9 +4074,24 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 #panel-metzgerbest .mb-artikel .mb-aname{
   flex:none; min-width:0;
   font-size:.92rem; line-height:1.25;
+  /* Bezeichnung und Vorgabe nebeneinander statt uebereinander: Das
+     fuellt den breiten Raum, den die 1fr-Spalte ohnehin belegt, und
+     macht die Zeile einzeilig. (Spec metzger-artikelliste, F9) */
+  flex-direction:row; align-items:baseline; gap:8px;
+  overflow:hidden;
+}
+/* Der Name darf schrumpfen, die Vorgabe rueckt nach. `min-width:0` ist
+   noetig, weil Flex-Elemente sonst nie unter ihre Mindestbreite gehen
+   und die Vorgabe aus der Spalte draengen wuerden. */
+#panel-metzgerbest .mb-artikel .mb-atxt{
+  flex:0 1 auto; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 #panel-metzgerbest .mb-artikel .mb-astd{
   font-size:.75rem; line-height:1.2;
+  min-width:0;
+  /* Die Vorgabe gibt zuerst nach — der Name ist das Wichtigere. */
+  flex:0 1 auto;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 /* Wichtig: NICHT `justify-self:end` — dann schrumpft die Box auf die
@@ -4097,17 +4112,19 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 
 /* Die beiden Schaltflaechen als eigene Gruppe, damit sie umbrechen
    koennen, ohne das Raster zu sprengen. */
-/* Die Schaltflaechen behalten die projektweite Antippgroesse (--tap-min,
-   44 px). Sie zu verkleinern haette die Zeile nur um wenige Pixel
-   gesenkt, aber die Bedienung am Tablet verschlechtert. Der Gewinn
-   liegt ohnehin in der Flucht und der ruhigen Flaeche, nicht in der
-   Zeilenhoehe. (Spec metzger-artikelliste, F5) */
+/* Die Schaltflaechen behalten ueberall die projektweite Antippgroesse.
+   Sie wird in dieser Datei mit `min-height:var(--tap-min) !important`
+   gesetzt — eine bewusste Grundsatzentscheidung, die hier nicht
+   ausgehebelt wird. Der Platzgewinn kommt stattdessen aus der
+   einzeiligen Zeile und aus der Nutzung der Breite (siehe unten).
+   (Spec metzger-artikelliste, F5) */
 #panel-metzgerbest .mb-artikel .mb-arow .mb-btn{
   padding:0 10px;
   width:100%;
   font-size:.8rem; border-radius:8px; white-space:nowrap;
   display:inline-flex; align-items:center; justify-content:center;
 }
+
 #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:first-of-type{
   background:#2e7d4f; color:#fff; border-color:#2e7d4f; font-weight:600;
 }
@@ -4121,10 +4138,41 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
     grid-template-columns:38px minmax(0,1fr) auto;
     row-gap:6px; padding:8px 10px;
   }
+  /* Hier ist die Spalte zu schmal fuer zwei Angaben nebeneinander — die
+     Vorgabe rueckt wieder unter den Namen. (Spec metzger-artikelliste, F9) */
+  #panel-metzgerbest .mb-artikel .mb-aname{
+    flex-direction:column; align-items:stretch; gap:2px;
+  }
   #panel-metzgerbest .mb-artikel .mb-agrp{ grid-column:2; justify-self:start; text-align:left }
   #panel-metzgerbest .mb-artikel .mb-apreis{ grid-column:3 }
   #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:first-of-type{ grid-column:2 }
   #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:last-of-type{ grid-column:3 }
+}
+
+/* Breite Schirme: zwei Artikel nebeneinander ───────────────────────────
+   Rueckmeldung: „Du beruecksichtigst die Breite nicht." Auf 1600 px
+   stand die Liste einspaltig, rechts blieb Leerraum, und von 102
+   Artikeln waren 16 zu sehen. Zwei Spalten verdoppeln das, ohne dass
+   die Zeile enger wird als noetig. (Spec metzger-artikelliste, F10) */
+@media (min-width:1500px){
+  #panel-metzgerbest .mb-artikel{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    column-gap:10px;
+  }
+  /* In der halben Breite muessen die festen Spalten schmaler werden,
+     sonst wird die Bezeichnung gedrueckt und die Zeile bricht um. */
+  #panel-metzgerbest .mb-artikel .mb-arow{
+    grid-template-columns:36px minmax(0,1fr) 92px 66px 92px 92px;
+    padding-left:10px; padding-right:10px;
+    gap:8px;
+  }
+  #panel-metzgerbest .mb-artikel .mb-arow .mb-btn{ padding:0 6px; font-size:.75rem }
+  #panel-metzgerbest .mb-artikel .mb-agrp{ font-size:.68rem }
+  /* Die obere Trennlinie entfaellt sonst nur bei der ersten Zeile —
+     bei zwei Spalten stehen die ersten ZWEI Zeilen oben. */
+  #panel-metzgerbest .mb-artikel .mb-arow:nth-child(2){ border-top:0 }
+  #panel-metzgerbest .mb-artikel .mb-arow:nth-child(odd){ border-right:1px solid #eef1f0 }
 }
 
 /* Ein vorgeblendeter Hinweis ist keine Menge, sondern Text — er wird
