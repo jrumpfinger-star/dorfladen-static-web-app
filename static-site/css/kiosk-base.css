@@ -172,6 +172,16 @@ html.k-embed .k-tabs{display:none!important}
 .k-order-hdr{display:flex;align-items:center;gap:6px 8px;padding:10px 12px;cursor:pointer;user-select:none;min-height:44px;flex-wrap:wrap}
 .k-order-hdr:active{background:#f9fafb}
 .k-order-hdr .k-oc-arrow{font-size:10px;color:var(--c-muted);transition:transform .2s;flex-shrink:0;width:18px;text-align:center}
+/* Der gewaehlte Titel steht in der Kopfzeile, damit man ihn ohne
+   Aufklappen sieht. Er darf die Kopfzeile nie sprengen.
+   (Spec social-titel-klappbar, F2) */
+.k-order-hdr .soc-kurz{
+  margin-left:auto; min-width:0; max-width:52%;
+  font-size:12px; color:#4b5563; font-style:italic;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  text-align:right;
+}
+.k-order:not(.oc-collapsed) .k-order-hdr .soc-kurz{ display:none }
 .k-order.oc-collapsed .k-oc-arrow{transform:rotate(-90deg)}
 .k-order.oc-collapsed .k-order-body{display:none}
 .k-order-hdr .k-oc-name{font-weight:600;font-size:15px;white-space:normal;overflow-wrap:anywhere;min-width:60px;flex:1 1 auto;max-width:none}
@@ -943,6 +953,12 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
   #soc-col-left .k-order{margin-bottom:12px!important}
   #soc-col-left .k-order-body{display:block!important}
   #soc-col-left .k-order.oc-collapsed .k-order-body{display:block!important}
+  /* Ausnahme Schritt 1: Er bleibt auch hier klappbar. Im Alltag wird
+     der vorgeschlagene Titel uebernommen — zugeklappt gewinnt die
+     Produktauswahl den Platz. (Spec social-titel-klappbar, F3) */
+  #soc-col-left #soc-step-1 .k-order-hdr{cursor:pointer}
+  #soc-col-left #soc-step-1 .k-order-hdr .k-oc-arrow{display:inline-block!important}
+  #soc-col-left #soc-step-1.oc-collapsed .k-order-body{display:none!important}
   /* Hide Heute/Morgen in Step 1 on desktop (moved to action bar) */
   #soc-day-section{display:none!important}
   /* Right column: keep card look, bodies always open */

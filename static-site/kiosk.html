@@ -364,12 +364,17 @@
 
       <div id="soc-col-left">
 
-      <!-- ── STEP 1: Titel & Text ── -->
-      <div class="k-order" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-1">
+      <!-- ── STEP 1: Titel & Text ──
+           Startet zugeklappt: Im Alltag wird der vorgeschlagene Titel
+           uebernommen, geaendert wird selten. Der gewaehlte Titel steht
+           in der Kopfzeile, damit man ihn ohne Aufklappen sieht.
+           (Spec social-titel-klappbar) -->
+      <div class="k-order oc-collapsed" style="border-left-color:#2e7d4f;margin-bottom:8px" id="soc-step-1">
               <div class="k-order-hdr" onclick="socToggleStep(1)" style="background:#f6f7f5">
           <span class="k-oc-arrow">&#9660;</span>
           <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#2e7d4f;color:#fff;font-size:13px;font-weight:600;flex-shrink:0">1</span>
           <span class="k-oc-name" style="color:#1f2937"><i data-lucide="type" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"></i> Titel &amp; Text</span>
+          <span id="soc-step1-kurz" class="soc-kurz" title="Gewählter Titel"></span>
         </div>
         <div class="k-order-body">
           <div style="padding:14px 16px">
@@ -385,10 +390,23 @@
             <div style="margin-bottom:14px">
               <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Titel w&#228;hlen</label>
               <select id="soc-post-titel-sel" onchange="socialTitelChange()" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px;background:#fff"></select>
-              <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
+              <input id="soc-post-titel" placeholder="Eigenen Titel eingeben..." oninput="socStep1Kurz()" style="width:100%;margin-top:6px;display:none;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;box-sizing:border-box;min-height:44px">
             </div>
             <script>
-            window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}if(window.innerWidth>=900&&typeof socialGenPreview==='function'){if(window._socTitelTimer)clearTimeout(window._socTitelTimer);window._socTitelTimer=setTimeout(socialGenPreview,600);}};
+            window.socStep1Kurz=function(){
+              /* Zeigt den gewaehlten Titel in der Kopfzeile von Schritt 1.
+                 Zugeklappt ist das die einzige Stelle, an der man sieht,
+                 was gepostet wird. (Spec social-titel-klappbar, F2) */
+              var el=document.getElementById('soc-step1-kurz'); if(!el) return;
+              var inp=document.getElementById('soc-post-titel');
+              var sel=document.getElementById('soc-post-titel-sel');
+              var titel=(inp&&inp.value)?inp.value:(sel?sel.value:'');
+              if(titel==='_custom') titel='';
+              var txt=document.getElementById('soc-post-text');
+              var frei=txt&&txt.value&&txt.value.trim();
+              el.textContent=titel?(titel+(frei?' · mit Freitext':'')):'Noch kein Titel gewählt';
+            };
+            window.socialTitelChange=function(){var sel=document.getElementById('soc-post-titel-sel');var inp=document.getElementById('soc-post-titel');if(!sel||!inp)return;if(sel.value==='_custom'){inp.style.display='';inp.value='';inp.focus();}else{inp.style.display='none';inp.value=sel.value;}socStep1Kurz();if(window.innerWidth>=900&&typeof socialGenPreview==='function'){if(window._socTitelTimer)clearTimeout(window._socTitelTimer);window._socTitelTimer=setTimeout(socialGenPreview,600);}};
             (function(){
               var tage=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
               window._socSelectedDay='heute';
@@ -431,7 +449,7 @@
             </script>
             <div>
               <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Freitext <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
-              <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="if(window.innerWidth>=900&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
+              <textarea id="soc-post-text" rows="2" placeholder="z.B. Frisch aus der K&#252;che! Heute als Dessert: Erdbeer-Sahne-Torte &#127856;" oninput="socStep1Kurz();if(window.innerWidth>=900&amp;&amp;typeof socialGenPreview==='function'){if(window._socTextTimer)clearTimeout(window._socTextTimer);window._socTextTimer=setTimeout(socialGenPreview,800);}" style="width:100%;resize:vertical;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:44px"></textarea>
             </div>
                           <label id="soc-tagesinfo-wrap" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-tagesinfo" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128260; Tagesinfo aktualisieren <span style="color:#9ca3af">(aus = Test, erscheint nicht auf der Homepage)</span></span></label>
                           <label id="soc-notify-wrap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:#374151;cursor:pointer;user-select:none"><input type="checkbox" id="soc-notify" checked style="width:18px;height:18px;accent-color:#2e7d4f;flex-shrink:0"><span>&#128226; Auch als Tagesinfo-Benachrichtigung senden <span style="color:#9ca3af">(Push an Abonnenten)</span></span></label>
