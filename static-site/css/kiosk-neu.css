@@ -3973,10 +3973,36 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   gap:10px; margin:0 0 10px }
 .mb-azahl{ font-size:.85rem; color:#5c6b66; font-weight:600 }
 
-/* Die Artikelmaske hat sechs Felder - auf breiten Schirmen zweispaltig,
-   damit sie ohne Rollen auf einen Blick passt. */
-.mb-aform{ display:grid; grid-template-columns:1fr; gap:10px }
-@media (min-width:560px){
-  .mb-aform{ grid-template-columns:1fr 1fr }
-  .mb-aform label.weit{ grid-column:1 / -1 }
+/* Die Artikelmaske hat sechs Felder - zweispaltig, damit sie ohne Rollen
+   auf einen Blick passt.
+
+   Die Grenzen richten sich nach der BREITE DES BLATTES, nicht des Schirms:
+   Ab 1180 px dockt jedes Blatt als schmale Spalte rechts an (min(560px,
+   42vw), siehe oben). Darin waeren zwei Spalten zu eng - dort also wieder
+   einspaltig. Zweispaltig lohnt nur dazwischen, wo das Blatt mittig als
+   640-px-Karte steht. */
+.mb-aform{ display:grid; grid-template-columns:minmax(0,1fr); gap:10px }
+/* Grid-Spalten haben von Haus aus min-width:auto. Die Erfassung in der
+   Vorbelegung ist breiter als ihre Spalte und sprengte damit den ganzen
+   Dialog ueber den Bildschirmrand hinaus - minmax(0,1fr) erlaubt das
+   Schrumpfen. */
+.mb-aform > *{ min-width:0 }
+@media (min-width:600px) and (max-width:1179px){
+  .mb-aform{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) }
+  .mb-aform label.weit,
+  .mb-aform .weit{ grid-column:1 / -1 }
 }
+/* Vorbelegung in der Artikelmaske.
+   Erfasst wird mit DERSELBEN Oberflaeche wie eine Bestellposition. Zwei
+   Dinge gehoeren dort aber nicht hin: ein Positions-Hinweis (den traegt
+   die Bestellung, nicht der Stamm) und der Knopf dorthin. */
+.mb-vgfeld{ display:flex; flex-direction:column; gap:4px }
+.mb-vglbl{ font-size:12px; font-weight:600; color:#6b7280 }
+.mb-vgbox{ border:1.5px solid var(--c-border,#e5e7eb); border-radius:9px;
+  padding:8px; background:var(--c-bg,#f6f7f6) }
+.mb-vgchips{ margin:0 0 8px }
+.mb-vgleer{ font-size:.82rem; color:#9aa3a0; font-style:italic }
+.mb-vgbox .mb-ed{ margin:0; border:0; padding:0; background:transparent }
+.mb-vgbox .mb-g.hinweis,
+.mb-vgbox .mb-hw-knopf,
+.mb-vgbox .mb-acts:empty{ display:none }

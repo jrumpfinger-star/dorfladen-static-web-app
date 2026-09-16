@@ -38,6 +38,15 @@ window.KMetzgerBest = (function () {
   var _korrektur = false;  // Gesendetes wird gerade nachtraeglich geaendert
   var _korrekturBasis = null;  // Stand bei Beginn der Korrektur
 
+  /* Vorbelegung im Artikelstamm.
+     Sie wird mit DERSELBEN Erfassung festgelegt wie eine Bestellposition -
+     Kacheln, Einheiten, Vakuum, Kurzeingabe. Damit der vorhandene Editor
+     das ohne Umbau kann, liegt hier eine Pseudo-Position: Alle Handler
+     gehen ueber finde(key), und finde() liefert fuer STAMM_KEY eben diese.
+     So gibt es weiterhin nur EINE Erfassung, die gepflegt werden muss. */
+  var _stamm = null;
+  var STAMM_KEY = '@stamm';
+
   var MAX_VORSCHLAEGE = 5;
 
   // "klein/mittel/gross" sind Portionsgroessen wie kg oder Stueck - sie haben
@@ -140,6 +149,10 @@ window.KMetzgerBest = (function () {
   }
 
   function gesperrt() {
+    // Die Vorbelegung im Artikelstamm hat mit dem Versandstand eines
+    // einzelnen Bestelltags nichts zu tun. Ohne diese Ausnahme waere sie
+    // an jedem Tag unbedienbar, an dem schon gesendet wurde.
+    if (_stamm) return false;
     // Eine gesendete Bestellung ist schreibgeschuetzt - AUSSER im
     // Korrekturmodus. Ohne diese Ausnahme bot der Kopf zwar „Korrektur
     // senden" an, aber saemtliche Felder blieben starr: Man konnte nichts
@@ -327,6 +340,9 @@ window.KMetzgerBest = (function () {
   // ══════════════════════════════════════════════════
 
   function render() {
+    // Solange die Vorbelegungs-Maske offen ist, liegt sie ueber der Liste:
+    // Neu zu zeichnen ist dann nur ihr Inhalt.
+    if (_stamm) { stammZeichnen(); return; }
     var el = host();
     if (!el) return;
     if (!_b) { el.innerHTML = '<div class="k-empty">Laden\u2026</div>'; return; }
@@ -980,6 +996,7 @@ window.KMetzgerBest = (function () {
   // ══════════════════════════════════════════════════
 
   function finde(key) {
+    if (_stamm && key === STAMM_KEY) return _stamm.pos;
     var t = null;
     (_b.positionen || []).forEach(function (p) { if (posKey(p) === key) t = p; });
     return t;
@@ -1376,6 +1393,9 @@ window.KMetzgerBest = (function () {
   var _autoTimer = null;
   var _autoLaeuft = false;
   function markiereGeaendert() {
+    // Die Vorbelegung wird erst beim Speichern der Maske geschickt - ein
+    // stiller Entwurfs-Speicher wuerde hier die Bestellung anfassen.
+    if (_stamm) return;
     _dirty = true;
     // Bewusst `istGesendet()` statt `gesperrt()`: Im Korrekturmodus sind die
     // Felder zwar frei, aber ein stiller Entwurfs-Speicher wuerde die bereits
@@ -1540,12 +1560,17 @@ window.KMetzgerBest = (function () {
       .replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
   }
 
+  /** Die hinterlegte Vorgabe als Bloecke — egal ob Liste oder Kurztext. */
+  function standardBloecke(a) {
+    var v = a && a.standard;
+    if (!v) return [];
+    return Array.isArray(v) ? v.slice() : (parse(String(v)).bloecke || []);
+  }
+
   /** Die hinterlegte Vorgabe als lesbarer Text, oder '' wenn es keine gibt. */
   function standardText(a) {
-    var v = a && a.standard;
-    if (!v) return '';
-    var bl = Array.isArray(v) ? v : (parse(String(v)).bloecke || []);
-    if (!bl || !bl.length) return '';
+    var bl = standardBloecke(a);
+    if (!bl.length) return '';
     return bl.map(function (b) {
       return blockText(b) + (b.vakuum ? ' (vak.)' : '');
     }).join(', ');
@@ -1582,9 +1607,6 @@ window.KMetzgerBest = (function () {
   function artikelMaske(a) {
     var neu = !a;
     var wert = function (k, s) { return neu ? (s || '') : (a[k] == null ? (s || '') : a[k]); };
-    var vg = neu ? ''
-      : ((a.standard && !Array.isArray(a.standard)) ? String(a.standard)
-        : standardText(a));
 
     var w = huelle('<div class="mb-dlg-kopf">'
       + (neu ? 'Neuer Artikel' : 'Artikel bearbeiten') + '</div>'
@@ -1604,19 +1626,22 @@ window.KMetzgerBest = (function () {
       + '</label>'
       + '<label>Einheit<input id="mb-a-einh" value="'
       + esc(wert('einheit', 'kg')) + '" placeholder="kg"></label>'
-      + '<label class="weit">Standard-Portionierung<input id="mb-vg-feld" '
-      + 'placeholder="z. B. 2x500g V" value="' + esc(vg) + '"></label>'
+      + '<div class="mb-vgfeld weit"><div class="mb-vglbl">Vorbelegung</div>'
+      + '<div class="mb-vgbox" id="mb-vgbox"></div></div>'
       + '</div>'
-      + '<div class="mb-dlg-hint">Die Portionierung wird so geschrieben wie '
-      + 'bei der Erfassung: <b>2x500g</b>, <b>3x2St</b>, <b>1x1,5kg</b>. '
-      + 'Ein <b>V</b> am Ende heißt vakuumiert, mehrere Portionen mit Komma '
-      + 'trennen. Leer lassen heißt: keine Vorgabe.</div>'
+      + '<div class="mb-dlg-hint">Diese Portionen werden bei der Bestellung '
+      + 'über dem Artikel vorgeblendet — ein Tipp übernimmt eine davon. '
+      + 'Erfasst wird genau wie bei der Bestellung. Keine Portion heißt: '
+      + 'keine Vorbelegung.</div>'
       + '<div class="mb-dlg-acts">'
       + '<button class="mb-btn" data-ab>Abbrechen</button>'
       + '<button class="mb-send" data-ok>' + (neu ? 'Anlegen' : 'Speichern')
       + '</button></div>');
 
-    w.querySelector('[data-ab]').onclick = function () { w.remove(); };
+    w.querySelector('[data-ab]').onclick = function () { w.remove(); stammEnde(); };
+    // Klick auf den abgedunkelten Rand schliesst ebenfalls (huelle()) - dann
+    // muss die Pseudo-Position genauso abgeraeumt werden.
+    w.addEventListener('click', function (ev) { if (ev.target === w) stammEnde(); });
     w.querySelector('[data-ok]').onclick = function () {
       var lies = function (id) {
         var f = document.getElementById(id);
@@ -1624,12 +1649,6 @@ window.KMetzgerBest = (function () {
       };
       var name = lies('mb-a-name');
       if (!name) { toast('Bitte eine Bezeichnung eintragen.'); return; }
-
-      var std = lies('mb-vg-feld');
-      if (std && !(parse(std).bloecke || []).length) {
-        toast('Die Portionierung konnte ich nicht lesen. Beispiel: 2x500g V');
-        return;
-      }
 
       var nrText = lies('mb-a-nr');
       var nr = nrText === '' ? null : parseInt(nrText, 10);
@@ -1643,10 +1662,14 @@ window.KMetzgerBest = (function () {
         toast('Der Preis muss eine Zahl sein.'); return;
       }
 
+      // Die Vorbelegung wird als Liste von Bloecken gespeichert - genau so,
+      // wie sie erfasst wurde. Kein Umweg ueber eine Kurzschreibweise.
+      var port = (_stamm && _stamm.pos.portionen) ? _stamm.pos.portionen.slice() : [];
+
       var daten = {
         name: name, nummer: nr, gruppe: lies('mb-a-grp') || null,
         preis: pr, einheit: lies('mb-a-einh') || 'kg',
-        standard: std || null
+        standard: port.length ? port : null
       };
       if (!neu) {
         // Wiedergefunden wird über den alten Stand - Name und Nummer
@@ -1655,11 +1678,64 @@ window.KMetzgerBest = (function () {
         else daten.alt_name = a.name;
       }
       w.remove();
+      stammEnde(true);
       artikelSenden(daten, neu, false);
     };
 
+    /* Die Erfassung arbeitet auf einer Pseudo-Position; ab hier verhaelt sie
+       sich genau wie in der Bestellung. */
+    _stamm = { pos: { nummer: neu ? null : a.nummer, name: neu ? '' : a.name,
+                      portionen: standardBloecke(a), hinweis: '' } };
+    _offen = STAMM_KEY;
+    _entwurf = { i: -1, anzahl: 1, menge: null, einheit: 'kg', vakuum: false };
+    stammZeichnen();
+
     var f = document.getElementById('mb-a-name');
     if (f) { f.focus(); f.select(); }
+  }
+
+  /** Nur den Inhalt der Vorbelegung neu zeichnen (render() ruft das). */
+  function stammZeichnen() {
+    var box = document.getElementById('mb-vgbox');
+    if (!box || !_stamm) return;
+    /* Manche Handler schliessen die Erfassung, wenn sie fertig sind
+       (weg(), kurz(), hinweisWeg()): Sie setzen _offen und _entwurf auf
+       null. In der Bestellliste ist das richtig - dort klappt die Zeile
+       wieder zu. In der Artikelmaske gibt es nichts zuzuklappen: Ohne
+       Entwurf liefe editor() in einen Fehler und die Maske bliebe stumm
+       stehen. Hier ist die Erfassung also dauerhaft offen. */
+    if (_offen !== STAMM_KEY || !_entwurf) {
+      var letzteEinheit = (_entwurf && _entwurf.einheit) || 'kg';
+      _offen = STAMM_KEY;
+      _entwurf = { i: -1, anzahl: 1, menge: null,
+                   einheit: letzteEinheit, vakuum: false };
+    }
+    var p = _stamm.pos;
+    var h = '<div class="mb-chips mb-vgchips">';
+    (p.portionen || []).forEach(function (b, i) {
+      h += '<span class="mb-chip">'
+        + '<button class="lab" title="Portion ändern"'
+        + ' onclick="KMetzgerBest.edit(\'' + STAMM_KEY + '\',' + i + ')">'
+        + esc(blockText(b))
+        + (b.vakuum ? '<span class="vak">vak</span>' : '') + '</button>'
+        + '<button class="x" title="Portion entfernen"'
+        + ' onclick="KMetzgerBest.weg(\'' + STAMM_KEY + '\',' + i + ')">✕</button></span>';
+    });
+    if (!(p.portionen || []).length) {
+      h += '<span class="mb-vgleer">Noch keine Portion festgelegt.</span>';
+    }
+    h += '</div>' + editor(STAMM_KEY, p);
+    box.innerHTML = h;
+    icons();
+  }
+
+  /** Die Pseudo-Position abraeumen. `still` laesst das Neuzeichnen weg. */
+  function stammEnde(still) {
+    if (!_stamm) return;
+    _stamm = null;
+    _offen = null;
+    _entwurf = null;
+    if (!still) render();
   }
 
   function artikelSenden(daten, neu, trotzdem) {

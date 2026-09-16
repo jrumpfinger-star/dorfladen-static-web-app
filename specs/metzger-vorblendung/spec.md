@@ -21,13 +21,17 @@ Artikel, nicht an die letzte Bestellung.
 Über einer Position steht **je Portionsblock ein eigener Knopf**. Ein Tipp
 übernimmt genau diesen Block. Mehrere Tipps übernehmen mehrere Blöcke.
 
-### F2 — Vorgabe aus dem Artikelstamm
+### F2 — Vorbelegung aus dem Artikelstamm
 
-Ein Artikel kann eine **Standard-Portionierung** tragen. Sie wird zusätzlich
-zur letzten Bestellung vorgeblendet und steht **vor** dieser.
+Ein Artikel kann eine **Vorbelegung** tragen: eine oder mehrere Portionen.
+Sie werden zusätzlich zur letzten Bestellung vorgeblendet und stehen
+**vor** dieser.
 
-Dieselbe Portion erscheint nur einmal, auch wenn Vorgabe und letzte
+Dieselbe Portion erscheint nur einmal, auch wenn Vorbelegung und letzte
 Bestellung sie beide enthalten.
+
+Gespeichert wird sie als Liste von Portionsblöcken. Ältere Einträge in
+Kurzschreibweise (`"2x500g V"`) werden weiterhin gelesen.
 
 ### F3 — Vorgabe ist sichtbar unterschieden
 
@@ -41,14 +45,20 @@ Verfahren (`vorschlaegeFuer()`). An ihnen ändert sich nichts.
 
 ### F5 — Vorgabe pflegen
 
-Im Bereich „Artikel" trägt jede Zeile ihre Vorgabe und einen Knopf
+Im Bereich „Artikel" trägt jede Zeile ihre Vorbelegung und einen Knopf
 **Bearbeiten**. Er öffnet eine Maske mit Bezeichnung, Nummer, Gruppe, Preis,
-Einheit und Standard-Portionierung.
+Einheit und Vorbelegung.
 
-Die Portionierung wird in derselben Kurzschreibweise eingetragen wie im
-Erfassungsfeld (`2x500g V`). Ein leeres Feld entfernt die Vorgabe.
+Die Vorbelegung wird mit **derselben Erfassung** festgelegt wie eine
+Bestellposition: Anzahl, Vakuum, Einheit, Mengenkacheln, freies Maß und
+Kurzeingabe. Mehrere Portionen sind möglich; jede lässt sich einzeln
+ändern und entfernen.
 
-Unlesbare Eingaben werden abgewiesen, ohne etwas zu speichern.
+Es gibt also nur **eine** Erfassung im Reiter — technisch über eine
+Pseudo-Position, die `finde()` unter einem eigenen Schlüssel liefert.
+Was der Stamm nicht kennt, entfällt dort: der Positions-Hinweis.
+
+Ohne Portion heißt: keine Vorbelegung.
 
 ### F6 — Mehr Kacheln
 
@@ -85,12 +95,12 @@ fragt nach und legt auf Bestätigung trotzdem an.
 | TC-V07 | Eine doppelte Portion erscheint nur einmal |
 | TC-V08 | Kachel „3 cm" und „5 cm" vorhanden |
 | TC-V09 | Kachel „½ St" und „1 St" vorhanden |
-| TC-V10 | Bereich „Artikel" zeigt die hinterlegte Vorgabe |
-| TC-V11 | Ohne Vorgabe steht dort „keine Vorgabe" |
-| TC-V12 | Knopf „Bearbeiten" öffnet die Maske mit dem heutigen Wert |
-| TC-V13 | Speichern schickt ein PATCH mit `standard` |
-| TC-V14 | Unlesbare Portionierung wird abgewiesen, kein PATCH |
-| TC-V15 | Leeres Feld schickt `standard: null` |
+| TC-V10 | Bereich „Artikel" zeigt die hinterlegte Vorbelegung |
+| TC-V11 | Ohne Vorbelegung steht dort „keine Vorgabe" |
+| TC-V12 | „Bearbeiten" öffnet die Maske mit Erfassung und heutigen Portionen |
+| TC-V13 | Eine Kachel legt eine Portion an, Speichern schickt sie als Liste |
+| TC-V14 | Mehrere Portionen sind erfassbar (Kurzeingabe) |
+| TC-V15 | Ohne Portion wird `standard: null` geschickt |
 | TC-V16 | Der Bereich „Artikel" bietet „+ Neuer Artikel" an |
 | TC-V17 | Anlegen schickt alle Felder als POST |
 | TC-V18 | Ohne Bezeichnung wird nichts gesendet |

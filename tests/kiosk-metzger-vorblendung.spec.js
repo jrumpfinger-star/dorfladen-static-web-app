@@ -293,58 +293,85 @@ test.describe('Vorgabe im Artikelstamm pflegen', () => {
     await expect(hack.locator('.mb-astd')).toHaveClass(/leer/);
   });
 
-  test('TC-V12: Der Knopf öffnet das Blatt mit dem heutigen Wert',
+  test('TC-V12: Der Knopf öffnet die Maske mit den heutigen Portionen',
     async ({ page }) => {
       await oeffneTab(page);
       await artikelBereich(page);
       await page.locator('.mb-arow').filter({ hasText: 'Putenschnitzel' })
         .first().getByRole('button', { name: 'Bearbeiten' }).click();
-      await page.locator('#mb-vg-feld').waitFor({ timeout: 5000 });
-      await expect(page.locator('#mb-vg-feld')).toHaveValue('1x2kg');
+      await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+      // Dieselbe Erfassung wie in der Bestellung — Kacheln, keine Eingabezeile.
+      await expect(page.locator('#mb-vgbox .mb-ed')).toHaveCount(1);
+      await expect(page.locator('#mb-vgbox .mb-kach button').first()).toBeVisible();
+      await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(1);
+      await expect(page.locator('#mb-vgbox .mb-chip .lab').first())
+        .toHaveText(/1 × 2 kg/);
     });
 
-  test('TC-V13: Übernehmen schickt ein PATCH mit standard', async ({ page }) => {
-    await oeffneTab(page);
-    const patches = sammlePatches(page);
-    await artikelBereich(page);
-    await page.locator('.mb-arow').filter({ hasText: 'Hackfleisch' })
-      .first().getByRole('button', { name: 'Bearbeiten' }).click();
-    await page.locator('#mb-vg-feld').waitFor({ timeout: 5000 });
-    await page.locator('#mb-vg-feld').fill('2x500g V');
-    await page.getByRole('button', { name: 'Speichern' }).click();
-    await page.waitForTimeout(700);
-    expect(patches.length).toBe(1);
-    expect(patches[0].standard).toBe('2x500g V');
-    expect(patches[0].alt_nummer).toBe(142);
-    expect(patches[0].name).toBe('Hackfleisch gemischt');
-  });
-
-  test('TC-V14: Unlesbares wird abgewiesen, ohne zu speichern',
+  test('TC-V13: Eine Kachel legt eine Portion an, Speichern schickt sie',
     async ({ page }) => {
       await oeffneTab(page);
       const patches = sammlePatches(page);
       await artikelBereich(page);
       await page.locator('.mb-arow').filter({ hasText: 'Hackfleisch' })
         .first().getByRole('button', { name: 'Bearbeiten' }).click();
-      await page.locator('#mb-vg-feld').waitFor({ timeout: 5000 });
-      await page.locator('#mb-vg-feld').fill('#####');
-      await page.getByRole('button', { name: 'Speichern' }).click();
-      await page.waitForTimeout(700);
-      expect(patches.length).toBe(0);
-      // Das Blatt bleibt offen, damit die Eingabe nicht verloren geht.
-      await expect(page.locator('#mb-vg-feld')).toBeVisible();
+      await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+      await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(0);
+
+      await page.locator('#mb-vgbox .mb-einh button', { hasText: 'g' })
+        .filter({ hasText: /^g$/ }).first().click();
+      await page.waitForTimeout(300);
+      await page.locator('#mb-vgbox .mb-kach button').filter({ hasText: /^500$/ })
+        .first().click();
+      await page.waitForTimeout(400);
+      await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(1);
+
+      await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Speichern' })
+        .click();
+      await page.waitForTimeout(800);
+      expect(patches.length).toBe(1);
+      expect(Array.isArray(patches[0].standard)).toBe(true);
+      expect(patches[0].standard.length).toBe(1);
+      expect(patches[0].standard[0]).toMatchObject({ anzahl: 1, menge: 500, einheit: 'g' });
+      expect(patches[0].alt_nummer).toBe(142);
+      expect(patches[0].name).toBe('Hackfleisch gemischt');
     });
 
-  test('TC-V15: Ein leeres Feld entfernt die Vorgabe', async ({ page }) => {
+  test('TC-V14: Mehrere Portionen sind erfassbar', async ({ page }) => {
+    await oeffneTab(page);
+    const patches = sammlePatches(page);
+    await artikelBereich(page);
+    await page.locator('.mb-arow').filter({ hasText: 'Hackfleisch' })
+      .first().getByRole('button', { name: 'Bearbeiten' }).click();
+    await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+
+    // Kurzeingabe wie auf dem Zettel — zwei Portionen auf einmal.
+    await page.locator('#mb-vgbox #mb-pf').fill('2x500g V + 1x1kg');
+    await page.locator('#mb-vgbox .mb-take').click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(2);
+
+    await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Speichern' })
+      .click();
+    await page.waitForTimeout(800);
+    expect(patches.length).toBe(1);
+    expect(patches[0].standard.length).toBe(2);
+    expect(patches[0].standard[0].vakuum).toBe(true);
+  });
+
+  test('TC-V15: Ohne Portion wird die Vorbelegung entfernt', async ({ page }) => {
     await oeffneTab(page);
     const patches = sammlePatches(page);
     await artikelBereich(page);
     await page.locator('.mb-arow').filter({ hasText: 'Putenschnitzel' })
       .first().getByRole('button', { name: 'Bearbeiten' }).click();
-    await page.locator('#mb-vg-feld').waitFor({ timeout: 5000 });
-    await page.locator('#mb-vg-feld').fill('');
-    await page.getByRole('button', { name: 'Speichern' }).click();
-    await page.waitForTimeout(700);
+    await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+    await page.locator('#mb-vgbox .mb-chip .x').first().click();
+    await page.waitForTimeout(400);
+    await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(0);
+    await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Speichern' })
+      .click();
+    await page.waitForTimeout(800);
     expect(patches.length).toBe(1);
     expect(patches[0].standard).toBe(null);
   });
@@ -370,15 +397,20 @@ test.describe('Neuen Artikel anlegen', () => {
     await page.locator('#mb-a-nr').fill('77');
     await page.locator('#mb-a-grp').fill('Fleisch frisch');
     await page.locator('#mb-a-preis').fill('11,05');
-    await page.locator('#mb-vg-feld').fill('1x2kg');
-    await page.getByRole('button', { name: 'Anlegen' }).click();
+    await page.locator('#mb-vgbox #mb-pf').fill('1x2kg');
+    await page.locator('#mb-vgbox .mb-take').click();
+    await page.waitForTimeout(400);
+    await expect(page.locator('#mb-vgbox .mb-chip')).toHaveCount(1);
+    await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Anlegen' })
+      .click();
     await page.waitForTimeout(800);
     expect(posts.length).toBe(1);
     expect(posts[0].name).toBe('Schweinebraten');
     expect(posts[0].nummer).toBe(77);
     expect(posts[0].gruppe).toBe('Fleisch frisch');
     expect(posts[0].preis).toBe(11.05);
-    expect(posts[0].standard).toBe('1x2kg');
+    expect(Array.isArray(posts[0].standard)).toBe(true);
+    expect(posts[0].standard[0]).toMatchObject({ anzahl: 1, menge: 2, einheit: 'kg' });
     expect(posts[0].einheit).toBe('kg');
   });
 
@@ -390,7 +422,7 @@ test.describe('Neuen Artikel anlegen', () => {
       .click();
     await page.locator('#mb-a-name').waitFor({ timeout: 5000 });
     await page.locator('#mb-a-nr').fill('99');
-    await page.getByRole('button', { name: 'Anlegen' }).click();
+    await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Anlegen' }).click();
     await page.waitForTimeout(700);
     expect(posts.length).toBe(0);
     await expect(page.locator('#mb-a-name')).toBeVisible();
@@ -405,7 +437,7 @@ test.describe('Neuen Artikel anlegen', () => {
     await page.locator('#mb-a-name').waitFor({ timeout: 5000 });
     await page.locator('#mb-a-name').fill('Testartikel');
     await page.locator('#mb-a-nr').fill('abc');
-    await page.getByRole('button', { name: 'Anlegen' }).click();
+    await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Anlegen' }).click();
     await page.waitForTimeout(700);
     expect(posts.length).toBe(0);
   });
@@ -419,7 +451,7 @@ test.describe('Neuen Artikel anlegen', () => {
         .click();
       await page.locator('#mb-a-name').waitFor({ timeout: 5000 });
       await page.locator('#mb-a-name').fill('Putenschnitzel');
-      await page.getByRole('button', { name: 'Anlegen' }).click();
+      await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Anlegen' }).click();
       await page.waitForTimeout(800);
 
       // Erster Versuch: abgewiesen mit Rückfrage.
@@ -427,7 +459,7 @@ test.describe('Neuen Artikel anlegen', () => {
       const frage = page.locator('.mb-dlg-text');
       await expect(frage).toContainText(/gibt es schon/);
 
-      await page.getByRole('button', { name: 'Weiter' }).click();
+      await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Weiter' }).click();
       await page.waitForTimeout(800);
       expect(posts.length).toBe(2);
       expect(posts[1].trotzdem).toBe(true);

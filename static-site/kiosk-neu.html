@@ -5054,7 +5054,22 @@ var K = (function(){
 
   // Fullscreen benoetigt eine Nutzerinteraktion: beim ersten Tippen/Klick aktivieren.
   if(!_kioskEmbedded && !isDisplayFullscreen()){
-    var once=function(){
+    var once=function(ev){
+      /* Ein Klick, der die Seite VERLAESST, gehoert der Navigation - nicht dem
+         Vollbildwechsel. Vorher fiel der erste Klick nach jedem Laden diesem
+         Handler zu: Wer als Erstes auf "Zum CMS" oder "Zur Website" tippte,
+         bei dem konkurrierte requestFullscreen() mit der Navigation und der
+         Knopf "reagierte nicht" - waehrend "Link in neuem Tab oeffnen" ging.
+         Weil sich der Kiosk alle drei Minuten selbst neu laedt, war nach
+         jedem Update wieder ein erster Klick faellig: Es wirkte, als gingen
+         die Kopfsymbole nie.
+         Der Handler bleibt in diesem Fall scharf - der naechste Klick
+         INNERHALB der Seite schaltet dann in den Vollbildmodus. */
+      var a = ev && ev.target && ev.target.closest && ev.target.closest('a[href]');
+      if(a){
+        var ziel = a.getAttribute('href') || '';
+        if(ziel && ziel.charAt(0) !== '#') return;
+      }
       enterFullscreen();
       document.removeEventListener('click',once);
       document.removeEventListener('touchend',once);
