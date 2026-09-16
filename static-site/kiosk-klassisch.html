@@ -1148,6 +1148,9 @@
     .k-search-item .si-name{font-weight:600;flex:1}
     .k-search-item .si-phone{font-size:13px;color:var(--c-muted)}
     .k-search-item.si-new{background:#f0fdf4;border-top:2px solid var(--c-green)}
+    /* Der haeufigste Weg am Telefon steht zuerst und ist deutlicher
+       hervorgehoben als die Neuanlage darunter. */
+    .k-search-item.si-frei{background:#eef6f1;border-top:2px solid var(--c-green);font-weight:600}
     .k-search-hint{padding:10px 14px;font-size:12px;color:#9ca3af;text-align:center}
 
     /* ═══ Qty selector ═══ */
@@ -2365,21 +2368,30 @@ var K = (function(){
      Kopfzeile; Stammkunden, Website und CMS klappen hier auf. Ab 560 px
      ist dieser Knopf ausgeblendet und alle stehen wieder direkt da.
      (Spec kiosk-bestellreiter-mobil, F2) */
+  var _kopfZu = null;
   function kopfMenue(){
     var kopf = document.querySelector('.k-header-acts');
     if(!kopf) return;
     var offen = kopf.classList.toggle('mehr-auf');
     var knopf = kopf.querySelector('.k-head-mehr');
     if(knopf) knopf.setAttribute('aria-expanded', offen ? 'true' : 'false');
+    /* Der Horcher vom letzten Aufklappen muss IMMER weg. Zuvor blieb er
+       beim Zuklappen über den Knopf liegen — bei jedem Auf und Zu kam
+       einer hinzu, und alle hingen dauerhaft am document.
+       (Spec kiosk-kopfnavigation, F9) */
+    if(_kopfZu){ document.removeEventListener('click', _kopfZu); _kopfZu = null; }
     if(!offen) return;
     // Ein Tipp daneben schließt wieder.
+    var zu = function(ev){
+      if(kopf.contains(ev.target)) return;
+      kopf.classList.remove('mehr-auf');
+      if(knopf) knopf.setAttribute('aria-expanded','false');
+      document.removeEventListener('click', zu);
+      if(_kopfZu === zu) _kopfZu = null;
+    };
+    _kopfZu = zu;
     setTimeout(function(){
-      document.addEventListener('click', function zu(ev){
-        if(kopf.contains(ev.target)) return;
-        kopf.classList.remove('mehr-auf');
-        if(knopf) knopf.setAttribute('aria-expanded','false');
-        document.removeEventListener('click', zu);
-      });
+      if(_kopfZu === zu) document.addEventListener('click', zu);
     }, 0);
   }
   function _initAlertSound(){
@@ -3909,6 +3921,10 @@ var K = (function(){
           var html = '';
           if(list.length===0){
             html = '<div class="k-search-hint">Kein Kunde gefunden</div>';
+            /* Der haeufigste Fall am Telefon: Der Anrufer steht nicht in
+               der Kartei, und ihn dort aufzunehmen lohnt nicht. Deshalb
+               steht dieser Weg zuerst. */
+            html += '<div class="k-search-item si-frei" onclick="K.freierKunde()"><span class="si-name">'+luc('phone',14)+' Nur für diese Bestellung: "'+esc(q)+'"</span></div>';
             html += '<div class="k-search-item si-new" onclick="K.newOrderKunde()"><span class="si-name">'+luc('user-plus',14)+' "'+esc(q)+'" als neuen Kunden anlegen</span></div>';
           } else {
             list.forEach(function(c){
@@ -3932,8 +3948,19 @@ var K = (function(){
     document.getElementById('no-kunde-results').classList.remove('show');
     document.getElementById('no-kunde-selected').style.display = '';
     document.getElementById('no-kunde-name').textContent = name;
-    document.getElementById('no-kunde-phone').textContent = phone?phone:'';
+    // Ohne Stammkunden-Eintrag steht hier keine Nummer, sondern der Grund
+    // dafuer - sonst sieht es aus, als fehle eine Angabe.
+    document.getElementById('no-kunde-phone').textContent =
+      phone ? phone : (id ? '' : 'ohne Kundenkartei \u2013 nur für diese Bestellung');
     document.getElementById('no-kunde-new').style.display = 'none';
+  }
+
+  /** Mit dem frei eingetippten Namen bestellen, ohne ihn in die Kartei
+   *  aufzunehmen. Technisch ein "Kunde" ohne Id. */
+  function freierKunde(){
+    var n = document.getElementById('no-kunde-search').value.trim();
+    if(!n){ toast('Bitte einen Namen eintragen'); return; }
+    selectOrderKunde('', n, '');
   }
 
   function clearOrderKunde(){
@@ -3998,8 +4025,19 @@ var K = (function(){
       });
       return;
     } else {
-      toast('Bitte zuerst einen Kunden auswählen');
-      return;
+      /* Freier Name ohne Kundenkartei.
+         Am Telefon sind Nummer und E-Mail oft unbekannt, und fuer jeden
+         Anruf einen Kontakt anzulegen kostet zu viel Zeit. Der Name
+         genuegt - die Schnittstelle verlangt ohnehin nur ihn, das Feld
+         dl_stammkunde_id darf leer bleiben. Die Suche bleibt unveraendert:
+         Wer einen Stammkunden findet, waehlt ihn weiterhin aus und
+         bekommt dessen Nummer mit. */
+      var frei = document.getElementById('no-kunde-search').value.trim();
+      if(!frei){
+        toast('Bitte einen Namen eintragen oder einen Kunden auswählen');
+        return;
+      }
+      kundenName = frei;
     }
     if(!selectedDish){toast('Bitte zuerst ein Gericht auswählen');return;}
     doSubmitOrder(kundenName, kundenPhone, stammkundeId);
@@ -6462,6 +6500,7 @@ var K = (function(){
     selectOrderKunde: selectOrderKunde,
     clearOrderKunde: clearOrderKunde,
     newOrderKunde: newOrderKunde,
+    freierKunde: freierKunde,
     submitNewOrder: submitNewOrder,
     orderForKunde: orderForKunde,
     openNewKunde: openNewKunde,

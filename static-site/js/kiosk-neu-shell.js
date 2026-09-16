@@ -870,6 +870,42 @@
     if (offen) blattSchliessen(offen);
   });
 
+  /* ── Kopfnavigation absichern ────────────────────────────────────────
+     Aus dem Laden gemeldet: Die Symbole oben rechts öffnen ihre Seite
+     „anfangs, später aber dann nicht mehr". Ein Klick bewirkt nichts,
+     während „Link in neuem Tab öffnen" weiterhin funktioniert.
+
+     Nachgemessen ist, dass der Klick selbst gesund ankommt: Er erreicht
+     das Fenster, nichts liegt darüber, niemand ruft preventDefault —
+     auch nach zehn Minuten Dauernutzung nicht. Es stirbt also die
+     Navigation NACH dem Klick, und zwar lautlos. Wer sie verschluckt,
+     ließ sich in mehreren Versuchen nicht einfangen.
+
+     Der Weg wird deshalb selbstheilend gemacht: Steht die Seite kurz
+     nach dem Klick immer noch da, wird die Navigation von Hand
+     nachgeholt. Führt der Klick wie vorgesehen zum Ziel, ist der Zähler
+     mitsamt der Seite längst verschwunden — dann passiert hier nichts. */
+  function kopfNavigationSichern() {
+    document.addEventListener('click', function (ev) {
+      if (ev.defaultPrevented || ev.button !== 0) return;
+      if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+      var a = ev.target && ev.target.closest && ev.target.closest('a.k-hbtn[href]');
+      if (!a) return;
+      if (a.target && a.target !== '_self') return;
+      var ziel = a.href;
+      // Nur eigene Seiten; alles Fremde geht seinen gewohnten Weg.
+      if (!ziel || ziel.indexOf(location.origin + '/') !== 0) return;
+      if (ziel.indexOf('#') !== -1 || /^(mailto|tel):/i.test(a.getAttribute('href') || '')) return;
+
+      var vorher = location.href;
+      setTimeout(function () {
+        if (location.href !== vorher) return;      // Navigation lief an
+        if (document.visibilityState === 'hidden') return;
+        try { location.assign(ziel); } catch (e) { location.href = ziel; }
+      }, 500);
+    }, false);
+  }
+
   // ── Start ────────────────────────────────────────────────────────────
   function start() {
     reiterBeobachten();
@@ -886,6 +922,7 @@
     socialKatalog();
     kalenderDatumswahl();
     blaetterFormen();
+    kopfNavigationSichern();
     document.documentElement.classList.add('kneu');
   }
 

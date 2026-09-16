@@ -105,14 +105,41 @@ self.addEventListener('fetch',function(e){
   if(isCode){
     e.respondWith(
       fetch(e.request).then(function(response){
-        var clone=response.clone();
-        caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,clone);});
+        /* Eine weitergeleitete Antwort weist der Browser bei einer
+           Navigation zurueck ("redirected flag set, but request was not
+           a redirect-mode request"). Die Navigation stirbt dann lautlos:
+           Der Klick kommt an, die Seite bleibt aber einfach stehen.
+           Deshalb wird sie hier als saubere Antwort nachgebaut. */
+        if(isNav&&response&&response.redirected){
+          return response.blob().then(function(leib){
+            return new Response(leib,{status:response.status,
+              statusText:response.statusText,headers:response.headers});
+          });
+        }
+        // Nur Brauchbares ablegen - eine 404 als Vorrat waere schaedlich.
+        if(response&&response.ok){
+          var clone=response.clone();
+          caches.open(CACHE_NAME).then(function(cache){
+            return cache.put(e.request,clone);
+          }).catch(function(){ /* Die Ablage ist Beiwerk, nie ein Grund zu scheitern. */ });
+        }
         return response;
       }).catch(function(){
         return caches.match(e.request).then(function(c){
           if(c)return c;
-          if(isNav)return caches.match('/');
-          return undefined;
+          /* Ohne Rueckfallantwort bekaeme respondWith() ein undefined -
+             daraus macht der Browser einen Netzwerkfehler. Bei einer
+             Navigation sieht das aus, als geschaehe gar nichts. */
+          if(isNav){
+            return caches.match('/').then(function(start){
+              return start||new Response(
+                '<!doctype html><meta charset="utf-8"><title>Keine Verbindung</title>'
+                +'<p style="font:16px system-ui;padding:24px">Keine Verbindung. '
+                +'Bitte erneut versuchen.',
+                {status:503,headers:{'Content-Type':'text/html; charset=utf-8'}});
+            });
+          }
+          return new Response('',{status:504,statusText:'Offline'});
         });
       })
     );
@@ -123,10 +150,14 @@ self.addEventListener('fetch',function(e){
     caches.match(e.request).then(function(cached){
       if(cached)return cached;
       return fetch(e.request).then(function(response){
-        var clone=response.clone();
-        caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,clone);});
+        if(response&&response.ok){
+          var clone=response.clone();
+          caches.open(CACHE_NAME).then(function(cache){
+            return cache.put(e.request,clone);
+          }).catch(function(){ /* siehe oben */ });
+        }
         return response;
-      });
+      }).catch(function(){ return new Response('',{status:504,statusText:'Offline'}); });
     })
   );
 });

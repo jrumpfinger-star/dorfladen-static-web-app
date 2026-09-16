@@ -1133,6 +1133,9 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
 .k-search-item .si-name{font-weight:600;flex:1}
 .k-search-item .si-phone{font-size:13px;color:var(--c-muted)}
 .k-search-item.si-new{background:#f0fdf4;border-top:2px solid var(--c-green)}
+/* Der haeufigste Weg am Telefon steht zuerst und ist deutlicher
+   hervorgehoben als die Neuanlage darunter. */
+.k-search-item.si-frei{background:#eef6f1;border-top:2px solid var(--c-green);font-weight:600}
 .k-search-hint{padding:10px 14px;font-size:12px;color:#9ca3af;text-align:center}
 
 /* ═══ Qty selector ═══ */
