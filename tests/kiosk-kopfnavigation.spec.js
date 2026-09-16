@@ -213,6 +213,37 @@ test.describe('Kiosk – Kopfnavigation', () => {
     // Vor der Reparatur wuchs der Stand hier um acht.
     expect(ende).toBeLessThanOrEqual(anfang);
   });
+
+  test('TC-K12: langsame Antwort wird nicht abgebrochen', async ({ page }) => {
+    /* Der erste Entwurf holte die Navigation per Zeitgeber nach. Bei
+       zwei Sekunden Antwortzeit brach er die laufende Navigation ab
+       (ERR_ABORTED) und startete sie neu — auf dem Tablet über
+       Mobilfunk bei jedem Klick. Dieser Wächter hält das fest. */
+    const ereignisse = [];
+    page.on('request', (r) => {
+      if (r.resourceType() === 'document' && /cms\.html/.test(r.url())) ereignisse.push('anfrage');
+    });
+    page.on('requestfailed', (r) => {
+      if (/cms\.html/.test(r.url())) ereignisse.push('abbruch');
+    });
+
+    await ruhigeApi(page);
+    await page.route('**/cms.html', async (route) => {
+      await new Promise((r) => setTimeout(r, 2000));
+      await route.continue();
+    });
+    await page.goto(KIOSK_URL, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector(CMS, { state: 'attached', timeout: 20000 });
+    await page.waitForTimeout(600);
+    await kopfLinksZeigen(page);
+
+    await page.click(CMS);
+    await page.waitForURL(/\/cms\.html/, { timeout: 25000 });
+    await page.waitForTimeout(1500);
+
+    expect(ereignisse.filter((e) => e === 'abbruch')).toEqual([]);
+    expect(ereignisse.filter((e) => e === 'anfrage').length).toBe(1);
+  });
 });
 
 test.describe('Service Worker – Navigationen sterben nicht lautlos', () => {
@@ -227,6 +258,10 @@ test.describe('Service Worker – Navigationen sterben nicht lautlos', () => {
 
   test('TC-K10: weitergeleitete Antworten werden bei Navigationen nachgebaut', () => {
     expect(swQuelle).toMatch(/response\.redirected/);
+    /* Beim Nachbau duerfen die Kodierungsheader NICHT mitkommen: blob()
+       liefert den bereits entpackten Rumpf. */
+    expect(swQuelle).not.toMatch(/headers\s*:\s*response\.headers/);
+    expect(swQuelle).toMatch(/Content-Type/);
     // Nur Brauchbares wird abgelegt, und ein Fehlschlag bleibt folgenlos.
     expect(swQuelle).toMatch(/response\.ok/);
     expect(swQuelle).toMatch(/cache\.put\(e\.request,clone\);?\s*\n?\s*\}\)\.catch\(/);

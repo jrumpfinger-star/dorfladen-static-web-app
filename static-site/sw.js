@@ -109,11 +109,19 @@ self.addEventListener('fetch',function(e){
            Navigation zurueck ("redirected flag set, but request was not
            a redirect-mode request"). Die Navigation stirbt dann lautlos:
            Der Klick kommt an, die Seite bleibt aber einfach stehen.
-           Deshalb wird sie hier als saubere Antwort nachgebaut. */
+           Deshalb wird sie hier als saubere Antwort nachgebaut.
+
+           Dabei duerfen NICHT alle Header mitkommen: blob() liefert den
+           bereits entpackten Rumpf, ein mitgeschlepptes Content-Encoding
+           wuerde den Browser ein zweites Mal entpacken lassen, und
+           Content-Length passt dann auch nicht mehr. Uebernommen wird
+           nur, was fuer eine Navigation wirklich zaehlt. */
         if(isNav&&response&&response.redirected){
           return response.blob().then(function(leib){
+            var kopf={'Content-Type':response.headers.get('Content-Type')
+              ||'text/html; charset=utf-8'};
             return new Response(leib,{status:response.status,
-              statusText:response.statusText,headers:response.headers});
+              statusText:response.statusText,headers:kopf});
           });
         }
         // Nur Brauchbares ablegen - eine 404 als Vorrat waere schaedlich.

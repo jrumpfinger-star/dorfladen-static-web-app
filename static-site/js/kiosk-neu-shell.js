@@ -878,13 +878,19 @@
      Nachgemessen ist, dass der Klick selbst gesund ankommt: Er erreicht
      das Fenster, nichts liegt darüber, niemand ruft preventDefault —
      auch nach zehn Minuten Dauernutzung nicht. Es stirbt also die
-     Navigation NACH dem Klick, und zwar lautlos. Wer sie verschluckt,
-     ließ sich in mehreren Versuchen nicht einfangen.
+     Navigation NACH dem Klick, und zwar lautlos.
 
-     Der Weg wird deshalb selbstheilend gemacht: Steht die Seite kurz
-     nach dem Klick immer noch da, wird die Navigation von Hand
-     nachgeholt. Führt der Klick wie vorgesehen zum Ziel, ist der Zähler
-     mitsamt der Seite längst verschwunden — dann passiert hier nichts. */
+     Der erste Versuch war ein Zeitgeber, der die Navigation nachholte,
+     falls die Seite kurz danach noch stand. Das war falsch: Bei einer
+     langsamen Leitung hat sich location.href noch nicht geändert,
+     während die Antwort noch unterwegs ist — der Zeitgeber brach die
+     laufende Navigation ab (ERR_ABORTED) und startete sie neu. Auf
+     einem Tablet über Mobilfunk traf das jeden Klick.
+
+     Deshalb jetzt ohne Zeitgeber: Der Klick stößt die Navigation selbst
+     an und bestellt erst danach den Standardweg ab. Es gibt damit genau
+     einen Weg, kein Rennen und keinen Abbruch — und die Eigenheiten des
+     Link-Standardverhaltens im PWA-Fenster sind umgangen. */
   function kopfNavigationSichern() {
     document.addEventListener('click', function (ev) {
       if (ev.defaultPrevented || ev.button !== 0) return;
@@ -892,17 +898,20 @@
       var a = ev.target && ev.target.closest && ev.target.closest('a.k-hbtn[href]');
       if (!a) return;
       if (a.target && a.target !== '_self') return;
+
+      var roh = a.getAttribute('href') || '';
+      if (roh.charAt(0) === '#' || /^(mailto|tel|javascript):/i.test(roh)) return;
       var ziel = a.href;
       // Nur eigene Seiten; alles Fremde geht seinen gewohnten Weg.
       if (!ziel || ziel.indexOf(location.origin + '/') !== 0) return;
-      if (ziel.indexOf('#') !== -1 || /^(mailto|tel):/i.test(a.getAttribute('href') || '')) return;
+      if (ziel.indexOf('#') !== -1) return;
 
-      var vorher = location.href;
-      setTimeout(function () {
-        if (location.href !== vorher) return;      // Navigation lief an
-        if (document.visibilityState === 'hidden') return;
-        try { location.assign(ziel); } catch (e) { location.href = ziel; }
-      }, 500);
+      /* Erst anstoßen, dann abbestellen. Wirft assign(), bleibt der
+         native Weg unangetastet — der Link ist nie tot. */
+      try {
+        location.assign(ziel);
+        ev.preventDefault();
+      } catch (e) { /* nativer Weg bleibt */ }
     }, false);
   }
 
