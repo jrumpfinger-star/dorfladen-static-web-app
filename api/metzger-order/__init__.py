@@ -67,6 +67,9 @@ def _send_mail(to_email, to_name, subject, body_text, anhang):
         attachments=[{"name": ANHANG_NAME, "content": anhang, "type": PDF_MIME}],
         # Kein Shop-Knopf: Der Metzger bestellt nicht in unserem Laden.
         mit_shop_link=False,
+        # Kopie in den Laden, damit dort nachvollziehbar bleibt, was
+        # bestellt wurde (Spec bestellkopie-laden).
+        kopie_an_laden=True,
     )
 
 

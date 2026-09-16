@@ -100,6 +100,24 @@ def get_contact_info():
     return _contact_cache
 
 
+def _kopie_adresse(ci):
+    """Adresse fuer die CC-Kopie an den Laden.
+
+    Bevorzugt `kopie_an` aus der Kontaktkonfiguration, sonst die
+    allgemeine Ladenadresse `email`.
+
+    Ein LEERER Eintrag bedeutet bewusst "Ladenadresse verwenden" und
+    nicht "abschalten": Die CMS-Maske schreibt beim Speichern alle Felder
+    zurueck, ein noch nie gefuelltes Feld waere also leer — einmal
+    Speichern haette die Kopie sonst stillschweigend abgeschaltet.
+    Abschalten geht nur ausdruecklich mit dem Wert "aus".
+    """
+    wert = str(ci.get("kopie_an") or "").strip()
+    if wert.lower() == "aus":
+        return ""
+    return wert or str(ci.get("email") or "").strip()
+
+
 def get_token():
     from shared.dataverse import get_tenant_id, get_client_id
     tenant_id = get_tenant_id()
@@ -338,14 +356,23 @@ def build_email_html(body_text, subject="", extra_html="", mit_shop_link=True):
 
 
 def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=None,
-               attachments=None, html_override=None, mit_shop_link=True):
+               attachments=None, html_override=None, mit_shop_link=True,
+               kopie_an_laden=False):
     """Send email via Microsoft Graph API. Contact info from Dataverse.
     reply_to: optionale Reply-To-Adresse (z.B. no-reply); Standard = Kontakt-Reply-To.
     attachments: optionale Liste von Dateianhaengen, je
         {"name": "datei.docx", "content": <bytes>, "type": "<MIME-Typ>"}.
     html_override: fertiges HTML statt des Standard-Layouts (z.B. schlichte
         Geschaeftsmail an einen Lieferanten).
-    mit_shop_link: Shop-Knopf im Layout. Bei Mails an Lieferanten abschalten."""
+    mit_shop_link: Shop-Knopf im Layout. Bei Mails an Lieferanten abschalten.
+    kopie_an_laden: Kopie (CC) an die Ladenadresse. Gedacht fuer Bestellungen
+        an Lieferanten, damit im Laden nachvollziehbar bleibt, was bestellt
+        wurde. Hintergrund: Gesendet wird aus dem technischen
+        onmicrosoft.com-Postfach, die Kopie in "Gesendet" liegt also dort
+        und nicht im Postfach des Ladens. Die CC-Kopie landet im
+        Posteingang von info@dorfladen-oberornau.de und schliesst diese
+        Luecke. Adresse aus der Kontaktkonfiguration (`kopie_an`, sonst
+        `email`)."""
     import base64
     import logging
     token = get_graph_token()
@@ -387,6 +414,14 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
         },
         "saveToSentItems": "true"
     }
+
+    kopie = _kopie_adresse(ci) if kopie_an_laden else ""
+    # Nicht an sich selbst in Kopie: Geht die Mail ohnehin schon an die
+    # Ladenadresse, waere die Kopie nur ein Doppel im Posteingang.
+    if kopie and kopie.lower() != (to_email or "").strip().lower():
+        mail_payload["message"]["ccRecipients"] = [{
+            "emailAddress": {"address": kopie, "name": sender_name}
+        }]
 
     if attachments:
         mail_payload["message"]["attachments"] = [

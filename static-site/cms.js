@@ -9285,7 +9285,7 @@
 
   // --- Kontaktdaten (shop_kontakt in Dataverse) ---
   var _kontaktLoaded=false;
-  var KONTAKT_FIELDS=['name','slogan','adresse','telefon','telefon_link','email','reply_to','website','website_url','shop_url','logo_url','mailbox'];
+  var KONTAKT_FIELDS=['name','slogan','adresse','telefon','telefon_link','email','reply_to','website','website_url','shop_url','logo_url','mailbox','kopie_an'];
 
   function loadKontaktdaten(){
     if(_kontaktLoaded) return;

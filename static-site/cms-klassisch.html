@@ -1327,6 +1327,13 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         <div>
           <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:2px">M365 Postfach (Absender)</label>
           <input type="text" id="kontakt-mailbox" class="cms-input" placeholder="info@dorfladenoberornau.onmicrosoft.com">
+          <p style="font-size:11px;color:#6b7280;margin:4px 0 0">Aus diesem Postfach wird gesendet &ndash; die Adresse muss im M365-Tenant existieren. Die Kopie im Ordner &bdquo;Gesendet&ldquo; liegt ebenfalls dort.</p>
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:2px">Kopie der Bestellungen an (CC)</label>
+          <input type="text" id="kontakt-kopie-an" class="cms-input" placeholder="info@dorfladen-oberornau.de">
+          <p style="font-size:11px;color:#6b7280;margin:4px 0 0">Bestellungen an B&auml;cker, Metzger und Getr&auml;nke gehen zus&auml;tzlich in Kopie hierher, damit im Laden nachvollziehbar bleibt, was bestellt wurde. Leer lassen &rarr; es wird die Ladenadresse oben verwendet. Zum Abschalten <strong>aus</strong> eintragen.</p>
         </div>
 
         <div style="display:flex;gap:8px;margin-top:4px">
@@ -1558,7 +1565,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         <div style="display:flex;gap:8px;margin-top:4px">
           <button class="cms-btn cms-btn-primary" id="gkcfg-save" data-action="gkcfgSave">&#128190; Getr&auml;nke-Einstellungen speichern</button>
           <span id="gkcfg-saved-hint" style="display:none;font-size:.82rem;color:#16a34a;font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
-      
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Statistik / Analytics -->
