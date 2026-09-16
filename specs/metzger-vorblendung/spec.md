@@ -21,6 +21,14 @@ Artikel, nicht an die letzte Bestellung.
 Über einer Position steht **je Portionsblock ein eigener Knopf**. Ein Tipp
 übernimmt genau diesen Block. Mehrere Tipps übernehmen mehrere Blöcke.
 
+Die übrigen Knöpfe **bleiben dabei stehen**. Weg fällt nur, was bereits in
+der Zeile steht. Früher hingen alle Vorblendungen daran, dass die Zeile noch
+leer war — der erste Tipp nahm damit alle übrigen mit, und wer zwei Größen
+wollte, kam an die zweite nicht mehr heran.
+
+Das gilt ausdrücklich auch für **verschiedene Einheiten**: `1 × 1 kg` und
+`1 × 2 St` sind zwei Vorblendungen und einzeln übernehmbar.
+
 ### F2 — Vorbelegung aus dem Artikelstamm
 
 Ein Artikel kann eine **Vorbelegung** tragen: eine oder mehrere Portionen.
@@ -50,15 +58,20 @@ Im Bereich „Artikel" trägt jede Zeile ihre Vorbelegung und einen Knopf
 Einheit und Vorbelegung.
 
 Die Vorbelegung wird mit **derselben Erfassung** festgelegt wie eine
-Bestellposition: Anzahl, Vakuum, Einheit, Mengenkacheln, freies Maß und
-Kurzeingabe. Mehrere Portionen sind möglich; jede lässt sich einzeln
-ändern und entfernen.
+Bestellposition: Anzahl, Vakuum, Einheit, Mengenkacheln, freies Maß,
+Kurzeingabe und **Hinweisfeld**. Mehrere Portionen sind möglich; jede lässt
+sich einzeln ändern und entfernen.
+
+Die zuletzt gewählte **Einheit bleibt stehen**, auch wenn eine Portion wieder
+entfernt oder die Kurzeingabe übernommen wird.
 
 Es gibt also nur **eine** Erfassung im Reiter — technisch über eine
 Pseudo-Position, die `finde()` unter einem eigenen Schlüssel liefert.
-Was der Stamm nicht kennt, entfällt dort: der Positions-Hinweis.
+Nicht übernommen wird dort nur der Umweg-Knopf zum Hinweis-Blatt: Das
+Hinweisfeld steht in der Maske ohnehin daneben.
 
-Ohne Portion heißt: keine Vorbelegung.
+Ohne Portion **und** ohne Hinweis heißt: keine Vorbelegung.
+
 
 ### F6 — Mehr Kacheln
 
@@ -81,6 +94,28 @@ wird nichts gesendet.
 
 Gibt es den Namen schon, ist das eine **Rückfrage**, keine Absage: Der Kiosk
 fragt nach und legt auf Bestätigung trotzdem an.
+
+### F8 — Hinweis im Artikelstamm
+
+Ein Artikel kann zusätzlich einen **festen Hinweis** tragen
+(`standard_hinweis`), etwa „dünn aufgeschnitten". Er gehört zur ganzen
+Position, nicht zu einer einzelnen Portion.
+
+Daraus folgt:
+
+- Ein Artikel darf einen Hinweis **ohne** Portion haben und eine Portion
+  **ohne** Hinweis.
+- Der Hinweis wird als **eigene Vorblendung** angeboten und ist als solche
+  erkennbar (Klasse `hw`). Ein Tipp setzt ihn als Hinweis der Position —
+  nicht als Portion.
+- Trägt die Position bereits einen Hinweis, wird er nicht mehr angeboten.
+- Ein geleertes Feld löscht die Vorgabe (`standard_hinweis: null`).
+
+### F9 — Fester Kopf im Artikelstamm
+
+Reiterleiste und die Kopfzeile mit „+ Neuer Artikel" bleiben beim Rollen der
+Artikelliste **oben stehen**. Bei über hundert Artikeln war der Knopf zum
+Anlegen sonst nach dem ersten Rollen nicht mehr erreichbar.
 
 ## Testfälle
 
@@ -106,3 +141,8 @@ fragt nach und legt auf Bestätigung trotzdem an.
 | TC-V18 | Ohne Bezeichnung wird nichts gesendet |
 | TC-V19 | Eine unlesbare Nummer wird abgewiesen |
 | TC-V20 | Gleicher Name führt zur Rückfrage, Bestätigen legt an |
+| TC-V21 | Der hinterlegte Hinweis steht als eigene Vorblendung (Klasse `hw`) |
+| TC-V22 | Ein Tipp übernimmt ihn als Hinweis, nicht als Portion |
+| TC-V23 | In der Artikelmaske ist der Hinweis pflegbar und wird gesendet |
+| TC-V24 | Ein geleerter Hinweis schickt `standard_hinweis: null` |
+| TC-V25 | Reiter und Kopfzeile bleiben beim Rollen der Artikelliste stehen |

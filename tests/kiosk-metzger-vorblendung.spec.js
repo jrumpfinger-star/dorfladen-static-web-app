@@ -1,7 +1,7 @@
 /**
  * Kiosk – Metzger: Vorblendungen einzeln, Vorgabe im Artikelstamm
  *
- * Deckt specs/metzger-vorblendung/spec.md ab (TC-V01 … TC-V15).
+ * Deckt specs/metzger-vorblendung/spec.md ab (TC-V01 … TC-V25).
  *
  * Eigene Mocks statt der gemeinsamen Hilfe: Diese Datei braucht mehrere
  * Portionsblöcke je Artikel und eine hinterlegte Standard-Portionierung —
@@ -65,7 +65,8 @@ const CONFIG = {
 
 /* 360 trägt eine Vorgabe im Stamm, 142 nicht. 600 trägt eine Vorgabe, die
    genau der letzten Bestellung entspricht — dort darf nichts doppelt
-   erscheinen (F2, TC-V07). */
+   erscheinen (F2, TC-V07). 715 trägt zusätzlich einen Hinweis im Stamm
+   (F8, TC-V21 … TC-V23). */
 const ARTIKEL = [
   { name: 'Putenschnitzel', nummer: 360, preis: 12.9, einheit: 'kg',
     gruppe: 'Geflügel', aktiv: true, auf_formular: true,
@@ -75,6 +76,9 @@ const ARTIKEL = [
   { name: 'Weißwurst', nummer: 600, preis: 8.7, einheit: 'kg',
     gruppe: 'Würste frisch', aktiv: true, auf_formular: true,
     standard: '1x30St' },
+  { name: 'Leberkäse', nummer: 715, preis: 10.2, einheit: 'kg',
+    gruppe: 'Brät', aktiv: true, auf_formular: true,
+    standard: '1x1kg', standard_hinweis: 'ohne Zwiebel' },
 ];
 
 /* Die letzte Bestellung. 142 hat drei Blöcke — daran zeigt sich die
@@ -89,6 +93,14 @@ const LETZTE = {
     600: [{ anzahl: 1, menge: 30, einheit: 'St', vakuum: false }],
   },
 };
+
+/* Für TC-V25: genug Artikel, damit die Liste tatsächlich rollt. Mit nur
+   vier Zeilen liefe die Rollprüfung ins Leere und der Wächter wäre blind. */
+const VIELE = ARTIKEL.concat(
+  Array.from({ length: 60 }, (_, i) => ({
+    name: 'Füllartikel ' + (i + 1), nummer: 900 + i, preis: 5, einheit: 'kg',
+    gruppe: 'Sonstiges', aktiv: true, auf_formular: true,
+  })));
 
 /** Alle PATCH-Rümpfe an /api/metzger-artikel, für TC-V13 bis TC-V15. */
 function sammlePatches(page) {
@@ -114,6 +126,7 @@ function sammlePosts(page) {
 
 async function mockApi(page, opts = {}) {
   const datum = naechsterTag();
+  const liste = opts.viele ? VIELE : ARTIKEL;
 
   await page.route('**/api/metzger-artikel**', (route) => {
     const m = route.request().method();
@@ -132,7 +145,7 @@ async function mockApi(page, opts = {}) {
     }
     return route.fulfill({
       status: m === 'POST' ? 201 : 200, contentType: 'application/json',
-      body: JSON.stringify({ success: true, artikel: ARTIKEL }),
+      body: JSON.stringify({ success: true, artikel: liste }),
     });
   });
 
@@ -158,12 +171,12 @@ async function mockApi(page, opts = {}) {
           bestellung: {
             datum, status: 0, protokoll: [],
             // Leer, damit die Vorblendungen überhaupt erscheinen.
-            positionen: ARTIKEL.map((a) => ({
+            positionen: liste.map((a) => ({
               nummer: a.nummer, name: a.name, portionen: [],
               hinweis: '', zusatz: false,
             })),
           },
-          artikel: ARTIKEL, vorschlaege: {},
+          artikel: liste, vorschlaege: {},
           vorbelegt_aus: null, letzte: LETZTE,
           bestelltag: true, bestellbar: true,
           config: CONFIG, testbetrieb: true, summen: {},
@@ -232,12 +245,22 @@ test.describe('Vorblendungen einzeln wählbar', () => {
     const z = zeile(page, 'Hackfleisch gemischt');
     await z.locator('.mb-frueher').nth(0).click();
     await page.waitForTimeout(400);
-    // Nach dem ersten Tipp ist die Zeile bestellt — die übrigen
-    // Vorblendungen verschwinden. Der zweite Block kommt daher über die
-    // Erfassung. Geprüft wird hier nur, dass der erste Block steht und
-    // die Zeile weiter bedienbar ist.
     await expect(z.locator('.mb-chip')).toHaveCount(1);
-    await expect(z.locator('.mb-chip').first()).toHaveText(/2 × 500 g/);
+
+    /* Die übrigen Vorblendungen müssen stehen bleiben. Früher hingen sie an
+       „die Zeile ist noch leer" — nach dem ersten Tipp waren alle weg und
+       eine zweite ließ sich gar nicht mehr wählen. */
+    const rest = z.locator('.mb-frueher');
+    await expect(rest).toHaveCount(2);
+    await rest.nth(0).click();
+    await page.waitForTimeout(400);
+
+    const chips = z.locator('.mb-chip');
+    await expect(chips).toHaveCount(2);
+    await expect(chips.nth(0)).toHaveText(/2 × 500 g/);
+    await expect(chips.nth(1)).toHaveText(/6 × 250 g/);
+    // Die bereits übernommenen werden nicht noch einmal angeboten.
+    await expect(z.locator('.mb-frueher')).toHaveCount(1);
   });
 
   test('TC-V04/V05/V06: Stamm-Vorgabe steht vorne und ist markiert',
@@ -463,5 +486,111 @@ test.describe('Neuen Artikel anlegen', () => {
       await page.waitForTimeout(800);
       expect(posts.length).toBe(2);
       expect(posts[1].trotzdem).toBe(true);
+    });
+});
+
+/* ── F8: Der Hinweis gehört mit in die Vorbelegung ───────────────────
+   Manche Artikel brauchen immer denselben Zusatz ("ohne Zwiebel"). Ihn
+   jedes Mal neu zu tippen kostet Zeit; hinterlegt wird er einmal im
+   Stamm und steht dann wie eine Portion zum Übernehmen bereit. */
+test.describe('Hinweis aus dem Artikelstamm', () => {
+  test('TC-V21: Der hinterlegte Hinweis steht als eigene Vorblendung',
+    async ({ page }) => {
+      await oeffneTab(page);
+      const knoepfe = zeile(page, 'Leberkäse').locator('.mb-frueher');
+      await expect(knoepfe).toHaveCount(2);
+      await expect(knoepfe.nth(0)).toHaveText(/1 × 1 kg/);
+      await expect(knoepfe.nth(1)).toHaveText(/ohne Zwiebel/);
+      await expect(knoepfe.nth(1)).toHaveClass(/hw/);
+    });
+
+  test('TC-V22: Ein Tipp übernimmt ihn als Hinweis, nicht als Portion',
+    async ({ page }) => {
+      await oeffneTab(page);
+      const z = zeile(page, 'Leberkäse');
+      await z.locator('.mb-frueher').nth(1).click();
+      await page.waitForTimeout(400);
+
+      const hw = z.locator('.mb-chip.hw');
+      await expect(hw).toHaveCount(1);
+      await expect(hw).toContainText('ohne Zwiebel');
+      // Er ist kein Portionsblock — die Portion bleibt unübernommen.
+      await expect(z.locator('.mb-chip:not(.hw)')).toHaveCount(0);
+      // Und er wird nicht ein zweites Mal angeboten.
+      await expect(z.locator('.mb-frueher.hw')).toHaveCount(0);
+      await expect(z.locator('.mb-frueher')).toHaveCount(1);
+    });
+
+  test('TC-V23: In der Artikelmaske ist der Hinweis pflegbar',
+    async ({ page }) => {
+      await oeffneTab(page);
+      const patches = sammlePatches(page);
+      await artikelBereich(page);
+      await page.locator('.mb-arow').filter({ hasText: 'Leberkäse' })
+        .first().getByRole('button', { name: 'Bearbeiten' }).click();
+      await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+
+      // Der hinterlegte Hinweis steht darin und ist änderbar.
+      const feld = page.locator('#mb-vgbox #mb-h');
+      await expect(feld).toBeVisible();
+      await expect(feld).toHaveValue('ohne Zwiebel');
+      await feld.fill('ohne Zwiebel, dünn');
+
+      await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Speichern' })
+        .click();
+      await page.waitForTimeout(800);
+      expect(patches.length).toBe(1);
+      expect(patches[0].standard_hinweis).toBe('ohne Zwiebel, dünn');
+      expect(patches[0].alt_nummer).toBe(715);
+    });
+
+  test('TC-V24: Ein geleerter Hinweis löscht die Vorgabe', async ({ page }) => {
+    await oeffneTab(page);
+    const patches = sammlePatches(page);
+    await artikelBereich(page);
+    await page.locator('.mb-arow').filter({ hasText: 'Leberkäse' })
+      .first().getByRole('button', { name: 'Bearbeiten' }).click();
+    await page.locator('#mb-vgbox').waitFor({ timeout: 8000 });
+    await page.locator('#mb-vgbox #mb-h').fill('');
+    await page.locator('.mb-dlg-acts').getByRole('button', { name: 'Speichern' })
+      .click();
+    await page.waitForTimeout(800);
+    expect(patches.length).toBe(1);
+    expect(patches[0].standard_hinweis).toBe(null);
+  });
+});
+
+/* ── F9: Die Kopfzeile des Artikelstamms rollt nicht mit ─────────────
+   Bei über hundert Artikeln waren Reiterleiste und „+ Neuer Artikel"
+   nach dem ersten Rollen verschwunden. */
+test.describe('Fester Kopf im Artikelstamm', () => {
+  test('TC-V25: Reiter und Kopfzeile bleiben beim Rollen stehen',
+    async ({ page }) => {
+      await oeffneTab(page, { viele: true });
+      await artikelBereich(page);
+      await page.locator('.mb-arow').first().waitFor({ timeout: 8000 });
+
+      const kopf = page.locator('#metzgerbest-body .mb-kopffest');
+      await expect(kopf).toHaveCSS('position', 'sticky');
+      // Beide Bedienelemente liegen darin — sonst rollen sie mit.
+      await expect(kopf.locator('.mb-akopf')).toHaveCount(1);
+      await expect(kopf.locator('.mb-subs')).toHaveCount(1);
+
+      const stand = await page.locator('#panel-metzgerbest').evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+        return el.scrollTop;
+      });
+      await page.waitForTimeout(400);
+      // Ohne echtes Rollen wäre die folgende Prüfung wertlos.
+      expect(stand).toBeGreaterThan(100);
+
+      const panel = await page.locator('#panel-metzgerbest').boundingBox();
+      const zeile2 = await page.locator('.mb-akopf').boundingBox();
+      expect(zeile2).not.toBeNull();
+      // Sie steht weiterhin vollständig im sichtbaren Bereich des Reiters.
+      expect(zeile2.y).toBeGreaterThanOrEqual(panel.y - 1);
+      expect(zeile2.y + zeile2.height).toBeLessThanOrEqual(panel.y + panel.height + 1);
+      await expect(page.locator('.mb-akopf')
+        .getByRole('button', { name: /Neuer Artikel/ })).toBeVisible();
     });
 });

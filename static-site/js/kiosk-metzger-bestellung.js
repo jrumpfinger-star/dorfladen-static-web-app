@@ -360,7 +360,10 @@ window.KMetzgerBest = (function () {
       // kiosk-bestellreiter-mobil, F1).
       h = renderBestellung();
     } else {
-      h = '<div class="mb">' + subTabs();
+      /* Reiterleiste und Artikelkopf stehen in einem klebenden Block: Sie
+         sollen beim Rollen der langen Liste oben bleiben. */
+      h = '<div class="mb"><div class="mb-kopffest">' + subTabs()
+        + (_sub === 'artikel' ? artikelKopf() : '') + '</div>';
       if (_sub === 'verlauf') h += verlaufAnsicht();
       else if (_sub === 'artikel') h += artikelAnsicht();
       else h += hinweisEinstellungen();
@@ -681,17 +684,19 @@ window.KMetzgerBest = (function () {
         + ' onclick="KMetzgerBest.hinweisWeg(\'' + esc(key) + '\')">✕</button></span>';
     }
     /* Anhalt beim Neuerfassen: Was zuletzt bestellt wurde oder im
-       Artikelstamm hinterlegt ist, steht blass daneben, solange die Zeile
-       leer ist. Jeder Block ist ein eigener Knopf — früher übernahm ein
-       einziger Tipp alle auf einmal, und wer nur einen wollte, musste die
-       übrigen wieder wegtippen. */
-    var vorbl = !lock && !bestellt(p)
-      ? vorblendungen({ nummer: p.nummer, name: p.name }) : [];
+       Artikelstamm hinterlegt ist, steht blass daneben. Jeder Block ist ein
+       eigener Knopf — früher übernahm ein einziger Tipp alle auf einmal, und
+       wer nur einen wollte, musste die übrigen wieder wegtippen.
+
+       Die Vorschläge bleiben stehen, bis sie übernommen sind: Vorher hing das
+       an `!bestellt(p)`, womit der erste Tipp alle übrigen mitnahm — mehrere
+       nacheinander zu wählen war unmöglich (Spec F3). */
+    var vorbl = lock ? [] : vorblendungen(p, p);
     vorbl.forEach(function (v, i) {
       h += '<button class="mb-frueher' + (v.quelle === 'stamm' ? ' stamm' : '')
-        + '" title="' + esc(v.titel) + '"'
+        + (v.hinweis ? ' hw' : '') + '" title="' + esc(v.titel) + '"'
         + ' onclick="KMetzgerBest.vorblenden(\'' + esc(key) + '\',' + i + ')">'
-        + esc(blockText(v.block)) + '</button>';
+        + esc(v.hinweis || blockText(v.block)) + '</button>';
     });
     if (istExtra && !lock) {
       h += '<button class="mb-add del" title="Position entfernen"'
@@ -895,9 +900,18 @@ window.KMetzgerBest = (function () {
 
      Die Vorschlaege IM Erfassungsfeld bleiben davon unberuehrt - dort
      rechnet weiterhin vorschlaegeFuer() (Spec F4). */
-  function vorblendungen(a) {
+  function vorblendungen(a, p) {
     var aus = [];
     var gesehen = {};
+
+    /* Was in der Zeile bereits steht, wird nicht noch einmal angeboten.
+       Frueher verschwanden ALLE Vorblendungen, sobald die erste uebernommen
+       war (die Bedingung hiess `!bestellt(p)`). Wer zwei davon wollte, kam
+       an die zweite nicht mehr heran. Jetzt faellt nur die weg, die schon
+       uebernommen ist - die uebrigen bleiben stehen (Spec F3). */
+    ((p && p.portionen) || []).forEach(function (b) {
+      gesehen[blockText(b) + '|' + (b.vakuum ? 'v' : '')] = true;
+    });
 
     var nimm = function (bl, quelle, titel) {
       (bl || []).forEach(function (b) {
@@ -911,7 +925,21 @@ window.KMetzgerBest = (function () {
     var st = standardWerte(a);
     if (st) nimm(st, 'stamm', 'Vorgabe aus dem Artikelstamm — tippen übernimmt');
     nimm(letzteWerte(a), 'letzte', letzteQuelle() + ' — tippen übernimmt');
+
+    /* Der Hinweis aus dem Stamm ist eine eigene Vorblendung: Er gehoert
+       nicht zu einer einzelnen Portion, sondern zur ganzen Position. */
+    var hw = standardHinweis(a);
+    if (hw && !(p && p.hinweis)) {
+      aus.push({ hinweis: hw, quelle: 'stamm',
+                 titel: 'Hinweis aus dem Artikelstamm — tippen übernimmt' });
+    }
     return aus;
+  }
+
+  /** Der im Artikelstamm hinterlegte Hinweis, oder '' wenn es keinen gibt. */
+  function standardHinweis(a) {
+    var st = artikelVon(a);
+    return st ? String(st.standard_hinweis || '').trim() : '';
   }
 
   /** Die im Artikelstamm hinterlegte Vorgabe, falls es eine gibt. */
@@ -941,12 +969,14 @@ window.KMetzgerBest = (function () {
   function vorblenden(key, i) {
     var p = finde(key);
     if (!p || gesperrt()) return;
-    var liste = vorblendungen({ nummer: p.nummer, name: p.name });
-    var v = liste[i];
+    var v = vorblendungen(p, p)[i];
     if (!v) return;
-    var b = v.block;
-    p.portionen.push({ anzahl: b.anzahl, menge: b.menge,
-                       einheit: b.einheit, vakuum: !!b.vakuum });
+    if (v.hinweis) p.hinweis = v.hinweis;
+    else {
+      var b = v.block;
+      p.portionen.push({ anzahl: b.anzahl, menge: b.menge,
+                         einheit: b.einheit, vakuum: !!b.vakuum });
+    }
     p.pruef = false;
     markiereGeaendert();
     render();
@@ -958,9 +988,10 @@ window.KMetzgerBest = (function () {
   function frueher(key) {
     var p = finde(key);
     if (!p || gesperrt()) return;
-    var liste = vorblendungen({ nummer: p.nummer, name: p.name });
+    var liste = vorblendungen(p, p);
     if (!liste.length) return;
     liste.forEach(function (v) {
+      if (v.hinweis) { p.hinweis = v.hinweis; return; }
       var b = v.block;
       p.portionen.push({ anzahl: b.anzahl, menge: b.menge,
                          einheit: b.einheit, vakuum: !!b.vakuum });
@@ -1529,12 +1560,18 @@ window.KMetzgerBest = (function () {
     }).join('') + '</div>';
   }
 
-  function artikelAnsicht() {
-    var h = '<div class="mb-akopf">'
+  /* Kopfzeile über dem Artikelstamm: Anzahl links, Anlegen rechts.
+     Sie gehört in den festen Kopf, nicht in die rollende Liste — bei über
+     hundert Artikeln war „+ Neuer Artikel" nach dem ersten Rollen weg. */
+  function artikelKopf() {
+    return '<div class="mb-akopf">'
       + '<span class="mb-azahl">' + _artikel.length + ' Artikel</span>'
       + '<button class="mb-send" onclick="KMetzgerBest.neuerArtikel()">'
       + '+ Neuer Artikel</button></div>';
-    return h + '<div class="mb-artikel">' + _artikel.map(function (a) {
+  }
+
+  function artikelAnsicht() {
+    return '<div class="mb-artikel">' + _artikel.map(function (a) {
       var st = standardText(a);
       var ruf = "KMetzgerBest.bearbeiten('" + jsText(a.name) + "')";
       return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
@@ -1569,11 +1606,12 @@ window.KMetzgerBest = (function () {
 
   /** Die hinterlegte Vorgabe als lesbarer Text, oder '' wenn es keine gibt. */
   function standardText(a) {
-    var bl = standardBloecke(a);
-    if (!bl.length) return '';
-    return bl.map(function (b) {
+    var t = standardBloecke(a).map(function (b) {
       return blockText(b) + (b.vakuum ? ' (vak.)' : '');
     }).join(', ');
+    var hw = String((a && a.standard_hinweis) || '').trim();
+    if (hw) t = t ? t + ' — ' + hw : hw;
+    return t;
   }
 
   function neuerArtikel() { artikelMaske(null); }
@@ -1629,10 +1667,11 @@ window.KMetzgerBest = (function () {
       + '<div class="mb-vgfeld weit"><div class="mb-vglbl">Vorbelegung</div>'
       + '<div class="mb-vgbox" id="mb-vgbox"></div></div>'
       + '</div>'
-      + '<div class="mb-dlg-hint">Diese Portionen werden bei der Bestellung '
-      + 'über dem Artikel vorgeblendet — ein Tipp übernimmt eine davon. '
-      + 'Erfasst wird genau wie bei der Bestellung. Keine Portion heißt: '
-      + 'keine Vorbelegung.</div>'
+      + '<div class="mb-dlg-hint">Portionen und Hinweis werden bei der '
+      + 'Bestellung über dem Artikel vorgeblendet — ein Tipp übernimmt '
+      + 'einen davon, mehrere nacheinander sind möglich. Erfasst wird genau '
+      + 'wie bei der Bestellung. Nichts eingetragen heißt: keine '
+      + 'Vorbelegung.</div>'
       + '<div class="mb-dlg-acts">'
       + '<button class="mb-btn" data-ab>Abbrechen</button>'
       + '<button class="mb-send" data-ok>' + (neu ? 'Anlegen' : 'Speichern')
@@ -1664,12 +1703,15 @@ window.KMetzgerBest = (function () {
 
       // Die Vorbelegung wird als Liste von Bloecken gespeichert - genau so,
       // wie sie erfasst wurde. Kein Umweg ueber eine Kurzschreibweise.
+      // Der Hinweis steht daneben: Es gibt Artikel mit Hinweis ohne Portion.
       var port = (_stamm && _stamm.pos.portionen) ? _stamm.pos.portionen.slice() : [];
+      var vgHinweis = (_stamm && String(_stamm.pos.hinweis || '').trim()) || '';
 
       var daten = {
         name: name, nummer: nr, gruppe: lies('mb-a-grp') || null,
         preis: pr, einheit: lies('mb-a-einh') || 'kg',
-        standard: port.length ? port : null
+        standard: port.length ? port : null,
+        standard_hinweis: vgHinweis || null
       };
       if (!neu) {
         // Wiedergefunden wird über den alten Stand - Name und Nummer
@@ -1685,7 +1727,8 @@ window.KMetzgerBest = (function () {
     /* Die Erfassung arbeitet auf einer Pseudo-Position; ab hier verhaelt sie
        sich genau wie in der Bestellung. */
     _stamm = { pos: { nummer: neu ? null : a.nummer, name: neu ? '' : a.name,
-                      portionen: standardBloecke(a), hinweis: '' } };
+                      portionen: standardBloecke(a),
+                      hinweis: String((a && a.standard_hinweis) || '') } };
     _offen = STAMM_KEY;
     _entwurf = { i: -1, anzahl: 1, menge: null, einheit: 'kg', vakuum: false };
     stammZeichnen();
@@ -1703,12 +1746,18 @@ window.KMetzgerBest = (function () {
        null. In der Bestellliste ist das richtig - dort klappt die Zeile
        wieder zu. In der Artikelmaske gibt es nichts zuzuklappen: Ohne
        Entwurf liefe editor() in einen Fehler und die Maske bliebe stumm
-       stehen. Hier ist die Erfassung also dauerhaft offen. */
+       stehen. Hier ist die Erfassung also dauerhaft offen.
+
+       Die gewaehlte Einheit merkt sich _stamm, nicht der Entwurf: Jene
+       Handler raeumen _entwurf ab, BEVOR wir hier ankommen - der Griff
+       danach lief also immer ins Leere und fiel auf 'kg' zurueck. Wer in
+       Stueck erfasste und eine Portion wieder entfernte, stand ohne sein
+       Zutun wieder bei Kilo. */
+    if (_entwurf && _entwurf.einheit) _stamm.einheit = _entwurf.einheit;
     if (_offen !== STAMM_KEY || !_entwurf) {
-      var letzteEinheit = (_entwurf && _entwurf.einheit) || 'kg';
       _offen = STAMM_KEY;
       _entwurf = { i: -1, anzahl: 1, menge: null,
-                   einheit: letzteEinheit, vakuum: false };
+                   einheit: _stamm.einheit || 'kg', vakuum: false };
     }
     var p = _stamm.pos;
     var h = '<div class="mb-chips mb-vgchips">';

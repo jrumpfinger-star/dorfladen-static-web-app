@@ -3993,9 +3993,11 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   .mb-aform .weit{ grid-column:1 / -1 }
 }
 /* Vorbelegung in der Artikelmaske.
-   Erfasst wird mit DERSELBEN Oberflaeche wie eine Bestellposition. Zwei
-   Dinge gehoeren dort aber nicht hin: ein Positions-Hinweis (den traegt
-   die Bestellung, nicht der Stamm) und der Knopf dorthin. */
+   Erfasst wird mit DERSELBEN Oberflaeche wie eine Bestellposition — samt
+   Hinweisfeld: Es gibt Artikel, die immer denselben Hinweis brauchen
+   ("ohne Knochen"), und Artikel mit Hinweis ganz ohne feste Portion.
+   Nicht hierher gehoert nur der Umweg-Knopf zum Hinweis-Blatt: Das Feld
+   steht ja direkt daneben. */
 .mb-vgfeld{ display:flex; flex-direction:column; gap:4px }
 .mb-vglbl{ font-size:12px; font-weight:600; color:#6b7280 }
 .mb-vgbox{ border:1.5px solid var(--c-border,#e5e7eb); border-radius:9px;
@@ -4003,6 +4005,26 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 .mb-vgchips{ margin:0 0 8px }
 .mb-vgleer{ font-size:.82rem; color:#9aa3a0; font-style:italic }
 .mb-vgbox .mb-ed{ margin:0; border:0; padding:0; background:transparent }
-.mb-vgbox .mb-g.hinweis,
+.mb-vgbox .mb-g.hinweis{ display:block }
 .mb-vgbox .mb-hw-knopf,
 .mb-vgbox .mb-acts:empty{ display:none }
+
+/* Fester Kopf der Reiter „Verlauf" und „Artikel".
+   Roll-Container ist #panel-metzgerbest (position:absolute, overflow-y:auto),
+   alle Elemente dazwischen sind statisch — sticky greift also hier. Der
+   negative obere Rand samt Polsterung haelt den Block im Ruhezustand an
+   seinem Platz und laesst ihn beim Rollen die ganze obere Kante abdecken,
+   sodass darunter nichts durchscheint. */
+.mb-kopffest{
+  position:sticky; top:0; z-index:6;
+  margin:calc(var(--pad) * -1) 0 8px;
+  padding:var(--pad) 0 6px;
+  background:var(--c-bg,#f1f3f2);
+}
+.mb-kopffest .mb-akopf{ margin:6px 0 0 }
+
+/* Ein vorgeblendeter Hinweis ist keine Menge, sondern Text — er wird
+   kursiv gesetzt, damit er in der Reihe der Mengen-Kacheln nicht als
+   Portion missverstanden wird. Umbrechen darf er wie die übrigen
+   Vorblendungen auch. */
+.mb-frueher.hw{ font-style:italic; max-width:18em }

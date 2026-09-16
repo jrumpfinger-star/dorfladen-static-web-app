@@ -66,6 +66,18 @@ def _standard(wert):
     return text or None
 
 
+def _std_hinweis(wert):
+    """Den im Stamm hinterlegten Hinweis auf eine speicherbare Form bringen.
+
+    Er steht bewusst NEBEN der Portionierung und nicht in ihr: Ein Artikel
+    kann einen Hinweis ohne Portion haben ("immer frisch aufschneiden") und
+    eine Portion ohne Hinweis. Leer heisst: keine Vorgabe.
+    """
+    if wert is None:
+        return None
+    return str(wert).strip() or None
+
+
 def _finde(artikel, name=None, nummer=None):
     for i, a in enumerate(artikel):
         if nummer is not None and a.get("nummer") == nummer:
@@ -146,6 +158,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "aktiv": True,
             "auf_formular": bool(body.get("auf_formular", True)),
             "standard": _standard(body.get("standard")),
+            "standard_hinweis": _std_hinweis(body.get("standard_hinweis")),
         })
         if not store.save_artikel(url, hdrs, rec_id, artikel):
             return _err("Der Artikel konnte nicht gespeichert werden.", 502)
@@ -185,6 +198,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # loescht die Vorgabe, statt einen leeren String zu hinterlassen.
     if "standard" in body:
         artikel[i]["standard"] = _standard(body["standard"])
+
+    if "standard_hinweis" in body:
+        artikel[i]["standard_hinweis"] = _std_hinweis(body["standard_hinweis"])
 
     if not store.save_artikel(url, hdrs, rec_id, artikel):
         return _err("Die \u00c4nderung konnte nicht gespeichert werden.", 502)
