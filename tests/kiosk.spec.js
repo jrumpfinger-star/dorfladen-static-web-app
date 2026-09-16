@@ -35,15 +35,29 @@ test.describe('Kiosk – Tab-Navigation', () => {
 
   test('Tab-Wechsel zeigt korrektes Panel', async ({ page }) => {
     await page.goto(KIOSK_URL);
-    // Switch to Mittagstisch
+    // Zum Bäcker wechseln
+    await page.locator('.k-tab[data-tab="baecker"]').click();
+    await expect(page.locator('.k-tab[data-tab="baecker"]')).toHaveClass(/active/);
+    await expect(page.locator('#panel-baecker')).toHaveClass(/active/);
+    // Zurück zum Mittagstisch
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await expect(page.locator('.k-tab[data-tab="mittag"]')).toHaveClass(/active/);
     await expect(page.locator('#panel-mittag')).toHaveClass(/active/);
-    // Switch to Stammkunden
-    await page.locator('.k-tab[data-tab="kunden"]').click();
-    await expect(page.locator('.k-tab[data-tab="kunden"]')).toHaveClass(/active/);
+    // Der Bäcker-Bereich darf jetzt nicht mehr aktiv sein
+    await expect(page.locator('#panel-baecker')).not.toHaveClass(/active/);
+  });
+
+  test('Stammkunden werden über den Kopf erreicht', async ({ page }) => {
+    // Stammkunden war früher ein Reiter. Heute liegt der Bereich hinter dem
+    // Knopf in der Kopfzeile — der alte Test klickte auf einen Reiter, den
+    // es nicht mehr gibt, und lief in einen Timeout.
+    await page.goto(KIOSK_URL);
+    await expect(page.locator('.k-tab[data-tab="kunden"]'),
+      'Stammkunden ist wieder ein Reiter — dann bitte diesen Test anpassen.')
+      .toHaveCount(0);
+
+    await page.locator('#k-kunden-btn').click();
     await expect(page.locator('#panel-kunden')).toHaveClass(/active/);
-    // Mittagstisch panel should no longer be active
     await expect(page.locator('#panel-mittag')).not.toHaveClass(/active/);
   });
 });
