@@ -48,8 +48,12 @@ window.KMetzgerBest = (function () {
   var KACHELN = {
     kg: [[.25, '¼'], [.5, '½'], [.75, '¾'], [1, '1'], [1.5, '1½'], [2, '2'], [3, '3'], [5, '5']],
     g: [[100, '100'], [125, '125'], [200, '200'], [250, '250'], [500, '500'], [750, '750']],
-    St: [[2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8'], [10, '10'], [12, '12'], [30, '30']],
-    cm: [[10, '10'], [20, '20'], [30, '30'], [50, '50'], [65, '65']],
+    // Halbe und einzelne Stuecke kommen vor: ein halbes Haehnchen, ein
+    // Braten. Sie fehlten und mussten frei eingetippt werden.
+    St: [[.5, '½'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8'],
+         [10, '10'], [12, '12'], [30, '30']],
+    // 3 und 5 cm fuer duenne Scheiben - die kleinste Kachel war bisher 10.
+    cm: [[3, '3'], [5, '5'], [10, '10'], [20, '20'], [30, '30'], [50, '50'], [65, '65']],
     Schale: [[1, '1'], [2, '2'], [5, '5'], [10, '10'], [20, '20']],
     Beutel: [[1, '1'], [2, '2'], [5, '5'], [10, '10']],
     groesse: [['klein', 'klein'], ['mittel', 'mittel'], ['groß', 'groß']]
@@ -660,16 +664,19 @@ window.KMetzgerBest = (function () {
         + '<button class="x" title="Hinweis entfernen"' + (lock ? ' disabled' : '')
         + ' onclick="KMetzgerBest.hinweisWeg(\'' + esc(key) + '\')">✕</button></span>';
     }
-    // Anhalt beim Neuerfassen: Was zuletzt bestellt wurde, steht blass daneben,
-    // solange die Zeile leer ist. Ein Tipp übernimmt es.
-    var frueher = !lock && !bestellt(p) ? letzteWerte(a) : null;
-    // Die Blöcke werden mit „|" getrennt: Ein „+" zwischen den Mengen las
-    // sich wie ein Rechenzeichen und ging in „1 × 2 kg" unter.
-    if (frueher) {
-      h += '<button class="mb-frueher" title="' + esc(letzteQuelle())
-        + ' — tippen übernimmt" onclick="KMetzgerBest.frueher(\'' + esc(key) + '\')">'
-        + esc(frueher.map(blockText).join(' | ')) + '</button>';
-    }
+    /* Anhalt beim Neuerfassen: Was zuletzt bestellt wurde oder im
+       Artikelstamm hinterlegt ist, steht blass daneben, solange die Zeile
+       leer ist. Jeder Block ist ein eigener Knopf — früher übernahm ein
+       einziger Tipp alle auf einmal, und wer nur einen wollte, musste die
+       übrigen wieder wegtippen. */
+    var vorbl = !lock && !bestellt(p)
+      ? vorblendungen({ nummer: p.nummer, name: p.name }) : [];
+    vorbl.forEach(function (v, i) {
+      h += '<button class="mb-frueher' + (v.quelle === 'stamm' ? ' stamm' : '')
+        + '" title="' + esc(v.titel) + '"'
+        + ' onclick="KMetzgerBest.vorblenden(\'' + esc(key) + '\',' + i + ')">'
+        + esc(blockText(v.block)) + '</button>';
+    });
     if (istExtra && !lock) {
       h += '<button class="mb-add del" title="Position entfernen"'
         + ' onclick="KMetzgerBest.zusatzWeg(\'' + esc(key) + '\')">✕</button>';
@@ -857,19 +864,95 @@ window.KMetzgerBest = (function () {
       + datumDe(_letzte.datum) + ' bestellt';
   }
 
+  /* ── Vorblendungen an der Artikelzeile ─────────────────────────────
+     Sie stehen blass neben dem Namen, solange nichts erfasst ist, und
+     sind ein Anhalt: So war es zuletzt. Zwei Quellen speisen sie:
+
+       1. die Vorgabe aus dem Artikelstamm - dauerhaft hinterlegt, weil
+          dieser Artikel fast immer gleich bestellt wird
+       2. die letzte Bestellung
+
+     Frueher gab es dafuer einen einzigen Knopf, der ALLE Bloecke auf
+     einmal uebernahm ("1 × 2 kg | 1 × 4 St | 1 × 2 St"). Wer nur einen
+     davon wollte, musste die uebrigen einzeln wieder wegtippen. Jeder
+     Block ist jetzt ein eigener Knopf.
+
+     Die Vorschlaege IM Erfassungsfeld bleiben davon unberuehrt - dort
+     rechnet weiterhin vorschlaegeFuer() (Spec F4). */
+  function vorblendungen(a) {
+    var aus = [];
+    var gesehen = {};
+
+    var nimm = function (bl, quelle, titel) {
+      (bl || []).forEach(function (b) {
+        var s = blockText(b) + '|' + (b.vakuum ? 'v' : '');
+        if (gesehen[s]) return;          // dieselbe Portion nicht zweimal
+        gesehen[s] = true;
+        aus.push({ block: b, quelle: quelle, titel: titel });
+      });
+    };
+
+    var st = standardWerte(a);
+    if (st) nimm(st, 'stamm', 'Vorgabe aus dem Artikelstamm — tippen übernimmt');
+    nimm(letzteWerte(a), 'letzte', letzteQuelle() + ' — tippen übernimmt');
+    return aus;
+  }
+
+  /** Die im Artikelstamm hinterlegte Vorgabe, falls es eine gibt. */
+  function standardWerte(a) {
+    var st = artikelVon(a);
+    var v = st && st.standard;
+    if (!v) return null;
+    // parse() liefert { bloecke, hinweis } - nicht die Liste selbst.
+    var bl = Array.isArray(v) ? v : (parse(String(v)).bloecke || []);
+    return (bl && bl.length) ? bl : null;
+  }
+
+  /** Den Artikelstamm-Eintrag zu einer Position finden. */
+  function artikelVon(a) {
+    if (!a) return null;
+    var nr = a.nummer != null ? String(a.nummer) : '';
+    var nm = (a.name || '').trim().toLowerCase();
+    for (var i = 0; i < _artikel.length; i++) {
+      var x = _artikel[i];
+      if (nr && String(x.nummer) === nr) return x;
+      if (!nr && (x.name || '').trim().toLowerCase() === nm) return x;
+    }
+    return null;
+  }
+
+  /** Eine einzelne Vorblendung übernehmen. */
+  function vorblenden(key, i) {
+    var p = finde(key);
+    if (!p || gesperrt()) return;
+    var liste = vorblendungen({ nummer: p.nummer, name: p.name });
+    var v = liste[i];
+    if (!v) return;
+    var b = v.block;
+    p.portionen.push({ anzahl: b.anzahl, menge: b.menge,
+                       einheit: b.einheit, vakuum: !!b.vakuum });
+    p.pruef = false;
+    markiereGeaendert();
+    render();
+    haltePlatz(key);
+  }
+
+  /* Alle Vorblendungen auf einmal - der frühere Weg. Er bleibt für die
+     Fälle, in denen wirklich alles gleich bleibt. */
   function frueher(key) {
     var p = finde(key);
     if (!p || gesperrt()) return;
-    var a = { nummer: p.nummer, name: p.name };
-    var bl = letzteWerte(a);
-    if (!bl) return;
-    bl.forEach(function (b) {
+    var liste = vorblendungen({ nummer: p.nummer, name: p.name });
+    if (!liste.length) return;
+    liste.forEach(function (v) {
+      var b = v.block;
       p.portionen.push({ anzahl: b.anzahl, menge: b.menge,
                          einheit: b.einheit, vakuum: !!b.vakuum });
     });
     p.pruef = false;
     markiereGeaendert();
     render();
+    haltePlatz(key);
   }
 
   // ── Vorschlaege (F4) ──
@@ -1427,19 +1510,185 @@ window.KMetzgerBest = (function () {
   }
 
   function artikelAnsicht() {
-    return '<div class="mb-artikel">' + _artikel.map(function (a) {
+    var h = '<div class="mb-akopf">'
+      + '<span class="mb-azahl">' + _artikel.length + ' Artikel</span>'
+      + '<button class="mb-send" onclick="KMetzgerBest.neuerArtikel()">'
+      + '+ Neuer Artikel</button></div>';
+    return h + '<div class="mb-artikel">' + _artikel.map(function (a) {
+      var st = standardText(a);
+      var ruf = "KMetzgerBest.bearbeiten('" + jsText(a.name) + "')";
       return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
         + '<span class="mb-nr' + (a.nummer ? '' : ' leer') + '">'
         + esc(a.nummer || '–') + '</span>'
-        + '<span class="mb-aname">' + esc(a.name) + '</span>'
+        + '<span class="mb-aname">' + esc(a.name)
+        + '<span class="mb-astd' + (st ? '' : ' leer') + '">'
+        + (st ? 'Vorgabe: ' + esc(st) : 'keine Vorgabe') + '</span></span>'
         + '<span class="mb-agrp">' + esc(a.gruppe || '') + '</span>'
         + '<span class="mb-apreis">' + (a.preis
           ? String(a.preis).replace('.', ',') + ' €/kg' : '—') + '</span>'
+        + '<button class="mb-btn" onclick="' + ruf + '">Bearbeiten</button>'
         + '<button class="mb-btn" onclick="KMetzgerBest.aktiv(\''
-        + esc(a.name) + '\',' + (a.aktiv === false) + ')">'
+        + jsText(a.name) + '\',' + (a.aktiv === false) + ')">'
         + (a.aktiv === false ? 'Einblenden' : 'Ausblenden') + '</button>'
         + '</div>';
     }).join('') + '</div>';
+  }
+
+  /** Text für ein onclick-Attribut: erst fürs Skript, dann fürs HTML. */
+  function jsText(s) {
+    return esc(String(s === null || s === undefined ? '' : s)
+      .replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+  }
+
+  /** Die hinterlegte Vorgabe als lesbarer Text, oder '' wenn es keine gibt. */
+  function standardText(a) {
+    var v = a && a.standard;
+    if (!v) return '';
+    var bl = Array.isArray(v) ? v : (parse(String(v)).bloecke || []);
+    if (!bl || !bl.length) return '';
+    return bl.map(function (b) {
+      return blockText(b) + (b.vakuum ? ' (vak.)' : '');
+    }).join(', ');
+  }
+
+  function neuerArtikel() { artikelMaske(null); }
+
+  function bearbeiten(name) {
+    var a = null;
+    for (var i = 0; i < _artikel.length; i++) {
+      if ((_artikel[i].name || '') === name) { a = _artikel[i]; break; }
+    }
+    if (a) artikelMaske(a);
+  }
+
+  /** Alle Gruppen, die es schon gibt — als Vorschlagsliste im Formular. */
+  function gruppenListe() {
+    var raus = [], da = {};
+    _artikel.forEach(function (a) {
+      var g = (a.gruppe || '').trim();
+      if (g && !da[g]) { da[g] = true; raus.push(g); }
+    });
+    return raus.sort();
+  }
+
+  /**
+   *  Artikel anlegen oder ändern — eine Maske für beides.
+   *
+   *  Bis hierher konnte der Kiosk Artikel nur ein- und ausblenden. Neue
+   *  anlegen ging gar nicht, obwohl die Schnittstelle es längst konnte.
+   *  Die Standard-Portionierung steht als eigenes Feld darin: Sie gehört
+   *  zum Artikel, nicht in einen eigenen Dialog.
+   */
+  function artikelMaske(a) {
+    var neu = !a;
+    var wert = function (k, s) { return neu ? (s || '') : (a[k] == null ? (s || '') : a[k]); };
+    var vg = neu ? ''
+      : ((a.standard && !Array.isArray(a.standard)) ? String(a.standard)
+        : standardText(a));
+
+    var w = huelle('<div class="mb-dlg-kopf">'
+      + (neu ? 'Neuer Artikel' : 'Artikel bearbeiten') + '</div>'
+      + '<div class="mb-dlg-form mb-aform">'
+      + '<label class="weit">Bezeichnung<input id="mb-a-name" value="'
+      + esc(wert('name')) + '" autofocus></label>'
+      + '<label>Nummer<input id="mb-a-nr" inputmode="numeric" value="'
+      + esc(wert('nummer')) + '" placeholder="falls bekannt"></label>'
+      + '<label>Gruppe<input id="mb-a-grp" list="mb-a-grpliste" value="'
+      + esc(wert('gruppe')) + '" placeholder="z. B. Fleisch frisch"></label>'
+      + '<datalist id="mb-a-grpliste">'
+      + gruppenListe().map(function (g) {
+        return '<option value="' + esc(g) + '">';
+      }).join('') + '</datalist>'
+      + '<label>Preis je kg<input id="mb-a-preis" inputmode="decimal" value="'
+      + esc(String(wert('preis')).replace('.', ',')) + '" placeholder="optional">'
+      + '</label>'
+      + '<label>Einheit<input id="mb-a-einh" value="'
+      + esc(wert('einheit', 'kg')) + '" placeholder="kg"></label>'
+      + '<label class="weit">Standard-Portionierung<input id="mb-vg-feld" '
+      + 'placeholder="z. B. 2x500g V" value="' + esc(vg) + '"></label>'
+      + '</div>'
+      + '<div class="mb-dlg-hint">Die Portionierung wird so geschrieben wie '
+      + 'bei der Erfassung: <b>2x500g</b>, <b>3x2St</b>, <b>1x1,5kg</b>. '
+      + 'Ein <b>V</b> am Ende heißt vakuumiert, mehrere Portionen mit Komma '
+      + 'trennen. Leer lassen heißt: keine Vorgabe.</div>'
+      + '<div class="mb-dlg-acts">'
+      + '<button class="mb-btn" data-ab>Abbrechen</button>'
+      + '<button class="mb-send" data-ok>' + (neu ? 'Anlegen' : 'Speichern')
+      + '</button></div>');
+
+    w.querySelector('[data-ab]').onclick = function () { w.remove(); };
+    w.querySelector('[data-ok]').onclick = function () {
+      var lies = function (id) {
+        var f = document.getElementById(id);
+        return f ? String(f.value || '').trim() : '';
+      };
+      var name = lies('mb-a-name');
+      if (!name) { toast('Bitte eine Bezeichnung eintragen.'); return; }
+
+      var std = lies('mb-vg-feld');
+      if (std && !(parse(std).bloecke || []).length) {
+        toast('Die Portionierung konnte ich nicht lesen. Beispiel: 2x500g V');
+        return;
+      }
+
+      var nrText = lies('mb-a-nr');
+      var nr = nrText === '' ? null : parseInt(nrText, 10);
+      if (nrText !== '' && !isFinite(nr)) {
+        toast('Die Nummer muss eine Zahl sein.'); return;
+      }
+
+      var prText = lies('mb-a-preis').replace(',', '.');
+      var pr = prText === '' ? null : parseFloat(prText);
+      if (prText !== '' && !isFinite(pr)) {
+        toast('Der Preis muss eine Zahl sein.'); return;
+      }
+
+      var daten = {
+        name: name, nummer: nr, gruppe: lies('mb-a-grp') || null,
+        preis: pr, einheit: lies('mb-a-einh') || 'kg',
+        standard: std || null
+      };
+      if (!neu) {
+        // Wiedergefunden wird über den alten Stand - Name und Nummer
+        // duerfen sich in derselben Maske aendern.
+        if (a.nummer != null) daten.alt_nummer = a.nummer;
+        else daten.alt_name = a.name;
+      }
+      w.remove();
+      artikelSenden(daten, neu, false);
+    };
+
+    var f = document.getElementById('mb-a-name');
+    if (f) { f.focus(); f.select(); }
+  }
+
+  function artikelSenden(daten, neu, trotzdem) {
+    var leib = {};
+    for (var k in daten) if (daten.hasOwnProperty(k)) leib[k] = daten[k];
+    if (trotzdem) leib.trotzdem = true;
+
+    return fetch(API + '/metzger-artikel', {
+      method: neu ? 'POST' : 'PATCH', headers: authHeaders(),
+      body: JSON.stringify(leib)
+    }).then(function (r) {
+      return r.json().then(function (d) { return { st: r.status, d: d }; });
+    }).then(function (a) {
+      // 409 heisst: Es gibt schon einen Artikel mit sehr aehnlichem Namen.
+      // Das ist keine Ablehnung, sondern eine Rueckfrage.
+      if (a.st === 409 && !trotzdem) {
+        dialogFrage(fehlerText(a.d, 'Diesen Artikel gibt es schon. '
+          + 'Wirklich noch einmal anlegen?'), function () {
+          artikelSenden(daten, neu, true);
+        });
+        return;
+      }
+      if (!a.d || !a.d.success) throw new Error(fehlerText(a.d, ''));
+      if (a.d.artikel) _artikel = a.d.artikel;
+      render();
+      toast(neu ? 'Der Artikel ist angelegt.' : 'Die Änderung ist gespeichert.');
+    }).catch(function (e) {
+      toast(e.message || 'Der Artikel konnte nicht gespeichert werden.');
+    });
   }
 
   function aktiv(name, an) {
@@ -1568,9 +1817,10 @@ window.KMetzgerBest = (function () {
     hinweis: hinweis, hinweisWeg: hinweisWeg, editHinweis: editHinweis, zu: zu,
     notizOeffnen: notizOeffnen,
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
+    vorblenden: vorblenden,
     speichern: speichern, senden: senden, korrektur: korrektur,
     verwerfen: verwerfen, korrekturSenden: korrekturSenden,
-    aktiv: aktiv,
+    aktiv: aktiv, neuerArtikel: neuerArtikel, bearbeiten: bearbeiten,
     istGeaendert: istGeaendert,
     badge: badge
   };

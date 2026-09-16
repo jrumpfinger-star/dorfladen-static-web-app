@@ -50,6 +50,22 @@ def _nummer(wert):
         return None
 
 
+def _standard(wert):
+    """Die Standard-Portionierung auf eine speicherbare Form bringen.
+
+    Erlaubt ist die Kurzschreibweise aus dem Erfassungsfeld ("2x500g V")
+    oder eine fertige Liste von Bloecken. Leer heisst: keine Vorgabe.
+    Ausgewertet wird sie im Kiosk, der die Kurzschreibweise ohnehin
+    schon lesen kann - so bleibt nur eine Stelle, die sie versteht.
+    """
+    if wert is None:
+        return None
+    if isinstance(wert, list):
+        return wert or None
+    text = str(wert).strip()
+    return text or None
+
+
 def _finde(artikel, name=None, nummer=None):
     for i, a in enumerate(artikel):
         if nummer is not None and a.get("nummer") == nummer:
@@ -129,6 +145,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "gruppe": body.get("gruppe") or "Nicht auf dem Formular",
             "aktiv": True,
             "auf_formular": bool(body.get("auf_formular", True)),
+            "standard": _standard(body.get("standard")),
         })
         if not store.save_artikel(url, hdrs, rec_id, artikel):
             return _err("Der Artikel konnte nicht gespeichert werden.", 502)
@@ -163,6 +180,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     for feld in ("preis", "einheit", "gruppe"):
         if feld in body:
             artikel[i][feld] = body[feld]
+
+    # Die im Stamm hinterlegte Standard-Portionierung. Ein leeres Feld
+    # loescht die Vorgabe, statt einen leeren String zu hinterlassen.
+    if "standard" in body:
+        artikel[i]["standard"] = _standard(body["standard"])
 
     if not store.save_artikel(url, hdrs, rec_id, artikel):
         return _err("Die \u00c4nderung konnte nicht gespeichert werden.", 502)

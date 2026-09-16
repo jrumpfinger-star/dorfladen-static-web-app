@@ -3953,3 +3953,30 @@ html[data-theme="dark"] .k-blatt-akt > button,
 html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   background:var(--c-surf, #111827); color:#e2e8f0;
 }
+/* Vorblendung aus dem Artikelstamm: dauerhaft hinterlegt, deshalb etwas
+   kraeftiger als der blasse Wert der letzten Bestellung. Beide bleiben
+   gestrichelt - sie sind ein Anhalt, noch keine Erfassung. */
+.mb-frueher.stamm{ border-color:#a7c4b5; color:#4a7c59 }
+.mb-frueher.stamm:hover{ border-color:var(--gr, #2e7d4f); color:var(--gr, #2e7d4f) }
+/* Artikelstamm: die hinterlegte Standard-Portionierung steht als zweite
+   Zeile unter dem Namen - sie ist eine Eigenschaft des Artikels, kein
+   eigenes Feld in der Reihe. */
+.mb-aname{ display:flex; flex-direction:column; gap:2px }
+.mb-astd{ font-weight:400; font-size:.8rem; color:#4a7c59 }
+.mb-astd.leer{ color:#9aa3a0; font-style:italic }
+
+/* Erklaerzeile unter einem Eingabefeld im Blatt. */
+.mb-dlg-hint{ font-size:.82rem; line-height:1.45; color:#5c6b66;
+  padding:0 2px 4px }
+/* Kopfzeile ueber dem Artikelstamm: Anzahl links, Anlegen rechts. */
+.mb-akopf{ display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin:0 0 10px }
+.mb-azahl{ font-size:.85rem; color:#5c6b66; font-weight:600 }
+
+/* Die Artikelmaske hat sechs Felder - auf breiten Schirmen zweispaltig,
+   damit sie ohne Rollen auf einen Blick passt. */
+.mb-aform{ display:grid; grid-template-columns:1fr; gap:10px }
+@media (min-width:560px){
+  .mb-aform{ grid-template-columns:1fr 1fr }
+  .mb-aform label.weit{ grid-column:1 / -1 }
+}

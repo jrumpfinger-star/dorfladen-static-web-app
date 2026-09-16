@@ -74,8 +74,15 @@ function baeckerBestellung() {
   };
 }
 
-const GETRAENKE_ARTIKEL = ARTIKEL_LANG.map((a, i) => ({
-  nummer: 'KA4001' + i, name: a.name, gruppe: i < 5 ? 'Bier' : 'Alkoholfrei',
+/* Standard-Portionierung aus dem Artikelstamm. Nur auf Anforderung, sonst
+   bekaeme jeder bestehende Test eine zusaetzliche Vorblendungs-Kachel. */
+function metzgerStandard(a, opts) {
+  const m = (opts || {}).metzgerStandard;
+  if (!m) return null;
+  return m[a.nummer] || null;
+}
+
+const GETRAENKE_ARTIKEL = ARTIKEL_LANG.map((a, i) => ({  nummer: 'KA4001' + i, name: a.name, gruppe: i < 5 ? 'Bier' : 'Alkoholfrei',
   gebinde: '20 × 0,5 l', preis: 12.5 + i, pfand: 3.1, menge: a.menge % 4,
   // „Übliche Artikel" entscheidet sich an der Zahl früherer Bestellungen.
   bestellungen: 9, ueblich: 4, aktiv: true,
@@ -121,6 +128,7 @@ async function mockApi(page, opts = {}) {
       return json({ success: true, artikel: ARTIKEL_LANG.map((a) => ({
         nummer: Number(a.nummer), name: a.name, preis: 12.4, einheit: 'kg',
         gruppe: a.gruppe, aktiv: true, auf_formular: true,
+        standard: metzgerStandard(a, opts),
       })) });
     }
     if (/metzger-order/.test(url)) {
@@ -142,7 +150,8 @@ async function mockApi(page, opts = {}) {
           bestellung: { datum, status: 0, protokoll: [], positionen },
           artikel: ARTIKEL_LANG.map((a) => ({
             nummer: Number(a.nummer), name: a.name, preis: 12.4, einheit: 'kg',
-            gruppe: a.gruppe, aktiv: true, auf_formular: true })),
+            gruppe: a.gruppe, aktiv: true, auf_formular: true,
+            standard: metzgerStandard(a, opts) })),
           vorschlaege: opts.metzgerVorschlaege || {},
           vorbelegt_aus: '2026-08-24', letzte: null,
           bestelltag: true, bestellbar: true, config, testbetrieb: true, summen: {} });
