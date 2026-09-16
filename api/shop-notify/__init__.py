@@ -9,6 +9,7 @@ import azure.functions as func
 import json
 import os
 import re
+import time
 import msal
 import requests
 
@@ -27,19 +28,43 @@ CONTACT_DEFAULTS = {
     "website_url": "https://www.dorfladen-oberornau.de",
     "shop_url": "https://www.dorfladen-oberornau.de/shop.html",
     "logo_url": "https://www.dorfladen-oberornau.de/images/dorfladen-logo.png",
+    # Absenderpostfach: Aus DIESEM Postfach wird gesendet, und nur hier
+    # landet die Kopie in "Gesendet". `reply_to` ist lediglich die
+    # Antwortadresse und hat darauf keinen Einfluss.
+    #
+    # ACHTUNG: Hier darf nur eine Adresse stehen, die Microsoft Graph im
+    # Tenant als Benutzer aufloesen kann. "info@dorfladen-oberornau.de"
+    # ist nachweislich KEINE solche Adresse — Graph antwortet darauf mit
+    # 404 ErrorInvalidUser ("The requested user ... is invalid"), und es
+    # geht dann gar keine Mail mehr raus. Die Domain ist im M365-Tenant
+    # offenbar nicht eingerichtet; das dortige Postfach liegt bei einem
+    # anderen Anbieter. Vor einer Umstellung erst die Domain im Tenant
+    # verifizieren und ein echtes Postfach anlegen.
     "mailbox": "info@dorfladenoberornau.onmicrosoft.com",
     "reply_to": "info@dorfladen-oberornau.de",
     "slogan": "Ihr Nahversorger"
 }
 
-# Cache for Dataverse config (loaded once per function cold start)
+# Zwischenspeicher fuer die Kontaktdaten aus Dataverse.
+#
+# Frueher galt er unbegrenzt ("loaded once per function cold start"). Das
+# war gefaehrlich: Eine fehlerhafte Kontaktangabe blieb in der Instanz
+# haengen, auch nachdem sie in Dataverse laengst zurueckgestellt war —
+# der Mailversand blieb dann bis zum naechsten Neustart tot. Genau das
+# ist eingetreten, als testweise ein nicht aufloesbares Absenderpostfach
+# hinterlegt wurde: Graph antwortete mit 404, und die Instanzen sendeten
+# auch nach der Ruecknahme weiter ins Leere.
+#
+# Mit einer kurzen Haltezeit heilt sich das von selbst.
+_CONTACT_TTL = 300  # Sekunden
 _contact_cache = None
+_contact_cache_zeit = 0.0
 
 
 def get_contact_info():
     """Load shop contact info from Dataverse (key: shop_kontakt), fallback to defaults."""
-    global _contact_cache
-    if _contact_cache is not None:
+    global _contact_cache, _contact_cache_zeit
+    if _contact_cache is not None and (time.time() - _contact_cache_zeit) < _CONTACT_TTL:
         return _contact_cache
 
     import logging
@@ -64,12 +89,14 @@ def get_contact_info():
                 dv_config = json.loads(items[0]["dl_wert"])
                 merged = {**CONTACT_DEFAULTS, **dv_config}
                 _contact_cache = merged
+                _contact_cache_zeit = time.time()
                 logging.info("[shop-notify] Contact info loaded from Dataverse")
                 return merged
     except Exception as e:
         logging.warning(f"[shop-notify] Could not load contact from Dataverse: {e}")
 
     _contact_cache = CONTACT_DEFAULTS.copy()
+    _contact_cache_zeit = time.time()
     return _contact_cache
 
 

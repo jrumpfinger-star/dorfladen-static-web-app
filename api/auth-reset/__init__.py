@@ -135,6 +135,9 @@ def _send_reset_email(to_email, to_name, reset_link):
         # Fallback simple HTML
         email_html = f"<html><body><h2>{subject}</h2><p>{body_text.replace(chr(10), '<br>')}</p></body></html>"
 
+    # Gleiches Absenderpostfach wie in shop-notify. Die Adresse muss von
+    # Graph im Tenant aufloesbar sein — "info@dorfladen-oberornau.de" ist
+    # es nicht (404 ErrorInvalidUser), siehe Hinweis in shop-notify.
     sender_mailbox = os.environ.get("SHOP_SENDER_MAILBOX", "info@dorfladenoberornau.onmicrosoft.com")
     sender_name = laden_name
 
