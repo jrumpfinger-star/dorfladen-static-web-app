@@ -748,7 +748,7 @@
     .bk-sw.off::after{left:3px}
     .bk-note{font-size:12px;color:var(--c-muted);background:#f9fafb;border-left:3px solid #d1d5db;border-radius:8px;padding:10px 13px;margin:12px 0;line-height:1.55}
     /* Verlauf */
-    .bk-hist{display:grid;grid-template-columns:150px 1fr auto auto;align-items:center;gap:12px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #d1d5db;border-radius:9px;padding:11px 13px;margin-bottom:6px;min-height:56px}
+    .bk-hist{display:grid;grid-template-columns:150px 1fr auto auto auto;align-items:center;gap:12px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #d1d5db;border-radius:9px;padding:11px 13px;margin-bottom:6px;min-height:56px}
     .bk-hist.ok{border-left-color:#16a34a}
     /* Steht der Ausdruck noch aus, gilt der Tag nicht als fertig – muss
        deshalb NACH .ok stehen, sonst gewinnt Gruen. */
@@ -846,10 +846,13 @@
       .bk-art{grid-template-columns:52px 1fr 34px 46px;grid-template-areas:"nr nm ed sw" "use use use use";row-gap:5px}
       .bk-art .nr{grid-area:nr}.bk-art .nm{grid-area:nm}
       .bk-art .use{grid-area:use}.bk-sw{grid-area:sw}.bk-edit{grid-area:ed}
-      .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m" "b b" "l l";row-gap:5px}
+      .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m" "b w" "l l";row-gap:5px}
       .bk-hist .d{grid-area:d}.bk-hist .m{grid-area:m}.bk-hist .s{grid-area:s}
       .bk-hist-liste{grid-area:l}
       .bk-hist-druck{grid-area:b;justify-self:start}
+      /* „Löschen" teilt sich die Zeile mit „Drucken"; ohne Drucken steht es
+         allein rechts. (Spec bestellung-loeschen, F16) */
+      .bk-hist-weg{grid-area:w;justify-self:end}
       .bk-two{grid-template-columns:1fr}
     }
     html[data-theme="dark"] .bk-row,html[data-theme="dark"] .bk-art,html[data-theme="dark"] .bk-hist,

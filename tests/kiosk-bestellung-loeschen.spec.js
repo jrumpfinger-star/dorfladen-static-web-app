@@ -309,7 +309,10 @@ async function mockBaecker(page, opts = {}) {
           bestellschluss: '', baeckereien: [] } }));
     }
     if (/mode=verlauf/.test(u)) {
-      return route.fulfill(j({ success: true, verlauf: B_VERLAUF }));
+      const v = opts.mitDruck
+        ? [Object.assign({}, B_VERLAUF[0], { papierausdruck: true, druck_offen: true })]
+        : B_VERLAUF;
+      return route.fulfill(j({ success: true, verlauf: v }));
     }
     if (/mode=config/.test(u)) {
       return route.fulfill(j({ success: true,
@@ -388,6 +391,44 @@ test.describe('Bäcker – Bestellung löschen', () => {
       await expect(kachel).toHaveCount(1);
       await expect(kachel).toHaveClass(/lesen/);
       await expect(kachel).toContainText('geliefert');
+    });
+
+  test('TC-D24: „Löschen" bleibt in derselben Zeile wie „Drucken"',
+    async ({ page }) => {
+      /* Das Zeilenraster hatte genau vier Spalten (`150px 1fr auto auto`).
+         Der zusätzliche Knopf war der fünfte und rutschte unter den
+         Wochentag — live gesehen. Der Wächter hält die eine Reihe fest. */
+      await mockBaecker(page, { mitDruck: true });
+      await page.goto(KIOSK_URL, { waitUntil: 'domcontentloaded' });
+      await page.locator('.k-tab[data-tab="baecker"]').click();
+      await page.locator('#panel-baecker .bk-day').first().waitFor({ timeout: 15000 });
+      await page.evaluate(() => window.KBaecker && window.KBaecker.sub('verlauf'));
+      await page.locator('#panel-baecker .bk-hist').first().waitFor({ timeout: 8000 });
+
+      const lage = await page.evaluate(() => {
+        const z = document.querySelector('#panel-baecker .bk-hist');
+        const weg = z.querySelector('.bk-hist-weg');
+        const druck = z.querySelector('.bk-hist-druck');
+        if (!weg || !druck) return null;
+        const d = druck.getBoundingClientRect(), w = weg.getBoundingClientRect();
+        const panel = document.getElementById('panel-baecker').getBoundingClientRect();
+        return {
+          /* Massgeblich ist: Beide Knöpfe teilen sich EINE Reihe. Auf
+             schmalen Schirmen bricht die Zeile bewusst um, dort stehen sie
+             gemeinsam in der Knopfreihe — ein Vergleich mit dem Wochentag
+             wäre dort falsch. */
+          gleicheReihe: Math.abs((d.top + d.height / 2) - (w.top + w.height / 2)) < 12,
+          wegRechts: w.left >= d.left,
+          imBild: w.right <= panel.right + 1 && w.left >= panel.left - 1,
+          breite: Math.round(w.width),
+        };
+      });
+
+      expect(lage, 'Kein Druck- oder Löschknopf gefunden').not.toBeNull();
+      expect(lage.gleicheReihe).toBe(true);
+      expect(lage.wegRechts).toBe(true);
+      expect(lage.imBild).toBe(true);
+      expect(lage.breite).toBeGreaterThan(40);
     });
 });
 
