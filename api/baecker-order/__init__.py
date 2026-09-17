@@ -305,6 +305,9 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         # Bestellt wird immer fuer einen kuenftigen Liefertag.
         "bestellbar": _bestellbar(datum_iso),
         "korrektur_moeglich": gesendet and store.korrektur_moeglich(cfg, datum_iso),
+        # Ein vergangener, gesendeter Liefertag ist zum Nachsehen da.
+        # (Spec bestellung-loeschen, F12)
+        "nur_lesen": bool(datum_iso < date.today().isoformat() and gesendet),
         "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
         "vorlage_datum_de": store.datum_de(quelle) if quelle else "",
@@ -336,6 +339,60 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
     }
 
 
+def _letzte_tage(url, hdrs, cfg, anzahl=3):
+    """Die letzten gesendeten Liefertage — zum Nachsehen, nicht zum Aendern.
+
+    Aus dem Laden: „Es sollten die letzten 3 Bestellungen auch angezeigt
+    werden, so dass man auf Klick auch sieht, was bestellt wurde, aber nur
+    im Read Modus." Die Tagesleiste zeigte bisher nur ab heute.
+    (Spec bestellung-loeschen, F11)
+    """
+    heute = date.today().isoformat()
+    nach_tag = {}
+    for bk, d, data in store.bestellungen(url, hdrs):
+        if not d or d >= heute:
+            continue
+        if (data or {}).get("status") not in (store.STATUS_GESENDET,
+                                              store.STATUS_KORRIGIERT):
+            continue
+        nach_tag.setdefault(d, []).append((bk, data))
+
+    tage = []
+    for d in sorted(nach_tag, reverse=True)[:anzahl]:
+        lieferanten = []
+        for bk, data in nach_tag[d]:
+            bcfg = store.cfg_von(cfg, bk)
+            s = data.get("status")
+            pos = [p for p in data.get("positionen", [])
+                   if (p.get("menge") or 0) or (p.get("retoure") or 0)]
+            lieferanten.append({
+                "baeckerei": bk,
+                "name": bcfg.get("name") or bk,
+                "status": ("korrigiert" if s == store.STATUS_KORRIGIERT
+                           else "gesendet"),
+                "gedruckt": bool(data.get("gedruckt_am")),
+                # Vergangenes mahnt nicht mehr zum Ausdrucken - der Tag ist um.
+                "druck_offen": False,
+                "positionen": len(pos),
+            })
+        lieferanten.sort(key=lambda x: x["baeckerei"])
+        tage.append({
+            "datum": d, "wochentag": store.wochentag(d),
+            "bestelltag": True,
+            "bestellbar": False,
+            "heute": False,
+            "nur_lesen": True,
+            "bestellschluss_datum": "", "bestellschluss_datum_de": "",
+            "bestellschluss_wochentag": "",
+            "heute_bestellen": False, "hat_offene": False,
+            "lieferanten": lieferanten,
+            "fertig": len(lieferanten), "gesamt": len(lieferanten),
+            "status": "gesendet",
+        })
+    tage.reverse()                       # aelteste zuerst: die Leiste laeuft vorwaerts
+    return tage
+
+
 def _uebersicht(url, hdrs, cfg):
     """Tagesleiste und Erinnerungsstatus (Spec F1, F9, F18, F19).
 
@@ -344,7 +401,8 @@ def _uebersicht(url, hdrs, cfg):
     und der Zaehler am Tab.
     """
     heute = date.today()
-    tage = []
+    # Die letzten gesendeten Tage stehen vorn - nur lesbar.
+    tage = _letzte_tage(url, hdrs, cfg)
     druck_offen_gesamt = 0
     for i in range(7):
         d = heute + timedelta(days=i)
@@ -387,6 +445,7 @@ def _uebersicht(url, hdrs, cfg):
             "bestelltag": bool(lieferanten),
             "bestellbar": bestellbar,
             "heute": i == 0,
+            "nur_lesen": False,
             "bestellschluss_datum": bs_iso,
             "bestellschluss_datum_de": store.datum_de(bs_iso) if bs_iso else "",
             "bestellschluss_wochentag": store.wochentag(bs_iso) if bs_iso else "",
@@ -824,6 +883,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             if aktion == "gedruckt":
                 return _gedruckt(url, hdrs, bcfg, bk, datum, body)
+
+            if aktion == "loeschen":
+                # Eine versehentliche oder zum Ausprobieren erfasste Bestellung
+                # soll verschwinden koennen. Beide Schluesselformen muessen weg:
+                # Bliebe der Altschluessel liegen, taeuchte der Eintrag beim
+                # naechsten Laden wieder auf. (Spec bestellung-loeschen, F4/F5)
+                entfernt = 0
+                for key in store.order_schluessel(bk, datum):
+                    rec_id, daten = store.read_json(url, hdrs, key)
+                    if not rec_id or not daten:
+                        continue
+                    if store.delete_json(url, hdrs, rec_id):
+                        entfernt += 1
+                    else:
+                        return _err("Die Bestellung konnte nicht gel\u00f6scht "
+                                    "werden. Bitte sp\u00e4ter erneut versuchen.", 502)
+                if not entfernt:
+                    return _err("Zu diesem Liefertag ist nichts gespeichert.", 404)
+                return _ok({"datum": datum, "baeckerei": bk,
+                            "meldung": "Die Bestellung wurde gel\u00f6scht."})
 
             # Entwurf speichern
             rec_id, order = store.load_order(url, hdrs, bk, datum)

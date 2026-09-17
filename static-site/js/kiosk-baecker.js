@@ -312,6 +312,7 @@
       var druckOffen = (t.lieferanten || []).some(function (x) { return x.druck_offen; });
       if (!t.bestelltag) cls += ' off';
       else if (t.datum === _datum) cls += ' active';
+      else if (t.nur_lesen) cls += ' lesen';
       else if (t.status === 'gesendet') cls += ' sent';
       else if (druckOffen) cls += ' druck';
       else if (!t.bestellbar) cls += ' vorbei';
@@ -323,6 +324,10 @@
 
       var st;
       if (!t.bestelltag) st = 'keine Lieferung';
+      // Vergangene Liefertage stehen zum Nachsehen da. Ohne eigenen Zweig
+      // hieß es dort „heute geliefert" – an einem Tag, der vorbei ist.
+      // (Spec bestellung-loeschen, F11)
+      else if (t.nur_lesen) st = '✓ geliefert';
       else if (druckOffen) st = 'Ausdruck fehlt';
       else if (!t.bestellbar) st = (t.status === 'gesendet' ? 'heute geliefert' : 'nicht bestellt');
       else if (t.heute_bestellen) st = 'heute bestellen';
@@ -1636,8 +1641,57 @@
     h += '<div class="bk-hist-fuss"><span>' + pos.length + ' Positionen · ' + stk + ' Stück</span>'
       + '<button class="bk-btn" onclick="event.stopPropagation();KBaecker.tagAusVerlauf(\''
       + e.datum + '\',\'' + esc(e.baeckerei) + '\')">' + luc('external-link', 14)
-      + ' Im Bestell-Tab öffnen</button></div>';
+      + ' Im Bestell-Tab öffnen</button>'
+      // Testbestellungen sollen verschwinden koennen (Spec F1).
+      + '<button class="bk-btn weg" onclick="event.stopPropagation();KBaecker.bestellungWeg(\''
+      + e.datum + '\',\'' + esc(e.baeckerei) + '\',' + (e.status || 0) + ')">'
+      + luc('trash-2', 14) + ' Löschen</button></div>';
     return h + '</div>';
+  }
+
+  /* Eine Bestellung aus dem Verlauf entfernen. Die Rückfrage sagt
+     ausdrücklich, dass eine bereits versandte E-Mail dadurch NICHT
+     zurückgeholt wird — sonst entsteht ein falsches Sicherheitsgefühl.
+     (Spec bestellung-loeschen, F2) */
+  function bestellungWeg(datum, bk, status) {
+    var eintrag = (_verlauf || []).filter(function (v) {
+      return v.datum === datum && v.baeckerei === bk;
+    })[0] || {};
+    var wer = eintrag.baeckerei_name || bk;
+    var text = 'Die Bestellung bei ' + wer + ' vom '
+      + (eintrag.wochentag ? eintrag.wochentag + ', ' : '')
+      + (eintrag.datum_de || datum) + ' wird gelöscht.';
+    if (status >= 1) {
+      text += ' Achtung: Die E-Mail an die Bäckerei ist bereits raus und wird '
+        + 'dadurch nicht zurückgeholt. Gelöscht wird nur der Eintrag hier.';
+    }
+    dlgFrage('Bestellung löschen?', text, 'Löschen', function () {
+      fetch(API + '/baecker-order/' + encodeURIComponent(datum) + '/loeschen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baeckerei: bk }),
+      })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; })
+            .then(function (res) {
+              if (!r.ok || res.error) {
+                throw new Error(res.error || 'Die Bestellung konnte nicht gelöscht werden.');
+              }
+              return res;
+            });
+        })
+        .then(function () {
+          toast('Bestellung gelöscht.');
+          var schluessel = bk + '|' + datum;
+          delete _verlaufOffen[schluessel];
+          delete _verlaufDetail[schluessel];
+          ladeVerlauf();
+          ladeUebersicht();
+        })
+        .catch(function (e) {
+          toast(e.message || 'Die Bestellung konnte nicht gelöscht werden.');
+        });
+    });
   }
 
   // Auf-/Zuklappen. Beim ersten Öffnen werden die Positionen nachgeladen –
@@ -1696,6 +1750,27 @@
     if (ov) ov.remove();
   }
 
+  /* Rückfrage vor einem Schritt, der sich nicht zurücknehmen lässt.
+     Kein natives `confirm` (Konstitution 6); der Aufbau folgt den übrigen
+     Dialogen dieser Datei. (Spec bestellung-loeschen, F2) */
+  var _dlgJa = null;
+  function dlgFrage(titel, text, knopf, ja) {
+    _dlgJa = ja;
+    dialog('<div class="bk-dlg-h">' + esc(titel) + '</div>'
+      + '<div class="bk-dlg-b"><div class="bk-note">' + esc(text) + '</div></div>'
+      + '<div class="bk-dlg-f">'
+      + '<button class="bk-btn" onclick="KBaecker.dlgZu()">Abbrechen</button>'
+      + '<button class="bk-send" onclick="KBaecker.dlgJa()">' + esc(knopf)
+      + '</button></div>');
+  }
+
+  function dlgJa() {
+    var f = _dlgJa;
+    _dlgJa = null;
+    dlgZu();
+    if (typeof f === 'function') f();
+  }
+
   // ══════════════════════════════════════════════════
 
   function start() {
@@ -1736,6 +1811,7 @@
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,
     bearbeiten: bearbeiten, aendernSpeichern: aendernSpeichern,
     tagAusVerlauf: tagAusVerlauf, dlgZu: dlgZu,
+    dlgJa: dlgJa, bestellungWeg: bestellungWeg,
     notizOeffnen: notizOeffnen,
     blatt: blatt
   };

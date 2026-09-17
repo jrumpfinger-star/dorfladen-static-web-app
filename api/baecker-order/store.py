@@ -198,6 +198,25 @@ def write_json(url, hdrs, key, rec_id, data, bezeichnung="Baecker"):
         return False
 
 
+def delete_json(url, hdrs, rec_id):
+    """Loescht einen Datensatz. Ein bereits fehlender gilt als geloescht.
+
+    404 wird bewusst als Erfolg gewertet: Das Ziel ist „der Datensatz ist
+    weg" — ist er das schon, gibt es nichts zu melden.
+    """
+    if not rec_id:
+        return False
+    try:
+        r = requests.delete(
+            f"{url}/api/data/v9.2/{ENTITY}({rec_id})",
+            headers={**hdrs, "If-Match": "*"}, timeout=30,
+        )
+        return r.status_code in (200, 204, 404)
+    except Exception as e:
+        logging.error(f"[baecker] delete {rec_id} failed: {e}")
+        return False
+
+
 def read_many(url, hdrs, prefix, top=400):
     """Liest alle Datensaetze mit Schluessel-Praefix. Gibt Liste von (key, daten)."""
     out = []
@@ -249,6 +268,19 @@ def order_praefix(bk):
 def alt_order_key(datum_iso):
     """Schluessel aus der Zeit vor der zweiten Baeckerei."""
     return f"{KEY_ORDER}{datum_iso}"
+
+
+def order_schluessel(bk, datum_iso):
+    """ALLE Schluessel, unter denen dieser Liefertag liegen kann.
+
+    Beim Loeschen zaehlt das: Bliebe der Altschluessel liegen, taeuchte der
+    Eintrag beim naechsten Laden wieder auf — ``bestellungen()`` liest beide
+    Formen. (Spec bestellung-loeschen, F5)
+    """
+    keys = [order_key(bk, datum_iso)]
+    if bk == ALT_BAECKEREI:
+        keys.append(alt_order_key(datum_iso))
+    return keys
 
 
 _ALT_DATUM = re.compile(r"^\d{4}-\d{2}-\d{2}$")

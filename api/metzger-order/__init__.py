@@ -20,7 +20,7 @@ import logging
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 import azure.functions as func
 
@@ -163,22 +163,64 @@ def _letzte_werte(letzte):
     }
 
 
+def _letzte_tage(alle, anzahl=3):
+    """Die letzten gesendeten Liefertage — zum Nachsehen, nicht zum Aendern.
+
+    Aus dem Laden: „Es sollten die letzten 3 Bestellungen auch angezeigt
+    werden, so dass man auf Klick auch sieht, was bestellt wurde, aber nur
+    im Read Modus." Die Tagesleiste zeigte bisher nur kuenftige Tage — was
+    vorige Woche rausging, war nur ueber den Verlauf erreichbar.
+    (Spec bestellung-loeschen, F11)
+    """
+    heute = date.today().isoformat()
+    aus = []
+    for o in alle:                       # `alle` ist absteigend sortiert
+        d = o.get("datum") or ""
+        if not d or d >= heute:
+            continue
+        if o.get("status") not in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT):
+            continue
+        aus.append(o)
+        if len(aus) >= anzahl:
+            break
+    aus.reverse()                        # aelteste zuerst: die Leiste laeuft vorwaerts
+    return aus
+
+
 def _uebersicht(url, hdrs, cfg):
     """Zustand der naechsten 14 Tage fuer die Tagesleiste (F1)."""
-    from datetime import date, timedelta
+    from datetime import timedelta
     # Ein Entwurf ohne Positionen ist inhaltlich nichts und bekommt deshalb
     # kein Abzeichen - sonst sieht ein unberuehrter Tag nach Arbeit aus.
+    alle = store.bestellungen(url, hdrs)
     bekannt = {}
-    for o in store.bestellungen(url, hdrs):
+    for o in alle:
         st = o.get("status", store.STATUS_ENTWURF)
         if st == store.STATUS_ENTWURF and not o.get("positionen"):
             continue
-        bekannt[o.get("datum")] = st
+        # Wie viele Positionen wirklich bestellt sind - die Tagesleiste zeigt
+        # es an, damit man ohne Aufklappen sieht, was an dem Tag lief.
+        anzahl = sum(1 for p in o.get("positionen", [])
+                     if P.normalisiere_position(p).get("portionen"))
+        bekannt[o.get("datum")] = {"status": st, "positionen": anzahl}
     heute = date.today()
     tage = []
+    # Zuerst die letzten gesendeten Tage - nur lesbar.
+    for o in _letzte_tage(alle):
+        d = o.get("datum")
+        tage.append({
+            "datum": d,
+            "wochentag": store.wochentag(d),
+            "bestelltag": True,
+            "bestellbar": False,
+            "nur_lesen": True,
+            "status": o.get("status"),
+            "positionen": (bekannt.get(d) or {}).get("positionen", 0),
+        })
     for i in range(14):
         d = (heute + timedelta(days=i)).isoformat()
         ist_tag = store.ist_bestelltag(cfg, d)
+        eintrag = bekannt.get(d) or {}
         tage.append({
             "datum": d,
             "wochentag": store.wochentag(d),
@@ -186,7 +228,9 @@ def _uebersicht(url, hdrs, cfg):
             # Heute ist die Ware laengst geliefert - bestellt wird spaetestens
             # am Vortag. Deshalb ist heute nie waehlbar.
             "bestellbar": ist_tag and store.bestellbar(d),
-            "status": bekannt.get(d),
+            "nur_lesen": False,
+            "status": eintrag.get("status"),
+            "positionen": eintrag.get("positionen", 0),
         })
     # Ein Entwurf gilt als offen - daran wird ja noch gearbeitet. Nur
     # Gesendetes und Korrigiertes wird uebersprungen.
@@ -372,6 +416,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "letzte": _letzte_werte(letzte),
             "bestelltag": store.ist_bestelltag(cfg, datum),
             "bestellbar": store.ist_bestelltag(cfg, datum) and store.bestellbar(datum),
+            # Ein vergangener, gesendeter Liefertag ist zum Nachsehen da.
+            # Korrigieren laesst er sich nicht mehr - die Ware ist geliefert.
+            # (Spec bestellung-loeschen, F12)
+            "nur_lesen": bool(datum < date.today().isoformat()
+                              and order.get("status") in (store.STATUS_GESENDET,
+                                                          store.STATUS_KORRIGIERT)),
             "config": {k: v for k, v in cfg.items() if not k.startswith("_")},
             "testbetrieb": store.testbetrieb(cfg),
             "summen": P.summen([P.normalisiere_position(p)
@@ -380,6 +430,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         })
 
     # ── Schreibende Aktionen ─────────────────────────────────────────
+    if aktion == "loeschen":
+        # Eine versehentliche oder zum Ausprobieren erfasste Bestellung soll
+        # verschwinden koennen. Sie wird wirklich geloescht, nicht nur
+        # ausgeblendet - sonst kaeme sie beim naechsten Laden zurueck.
+        # (Spec bestellung-loeschen, F4)
+        rec_id, vorhanden = store.load_order(url, hdrs, datum)
+        if not rec_id or not vorhanden:
+            return _err("Zu diesem Liefertag ist nichts gespeichert.", 404)
+        if not store.delete_json(url, hdrs, rec_id):
+            return _err("Die Bestellung konnte nicht gel\u00f6scht werden. "
+                        "Bitte sp\u00e4ter erneut versuchen.", 502)
+        return _ok({"datum": datum, "meldung": "Die Bestellung wurde gel\u00f6scht."})
+
     if aktion == "speichern":
         if not store.bestellbar(datum):
             return _err("F\u00fcr diesen Tag l\u00e4sst sich nichts mehr bestellen. "

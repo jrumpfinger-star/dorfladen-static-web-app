@@ -283,6 +283,14 @@ window.KMetzgerBest = (function () {
         if (!d || !d.success) throw new Error(fehlerText(d, ''));
         _datum = datum;
         _b = d.bestellung;
+        /* Die Zustandsangaben stehen NEBEN der Bestellung, nicht darin.
+           Ohne dieses Nachziehen blieb `_b.bestellbar` undefined — die
+           Kontextzeile „Dieser Tag ist geliefert" konnte nie erscheinen,
+           und ein vergangener Tag bot weiter „Korrigieren" an.
+           (Spec bestellung-loeschen, F12) */
+        _b.bestelltag = d.bestelltag;
+        _b.bestellbar = d.bestellbar;
+        _b.nur_lesen = !!d.nur_lesen;
         _artikel = d.artikel || [];
         _vorschlaege = d.vorschlaege || {};
         _cfg = d.config || _cfg;
@@ -546,20 +554,42 @@ window.KMetzgerBest = (function () {
     h += '<div class="mb-days">';
     (_tage || []).forEach(function (t) {
       // Heute ist die Ware schon da - bestellt wird spätestens am Vortag.
+      // Ein vergangener, gesendeter Tag ist trotzdem anklickbar: Er wird
+      // nur gelesen. (Spec bestellung-loeschen, F11)
       var waehlbar = t.bestellbar !== undefined ? t.bestellbar : t.bestelltag;
+      var offenbar = waehlbar || t.nur_lesen;
       var cls = 'mb-day';
-      if (!waehlbar) cls += ' off';
+      if (!offenbar) cls += ' off';
+      if (t.nur_lesen) cls += ' lesen';
       if (t.datum === _datum) cls += ' on';
       if (t.status === 1) cls += ' sent';
       if (t.status === 2) cls += ' korr';
       var d = t.datum.slice(8) + '.' + t.datum.slice(5, 7) + '.';
-      var titel = waehlbar ? '' : (t.bestelltag
-        ? ' title="Liefertag, aber zu spät — bestellt wird spätestens am Vortag"'
-        : ' title="An diesem Tag liefert der Metzger nicht"');
-      h += '<button class="' + cls + '"' + (waehlbar ? '' : ' disabled') + titel
+
+      /* Ohne Statuszeile sagte die Kachel nur, WELCHER Tag es ist – nicht,
+         was dort läuft. Aus dem Laden: „so dass man gleich sieht, was an
+         welchem Tag bestellt wurde". (Spec bestellung-loeschen, F13) */
+      var st;
+      if (t.status === 2) st = '✓ korrigiert';
+      else if (t.status === 1) st = '✓ gesendet';
+      else if (t.status === 0) st = 'Entwurf';
+      else if (!t.bestelltag) st = 'keine Lieferung';
+      else if (!waehlbar) st = 'nicht bestellt';
+      else st = 'offen';
+      if (t.status !== undefined && t.status !== null && t.positionen) {
+        st += ' · ' + t.positionen + ' Pos.';
+      }
+
+      var titel = t.nur_lesen
+        ? ' title="Bereits geliefert – zum Nachsehen, Änderungen sind nicht mehr möglich"'
+        : waehlbar ? '' : (t.bestelltag
+          ? ' title="Liefertag, aber zu spät — bestellt wird spätestens am Vortag"'
+          : ' title="An diesem Tag liefert der Metzger nicht"');
+      h += '<button class="' + cls + '"' + (offenbar ? '' : ' disabled') + titel
         + ' onclick="KMetzgerBest.tag(\'' + t.datum + '\')">'
         + esc((t.wochentag || '').slice(0, 2))
-        + '<span class="d2">' + d + '</span></button>';
+        + '<span class="d2">' + d + '</span>'
+        + '<span class="d3">' + esc(st) + '</span></button>';
     });
     return h + '</div>';
   }
@@ -838,9 +868,17 @@ window.KMetzgerBest = (function () {
       h += '<button class="mb-btn" onclick="KMetzgerBest.speichern()">Speichern</button>'
         + '<button class="mb-send" onclick="KMetzgerBest.senden()">Bestellung senden</button>';
     } else {
-      // Gesendet und keine Korrektur offen: nur noch lesbar, aber die
-      // Korrektur muss von hier aus erreichbar sein (F32).
-      h += '<button class="mb-btn" onclick="KMetzgerBest.korrektur()">Korrigieren</button>';
+      /* Gesendet und keine Korrektur offen: nur noch lesbar, aber die
+         Korrektur muss von hier aus erreichbar sein (F32).
+         Ausnahme: ein vergangener Liefertag. Die Ware ist geliefert, eine
+         Korrektur ginge ins Leere — er ist reine Nachschau.
+         (Spec bestellung-loeschen, F12) */
+      if (_b.nur_lesen) {
+        h += '<span class="mb-foot-note">' + ikone('lock')
+          + ' Geliefert \u2013 nur zum Nachsehen</span>';
+      } else {
+        h += '<button class="mb-btn" onclick="KMetzgerBest.korrektur()">Korrigieren</button>';
+      }
     }
     el.innerHTML = h;
   }
@@ -1477,6 +1515,10 @@ window.KMetzgerBest = (function () {
      unveraenderte Bestellung ein zweites Mal. */
   function korrektur() {
     if (!istGesendet()) return;
+    if (_b.nur_lesen) {
+      toast('Dieser Liefertag ist geliefert – er lässt sich nur noch nachlesen.');
+      return;
+    }
     _korrektur = true;
     _korrekturBasis = JSON.stringify(nutzbare());
     render();
@@ -1556,8 +1598,55 @@ window.KMetzgerBest = (function () {
           ? '<a class="mb-btn" target="_blank" rel="noopener" href="' + API
             + '/metzger-order/' + encodeURIComponent(v.datum)
             + '/dokument">Formular ansehen</a>' : '')
+        // Testbestellungen sollen verschwinden koennen (Spec F1).
+        + '<button class="mb-btn weg" onclick="KMetzgerBest.bestellungWeg(\''
+        + v.datum + '\',' + (v.status || 0) + ')">Löschen</button>'
         + '</div>';
     }).join('') + '</div>';
+  }
+
+  /* Eine Bestellung aus dem Verlauf entfernen. Die Rückfrage sagt
+     ausdrücklich, dass eine bereits versandte E-Mail dadurch NICHT
+     zurückgeholt wird — sonst entsteht ein falsches Sicherheitsgefühl.
+     (Spec bestellung-loeschen, F2) */
+  function bestellungWeg(datum, status) {
+    // Den Wochentag aus dem Verlauf holen, nicht aus der Tagesleiste: Dort
+    // stehen längst vergangene Liefertage nicht mehr drin.
+    var eintrag = (_verlauf || []).filter(function (v) {
+      return v.datum === datum;
+    })[0] || {};
+    var wt = eintrag.wochentag || wochentagVon(datum);
+    var text = 'Die Bestellung vom ' + (wt ? wt + ', ' : '') + datumDe(datum)
+      + ' wird gelöscht.';
+    if (status >= 1) {
+      text += ' Achtung: Die E-Mail an die Metzgerei ist bereits raus und '
+        + 'wird dadurch nicht zurückgeholt. Gelöscht wird nur der Eintrag hier.';
+    }
+    dialog('<div class="mb-dlg-kopf">Bestellung löschen?</div>'
+      + '<div class="mb-dlg-text">' + esc(text) + '</div>',
+      'Löschen', function () {
+        fetch(API + '/metzger-order/' + encodeURIComponent(datum) + '/loeschen',
+          { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: '{}' })
+          .then(function (r) {
+            return r.json().catch(function () { return {}; })
+              .then(function (res) {
+                if (!r.ok || res.error) {
+                  throw new Error(res.error || 'Die Bestellung konnte nicht gelöscht werden.');
+                }
+                return res;
+              });
+          })
+          .then(function () {
+            toast('Bestellung gelöscht.');
+            // Verlauf UND Tagesleiste nachziehen: Der Tag ist jetzt wieder frei.
+            ladeVerlauf();
+            ladeUebersicht();
+          })
+          .catch(function (e) {
+            toast(e.message || 'Die Bestellung konnte nicht gelöscht werden.');
+          });
+      });
   }
 
   /* Kopfzeile über dem Artikelstamm: Anzahl links, Anlegen rechts.
@@ -1945,6 +2034,7 @@ window.KMetzgerBest = (function () {
     edit: edit, feld: feld, anz: anz, einheit: einheit, kachel: kachel,
     vakAn: vakAn, pad: pad, nimm: nimm, vorschau: vorschau, kurz: kurz,
     weg: weg, allesWeg: allesWeg, loeschen: loeschen,
+    bestellungWeg: bestellungWeg,
     hinweis: hinweis, hinweisWeg: hinweisWeg, editHinweis: editHinweis, zu: zu,
     notizOeffnen: notizOeffnen,
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
