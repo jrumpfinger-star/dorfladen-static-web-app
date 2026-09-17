@@ -41,6 +41,7 @@
     kundenMap: {},      // name(lower) → id
     newCat: 'aufgabe',  // Dialog: gewählte Kategorie
     newRecur: '',       // Dialog: gewählte Wiederholung
+    newEnde: '',        // Dialog: gewähltes Serienende ('', 'w1', …, 'datum')
     newWeekdays: []     // Dialog: gewählte ISO-Wochentage (1=Mo … 7=So)
   };
 
@@ -176,6 +177,24 @@
             '<div class="kal-weekdays" id="kal-weekdays" hidden>' +
               DOW.map(function (n, i) { return '<button type="button" class="kal-wd" data-wd="' + (i + 1) + '">' + n + '</button>'; }).join('') +
               '<div class="kal-wd-hint">Serie an den gewählten Wochentagen</div>' +
+            '</div>' +
+            /* Wie lange die Serie laufen soll. Ohne diese Angabe lief jede
+               Serie endlos — aus dem Laden kam der Wunsch nach einem Ende
+               wie in Outlook. (Spec kalender-serienende, F1) */
+            '<div class="kal-ende" id="kal-ende" hidden>' +
+              '<span class="kal-ende-lbl">Serie läuft</span>' +
+              '<div class="kal-pills" id="kal-endepills">' +
+                '<button type="button" class="kal-pill active" data-ende="">Endlos</button>' +
+                '<button type="button" class="kal-pill" data-ende="w1">1 Woche</button>' +
+                '<button type="button" class="kal-pill" data-ende="w2">2 Wochen</button>' +
+                '<button type="button" class="kal-pill" data-ende="m1">1 Monat</button>' +
+                '<button type="button" class="kal-pill" data-ende="m3">3 Monate</button>' +
+                '<button type="button" class="kal-pill" data-ende="m6">6 Monate</button>' +
+                '<button type="button" class="kal-pill" data-ende="j1">1 Jahr</button>' +
+                '<button type="button" class="kal-pill" data-ende="datum">Bis Datum…</button>' +
+              '</div>' +
+              '<input type="date" id="kal-ende-datum" class="kal-ende-datum" hidden>' +
+              '<div class="kal-ende-hint" id="kal-ende-hint"></div>' +
             '</div></div>' +
           '<div class="kal-modal-foot">' +
             '<button class="kal-btn-ghost" data-act="closedialog">Abbrechen</button>' +
@@ -197,6 +216,9 @@
     title.addEventListener('blur', function () { setTimeout(hideTitleDd, 150); });
     var timeEl = document.getElementById('kal-time');
     timeEl.addEventListener('input', function () { timeEl.value = fmtTimeInput(timeEl.value); refreshTimeQuick(); });
+    // Ein von Hand gewähltes Enddatum muss den Hinweistext nachziehen.
+    var endeFeld = document.getElementById('kal-ende-datum');
+    if (endeFeld) endeFeld.addEventListener('input', zeigeEnde);
     var kunde = document.getElementById('kal-kunde');
     var kt = null;
     kunde.addEventListener('input', function () {
@@ -214,7 +236,7 @@
   }
 
   function onClick(e) {
-    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl],[data-tp],[data-tpq]');
+    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl],[data-tp],[data-tpq],[data-ende]');
     if (!b) return;
     if (b.dataset.act === 'prev') { state.weekOffset--; load(); }
     else if (b.dataset.act === 'next') { state.weekOffset++; load(); }
@@ -227,6 +249,7 @@
     else if (b.dataset.ad) { setAllday(b.dataset.ad === '1'); }
     else if (b.dataset.newcat !== undefined) { setCat(b.dataset.newcat); }
     else if (b.dataset.newrecur !== undefined) { setRecur(b.dataset.newrecur); }
+    else if (b.dataset.ende !== undefined) { setEnde(b.dataset.ende); }
     else if (b.dataset.wd !== undefined) { toggleWeekday(parseInt(b.dataset.wd, 10), b); }
     else if (b.dataset.kunde !== undefined) { setKunde(b.dataset.kunde, b.dataset.kid); }
     else if (b.dataset.titlepick !== undefined) { setTitle(b.dataset.titlepick); }
@@ -275,6 +298,8 @@
     document.querySelectorAll('#kal-weekdays .kal-wd').forEach(function (w) {
       w.classList.toggle('active', state.newWeekdays.indexOf(parseInt(w.dataset.wd, 10)) !== -1);
     });
+    // Vorlagen bringen kein Ende mit – sie starten endlos, wie bisher.
+    setEnde('');
   }
 
   function setCat(cat) {
@@ -290,6 +315,76 @@
     });
     var wd = document.getElementById('kal-weekdays');
     if (wd) wd.hidden = (rec !== 'weekdays');
+    // Ein Einzeltermin braucht kein Ende – das Feld bliebe sinnlos stehen.
+    var ende = document.getElementById('kal-ende');
+    if (ende) ende.hidden = !rec;
+    if (!rec) setEnde('');
+    else zeigeEnde();
+  }
+
+  /* ── Serienende ───────────────────────────────────────────────────────
+     Aus dem Laden: „Bei der Terminserie sollte es auch möglich sein
+     anzugeben, wie lange die Serie laufen soll. 1 Woche, 2 Wochen, oder
+     Monate oder auch spezifisches Datum oder endlos."
+     (Spec kalender-serienende) */
+
+  /** Rechnet die gewählte Dauer in ein konkretes Enddatum um. */
+  function endeDatum(wahl) {
+    if (!wahl) return '';
+    if (wahl === 'datum') {
+      var feld = document.getElementById('kal-ende-datum');
+      return (feld && feld.value) || '';
+    }
+    var start = new Date((state.selected || todayIso()) + 'T12:00:00');
+    if (isNaN(start.getTime())) return '';
+    var d = new Date(start.getTime());
+    // Der Starttag zählt mit: „1 Woche" heißt sieben Tage ab Start, also
+    // endet die Serie am Vortag der nächsten Woche.
+    if (wahl === 'w1') d.setDate(d.getDate() + 6);
+    else if (wahl === 'w2') d.setDate(d.getDate() + 13);
+    else if (wahl === 'm1') { d.setMonth(d.getMonth() + 1); d.setDate(d.getDate() - 1); }
+    else if (wahl === 'm3') { d.setMonth(d.getMonth() + 3); d.setDate(d.getDate() - 1); }
+    else if (wahl === 'm6') { d.setMonth(d.getMonth() + 6); d.setDate(d.getDate() - 1); }
+    else if (wahl === 'j1') { d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1); }
+    else return '';
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)
+      + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  function setEnde(wahl) {
+    state.newEnde = wahl || '';
+    document.querySelectorAll('#kal-endepills .kal-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.ende === state.newEnde);
+    });
+    var feld = document.getElementById('kal-ende-datum');
+    if (feld) {
+      feld.hidden = (state.newEnde !== 'datum');
+      // Ein leeres Datumsfeld hilft niemandem: Vorschlag ist ein Monat.
+      if (state.newEnde === 'datum' && !feld.value) feld.value = endeDatum('m1');
+      // Vor dem Starttag ergibt ein Ende keinen Sinn.
+      if (state.selected) feld.min = state.selected;
+    }
+    zeigeEnde();
+  }
+
+  /** Schreibt in Klartext an, wann die Serie das letzte Mal auftritt. */
+  function zeigeEnde() {
+    var hint = document.getElementById('kal-ende-hint');
+    if (!hint) return;
+    if (!state.newRecur) { hint.textContent = ''; return; }
+    var bis = endeDatum(state.newEnde);
+    if (!bis) {
+      hint.textContent = 'Die Serie läuft ohne Ende weiter.';
+      return;
+    }
+    hint.textContent = 'Letzter möglicher Termin: ' + datumDe(bis);
+  }
+
+  /* Parametername bewusst nicht `iso` — so heißt eine Hilfsfunktion
+     dieser Datei, die dadurch verdeckt würde. */
+  function datumDe(wert) {
+    if (!wert || wert.length < 10) return wert || '';
+    return wert.slice(8) + '.' + wert.slice(5, 7) + '.' + wert.slice(0, 4);
   }
   function toggleWeekday(day, btn) {
     var i = state.newWeekdays.indexOf(day);
@@ -591,12 +686,20 @@
     var kundeId = state.kundenMap[kundeVal.toLowerCase()] || '';
     var wochentage = state.newRecur === 'weekdays'
       ? state.newWeekdays.slice().sort().join('') : '';
+    var serieBis = state.newRecur ? endeDatum(state.newEnde) : '';
+    if (state.newRecur && state.newEnde === 'datum' && !serieBis) {
+      toast('Bitte ein Enddatum für die Serie wählen.', 'err'); return;
+    }
+    if (serieBis && serieBis < state.selected) {
+      toast('Die Serie kann nicht enden, bevor sie beginnt.', 'err'); return;
+    }
     var body = {
       titel: t, datum: state.selected, ganztags: state.allday,
       uhrzeit: state.allday ? '' : uhr,
       kategorie: state.newCat,
       wiederholung: state.newRecur,
       wochentage: wochentage,
+      serie_bis: serieBis,
       // Anzeigename immer speichern (lesbares Badge); kunde_id verknüpft zusätzlich
       // mit dem Stammkunden, falls ein Treffer gewählt wurde.
       kunde_id: kundeId, kunde_freitext: kundeVal

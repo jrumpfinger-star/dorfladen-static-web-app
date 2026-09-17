@@ -117,6 +117,100 @@ def test_expand_entry_serie_ende_behaelt_historie():
     assert by_date["2026-07-21"]["status"] == "erledigt"
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  Serienende (Spec specs/kalender-serienende)
+#
+#  Aus dem Laden: "Bei der Terminserie sollte es auch moeglich sein
+#  anzugeben, wie lange die Serie laufen soll."
+#
+#  Das Ende reist im vorhandenen Textfeld mit, weil die Dataverse-Tabelle
+#  feste Spalten hat: "weekly~2026-12-31". Trennzeichen ist "~" und nicht
+#  ":", denn letzteres trennt schon weekdays von den Ziffern.
+# ══════════════════════════════════════════════════════════════════════
+
+def test_serienende_zerlegen():
+    # TC-E01: ohne Ende bleibt alles wie bisher
+    assert serien.zerlege("weekly") == ("weekly", "", "")
+    # TC-E02: mit Ende
+    assert serien.zerlege("weekly~2026-12-31") == ("weekly", "", "2026-12-31")
+    # TC-E03: Wochentage UND Ende - beide Trennzeichen im selben Text
+    assert serien.zerlege("weekdays:135~2026-12-31") == ("weekdays", "135", "2026-12-31")
+    assert serien.zerlege("weekdays:135") == ("weekdays", "135", "")
+    # Leer bleibt leer
+    assert serien.zerlege("") == ("", "", "")
+    assert serien.zerlege(None) == ("", "", "")
+
+
+def test_serienende_hin_und_zurueck():
+    # TC-E04: Was zusammengebaut wird, muss sich wieder zerlegen lassen.
+    faelle = [
+        ("weekly", "", ""),
+        ("weekly", "", "2026-12-31"),
+        ("weekdays", "135", ""),
+        ("weekdays", "135", "2026-12-31"),
+        ("monthly", "", "2027-01-01"),
+    ]
+    for rec, wd, ende in faelle:
+        text = serien.fuege_zusammen(rec, wd, ende)
+        assert serien.zerlege(text) == (rec, wd, ende), text
+    # Ein Einzeltermin hat kein Ende - der Text bleibt leer.
+    assert serien.fuege_zusammen("", "", "2026-12-31") == ""
+
+
+def test_serienende_begrenzt_die_expansion():
+    # TC-E05: woechentlich ab 20.07., Ende 03.08. - der 10.08. faellt weg.
+    entry = {"id": "1", "datum": "2026-07-20", "wiederholung": "weekly",
+             "serie_bis": "2026-08-03"}
+    dates = [i["datum"] for i in
+             serien.expand_entry(entry, "2026-07-20", "2026-08-31")]
+    assert dates == ["2026-07-20", "2026-07-27", "2026-08-03"], dates
+
+    # TC-E06: dieselbe Serie OHNE Ende laeuft weiter.
+    ohne = dict(entry)
+    ohne.pop("serie_bis")
+    dates = [i["datum"] for i in
+             serien.expand_entry(ohne, "2026-07-20", "2026-08-31")]
+    assert dates == ["2026-07-20", "2026-07-27", "2026-08-03",
+                     "2026-08-10", "2026-08-17", "2026-08-24", "2026-08-31"], dates
+
+
+def test_serienende_am_starttag():
+    # TC-E07: Ende am Starttag - genau ein Vorkommen, nicht null.
+    entry = {"id": "1", "datum": "2026-07-20", "wiederholung": "daily",
+             "serie_bis": "2026-07-20"}
+    dates = [i["datum"] for i in
+             serien.expand_entry(entry, "2026-07-01", "2026-07-31")]
+    assert dates == ["2026-07-20"], dates
+
+
+def test_serienende_unlesbar_faellt_auf_endlos_zurueck():
+    # TC-E08: Ein kaputter Wert darf den Kalender nicht leerraeumen -
+    # lieber zu viele Termine als gar keine.
+    entry = {"id": "1", "datum": "2026-07-20", "wiederholung": "weekly",
+             "serie_bis": "kaputt"}
+    dates = [i["datum"] for i in
+             serien.expand_entry(entry, "2026-07-20", "2026-08-03")]
+    assert dates == ["2026-07-20", "2026-07-27", "2026-08-03"], dates
+
+
+def test_serienende_und_override_das_fruehere_gewinnt():
+    # TC-E09: Beendet jemand die Serie zusaetzlich von Hand, gilt das
+    # fruehere der beiden Enden.
+    entry = {"id": "1", "datum": "2026-07-20", "wiederholung": "weekly",
+             "serie_bis": "2026-08-31"}
+    overrides = {"2026-08-03": {"status": "serie_ende"}}
+    dates = [i["datum"] for i in
+             serien.expand_entry(entry, "2026-07-20", "2026-08-31", overrides)]
+    assert dates == ["2026-07-20", "2026-07-27"], dates
+
+    # Andersherum: das gespeicherte Ende ist frueher als der Override.
+    entry2 = {"id": "1", "datum": "2026-07-20", "wiederholung": "weekly",
+              "serie_bis": "2026-07-27"}
+    overrides2 = {"2026-08-17": {"status": "serie_ende"}}
+    dates2 = [i["datum"] for i in
+              serien.expand_entry(entry2, "2026-07-20", "2026-08-31", overrides2)]
+    assert dates2 == ["2026-07-20", "2026-07-27"], dates2
+
 def _run():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

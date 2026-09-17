@@ -1016,6 +1016,38 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 /* Kalender: Wochenraster mit ausreichend großen Tagesflächen. */
 .kal-day{ min-height:var(--tap) }
 .kal-tp-btn, .kal-pill, .kal-chip{ min-height:var(--tap-min); border-radius:999px }
+
+/* ── Serienende im Terminfenster ────────────────────────────────────────
+   Aus dem Laden: „Bei der Terminserie sollte es auch möglich sein
+   anzugeben, wie lange die Serie laufen soll … oder endlos." Der Block
+   erscheint nur, wenn überhaupt eine Wiederholung gewählt ist.
+   (Spec kalender-serienende, F1/F2) */
+.kal-ende{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--c-border,#e5e7eb);
+}
+.kal-ende[hidden]{ display:none }
+.kal-ende-lbl{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px; font-weight:600; color:#374151;
+}
+.kal-ende-datum{
+  margin-top:8px;
+  width:100%;
+  min-height:var(--tap-min);
+  padding:8px 12px;
+  border:1px solid var(--c-border,#d1d5db);
+  border-radius:10px;
+  font-size:15px;
+  box-sizing:border-box;
+}
+.kal-ende-datum[hidden]{ display:none }
+.kal-ende-hint{
+  margin-top:6px;
+  font-size:12px; color:#6b7280;
+}
 .kal-toolbar{ position:sticky; top:0; z-index:20; background:var(--c-bg); padding:6px 0 }
 
 /* Kontakt: Nachrichtenkarten. */

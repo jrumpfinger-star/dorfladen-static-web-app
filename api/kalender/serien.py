@@ -17,6 +17,44 @@ from datetime import date, timedelta
 
 RECURRENCES = ("daily", "weekly", "biweekly", "monthly")
 
+# Trennzeichen fuer das Serienende im gespeicherten Text. Bewusst NICHT
+# ":" - das trennt bereits "weekdays" von den Wochentagsziffern.
+#   "weekly"                 -> laeuft endlos
+#   "weekly~2026-12-31"      -> letzter moeglicher Tag ist der 31.12.2026
+#   "weekdays:135~2026-12-31"
+ENDE_TRENNER = "~"
+
+
+def zerlege(roh):
+    """Gespeicherten Wiederholungstext aufteilen.
+
+    Gibt ``(wiederholung, wochentage, serie_bis)``. Alle drei sind Text;
+    fehlende Teile sind leer. Alte Werte ohne Ende bleiben gueltig - sie
+    ergeben schlicht ein leeres ``serie_bis`` und laufen damit weiter wie
+    bisher. (Spec kalender-serienende, F6)
+    """
+    roh = (roh or "").strip()
+    ende = ""
+    if ENDE_TRENNER in roh:
+        roh, _, ende = roh.partition(ENDE_TRENNER)
+        ende = ende.strip()[:10]
+    if roh.startswith("weekdays:"):
+        return "weekdays", roh.split(":", 1)[1], ende
+    return roh, "", ende
+
+
+def fuege_zusammen(wiederholung, wochentage, serie_bis):
+    """Gegenstueck zu :func:`zerlege` - baut den Speichertext."""
+    if wiederholung == "weekdays":
+        text = "weekdays:" + (wochentage or "")
+    elif wiederholung in RECURRENCES:
+        text = wiederholung
+    else:
+        return ""                      # Einzeltermin: kein Ende noetig
+    if serie_bis:
+        text += ENDE_TRENNER + serie_bis
+    return text
+
 
 def parse_date(value) -> date:
     """Akzeptiert ``date`` oder ISO-String (``YYYY-MM-DD`` / ``YYYY-MM-DDT…``)."""
@@ -117,6 +155,16 @@ def expand_entry(entry: dict, von, bis, overrides=None):
     """
     overrides = overrides or {}
     wiederholung = entry.get("wiederholung") or ""
+    # Serienende aus dem Eintrag: Ab dem Folgetag gibt es keine Vorkommen
+    # mehr. Leer bedeutet "laeuft endlos" - so verhalten sich alle
+    # Eintraege, die vor dieser Erweiterung angelegt wurden.
+    # (Spec kalender-serienende, F5)
+    serie_bis = (entry.get("serie_bis") or "").strip()[:10]
+    if serie_bis:
+        try:
+            bis = min(parse_date(bis), parse_date(serie_bis))
+        except ValueError:
+            pass                        # unlesbares Ende: lieber endlos als leer
     # Serien-Ende: frühestes Datum mit Status "serie_ende" (ab hier keine Vorkommen mehr).
     ende = None
     for iso_d, ov in overrides.items():

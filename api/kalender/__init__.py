@@ -112,11 +112,8 @@ def _ok(payload, status=200):
 
 def _serialize(item):
     """Dataverse-Datensatz → API-Objekt (Klartext + Roh-Felder)."""
-    raw_recur = item.get("dl_wiederholung", "") or ""
-    if raw_recur.startswith("weekdays:"):
-        wiederholung, wochentage = "weekdays", raw_recur.split(":", 1)[1]
-    else:
-        wiederholung, wochentage = raw_recur, ""
+    wiederholung, wochentage, serie_bis = serien.zerlege(
+        item.get("dl_wiederholung", "") or "")
     return {
         "id": item.get(PK, ""),
         "titel": item.get("dl_titel", ""),
@@ -126,6 +123,7 @@ def _serialize(item):
         "kategorie": item.get("dl_kategorie", "aufgabe") or "aufgabe",
         "wiederholung": wiederholung,
         "wochentage": wochentage,
+        "serie_bis": serie_bis,
         "kunde_id": item.get("dl_stammkundeid", "") or "",
         "kunde_freitext": item.get("dl_kunde_freitext", "") or "",
         "status": item.get("dl_status", "offen") or "offen",
@@ -157,11 +155,31 @@ def _payload_from_body(body):
     if wiederholung == "weekdays":
         if not wochentage:
             errors.append("Bitte mindestens einen Wochentag wählen.")
-        recur_store = "weekdays:" + wochentage
-    elif wiederholung in serien.RECURRENCES:
-        recur_store = wiederholung
-    else:
-        recur_store = ""
+    elif wiederholung not in serien.RECURRENCES:
+        wiederholung = ""
+
+    # Serienende (Spec kalender-serienende). Leer = laeuft endlos.
+    serie_bis = (body.get("serie_bis") or "").strip()[:10]
+    if serie_bis:
+        if not wiederholung:
+            # Ein Einzeltermin hat kein Ende - das Feld waere sinnlos und
+            # wuerde beim Lesen nur verwirren.
+            serie_bis = ""
+        else:
+            try:
+                ende = serien.parse_date(serie_bis)
+            except ValueError:
+                errors.append("Das Enddatum der Serie ist unlesbar.")
+                ende = None
+            if ende is not None and datum:
+                try:
+                    if ende < serien.parse_date(datum):
+                        errors.append("Die Serie kann nicht enden, bevor sie "
+                                      "beginnt.")
+                except ValueError:
+                    pass
+
+    recur_store = serien.fuege_zusammen(wiederholung, wochentage, serie_bis)
 
     payload = {
         "dl_titel": titel,

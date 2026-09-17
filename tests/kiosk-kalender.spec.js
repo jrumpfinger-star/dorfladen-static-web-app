@@ -13,6 +13,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+/* Ohne diese Zeile faengt der Service Worker die API-Aufrufe ab, bevor
+   `page.route` sie sieht — die Mocks liefen ins Leere und jeder Test, der
+   speichert, scheiterte mit „Speichern fehlgeschlagen". Alle uebrigen
+   Kiosk-Suiten blocken den Service Worker bereits; diese hier fehlte. */
+test.use({ serviceWorkers: 'block' });
+
 const ROOT = path.join(__dirname, '..', 'static-site');
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -788,6 +794,87 @@ test.describe('Kiosk-Kalender', () => {
     const overflow = await title.evaluate((el) => el.scrollWidth - el.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
   });
+
+  // ── Serienende (Spec specs/kalender-serienende) ──────────────────────
+  // Aus dem Laden: "Bei der Terminserie sollte es auch moeglich sein
+  // anzugeben, wie lange die Serie laufen soll ... oder endlos."
+
+  test('TC-E12/E13: Das Serienende erscheint nur bei einer Wiederholung', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+
+    const block = page.locator('#kal-ende');
+    // Einmalig ist die Voreinstellung - ein Einzeltermin hat kein Ende.
+    await expect(block).toBeHidden();
+
+    await page.locator('#kal-recurpills [data-newrecur="weekly"]').click();
+    await expect(block).toBeVisible();
+    // F3: Voreinstellung bleibt "Endlos" - das bisherige Verhalten.
+    await expect(page.locator('#kal-endepills [data-ende=""]')).toHaveClass(/active/);
+    await expect(page.locator('#kal-ende-hint')).toContainText('ohne Ende');
+
+    await page.locator('#kal-recurpills [data-newrecur=""]').click();
+    await expect(block).toBeHidden();
+  });
+
+  test('TC-E14: "2 Wochen" nennt den letzten Termin und wird mitgesendet', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+
+    await page.locator('#kal-title').fill('Vertretung Kasse');
+    await page.locator('#kal-recurpills [data-newrecur="daily"]').click();
+    await page.locator('#kal-endepills [data-ende="w2"]').click();
+
+    // Der Starttag zaehlt mit: zwei Wochen sind 14 Tage, also Start + 13.
+    const erwartet = new Date(st.di + 'T12:00:00');
+    erwartet.setDate(erwartet.getDate() + 13);
+    const isoEnde = erwartet.getFullYear() + '-'
+      + ('0' + (erwartet.getMonth() + 1)).slice(-2) + '-'
+      + ('0' + erwartet.getDate()).slice(-2);
+    const de = isoEnde.slice(8) + '.' + isoEnde.slice(5, 7) + '.' + isoEnde.slice(0, 4);
+
+    await expect(page.locator('#kal-ende-hint')).toContainText(de);
+
+    await page.locator('.kal-add').click();
+    await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
+    expect(st.posts[0].wiederholung).toBe('daily');
+    expect(st.posts[0].serie_bis).toBe(isoEnde);
+  });
+
+  test('TC-E15: "Bis Datum" ohne Datum speichert nicht', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+
+    await page.locator('#kal-title').fill('Irgendwas');
+    await page.locator('#kal-recurpills [data-newrecur="weekly"]').click();
+    await page.locator('#kal-endepills [data-ende="datum"]').click();
+
+    const feld = page.locator('#kal-ende-datum');
+    await expect(feld).toBeVisible();
+    // Ein leeres Feld hilft niemandem - vorgeschlagen wird ein Monat.
+    await expect(feld).not.toHaveValue('');
+
+    // Von Hand geleert: Dann darf nichts rausgehen.
+    await feld.fill('');
+    await page.locator('.kal-add').click();
+    await page.waitForTimeout(800);
+    expect(st.posts.length).toBe(0);
+    await expect(page.locator('#kal-modal')).toBeVisible();
+  });
+
+  test('TC-E07-UI: Endlos sendet ein leeres Ende', async ({ page }) => {
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+
+    await page.locator('#kal-title').fill('Laeuft immer');
+    await page.locator('#kal-recurpills [data-newrecur="monthly"]').click();
+    await page.locator('.kal-add').click();
+
+    await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
+    expect(st.posts[0].serie_bis).toBe('');
+  });
 });
-
-
