@@ -347,34 +347,38 @@ async function baeckerOeffnen(page, opts = {}) {
 }
 
 test.describe('Bäcker – Bestellung löschen', () => {
-  test('TC-D06/D07: der aufgeklappte Eintrag löscht mit Bäckerei', async ({ page }) => {
-    const rufe = sammle(page);
-    await baeckerOeffnen(page);
+  test('TC-D06/D07: „Löschen" ist ohne Aufklappen da und löscht mit Bäckerei',
+    async ({ page }) => {
+      const rufe = sammle(page);
+      await baeckerOeffnen(page);
 
-    /* Auf schmalen Schirmen liegt „Verlauf" hinter dem Blatt. Geprüft wird
-       hier das Löschen, nicht der Weg dorthin — den decken die
-       Navigationstests ab. Deshalb direkt in den Bereich. */
-    await page.evaluate(() => window.KBaecker && window.KBaecker.sub('verlauf'));
-    await page.locator('#panel-baecker .bk-hist').first().waitFor({ timeout: 8000 });
-    // Die Positionen liegen hinter dem Aufklappen – dort sitzt „Löschen".
-    await page.locator('#panel-baecker .bk-hist .d').first().click();
-    await page.locator('#panel-baecker .bk-hist-fuss').first().waitFor({ timeout: 8000 });
+      /* Auf schmalen Schirmen liegt „Verlauf" hinter dem Blatt. Geprüft wird
+         hier das Löschen, nicht der Weg dorthin — den decken die
+         Navigationstests ab. Deshalb direkt in den Bereich. */
+      await page.evaluate(() => window.KBaecker && window.KBaecker.sub('verlauf'));
+      await page.locator('#panel-baecker .bk-hist').first().waitFor({ timeout: 8000 });
 
-    await page.locator('#panel-baecker .bk-hist-fuss')
-      .getByRole('button', { name: /Löschen/ }).first().click();
+      /* F16: Der Knopf muss OHNE Aufklappen dastehen. Vorher lag er hinter
+         dem Aufklappen und wurde im Laden schlicht nicht gefunden. */
+      await expect(page.locator('#panel-baecker .bk-hist-liste')).toHaveCount(0);
+      const weg = page.locator('#panel-baecker .bk-hist').first()
+        .locator('.bk-hist-weg');
+      await expect(weg).toHaveCount(1);
 
-    const dlg = page.locator('#bk-overlay .bk-dlg');
-    await expect(dlg).toBeVisible();
-    await expect(dlg).toContainText('Bäckerei Freundl');
-    await expect(dlg).toContainText(/E-Mail/i);
-    expect(rufe).toEqual([]);
+      await weg.click();
 
-    await dlg.getByRole('button', { name: 'Löschen' }).click();
+      const dlg = page.locator('#bk-overlay .bk-dlg');
+      await expect(dlg).toBeVisible();
+      await expect(dlg).toContainText('Bäckerei Freundl');
+      await expect(dlg).toContainText(/E-Mail/i);
+      expect(rufe).toEqual([]);
 
-    await expect.poll(() => rufe.length, { timeout: 8000 }).toBe(1);
-    expect(rufe[0].url).toContain('/baecker-order/' + GESTERN + '/loeschen');
-    expect(rufe[0].leib.baeckerei).toBe('freundl');
-  });
+      await dlg.getByRole('button', { name: 'Löschen' }).click();
+
+      await expect.poll(() => rufe.length, { timeout: 8000 }).toBe(1);
+      expect(rufe[0].url).toContain('/baecker-order/' + GESTERN + '/loeschen');
+      expect(rufe[0].leib.baeckerei).toBe('freundl');
+    });
 
   test('TC-D16: vergangene Liefertage sind abgesetzt und beschriftet',
     async ({ page }) => {
@@ -384,5 +388,132 @@ test.describe('Bäcker – Bestellung löschen', () => {
       await expect(kachel).toHaveCount(1);
       await expect(kachel).toHaveClass(/lesen/);
       await expect(kachel).toContainText('geliefert');
+    });
+});
+
+/* ── Getränke ─────────────────────────────────────────────────────────
+   Aus dem Laden: "Ich hab doch gesagt, dass Bäcker und Getränke
+   Bestellungen auch gelöscht werden sollen" und "Bei Getränke möchte ich
+   nach Klick auch sehen, was bestellt wurde." */
+
+const G_VERLAUF = [
+  { datum: GESTERN, datum_de: GESTERN.slice(8) + '.' + GESTERN.slice(5, 7) + '.' + GESTERN.slice(0, 4),
+    kw: 38, status: 2,
+    summen: { kisten: 65, positionen: 3, wert: 0, pfand_max: 0 },
+    positionen: [
+      { nummer: '101', name: 'Spezi', gebinde: '20x0,5', menge: 30 },
+      { nummer: '102', name: 'Mineralwasser', gebinde: '12x1,0', menge: 25 },
+      { nummer: '103', name: 'Apfelschorle', gebinde: '12x0,7', menge: 10 },
+    ],
+    protokoll: [] },
+];
+
+async function mockGetraenke(page, opts = {}) {
+  const j = (o, st) => ({ status: st || 200, contentType: 'application/json',
+    body: JSON.stringify(o) });
+
+  await page.route('**/api/getraenke-order**', (route) => {
+    const u = route.request().url();
+    if (/loeschen/.test(u)) {
+      if (opts.loeschFehler) {
+        return route.fulfill(j({ success: false, error: 'Der Speicher antwortet nicht.' }, 502));
+      }
+      return route.fulfill(j({ success: true, meldung: 'Die Bestellung wurde gelöscht.' }));
+    }
+    if (/mode=verlauf/.test(u)) {
+      return route.fulfill(j({ success: true, verlauf: G_VERLAUF }));
+    }
+    if (/getraenke-order\/\d{4}-\d{2}-\d{2}/.test(u)) {
+      return route.fulfill(j({
+        success: true,
+        bestellung: { datum: MORGEN, status: 0, positionen: [], protokoll: [] },
+        artikel: [], gruppen: [], pfand: {}, letzte: null,
+        bestellbar: true, config: { name: 'Kratzer' }, testbetrieb: true,
+        summen: { kisten: 0, positionen: 0 },
+      }));
+    }
+    return route.fulfill(j({
+      success: true, termin: MORGEN, kw: 38, letzte: null,
+      config: { name: 'Kratzer' }, testbetrieb: true,
+    }));
+  });
+
+  await page.route('**/api/**', (route) => {
+    if (/getraenke-order/.test(route.request().url())) return route.fallback();
+    return route.fulfill(j({ success: true }));
+  });
+}
+
+async function getraenkeVerlauf(page, opts = {}) {
+  await mockGetraenke(page, opts);
+  await page.goto(KIOSK_URL, { waitUntil: 'domcontentloaded' });
+  await page.locator('.k-tab[data-tab="getraenke"]').click();
+  await page.waitForTimeout(1500);
+  /* Auf schmalen Schirmen liegt der Reiter „Verlauf" hinter dem Blatt und
+     ist für Playwright „not visible". Geprüft wird hier das Löschen und
+     das Nachsehen, nicht der Weg dorthin — deshalb der Unterreiter direkt
+     über sein `data-sub`. */
+  await page.evaluate(() => {
+    const b = document.querySelector('#panel-getraenke [data-sub="verlauf"]');
+    if (b) b.click();
+  });
+  await page.locator('#panel-getraenke .gk-vrow').first().waitFor({ timeout: 10000 });
+}
+
+test.describe('Getränke – Bestellung löschen und nachsehen', () => {
+  test('TC-D17: jeder Verlaufseintrag hat „Löschen"', async ({ page }) => {
+    await getraenkeVerlauf(page);
+    const zeilen = page.locator('#panel-getraenke .gk-vrow');
+    await expect(zeilen).toHaveCount(G_VERLAUF.length);
+    await expect(zeilen.first().getByRole('button', { name: 'Löschen' })).toHaveCount(1);
+  });
+
+  test('TC-D18/D19: Klick zeigt die Positionen, erneut klappt zu', async ({ page }) => {
+    await getraenkeVerlauf(page);
+
+    // Zugeklappt ist noch nichts zu sehen.
+    await expect(page.locator('#panel-getraenke .gk-vliste')).toHaveCount(0);
+
+    await page.locator('#panel-getraenke .gk-vkopf').first().click();
+    const liste = page.locator('#panel-getraenke .gk-vliste');
+    await expect(liste).toHaveCount(1);
+    // Genau die bestellten Positionen, mit Menge.
+    await expect(liste).toContainText('Spezi');
+    await expect(liste).toContainText('Mineralwasser');
+    await expect(liste).toContainText('Apfelschorle');
+    await expect(liste.locator('tbody tr')).toHaveCount(3);
+    await expect(liste).toContainText('20x0,5');
+
+    await page.locator('#panel-getraenke .gk-vkopf').first().click();
+    await expect(page.locator('#panel-getraenke .gk-vliste')).toHaveCount(0);
+  });
+
+  test('TC-D20/D21: Rückfrage warnt, Abbrechen sendet nichts, Bestätigen löscht',
+    async ({ page }) => {
+      const rufe = sammle(page);
+      await getraenkeVerlauf(page);
+
+      await page.locator('#panel-getraenke .gk-vrow').first()
+        .getByRole('button', { name: 'Löschen' }).click();
+
+      const dlg = page.locator('#gk-weg-blatt');
+      await expect(dlg).toBeVisible();
+      // Gesendet: Die Mail bleibt draußen. Das muss dastehen.
+      await expect(dlg).toContainText(/E-Mail/i);
+      expect(rufe).toEqual([]);
+
+      // TC-D21: Abbrechen
+      await dlg.getByRole('button', { name: 'Abbrechen' }).click();
+      await page.waitForTimeout(500);
+      expect(rufe).toEqual([]);
+      await expect(page.locator('#panel-getraenke .gk-vrow')).toHaveCount(G_VERLAUF.length);
+
+      // TC-D20: Bestätigen
+      await page.locator('#panel-getraenke .gk-vrow').first()
+        .getByRole('button', { name: 'Löschen' }).click();
+      await page.locator('#gk-weg-blatt').getByRole('button', { name: 'Löschen' }).click();
+
+      await expect.poll(() => rufe.length, { timeout: 8000 }).toBe(1);
+      expect(rufe[0].url).toContain('/getraenke-order/' + GESTERN + '/loeschen');
     });
 });

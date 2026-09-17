@@ -173,6 +173,16 @@ def _verlauf(url, hdrs):
             "kw": store.kw(o.get("datum", "")),
             "status": o.get("status"),
             "summen": store.summen(positionen, pfand),
+            # Aus dem Laden: „Bei Getraenke moechte ich nach Klick auch sehen,
+            # was bestellt wurde." Die Positionen reisen gleich mit - der
+            # Verlauf umfasst nur wenige Bestellungen, ein zweiter Abruf je
+            # Aufklappen waere Aufwand ohne Gegenwert.
+            # (Spec bestellung-loeschen, F14)
+            "positionen": [
+                {"nummer": p["nummer"], "name": p["name"],
+                 "gebinde": p["gebinde"], "menge": p["menge"]}
+                for p in positionen if store.bestellt(p)
+            ],
             "protokoll": o.get("protokoll", []),
         })
     return out
@@ -331,6 +341,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         })
 
     # ── Schreibende Aktionen ─────────────────────────────────────────
+    if aktion == "loeschen":
+        # Eine versehentliche oder zum Ausprobieren erfasste Bestellung soll
+        # verschwinden koennen. Sie wird wirklich geloescht, nicht nur
+        # ausgeblendet - sonst kaeme sie beim naechsten Laden zurueck.
+        # (Spec bestellung-loeschen, F4)
+        rec_id, vorhanden = store.load_order(url, hdrs, datum)
+        if not rec_id or not vorhanden:
+            return _err("Zu diesem Liefertermin ist nichts gespeichert.", 404)
+        if not store.delete_json(url, hdrs, rec_id):
+            return _err("Die Bestellung konnte nicht gel\u00f6scht werden. "
+                        "Bitte sp\u00e4ter erneut versuchen.", 502)
+        return _ok({"datum": datum, "meldung": "Die Bestellung wurde gel\u00f6scht."})
+
     if aktion == "speichern":
         rec_id, order = store.load_order(url, hdrs, datum)
         order = order or {"datum": datum, "protokoll": []}

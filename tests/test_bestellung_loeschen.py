@@ -253,7 +253,81 @@ def baecker_tests():
     pruefe("TC-D11  und loescht nichts", dv.geloescht == [])
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  Getraenke
+# ══════════════════════════════════════════════════════════════════════
+
+def getraenke_tests():
+    print("Getraenke")
+    getraenke = lade("getraenke-order/__init__.py", "getraenke_order_test")
+
+    def lauf(dv, datum, aktion="loeschen"):
+        requests.get, requests.post = dv.get, dv.post
+        requests.patch, requests.delete = dv.patch, dv.delete
+        return getraenke.main(Anfrage(route={"datum": datum, "aktion": aktion}))
+
+    # TC-D20: vorhandene Bestellung verschwindet wirklich
+    dv = Dataverse({
+        "getraenke_order_2026-09-14": ("rec-g1", {"datum": "2026-09-14", "status": 1}),
+    })
+    antwort = lauf(dv, "2026-09-14")
+    pruefe("TC-D20  Loeschen meldet Erfolg", antwort.status_code == 200,
+           f"war {antwort.status_code}: {rumpf(antwort)}")
+    pruefe("TC-D20  der Datensatz ist weg", dv.geloescht == ["rec-g1"],
+           f"geloescht: {dv.geloescht}")
+    pruefe("TC-D20  nichts bleibt liegen", not dv.saetze, f"Rest: {list(dv.saetze)}")
+
+    # TC-D22: unbekannter Termin -> 404, kein stiller Erfolg
+    dv = Dataverse()
+    antwort = lauf(dv, "2026-09-15")
+    pruefe("TC-D22  unbekannter Termin gibt 404", antwort.status_code == 404,
+           f"war {antwort.status_code}")
+    pruefe("TC-D22  und loescht nichts", dv.geloescht == [])
+
+    # TC-D23: unsinniges Datum -> 400
+    dv = Dataverse()
+    antwort = lauf(dv, "irgendwas")
+    pruefe("TC-D23  unsinniges Datum gibt 400", antwort.status_code == 400,
+           f"war {antwort.status_code}")
+    pruefe("TC-D23  und loescht nichts", dv.geloescht == [])
+
+    # Der Speicher streikt -> 502, keine falsche Erfolgsmeldung
+    dv = Dataverse({
+        "getraenke_order_2026-09-14": ("rec-g2", {"datum": "2026-09-14", "status": 1}),
+    })
+    dv.delete_status = 500
+    antwort = lauf(dv, "2026-09-14")
+    pruefe("Streik  gibt 502 statt Erfolg", antwort.status_code == 502,
+           f"war {antwort.status_code}")
+
+    # TC-D18/F14: Der Verlauf traegt die Positionen mit - ohne sie koennte
+    # der Kiosk beim Aufklappen nichts zeigen.
+    dv = Dataverse({
+        "getraenke_order_2026-09-14": ("rec-g3", {
+            "datum": "2026-09-14", "status": 2,
+            "positionen": [
+                {"nummer": "101", "name": "Spezi", "gebinde": "20x0,5", "menge": 3},
+                {"nummer": "102", "name": "Wasser", "gebinde": "12x1,0", "menge": 0},
+            ],
+        }),
+    })
+    requests.get, requests.post = dv.get, dv.post
+    requests.patch, requests.delete = dv.patch, dv.delete
+    antwort = getraenke.main(Anfrage(method="GET", params={"mode": "verlauf"}))
+    daten = rumpf(antwort)
+    eintraege = daten.get("verlauf", [])
+    pruefe("TC-D18  Verlauf liefert einen Eintrag", len(eintraege) == 1,
+           f"waren {len(eintraege)}")
+    pos = eintraege[0].get("positionen", []) if eintraege else []
+    pruefe("TC-D18  nur wirklich Bestelltes ist dabei", len(pos) == 1,
+           f"Positionen: {pos}")
+    pruefe("TC-D18  mit Nummer, Name, Gebinde und Menge",
+           pos and pos[0].get("name") == "Spezi" and pos[0].get("menge") == 3
+           and pos[0].get("gebinde") == "20x0,5",
+           f"Position: {pos}")
+
 if __name__ == "__main__":
     metzger_tests()
     baecker_tests()
+    getraenke_tests()
     print("\nAlle Pruefungen bestanden.")

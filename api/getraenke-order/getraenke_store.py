@@ -157,6 +157,25 @@ def write_json(url, hdrs, key, rec_id, data, bezeichnung="Getr\u00e4nke"):
         return False
 
 
+def delete_json(url, hdrs, rec_id):
+    """Loescht einen Datensatz. Ein bereits fehlender gilt als geloescht.
+
+    404 wird bewusst als Erfolg gewertet: Das Ziel ist „der Datensatz ist
+    weg" — ist er das schon, gibt es nichts zu melden.
+    """
+    if not rec_id:
+        return False
+    try:
+        r = requests.delete(
+            f"{url}/api/data/v9.2/{ENTITY}({rec_id})",
+            headers={**hdrs, "If-Match": "*"}, timeout=30,
+        )
+        return r.status_code in (200, 204, 404)
+    except Exception as e:
+        logging.error(f"[getraenke] delete {rec_id} failed: {e}")
+        return False
+
+
 def read_many(url, hdrs, prefix, top=400):
     """Alle Datensaetze mit Schluessel-Praefix als Liste von (key, daten)."""
     out = []

@@ -71,6 +71,24 @@ im Read Modus."*
   „✓ korrigiert", „Entwurf", „offen", „nicht bestellt" oder „keine
   Lieferung" — beim Metzger zusätzlich die Zahl der Positionen.
 
+## Nachtrag 2: Getränke und die Auffindbarkeit beim Bäcker
+
+Aus dem Laden: *„Ich hab doch gesagt, dass Bäcker und Getränke
+Bestellungen auch gelöscht werden sollen"* und *„Bei Getränke möchte ich
+nach Klick auch sehen, was bestellt wurde."*
+
+Beim Bäcker war „Löschen" zwar vorhanden, lag aber **hinter dem
+Aufklappen** — es war da, aber niemand fand es. Bei **Getränke** fehlte
+es ganz.
+
+- **F14** Der Getränke-Verlauf lässt sich aufklappen und zeigt dann die
+  bestellten Positionen (Nummer, Artikel, Gebinde, Kisten).
+- **F15** Der Getränke-Verlauf hat je Eintrag **„Löschen"**, mit
+  derselben Rückfrage und demselben Hinweis auf die bereits versandte
+  E-Mail.
+- **F16** Beim Bäcker steht „Löschen" in der **zugeklappten** Zeile —
+  sichtbar ohne weiteren Klick.
+
 ## Testfälle
 
 | Nr. | Fall | Erwartung |
@@ -80,11 +98,19 @@ im Read Modus."*
 | TC-D03 | Metzger: Rückfrage abbrechen | nichts wird gesendet, Eintrag bleibt |
 | TC-D04 | Metzger: bestätigen | `POST …/metzger-order/<datum>/loeschen`, Eintrag verschwindet |
 | TC-D05 | Metzger: gesendete Bestellung | Rückfrage nennt, dass die E-Mail bleibt |
-| TC-D06 | Bäcker-Verlauf aufklappen | der Eintrag hat „Löschen" |
+| TC-D06 | Bäcker-Verlauf, **ohne** Aufklappen | „Löschen" ist sichtbar |
 | TC-D07 | Bäcker: bestätigen | `POST …/baecker-order/<datum>/loeschen` mit Bäckerei |
 | TC-D08 | Bäcker: Fehler vom Server | Meldung, Eintrag bleibt stehen |
 | TC-D13 | Metzger: Tageskachel mit gesendeter Bestellung | zeigt „✓ gesendet" und die Positionszahl |
 | TC-D14 | Metzger: Kachel eines vergangenen Tages | anklickbar, Klasse `lesen` |
 | TC-D15 | Metzger: vergangener Tag geöffnet | kein „Korrigieren", Hinweis „nur zum Nachsehen" |
 | TC-D16 | Bäcker: Kachel eines vergangenen Tages | „✓ geliefert", Klasse `lesen` |
+| TC-D17 | Getränke-Verlauf | jeder Eintrag hat „Löschen" |
+| TC-D18 | Getränke: Zeile antippen | klappt auf und zeigt die Positionen |
+| TC-D19 | Getränke: erneut antippen | klappt wieder zu |
+| TC-D20 | Getränke: löschen bestätigen | `POST …/getraenke-order/<datum>/loeschen` |
+| TC-D21 | Getränke: Rückfrage abbrechen | nichts wird gesendet |
+| TC-D22 | Server Getränke: unbekannter Termin | 404 |
+| TC-D23 | Server Getränke: unsinniges Datum | 400 |
+
 

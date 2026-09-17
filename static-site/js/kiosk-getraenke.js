@@ -1197,6 +1197,14 @@ window.KGetraenke = (function () {
       });
   }
 
+  /* ── Verlauf ───────────────────────────────────────────────────────
+     Aus dem Laden zwei Wünsche: „Bei Getränke möchte ich nach Klick auch
+     sehen, was bestellt wurde" und Testbestellungen sollen sich löschen
+     lassen. Die Zeile klappt deshalb auf; die Positionen kommen mit dem
+     Verlauf mit, ein zweiter Abruf wäre Aufwand ohne Gegenwert.
+     (Spec bestellung-loeschen, F1/F14) */
+  var _vOffen = {};
+
   function verlaufAnsicht() {
     if (!_verlauf.length) {
       return '<div class="k-empty">Es wurde noch keine Bestellung \u00fcber den '
@@ -1204,13 +1212,94 @@ window.KGetraenke = (function () {
     }
     return '<div class="gk-panel"><h3>Gesendete Bestellungen</h3><div class="gk-verlauf">'
       + _verlauf.map(function (v) {
-          return '<div>' + esc(v.datum_de || v.datum) + ' \u00b7 KW ' + (v.kw || '')
+          var offen = !!_vOffen[v.datum];
+          var h = '<div class="gk-vrow' + (offen ? ' auf' : '') + '">';
+          h += '<button class="gk-vkopf" onclick="KGetraenke.verlaufAuf(\''
+            + v.datum + '\')" aria-expanded="' + (offen ? 'true' : 'false') + '">'
+            + '<span class="pf">' + (offen ? '\u25be' : '\u25b8') + '</span>'
+            + '<span class="tx"><b>' + esc(v.datum_de || v.datum) + ' \u00b7 KW '
+            + (v.kw || '') + '</b>'
             + '<span>' + (v.summen ? v.summen.kisten + ' Kisten \u00b7 '
               + v.summen.positionen + ' Positionen' : '')
-            + '</span>'
-            + (v.status === 2 ? '<span>zuletzt korrigiert</span>' : '')
-            + '</div>';
+            + (v.status === 2 ? ' \u00b7 zuletzt korrigiert' : '') + '</span></span>'
+            + '</button>';
+          h += '<button class="gk-btn weg" onclick="KGetraenke.bestellungWeg(\''
+            + v.datum + '\',' + (v.status || 0) + ')">L\u00f6schen</button>';
+          if (offen) h += verlaufListe(v);
+          return h + '</div>';
         }).join('') + '</div></div>';
+  }
+
+  function verlaufListe(v) {
+    var pos = v.positionen || [];
+    if (!pos.length) {
+      return '<div class="gk-vliste"><div class="gk-vleer">'
+        + 'Zu dieser Bestellung sind keine Positionen hinterlegt.</div></div>';
+    }
+    var h = '<div class="gk-vliste"><table class="gk-vtab">'
+      + '<thead><tr><th>Nr.</th><th>Artikel</th><th class="r">Kisten</th></tr></thead><tbody>';
+    pos.forEach(function (p) {
+      h += '<tr><td class="nr">' + esc(p.nummer || '') + '</td>'
+        + '<td>' + esc(p.name || '')
+        + (p.gebinde ? ' <span class="gb">' + esc(p.gebinde) + '</span>' : '')
+        + '</td><td class="r"><b>' + esc(String(p.menge || 0)) + '</b></td></tr>';
+    });
+    return h + '</tbody></table></div>';
+  }
+
+  function verlaufAuf(datum) {
+    if (_vOffen[datum]) delete _vOffen[datum];
+    else _vOffen[datum] = true;
+    zeichne();
+  }
+
+  /* Eine Bestellung aus dem Verlauf entfernen. Die Rückfrage sagt
+     ausdrücklich, dass eine bereits versandte E-Mail dadurch NICHT
+     zurückgeholt wird. (Spec bestellung-loeschen, F2) */
+  function bestellungWeg(datum, status) {
+    var v = (_verlauf || []).filter(function (x) { return x.datum === datum; })[0] || {};
+    var text = 'Die Bestellung vom ' + (v.datum_de || datum)
+      + (v.kw ? ' (KW ' + v.kw + ')' : '') + ' wird gelöscht.';
+    if (status >= 1) {
+      text += ' Achtung: Die E-Mail an den Getränkelieferanten ist bereits raus '
+        + 'und wird dadurch nicht zurückgeholt. Gelöscht wird nur der Eintrag hier.';
+    }
+    frageLoeschen('Bestellung löschen?', text, function () {
+      fetch(API + '/getraenke-order/' + encodeURIComponent(datum) + '/loeschen', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: '{}',
+      })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; })
+            .then(function (res) {
+              if (!r.ok || res.error) {
+                throw new Error(res.error || 'Die Bestellung konnte nicht gelöscht werden.');
+              }
+              return res;
+            });
+        })
+        .then(function () {
+          delete _vOffen[datum];
+          toast('Bestellung gelöscht.');
+          ladeVerlauf().then(zeichne);
+        })
+        .catch(function (e) {
+          toast(e.message || 'Die Bestellung konnte nicht gelöscht werden.');
+        });
+    });
+  }
+
+  /* Rückfrage im Stil der übrigen Blätter dieser Datei — kein natives
+     `confirm` (Konstitution 6). */
+  function frageLoeschen(titel, text, ja) {
+    var o = blatt('gk-weg-blatt',
+      '<header><h3>' + esc(titel) + '</h3></header>'
+      + '<div class="gk-body"><div class="gk-warn">' + esc(text) + '</div></div>'
+      + '<footer><button class="zu" id="gkw-ab">Abbrechen</button>'
+      + '<button class="ok" id="gkw-ok">Löschen</button></footer>');
+    $('gkw-ab').onclick = function () { o.remove(); };
+    $('gkw-ok').onclick = function () { o.remove(); ja(); };
   }
 
   // Ein Zuhoerer fuer die Artikelpflege - die Liste wird komplett neu gebaut.
@@ -1222,6 +1311,7 @@ window.KGetraenke = (function () {
 
   return {
     onShow: onShow,
+    verlaufAuf: verlaufAuf, bestellungWeg: bestellungWeg,
     // Fuer Tests und die Konsole
     mailtext: mailtext, summen: summen, katalog: katalog,
     setze: setze, anlegenOeffnen: anlegenOeffnen

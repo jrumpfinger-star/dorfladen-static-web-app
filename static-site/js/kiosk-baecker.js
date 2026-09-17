@@ -1597,6 +1597,14 @@
           + '\',\'' + e.datum + '\')">' + luc('printer', 14) + ' '
           + (e.druck_offen ? 'Drucken' : 'Erneut') + '</button>';
       }
+      /* „Löschen" steht in der zugeklappten Zeile. Vorher lag es hinter dem
+         Aufklappen — aus dem Laden kam prompt „ich hab doch gesagt, dass
+         Bäcker-Bestellungen auch gelöscht werden sollen": Es war da, aber
+         niemand fand es. (Spec bestellung-loeschen, F1) */
+      h += '<button class="bk-btn weg bk-hist-weg" title="Bestellung löschen"'
+        + ' onclick="event.stopPropagation();KBaecker.bestellungWeg(\''
+        + e.datum + '\',\'' + esc(e.baeckerei) + '\',' + (e.status || 0) + ')">'
+        + luc('trash-2', 14) + ' Löschen</button>';
       if (offen) h += verlaufListe(schluessel, e);
       h += '</div>';
     });
@@ -1641,11 +1649,7 @@
     h += '<div class="bk-hist-fuss"><span>' + pos.length + ' Positionen · ' + stk + ' Stück</span>'
       + '<button class="bk-btn" onclick="event.stopPropagation();KBaecker.tagAusVerlauf(\''
       + e.datum + '\',\'' + esc(e.baeckerei) + '\')">' + luc('external-link', 14)
-      + ' Im Bestell-Tab öffnen</button>'
-      // Testbestellungen sollen verschwinden koennen (Spec F1).
-      + '<button class="bk-btn weg" onclick="event.stopPropagation();KBaecker.bestellungWeg(\''
-      + e.datum + '\',\'' + esc(e.baeckerei) + '\',' + (e.status || 0) + ')">'
-      + luc('trash-2', 14) + ' Löschen</button></div>';
+      + ' Im Bestell-Tab öffnen</button></div>';
     return h + '</div>';
   }
 

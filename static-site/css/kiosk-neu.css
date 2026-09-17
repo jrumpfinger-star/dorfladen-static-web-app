@@ -3010,6 +3010,60 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
 #panel-baecker .bk-btn.weg:hover{
   background:#fdf3f2; border-color:#d98b8b;
 }
+/* „Löschen" steht beim Bäcker in der zugeklappten Zeile — sonst fand es
+   niemand. (Spec bestellung-loeschen, F1) */
+.bk-hist .bk-btn.bk-hist-weg{ white-space:nowrap }
+
+/* ── Getränke: Verlauf aufklappbar und löschbar ─────────────────────────
+   Aus dem Laden: „Bei Getränke möchte ich nach Klick auch sehen, was
+   bestellt wurde" — und Testbestellungen sollen verschwinden können.
+   (Spec bestellung-loeschen, F1/F14) */
+#panel-getraenke .gk-vrow{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  margin-bottom:6px;
+}
+#panel-getraenke .gk-vkopf{
+  flex:1 1 auto;
+  display:flex; align-items:center; gap:8px;
+  min-width:0;
+  background:none; border:0; padding:0;
+  font:inherit; text-align:left; cursor:pointer;
+  min-height:var(--tap-min);
+}
+#panel-getraenke .gk-vkopf .pf{ flex:0 0 auto; color:#6b7280; font-size:12px }
+#panel-getraenke .gk-vkopf .tx{ display:flex; flex-direction:column; gap:2px; min-width:0 }
+#panel-getraenke .gk-vkopf .tx span{ font-size:12px; color:#6b7280 }
+
+/* Die aufgeklappte Liste nimmt die ganze Breite unter der Zeile ein. */
+#panel-getraenke .gk-vliste{
+  flex:1 1 100%; margin-top:6px;
+  border-top:1px solid #eef1f0; padding-top:8px;
+}
+#panel-getraenke .gk-vtab{ width:100%; border-collapse:collapse; font-size:.85rem }
+#panel-getraenke .gk-vtab th{
+  text-align:left; font-size:.72rem; font-weight:600; color:#8a9491;
+  padding:2px 6px; border-bottom:1px solid #eef1f0;
+}
+#panel-getraenke .gk-vtab td{ padding:4px 6px; border-bottom:1px solid #f4f6f5 }
+#panel-getraenke .gk-vtab .r{ text-align:right; font-variant-numeric:tabular-nums }
+#panel-getraenke .gk-vtab .nr{ color:#6b7280; font-variant-numeric:tabular-nums }
+#panel-getraenke .gk-vtab .gb{ font-size:.72rem; color:#8a9491 }
+#panel-getraenke .gk-vleer{ font-size:.82rem; color:#6b7280; padding:6px }
+
+/* „Löschen" ist ein Abriss — er darf nicht aussehen wie die Knöpfe daneben. */
+#panel-getraenke .gk-btn.weg{
+  border:1.5px solid #e7c9c9; background:#fff; color:#b42318;
+  border-radius:9px; min-height:var(--tap-min); padding:0 12px;
+  font-size:.8rem; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+#panel-getraenke .gk-btn.weg:hover{ background:#fdf3f2; border-color:#d98b8b }
 
 /* „Löschen" im Verlauf ist ein Abriss — er darf nicht aussehen wie
    „Formular ansehen" daneben. (Spec bestellung-loeschen, F1) */
