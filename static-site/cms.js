@@ -1,4 +1,4 @@
-﻿(function(){
+(function(){
   /* ============================================================================
    * INHALTSVERZEICHNIS (cms.js ~12.600 Zeilen, eine IIFE)
    * Zum Springen: Strg+F nach dem Anker-Text in [Klammern] suchen.
@@ -287,6 +287,11 @@
       +'<div class="cms-ang-row-img">'
       +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
       +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
+      // Bild zum Strichcode holen. Ohne diesen Knopf laesst sich das Bild
+      // nur ueber die Vorschlagsliste laden - wer einen Artikel von Hand
+      // eintraegt (weil er nicht in der Preisliste steht), kam nie daran.
+      // (Spec cms-aktion-bild, F1)
+      +'<button class="cms-bild-load-sp" type="button" title="Bild zum Strichcode suchen" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" style="font-size:11px;background:none;border:none;cursor:pointer;padding:0 2px">&#128269;</button>'
       +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:var(--schrift-normal);background:none;border:none;cursor:pointer;padding:0 2px;color:var(--mut)">\uD83D\uDCC1</button>'
 +'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:var(--schrift-klein);background:none;border:1px solid var(--line);border-radius:var(--r-s);cursor:pointer;padding:1px 4px;color:var(--mut)">\uD83D\uDCCB</button>'
       +'</div>'
@@ -302,6 +307,21 @@
       prodInp.addEventListener('input',function(e){console.log('[CMS] Input:',this.value);artSearchFilter(this);});
       prodInp.addEventListener('focus',function(){artSearchFilter(this);});
       prodInp.addEventListener('blur',function(){setTimeout(function(){var wrap=prodInp.parentElement;if(wrap){var dd=wrap.querySelector('.cms-art-dd');if(dd&&!dd.contains(document.activeElement)&&!dd.matches(':hover')&&!dd.matches(':active'))dd.classList.remove('open');}},300);});
+    }
+    /* Wird der Strichcode von Hand eingetragen (Artikel steht nicht in
+       der Preisliste, also gibt es keinen Vorschlag zum Anklicken),
+       wird das Bild selbsttaetig gesucht. Ein bereits gesetztes Bild
+       bleibt unangetastet. (Spec cms-aktion-bild, F4/F6) */
+    var scInp=row.querySelector('[data-f="artikelnummer"]');
+    if(scInp){
+      scInp.addEventListener('change',function(){
+        var sc=(this.value||'').trim();
+        if(!sc) return;
+        var bildInp=row.querySelector('[data-f="bild_data"]');
+        if(bildInp&&bildInp.value) return;          // schon ein Bild da
+        var rowId=row.id.replace('cms-ar-','');
+        if(typeof cmsLoadBildSharePoint==='function') cmsLoadBildSharePoint(parseInt(rowId));
+      });
     }
     renumberAngRows();
   }
@@ -549,7 +569,7 @@
     img.src = base64Str;
   }
 
-  window.cmsLoadBildSharePoint=function(rowNum){
+  window.cmsLoadBildSharePoint=function(rowNum, frisch){
     var row=document.getElementById('cms-ar-'+rowNum);
     if(!row) return;
     var nrInp=row.querySelector('[data-f="artikelnummer"]');
@@ -566,7 +586,7 @@
     var btn=row.querySelector('[data-action="loadBildSharePoint"]');
     if(btn){btn.disabled=true;btn.textContent='⏳';}
     console.log('[CMS] Loading image for article:',artnr,'strichcode:',strichcode);
-    loadImageFromSharePoint(artnr, strichcode).then(function(b64){
+    loadImageFromSharePoint(artnr, strichcode, frisch).then(function(b64){
       if(b64 && bildInp){
         cmsCompressImage(b64, 500, 500, function(compressedB64){
           bildInp.value=compressedB64;
@@ -891,22 +911,61 @@
     });
   }
 
-  function loadImageFromSharePoint(artnr, strichcode){
+  /* Bild zum Strichcode ueber den SERVER holen.
+
+     Der Server spricht mit SharePoint ueber die Anmeldedaten der
+     Anwendung - kein Anmeldefenster, kein MSAL. Fuer das reine Lesen ist
+     das der verlaessliche Weg; MSAL bleibt der Rueckfall.
+     (Spec cms-aktion-bild, F2) */
+  function _bildVomServer(sc, frisch){
+    if(!sc) return Promise.resolve(null);
+    // Beim ausdruecklichen Suchen einen Stempel anhaengen: So kann weder
+    // der Browser noch etwas dazwischen eine alte Antwort liefern.
+    var u=API+'/werbebilder?artnrs='+encodeURIComponent(sc)+'&sharepoint=1'
+      +(frisch?('&_t='+Date.now()):'');
+    return fetch(u,frisch?{cache:'no-store'}:undefined)
+      .then(function(r){ return r.ok?r.json():[]; })
+      .then(function(liste){
+        if(!liste||!liste.length) return null;
+        // Zu diesem Strichcode liegt in Dataverse ein Werbebild-Datensatz
+        // OHNE Bild. Wer den ersten Treffer nimmt, bekommt nichts -
+        // deshalb ausdruecklich den mit gefuelltem Bild. (F3)
+        for(var i=0;i<liste.length;i++){
+          var b=liste[i]&&liste[i].dl_bild_base64;
+          if(b&&b.length>32) return b;
+        }
+        return null;
+      })
+      .catch(function(){ return null; });
+  }
+
+  /* `frisch`: Zwischenspeicher uebergehen. Wer den Suchknopf drueckt, hat
+     das Bild in SharePoint gerade getauscht und will das neue sehen - der
+     15-Minuten-Speicher haette sonst weiter das alte geliefert.
+     (Spec cms-aktion-bild, F9) */
+  function loadImageFromSharePoint(artnr, strichcode, frisch){
     var sc=strichcode||artnr;
     if(!sc) return Promise.resolve(null);
-    console.log('[CMS] Fetching image for strichcode:',sc);
-    var hit=_imgCacheGet(sc,sc);
-    if(hit){console.log('[CMS] Image cache hit for',sc);return Promise.resolve(hit);}
-    if(!msalApp){console.warn('[CMS] MSAL nicht verfuegbar – kein Bild geladen fuer',sc);return Promise.resolve(null);}
-    return getGraphToken().then(function(token){
-      return _searchFolderForImage(token, SP_BARCODE_FOLDER, sc).then(function(b64){
-        if(b64){_imgCacheSet(sc,sc,b64);return b64;}
-        console.warn('[CMS] Kein Bild in SharePoint StrichcodeBilder fuer',sc);
+    console.log('[CMS] Fetching image for strichcode:',sc,frisch?'(frisch)':'');
+    if(frisch){ _imgCacheInvalidate(sc,sc); }
+    else {
+      var hit=_imgCacheGet(sc,sc);
+      if(hit){console.log('[CMS] Image cache hit for',sc);return Promise.resolve(hit);}
+    }
+    // Erst der Server (ohne Anmeldung), dann MSAL als Rueckfall.
+    return _bildVomServer(sc, frisch).then(function(b64){
+      if(b64){_imgCacheSet(sc,sc,b64);return b64;}
+      if(!msalApp){console.warn('[CMS] MSAL nicht verfuegbar – kein Bild geladen fuer',sc);return null;}
+      return getGraphToken().then(function(token){
+        return _searchFolderForImage(token, SP_BARCODE_FOLDER, sc).then(function(b2){
+          if(b2){_imgCacheSet(sc,sc,b2);return b2;}
+          console.warn('[CMS] Kein Bild in SharePoint StrichcodeBilder fuer',sc);
+          return null;
+        });
+      }).catch(function(e){
+        console.error('[CMS] SharePoint image load error for',sc,e);
         return null;
       });
-    }).catch(function(e){
-      console.error('[CMS] SharePoint image load error for',sc,e);
-      return null;
     });
   }
 
@@ -8157,6 +8216,12 @@
           if(pv){pv.src='';pv.style.display='none';}
           t.style.display='none';
         }
+        break;
+      case 'loadBildSharePoint':
+        (function(){
+          var rn=t.getAttribute('data-row');
+          if(rn&&typeof cmsLoadBildSharePoint==='function') cmsLoadBildSharePoint(parseInt(rn), true);
+        })();
         break;
       case 'uploadBildSP':
         (function(){

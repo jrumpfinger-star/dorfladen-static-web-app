@@ -220,6 +220,13 @@ def get_cors_headers():
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
+        # Bilder liegen in SharePoint und werden dort auch getauscht. Ohne
+        # diese Angabe darf ein Browser die Antwort nach eigenem Ermessen
+        # aufbewahren - dann bleibt das ALTE Bild stehen, obwohl in
+        # SharePoint laengst ein neues liegt. Genau das wurde aus dem Laden
+        # gemeldet. (Spec cms-aktion-bild, F8)
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
         "Content-Type": "application/json; charset=utf-8"
     }
 
