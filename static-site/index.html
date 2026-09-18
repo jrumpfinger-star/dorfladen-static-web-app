@@ -2222,9 +2222,14 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
           var g=el.getAttribute('data-gericht').toLowerCase();
           if(!byGericht[g])return;
           var info=byGericht[g];
-          var lbl=info.count>1?info.count+'x bestellt':'bestellt';
-          var col=info.status===1?'#16a34a':'#d97706';
-          var bg=info.status===1?'#dcfce7':'#fef3c7';
+          // Abgeholt (3) ist erledigt, nicht offen: eigene Beschriftung und
+          // die Farbe fuer Fertiges. Sonst saehe eine abgeholte Bestellung
+          // aus wie eine, die noch aussteht.
+          // (Spec mittagstisch-abgeholt-sichtbar, F5)
+          var fertig=info.status===1||info.status===3;
+          var lbl=info.status===3?'abgeholt':(info.count>1?info.count+'x bestellt':'bestellt');
+          var col=fertig?'#16a34a':'#d97706';
+          var bg=fertig?'#dcfce7':'#fef3c7';
           var badge=document.createElement('a');
           badge.href='javascript:void(0)';
           badge.setAttribute('data-bs-nr',info.nr);

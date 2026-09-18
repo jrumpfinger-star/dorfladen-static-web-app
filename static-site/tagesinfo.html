@@ -442,9 +442,12 @@ window.addEventListener('message',function(e){
         var info=byGericht[g];
         var lbl, col, bg;
         if(info.count>0){
-          lbl=info.count>1?info.count+'x bestellt':'bestellt';
-          col=info.status===1?'#16a34a':'#d97706';
-          bg=info.status===1?'#dcfce7':'#fef3c7';
+          // Abgeholt (3) ist erledigt, nicht offen: eigene Beschriftung und
+          // die Farbe fuer Fertiges. (Spec mittagstisch-abgeholt-sichtbar, F5)
+          var _fertig=info.status===1||info.status===3;
+          lbl=info.status===3?'abgeholt':(info.count>1?info.count+'x bestellt':'bestellt');
+          col=_fertig?'#16a34a':'#d97706';
+          bg=_fertig?'#dcfce7':'#fef3c7';
         } else {
           // nur stornierte Bestellung(en) fuer dieses Gericht
           lbl='storniert';

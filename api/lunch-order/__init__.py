@@ -72,6 +72,23 @@ STATUS_STORNIERT = 2
 STATUS_ABGEHOLT = 3
 
 
+def _heute_lokal():
+    """Heutiger Kalendertag in Berliner Zeit als ``YYYY-MM-DD``.
+
+    Bewusst nicht ``utcnow()``: UTC hinkt der Berliner Zeit ein bis zwei
+    Stunden hinterher. Ein Tagesfilter auf UTC-Basis wuerde die
+    Bestellungen von gestern nach Mitternacht noch bis zu zwei Stunden
+    mitliefern. (Spec mittagstisch-abgeholt-sichtbar, F2)
+    """
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo("Europe/Berlin")
+    except Exception:
+        from datetime import timezone
+        tz = timezone(timedelta(hours=2))      # Rueckfall: CEST
+    return datetime.now(tz).strftime("%Y-%m-%d")
+
+
 # Bestellquellen
 QUELLE_ONLINE = 0
 QUELLE_TELEFON = 1
@@ -673,15 +690,25 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Schluessel: E-Mail ODER Geraete-ID (device_id), damit Bestellungen
             # auch ohne E-Mail auffindbar sind. Stornierte Bestellungen (status 2)
             # bleiben bis Ende des Bestelltags sichtbar (datum >= heute).
+            #
+            # ABGEHOLT (3) gehoert ausdruecklich dazu: Der Kasten auf der
+            # Startseite ist der einzige Weg zurueck in den Bestellstatus - und
+            # dort liegt der Nachrichtenverlauf. Fiel die Bestellung beim
+            # Abhaken heraus, war der Faden fuer die Kundin weg, obwohl das
+            # Nachrichtenfeld weiterhin funktioniert.
+            # (Spec mittagstisch-abgeholt-sichtbar, F1)
             if (email_filter or device_filter) and not nr_filter and req.params.get("mode") == "my":
-                today_str = datetime.utcnow().strftime("%Y-%m-%d")
+                # Berliner Kalendertag, nicht UTC: "Den ganzen Tag" heisst
+                # genau diesen Tag. (F2)
+                today_str = _heute_lokal()
                 if email_filter:
                     id_clause = f"dl_email eq '{_odata_str(email_filter)}'"
                 else:
                     id_clause = f"dl_device_id eq '{_odata_str(device_filter)}'"
                 status_clause = (
                     f"(dl_status eq {STATUS_NEU} or dl_status eq {STATUS_BESTAETIGT}"
-                    f" or dl_status eq {STATUS_STORNIERT})"
+                    f" or dl_status eq {STATUS_STORNIERT}"
+                    f" or dl_status eq {STATUS_ABGEHOLT})"
                 )
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
