@@ -65,6 +65,28 @@ denselben Empfänger schickt, gab es auch keinen Ersatzweg — die
 Bestellung ging restlos verloren, während der Kiosk sie als „gesendet"
 führte.
 
+Bemerkenswert: `empfaenger_name` steht weiterhin auf
+`Test (Metzger-Bestellung)`, die Adresse daneben aber nicht mehr auf der
+Testadresse. Der Name führt also in die Irre.
+
+### Ein Tippfehler ist ausgeschlossen
+
+Naheliegender Verdacht, deshalb geprüft:
+
+| Feld | Wert |
+|---|---|
+| `mailbox` | `info@dorfladenoberornau.onmicrosoft.com` |
+| `email` | `info@dorfladen-oberornau.de` — 27 Zeichen, zeichengenau, keine Zeichen außerhalb ASCII |
+| `kopie_an` | leer → Rückfall auf `email`, wie in F3 vorgesehen |
+
+> **Korrektur einer früheren Annahme.** Hier stand zwischenzeitlich, die
+> Bestellung sei „eine Mail mit zwei Empfängern (An: Testadresse, Kopie:
+> Laden)" gewesen — einer habe angenommen, einer abgelehnt. Das direkte
+> Auslesen von `metzger_config` widerlegt das: Der Empfänger **ist** die
+> Ladenadresse, also gab es nach F4 gar keine zweite Adresse. Die
+> Annahme stützte sich auf den Vorgabewert im Code, nicht auf den
+> tatsächlich gespeicherten Wert.
+
 ### Warum die eine Adresse geht und die andere nicht
 
 Die naheliegende Frage: `jrumpfinger@t-online.de` und
