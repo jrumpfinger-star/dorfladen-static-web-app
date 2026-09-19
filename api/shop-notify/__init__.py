@@ -428,6 +428,8 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
         mail_payload["message"]["ccRecipients"] = [{
             "emailAddress": {"address": kopie, "name": sender_name}
         }]
+    else:
+        kopie = ""
 
     if attachments:
         mail_payload["message"]["attachments"] = [
@@ -452,7 +454,12 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
     )
 
     if r.status_code in (200, 202):
-        logging.info(f"[shop-notify] Email sent to {to_email}: {subject}")
+        # Die Kopieadresse gehoert ins Protokoll: Prallt eine Bestellmail
+        # spaeter als unzustellbar zurueck, laesst sich nur so nachsehen,
+        # welche Adresse tatsaechlich verwendet wurde.
+        cc_txt = f" (CC {kopie})" if kopie else ""
+        logging.info(
+            f"[shop-notify] Email sent to {to_email}{cc_txt}: {subject}")
         return True, "sent"
     else:
         err = r.text[:200] if r.text else str(r.status_code)
