@@ -135,6 +135,21 @@ auf `/domains` und auf das Postfach jeweils **403**):
 Server einen `*.outlook.com`/`*.protection.outlook.com`, gilt A. Nennt er
 `mx00.ionos.de`, gilt B.
 
+Ebenso einfach und ohne Administratorrechte zu prüfen: **Von einer
+laden-fremden Adresse** (z. B. dem privaten Postfach) eine Mail an
+`info@dorfladen-oberornau.de` schicken.
+
+- **Kommt sie an** → Das Postfach bei IONOS ist gesund, und nur der
+  eigene Tenant kann nicht dorthin zustellen. Das ist **Erklärung A**.
+- **Kommt sie nicht an** → Das Postfach selbst ist das Problem,
+  **Erklärung B**.
+
+Dieser Test wiegt schwer, weil er die scheinbare Widersprüchlichkeit
+auflöst: Im Laden wird an dieser Adresse Post empfangen — sie „existiert"
+also. Beides zugleich ist nur möglich, wenn eingehende Post über den MX
+zu IONOS läuft, während Exchange Online für eigene Absender einen anderen
+Weg wählt. Genau das beschreibt Erklärung A.
+
 Nachgemessene Randbedingungen (DNS und Microsoft-Anmeldedienst):
 
 | Befund | Ergebnis |
@@ -145,7 +160,38 @@ Nachgemessene Randbedingungen (DNS und Microsoft-Anmeldedienst):
 | `getuserrealm` für die `.de`-Domäne | `NameSpaceType=Unknown` |
 | `getuserrealm` für `…onmicrosoft.com` (Kontrollprobe) | `NameSpaceType=Managed` |
 
-### Behebung
+### Sofortmaßnahme: der Verlust ist gestoppt
+
+Solange die Ursache nicht behoben ist, gingen Bestellungen **restlos
+verloren**: Der Empfänger war die abprallende Adresse, und weil F4 keine
+Kopie an denselben Empfänger schickt, gab es keinen Ersatzweg — der
+Kiosk meldete trotzdem „gesendet".
+
+Deshalb zeigen die Bestellziele jetzt auf das technische Tenant-Postfach
+`info@dorfladenoberornau.onmicrosoft.com`. Das ist **belegbar
+erreichbar**: Genau dort landen die Unzustellbarkeitsberichte, die im
+Laden in Outlook gelesen werden.
+
+| Schlüssel | vorher | jetzt |
+|---|---|---|
+| `shop_kontakt.kopie_an` | nicht gesetzt → `email` | `info@dorfladenoberornau.onmicrosoft.com` |
+| `metzger_config.empfaenger` | `info@dorfladen-oberornau.de` | `info@dorfladenoberornau.onmicrosoft.com` |
+| `getraenke_config.empfaenger` | `info@dorfladen-oberornau.de` | `info@dorfladenoberornau.onmicrosoft.com` |
+
+Über den **echten** Versandweg nachgewiesen (`shop-notify.send_email`
+mit den Kontaktdaten aus Dataverse, echter Graph-Versand): Ergebnis
+`ERFOLG – sent`.
+
+`reply_to` bleibt bewusst auf `info@dorfladen-oberornau.de`: Antworten
+von Lieferanten kommen von **außen** und laufen damit über den MX zu
+IONOS — dieser Weg ist von der Störung nicht betroffen.
+
+Die Werte sind im CMS unter *Kontaktdaten* und im Kiosk unter
+*Einstellungen* jederzeit zurückzustellen. Die Kontaktdaten werden
+höchstens 5 Minuten zwischengespeichert (F6), danach greift eine
+Änderung von selbst.
+
+### Behebung der eigentlichen Ursache
 
 **Bei Erklärung A** — Microsoft 365 Admin Center → *Einstellungen →
 Domänen*: Ist `dorfladen-oberornau.de` dort gelistet, im Exchange Admin
@@ -157,15 +203,20 @@ Postfach für `info@` anlegen.
 **Bei Erklärung B** — Postfach bei IONOS prüfen: Existiert es wirklich,
 ist es voll, oder ist es nur eine Weiterleitung mit totem Ziel?
 
-**Sofort und unabhängig davon** — im Kiosk unter *Metzger →
-Einstellungen* und *Getränke → Einstellungen* eine nachweislich
-erreichbare Empfängeradresse eintragen, und im CMS unter Kontaktdaten
-`kopie_an` ebenso. Sonst prallt jede Bestellung weiter ab.
+Ist die Ursache behoben, genügt es, die drei Werte oben wieder auf
+`info@dorfladen-oberornau.de` zu stellen — im CMS und im Kiosk, ohne
+Codeänderung.
 
 **Folge für F1:** Die Kopie erfüllt ihren Zweck nur, wenn die Zieladresse
-von außen erreichbar ist. Ist sie es nicht, erzeugt jede Lieferantenmail
-zusätzlich einen Unzustellbarkeitsbericht. Abschalten geht mit `aus`
-(F3).
+tatsächlich zustellbar ist. Ist sie es nicht, erzeugt jede
+Lieferantenmail zusätzlich einen Unzustellbarkeitsbericht — und wenn sie
+zugleich der einzige Empfänger ist, geht die Bestellung ersatzlos
+verloren. Abschalten geht mit `aus` (F3).
+
+**Lehre daraus:** Eine Zieladresse, die im Laden „ganz offensichtlich
+existiert", muss für den **eigenen Tenant** noch lange nicht erreichbar
+sein. Vor dem Eintragen einer Adresse in `empfaenger` oder `kopie_an`
+gehört ein echter Zustellversuch aus genau diesem Versandweg dazu.
 
 ## Ein zweiter Fehler, der dabei aufflog
 
