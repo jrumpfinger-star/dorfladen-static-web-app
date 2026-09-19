@@ -153,3 +153,27 @@ Reihenfolge (verhindert 500 bei aktiver Prüfung):
 3. Client auf `/api/cms-auth` + `X-CMS-Auth` umstellen.
 4. Guards in den geschützten Endpunkten aktivieren.
 5. Verifizieren (Integration + E2E), dann Merge.
+
+## Stand in der Produktion — Schritt 6 fehlt noch
+
+Live nachgemessen (19.09.2026): Ein `POST /api/cms-config` **ohne jeden
+Auth-Header** wird nicht mit `401` abgewiesen, sondern erreicht den
+Handler (Antwort `400`, weil der Testkörper absichtlich unvollständig
+war). Damit ist belegt:
+
+> Das App-Setting **`CMS_AUTH_ENFORCE` ist nicht gesetzt**. Solange das so
+> ist, sind alle schreibenden Admin-Endpunkte (CMS-Konfiguration,
+> Bestellungen an Metzger/Bäcker/Getränke, Kalender …) aus dem Internet
+> **ohne Anmeldung** erreichbar. Die Passwortabfrage in CMS und Kiosk
+> wirkt nur im Browser und schützt die Schnittstelle nicht.
+
+Die Clientseite ist dafür **fertig**: `js/admin-auth.js` ist auf allen
+Adminseiten eingebunden (`cms.html`, `kiosk.html`, `shop-admin.html`,
+`shop-freigabe.html`, `posten.html`), hängt den Header an alle
+mutierenden `/api/`-Aufrufe und fragt bei `401` das Passwort ab und
+wiederholt den Aufruf. Kundenendpunkte wie `POST /api/shop-order` tragen
+bewusst keinen Guard und bleiben unberührt (TC-F3-02).
+
+**Offener Schritt 6:** `CMS_AUTH_ENFORCE=true` in beiden Function-Apps
+setzen, danach je einmal Speichern im CMS und eine Bestellung im Kiosk
+gegenprüfen.

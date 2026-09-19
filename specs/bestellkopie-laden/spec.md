@@ -75,6 +75,21 @@ Server benannt. Typische Ursachen bei IONOS: Postfach voll, die Adresse
 ist nur eine Weiterleitung mit totem Ziel, oder der Absender wird
 abgewiesen.
 
+### Ein Tippfehler ist ausgeschlossen
+
+Naheliegender Verdacht, deshalb live geprüft (`GET /api/cms-config`):
+
+| Feld | Wert |
+|---|---|
+| `mailbox` | `info@dorfladenoberornau.onmicrosoft.com` |
+| `email` | `info@dorfladen-oberornau.de` — 27 Zeichen, zeichengenau gleich, keine Zeichen außerhalb ASCII |
+| `kopie_an` | leer → Rückfall auf `email`, wie in F3 vorgesehen |
+
+Ebenso aufschlussreich: Die Bestellung ist **eine** Mail mit **zwei**
+Empfängern (An: Testadresse, Kopie: Laden). Derselbe Absender, derselbe
+Augenblick, derselbe Server — der eine Empfänger nahm an, der andere
+lehnte ab. Ein Unterschied im eigenen Code ist damit ausgeschlossen.
+
 **Folge für F1:** Die Kopie erfüllt ihren Zweck nur, wenn die Zieladresse
 von außen erreichbar ist. Ist sie es nicht, erzeugt jede Lieferantenmail
 zusätzlich einen Unzustellbarkeitsbericht. Als Zwischenlösung lässt sich
