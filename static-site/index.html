@@ -1543,14 +1543,20 @@
         return p.length===3 ? p[2]+'.'+p[1]+'.'+p[0] : iso;
       }
 
-      function fmtDateLong(iso){
+      /* Kurzform fuer die Kachel: "Fr., 18. Sep."
+         Die fruehere Langform ("Freitag, 18. September 2026") passte auf
+         keinem gaengigen Handy in die Zeile und wurde abgeschnitten —
+         gemessen bei 320, 360, 390 und 414 px. Ein abgeschnittenes Datum
+         nuetzt niemandem, die Kurzform steht vollstaendig da.
+         (Spec mittagstisch-kachel, F2) */
+      function fmtDateKurz(iso){
         if(!iso) return '';
         var p = iso.split('-');
         if(p.length!==3) return fmtDate(iso);
-        var wd=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-        var mo=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+        var wd=['So','Mo','Di','Mi','Do','Fr','Sa'];
+        var mo=['Jan','Feb','M\u00e4r','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
         var d=new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));
-        return wd[d.getDay()]+', '+parseInt(p[2],10)+'. '+mo[parseInt(p[1],10)-1]+' '+p[0];
+        return wd[d.getDay()]+'., '+parseInt(p[2],10)+'. '+mo[parseInt(p[1],10)-1]+'.';
       }
 
       window._dlLunchOrderP
@@ -1592,34 +1598,34 @@
               var t = isDark ? {
                 card:'rgba(255,255,255,.12)', border:'rgba(255,255,255,.25)',
                 title:'#fff', sub:'rgba(255,255,255,.82)', dish:'#fff',
-                iconBg:'rgba(255,255,255,.18)', iconStroke:'#fff',
-                btnBg:'#fff', btnColor:'#1d4ed8', price:'#fff'
+                price:'#fff'
               } : {
                 card:'#fff', border:'#bfdbfe',
                 title:'#0f172a', sub:'#64748b', dish:'#1e293b',
-                iconBg:'#eff6ff', iconStroke:'#2563eb',
-                btnBg:'#2563eb', btnColor:'#fff', price:'#0f172a'
+                price:'#0f172a'
               };
-              el.innerHTML = '<div onclick="openBestellstatus(\''+esc(nr)+'\')" role="button" tabindex="0" title="Bestellung anzeigen" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openBestellstatus(\''+esc(nr)+'\');}" style="display:flex;align-items:flex-start;gap:12px;background:'+t.card+';border:1px solid '+(unread?'#f87171':t.border)+';border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
-                +'<div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:'+t.iconBg+';display:flex;align-items:center;justify-content:center">'
-                  +'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+t.iconStroke+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
+              /* Aufbau bewusst ohne eigenes Symbol und ohne Augen-Knopf:
+                 Die Kachel sitzt INNERHALB der Mittagstisch-Karte, die
+                 links bereits ein Symbol traegt. Das zweite Symbol (40 px)
+                 und der Knopf (32 px) kosteten zusammen rund 92 px — bei
+                 einer nur 198 px breiten Karte auf dem Handy war das der
+                 Grund, warum Datum und Gericht abgeschnitten wurden. Die
+                 ganze Karte ist ohnehin anklickbar, der Knopf war also
+                 auch funktional entbehrlich.
+                 (Spec mittagstisch-kachel, F1/F3) */
+              el.innerHTML = '<div onclick="openBestellstatus(\''+esc(nr)+'\')" role="button" tabindex="0" title="Bestellung anzeigen" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openBestellstatus(\''+esc(nr)+'\');}" style="background:'+t.card+';border:1px solid '+(unread?'#f87171':t.border)+';border-radius:12px;padding:9px 11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
+                +'<div style="display:flex;align-items:baseline;gap:8px">'
+                  +'<span style="font-weight:800;font-size:13px;color:'+t.title+';flex:1;min-width:0">Ihre Bestellung</span>'
+                  +(priceTxt?'<span style="font-weight:800;font-size:14px;color:'+t.price+';white-space:nowrap">'+priceTxt+'</span>':'')
                 +'</div>'
-                +'<div style="flex:1;min-width:0">'
-                  +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-                    +'<span style="font-weight:800;font-size:14px;color:'+t.title+'">Ihre Bestellung</span>'
-                    +'<span style="font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700;background:'+bg+';color:'+col+'">'+esc(st)+'</span>'
-                    +(unread?'<span style="font-size:10px;padding:2px 8px;border-radius:8px;font-weight:800;background:#fee2e2;color:#b91c1c;display:inline-flex;align-items:center;gap:3px">\uD83D\uDCAC Neue Nachricht</span>':'')
-                  +'</div>'
-                  +'<div style="font-size:12px;color:'+t.sub+';margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(fmtDateLong(o.datum))+'</div>'
-                  +'<div style="font-weight:600;font-size:13px;color:'+t.dish+';margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.gericht||'Mittagessen')+'</div>'
-                  +'<div style="font-size:11px;color:'+t.sub+';margin-top:1px">'+esc(portTxt+mitTxt)+'</div>'
+                +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:4px">'
+                  +'<span style="font-size:10px;padding:1px 7px;border-radius:7px;font-weight:700;background:'+bg+';color:'+col+'">'+esc(st)+'</span>'
+                  +(unread?'<span style="font-size:10px;padding:1px 7px;border-radius:7px;font-weight:800;background:#fee2e2;color:#b91c1c;display:inline-flex;align-items:center;gap:3px">\uD83D\uDCAC Neue Nachricht</span>':'')
                 +'</div>'
-                +'<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px">'
-                  +(priceTxt?'<span style="font-weight:800;font-size:15px;color:'+t.price+';white-space:nowrap">'+priceTxt+'</span>':'')
-                  +'<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:'+t.btnBg+';color:'+t.btnColor+'" aria-label="Bestellung anzeigen">'
-                    +'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
-                  +'</span>'
-                +'</div>'
+                /* Das Gericht darf umbrechen. Abschneiden war hier der
+                   eigentliche Schaden: "Fischfilet mit Di…" sagt nichts. */
+                +'<div style="font-weight:600;font-size:13px;line-height:1.25;color:'+t.dish+';margin-top:5px;overflow-wrap:anywhere">'+esc(o.gericht||'Mittagessen')+'</div>'
+                +'<div style="font-size:11px;line-height:1.3;color:'+t.sub+';margin-top:2px">'+esc(fmtDateKurz(o.datum)+' \u00b7 '+portTxt+mitTxt)+'</div>'
                 +'</div>';
             } else {
               var popupId = 'popup-'+containerId;
@@ -1646,10 +1652,18 @@
                 var col = STATUS_COLORS[o.status]||'#6b7280';
                 var bg = STATUS_BG[o.status]||'#f3f4f6';
                 var un2 = dlOrderUnread(o);
-                card += '<a href="javascript:void(0)" onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\';openBestellstatus(\''+esc(nr2)+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s;cursor:pointer" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
-                  +'<span style="font-size:12px;color:#6b7280;min-width:70px">'+fmtDate(o.datum)+'</span>'
-                  +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.gericht||'Mittagessen')+(un2?' <span style="color:#b91c1c;font-weight:800">\uD83D\uDCAC</span>':'')+'</span>'
-                  +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+'">'+st+'</span>'
+                /* Zwei Zeilen statt einer: Datum und Zustand oben, das
+                   Gericht darunter mit Umbruch. In einer Zeile blieben
+                   fuer das Gericht nur rund 170 px — es wurde
+                   abgeschnitten wie in der Kachel.
+                   (Spec mittagstisch-kachel, F4) */
+                card += '<a href="javascript:void(0)" onclick="document.getElementById(\''+popupId+'\').style.display=\'none\';document.body.style.overflow=\'\';openBestellstatus(\''+esc(nr2)+'\')" style="display:block;padding:8px 12px;border-radius:10px;text-decoration:none;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:2px;transition:background .15s;cursor:pointer" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'transparent\'">'
+                  +'<span style="display:flex;align-items:center;gap:8px">'
+                    +'<span style="font-size:12px;color:#6b7280;font-weight:600;flex:1;min-width:0">'+esc(fmtDateKurz(o.datum))+'</span>'
+                    +(un2?'<span style="color:#b91c1c;font-weight:800;font-size:11px">\uD83D\uDCAC</span>':'')
+                    +'<span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;background:'+bg+';color:'+col+';white-space:nowrap">'+esc(st)+'</span>'
+                  +'</span>'
+                  +'<span style="display:block;margin-top:2px;line-height:1.25;overflow-wrap:anywhere">'+esc(o.gericht||'Mittagessen')+'</span>'
                   +'</a>';
               });
               card += '</div></div>';
