@@ -36,13 +36,14 @@ CONTACT_DEFAULTS = {
     # Tenant als Benutzer aufloesen kann. "info@dorfladen-oberornau.de"
     # ist nachweislich KEINE solche Adresse — Graph antwortet darauf mit
     # 404 ErrorInvalidUser ("The requested user ... is invalid"), und es
-    # geht dann gar keine Mail mehr raus. Nachgemessen: Die Domain gehoert
-    # NICHT zum M365-Tenant (getuserrealm liefert "Unknown", waehrend die
-    # onmicrosoft-Domain "Managed" liefert); der MX zeigt auf IONOS
-    # (mx00/mx01.ionos.de). Der TXT-Eintrag "MS=5016065" im DNS ist nur
-    # ein liegengebliebener Verifizierungsversuch und taeuscht eine
-    # Einrichtung vor. Vor einer Umstellung erst die Domain im Tenant
-    # verifizieren und ein echtes Postfach anlegen.
+    # geht dann gar keine Mail mehr raus. Als Absender taugt nur ein
+    # Postfach, das Graph im Tenant aufloesen kann - deshalb steht hier
+    # die onmicrosoft-Adresse. Fuer EMPFAENGER gilt das nicht: dorthin
+    # darf jede beliebige Adresse gehen. Warum die .de-Adresse als
+    # Empfaenger trotzdem abprallt, ist in der Spec bestellkopie-laden
+    # ("Nachtrag") mit allen Messwerten aufgearbeitet. Vor einer
+    # Umstellung erst die Domain im Tenant verifizieren und ein echtes
+    # Postfach anlegen.
     "mailbox": "info@dorfladenoberornau.onmicrosoft.com",
     "reply_to": "info@dorfladen-oberornau.de",
     "slogan": "Ihr Nahversorger"
@@ -373,9 +374,9 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
         wurde. Hintergrund: Gesendet wird aus dem technischen
         onmicrosoft.com-Postfach, die Kopie in "Gesendet" liegt also dort
         und nicht im Postfach des Ladens. Die CC-Kopie soll diese Luecke
-        schliessen. ACHTUNG: Sie kommt nur an, wenn die Zieladresse von
-        aussen zustellbar ist - das .de-Postfach liegt bei IONOS, nicht
-        im Tenant. Weist IONOS ab, erzeugt jede Lieferantenmail
+        schliessen. ACHTUNG: Sie kommt nur an, wenn die Zieladresse
+        tatsaechlich zustellbar ist. Fuer die Ladenadresse war das
+        zeitweise NICHT der Fall - jede Lieferantenmail erzeugte dann
         zusaetzlich einen Unzustellbarkeitsbericht (Spec
         bestellkopie-laden, Abschnitt "Nachtrag"). Adresse aus der
         Kontaktkonfiguration (`kopie_an`, sonst `email`)."""
@@ -428,8 +429,6 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
         mail_payload["message"]["ccRecipients"] = [{
             "emailAddress": {"address": kopie, "name": sender_name}
         }]
-    else:
-        kopie = ""
 
     if attachments:
         mail_payload["message"]["attachments"] = [
@@ -454,12 +453,7 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
     )
 
     if r.status_code in (200, 202):
-        # Die Kopieadresse gehoert ins Protokoll: Prallt eine Bestellmail
-        # spaeter als unzustellbar zurueck, laesst sich nur so nachsehen,
-        # welche Adresse tatsaechlich verwendet wurde.
-        cc_txt = f" (CC {kopie})" if kopie else ""
-        logging.info(
-            f"[shop-notify] Email sent to {to_email}{cc_txt}: {subject}")
+        logging.info(f"[shop-notify] Email sent to {to_email}: {subject}")
         return True, "sent"
     else:
         err = r.text[:200] if r.text else str(r.status_code)

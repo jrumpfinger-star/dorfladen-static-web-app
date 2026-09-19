@@ -30,15 +30,15 @@ Naheliegend, aber **nicht möglich**. Live gemessen: Wird `mailbox` auf
 ```
 
 und es geht **gar keine** Mail mehr raus (8 von 8 Sendungen gescheitert).
-Die Domain ist im M365-Tenant nicht eingerichtet; das dortige Postfach
-liegt bei einem anderen Anbieter. Eine Umstellung setzt voraus, dass die
-Domain im Tenant verifiziert und dort ein echtes Postfach angelegt wird.
+Im Tenant existiert unter dieser Adresse **kein Postfach**, das Graph
+auflösen könnte. Eine Umstellung setzt voraus, dass die Domäne im Tenant
+verifiziert und dort ein echtes Postfach angelegt wird.
 
-Solange das nicht der Fall ist, geht stattdessen eine **Kopie per CC** an
-die Ladenadresse — sofern diese Adresse von außen zustellbar ist. Genau
-das ist der wunde Punkt, siehe nächster Abschnitt.
+Wichtig für das Verständnis: Diese Einschränkung gilt nur für die
+**Absenderrolle**. Als **Empfänger** darf jede beliebige Adresse der Welt
+eintragen sein — dafür muss im Tenant nichts eingerichtet sein.
 
-## Nachtrag: Die Kopie kann unzustellbar sein
+## Nachtrag: Die Bestellung selbst prallte ab
 
 Aus dem Laden kam ein Unzustellbarkeitsbericht zu einer
 Metzger-Bestellung:
@@ -49,52 +49,101 @@ info wurde nicht in dorfladen-oberornau.de gefunden,
 oder das Postfach ist nicht verfügbar.
 ```
 
-Nachgemessen (DNS und Microsoft-Anmeldedienst):
+Aus der Live-Konfiguration in Dataverse ausgelesen:
+
+| Schlüssel | Wert |
+|---|---|
+| `metzger_config.empfaenger` | `info@dorfladen-oberornau.de` |
+| `getraenke_config.empfaenger` | `info@dorfladen-oberornau.de` |
+| `shop_kontakt.email` | `info@dorfladen-oberornau.de` |
+| `shop_kontakt.kopie_an` | nicht gesetzt → fällt auf `email` zurück |
+| `shop_kontakt.mailbox` | `info@dorfladenoberornau.onmicrosoft.com` |
+
+**Damit ist der Bericht kein Kopie-Problem, sondern ein Bestellproblem.**
+Der Empfänger war selbst die Ladenadresse. Und weil F4 keine Kopie an
+denselben Empfänger schickt, gab es auch keinen Ersatzweg — die
+Bestellung ging restlos verloren, während der Kiosk sie als „gesendet"
+führte.
+
+### Warum die eine Adresse geht und die andere nicht
+
+Die naheliegende Frage: `jrumpfinger@t-online.de` und
+`info@dorfladen-oberornau.de` sind **beide** fremde Postfächer. Warum
+scheitert nur die zweite?
+
+Weil „fremd" für Exchange Online nicht gleich „fremd" ist. Gemessen:
+
+| Prüfung | Ergebnis |
+|---|---|
+| Graph `sendMail` → `jrumpfinger@t-online.de` | **HTTP 202**, angenommen |
+| Graph `sendMail` → `info@dorfladen-oberornau.de` | **HTTP 202**, angenommen |
+
+Der Versandweg ist für beide gesund; der Unterschied entsteht erst
+**danach**, bei der Zustellentscheidung von Exchange Online:
+
+- `t-online.de` ist für den Tenant eindeutig fremd → Exchange schlägt den
+  MX nach und liefert nach außen. Kommt an.
+- `dorfladen-oberornau.de` trägt den Namen des eigenen Ladens. Ist diese
+  Domain im Tenant als **Akzeptierte Domäne vom Typ „Autoritativ"**
+  eingetragen, gilt für Exchange: „Für diese Domäne bin ich selbst
+  zuständig." Exchange sucht dann ein **lokales** Postfach, findet keins
+  (das echte liegt bei IONOS) und weist ab — **ohne den MX überhaupt zu
+  fragen**. Genau dieses Verhalten heißt bei Microsoft *Directory-Based
+  Edge Blocking*.
+
+Das erklärt den Wortlaut des Berichts: „info wurde nicht **in**
+dorfladen-oberornau.de gefunden" ist die Aussage eines Servers, der sich
+für die Domäne für zuständig hält.
+
+### Was noch offen ist
+
+Zwei Erklärungen passen auf den Befund; sie zu trennen erfordert einen
+Blick, den das Projekt selbst nicht hat (die App-Registrierung bekommt
+auf `/domains` und auf das Postfach jeweils **403**):
+
+| | Erklärung A | Erklärung B |
+|---|---|---|
+| Ursache | Domäne im Tenant, Typ „Autoritativ" | Domäne nicht im Tenant, **IONOS** weist ab |
+| Mail verlässt Microsoft | nein | ja |
+| Passt zum Wortlaut des Berichts | sehr gut | möglich |
+| Gegenargument | `getuserrealm` meldet `Unknown` | müsste erklären, warum IONOS ablehnt |
+
+**Der entscheidende Beleg** steht im Bericht selbst unter
+„Diagnoseinformationen für Administratoren": Nennt er als abweisenden
+Server einen `*.outlook.com`/`*.protection.outlook.com`, gilt A. Nennt er
+`mx00.ionos.de`, gilt B.
+
+Nachgemessene Randbedingungen (DNS und Microsoft-Anmeldedienst):
 
 | Befund | Ergebnis |
 |---|---|
 | MX von `dorfladen-oberornau.de` | `mx00.ionos.de`, `mx01.ionos.de` |
 | SPF | `v=spf1 include:_spf-eu.ionos.com ~all` |
-| TXT | enthält `MS=5016065` (Verifizierungseintrag, **Verifizierung nie abgeschlossen**) |
-| `getuserrealm` für die `.de`-Domain | `NameSpaceType=Unknown` |
+| TXT | enthält `MS=5016065` — jemand hat die Domäne einmal bei Microsoft hinterlegt |
+| `getuserrealm` für die `.de`-Domäne | `NameSpaceType=Unknown` |
 | `getuserrealm` für `…onmicrosoft.com` (Kontrollprobe) | `NameSpaceType=Managed` |
 
-Daraus folgt zweierlei:
+### Behebung
 
-1. Die Domain gehört **nicht** zum M365-Tenant. Der liegengebliebene
-   `MS=`-Eintrag im DNS täuscht das nur vor. Damit ist auch bestätigt,
-   warum Graph das `.de`-Postfach nicht auflösen kann.
-2. Das Postfach liegt bei **IONOS**. Unsere Mail verlässt Microsoft also
-   und wird erst am IONOS-Rand abgewiesen. Die Ablehnung kommt **nicht**
-   aus unserem Code und nicht aus dem Tenant.
+**Bei Erklärung A** — Microsoft 365 Admin Center → *Einstellungen →
+Domänen*: Ist `dorfladen-oberornau.de` dort gelistet, im Exchange Admin
+Center unter *Nachrichtenfluss → Akzeptierte Domänen* den Typ auf
+**„Internes Relay"** stellen. Dann liefert Exchange unbekannte Adressen
+wieder über den MX nach außen an IONOS. Alternativ im Tenant ein echtes
+Postfach für `info@` anlegen.
 
-Der Bericht ist damit kein Softwarefehler, sondern eine Aussage des
-Zielservers. Welche genau, steht im Fußteil des Berichts
-(„Diagnoseinformationen für Administratoren") — dort ist der abweisende
-Server benannt. Typische Ursachen bei IONOS: Postfach voll, die Adresse
-ist nur eine Weiterleitung mit totem Ziel, oder der Absender wird
-abgewiesen.
+**Bei Erklärung B** — Postfach bei IONOS prüfen: Existiert es wirklich,
+ist es voll, oder ist es nur eine Weiterleitung mit totem Ziel?
 
-### Ein Tippfehler ist ausgeschlossen
-
-Naheliegender Verdacht, deshalb live geprüft (`GET /api/cms-config`):
-
-| Feld | Wert |
-|---|---|
-| `mailbox` | `info@dorfladenoberornau.onmicrosoft.com` |
-| `email` | `info@dorfladen-oberornau.de` — 27 Zeichen, zeichengenau gleich, keine Zeichen außerhalb ASCII |
-| `kopie_an` | leer → Rückfall auf `email`, wie in F3 vorgesehen |
-
-Ebenso aufschlussreich: Die Bestellung ist **eine** Mail mit **zwei**
-Empfängern (An: Testadresse, Kopie: Laden). Derselbe Absender, derselbe
-Augenblick, derselbe Server — der eine Empfänger nahm an, der andere
-lehnte ab. Ein Unterschied im eigenen Code ist damit ausgeschlossen.
+**Sofort und unabhängig davon** — im Kiosk unter *Metzger →
+Einstellungen* und *Getränke → Einstellungen* eine nachweislich
+erreichbare Empfängeradresse eintragen, und im CMS unter Kontaktdaten
+`kopie_an` ebenso. Sonst prallt jede Bestellung weiter ab.
 
 **Folge für F1:** Die Kopie erfüllt ihren Zweck nur, wenn die Zieladresse
 von außen erreichbar ist. Ist sie es nicht, erzeugt jede Lieferantenmail
-zusätzlich einen Unzustellbarkeitsbericht. Als Zwischenlösung lässt sich
-im CMS unter Kontaktdaten `kopie_an` auf eine erreichbare Adresse setzen
-oder mit `aus` abschalten (F3).
+zusätzlich einen Unzustellbarkeitsbericht. Abschalten geht mit `aus`
+(F3).
 
 ## Ein zweiter Fehler, der dabei aufflog
 
