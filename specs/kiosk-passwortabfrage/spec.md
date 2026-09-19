@@ -72,6 +72,31 @@ Bauwerkzeug um Kopf, Reiter und Inhalt legt (Regel R4).
 - **F9** Die Maske ist bedienbar: Eingabefeld, Auge zum Anzeigen,
   Eingabetaste, Antippgröße mindestens 44 px.
 
+## Nachtrag: Neustart auf dem Kiosk-Tablett
+
+Aus dem Laden: *„Ich habe Fully Kiosk installiert. Aber ich muss bei
+Neustart immer das Passwort für Kiosk eingeben."*
+
+Der erste Entwurf merkte sich die Anmeldung nur im **Sitzungsspeicher**
+(`sessionStorage`) — so wie das CMS. Der wird beim Beenden des Browsers
+geleert. Das CMS läuft auf einem Rechner und wird zwischendurch
+geschlossen; ein Kiosk-Tablett unter Fully Kiosk wird dagegen **täglich
+neu gestartet**. Damit stand jeden Morgen die Passwortabfrage.
+
+Fully Kiosk behält den **dauerhaften** Speicher über Neustarts hinweg —
+gelöscht wird er nur, wenn unter *Page & Content* die Einstellung
+„Clear WebStorage" eingeschaltet ist.
+
+- **F10** Die Anmeldung wird **dauerhaft** gemerkt
+  (`localStorage`, Schlüssel `kiosk_auth_ok`) und übersteht einen
+  Neustart. Der Sitzungsschlüssel des CMS (`cms_auth_ok`) gilt
+  **zusätzlich** weiter, damit eine CMS-Anmeldung den Kiosk sofort
+  öffnet.
+- **F11** Es gibt einen Weg zurück: `kioskSperren()` löscht beide
+  Einträge und lädt neu. Ohne das bliebe ein Gerät für immer offen.
+  Ebenso wirkt eine Änderung des Passworts — die alte Prüfsumme passt
+  dann nicht mehr, alle Geräte fragen erneut.
+
 ## Testfälle
 
 | Nr. | Fall | Erwartung |
@@ -86,3 +111,7 @@ Bauwerkzeug um Kopf, Reiter und Inhalt legt (Regel R4).
 | TC-P08 | Eingabetaste im Feld | meldet an wie der Knopf |
 | TC-P09 | Antippgrößen | Feld und Knopf mindestens 44 px |
 | TC-P10 | Quelldatei | Passwort-Prüfsumme genau einmal enthalten |
+| TC-P11 | Anmelden, dann **Neustart** (Sitzung leer) | bleibt frei — kein erneutes Passwort |
+| TC-P12 | Anmelden schreibt den dauerhaften Schlüssel | `kiosk_auth_ok` gesetzt |
+| TC-P13 | `kioskSperren()` aufrufen | beide Einträge weg, Maske wieder da |
+

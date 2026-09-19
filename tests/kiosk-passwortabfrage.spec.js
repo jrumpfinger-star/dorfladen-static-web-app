@@ -186,3 +186,59 @@ test.describe('Quelle', () => {
     expect(quelle).toContain('id="cms-pw-hash"');
   });
 });
+
+test.describe('Kiosk – Anmeldung übersteht den Neustart', () => {
+  /* Gemeldet: „Ich habe Fully Kiosk installiert. Aber ich muss bei
+     Neustart immer das Passwort für Kiosk eingeben."
+
+     Ein Neustart des Browsers leert den Sitzungsspeicher, nicht den
+     dauerhaften. Genau das wird hier nachgestellt. */
+
+  test('TC-P11/P12: nach dem Anmelden übersteht der Kiosk einen Neustart',
+    async ({ page }) => {
+      await kioskOeffnen(page);
+      await page.locator('#kg-pw').fill(PW);
+      await page.locator('#kg-btn').click();
+      await expect.poll(async () => (await lage(page)).gesperrt, { timeout: 8000 }).toBe(false);
+
+      // TC-P12: der dauerhafte Schlüssel ist gesetzt.
+      const dauerhaft = await page.evaluate(() => {
+        try { return localStorage.getItem('kiosk_auth_ok'); } catch (e) { return null; }
+      });
+      expect(dauerhaft).toBe(PW_HASH);
+
+      // Neustart nachstellen: Sitzungsspeicher weg, dauerhafter bleibt.
+      await page.evaluate(() => { try { sessionStorage.clear(); } catch (e) {} });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(1500);
+
+      const l = await lage(page);
+      expect(l.gesperrt, 'Nach dem Neustart wird erneut gefragt').toBe(false);
+      expect(l.gateSichtbar).toBe(false);
+      expect(l.kopfFlaeche).toBeGreaterThan(1000);
+    });
+
+  test('TC-P13: kioskSperren() sperrt das Gerät wieder', async ({ page }) => {
+    await kioskOeffnen(page);
+    await page.locator('#kg-pw').fill(PW);
+    await page.locator('#kg-btn').click();
+    await expect.poll(async () => (await lage(page)).gesperrt, { timeout: 8000 }).toBe(false);
+
+    await page.evaluate(() => window.kioskSperren && window.kioskSperren());
+    await page.waitForTimeout(2000);
+
+    const l = await lage(page);
+    expect(l.gesperrt).toBe(true);
+    expect(l.gateSichtbar).toBe(true);
+    const reste = await page.evaluate(() => {
+      try {
+        return {
+          dauer: localStorage.getItem('kiosk_auth_ok'),
+          sitzung: sessionStorage.getItem('cms_auth_ok'),
+        };
+      } catch (e) { return { dauer: 'x', sitzung: 'x' }; }
+    });
+    expect(reste.dauer).toBeNull();
+    expect(reste.sitzung).toBeNull();
+  });
+});

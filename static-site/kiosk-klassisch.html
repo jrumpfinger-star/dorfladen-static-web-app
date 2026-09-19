@@ -1658,9 +1658,18 @@
         var el=document.getElementById('cms-pw-hash');
         var hash=el?JSON.parse(el.textContent):'';
         if(!hash) return;                     // ohne Hash nicht aussperren
-        if(sessionStorage.getItem('cms_auth_ok')!==hash){
-          document.documentElement.classList.add('kiosk-zu');
-        }
+        /* Zwei Quellen, absichtlich:
+           - localStorage ueberlebt den Neustart. Auf einem Kiosk-Tablett
+             (Fully Kiosk) wird taeglich neu gestartet - mit reinem
+             sessionStorage haette man jeden Morgen das Passwort tippen
+             muessen. Genau das wurde aus dem Laden gemeldet.
+           - sessionStorage bleibt als zweite Quelle, damit eine Anmeldung
+             im CMS den Kiosk weiterhin sofort oeffnet.
+           (Spec kiosk-passwortabfrage, F10) */
+        var frei=false;
+        try{ frei = localStorage.getItem('kiosk_auth_ok')===hash; }catch(e){}
+        if(!frei){ try{ frei = sessionStorage.getItem('cms_auth_ok')===hash; }catch(e){} }
+        if(!frei){ document.documentElement.classList.add('kiosk-zu'); }
       }catch(e){ /* Speicher gesperrt: dann offen lassen, der Laden muss arbeiten */ }
     })();
   </script>
@@ -6869,34 +6878,53 @@ var K = (function(){
   </div>
 </div>
 <script>
-/* Dieselbe Abfrage wie im CMS: gleiches Passwort, gleicher Schluessel
-   (`cms_auth_ok`) im Sitzungsspeicher. Wer sich im CMS angemeldet hat,
-   kommt hier ohne erneute Eingabe hinein - und umgekehrt.
+/* Dieselbe Abfrage wie im CMS: gleiches Passwort, gleiche Anmeldung.
+   Wer sich im CMS angemeldet hat, kommt hier ohne erneute Eingabe hinein.
+
+   Gemerkt wird DAUERHAFT (localStorage `kiosk_auth_ok`), nicht nur fuer
+   die Sitzung. Der Kiosk laeuft auf einem Tablett unter Fully Kiosk und
+   wird taeglich neu gestartet - mit reinem Sitzungsspeicher haette man
+   jeden Morgen das Passwort tippen muessen. Der Sitzungsschluessel des
+   CMS (`cms_auth_ok`) gilt zusaetzlich weiter.
+   (Spec kiosk-passwortabfrage, F2/F10)
 
    Wichtig zur Einordnung: Das ist ein Riegel vor der BEDIENOBERFLAECHE,
    kein Schutz der Daten. Die Schnittstellen antworten weiterhin ohne
    Anmeldung; das ist eine eigene Baustelle (specs/serverseitige-auth,
-   T10). Wer das hier fuer Datenschutz haelt, taeuscht sich.
-   (Spec kiosk-passwortabfrage) */
+   T10). Wer das hier fuer Datenschutz haelt, taeuscht sich. */
 (function(){
   var el=document.getElementById('cms-pw-hash');
   var HASH='';
   try{ HASH = el?JSON.parse(el.textContent):''; }catch(e){ HASH=''; }
-  var KEY='cms_auth_ok';
+  var DAUER='kiosk_auth_ok';       // ueberlebt den Neustart
+  var SITZUNG='cms_auth_ok';       // gemeinsam mit dem CMS
   var gate=document.getElementById('kiosk-gate');
   if(!gate) return;
   // Ohne hinterlegtes Passwort wird nicht ausgesperrt.
   if(!HASH){ document.documentElement.classList.remove('kiosk-zu'); return; }
 
   function frei(){
-    try{ sessionStorage.setItem(KEY,HASH); }catch(e){}
+    // Beides schreiben: dauerhaft fuers Tablett, Sitzung fuers CMS.
+    try{ localStorage.setItem(DAUER,HASH); }catch(e){}
+    try{ sessionStorage.setItem(SITZUNG,HASH); }catch(e){}
     document.documentElement.classList.remove('kiosk-zu');
     gate.style.display='none';
   }
 
+  /* Weg zurueck: Weil dauerhaft gemerkt wird, bliebe das Geraet sonst
+     fuer immer offen - ohne jede Moeglichkeit, es wieder zu sperren.
+     Aufruf ueber die Adresszeile: javascript:kioskSperren()
+     oder aus der Entwicklerkonsole. (Spec kiosk-passwortabfrage, F11) */
+  window.kioskSperren=function(){
+    try{ localStorage.removeItem(DAUER); }catch(e){}
+    try{ sessionStorage.removeItem(SITZUNG); }catch(e){}
+    location.reload();
+  };
+
   // Bereits angemeldet? Dann gar nicht erst zeigen.
   var schon=false;
-  try{ schon = sessionStorage.getItem(KEY)===HASH; }catch(e){ schon=true; }
+  try{ schon = localStorage.getItem(DAUER)===HASH; }catch(e){ schon=true; }
+  if(!schon){ try{ schon = sessionStorage.getItem(SITZUNG)===HASH; }catch(e){ schon=true; } }
   if(schon){ document.documentElement.classList.remove('kiosk-zu'); return; }
 
   gate.style.display='';
