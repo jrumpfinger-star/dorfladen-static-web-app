@@ -35,7 +35,51 @@ liegt bei einem anderen Anbieter. Eine Umstellung setzt voraus, dass die
 Domain im Tenant verifiziert und dort ein echtes Postfach angelegt wird.
 
 Solange das nicht der Fall ist, geht stattdessen eine **Kopie per CC** an
-die Ladenadresse. Sie landet im Posteingang und schließt die Lücke.
+die Ladenadresse — sofern diese Adresse von außen zustellbar ist. Genau
+das ist der wunde Punkt, siehe nächster Abschnitt.
+
+## Nachtrag: Die Kopie kann unzustellbar sein
+
+Aus dem Laden kam ein Unzustellbarkeitsbericht zu einer
+Metzger-Bestellung:
+
+```
+Ihre Nachricht an info@dorfladen-oberornau.de konnte nicht zugestellt werden.
+info wurde nicht in dorfladen-oberornau.de gefunden,
+oder das Postfach ist nicht verfügbar.
+```
+
+Nachgemessen (DNS und Microsoft-Anmeldedienst):
+
+| Befund | Ergebnis |
+|---|---|
+| MX von `dorfladen-oberornau.de` | `mx00.ionos.de`, `mx01.ionos.de` |
+| SPF | `v=spf1 include:_spf-eu.ionos.com ~all` |
+| TXT | enthält `MS=5016065` (Verifizierungseintrag, **Verifizierung nie abgeschlossen**) |
+| `getuserrealm` für die `.de`-Domain | `NameSpaceType=Unknown` |
+| `getuserrealm` für `…onmicrosoft.com` (Kontrollprobe) | `NameSpaceType=Managed` |
+
+Daraus folgt zweierlei:
+
+1. Die Domain gehört **nicht** zum M365-Tenant. Der liegengebliebene
+   `MS=`-Eintrag im DNS täuscht das nur vor. Damit ist auch bestätigt,
+   warum Graph das `.de`-Postfach nicht auflösen kann.
+2. Das Postfach liegt bei **IONOS**. Unsere Mail verlässt Microsoft also
+   und wird erst am IONOS-Rand abgewiesen. Die Ablehnung kommt **nicht**
+   aus unserem Code und nicht aus dem Tenant.
+
+Der Bericht ist damit kein Softwarefehler, sondern eine Aussage des
+Zielservers. Welche genau, steht im Fußteil des Berichts
+(„Diagnoseinformationen für Administratoren") — dort ist der abweisende
+Server benannt. Typische Ursachen bei IONOS: Postfach voll, die Adresse
+ist nur eine Weiterleitung mit totem Ziel, oder der Absender wird
+abgewiesen.
+
+**Folge für F1:** Die Kopie erfüllt ihren Zweck nur, wenn die Zieladresse
+von außen erreichbar ist. Ist sie es nicht, erzeugt jede Lieferantenmail
+zusätzlich einen Unzustellbarkeitsbericht. Als Zwischenlösung lässt sich
+im CMS unter Kontaktdaten `kopie_an` auf eine erreichbare Adresse setzen
+oder mit `aus` abschalten (F3).
 
 ## Ein zweiter Fehler, der dabei aufflog
 

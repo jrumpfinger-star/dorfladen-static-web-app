@@ -36,9 +36,12 @@ CONTACT_DEFAULTS = {
     # Tenant als Benutzer aufloesen kann. "info@dorfladen-oberornau.de"
     # ist nachweislich KEINE solche Adresse — Graph antwortet darauf mit
     # 404 ErrorInvalidUser ("The requested user ... is invalid"), und es
-    # geht dann gar keine Mail mehr raus. Die Domain ist im M365-Tenant
-    # offenbar nicht eingerichtet; das dortige Postfach liegt bei einem
-    # anderen Anbieter. Vor einer Umstellung erst die Domain im Tenant
+    # geht dann gar keine Mail mehr raus. Nachgemessen: Die Domain gehoert
+    # NICHT zum M365-Tenant (getuserrealm liefert "Unknown", waehrend die
+    # onmicrosoft-Domain "Managed" liefert); der MX zeigt auf IONOS
+    # (mx00/mx01.ionos.de). Der TXT-Eintrag "MS=5016065" im DNS ist nur
+    # ein liegengebliebener Verifizierungsversuch und taeuscht eine
+    # Einrichtung vor. Vor einer Umstellung erst die Domain im Tenant
     # verifizieren und ein echtes Postfach anlegen.
     "mailbox": "info@dorfladenoberornau.onmicrosoft.com",
     "reply_to": "info@dorfladen-oberornau.de",
@@ -369,10 +372,13 @@ def send_email(to_email, to_name, subject, body_text, extra_html="", reply_to=No
         an Lieferanten, damit im Laden nachvollziehbar bleibt, was bestellt
         wurde. Hintergrund: Gesendet wird aus dem technischen
         onmicrosoft.com-Postfach, die Kopie in "Gesendet" liegt also dort
-        und nicht im Postfach des Ladens. Die CC-Kopie landet im
-        Posteingang von info@dorfladen-oberornau.de und schliesst diese
-        Luecke. Adresse aus der Kontaktkonfiguration (`kopie_an`, sonst
-        `email`)."""
+        und nicht im Postfach des Ladens. Die CC-Kopie soll diese Luecke
+        schliessen. ACHTUNG: Sie kommt nur an, wenn die Zieladresse von
+        aussen zustellbar ist - das .de-Postfach liegt bei IONOS, nicht
+        im Tenant. Weist IONOS ab, erzeugt jede Lieferantenmail
+        zusaetzlich einen Unzustellbarkeitsbericht (Spec
+        bestellkopie-laden, Abschnitt "Nachtrag"). Adresse aus der
+        Kontaktkonfiguration (`kopie_an`, sonst `email`)."""
     import base64
     import logging
     token = get_graph_token()
