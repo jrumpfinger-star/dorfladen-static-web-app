@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 /**
  * Social-Vorschau (F16) – Poster passt ohne Scrollen in die rechte Spalte,

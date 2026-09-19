@@ -8,7 +8,7 @@
  *
  * Ausführen:  npx playwright test tests/kiosk-kalender.spec.js
  */
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');

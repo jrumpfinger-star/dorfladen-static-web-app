@@ -14,7 +14,7 @@
  *   node node_modules\@playwright\test\cli.js test tests/kiosk-bestellung-loeschen.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 

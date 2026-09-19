@@ -11,7 +11,7 @@
  *   npx playwright test tests/kiosk-kontakt-haken.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 // Der Kiosk ist eine PWA: ohne diesen Schalter beantwortet der Service Worker
 // die API-Aufrufe aus seinem Cache und die Mock-Routen greifen nicht.

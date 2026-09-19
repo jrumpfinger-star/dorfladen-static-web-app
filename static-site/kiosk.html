@@ -23,6 +23,22 @@
   <link rel="stylesheet" href="/css/kiosk-base.css">
   <link rel="stylesheet" href="/css/dl-design.css">
   <link rel="stylesheet" href="/css/kiosk-neu.css">
+  <script id="cms-pw-hash" type="application/json">"d324fb3c8c3a1ef449e1f776b2f29fd718d00e7967adbb0bbe8326c2452bea93"</script>
+  <script>
+    /* Sofort sperren, noch bevor der Kiosk gezeichnet wird - sonst blitzt
+       der Inhalt kurz auf, bevor die Abfrage darueberlegt.
+       (Spec kiosk-passwortabfrage, F3) */
+    (function(){
+      try{
+        var el=document.getElementById('cms-pw-hash');
+        var hash=el?JSON.parse(el.textContent):'';
+        if(!hash) return;                     // ohne Hash nicht aussperren
+        if(sessionStorage.getItem('cms_auth_ok')!==hash){
+          document.documentElement.classList.add('kiosk-zu');
+        }
+      }catch(e){ /* Speicher gesperrt: dann offen lassen, der Laden muss arbeiten */ }
+    })();
+  </script>
   <script src="/js/theme.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -5230,6 +5246,107 @@ var K = (function(){
   // Falls ein Update ansteht, beim Schliessen eines Modals / Fokusverlust nachziehen.
   document.addEventListener('click', reloadIfIdle);
   document.addEventListener('focusout', function(){ setTimeout(reloadIfIdle, 300); });
+})();
+</script>
+
+<!-- ═══ Passwortabfrage (Spec kiosk-passwortabfrage) ═══
+     Bewusst am Ende: So liegt sie ausserhalb der Rasterhuelle, die das
+     Bauwerkzeug um Kopf, Reiter und Inhalt legt (Regel R4). -->
+<div id="kiosk-gate" style="display:none">
+  <div class="kg-box">
+    <h2>Dorfladen Kiosk</h2>
+    <p>Bitte Passwort eingeben</p>
+    <div class="kg-pw">
+      <input type="password" id="kg-pw" placeholder="Passwort" autocomplete="current-password" enterkeyhint="go">
+      <button type="button" class="kg-auge" id="kg-auge" title="Passwort anzeigen">&#128065;</button>
+    </div>
+    <div class="kg-err" id="kg-err">Falsches Passwort</div>
+    <button type="button" class="kg-btn" id="kg-btn">Anmelden</button>
+  </div>
+</div>
+<script>
+/* Dieselbe Abfrage wie im CMS: gleiches Passwort, gleicher Schluessel
+   (`cms_auth_ok`) im Sitzungsspeicher. Wer sich im CMS angemeldet hat,
+   kommt hier ohne erneute Eingabe hinein - und umgekehrt.
+
+   Wichtig zur Einordnung: Das ist ein Riegel vor der BEDIENOBERFLAECHE,
+   kein Schutz der Daten. Die Schnittstellen antworten weiterhin ohne
+   Anmeldung; das ist eine eigene Baustelle (specs/serverseitige-auth,
+   T10). Wer das hier fuer Datenschutz haelt, taeuscht sich.
+   (Spec kiosk-passwortabfrage) */
+(function(){
+  var el=document.getElementById('cms-pw-hash');
+  var HASH='';
+  try{ HASH = el?JSON.parse(el.textContent):''; }catch(e){ HASH=''; }
+  var KEY='cms_auth_ok';
+  var gate=document.getElementById('kiosk-gate');
+  if(!gate) return;
+  // Ohne hinterlegtes Passwort wird nicht ausgesperrt.
+  if(!HASH){ document.documentElement.classList.remove('kiosk-zu'); return; }
+
+  function frei(){
+    try{ sessionStorage.setItem(KEY,HASH); }catch(e){}
+    document.documentElement.classList.remove('kiosk-zu');
+    gate.style.display='none';
+  }
+
+  // Bereits angemeldet? Dann gar nicht erst zeigen.
+  var schon=false;
+  try{ schon = sessionStorage.getItem(KEY)===HASH; }catch(e){ schon=true; }
+  if(schon){ document.documentElement.classList.remove('kiosk-zu'); return; }
+
+  gate.style.display='';
+  var pw=document.getElementById('kg-pw');
+  var err=document.getElementById('kg-err');
+  var btn=document.getElementById('kg-btn');
+
+  function sha256(text){
+    var buf=new TextEncoder().encode(text);
+    return crypto.subtle.digest('SHA-256',buf).then(function(h){
+      return Array.from(new Uint8Array(h)).map(function(b){
+        return b.toString(16).padStart(2,'0');
+      }).join('');
+    });
+  }
+
+  function pruefen(){
+    var wert=pw.value||'';
+    if(!wert){ pw.focus(); return; }
+    btn.disabled=true;
+    sha256(wert).then(function(hash){
+      btn.disabled=false;
+      if(hash!==HASH){
+        err.style.display='block';
+        pw.value=''; pw.focus();
+        return;
+      }
+      err.style.display='none';
+      /* Denselben Weg wie das CMS gehen: Das Admin-Token holen, damit
+         schreibende Aufrufe spaeter nicht erneut nach dem Passwort
+         fragen. Schlaegt es fehl, wird trotzdem aufgesperrt - sonst
+         haenge der Laden an einem Nebenweg fest. */
+      try{
+        if(window.dlAdminLogin){ window.dlAdminLogin(wert).catch(function(){}); }
+      }catch(e){}
+      frei();
+    }).catch(function(){
+      /* Ohne Web-Crypto (sehr alter Browser oder unsichere Verbindung)
+         laesst sich nichts pruefen. Dann aufsperren statt aussperren:
+         Der Kiosk ist das Arbeitsgeraet im Laden. */
+      btn.disabled=false;
+      frei();
+    });
+  }
+
+  btn.addEventListener('click', pruefen);
+  pw.addEventListener('keydown', function(e){ if(e.key==='Enter') pruefen(); });
+  pw.addEventListener('input', function(){ err.style.display='none'; });
+  var auge=document.getElementById('kg-auge');
+  if(auge) auge.addEventListener('click', function(){
+    pw.type = pw.type==='password' ? 'text' : 'password';
+    pw.focus();
+  });
+  setTimeout(function(){ try{ pw.focus(); }catch(e){} }, 60);
 })();
 </script>
 </body>

@@ -24,7 +24,7 @@
  *   TEST_URL=http://127.0.0.1:8080 npx playwright test tests/kiosk-getraenke.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 

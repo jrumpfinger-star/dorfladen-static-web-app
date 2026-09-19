@@ -17,7 +17,7 @@
  *   npx playwright test tests/kiosk-sonderwuensche.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 const KIOSK_URL = `${BASE}/kiosk`;

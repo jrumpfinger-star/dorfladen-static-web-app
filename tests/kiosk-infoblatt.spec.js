@@ -18,7 +18,7 @@
  *   node node_modules\@playwright\test\cli.js test tests/kiosk-infoblatt.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 const { mockApi } = require('./helpers/bestellreiter-mocks');
 
 test.use({ serviceWorkers: 'block' });

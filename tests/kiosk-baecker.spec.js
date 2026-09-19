@@ -20,7 +20,7 @@
  *   npx playwright test tests/kiosk-baecker.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 

@@ -8,7 +8,7 @@
  *   npx playwright test tests/fleisch.spec.js
  */
 
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 const FLEISCH_URL = `${BASE}/fleisch-bestellen`;

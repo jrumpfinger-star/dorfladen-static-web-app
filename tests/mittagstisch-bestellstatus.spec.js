@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./_kiosk-angemeldet');
 
 /**
  * Mittagstisch – Bestellstatus sichtbar und einheitlich.

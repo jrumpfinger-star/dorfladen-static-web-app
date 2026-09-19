@@ -1583,3 +1583,52 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
 @media(min-width:701px) and (max-width:1100px){
   .gk{--gk-spalte:100%;--gk-namensp:210px}
 }
+
+/* ── Passwortabfrage (Spec kiosk-passwortabfrage) ────────────────────
+   Dieselbe Abfrage wie im CMS: gleiches Passwort, gleicher Schluessel
+   im Sitzungsspeicher. Wer sich im CMS angemeldet hat, kommt auch
+   hier ohne erneute Eingabe hinein.
+
+   Gesperrt wird ueber die Klasse am <html>-Element, nicht ueber eine
+   Auszeichnung im Markup: So bleibt die Seite bedienbar, falls das
+   Skript gar nicht erst laeuft. Ein blinder Kiosk waere im Laden
+   schlimmer als ein offener. */
+html.kiosk-zu body > *:not(#kiosk-gate){display:none!important}
+html.kiosk-zu{overflow:hidden}
+#kiosk-gate{
+  position:fixed; inset:0; z-index:100000;
+  display:flex; align-items:flex-start; justify-content:center;
+  background:#f1f3f2; padding:24px;
+  -webkit-overflow-scrolling:touch; overflow:auto;
+}
+#kiosk-gate .kg-box{
+  max-width:360px; width:100%; margin:80px auto 0; padding:32px;
+  background:#fff; border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.08);
+  text-align:center;
+}
+#kiosk-gate h2{font-size:20px;font-weight:600;color:#1f2937;margin:0 0 4px}
+#kiosk-gate p{font-size:13px;color:#6b7280;margin:0 0 20px}
+#kiosk-gate .kg-pw{position:relative}
+#kiosk-gate input{
+  width:100%; padding:10px 40px 10px 14px; border:1px solid #d1d5db;
+  border-radius:8px; font-size:16px; margin-bottom:12px; box-sizing:border-box;
+  min-height:var(--tap-min,44px);
+}
+#kiosk-gate input:focus{outline:none;border-color:#2e7d4f;box-shadow:0 0 0 3px rgba(46,125,79,.15)}
+#kiosk-gate .kg-auge{
+  position:absolute; right:6px; top:4px; background:none; border:0;
+  font-size:16px; cursor:pointer; padding:6px 8px; line-height:1;
+}
+#kiosk-gate .kg-btn{
+  width:100%; padding:10px; background:#2e7d4f; color:#fff; border:none;
+  border-radius:8px; font-size:15px; font-weight:600; cursor:pointer;
+  min-height:var(--tap-min,44px);
+}
+#kiosk-gate .kg-btn:hover{background:#27663f}
+#kiosk-gate .kg-err{
+  display:none; color:#b42318; font-size:13px; margin:0 0 10px; font-weight:600;
+}
+html[data-theme="dark"] #kiosk-gate{background:#111827}
+html[data-theme="dark"] #kiosk-gate .kg-box{background:#1f2937}
+html[data-theme="dark"] #kiosk-gate h2{color:#f3f4f6}
+html[data-theme="dark"] #kiosk-gate input{background:#111827;color:#f3f4f6;border-color:#374151}
