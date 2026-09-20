@@ -36,14 +36,22 @@
    important confirmations and errors; brief status feedback may use toasts.
    Technical details go to the console/logs, not to the user.
 7. **Responsive across all target sizes.** Every UI change MUST be tested and
-   look correct at three viewports: **mobile** (375×667), **iPad mini**
-   (768×1024), and **desktop** (1280×800). On every one the UI must fit (no
+   look correct at four viewports: **mobile** (375×667), **iPad mini**
+   (768×1024), **desktop** (1280×800), and the **store tablet in portrait**
+   (686×1095 CSS px — a Lenovo TAB P12 with 1200×2000 device pixels at a
+   measured device pixel ratio of 1.75). On every one the UI must fit (no
    overflow, no clipped/overlapping elements, no horizontal scroll) and be
-   modern and user-friendly. Playwright projects MUST cover these three
+   modern and user-friendly. Playwright projects MUST cover these four
    viewports.
+
+   The store tablet is not a hypothetical size: it is the device the kiosk
+   runs on every day. A layout fault there hits the shop immediately. It is
+   also the only target that is narrow (686 px) yet tall (1095 px) — rules
+   keyed to width alone mistake it for a phone and hide content that has
+   ample room.
 8. **Changes are tested automatically.** Every change MUST be covered by
    automated tests that run without manual steps. Prefer Playwright for
-   UI/CMS behaviour and run the relevant specs across all three viewports
+   UI/CMS behaviour and run the relevant specs across all four viewports
    (Principle 7). No change is "done" until its automated tests pass.
 
 ## Quality Gates
@@ -52,10 +60,11 @@
 - Static site builds/serves without errors; API starts cleanly.
 - No user-facing `alert()`/`confirm()` or raw `Fehler: <exception>` text in
   changed code; messages are friendly and use the in-app components.
-- UI changes verified at mobile (375×667), iPad mini (768×1024), and desktop
-  (1280×800); the layout fits and stays modern/user-friendly on each.
+- UI changes verified at mobile (375×667), iPad mini (768×1024), desktop
+  (1280×800), and the store tablet in portrait (686×1095); the layout fits
+  and stays modern/user-friendly on each.
 - Changes ship with automated tests that pass; the relevant Playwright specs
-  run across all three viewports.
+  run across all four viewports.
 
 ## Amending This Document
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Bestellreiter auf dem Telefon — der Wächter
  * Spec: specs/kiosk-bestellreiter-mobil/spec.md
  *
@@ -334,9 +334,16 @@ test.describe('Bestellreiter auf dem Telefon', () => {
     test(`TC-F1-03 + TC-F2-01: ${r.name} im Projekt-Viewport`, async ({ page }, info) => {
       await oeffne(page, r.tab);
       const m = await miss(page, r.zeile);
-      // Auf dem Tablet ist mehr Platz, also gilt die höhere Schwelle.
-      const breit = info.project.use.viewport.height >= 1000;
-      pruefe(m, `${r.name} (${info.project.name})`, breit ? 10 : 4);
+      /* Die Schwelle haengt an BEIDEN Massen, nicht nur an der Hoehe.
+         Das Ladentablett ist mit 1095 px hoch, aber mit 686 px schmal:
+         Bäcker- und Getränkeliste bleiben dort einspaltig, weil ihre
+         Spalten sonst unter 300 px fielen — dann passen zwangslaeufig
+         weniger Zeilen als auf dem gleich hohen, aber breiteren iPad.
+         (Spec metzger-tablett-hoch) */
+      const v = info.project.use.viewport;
+      const zweispaltig = v.width >= 760;
+      const mindestens = v.height >= 1000 ? (zweispaltig ? 10 : 7) : 4;
+      pruefe(m, `${r.name} (${info.project.name})`, mindestens);
     });
   }
 

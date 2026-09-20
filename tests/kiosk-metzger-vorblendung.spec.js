@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Kiosk – Metzger: Vorblendungen einzeln, Vorgabe im Artikelstamm
  *
  * Deckt specs/metzger-vorblendung/spec.md ab (TC-V01 … TC-V25).
@@ -97,13 +97,29 @@ const LETZTE = {
 /* Für TC-V25: genug Artikel, damit die Liste tatsächlich rollt. Mit nur
    vier Zeilen liefe die Rollprüfung ins Leere und der Wächter wäre blind.
    Die Namen sind bewusst unterschiedlich lang: Nur so faellt auf, wenn
-   die Spalten der Liste nicht in einer Flucht stehen (TC-A03/TC-A04). */
+   die Spalten der Liste nicht in einer Flucht stehen (TC-A03/TC-A04).
+
+   Die Warengruppen kommen in BLOECKEN, nicht abwechselnd. Vorher wechselte
+   die Gruppe bei jedem Artikel — dadurch bekam jeder eine eigene
+   Ueberschrift und stand allein in seiner Rasterzeile. In der
+   Zweispalten-Ansicht stand deshalb nie eine Kachel neben einer anderen,
+   und ein Waechter darauf waere blind gewesen. Im Laden haben die Gruppen
+   mehrere Mitglieder ("FLEISCH FRISCH" mit fuenf Artikeln usw.). */
 const VIELE = ARTIKEL.concat(
   Array.from({ length: 60 }, (_, i) => ({
     name: (i % 3 === 0 ? 'Füllartikel mit einem recht langen Namen ' : 'Füllartikel ')
       + (i + 1),
     nummer: 900 + i, preis: 5 + (i % 9), einheit: 'kg',
-    gruppe: i % 2 ? 'Brät & Leberkäse' : 'Sonstiges', aktiv: true, auf_formular: true,
+    gruppe: i < 30 ? 'Brät & Leberkäse' : 'Sonstiges', aktiv: true, auf_formular: true,
+    /* Jeder dritte Artikel traegt eine mehrteilige Vorgabe. Genau daraus
+       entsteht der Hoehenunterschied zwischen benachbarten Kacheln — ohne
+       ihn waeren alle gleich gross und ein Waechter auf gleiche Hoehen
+       wuerde bestehen, ohne je etwas geprueft zu haben. */
+    standard: i % 3 === 0
+      ? [{ anzahl: 2, menge: 500, einheit: 'g', vakuum: true },
+         { anzahl: 6, menge: 250, einheit: 'g', vakuum: true },
+         { anzahl: 1, menge: 1, einheit: 'kg', vakuum: false }]
+      : '',
   })));
 
 /** Alle PATCH-Rümpfe an /api/metzger-artikel, für TC-V13 bis TC-V15. */
@@ -819,4 +835,202 @@ test.describe('Artikelliste auf allen Breiten', () => {
       expect(ab.vorgabe, 'Breite ' + w + ': Vorgabe abgeschnitten').toBe(0);
     }
   });
+});
+
+/* ── Ladentablett im Hochformat ─────────────────────────────────────────
+   Aus dem Laden: „Wir haben ein Tablet mit 1200 x 2000 Aufloesung und
+   wollen dies in Portraet bedienen … Teste bei Aenderungen mit, ob alle
+   Elemente auch sauber platziert und dargestellt werden." Dazu: „Kannst
+   du bei 2-spaltiger Darstellung bei Metzger Mair die Kacheln links und
+   rechts gleich hoch machen, so dass das Bild nicht so zerklueftet
+   aussieht."
+
+   686 x 1095 sind die CSS-Pixel dieses Geraets (1200/1,75 bzw. 2000/1,75
+   abzueglich der Systemleisten) — Herleitung in playwright.config.js.
+   Deckt specs/metzger-tablett-hoch/spec.md (TC-T01 ... TC-T07). */
+test.describe('Bestellliste auf dem Ladentablett', () => {
+  const HOCH = { width: 686, height: 1095 };
+  /* Das Querformat desselben Geraets. Dort stehen zwei Spalten — genau
+     die Ansicht, deren Kacheln unterschiedlich hoch waren. */
+  const QUER = { width: 1143, height: 638 };
+
+  async function beiMass(browser, mass, was) {
+    const ctx = await browser.newContext({
+      viewport: mass, deviceScaleFactor: 1.75, hasTouch: true,
+    });
+    const p = await ctx.newPage();
+    try {
+      await oeffneTab(p, { viele: true });
+      return await was(p);
+    } finally { await ctx.close(); }
+  }
+
+  /**
+   * Fasst die Kacheln zu Rasterzeilen zusammen (gleiche Oberkante) und
+   * meldet je Zeile die groesste Hoehendifferenz.
+   *
+   * Aufgeklappte Kacheln (`.mb-row.offen`) spannen ueber beide Spalten und
+   * bleiben aussen vor — sie haben bauartbedingt keine Nachbarin.
+   */
+  async function lage(page) {
+    return page.evaluate(() => {
+      const liste = document.querySelector('#panel-metzgerbest .mb-liste');
+      if (!liste) return null;
+      const alle = [...liste.children].filter(
+        (r) => r.classList.contains('mb-row') && !r.classList.contains('offen'));
+      if (!alle.length) return null;
+      const br = liste.getBoundingClientRect();
+
+      const gruppen = new Map();
+      alle.forEach((r) => {
+        const k = r.getBoundingClientRect();
+        const s = Math.round(k.top / 2) * 2;
+        if (!gruppen.has(s)) gruppen.set(s, []);
+        gruppen.get(s).push(k.height);
+      });
+
+      let maxDiff = 0;
+      let paare = 0;
+      gruppen.forEach((g) => {
+        if (g.length < 2) return;
+        paare++;
+        maxDiff = Math.max(maxDiff, Math.max(...g) - Math.min(...g));
+      });
+
+      const raus = alle.some((r) => {
+        const k = r.getBoundingClientRect();
+        return k.right > br.right + 1 || k.left < br.left - 1;
+      });
+
+      const oben = alle[0].getBoundingClientRect().top;
+      /* Die Spaltenzahl NICHT an der ersten Zeile ablesen: Steht dort eine
+         Warengruppe mit nur einem Artikel, sieht jede Liste einspaltig aus.
+         Die Zahl der verschiedenen linken Kanten ist die verlaessliche
+         Groesse. */
+      const kanten = new Set(alle.map(
+        (r) => Math.round(r.getBoundingClientRect().left)));
+
+      return {
+        spalten: kanten.size,
+        ersteZeile: alle.filter(
+          (r) => Math.abs(r.getBoundingClientRect().top - oben) < 2).length,
+        maxDiff: Math.round(maxDiff), paare, raus, zahl: alle.length,
+      };
+    });
+  }
+
+  test('TC-T01: die Kacheln einer Zeile sind gleich hoch',
+    async ({ browser }) => {
+      test.setTimeout(180000);
+      /* Beide Lagen zeigen zwei Spalten — in beiden muss die Reihe stehen. */
+      for (const [name, mass] of [['hoch', HOCH], ['quer', QUER]]) {
+        const l = await beiMass(browser, mass, lage);
+        expect(l, name + ': keine Bestellliste gefunden').not.toBeNull();
+        /* Ohne Paare waere die Pruefung blind — genau das war sie, solange
+           die Testdaten jedem Artikel eine eigene Warengruppe gaben. */
+        expect(l.paare, name + ': keine Zeile mit zwei Kacheln — Waechter waere blind')
+          .toBeGreaterThan(3);
+        /* Vor der Aenderung waren es 44 px: Die Kachel mit wenigen Portionen
+           blieb kurz, die Nachbarin ragte darueber hinaus. */
+        expect(l.maxDiff,
+          name + ': Kacheln einer Zeile unterschiedlich hoch (' + l.maxDiff + ' px)')
+          .toBeLessThanOrEqual(1);
+      }
+    });
+
+  test('TC-T02: im Hochformat stehen zwei Spalten nebeneinander',
+    async ({ browser }) => {
+      test.setTimeout(120000);
+      const l = await beiMass(browser, HOCH, lage);
+      expect(l, 'keine Bestellliste gefunden').not.toBeNull();
+      expect(l.zahl, 'zu wenige Kacheln fuer eine Aussage').toBeGreaterThan(10);
+      /* Dem Listenbereich bleiben bei 686 CSS-Pixeln rund 574 px — knapp
+         unter der alten 600er-Schwelle. Das Tablett stand deshalb
+         einspaltig da, obwohl es 1095 px hoch ist: gemessen 8 von 12
+         Artikeln sichtbar statt 12 von 12. */
+      expect(l.spalten, 'Hochformat sollte zweispaltig sein').toBe(2);
+    });
+
+  test('TC-T03: keine Kachel ragt aus der Liste heraus', async ({ browser }) => {
+    test.setTimeout(120000);
+    for (const [name, mass] of [['hoch', HOCH], ['quer', QUER]]) {
+      const l = await beiMass(browser, mass, lage);
+      expect(l.raus, name + ': Kachel ausserhalb der Liste').toBe(false);
+    }
+  });
+
+  test('TC-T04: der feste Kopf verdeckt die erste Kachel nicht',
+    async ({ browser }) => {
+      test.setTimeout(120000);
+      /* „ob alle Elemente auch sauber platziert werden": Geprueft wird mit
+         elementFromPoint — also so, wie der Finger trifft, nicht nur nach
+         Koordinaten. */
+      const l = await beiMass(browser, HOCH, (p) => p.evaluate(() => {
+        const erste = document.querySelector('#panel-metzgerbest .mb-liste > .mb-row');
+        if (!erste) return null;
+        const er = erste.getBoundingClientRect();
+        const treffer = document.elementFromPoint(
+          Math.round(er.left + er.width / 2), Math.round(er.top + er.height / 2));
+        return { trifft: !!(treffer && treffer.closest('.mb-row') === erste) };
+      }));
+      expect(l, 'keine Kachel gefunden').not.toBeNull();
+      expect(l.trifft, 'auf der ersten Kachel liegt etwas anderes obenauf').toBe(true);
+    });
+
+  test('TC-T05: die Fusszeile nennt auch im Hochformat die Zähler',
+    async ({ browser }) => {
+      test.setTimeout(120000);
+      /* Die Zaehler hingen an `max-width:699px` und verschwanden deshalb
+         auf dem Tablett — obwohl es 1095 px hoch ist. Eng ist ein Geraet
+         erst, wenn es schmal UND niedrig ist. */
+      const sicht = await beiMass(browser, HOCH, (p) => p.evaluate(() =>
+        [...document.querySelectorAll('#panel-metzgerbest .mb-foot .mb-st')]
+          .filter((s) => getComputedStyle(s).display !== 'none').length));
+      expect(sicht, 'keine Zähler in der Fusszeile').toBeGreaterThan(0);
+    });
+
+  test('TC-T06: die Bedienknoepfe behalten ihre Antippgroesse',
+    async ({ browser }) => {
+      test.setTimeout(120000);
+      /* Gleich hohe Kacheln duerfen nicht damit erkauft werden, dass die
+         Knoepfe gestaucht werden — auf dem Tablett wird getippt. */
+      const klein = await beiMass(browser, HOCH, (p) => p.evaluate(() =>
+        [...document.querySelectorAll('#panel-metzgerbest .mb-liste .mb-akt button')]
+          .filter((b) => b.getBoundingClientRect().height < 32).length));
+      expect(klein, 'Knoepfe unter 32 px hoch').toBe(0);
+    });
+
+  test('TC-T07: nichts ragt seitlich aus dem Fenster', async ({ browser }) => {
+    test.setTimeout(120000);
+    /* Waagerechtes Rollen ist auf einem Kiosk immer ein Fehler: Was rechts
+       hinausragt, wird nie gefunden. */
+    const ueber = await beiMass(browser, HOCH, (p) => p.evaluate(() => {
+      const w = document.documentElement.clientWidth;
+      return [...document.querySelectorAll('#panel-metzgerbest *')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.right > w + 1;
+        })
+        .slice(0, 5)
+        .map((el) => (el.className || el.tagName).toString().slice(0, 40));
+    }));
+    expect(ueber, 'ragt ueber den rechten Rand: ' + ueber.join(' | ')).toEqual([]);
+  });
+
+  test('TC-T08: lange Woerter werden getrennt, nicht mitten im Wort gebrochen',
+    async ({ browser }) => {
+      test.setTimeout(120000);
+      /* In der schmalen Spalte brach „Sonnenblumenkernbrot" ohne Trennung
+         um und liess ein einzelnes „t" in der zweiten Zeile stehen.
+         Geprueft wird die Regel selbst — ob eine konkrete Trennstelle
+         faellt, entscheidet der Browser und waere kein stabiler Waechter. */
+      const trennung = await beiMass(browser, HOCH, (p) => p.evaluate(() => {
+        const n = document.querySelector('#panel-metzgerbest .mb-nm');
+        if (!n) return null;
+        const cs = getComputedStyle(n);
+        return cs.hyphens || cs.webkitHyphens;
+      }));
+      expect(trennung, 'kein Artikelname gefunden').not.toBeNull();
+      expect(trennung, 'Silbentrennung ist nicht eingeschaltet').toBe('auto');
+    });
 });

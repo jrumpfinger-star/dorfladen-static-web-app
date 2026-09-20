@@ -323,15 +323,27 @@ html.k-embed .k-tabs{display:none!important}
 .mb-jump button{border:1.5px solid var(--c-border,#e5e7eb);background:#fff;border-radius:16px;
   padding:0 12px;min-height:38px;font-size:11px;font-weight:600;cursor:pointer;
   color:#6b7280;white-space:nowrap}
-/* Liste: die Breite bestimmt die Spaltenzahl (F17) */
+/* Liste: die Breite bestimmt die Spaltenzahl (F17).
+   `align-items:stretch` statt `start`: Bei zwei Spalten war die Kachel
+   mit wenigen Portionen kuerzer als ihre Nachbarin — gemessen bis zu
+   44 px Unterschied. Das Bild wirkte dadurch zerklueftet ("Kannst du
+   die Kacheln links und rechts gleich hoch machen"). Gestreckt fuellt
+   jede Kachel ihre Rasterzeile, die Karten stehen also in einer
+   sauberen Reihe. Bei einer Spalte aendert sich nichts, dort ist die
+   Zeilenhoehe ohnehin die Inhaltshoehe.
+   (Spec metzger-tablett-hoch, F3) */
 .mb-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--mb-sp,100%),1fr));
-  gap:4px 10px;align-items:start}
+  gap:4px 10px;align-items:stretch}
 .mb-grp{grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;
   letter-spacing:.4px;color:#6b7280;margin:12px 0 2px;border-bottom:1px solid var(--c-border,#e5e7eb);
   padding-bottom:4px}
 .mb-row{background:#fff;border-radius:8px;padding:4px 8px;box-shadow:0 1px 2px rgba(0,0,0,.05);
   border-left:4px solid transparent;display:grid;grid-template-columns:46px minmax(0,1fr) auto;
   gap:4px 8px;align-items:center;scroll-margin-top:120px;scroll-margin-bottom:90px}
+/* Der Inhalt bleibt oben, auch wenn die Kachel auf die Hoehe ihrer
+   Nachbarin gestreckt wird. Zentriert wuerde der Name je nach Zahl der
+   Portionen auf- und abwandern — die Liste liefe wieder unruhig. */
+.mb-liste > .mb-row{align-content:start}
 /* Eigene Spalte für den Öffnen-/Schließen-Knopf, oben ausgerichtet: Er bleibt
    damit unabhängig von der Zahl der erfassten Portionen an derselben Stelle. */
 .mb-akt{align-self:start;display:flex;align-items:flex-start;gap:4px}

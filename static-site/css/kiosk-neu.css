@@ -909,8 +909,15 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 
 /* Auf dem Handy zählt jeder Millimeter. Positionen, Kilo, Stück und
    Vakuumzahl stehen als Zwischenstand in der Liste darüber ohnehin fest;
-   in der Fußleiste bleiben die beiden Knöpfe, um die es dort geht. */
-@media (max-width:699px){
+   in der Fußleiste bleiben die beiden Knöpfe, um die es dort geht.
+
+   Die Höhenbedingung kam dazu, als der Kiosk auf dem Ladentablett ins
+   Hochformat gedreht wurde: Das Gerät meldet dort 686 × 1095 CSS-Pixel.
+   Über die Breite allein galt es als Handy — die vier Zähler verschwanden,
+   obwohl über tausend Pixel Höhe zur Verfügung stehen. Eng ist ein Gerät
+   erst, wenn es schmal UND niedrig ist.
+   (Spec metzger-tablett-hoch, F4) */
+@media (max-width:699px) and (max-height:950px){
   #panel-metzgerbest .mb-foot .mb-st{ display:none }
 }
 
@@ -982,6 +989,14 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   flex:0 1 auto;
   min-width:0;
   max-width:none;
+  /* Lange zusammengesetzte Woerter — „Sonnenblumenkernbrot", „Oberschalen-
+     schnitzel" — passen in einer schmalen Spalte nicht in eine Zeile. Ohne
+     Trennung brach der Browser mitten im Wort um und liess ein einzelnes
+     „t" in der zweiten Zeile stehen. Mit `hyphens:auto` und `lang="de"` am
+     Dokument wird stattdessen an einer erlaubten Stelle mit Bindestrich
+     getrennt. (Spec metzger-tablett-hoch, F8) */
+  hyphens:auto;
+  -webkit-hyphens:auto;
 }
 #panel-metzgerbest .mb-frueher{ order:1 }
 #panel-metzgerbest .mb-add.del{ order:3 }
@@ -1003,6 +1018,18 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
    Metzger-Zeilen (Name + Portionen) nicht in ausreichender Zahl auf den
    Schirm. Die Metzger-Spec will ohnehin, dass die Breite die Spaltenzahl
    bestimmt (F17). */
+/* Das Ladentablett im Hochformat bleibt mit 574 px Listenbreite knapp
+   unter der 600er-Schwelle und stand deshalb einspaltig da — obwohl es
+   1095 px hoch ist. Gemessen: 8 von 12 Artikeln sichtbar gegenüber 12 von
+   12 bei zwei Spalten. Die Kacheln sind dann 274 statt 315 px breit;
+   längere Namen brechen auf zwei Zeilen um, die Zeile bleibt aber
+   bedienbar und die Antippflächen unverändert.
+   Diese Stufe steht VOR der 600er-Regel, damit breitere Behälter weiterhin
+   ihre 300 px bekommen — sonst kippten sie bei 880 px auf drei Spalten.
+   (Spec metzger-tablett-hoch, F2) */
+@container liste (min-width:560px){
+  .mb-liste{ --mb-sp:272px }
+}
 @container liste (min-width:600px){
   .mb-liste{ --mb-sp:300px }
 }
