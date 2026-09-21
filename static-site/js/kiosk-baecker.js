@@ -911,14 +911,30 @@
   // Das versendete Dokument ist bei Freundl ein Word-Anhang – den kann der
   // Browser nicht drucken. Der Ausdruck entsteht deshalb hier aus denselben
   // Positionsdaten, im selben Aufbau wie das Formular.
+  //
+  // Diese HTML-Fassung ist seit der Rueckmeldung aus dem Laden der REGELWEG,
+  // nicht mehr der Rueckfall: „Auf Android kommt man nicht direkt zur
+  // Moeglichkeit zu drucken. Es geht erst das PDF-Formular auf, dann muss man
+  // teilen sagen und dann kann man drucken." Android kann ein PDF nicht selbst
+  // drucken — es oeffnet den Betrachter, und von dort fuehrt nur der Umweg
+  // ueber „Teilen". Eine HTML-Seite mit `window.print()` loest dagegen sofort
+  // den Systemdruckdialog aus. Die Spaltenfolge entspricht dem versendeten
+  // Formular (Bestellmenge vor Retoure), damit beide Blaetter gleich zu lesen
+  // sind. (Spec baecker-druck-direkt, F1/F2)
   function druckseite(daten) {
     function z(p) {
       return '<tr><td>' + esc(p.nummer || '') + '</td>'
         + '<td>' + esc(p.name || '') + (p.zusatz ? ' *' : '') + '</td>'
-        + '<td class="r">' + (p.retoure ? esc(String(p.retoure)) : '–') + '</td>'
-        + '<td class="r"><b>' + (p.menge ? esc(String(p.menge)) : '–') + '</b></td></tr>';
+        + '<td class="r"><b>' + (p.menge ? esc(String(p.menge)) : '') + '</b></td>'
+        + '<td class="r">' + (p.retoure ? esc(String(p.retoure)) : '') + '</td></tr>';
     }
     var stueck = daten.positionen.reduce(function (s, p) { return s + (p.menge || 0); }, 0);
+    /* Gezaehlt werden die BESTELLTEN Zeilen, nicht die Zeilen des Blattes:
+       Das Formular fuehrt den ganzen Katalog, die Fusszeile soll aber sagen,
+       was tatsaechlich bestellt ist. */
+    var bestellt = daten.positionen.filter(function (p) {
+      return (p.menge || 0) > 0 || (p.retoure || 0) > 0;
+    });
     return '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">'
       + '<title>Bestellung ' + esc(daten.datum_de) + '</title><style>'
       + 'body{font-family:"Segoe UI",system-ui,sans-serif;padding:16px 20px;color:#111}'
@@ -930,7 +946,7 @@
       + 'th{text-align:left;border-bottom:1px solid #111;padding:3px 5px;'
       + 'font-size:10px;text-transform:uppercase;letter-spacing:.3px}'
       + 'td{padding:3px 5px;border-bottom:1px solid #e5e7eb}'
-      + 'td.r,th.r{text-align:right;width:56px}'
+      + 'td.r,th.r{text-align:right;width:62px}'
       + '.fuss{margin-top:10px;font-size:11px;color:#555}'
       + '.test{background:#fff3cd;border:1px solid #e6b43c;padding:6px 10px;'
       + 'font-size:12px;font-weight:600;text-align:center;margin-bottom:8px}'
@@ -944,16 +960,19 @@
       + (daten.kd_nr ? '<b>Kd.-Nr.</b> ' + esc(daten.kd_nr) : '')
       + (daten.tour_nr ? ' / <b>Tour</b> ' + esc(daten.tour_nr) : '') + '</span></div>'
       + '<table><thead><tr><th>Nr</th><th>Artikelbezeichnung</th>'
-      + '<th class="r">Ret.</th><th class="r">Menge</th></tr></thead><tbody>'
+      + '<th class="r">Bestell Menge</th><th class="r">Retouren Menge</th>'
+      + '</tr></thead><tbody>'
       + daten.positionen.map(z).join('')
       + '</tbody></table>'
-      + '<div class="fuss">' + daten.positionen.length + ' Positionen · ' + stueck + ' Stück'
-      + (daten.positionen.some(function (p) { return p.zusatz; })
+      + '<div class="fuss">' + bestellt.length + ' Positionen · ' + stueck + ' Stück'
+      + (bestellt.some(function (p) { return p.zusatz; })
          ? ' · * nur für diesen Tag zusätzlich bestellt' : '') + '</div>'
       + '<div class="noprint" style="margin-top:18px;text-align:center">'
       + '<button onclick="window.print()" style="padding:10px 20px;font-size:14px;'
       + 'font-weight:600;cursor:pointer">Drucken</button></div>'
-      + '<script>window.onload=function(){window.print();}<\/script>'
+      /* Der Druckdialog kommt von selbst. Klappt das nicht — manche Browser
+         blockieren den Aufruf beim Laden —, steht der Knopf darueber bereit. */
+      + '<script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script>'
       + '</body></html>';
   }
 
@@ -971,38 +990,35 @@
     return true;
   }
 
-  /* Holt das Bestellformular als PDF und legt es zum Drucken vor. Faellt das
-     aus, greift die alte HTML-Fassung - besser ein einfaches Blatt als gar
-     keines, wenn die Verkaeuferin gerade drucken muss. */
+  /* Druckt unmittelbar: HTML-Seite ins Fenster, `window.print()` loest den
+     Systemdruckdialog aus. Kein PDF-Betrachter, kein „Teilen".
+
+     Frueher holte diese Funktion ein PDF vom Server, damit der Ausdruck
+     genauso aussieht wie der Mailanhang. Das war auf dem Ladentablett
+     unbrauchbar: Android kann ein PDF nicht selbst drucken und oeffnet den
+     Betrachter — der Weg zum Drucker fuehrte dann ueber „Teilen" und einen
+     zweiten Betrachter. Die HTML-Fassung ist dem Formular inzwischen
+     nachgebildet (gleiche Spalten, gleiche Reihenfolge), sodass der
+     fruehere Einwand entfaellt.
+
+     Wer das PDF als Datei braucht, bekommt es weiterhin ueber
+     `mode=dokument` — es ist derselbe Weg, den auch der Mailanhang nimmt.
+     (Spec baecker-druck-direkt, F1) */
   function blattDrucken(bk, datum) {
-    // Das Fenster MUSS vor dem Netzaufruf aufgehen, sonst hält der Browser es
-    // für einen ungefragten Pop-up und blockiert es.
-    var w = window.open('', '_blank', 'width=860,height=1000');
-    if (!w) {
-      toast('Der Ausdruck konnte nicht geöffnet werden – bitte Pop-ups erlauben.');
-      return Promise.resolve(false);
+    if (bk === _bk && datum === _datum && _b) {
+      return Promise.resolve(druckFenster(druckDaten(_b)));
     }
-    w.document.write('<!doctype html><meta charset="utf-8"><title>Bestellformular</title>'
-      + '<body style="font:15px system-ui;padding:26px;color:#374151">Das Bestellformular wird erstellt…</body>');
-    w.document.close();
-    return fetch(API + '/baecker-order?mode=dokument&baeckerei='
-        + encodeURIComponent(bk) + '&datum=' + encodeURIComponent(datum))
+    /* Anderer Tag oder andere Baeckerei: erst die Daten holen. */
+    return fetch(API + '/baecker-order?baeckerei=' + encodeURIComponent(bk)
+        + '&datum=' + encodeURIComponent(datum))
       .then(function (r) { return r.json(); })
       .then(function (res) {
-        if (!res || !res.success || !res.pdf_base64) throw new Error('kein Blatt');
-        var roh = atob(res.pdf_base64);
-        var bytes = new Uint8Array(roh.length);
-        for (var i = 0; i < roh.length; i++) bytes[i] = roh.charCodeAt(i);
-        var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-        w.location.href = url;
-        // Erst freigeben, wenn das Fenster es gelesen hat.
-        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
-        return true;
+        if (!res || !res.success || !res.bestellung) throw new Error('keine Bestellung');
+        return druckFenster(druckDaten(res.bestellung));
       })
       .catch(function () {
-        try { w.close(); } catch (e) { /* schon zu */ }
-        toast('Das Formular kam nicht – es wird die einfache Fassung gedruckt.');
-        return druckFenster(druckDaten(_b));
+        toast('Die Bestellung konnte nicht geladen werden.');
+        return false;
       });
   }
 
@@ -1012,9 +1028,15 @@
       baeckerei_name: quelle.baeckerei_name || '',
       kd_nr: quelle.kd_nr || '', tour_nr: quelle.tour_nr || '',
       testbetrieb: !!quelle.testbetrieb,
-      positionen: (quelle.positionen || []).filter(function (p) {
-        return (p.menge || 0) > 0 || (p.retoure || 0) > 0;
-      }),
+      /* ALLE Katalogzeilen, nicht nur die bestellten. Das versendete
+         Dokument ist ein Formular ueber den ganzen Katalog, in das nur die
+         Mengen eingetragen werden — auf Papier wird daran abgehakt und mit
+         dem Stift nachgetragen. Eine Liste nur der bestellten Positionen
+         waere ein anderes Papier; genau das wurde schon einmal gemeldet
+         („Es wird nicht das Originalfile gedruckt!!"). Serverseitig macht
+         es `_positionen_formular()` ebenso.
+         (Spec baecker-druck-direkt, F2) */
+      positionen: (quelle.positionen || []).slice(),
     };
   }
 
@@ -1166,7 +1188,11 @@
     }
     h += kv('Empfänger', _b.empfaenger);
     h += kv('Betreff', betreff);
-    h += kv('Anhang', 'Freundl-Bestellformular.docx');
+    /* Der Name kommt vom Server — dort entsteht er aus der Baeckerei. So
+       nennt die Vorschau genau die Datei, die gleich rausgeht. Frueher
+       stand hier fest „Freundl-Bestellformular.docx", auch bei Martin's
+       Backstube. (Spec baecker-anhangname, F2) */
+    h += kv('Anhang', _b.anhang_name || 'Bestellformular');
     h += kv('Liefertag', _b.wochentag + ', ' + _b.datum_de
       + ' · Kd.-Nr. ' + _b.kd_nr + ' / Tour-Nr. ' + _b.tour_nr);
     h += '<div class="bk-prev"><table><tr><th>Nr</th><th>Artikel</th><th class="q">Menge</th><th class="q">Ret.</th></tr>';

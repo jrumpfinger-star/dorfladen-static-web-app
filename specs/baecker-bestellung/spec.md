@@ -42,7 +42,7 @@ Referenz-Mockup: `baecker-bestellung-mockup.html` (Session-Ordner).
 | --- | --- |
 | Empfänger | `info@baeckerei-freundl.de` |
 | Absender | `info@dorfladen-oberornau.de` |
-| Anhang | `Freundl-Bestellformular.docx` |
+| Anhang | `Baeckerei-Freundl-Bestellformular.docx` |
 | Liefertage | Do 8× · Fr 5× · Sa 4× · Mi 2× — **keine** Bestellung für So/Mo/Di |
 | Vorlauf | durchgehend **1 Tag** (Ausnahme: der Datumsfehler oben) |
 | Sendezeit | zwischen **10:08 und 12:05 Uhr** |
@@ -431,7 +431,11 @@ verschickten Formular entspricht.
   bisher) — die Bäckerei ist das gewohnt.
 - Inaktive Artikel ohne Menge erscheinen **nicht**.
 - Layout, Schrift, Rahmen und Spaltenbreiten entsprechen der Vorlage.
-- Der Dateiname ist immer `Freundl-Bestellformular.docx`.
+- Der Dateiname entsteht aus dem Namen der Bäckerei, die Endung aus dem
+  Format — für Freundl also `Baeckerei-Freundl-Bestellformular.docx`.
+  Siehe [baecker-anhangname](../baecker-anhangname/spec.md): Früher hing er
+  am Format, sodass eine Bestellung an Martin's Backstube eine Datei namens
+  `Freundl-Bestellformular.docx` trug.
 - Die Datei ist mit Word und LibreOffice ohne Reparaturhinweis zu öffnen.
 
 #### F6 Test Cases

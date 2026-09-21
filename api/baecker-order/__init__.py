@@ -43,13 +43,50 @@ DOCX_MIME = ("application/vnd.openxmlformats-officedocument"
              ".wordprocessingml.document")
 PDF_MIME = "application/pdf"
 
-# Anhang je Ausgabeformat. Der Dateiname landet im Postfach der Baeckerei –
-# deshalb sprechend halten.
-ANHANG = {
-    "docx": ("Freundl-Bestellformular.docx", DOCX_MIME),
-    "pdf": ("Bestellung-Martins-Backstube.pdf", PDF_MIME),
+# Dateiendung und MIME je Ausgabeformat. Der NAME entsteht erst in
+# `_anhang_name()` aus der jeweiligen Baeckerei — er darf nicht am Format
+# haengen. Vorher stand hier fest "Freundl-Bestellformular.docx", sodass
+# Martin's Backstube eine Datei mit dem Namen der anderen Baeckerei bekam,
+# sobald dort das Word-Format eingestellt war.
+# (Spec baecker-anhangname, F1)
+FORMATE = {
+    "docx": ("docx", DOCX_MIME),
+    "pdf": ("pdf", PDF_MIME),
 }
-ANHANG_NAME = ANHANG["docx"][0]   # Rueckwaertskompatibilitaet fuer Werkzeuge
+
+
+def _dateiname_teil(text):
+    """Macht aus „Martin's Backstube" ein dateitaugliches „Martins-Backstube".
+
+    Umlaute werden umgeschrieben (ä→ae, ß→ss): Der Name landet im Postfach
+    einer fremden Baeckerei, und dort ist nicht absehbar, welches Programm
+    ihn oeffnet. Ein Dateiname aus reinen ASCII-Zeichen kommt ueberall
+    unbeschaedigt an.
+    """
+    s = str(text or "")
+    for alt, neu in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"),
+                     ("Ä", "Ae"), ("Ö", "Oe"), ("Ü", "Ue"), ("ß", "ss")):
+        s = s.replace(alt, neu)
+    s = re.sub(r"[^A-Za-z0-9\s-]", "", s)
+    s = re.sub(r"\s+", "-", s.strip())
+    s = re.sub(r"-{2,}", "-", s).strip("-")
+    return s or "Baeckerei"
+
+
+def _anhang_name(bcfg, format_="docx"):
+    """Dateiname des Mailanhangs, benannt nach der Baeckerei.
+
+    Der Name landet im Postfach der Baeckerei – deshalb sprechend halten und
+    vor allem: die RICHTIGE Baeckerei nennen.
+    """
+    endung, mime = FORMATE.get(format_, FORMATE["docx"])
+    name = _dateiname_teil(bcfg.get("name") if bcfg else "")
+    return f"{name}-Bestellformular.{endung}", mime
+
+
+# Rueckwaertskompatibilitaet fuer Werkzeuge, die den Namen ohne Konfiguration
+# brauchen. Im Versand wird immer `_anhang_name()` verwendet.
+ANHANG_NAME = "Bestellformular.docx"
 
 
 def _err(msg, status=400):
@@ -68,9 +105,14 @@ def _ok(payload, status=200):
     )
 
 
-def _send_mail(to_email, to_name, subject, body_text, attachment_bytes, format_="docx"):
-    """Mail ueber den bestehenden Graph-Versand aus shop-notify."""
-    name, mime = ANHANG.get(format_, ANHANG["docx"])
+def _send_mail(to_email, to_name, subject, body_text, attachment_bytes,
+               format_="docx", bcfg=None):
+    """Mail ueber den bestehenden Graph-Versand aus shop-notify.
+
+    ``bcfg`` ist die Konfiguration DIESER Baeckerei — aus ihr entsteht der
+    Dateiname des Anhangs.
+    """
+    name, mime = _anhang_name(bcfg, format_)
     pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "shop-notify", "__init__.py")
     spec = importlib.util.spec_from_file_location("shop_notify_mail", pfad)
@@ -298,6 +340,12 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "datum": datum_iso,
         "baeckerei": bk,
         "baeckerei_name": cfg.get("name") or bk,
+        # Der Name des Mailanhangs kommt vom Server, damit die Vorschau im
+        # Kiosk genau das nennt, was tatsaechlich verschickt wird. Frueher
+        # stand dort fest „Freundl-Bestellformular.docx" — auch dann, wenn
+        # die Bestellung an Martin's Backstube ging.
+        # (Spec baecker-anhangname, F2)
+        "anhang_name": _anhang_name(cfg, (cfg.get("format") or "docx").lower())[0],
         "wochentag": store.wochentag(datum_iso),
         "datum_de": store.datum_de(datum_iso),
         "status": order.get("status", store.STATUS_ENTWURF),
@@ -632,6 +680,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
     ok, info = _send_mail(
         cfg.get("empfaenger"), cfg.get("empfaenger_name") or "B\u00e4ckerei",
         betreff, _mail_text(datum_iso, cfg, korrektur, notiz), dokument, format_,
+        bcfg=cfg,
     )
     if not ok:
         logging.error(f"[baecker-order] Mailversand fehlgeschlagen: {info}")

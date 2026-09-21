@@ -112,8 +112,12 @@ function bestellung(opts = {}) {
     positionen: opts.positionen || positionen(),
     tour_nr: opts.tour_nr || '87',
     kd_nr: '1190',
-    baeckerei: 'freundl',
-    baeckerei_name: 'Bäckerei Freundl',
+    baeckerei: opts.baeckerei || 'freundl',
+    baeckerei_name: opts.baeckereiName || 'Bäckerei Freundl',
+    /* Der Anhangname kommt vom Server — er entsteht dort aus der Bäckerei.
+       Früher stand er fest im Kiosk und nannte immer „Freundl", auch bei
+       Martin's Backstube. (Spec baecker-anhangname) */
+    anhang_name: opts.anhangName || 'Baeckerei-Freundl-Bestellformular.docx',
     // Der Papierausdruck ist eine Einstellung je Bäckerei; in den
     // Freundl-Bestandstests bewusst aus, damit ihr Ablauf unverändert bleibt.
     papierausdruck: !!opts.papierausdruck,
@@ -531,12 +535,33 @@ test.describe('Bäcker – Senden (F7)', () => {
 
     const dlg = page.locator('.bk-dlg');
     await expect(dlg).toBeVisible();
-    await expect(dlg).toContainText('Freundl-Bestellformular.docx');
+    await expect(dlg).toContainText('Baeckerei-Freundl-Bestellformular.docx');
     await expect(dlg).toContainText('Tour-Nr. 87');
     await expect(dlg.locator('.bk-prev tr')).not.toHaveCount(0);
     // Noch kein Versand
     expect(page.__calls.filter((c) => /baecker-order/.test(c.url)).length).toBe(0);
   });
+
+  /* Aus dem Laden: „Wenn man Bestellung an Martins Backstube schicken will,
+     steht im Anhang Freundl-Bestellformular.docx." Der Name stand fest im
+     Kiosk statt aus der Bäckerei zu kommen — bei einer Bestellung an eine
+     fremde Firma ist das mehr als ein Schönheitsfehler.
+     (Spec baecker-anhangname, TC-A07) */
+  test('TC-F7-01b: die Vorschau nennt die richtige Bäckerei im Anhang',
+    async ({ page }) => {
+      await openBaecker(page, {
+        baeckerei: 'martins',
+        baeckereiName: "Martin's Backstube",
+        anhangName: 'Martins-Backstube-Bestellformular.docx',
+      });
+      await page.locator('.bk-send').first().click();
+
+      const dlg = page.locator('.bk-dlg');
+      await expect(dlg).toBeVisible();
+      await expect(dlg).toContainText('Martins-Backstube-Bestellformular.docx');
+      await expect(dlg, 'Der Name der anderen Bäckerei darf nicht erscheinen')
+        .not.toContainText('Freundl');
+    });
 
   test('TC-F7-02: Testbetrieb ist gekennzeichnet', async ({ page }) => {
     await openBaecker(page);

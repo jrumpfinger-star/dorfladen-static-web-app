@@ -957,15 +957,53 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
 // Gemeldet: „Es wird nicht das Originalfile gedruckt!! Wir brauchen aber dies."
 //
 // Der Kiosk baute sich zum Drucken eine eigene HTML-Seite zusammen – eine
-// kompakte Liste, die dem versendeten Bestellformular nicht ähnlich sah.
-// Jetzt holt er das Blatt vom Server (mode=dokument), aus derselben Quelle
-// wie der Mailanhang. Für Freundl ist es die Nachbildung der Word-Vorlage:
-// Ein Browser kann .docx nicht drucken.
+// kompakte Liste nur der bestellten Zeilen, die dem versendeten
+// Bestellformular nicht ähnlich sah. Daraufhin holte er das fertige PDF vom
+// Server (mode=dokument).
+//
+// Später kam aus dem Laden der Gegenbefund: „Auf Android kommt man nicht
+// direkt zur Möglichkeit zu drucken. Es geht erst das PDF-Formular auf, dann
+// muss man teilen sagen … Das ist zu kompliziert." Android kann ein PDF nicht
+// selbst drucken und öffnet den Betrachter.
+//
+// Auflösung beider Anliegen: Gedruckt wird wieder eine HTML-Seite — aber eine,
+// die das Formular nachbildet. Entscheidend ist, dass sie den GANZEN Katalog
+// führt, nicht nur die bestellten Zeilen; genau daran war die erste Fassung
+// gescheitert. Dafür löst `window.print()` den Systemdruckdialog sofort aus.
+// (Spec baecker-druck-direkt)
 
-test.describe('Bäcker – Ausdruck holt das echte Blatt (F35)', () => {
+test.describe('Bäcker – Ausdruck bildet das Blatt ab (F35)', () => {
   test.use({ serviceWorkers: 'block' });
 
-  test('TC-F35-01: Drucken fragt das Dokument beim Server an', async ({ page }) => {
+  /** Fängt das Druckfenster ab: Was hineingeschrieben wird und ob gedruckt wird.
+   *
+   *  Ein echtes Fenster würde den Lauf blockieren, sobald `window.print()`
+   *  den Systemdialog öffnet. Stattdessen wird ein Doppel untergeschoben,
+   *  das beides mitschreibt. */
+  async function faltungDesDruckfensters(page) {
+    await page.evaluate(() => {
+      window.__druck = { html: '', gedruckt: 0 };
+      window.open = function () {
+        return {
+          document: {
+            write(s) { window.__druck.html += s; },
+            close() {
+              /* Das eingebettete `window.onload` läuft im Doppel nicht —
+                 der Aufruf wird hier nachgebildet, damit die Prüfung den
+                 wirklichen Ablauf abbildet. */
+              if (/window\.print\(\)/.test(window.__druck.html)) {
+                window.__druck.gedruckt++;
+              }
+            },
+          },
+          focus() {}, print() { window.__druck.gedruckt++; }, close() {},
+          location: {},
+        };
+      };
+    });
+  }
+
+  test('TC-F35-01: Drucken öffnet unmittelbar den Druckdialog', async ({ page }) => {
     const abrufe = [];
     page.on('request', (r) => {
       if (/mode=dokument/.test(r.url())) abrufe.push(r.url());
@@ -973,13 +1011,42 @@ test.describe('Bäcker – Ausdruck holt das echte Blatt (F35)', () => {
     const fr = tagNurFuer('freundl');
     await openBaecker(page, { druckOffen: [{ datum: fr.datum, bk: 'freundl' }] });
     await tagWaehlen(page, fr.datum);
+    await faltungDesDruckfensters(page);
+
     await page.locator('#panel-baecker button', { hasText: 'drucken' }).first().click();
     await page.waitForTimeout(1500);
-    expect(abrufe.length).toBeGreaterThan(0);
-    // Der Abruf muss Bäckerei UND Liefertag nennen – sonst käme das falsche Blatt.
-    expect(abrufe[0]).toContain('baeckerei=freundl');
-    expect(abrufe[0]).toContain('datum=' + fr.datum);
+
+    const p = await page.evaluate(() => window.__druck);
+    expect(abrufe.length,
+      'Der Ausdruck darf nicht mehr den Umweg über das PDF nehmen').toBe(0);
+    expect(p.gedruckt,
+      'window.print() wurde nicht gerufen — auf Android bliebe der Umweg')
+      .toBeGreaterThan(0);
   });
+
+  test('TC-F35-03: Das Blatt führt den ganzen Katalog, nicht nur Bestelltes',
+    async ({ page }) => {
+      /* Der eigentliche Grund für die frühere Beschwerde: Auf Papier wird
+         abgehakt und mit dem Stift nachgetragen. Eine Liste nur der
+         bestellten Zeilen ist dafür das falsche Papier. Geprüft wird das
+         Blatt, das wirklich ins Druckfenster geht. */
+      const fr = tagNurFuer('freundl');
+      await openBaecker(page, { druckOffen: [{ datum: fr.datum, bk: 'freundl' }] });
+      await tagWaehlen(page, fr.datum);
+      await faltungDesDruckfensters(page);
+
+      await page.locator('#panel-baecker button', { hasText: 'drucken' }).first().click();
+      await page.waitForTimeout(1200);
+
+      const html = await page.evaluate(() => window.__druck.html);
+      expect(html, 'nichts ins Druckfenster geschrieben').toBeTruthy();
+
+      const zeilen = (html.match(/<tr>/g) || []).length - 1;   // ohne Kopfzeile
+      const inListe = await page.locator('#panel-baecker .bk-row').count();
+      expect(zeilen,
+        'Das Blatt zeigt weniger Zeilen als der Katalog — es ist die alte, '
+        + 'gefilterte Liste').toBeGreaterThanOrEqual(inListe);
+    });
 
   test('TC-F35-02: Nach dem Senden steht der Nachdruck bereit', async ({ page }) => {
     // Nur Freundl braucht Papier – deshalb ein Freundl-Tag.
