@@ -247,7 +247,7 @@ test.describe('Kiosk – Mittagstisch Filter', () => {
 });
 
 // ════════════════════════════════════════════════════
-//  Mittagstisch – Bestellschluss (12:00)
+//  Mittagstisch – Bestellschluss (Hinweis, keine Sperre)
 // ════════════════════════════════════════════════════
 
 test.describe('Kiosk – Bestellschluss', () => {
@@ -262,21 +262,21 @@ test.describe('Kiosk – Bestellschluss', () => {
     expect(hasFn).toBe(true);
   });
 
-  test('T-17-07 (AK-UI-17h) Button-Zustand passt zur Uhrzeit', async ({ page }) => {
+  /* Früher hiess dieser Fall „Button-Zustand passt zur Uhrzeit" und
+     verlangte nach 12 Uhr einen gesperrten Knopf. Aus dem Laden kam:
+     „nach 12.00 Uhr kann ich nichts mehr eingeben, keine Bestellung mehr."
+     Der Kiosk erfasst ausschliesslich telefonische Bestellungen, und die
+     sind bewusst nicht an die Zeit gebunden — der Server lässt sie auch
+     nach dem Bestellschluss zu. Die Uhrzeit ist ein Hinweis, keine Sperre.
+     (Spec mittag-telefon-bestellschluss, TC-B02) */
+  test('T-17-07 (AK-UI-17h) Der Knopf bleibt zu jeder Uhrzeit bedienbar', async ({ page }) => {
     await page.goto(KIOSK_URL);
     await page.locator('.k-tab[data-tab="mittag"]').click();
     await page.waitForTimeout(1000);
     const btn = page.locator('#btn-new-order');
-    const hour = new Date().getHours();
-    if (hour >= 12) {
-      // After cutoff: button should be disabled
-      await expect(btn).toBeDisabled();
-      const opacity = await btn.evaluate(el => getComputedStyle(el).opacity);
-      expect(parseFloat(opacity)).toBeLessThan(1);
-    } else {
-      // Before cutoff: button should be enabled
-      await expect(btn).toBeEnabled();
-    }
+    await expect(btn, 'Telefonische Erfassung darf nie gesperrt sein').toBeEnabled();
+    const opacity = await btn.evaluate((el) => getComputedStyle(el).opacity);
+    expect(parseFloat(opacity), 'Der Knopf darf nicht ausgegraut wirken').toBe(1);
   });
 });
 

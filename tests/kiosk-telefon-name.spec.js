@@ -73,9 +73,16 @@ async function mockApi(page, opts = {}) {
   await page.route('**/api/wochenplan**', (route) =>
     route.fulfill(j({ success: true, data: [GERICHT] })));
 
+  /* Der Bestellschluss kommt aus dem CMS. Ohne ihn bliebe `_mittagSchluss`
+     leer und der Hinweis-Toast erschiene nie — der Wächter wäre blind.
+     (Spec mittag-telefon-bestellschluss) */
+  await page.route('**/api/cms-config**', (route) =>
+    route.fulfill(j({ success: true,
+      data: { bestellschluss_uhr: opts.bestellschluss || '11:00' } })));
+
   await page.route('**/api/**', (route) => {
     const u = route.request().url();
-    if (/stammkunden|lunch-order|wochenplan/.test(u)) return route.fallback();
+    if (/stammkunden|lunch-order|wochenplan|cms-config/.test(u)) return route.fallback();
     return route.fulfill(j({ success: true }));
   });
 }
@@ -84,13 +91,16 @@ async function mockApi(page, opts = {}) {
  *  Umgeschaltet wird über switchTab statt per Klick: Ohne Freigaben aus
  *  /api/cms-config ist der Reiter ausgeblendet und nicht anklickbar.
  *
- *  Die Uhr wird auf den Vormittag gestellt. Der Kiosk verweigert die
- *  Neubestellung ab 12:00 Uhr für den heutigen Tag (_isMittagCutoff) - ohne
- *  feste Uhrzeit wäre dieser Wächter nur vormittags grün und ab Mittag rot,
- *  ohne dass sich am Programm etwas geändert hätte. setFixedTime lässt die
- *  Zeitgeber weiterlaufen und stellt nur Date.now() fest. */
+ *  Die Uhr wird auf den Vormittag gestellt, damit der Wächter unabhängig
+ *  von der Tageszeit dasselbe misst. Früher war das zwingend: Der Kiosk
+ *  verriegelte die Neubestellung ab 12:00 Uhr. Diese Sperre ist gefallen
+ *  (Spec mittag-telefon-bestellungen sind nicht an die Zeit gebunden), die
+ *  feste Zeit bleibt aber nützlich — nach dem Bestellschluss erscheint ein
+ *  Hinweis-Toast, der sonst je nach Uhrzeit mal da wäre und mal nicht.
+ *  setFixedTime lässt die Zeitgeber weiterlaufen und stellt nur Date.now()
+ *  fest. */
 async function oeffneDialog(page, opts = {}) {
-  await page.clock.setFixedTime(new Date('2026-03-04T09:30:00'));
+  await page.clock.setFixedTime(new Date(opts.zeit || '2026-03-04T09:30:00'));
   await mockApi(page, opts);
   await page.goto(KIOSK_URL);
   await page.waitForTimeout(2500);
@@ -201,5 +211,74 @@ test.describe('Telefonbestellung mit freiem Namen', () => {
       expect(g.orders[0].stammkunde_id).toBe('sk-9');
       expect(g.orders[0].telefon).toBe('08031 12345');
       expect(g.kunden.length).toBe(0);
+    });
+});
+
+/* ── Bestellschluss: Hinweis statt Sperre ───────────────────────────────
+   Aus dem Laden: „Bei Mittagessen Bestellung musst du bei telefonischer
+   Bestellung Zeit ändern. Da ist momentan Schluss um 12.00 und nach 12.00
+   Uhr kann ich nichts mehr eingeben, keine Bestellung mehr."
+
+   Zwei Fehler steckten darin: Die 12 Uhr standen fest im Code, obwohl im
+   CMS eine Zeit gepflegt wird (dort 11:00) — und die Sperre traf die
+   telefonische Erfassung, die der Server ausdruecklich erlaubt.
+   Deckt specs/mittag-telefon-bestellschluss/spec.md (TC-B01 ... TC-B05). */
+test.describe('Bestellschluss bremst die telefonische Aufnahme nicht', () => {
+  const NACH = '2026-03-04T12:30:00';   // nach jedem denkbaren Schluss
+  const VOR  = '2026-03-04T09:30:00';   // davor
+
+  test('TC-B01: nach dem Bestellschluss laesst sich weiter bestellen',
+    async ({ page }) => {
+      const g = sammle(page);
+      await oeffneDialog(page, { zeit: NACH });
+      await waehleGericht(page);
+      await page.locator('#no-kunde-search').fill('Herr Huber');
+      await page.evaluate(() => window.K.submitNewOrder());
+      await page.waitForTimeout(900);
+
+      expect(g.orders.length,
+        'Nach dem Bestellschluss kam keine Bestellung an').toBe(1);
+      expect(g.orders[0].name).toBe('Herr Huber');
+      /* Der Kiosk erfasst ausschliesslich telefonisch — genau diese Quelle
+         nimmt der Server von seiner Zeitsperre aus. */
+      expect(g.orders[0].quelle, 'Quelle muss telefonisch sein').toBe(1);
+    });
+
+  test('TC-B02: der Knopf bleibt auch nach dem Bestellschluss bedienbar',
+    async ({ page }) => {
+      await oeffneDialog(page, { zeit: NACH });
+      const btn = page.locator('#btn-new-order');
+      await expect(btn, 'Knopf darf nicht gesperrt sein').toBeEnabled();
+      const deck = await btn.evaluate((el) => getComputedStyle(el).opacity);
+      expect(parseFloat(deck), 'Knopf darf nicht ausgegraut wirken').toBe(1);
+    });
+
+  test('TC-B03: nach dem Bestellschluss erklaert ein Hinweis die Lage',
+    async ({ page }) => {
+      await oeffneDialog(page, { zeit: NACH });
+      const titel = await page.locator('#btn-new-order').getAttribute('title');
+      expect(titel, 'kein Hinweis am Knopf').toBeTruthy();
+      /* Die Uhrzeit stammt aus dem CMS (11:00), nicht aus dem Code. */
+      expect(titel).toContain('11:00');
+      expect(titel).toMatch(/telefonisch/i);
+    });
+
+  test('TC-B04: vor dem Bestellschluss gibt es keinen Hinweis',
+    async ({ page }) => {
+      await oeffneDialog(page, { zeit: VOR });
+      const titel = await page.locator('#btn-new-order').getAttribute('title');
+      expect(titel || '', 'vorher soll nichts stehen').toBe('');
+    });
+
+  test('TC-B05: die Uhrzeit kommt aus dem CMS, nicht aus dem Code',
+    async ({ page }) => {
+      /* Mit einer anderen gepflegten Zeit muss sich der Hinweis mitbewegen.
+         Steht er weiterhin auf 11:00 oder 12:00, ist die Zeit wieder fest
+         verdrahtet — genau der Fehler, um den es ging. */
+      await oeffneDialog(page, { zeit: '2026-03-04T14:30:00',
+        bestellschluss: '14:15' });
+      const titel = await page.locator('#btn-new-order').getAttribute('title');
+      expect(titel, 'kein Hinweis am Knopf').toBeTruthy();
+      expect(titel, 'Die Uhrzeit folgt der CMS-Angabe nicht').toContain('14:15');
     });
 });

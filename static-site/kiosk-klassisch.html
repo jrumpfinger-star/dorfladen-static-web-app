@@ -3991,24 +3991,75 @@ var K = (function(){
   //  NEW ORDER MODAL
   // ══════════════════════════════════════════════════
 
-  function _isMittagCutoff(){
-    var now = new Date();
-    return _mittagDatum === today() && now.getHours() >= 12;
+  /* Bestellschluss für den Mittagstisch, in Stunden als Dezimalzahl
+     (10.5 = 10:30 Uhr). Gepflegt wird er im CMS unter „Bestellschluss"
+     (Dataverse-Schlüssel `bestellschluss_uhr`) — dieselbe Angabe, nach der
+     sich auch die Kundenseiten richten.
+
+     Er dient im Kiosk nur noch als HINWEIS, nicht als Sperre: Der Kiosk
+     erfasst ausschliesslich telefonische Bestellungen (`quelle: 1`), und
+     die sind bewusst nicht an die Zeit gebunden. Der Server sieht das
+     genauso — seine Zeitsperre greift ausdrücklich nur bei
+     Online-Bestellungen (`quelle == QUELLE_ONLINE` in api/lunch-order).
+     (Spec mittag-telefon-bestellschluss, F1/F2) */
+  var _mittagSchluss = null;
+
+  function _ladeMittagSchluss(){
+    fetch(API+'/cms-config')
+      .then(function(r){ return r.json(); })
+      .then(function(p){
+        var cfg = (p && p.data) ? p.data : p;
+        var roh = cfg && cfg['bestellschluss_uhr'];
+        if(!roh) return;
+        var t = String(roh).split(':');
+        var h = parseInt(t[0],10), m = parseInt(t[1]||'0',10);
+        if(!isNaN(h)) _mittagSchluss = h + (isNaN(m)?0:m)/60;
+        _updateNewOrderBtn();
+      })
+      .catch(function(){ /* ohne Angabe bleibt der Hinweis einfach aus */ });
   }
 
+  /** Lesbare Uhrzeit für Meldungen, z. B. „11:00". */
+  function _mittagSchlussText(){
+    if(_mittagSchluss === null) return '';
+    var h = Math.floor(_mittagSchluss);
+    var m = Math.round((_mittagSchluss - h) * 60);
+    return h + ':' + (m < 10 ? '0' : '') + m;
+  }
+
+  /* Wahr, wenn für HEUTE der im CMS gepflegte Bestellschluss vorbei ist.
+     Früher hiess die Funktion dasselbe, verriegelte aber die Erfassung —
+     mit fest verdrahteten 12 Uhr, während im CMS längst 11:00 stand. Aus
+     dem Laden kam dazu: „nach 12.00 Uhr kann ich nichts mehr eingeben,
+     keine Bestellung mehr." Genau das war der Fehler: Ein Anruf um 12:30
+     muss aufgenommen werden können, solange die Küche noch kocht.
+     (Spec mittag-telefon-bestellschluss, F2) */
+  function _isMittagCutoff(){
+    if(_mittagSchluss === null) return false;
+    var now = new Date();
+    var jetzt = now.getHours() + now.getMinutes()/60;
+    return _mittagDatum === today() && jetzt >= _mittagSchluss;
+  }
+
+  /* Der Knopf bleibt IMMER bedienbar. Nach dem Bestellschluss trägt er
+     nur einen Hinweis — die Entscheidung trifft der Mensch am Telefon,
+     nicht die Uhr. (Spec mittag-telefon-bestellschluss, F3) */
   function _updateNewOrderBtn(){
     var btn = document.getElementById('btn-new-order');
     if(!btn) return;
-    var cutoff = _isMittagCutoff();
-    btn.disabled = cutoff;
-    btn.style.opacity = cutoff ? '.5' : '';
-    btn.title = cutoff ? 'Bestellschluss für heute (12:00 Uhr) erreicht' : '';
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.title = _isMittagCutoff()
+      ? 'Der Bestellschluss für heute (' + _mittagSchlussText()
+        + ' Uhr) ist vorbei — telefonisch ist die Aufnahme weiterhin möglich.'
+      : '';
   }
 
   function openNewOrder(){
+    /* Kein Abbruch mehr, nur ein Hinweis: Die Bestellung wird aufgenommen. */
     if(_isMittagCutoff()){
-      toast('Bestellschluss für heute erreicht (12:00 Uhr). Bitte zuerst den Tag wechseln.');
-      return;
+      toast('Hinweis: Bestellschluss (' + _mittagSchlussText()
+        + ' Uhr) ist vorbei — telefonische Aufnahme ist weiterhin möglich.');
     }
     selectedKunde = null;
     selectedDish = null;
@@ -6630,6 +6681,7 @@ var K = (function(){
     applyKioskFeatures(); // Nur im CMS freigeschaltete Tabs anzeigen
   }
   setMittagFilter('offen'); // Default: Offen
+  _ladeMittagSchluss();     // Bestellschluss aus dem CMS holen
   loadOrders();
   if(!_embedMittag){
     loadDishes();
