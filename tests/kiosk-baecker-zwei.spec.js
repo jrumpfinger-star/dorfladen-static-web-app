@@ -272,6 +272,28 @@ async function tagWaehlen(page, datum) {
 }
 
 /**
+ * Öffnet das Blatt hinter dem „i" und gibt seinen Text zurück.
+ *
+ * Der frühere Infokasten war 250 px hoch und trug Angaben, die man einmal
+ * liest und dann nicht mehr braucht: Herkunft der Mengen, Bestellschluss,
+ * Sortierung, Versandeintrag. Sie stehen seit dem Umbau im Blatt
+ * (Spec kiosk-bestellreiter-mobil, F3). Die Kontextzeile führt nur noch
+ * Bäckerei und Zustand.
+ *
+ * Geprüft wird weiterhin, DASS die Angabe auffindbar ist — nur eben dort,
+ * wo sie jetzt steht.
+ */
+async function blattText(page) {
+  const mehr = page.locator('#panel-baecker .bk-mehr');
+  if (await mehr.count()) {
+    await mehr.click();
+    await page.locator('#bk-blatt').waitFor({ state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(200);
+  }
+  return page.locator('#bk-blatt').innerText();
+}
+
+/**
  * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
  * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
  * Kiosk kennt sie nicht. Damit dieselbe Datei gegen beide laeuft, wird sie
@@ -291,7 +313,7 @@ test.describe('Zweite Bäckerei', () => {
     await openBaecker(page);
     await tagWaehlen(page, tagNurFuer('martins').datum);
     await expect(page.locator('#panel-baecker .bk-btabs')).toHaveCount(0);
-    await expect(page.locator('#panel-baecker .bk-stat .t1')).toContainText("Martin's Backstube");
+    await expect(page.locator('#panel-baecker .bk-kontext .z1')).toContainText("Martin's Backstube");
   });
 
   test('TC-B2-F18-02: Tageswechsel schaltet die Bäckerei mit', async ({ page }) => {
@@ -300,7 +322,7 @@ test.describe('Zweite Bäckerei', () => {
     await expect(page.locator('#panel-baecker .bk-row').first()).toContainText('Semmel');
 
     await tagWaehlen(page, tagNurFuer('freundl').datum);
-    await expect(page.locator('#panel-baecker .bk-stat .t1')).toContainText('Freundl');
+    await expect(page.locator('#panel-baecker .bk-kontext .z1')).toContainText('Freundl');
     // Nr. 1 heißt jetzt Kaisersemmel – der Katalog wurde tatsächlich getauscht
     await expect(page.locator('#panel-baecker .bk-row').first()).toContainText('Kaisersemmel');
   });
@@ -345,7 +367,7 @@ test.describe('Zweite Bäckerei', () => {
     await page.click('.bk-btab-freundl');
     await page.waitForTimeout(600);
     await expect(page.locator('#panel-baecker .bk-row').first()).toContainText('Kaisersemmel');
-    await expect(page.locator('#panel-baecker .bk-stat .t1')).toContainText('Freundl');
+    await expect(page.locator('#panel-baecker .bk-kontext .z1')).toContainText('Freundl');
   });
 
   test('TC-B2-F19-05: Zähler zählt Bestellung und Ausdruck', async ({ page }) => {
@@ -363,7 +385,10 @@ test.describe('Zweite Bäckerei', () => {
     const mo = tagNurFuer('martins').datum;
     await openBaecker(page, { gesendet: [{ datum: mo, bk: 'martins' }] });
     await tagWaehlen(page, mo);
-    await expect(page.locator('#panel-baecker .bk-stat')).not.toContainText('drucken');
+    /* Zustand steht in der Kontextzeile, die nächste Handlung in der
+       Fußzeile — beides muss frei von „drucken" sein. */
+    await expect(page.locator('#panel-baecker .bk-kontext')).not.toContainText('drucken');
+    await expect(page.locator('#panel-baecker .bk-foot')).not.toContainText('drucken');
     await expect(page.locator(`#panel-baecker .bk-day[onclick*="${mo}"]`)).not.toContainText('Ausdruck');
   });
 
@@ -371,10 +396,11 @@ test.describe('Zweite Bäckerei', () => {
     const fr = tagNurFuer('freundl').datum;
     await openBaecker(page, { druckOffen: [{ datum: fr, bk: 'freundl' }] });
     await tagWaehlen(page, fr);
-    await expect(page.locator('#panel-baecker .bk-stat')).toContainText('Papierausdruck steht noch aus');
+    await expect(page.locator('#panel-baecker .bk-kontext .z2'))
+      .toContainText('Papierausdruck steht noch aus');
     // Der Druckknopf tritt an die Stelle von „Korrektur senden"
-    await expect(page.locator('#panel-baecker .bk-stat .bk-cta')).toContainText('Jetzt drucken');
-    await expect(page.locator('#panel-baecker .bk-stat')).not.toContainText('Korrektur senden');
+    await expect(page.locator('#panel-baecker .bk-foot .bk-send')).toContainText('Jetzt drucken');
+    await expect(page.locator('#panel-baecker .bk-foot')).not.toContainText('Korrektur senden');
   });
 
   test('TC-B2-F23-06: nach dem Druck wird der Ausdruck vermerkt', async ({ page }) => {
@@ -393,7 +419,7 @@ test.describe('Zweite Bäckerei', () => {
         },
       });
     });
-    await page.click('#panel-baecker .bk-stat .bk-cta');
+    await page.click('#panel-baecker .bk-foot .bk-send');
     await page.waitForTimeout(900);
 
     const html = await page.evaluate(() => window.__gedruckt);
@@ -413,7 +439,7 @@ test.describe('Zweite Bäckerei', () => {
     await openBaecker(page);
     await tagWaehlen(page, mo);
     await page.evaluate(() => { window.open = () => null; });
-    await page.click('#panel-baecker .bk-stat .bk-cta');   // Vorschau öffnen
+    await page.click('#panel-baecker .bk-foot .bk-send');   // Vorschau öffnen
     await page.waitForTimeout(400);
     await page.click('#bk-send-btn');                      // senden
     await page.waitForTimeout(900);
@@ -429,7 +455,7 @@ test.describe('Zweite Bäckerei', () => {
   test('TC-B2-F23-01: Druckschritt erscheint nach dem Senden', async ({ page }) => {
     await openBaecker(page);
     await tagWaehlen(page, tagNurFuer('freundl').datum);
-    await page.click('#panel-baecker .bk-stat .bk-cta');
+    await page.click('#panel-baecker .bk-foot .bk-send');
     await page.waitForTimeout(400);
     await page.click('#bk-send-btn');
     await page.waitForTimeout(900);
@@ -519,9 +545,11 @@ test.describe('Zweite Bäckerei', () => {
     if (await chip.count()) {
       await chip.click();
       await page.waitForTimeout(700);
-      await expect(page.locator('#panel-baecker .bk-stat')).toContainText('geliefert');
-      // Weder in der Statuskarte noch in der Fußzeile darf gesendet werden
-      await expect(page.locator('#panel-baecker .bk-stat .bk-cta')).toHaveCount(0);
+      /* „geliefert" steht jetzt im Zustandstext der Kontextzeile
+         („Dieser Tag ist geliefert"). */
+      await expect(page.locator('#panel-baecker .bk-kontext .z2')).toContainText('geliefert');
+      // Weder in der Kontextzeile noch in der Fußzeile darf gesendet werden
+      await expect(page.locator('#panel-baecker .bk-foot .bk-send')).toHaveCount(0);
       await expect(page.locator('#panel-baecker .bk-send')).toHaveCount(0);
     }
   });
@@ -551,10 +579,18 @@ test.describe('Zweite Bäckerei', () => {
         bestellschluss: '12:00', baeckereien: [NAME.martins],
       },
     });
-    const hinweis = page.locator('#panel-baecker .bk-offen');
-    await expect(hinweis).toHaveCount(1);
-    await expect(hinweis).toContainText('noch offen');
-    await expect(hinweis).toContainText('Bestellschluss war um 12:00');
+    /* Der Klartext hängt seit dem Umbau am Zähler des Reiters (als Tooltip)
+       und steht im Blatt hinter dem „i". Die Absicht bleibt: Der Reiter darf
+       nicht blinken, ohne dass jemand sagen kann, warum. */
+    const zaehler = page.locator('#badges-baecker .k-tab-badge');
+    await expect(zaehler).toHaveCount(1);
+    const titel = await zaehler.getAttribute('title');
+    expect(titel, 'Der Zähler erklärt sich nicht').toBeTruthy();
+    expect(titel).toContain('noch offen');
+
+    const text = await blattText(page);
+    expect(text, 'Im Blatt fehlt der Hinweis auf die offene Bestellung')
+      .toContain('noch offen');
   });
 
   // ── F28: Verlauf zeigt die bestellten Artikel ─────────────────────────
@@ -633,12 +669,13 @@ test.describe('Bäcker – Startwerte aus Rechnungen (F29)', () => {
   // und die Mock-Routen greifen nicht – der Tab bliebe leer.
   test.use({ serviceWorkers: 'block' });
 
-  test('TC-F29-01: Statuszeile nennt die Rechnungen statt "keine Vorlage"', async ({ page }) => {
+  test('TC-F29-01: Die Herkunft nennt die Rechnungen statt "keine Vorlage"', async ({ page }) => {
     await openBaecker(page, { startwerte: true });
     await tagWaehlen(page, tagNurFuer('martins').datum);
-    const zeile = page.locator('#panel-baecker .bk-stat .t2');
-    await expect(zeile).toContainText('Startwerte aus 11 Rechnungen');
-    await expect(zeile).not.toContainText('keine Vorlage vorhanden');
+    // Die Herkunft der Mengen steht seit dem Umbau im Blatt hinter dem „i".
+    const text = await blattText(page);
+    expect(text).toContain('Startwerte aus 11 Rechnungen');
+    expect(text).not.toContain('Keine Vorlage vorhanden');
   });
 
   test('TC-F29-02: Kein Wochenschnitt mehr in der Zeile', async ({ page }) => {
@@ -655,9 +692,9 @@ test.describe('Bäcker – Startwerte aus Rechnungen (F29)', () => {
   test('TC-F29-03: Freundl bleibt bei der echten Vorlage', async ({ page }) => {
     await openBaecker(page, { startwerte: true });
     await tagWaehlen(page, tagNurFuer('freundl').datum);
-    const zeile = page.locator('#panel-baecker .bk-stat .t2');
-    await expect(zeile).toContainText('01.09.2026');
-    await expect(zeile).not.toContainText('Startwerte aus');
+    const text = await blattText(page);
+    expect(text).toContain('01.09.2026');
+    expect(text).not.toContain('Startwerte aus');
   });
 });
 
@@ -678,24 +715,31 @@ test.describe('Bäcker – Liefertag und stille Sicherung (F30)', () => {
     await expect(page.locator('#panel-baecker .bk-days-lbl')).toContainText('Liefertag wählen');
   });
 
-  test('TC-F30-02: Statuszeile sagt „Lieferung am", nicht „Bestellung für"', async ({ page }) => {
+  test('TC-F30-02: Der Liefertag steht eindeutig da, nicht doppelt', async ({ page }) => {
     await openBaecker(page);
     await tagWaehlen(page, tagNurFuer('martins').datum);
-    const t1 = page.locator('#panel-baecker .bk-stat .t1');
-    await expect(t1).toContainText('Lieferung am');
-    await expect(t1).not.toContainText('Bestellung für');
+    /* Ursprünglich trug die Statuszeile „Lieferung am …". Seit dem Umbau
+       nennt ihn die markierte Tageskachel, und die Leiste darüber ist mit
+       „Liefertag wählen" beschriftet — die Zeile wiederholt ihn nicht mehr
+       (Spec kiosk-bestellreiter-mobil, F3). Die Absicht bleibt: Niemand
+       darf die Kacheln für Bestelltage halten. */
+    await expect(page.locator('#panel-baecker .bk-days-lbl'))
+      .toContainText('Liefertag wählen');
+    await expect(page.locator('#panel-baecker .bk-day.active')).toBeVisible();
+    // Die Kontextzeile darf den Tag nicht als Bestelltag ausgeben.
+    await expect(page.locator('#panel-baecker .bk-kontext'))
+      .not.toContainText('Bestellung für');
   });
 
-  test('TC-F30-03: Statuszeile nennt den Bestelltag', async ({ page }) => {
+  test('TC-F30-03: Der Bestelltag ist auffindbar', async ({ page }) => {
     await openBaecker(page);
     const tag = tagNurFuer('martins');
     await tagWaehlen(page, tag.datum);
-    const bs = new Date(tag.datum + 'T12:00:00');
-    bs.setDate(bs.getDate() - 1);
-    const bsDe = bs.toISOString().slice(0, 10).split('-').reverse().join('.');
-    const t2 = await page.locator('#panel-baecker .bk-stat .t2').innerText();
-    // Entweder der Vortag steht da oder – wenn er heute ist – „heute bestellen“
-    expect(t2.includes(bsDe) || t2.includes('heute bestellen')).toBeTruthy();
+    /* Der Bestellschluss steht seit dem Umbau im Blatt hinter dem „i" —
+       man liest ihn einmal, nicht bei jeder Erfassung. */
+    const text = await blattText(page);
+    expect(text, 'Der Bestellschluss ist nirgends auffindbar')
+      .toContain('Bestellschluss');
   });
 
   test('TC-F30-04: Eine geänderte Menge wird ohne Zutun gesichert', async ({ page }) => {
@@ -762,7 +806,11 @@ test.describe('Bäcker – Vorauswahl folgt der Arbeit (F31)', () => {
     const m = morgen();
     await expect(page.locator('#panel-baecker .bk-day.active')).toHaveAttribute(
       'onclick', new RegExp(m.datum));
-    await expect(page.locator('#panel-baecker .bk-stat .t1')).toContainText('Lieferung am');
+    /* Der Liefertag steht an der markierten Kachel, nicht mehr in der
+       Kontextzeile — dort stünde er doppelt. Geprüft wird deshalb, dass
+       die Zeile den Zustand dieses Tages führt. */
+    await expect(page.locator('#panel-baecker .bk-kontext .z2'))
+      .toContainText(/Noch nicht gesendet|Testbetrieb/);
   });
 
   test('TC-F31-02: Der fällige Tag ist als „heute bestellen" markiert', async ({ page }) => {
@@ -783,14 +831,23 @@ test.describe('Bäcker – Vorauswahl folgt der Arbeit (F31)', () => {
     await expect(aktiv).not.toContainText('gesendet');
   });
 
-  test('TC-F31-04: Ein gesendeter Tag nennt den Liefertag, nicht den Sendetag', async ({ page }) => {
+  test('TC-F31-04: Ein gesendeter Tag verwechselt Sende- und Liefertag nicht', async ({ page }) => {
     // „Gesendet – Dienstag" las sich wie „am Dienstag gesendet".
     const m = morgen();
     await openBaecker(page, { gesendet: [{ datum: m.datum, bk: m.bk }] });
     await tagWaehlen(page, m.datum);
-    const t1 = page.locator('#panel-baecker .bk-stat .t1');
-    await expect(t1).toContainText('Gesendet – Lieferung am');
-    await expect(page.locator('#panel-baecker .bk-stat .t2')).toContainText('abgeschickt');
+    /* Seit dem Umbau steht dort „Gesendet HH:MM" — eine Uhrzeit lässt sich
+       nicht mit einem Liefertag verwechseln. Der Liefertag steht an der
+       markierten Kachel. Damit ist das gemeldete Missverständnis
+       ausgeschlossen, ohne dass der Tag doppelt genannt wird. */
+    const z2 = page.locator('#panel-baecker .bk-kontext .z2');
+    await expect(z2).toContainText('Gesendet');
+    const wochentag = (m.datum && TAGE[new Date(m.datum + 'T12:00:00').getDay()]) || '';
+    await expect(z2, 'Der Wochentag hier läse sich als Sendetag')
+      .not.toContainText(wochentag);
+    // Wer es genau wissen will, findet den Versandeintrag im Blatt.
+    const text = await blattText(page);
+    expect(text).toContain('Abgeschickt');
   });
 
   test('TC-F31-05: Das Plättchen verrät im Tooltip den Bestelltag', async ({ page }) => {
@@ -845,13 +902,19 @@ test.describe('Bäcker – einheitliches Farbschema (F33)', () => {
     expect(a).not.toBe(b);
   });
 
-  test('TC-F33-04: Statuskarte und Tagesleiste folgen der Leitfarbe', async ({ page }) => {
+  test('TC-F33-04: Kontextzeile und Tagesleiste folgen der Leitfarbe', async ({ page }) => {
     await openBaecker(page);
     await tagWaehlen(page, tagNurFuer('martins').datum);
-    // Die Statuskarte darf keine Fremdfarbe mehr mitbringen.
-    const rand = await page.locator('#panel-baecker .bk-stat').evaluate(
-      (el) => getComputedStyle(el).borderTopColor);
-    expect(rand).not.toBe(LEIT.freundl);
+    /* Die Kontextzeile trägt die Leitfarbe über `bk-kontext-<baeckerei>`
+       und darf keine Fremdfarbe mitbringen. Geprüft wird der linke Rand —
+       dort setzt die Leitfarbe an, seit der Kasten zur Zeile wurde. */
+    const rand = await page.locator('#panel-baecker .bk-kontext').evaluate(
+      (el) => {
+        const cs = getComputedStyle(el);
+        return [cs.borderTopColor, cs.borderLeftColor, cs.backgroundColor];
+      });
+    expect(rand, 'Die Kontextzeile trägt die Farbe der anderen Bäckerei')
+      .not.toContain(LEIT.freundl);
     // Der gewählte Tag darf keine der beiden Bäckerei-Farben tragen - sonst
     // liest man die Auswahl als Bäckerei. Auf welchen Ton er stattdessen
     // setzt, ist Sache der Gestaltung: Der gewohnte Kiosk nimmt neutrales
@@ -897,9 +960,11 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
 
   test('TC-F34-01: Der Knopf heisst „Korrigieren", nicht „Korrektur senden"', async ({ page }) => {
     await gesendeterTag(page);
-    const karte = page.locator('#panel-baecker .bk-stat');
-    await expect(karte.locator('button', { hasText: 'Korrigieren' })).toBeVisible();
-    await expect(karte.locator('button', { hasText: /^.*Korrektur senden.*$/ })).toHaveCount(0);
+    /* Die nächste Handlung steht in der Fußzeile, seit der Infokasten zur
+       Kontextzeile wurde (Spec kiosk-bestellreiter-mobil, F3). */
+    const fuss = page.locator('#panel-baecker .bk-foot');
+    await expect(fuss.locator('button', { hasText: 'Korrigieren' })).toBeVisible();
+    await expect(fuss.locator('button', { hasText: /^.*Korrektur senden.*$/ })).toHaveCount(0);
   });
 
   test('TC-F34-02: „Korrigieren" gibt die Felder frei, ohne zu senden', async ({ page }) => {
@@ -907,20 +972,24 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
     const gesperrt = await page.locator('#panel-baecker .bk-row .step input')
       .first().getAttribute('readonly');
     expect(gesperrt).not.toBeNull();
-    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
+    await page.locator('#panel-baecker .bk-foot button', { hasText: 'Korrigieren' }).click();
     await page.waitForTimeout(400);
     expect(await page.locator('#panel-baecker .bk-row .step input')
       .first().getAttribute('readonly')).toBeNull();
-    // Erst jetzt darf gesendet werden – und der Ausstieg steht daneben.
-    await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrektur senden' })).toBeVisible();
-    await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Verwerfen' })).toBeVisible();
+    // Erst jetzt darf gesendet werden.
+    await expect(page.locator('#panel-baecker .bk-foot button', { hasText: 'Korrektur senden' })).toBeVisible();
+    /* Der Ausstieg steht im Blatt hinter dem „i" — dort sammeln sich die
+       Schritte, die man selten braucht. */
+    await page.locator('#panel-baecker .bk-mehr').click();
+    await expect(page.locator('#bk-blatt button', { hasText: 'Korrektur verwerfen' }))
+      .toBeVisible();
   });
 
   test('TC-F34-03: Ohne Änderung wird nichts verschickt', async ({ page }) => {
     await gesendeterTag(page);
-    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
+    await page.locator('#panel-baecker .bk-foot button', { hasText: 'Korrigieren' }).click();
     await page.waitForTimeout(400);
-    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrektur senden' }).click();
+    await page.locator('#panel-baecker .bk-foot button', { hasText: 'Korrektur senden' }).click();
     await page.waitForTimeout(700);
     // Kein Vorschaudialog – stattdessen ein Hinweis.
     await expect(page.locator('.bk-dlg-h')).toHaveCount(0);
@@ -928,15 +997,17 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
 
   test('TC-F34-04: „Verwerfen" schliesst die Korrektur wieder', async ({ page }) => {
     await gesendeterTag(page);
-    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' }).click();
+    await page.locator('#panel-baecker .bk-foot button', { hasText: 'Korrigieren' }).click();
     await page.waitForTimeout(400);
-    await page.locator('#panel-baecker .bk-stat button', { hasText: 'Verwerfen' }).click();
+    // „Korrektur verwerfen" steht im Blatt hinter dem „i".
+    await page.locator('#panel-baecker .bk-mehr').click();
+    await page.locator('#bk-blatt button', { hasText: 'Korrektur verwerfen' }).click();
     // Verwerfen loescht das Erfasste und laesst sich nicht zurueckholen; der
     // umgebaute Kiosk fragt deshalb vorher nach (TC-F5-05). Der gewohnte
     // Kiosk kennt die Rueckfrage nicht - beide Wege bestehen.
     await bestaetigenFallsGefragt(page);
     await page.waitForTimeout(900);
-    await expect(page.locator('#panel-baecker .bk-stat button', { hasText: 'Korrigieren' })).toBeVisible();
+    await expect(page.locator('#panel-baecker .bk-foot button', { hasText: 'Korrigieren' })).toBeVisible();
   });
 
   test('TC-F34-05: Nach dem Drucken steht keine "undefined"-Angabe da', async ({ page }) => {
@@ -947,8 +1018,11 @@ test.describe('Bäcker – Korrektur wie beim Metzger (F34)', () => {
     const bk = liefertAm(d)[0];
     await openBaecker(page, { gesendet: [{ datum: iso(d), bk: bk }], druckVermerk: true });
     await tagWaehlen(page, iso(d));
-    const txt = await page.locator('#panel-baecker .bk-stat').innerText();
+    const txt = await page.locator('#panel-baecker .bk-kontext').innerText();
     expect(txt).not.toContain('undefined');
+    // Die Fußzeile nennt die Zahlen – auch dort darf nichts fehlen.
+    const fuss = await page.locator('#panel-baecker .bk-foot').innerText();
+    expect(fuss).not.toContain('undefined');
   });
 });
 
@@ -1053,7 +1127,59 @@ test.describe('Bäcker – Ausdruck bildet das Blatt ab (F35)', () => {
     const t = tagNurFuer('freundl');
     await openBaecker(page, { gesendet: [{ datum: t.datum, bk: 'freundl' }] });
     await tagWaehlen(page, t.datum);
-    await expect(page.locator('#panel-baecker button', { hasText: 'Noch einmal drucken' }))
+    /* Der Knopf hiess „Noch einmal drucken" und stand im Infokasten. Seit
+       dem Umbau sammelt das Blatt hinter dem „i" die selten gebrauchten
+       Schritte — dort heisst er schlicht „Drucken". Die Absicht bleibt:
+       Ein Ausdruck muss sich wiederholen lassen, Papier geht verloren. */
+    await page.locator('#panel-baecker .bk-mehr').click();
+    await page.locator('#bk-blatt').waitFor({ state: 'visible', timeout: 5000 });
+    await expect(page.locator('#bk-blatt button', { hasText: 'Drucken' }))
       .toBeVisible();
   });
+
+  test('TC-F35-04: Das Blatt hat ein vollständiges Gitternetz',
+    async ({ page }) => {
+      /* Aus dem Laden: „Beim Ausdruck müssen Gitternetzlinien in der Liste
+         rein." Auf dem Blatt wird von Hand eingetragen; ohne senkrechte
+         Linien rutscht man beim Schreiben in die falsche Spalte. Vorher gab
+         es nur `border-bottom`. */
+      const fr = tagNurFuer('freundl');
+      await openBaecker(page, { druckOffen: [{ datum: fr.datum, bk: 'freundl' }] });
+      await tagWaehlen(page, fr.datum);
+      await faltungDesDruckfensters(page);
+
+      await page.locator('#panel-baecker button', { hasText: 'drucken' }).first().click();
+      await page.waitForTimeout(1200);
+      const html = await page.evaluate(() => window.__druck.html);
+      expect(html, 'nichts ins Druckfenster geschrieben').toBeTruthy();
+
+      /* Das Blatt in einem echten Dokument zeichnen und die Ränder messen —
+         eine Textsuche im CSS würde nur beweisen, dass etwas dasteht, nicht
+         dass es wirkt. */
+      const raender = await page.evaluate((quelle) => {
+        const rahmen = document.createElement('iframe');
+        rahmen.style.cssText = 'position:fixed;left:-9999px;width:800px;height:600px';
+        document.body.appendChild(rahmen);
+        const d = rahmen.contentDocument;
+        d.open();
+        d.write(quelle.replace(/<script[\s\S]*?<\/script>/gi, ''));
+        d.close();
+        const td = d.querySelector('tbody td');
+        if (!td) return null;
+        const cs = rahmen.contentWindow.getComputedStyle(td);
+        const w = (s) => parseFloat(s) || 0;
+        const erg = {
+          oben: w(cs.borderTopWidth), unten: w(cs.borderBottomWidth),
+          links: w(cs.borderLeftWidth), rechts: w(cs.borderRightWidth),
+        };
+        rahmen.remove();
+        return erg;
+      }, html);
+
+      expect(raender, 'keine Tabellenzelle im Blatt').not.toBeNull();
+      expect(raender.links, 'keine senkrechte Linie links').toBeGreaterThan(0);
+      expect(raender.rechts, 'keine senkrechte Linie rechts').toBeGreaterThan(0);
+      expect(raender.oben, 'keine waagerechte Linie oben').toBeGreaterThan(0);
+      expect(raender.unten, 'keine waagerechte Linie unten').toBeGreaterThan(0);
+    });
 });

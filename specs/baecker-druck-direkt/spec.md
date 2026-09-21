@@ -59,6 +59,12 @@ das Formular **und** druckt in einem Schritt.
   des Blattes. Sonst stünde dort die Kataloggröße.
 - **F5** Löst der Browser den Druckdialog beim Laden nicht aus, steht ein
   Knopf „Drucken" auf dem Blatt bereit.
+- **F6** Die Liste hat ein **vollständiges Gitternetz** — waagerecht **und**
+  senkrecht. Aus dem Laden: „Beim Ausdruck müssen Gitternetzlinien in der
+  Liste rein." Auf dem Blatt wird von Hand eingetragen; ohne senkrechte
+  Linien rutscht man beim Schreiben in die falsche Spalte. Die Linien sind
+  dunkel genug, um auf schlichtem Papier zu tragen; ein helles Grau
+  verschwindet im Ausdruck.
 
 ## Testfälle
 
@@ -67,12 +73,17 @@ das Formular **und** druckt in einem Schritt.
 | TC-F35-01 | Drucken auslösen | **kein** Abruf von `mode=dokument`; `window.print()` wird gerufen |
 | TC-F35-03 | gedrucktes Blatt | mindestens so viele Zeilen wie der Katalog |
 | TC-F35-02 | nach dem Senden | Nachdruck steht bereit |
+| TC-F35-04 | Tabellenzelle im Blatt | Rand auf **allen vier** Seiten |
 
 Wächter: `tests/kiosk-baecker-zwei.spec.js`, Block „Bäcker – Ausdruck bildet
 das Blatt ab (F35)". Geprüft wird das Blatt, das **wirklich** ins
 Druckfenster geht: Das Fenster wird durch ein Doppel ersetzt, das den
 geschriebenen Inhalt und den Druckaufruf mitschreibt. Ein echtes Fenster
 würde den Lauf blockieren, sobald der Systemdialog aufgeht.
+
+TC-F35-04 zeichnet das Blatt in einem echten Dokument und **misst** die
+Ränder. Eine Textsuche im CSS würde nur beweisen, dass etwas dasteht — nicht,
+dass es wirkt.
 
 ## Das PDF bleibt erreichbar
 
@@ -88,6 +99,40 @@ mehr. Wer die Datei braucht, bekommt sie darüber.
 
 ## Vorbestehend, nicht Teil dieser Änderung
 
-In `tests/kiosk-baecker-zwei.spec.js` scheitern 23 Fälle — gemessen mit und
-ohne diese Änderung **identisch**, unter anderem TC-F35-02. Sie hängen am
-fehlenden Backend im örtlichen Testaufbau und gehören in eine eigene Runde.
+*(erledigt — siehe unten)*
+
+## Nachtrag: die vorbestehenden Fehlschläge sind behoben
+
+In `tests/kiosk-baecker-zwei.spec.js` scheiterten **23 Fälle** — mit und
+ohne die Druckumstellung identisch. Ursache war ein **Umbau der Oberfläche,
+dem die Tests nicht gefolgt waren**: Der frühere Infokasten (`.bk-stat`)
+wurde zur Kontextzeile (`.bk-kontext`), und die Angaben, die man einmal
+liest, wanderten ins Blatt hinter dem „i" (Spec
+`kiosk-bestellreiter-mobil`, F3).
+
+Die Tests suchten also an Orten, die es nicht mehr gab. Sie liefen zum Teil
+in 60-Sekunden-Zeitüberschreitungen — der Durchlauf brauchte **12,6 Minuten**
+statt gut zwei.
+
+| | vorher | nachher |
+|---|---|---|
+| Fehlschläge | 23 | **0** |
+| Laufzeit | 12,6 min | **2,2 min** |
+
+Nachgezogen wurde die **Absicht**, nicht nur der Selektor:
+
+| Test | Früher geprüft | Jetzt geprüft |
+|---|---|---|
+| TC-F29-01/03 | Herkunft in der Statuszeile | Herkunft im Blatt |
+| TC-F30-02 | „Lieferung am" in der Zeile | Leiste heißt „Liefertag wählen", Zeile nennt ihn nicht doppelt |
+| TC-F30-03 | Bestelltag in der Zeile | Bestellschluss im Blatt auffindbar |
+| TC-F31-04 | „Gesendet – Lieferung am" | „Gesendet **HH:MM**" — eine Uhrzeit lässt sich nicht mit einem Liefertag verwechseln |
+| TC-B2-F27-03 | `.bk-offen` | Klartext am Zähler-Tooltip **und** im Blatt |
+| TC-F34-02/04 | „Verwerfen" in der Fußzeile | „Korrektur verwerfen" im Blatt |
+| TC-F35-02 | „Noch einmal drucken" | „Drucken" im Blatt |
+
+Ebenfalls behoben: **drei Python-Wächter** brachen schon beim Import ab
+(`ModuleNotFoundError: shared`), weil `api` nicht im Suchpfad lag —
+`baecker_docx_test.py`, `baecker_pdf_test.py`, `metzger_pdf_test.py`. Sie
+liefen dadurch **gar nicht mehr**, ohne dass es auffiel. Jetzt laufen alle
+21 Python-Wächter grün.

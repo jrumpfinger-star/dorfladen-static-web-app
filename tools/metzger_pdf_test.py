@@ -5,6 +5,10 @@
 import os
 import sys
 
+# `api` gehoert mit in den Pfad: `metzger_pdf` holt sich `shared.pdf_notiz`,
+# und das liegt eine Ebene hoeher. Ohne diesen Eintrag brach der Test schon
+# beim Import ab (ModuleNotFoundError: shared) — er lief also gar nicht mehr.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "api"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "api", "metzger-order"))
 
 import metzger_portionen as P          # noqa: E402

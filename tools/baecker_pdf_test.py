@@ -16,6 +16,10 @@ import sys
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 WURZEL = os.path.dirname(HIER)
+# `api` gehoert mit in den Pfad: `pdf_fill` holt sich `shared.pdf_notiz`, und
+# das liegt eine Ebene hoeher. Ohne diesen Eintrag brach der Test schon beim
+# Import ab (ModuleNotFoundError: shared) — er lief also gar nicht mehr.
+sys.path.insert(0, os.path.join(WURZEL, "api"))
 sys.path.insert(0, os.path.join(WURZEL, "api", "baecker-order"))
 
 logging.getLogger("pypdf").setLevel(logging.CRITICAL)

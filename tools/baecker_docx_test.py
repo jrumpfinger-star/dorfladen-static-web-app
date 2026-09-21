@@ -12,6 +12,11 @@ from email import policy
 from xml.etree import ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# `api` muss mit in den Pfad: `docx_fill` holt sich `shared.richtext`, und das
+# liegt eine Ebene hoeher. Ohne diesen Eintrag brach der Test schon beim
+# Import ab (ModuleNotFoundError: shared) — er lief also gar nicht mehr,
+# ohne dass es auffiel. Die uebrigen Baecker-Tests machen es ebenso.
+sys.path.insert(0, os.path.join(ROOT, "api"))
 sys.path.insert(0, os.path.join(ROOT, "api", "baecker-order"))
 from docx_fill import fill_form, tour_fuer  # noqa: E402
 

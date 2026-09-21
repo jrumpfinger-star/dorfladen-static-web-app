@@ -943,10 +943,20 @@
       + '.meta{display:flex;justify-content:space-between;font-size:12px;'
       + 'border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:8px}'
       + 'table{width:100%;border-collapse:collapse;font-size:12px}'
-      + 'th{text-align:left;border-bottom:1px solid #111;padding:3px 5px;'
-      + 'font-size:10px;text-transform:uppercase;letter-spacing:.3px}'
-      + 'td{padding:3px 5px;border-bottom:1px solid #e5e7eb}'
+      /* Vollständiges Gitternetz: Aus dem Laden — „Beim Ausdruck müssen
+         Gitternetzlinien in der Liste rein." Auf dem Blatt wird von Hand
+         eingetragen und abgehakt; ohne senkrechte Linien rutscht man beim
+         Schreiben in die falsche Spalte. Die Ränder sind bewusst dunkel
+         genug, um auf schlichtem Papier zu tragen — ein helles Grau
+         verschwindet im Ausdruck.
+         (Spec baecker-druck-direkt, F6) */
+      + 'th,td{border:1px solid #6b7280}'
+      + 'th{text-align:left;border-color:#111;border-bottom-width:2px;padding:4px 5px;'
+      + 'font-size:10px;text-transform:uppercase;letter-spacing:.3px;background:#f3f4f6}'
+      + 'td{padding:3px 5px}'
+      /* Die beiden Eintragespalten heben sich ab: Dort wird geschrieben. */
       + 'td.r,th.r{text-align:right;width:62px}'
+      + 'td.r{border-left-color:#111}'
       + '.fuss{margin-top:10px;font-size:11px;color:#555}'
       + '.test{background:#fff3cd;border:1px solid #e6b43c;padding:6px 10px;'
       + 'font-size:12px;font-weight:600;text-align:center;margin-bottom:8px}'
