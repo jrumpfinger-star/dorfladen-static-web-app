@@ -455,8 +455,7 @@
             + ' (' + esc(_b.vorlage_datum_de) + ')')
       : (_b.hat_entwurf ? 'Gespeicherter Entwurf'
           : (_b.aus_startwerten
-              ? 'Startwerte aus ' + esc(String((_b.startwerte_meta || {}).rechnungen || ''))
-                + ' Rechnungen (Durchschnitt je Liefertag) – bitte prüfen'
+              ? esc((_b.startwerte_meta || {}).text || 'Startwerte – bitte prüfen')
               : 'Keine Vorlage vorhanden, alle Mengen starten bei 0'));
     h += z('rotate-ccw', herkunft);
 

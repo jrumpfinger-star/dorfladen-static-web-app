@@ -440,16 +440,30 @@ def sort_nr(nummer):
     return (0, int(s)) if s.isdigit() else (1, 0)
 
 
-def startwerte(bk):
-    """Startwerte aus den Rechnungen, falls fuer diese Baeckerei hinterlegt.
+def startwerte(bk, datum_iso=None):
+    """Startwerte aus den Altunterlagen, falls fuer diese Baeckerei hinterlegt.
 
-    Fuer Martin's Backstube liegen keine alten Bestellzettel vor, nur
-    Rechnungen. Daraus laesst sich keine wochentaggenaue Vorlage gewinnen -
-    jede Rechnung fasst eine ganze Woche zusammen. Was bleibt, ist ein
-    Durchschnitt je Liefertag (erzeugt von tools/baecker_startwerte_martins.py).
+    Sie greifen **nur**, solange es fuer den Wochentag noch keine gesendete
+    Bestellung gibt. Sobald eine vorliegt, hat sie Vorrang - die Startwerte
+    sind reine Starthilfe.
 
-    Er dient nur als **erste Vorbelegung**, solange es fuer den Wochentag noch
-    keine echte Bestellung gibt. Sobald eine gesendet wurde, hat sie Vorrang.
+    Zwei Dateiformen, je nachdem was die Altunterlagen hergeben:
+
+    * **wochentaggenau** (``tage``): aus alten Bestellzetteln, die ein Datum
+      tragen - bei Freundl der Fall. Je Wochentag ein eigener Satz, denn das
+      Sortiment unterscheidet sich deutlich (samstags rund 40 % weniger und
+      ohne Kaisersemmel). Fuer einen Wochentag ohne Zettel gibt es bewusst
+      **keinen** Wert: Einen Donnerstagswert auf einen Montag zu uebertragen
+      waere geraten, nicht belegt.
+    * **flach** (``artikel``): aus Rechnungen, die keine Tagesaufschluesselung
+      enthalten - bei Martin's Backstube der Fall. Jede Rechnung fasst eine
+      ganze Woche zusammen ("Lieferungen vom 08.06. bis 13.06."), nennt je
+      Artikel nur die Wochensumme und kein Wochentagskuerzel. Was bleibt, ist
+      ein Durchschnitt je Liefertag, der fuer alle Wochentage gilt.
+
+    Beide Formen werden hier gelesen; ``datum_iso`` wirkt nur auf die erste.
+    Bekommt Martins spaeter wochentaggenaue Daten, genuegt die neue Datei -
+    am Code ist nichts zu aendern.
 
     Gibt zurueck: ({schluessel: menge}, {schluessel: stueck_je_woche}, meta)
     """
@@ -463,8 +477,27 @@ def startwerte(bk):
     except Exception as e:
         logging.warning(f"[baecker] Startwerte {bk} unlesbar: {e}")
         return {}, {}, {}
+
+    eintraege = daten.get("artikel") or []
+    meta = {"rechnungen": daten.get("rechnungen", 0),
+            "liefertage": daten.get("liefertage", 0)}
+
+    tage = daten.get("tage") or {}
+    if tage:
+        # Wochentaggenau: ohne Datum laesst sich der Satz nicht waehlen, und
+        # irgendeinen zu nehmen waere schlechter als keinen.
+        try:
+            wd = datetime.strptime(datum_iso or "", "%Y-%m-%d").weekday()
+        except ValueError:
+            return {}, {}, {"zettel": daten.get("zettel", 0)}
+        tag = tage.get(str(wd))
+        if not tag:
+            return {}, {}, {"zettel": daten.get("zettel", 0), "wochentag_ohne_daten": True}
+        eintraege = tag.get("artikel") or []
+        meta = {"zettel": tag.get("zettel", 0), "wochentag": tag.get("wochentag", "")}
+
     mengen, wochen = {}, {}
-    for e in daten.get("artikel", []) or []:
+    for e in eintraege:
         key = str(e.get("nummer") or "").strip() or (e.get("name") or "").strip().lower()
         if not key:
             continue
@@ -473,8 +506,24 @@ def startwerte(bk):
             wochen[key] = float(e.get("je_woche") or 0)
         except (TypeError, ValueError):
             wochen[key] = 0.0
-    meta = {"rechnungen": daten.get("rechnungen", 0), "liefertage": daten.get("liefertage", 0)}
+    meta["text"] = startwerte_text(meta)
     return mengen, wochen, meta
+
+
+def startwerte_text(meta):
+    """Woher die Startwerte stammen, in einem Satz fuer den Kiosk.
+
+    Der Satz gehoert hierher und nicht in den Kiosk: Die beiden Baeckereien
+    haben verschiedene Quellen (Bestellzettel bzw. Rechnungen), und nur hier
+    ist bekannt, welche gelesen wurde.
+    """
+    if meta.get("wochentag"):
+        n = meta.get("zettel") or 0
+        return (f"Erfahrungswert f\u00fcr {meta['wochentag']}e aus {n} alten "
+                f"Bestellzettel{'n' if n != 1 else ''} \u2013 bitte pr\u00fcfen")
+    n = meta.get("rechnungen") or 0
+    return (f"Startwerte aus {n} Rechnungen (Durchschnitt je Liefertag) "
+            f"\u2013 bitte pr\u00fcfen")
 
 
 def sort_artikel(artikel):

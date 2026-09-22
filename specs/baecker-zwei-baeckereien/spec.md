@@ -674,6 +674,87 @@ Abruf, danach die Positionen; erneutes Öffnen lädt nicht nach.
 
 **TC-B2-F28-02: Positionen sind nach Nummer sortiert.**
 
+### F29: Startwerte, solange es keine eigene Bestellung gibt
+
+#### F29 Description
+
+Gemeldet aus dem Laden: *„Bei Freundl werden keine Tageswerte vorgeblendet."*
+Die Vorbelegung kennt drei Stufen, und die ersten beiden waren leer:
+
+1. ein gespeicherter **Entwurf** desselben Tages,
+2. die letzte **gesendete** Bestellung desselben **Wochentags**,
+3. **Startwerte** aus den Altunterlagen.
+
+Bei Martin's wird regelmäßig bestellt, dort greift Stufe 2 nach einer Woche
+Betrieb immer. Freundl wird **unregelmäßig** beliefert — dort lag nur eine
+einzige gesendete Bestellung vor (Freitag). An einem Mittwoch stand deshalb
+jede Zeile auf 0, und die Bestellung musste von Hand aufgebaut werden.
+
+Die Altunterlagen der beiden Bäckereien geben Unterschiedliches her, und
+daraus folgen zwei Dateiformen:
+
+| | Freundl | Martin's Backstube |
+| --- | --- | --- |
+| Quelle | 19 alte **Bestellzettel** | 11 **Rechnungen** |
+| Datum je Lieferung | ja, im Dokument | nein |
+| Feinheit | **je Wochentag** | Durchschnitt je Liefertag |
+| Kennzahl | Median | Mittelwert aus *berechneter* Menge |
+
+Warum für Martin's **keine** wochentaggenauen Werte möglich sind: Jede
+Rechnung fasst eine ganze Woche zusammen („Diese Rechnung umfasst Lieferungen
+vom 08.06.2026 bis 13.06.2026") und nennt je Artikel nur die Summe über alle
+Liefertage — 170 Semmeln für sechs Tage. Wochentagskürzel oder Lieferschein-
+bezüge enthalten die Dokumente nachweislich nicht. Eine Aufteilung wäre
+geraten, nicht belegt. Für die Zukunft ist der Punkt gegenstandslos: Sobald
+je Wochentag einmal bestellt wurde, greift ohnehin Stufe 2.
+
+Warum bei Freundl **Median statt Mittelwert**: Ein Feiertag oder ein Fest
+würde den Mittelwert dauerhaft nach oben ziehen. Der Median wird über *alle*
+Zettel des Wochentags gebildet, Nullen eingeschlossen — ein Artikel, der
+einmal von acht Malen bestellt wurde, soll nicht vorbelegt werden.
+
+Dass die Trennung nach Wochentagen nötig ist, zeigen die Zettel selbst:
+samstags werden rund 40 % weniger Stück bestellt und **keine Kaisersemmel**,
+während donnerstags 40 Stück davon üblich sind.
+
+#### F29 Behaviour / Acceptance
+
+- Startwerte greifen **nur**, wenn weder Entwurf noch gesendeter Vorgänger
+  desselben Wochentags vorliegt. Eine echte Bestellung hat immer Vorrang.
+- Bei Freundl wählt das **Liefertagsdatum** den Wochentagssatz.
+- Für einen Wochentag **ohne** Zettel bleibt es bei 0. Einen Donnerstagswert
+  auf einen Montag zu übertragen wäre geraten; Freundl liefert dann nicht.
+- Bei Martin's gilt derselbe Satz für alle Wochentage. Brote tragen einen
+  **Wochenschnitt**, weil ihr Tagesdurchschnitt auf 0 rundet, obwohl sie
+  regelmäßig bestellt werden.
+- Den **Herkunftstext bildet der Server**, nicht der Kiosk: Nur dort ist
+  bekannt, welche Quelle gelesen wurde. Bei Freundl „Erfahrungswert für
+  Donnerstage aus 8 alten Bestellzetteln", bei Martin's „Startwerte aus 11
+  Rechnungen (Durchschnitt je Liefertag)" — beide mit „bitte prüfen".
+- Das Dateiformat ist für beide offen: Bekommt Martin's später
+  wochentaggenaue Daten, genügt eine neue Datei ohne Codeänderung.
+
+#### F29 Test Cases
+
+**TC-F29-01: Die Herkunft nennt die Rechnungen statt „keine Vorlage"** —
+Martin's ohne Vorgänger zeigt den Rechnungstext.
+
+**TC-F29-02: Kein Wochenschnitt mehr in der Zeile** — „Ø Wo" stand neben einem
+Tagesfeld und sah aus wie eine Tagesmenge.
+
+**TC-F29-03: Freundl bleibt bei der echten Vorlage** — liegt eine gesendete
+Bestellung vor, treten die Startwerte zurück.
+
+**TC-F29-04: Freundl ohne Vorgänger zeigt den Erfahrungswert statt 0** — der
+gemeldete Fall; der Text nennt die Bestellzettel.
+
+**TC-F29-05: Der Text nennt den Wochentag, nicht die Rechnungen** — Freundl
+hat keine Rechnungen als Quelle; stünde das dort, wäre es schlicht falsch.
+
+Zusätzlich prüft [baecker_startwerte_test.py](../../tools/baecker_startwerte_test.py)
+ohne Netz beide Dateiformen, die Wochentagswahl, den leeren Montag und den
+Herkunftstext.
+
 ## Data / API
 
 ### Geänderte Endpunkte

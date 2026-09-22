@@ -411,18 +411,29 @@ Vorgeschlagener Weg:
 Kernschrift Helvetica kann nur Latin-1; ein „–" (U+2013) wirft
 `FPDFUnicodeEncodingException` **mitten im Versand**.
 
-### 2. F29 ist Code ohne Spec
+### 2. F29 ist Code ohne Spec — **erledigt**
 
-Die Startwerte aus den Rechnungen sind umgesetzt und live (`store.startwerte`,
-`tools/baecker_startwerte_martins.py`), und drei Tests `TC-F29-01…03` liegen in
-[kiosk-baecker-zwei.spec.js](../../tests/kiosk-baecker-zwei.spec.js). In dieser
-Spec fehlt der Abschnitt F29 dazu — bitte nachtragen, sonst beschreibt die Spec
-den Stand nicht mehr.
+Nachgetragen als Abschnitt F29 in der [Spec](spec.md), erweitert um die
+wochentaggenauen Startwerte für Freundl (gemeldet: „keine Tageswerte
+vorgeblendet"). Quellen und Werkzeuge:
+
+| Bäckerei | Quelle | Werkzeug | Datei |
+| --- | --- | --- | --- |
+| Freundl | 19 Bestellzettel | `tools/baecker_startwerte_freundl.py` | `startwerte-freundl.json` (je Wochentag) |
+| Martin's | 11 Rechnungen | `tools/baecker_startwerte_martins.py` | `startwerte-martins.json` (flach) |
 
 Fachlich festzuhalten: Die Startwerte greifen **nur**, solange es für den
 Wochentag keine echte Bestellung gibt; eine gesendete Bestellung hat immer
-Vorrang. Brote brauchen den **Wochenschnitt**, weil ihr Tagesdurchschnitt auf 0
-rundet, obwohl sie regelmäßig bestellt werden.
+Vorrang. Brote brauchen bei Martin's den **Wochenschnitt**, weil ihr
+Tagesdurchschnitt auf 0 rundet, obwohl sie regelmäßig bestellt werden.
+
+Für Martin's sind wochentaggenaue Werte aus den Rechnungen **nicht
+gewinnbar** — jede fasst eine Woche zusammen, ohne Tagesaufschlüsselung.
+Nötig sind sie dort auch nicht: Bei regelmäßiger Bestellung greift nach einer
+Woche Betrieb die gesendete Vorlage desselben Wochentags. `store.startwerte`
+liest beide Formen, eine spätere wochentaggenaue Datei für Martin's bräuchte
+keine Codeänderung.
+
 
 ### 3. Bestandsübernahme ausführen (T113/T114)
 

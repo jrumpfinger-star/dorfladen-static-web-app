@@ -1,0 +1,664 @@
+{
+  "hinweis": "Median je Wochentag aus den alten Bestellzetteln (Word-Anhang der versendeten Mails). Grundlage ist die Bestellmenge; das Feld Retoure ist in allen Zetteln leer. Dient nur als erste Vorbelegung, solange fuer den Wochentag keine gesendete Bestellung vorliegt - sobald eine da ist, hat sie Vorrang.",
+  "erzeugt_von": "tools/baecker_startwerte_freundl.py",
+  "zettel": 19,
+  "tage": {
+    "2": {
+      "wochentag": "Mittwoch",
+      "zettel": 2,
+      "quellen": [
+        "2026-08-19",
+        "2026-07-22"
+      ],
+      "artikel": [
+        {
+          "nummer": "1",
+          "name": "Kaisersemmel",
+          "menge": 40,
+          "aus": 2
+        },
+        {
+          "nummer": "33",
+          "name": "Mohnsemmel",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "34",
+          "name": "Sesamsemmel",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "39",
+          "name": "Roggensemmel",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "53",
+          "name": "Doppelte",
+          "menge": 3,
+          "aus": 2
+        },
+        {
+          "nummer": "54",
+          "name": "Rustikale",
+          "menge": 3,
+          "aus": 2
+        },
+        {
+          "nummer": "56",
+          "name": "Rosensemmel",
+          "menge": 3,
+          "aus": 2
+        },
+        {
+          "nummer": "58",
+          "name": "Mehrkornsemmel",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "64",
+          "name": "Dinkli",
+          "menge": 3,
+          "aus": 2
+        },
+        {
+          "nummer": "73",
+          "name": "Schrötlisemmel",
+          "menge": 4,
+          "aus": 2
+        },
+        {
+          "nummer": "75",
+          "name": "Kartoffelsemmel",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "107",
+          "name": "Chia-Weizensemmel",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "119",
+          "name": "Roggensemmel mit Kümmel",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "120",
+          "name": "Kornstangel",
+          "menge": 3,
+          "aus": 2
+        },
+        {
+          "nummer": "126",
+          "name": "Baguette 400g",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "148",
+          "name": "Kartoffelbrot",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "150",
+          "name": "Mischbrot 1kg",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "151",
+          "name": "Mischbrot 500g",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "160",
+          "name": "Ebrachtaler 1 kg",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "161",
+          "name": "Ebrachtaler 500g",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "167",
+          "name": "Sonnenblumenkernbrot 750g",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "183",
+          "name": "6-Korn-Quarkbrot 500g",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "227",
+          "name": "Bauernbaguette",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "295",
+          "name": "Dinkelvollkorn Pur 500g",
+          "menge": 1,
+          "aus": 2
+        },
+        {
+          "nummer": "459",
+          "name": "Mandelbogen",
+          "menge": 2,
+          "aus": 2
+        },
+        {
+          "nummer": "1183",
+          "name": "König-Ludwig-Brot 1kg",
+          "menge": 2,
+          "aus": 2
+        }
+      ]
+    },
+    "3": {
+      "wochentag": "Donnerstag",
+      "zettel": 8,
+      "quellen": [
+        "2026-08-27",
+        "2026-08-20",
+        "2026-08-13",
+        "2026-08-06",
+        "2026-08-06",
+        "2026-07-30",
+        "2026-07-23",
+        "2025-01-30"
+      ],
+      "artikel": [
+        {
+          "nummer": "1",
+          "name": "Kaisersemmel",
+          "menge": 40,
+          "aus": 8
+        },
+        {
+          "nummer": "33",
+          "name": "Mohnsemmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "34",
+          "name": "Sesamsemmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "39",
+          "name": "Roggensemmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "53",
+          "name": "Doppelte",
+          "menge": 3,
+          "aus": 8
+        },
+        {
+          "nummer": "54",
+          "name": "Rustikale",
+          "menge": 3,
+          "aus": 8
+        },
+        {
+          "nummer": "56",
+          "name": "Rosensemmel",
+          "menge": 3,
+          "aus": 8
+        },
+        {
+          "nummer": "58",
+          "name": "Mehrkornsemmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "64",
+          "name": "Dinkli",
+          "menge": 3,
+          "aus": 8
+        },
+        {
+          "nummer": "73",
+          "name": "Schrötlisemmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "75",
+          "name": "Kartoffelsemmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "119",
+          "name": "Roggensemmel mit Kümmel",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "120",
+          "name": "Kornstangel",
+          "menge": 3,
+          "aus": 8
+        },
+        {
+          "nummer": "126",
+          "name": "Baguette 400g",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "148",
+          "name": "Kartoffelbrot",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "150",
+          "name": "Mischbrot 1kg",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "151",
+          "name": "Mischbrot 500g",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "160",
+          "name": "Ebrachtaler 1 kg",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "161",
+          "name": "Ebrachtaler 500g",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "167",
+          "name": "Sonnenblumenkernbrot 750g",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "179",
+          "name": "Superlaib mit Körner 2kg",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "183",
+          "name": "6-Korn-Quarkbrot 500g",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "217",
+          "name": "Finnerl 500g",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "227",
+          "name": "Bauernbaguette",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "295",
+          "name": "Dinkelvollkorn Pur 500g",
+          "menge": 1,
+          "aus": 8
+        },
+        {
+          "nummer": "459",
+          "name": "Mandelbogen",
+          "menge": 2,
+          "aus": 8
+        },
+        {
+          "nummer": "1183",
+          "name": "König-Ludwig-Brot 1kg",
+          "menge": 2,
+          "aus": 8
+        }
+      ]
+    },
+    "4": {
+      "wochentag": "Freitag",
+      "zettel": 5,
+      "quellen": [
+        "2026-09-04",
+        "2026-08-21",
+        "2026-08-14",
+        "2026-07-31",
+        "2026-07-24"
+      ],
+      "artikel": [
+        {
+          "nummer": "1",
+          "name": "Kaisersemmel",
+          "menge": 40,
+          "aus": 5
+        },
+        {
+          "nummer": "33",
+          "name": "Mohnsemmel",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "34",
+          "name": "Sesamsemmel",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "39",
+          "name": "Roggensemmel",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "53",
+          "name": "Doppelte",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "54",
+          "name": "Rustikale",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "56",
+          "name": "Rosensemmel",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "58",
+          "name": "Mehrkornsemmel",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "64",
+          "name": "Dinkli",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "73",
+          "name": "Schrötlisemmel",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "75",
+          "name": "Kartoffelsemmel",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "107",
+          "name": "Chia-Weizensemmel",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "119",
+          "name": "Roggensemmel mit Kümmel",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "120",
+          "name": "Kornstangel",
+          "menge": 3,
+          "aus": 5
+        },
+        {
+          "nummer": "126",
+          "name": "Baguette 400g",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "148",
+          "name": "Kartoffelbrot",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "150",
+          "name": "Mischbrot 1kg",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "151",
+          "name": "Mischbrot 500g",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "160",
+          "name": "Ebrachtaler 1 kg",
+          "menge": 2,
+          "aus": 5
+        },
+        {
+          "nummer": "161",
+          "name": "Ebrachtaler 500g",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "167",
+          "name": "Sonnenblumenkernbrot 750g",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "183",
+          "name": "6-Korn-Quarkbrot 500g",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "217",
+          "name": "Finnerl 500g",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "227",
+          "name": "Bauernbaguette",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "295",
+          "name": "Dinkelvollkorn Pur 500g",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "565",
+          "name": "Krustenlaib 2kg (Di-Sa)",
+          "menge": 1,
+          "aus": 5
+        },
+        {
+          "nummer": "1183",
+          "name": "König-Ludwig-Brot 1kg",
+          "menge": 2,
+          "aus": 5
+        }
+      ]
+    },
+    "5": {
+      "wochentag": "Samstag",
+      "zettel": 4,
+      "quellen": [
+        "2026-08-29",
+        "2026-08-08",
+        "2026-07-25",
+        "2026-07-11"
+      ],
+      "artikel": [
+        {
+          "nummer": "39",
+          "name": "Roggensemmel",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "43",
+          "name": "Urige",
+          "menge": 4,
+          "aus": 4
+        },
+        {
+          "nummer": "56",
+          "name": "Rosensemmel",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "64",
+          "name": "Dinkli",
+          "menge": 6,
+          "aus": 4
+        },
+        {
+          "nummer": "73",
+          "name": "Schrötlisemmel",
+          "menge": 4,
+          "aus": 4
+        },
+        {
+          "nummer": "75",
+          "name": "Kartoffelsemmel",
+          "menge": 2,
+          "aus": 4
+        },
+        {
+          "nummer": "86",
+          "name": "Vinschgauer",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "107",
+          "name": "Chia-Weizensemmel",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "119",
+          "name": "Roggensemmel mit Kümmel",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "122",
+          "name": "Ur-Krusti",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "126",
+          "name": "Baguette 400g",
+          "menge": 1,
+          "aus": 4
+        },
+        {
+          "nummer": "148",
+          "name": "Kartoffelbrot",
+          "menge": 1,
+          "aus": 4
+        },
+        {
+          "nummer": "150",
+          "name": "Mischbrot 1kg",
+          "menge": 2,
+          "aus": 4
+        },
+        {
+          "nummer": "151",
+          "name": "Mischbrot 500g",
+          "menge": 2,
+          "aus": 4
+        },
+        {
+          "nummer": "160",
+          "name": "Ebrachtaler 1 kg",
+          "menge": 2,
+          "aus": 4
+        },
+        {
+          "nummer": "161",
+          "name": "Ebrachtaler 500g",
+          "menge": 1,
+          "aus": 4
+        },
+        {
+          "nummer": "183",
+          "name": "6-Korn-Quarkbrot 500g",
+          "menge": 1,
+          "aus": 4
+        },
+        {
+          "nummer": "227",
+          "name": "Bauernbaguette",
+          "menge": 1,
+          "aus": 4
+        },
+        {
+          "nummer": "295",
+          "name": "Dinkelvollkorn Pur 500g",
+          "menge": 1,
+          "aus": 4
+        },
+        {
+          "nummer": "459",
+          "name": "Mandelbogen",
+          "menge": 3,
+          "aus": 4
+        },
+        {
+          "nummer": "1183",
+          "name": "König-Ludwig-Brot 1kg",
+          "menge": 2,
+          "aus": 4
+        }
+      ]
+    }
+  }
+}

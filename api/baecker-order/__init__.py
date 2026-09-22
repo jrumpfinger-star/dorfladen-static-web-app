@@ -277,10 +277,11 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
 
     gesendet = order.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
     hat_entwurf = bool(order.get("positionen"))
-    # Startwerte aus den Rechnungen: greifen NUR, wenn es fuer diesen Wochentag
-    # noch keine echte Bestellung gibt. Sobald eine gesendet wurde, hat sie
-    # Vorrang - der Durchschnitt ist nur die Starthilfe am ersten Tag.
-    sw_mengen, _sw_woche, sw_meta = store.startwerte(bk)
+    # Startwerte aus den Altunterlagen: greifen NUR, wenn es fuer diesen
+    # Wochentag noch keine echte Bestellung gibt. Sobald eine gesendet wurde,
+    # hat sie Vorrang - die Startwerte sind nur die Starthilfe am ersten Tag.
+    # Das Datum waehlt bei Freundl den passenden Wochentagssatz.
+    sw_mengen, _sw_woche, sw_meta = store.startwerte(bk, datum_iso)
     aus_startwerten = False
     if hat_entwurf:
         mengen = {}

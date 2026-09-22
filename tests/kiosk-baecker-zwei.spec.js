@@ -120,8 +120,11 @@ function bestellung(bk, datum, opts) {
   const gesendet = (opts.gesendet || []).some((x) => x.datum === datum && x.bk === bk);
   const druckOffen = (opts.druckOffen || []).some((x) => x.datum === datum && x.bk === bk);
   const d = new Date(datum + 'T12:00:00');
-  // Startwerte aus den Rechnungen: greifen nur ohne echte Vorlage (F29).
+  // Startwerte: greifen nur ohne echte Vorlage (F29). Der Herkunftstext
+  // kommt vom Server, damit Kiosk und API nicht auseinanderlaufen – bei
+  // Martins aus Rechnungen, bei Freundl wochentaggenau aus Bestellzetteln.
   const startwerte = !!opts.startwerte && bk === 'martins';
+  const swFreundl = !!opts.startwerteFreundl && bk === 'freundl';
   // Bestellschluss: in der Regel der Vortag. Der Kiosk schreibt ihn an, damit
   // Liefertag und Bestelltag nicht verwechselt werden (F30).
   const bsD = new Date(datum + 'T12:00:00');
@@ -139,10 +142,17 @@ function bestellung(bk, datum, opts) {
     bestellbar: new Date(datum + 'T12:00:00') > new Date(new Date().setHours(23, 59, 59, 0)),
     korrektur_moeglich: gesendet && !druckOffen,
     hat_entwurf: false,
-    vorlage_datum: bk === 'freundl' ? '2026-09-01' : '',
-    vorlage_datum_de: bk === 'freundl' ? '01.09.2026' : '',
-    aus_startwerten: startwerte,
-    startwerte_meta: startwerte ? { rechnungen: 11, liefertage: 66 } : {},
+    vorlage_datum: bk === 'freundl' && !swFreundl ? '2026-09-01' : '',
+    vorlage_datum_de: bk === 'freundl' && !swFreundl ? '01.09.2026' : '',
+    aus_startwerten: startwerte || swFreundl,
+    startwerte_meta: startwerte
+      ? { rechnungen: 11, liefertage: 66,
+          text: 'Startwerte aus 11 Rechnungen (Durchschnitt je Liefertag) – bitte prüfen' }
+      : (swFreundl
+          ? { zettel: 8, wochentag: TAGE[d.getDay()],
+              text: 'Erfahrungswert für ' + TAGE[d.getDay()]
+                + 'e aus 8 alten Bestellzetteln – bitte prüfen' }
+          : {}),
     // Ein Druckvermerk steht VORNE im Protokoll und trägt weder Positionen
     // noch Stückzahl – genau daran ist die Statuszeile zerbrochen (F34-05).
     protokoll: (gesendet || druckOffen)
@@ -732,6 +742,31 @@ test.describe('Bäcker – Startwerte aus Rechnungen (F29)', () => {
     const text = await blattText(page);
     expect(text).toContain('01.09.2026');
     expect(text).not.toContain('Startwerte aus');
+  });
+
+  // Gemeldet aus dem Laden: „Bei Freundl werden keine Tageswerte vorgeblendet."
+  // Ursache: Freundl wird unregelmäßig bestellt, für die meisten Wochentage
+  // gab es noch keine gesendete Bestellung – also stand alles auf 0. Abhilfe
+  // sind wochentaggenaue Erfahrungswerte aus 19 alten Bestellzetteln.
+  test('TC-F29-04: Freundl ohne Vorgänger zeigt den Erfahrungswert statt 0', async ({ page }) => {
+    await openBaecker(page, { startwerteFreundl: true });
+    await tagWaehlen(page, tagNurFuer('freundl').datum);
+    const text = await blattText(page);
+    expect(text).toContain('Erfahrungswert');
+    expect(text).toContain('Bestellzetteln');
+    expect(text).not.toContain('Keine Vorlage vorhanden');
+  });
+
+  test('TC-F29-05: Der Text nennt den Wochentag, nicht die Rechnungen', async ({ page }) => {
+    // Freundl hat keine Rechnungen als Quelle – stünde dort „aus Rechnungen",
+    // wäre das schlicht falsch. Den Satz bildet deshalb der Server.
+    const tag = tagNurFuer('freundl');
+    await openBaecker(page, { startwerteFreundl: true });
+    await tagWaehlen(page, tag.datum);
+    const text = await blattText(page);
+    const wochentag = TAGE[new Date(tag.datum + 'T12:00:00').getDay()];
+    expect(text).toContain(wochentag);
+    expect(text).not.toContain('Rechnungen');
   });
 });
 
