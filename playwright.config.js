@@ -34,6 +34,24 @@ module.exports = {
     ignoreHTTPSErrors: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    /* Der Service Worker wird für ALLE Tests abgeschaltet — aus zwei
+       Gründen:
+
+       1. Er beantwortet API-Aufrufe aus seinem Zwischenspeicher. Die Mocks
+          der Tests greifen dann nicht, und der Reiter bleibt leer.
+       2. Er bringt Chromium reproduzierbar zum Absturz („Terminating render
+          process for bad Mojo message … BadgeService"). Die Tests brechen
+          dann mit „Target page, context or browser has been closed" ab —
+          ein Fehlerbild, das nichts mit der geprüften Sache zu tun hat.
+
+       Bisher schalteten ihn 30 Dateien einzeln ab (`test.use({ serviceWorkers:
+       'block' })`), 18 andere nicht — und genau die waren rot. Hier steht es
+       einmal für alle; die Einzelangaben dürfen bleiben, sie schaden nicht.
+
+       Kein Test braucht den Service Worker im Browser: Die beiden, die ihn
+       prüfen (`kiosk-kopfnavigation`, `kiosk-ladefehler`), lesen `sw.js` als
+       Datei. */
+    serviceWorkers: 'block',
     // Optional: Zeitlupe zum Zuschauen im Headed-Modus, z. B.
     //   $env:PW_SLOWMO=800; npx playwright test --headed
     launchOptions: { slowMo: Number(process.env.PW_SLOWMO) || 0 },

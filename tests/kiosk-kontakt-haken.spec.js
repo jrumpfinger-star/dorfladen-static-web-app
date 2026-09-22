@@ -228,31 +228,69 @@ test.describe('Kontakt – Öffnen markiert gelesen (K3)', () => {
 
 test.describe('Kontakt – Spalten (K4)', () => {
 
-  test('K4-01: Name, Gerät und Vorschau starten bündig', async ({ page }, testInfo) => {
+  /**
+   * Misst eine Spaltenkante je KARTENSPALTE.
+   *
+   * Die Kontaktliste steht auf breiten Schirmen mehrspaltig: Bei 1280 px
+   * passen zwei Karten à 496 px nebeneinander. Früher verlangten diese
+   * Prüfungen EINE gemeinsame x-Position über alle Karten — das konnte nur
+   * einspaltig aufgehen und schlug seit dem Umbau fehl (gemessen: 861 und
+   * 351, also genau eine Kartenspalte Abstand).
+   *
+   * Die Absicht bleibt: Innerhalb einer Kartenspalte müssen die Angaben in
+   * einer Flucht stehen. Geprüft wird das jetzt je Spalte.
+   */
+  async function kantenJeSpalte(page, sel, seite = 'left') {
+    return page.evaluate(({ s, w }) => {
+      const karten = [...document.querySelectorAll('#kontakt-list .kk-card')];
+      const spalten = new Map();
+      karten.forEach((k) => {
+        const el = k.querySelector(s);
+        if (!el) return;
+        const spalte = Math.round(k.getBoundingClientRect().left);
+        const kante = Math.round(el.getBoundingClientRect()[w]);
+        if (!spalten.has(spalte)) spalten.set(spalte, []);
+        spalten.get(spalte).push(kante);
+      });
+      return [...spalten.values()];
+    }, { s: sel, w: seite });
+  }
+
+  test('K4-01: Name, Gerät und Vorschau starten bündig', async ({ page }) => {
     await openKontakt(page);
-    test.skip(testInfo.project.name !== 'desktop', 'Rasterlayout erst ab 900px');
+    /* Die Spaltenform greift ab 620 px KARTENbreite (Container-Abfrage),
+       nicht ab einer Fensterbreite — der Profilname ist dafür das falsche
+       Kriterium. */
+    const breite = await page.locator('#kontakt-list .kk-card').first()
+      .evaluate((e) => Math.round(e.getBoundingClientRect().width));
+    test.skip(breite < 620, `Karte ist ${breite} px breit – Spaltenform greift erst ab 620`);
 
-    const cols = async (sel) => page.locator('#kontakt-list ' + sel).evaluateAll(
-      (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+    const karten = await page.locator('#kontakt-list .kk-card').count();
+    expect(karten, 'zu wenige Karten für eine Aussage').toBe(3);
 
-    const names = await cols('.kk-name');
-    const devs = await cols('.kk-dev');
-    const prevs = await cols('.kk-prev');
-
-    expect(names.length).toBe(3);
-    // Alle drei Spalten jeweils an derselben x-Position
-    expect(new Set(names).size).toBe(1);
-    expect(new Set(devs).size).toBe(1);
-    expect(new Set(prevs).size).toBe(1);
+    for (const sel of ['.kk-name', '.kk-dev', '.kk-prev']) {
+      const gruppen = await kantenJeSpalte(page, sel);
+      expect(gruppen.length, `${sel}: keine Karten gefunden`).toBeGreaterThan(0);
+      for (const g of gruppen) {
+        expect(new Set(g).size,
+          `${sel}: innerhalb einer Kartenspalte nicht in einer Flucht (${g.join(', ')})`)
+          .toBe(1);
+      }
+    }
   });
 
-  test('K4-02: Zeitspalte endet bündig', async ({ page }, testInfo) => {
+  test('K4-02: Zeitspalte endet bündig', async ({ page }) => {
     await openKontakt(page);
-    test.skip(testInfo.project.name !== 'desktop', 'Rasterlayout erst ab 900px');
+    const breite = await page.locator('#kontakt-list .kk-card').first()
+      .evaluate((e) => Math.round(e.getBoundingClientRect().width));
+    test.skip(breite < 620, `Karte ist ${breite} px breit – Spaltenform greift erst ab 620`);
 
-    const rights = await page.locator('#kontakt-list .kk-time').evaluateAll(
-      (els) => els.map((e) => Math.round(e.getBoundingClientRect().right)));
-    expect(new Set(rights).size).toBe(1);
+    const gruppen = await kantenJeSpalte(page, '.kk-time', 'right');
+    expect(gruppen.length, 'keine Zeitangaben gefunden').toBeGreaterThan(0);
+    for (const g of gruppen) {
+      expect(new Set(g).size,
+        `Zeitspalte endet nicht bündig (${g.join(', ')})`).toBe(1);
+    }
   });
 
   test('K4-03: kein horizontales Scrollen', async ({ page }) => {
@@ -262,9 +300,17 @@ test.describe('Kontakt – Spalten (K4)', () => {
     expect(overflow).toBeLessThanOrEqual(1);
   });
 
-  test('K4-04: auf schmalen Schirmen zwei feste Zeilen statt freiem Umbruch', async ({ page }, testInfo) => {
+  test('K4-04: auf schmalen Schirmen zwei feste Zeilen statt freiem Umbruch', async ({ page }) => {
     await openKontakt(page);
-    test.skip(testInfo.project.name === 'desktop', 'Zweizeiliges Raster nur unter 900px');
+    /* Maßgeblich ist die Breite der KARTE, nicht die des Fensters: Das
+       zweizeilige Raster greift per Container-Abfrage unter 620 px
+       Kartenbreite (`@container kkkarte (max-width:619px)`). Früher
+       übersprang sich der Fall nur auf `desktop` — auf dem iPad mini ist
+       die Karte aber ebenfalls über 620 px breit und damit einzeilig. */
+    const breite = await page.locator('#kontakt-list .kk-card').first()
+      .evaluate((e) => Math.round(e.getBoundingClientRect().width));
+    test.skip(breite >= 620,
+      `Karte ist ${breite} px breit – das zweizeilige Raster greift erst darunter`);
 
     const box = async (sel) => page.locator('#kontakt-list .kk-card').first()
       .locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { top: Math.round(r.top), left: Math.round(r.left) }; });
@@ -282,10 +328,12 @@ test.describe('Kontakt – Spalten (K4)', () => {
   test('K4-05: Namensspalte startet in allen Zeilen gleich', async ({ page }) => {
     await openKontakt(page);
     // Unterschiedlich breite Geraete-Chips duerfen die Namensspalte nicht verschieben
-    const lefts = await page.locator('#kontakt-list .kk-name').evaluateAll(
-      (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
-    expect(lefts.length).toBe(3);
-    expect(new Set(lefts).size).toBe(1);
+    const gruppen = await kantenJeSpalte(page, '.kk-name');
+    expect(gruppen.length, 'keine Karten gefunden').toBeGreaterThan(0);
+    for (const g of gruppen) {
+      expect(new Set(g).size,
+        `Namensspalte verschoben (${g.join(', ')})`).toBe(1);
+    }
   });
 });
 

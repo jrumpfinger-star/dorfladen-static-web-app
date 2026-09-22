@@ -294,6 +294,26 @@ async function blattText(page) {
 }
 
 /**
+ * Wechselt in den Verlauf — auf jedem Schirm.
+ *
+ * Ab Tablet steht der Bereichswechsel sichtbar im Kopf. Auf dem Telefon
+ * fehlt dafür der Platz; dort liegt er im Blatt hinter dem „i" und heißt
+ * „Verlauf ansehen" (Spec kiosk-bestellreiter-mobil). Tests, die stur den
+ * Kopfknopf klickten, liefen auf `mobile` in die Zeitüberschreitung.
+ */
+async function verlaufOeffnen(page) {
+  const kopf = page.locator('#panel-baecker .k-filter-btn:has-text("Verlauf")');
+  if (await kopf.count() && await kopf.first().isVisible()) {
+    await kopf.first().click();
+  } else {
+    await page.locator('#panel-baecker .bk-mehr').click();
+    await page.locator('#bk-blatt').waitFor({ state: 'visible', timeout: 5000 });
+    await page.locator('#bk-blatt button', { hasText: 'Verlauf ansehen' }).click();
+  }
+  await page.waitForTimeout(700);
+}
+
+/**
  * Der umgebaute Kiosk legt vor nicht zurueckholbaren Schritten ein Blatt
  * mit einer Rueckfrage vor (specs/kiosk-umbau, TC-F5-05). Der gewohnte
  * Kiosk kennt sie nicht. Damit dieselbe Datei gegen beide laeuft, wird sie
@@ -362,12 +382,32 @@ test.describe('Zweite Bäckerei', () => {
     const sa = tagFuerBeide().datum;
     await openBaecker(page);
     await tagWaehlen(page, sa);
-    await expect(page.locator('#panel-baecker .bk-row').first()).toContainText('Semmel');
 
-    await page.click('.bk-btab-freundl');
+    /* WELCHE Bäckerei an einem Tag mit zwei Lieferanten vorausgewählt ist,
+       hängt vom heutigen Wochentag und vom Bestellschluss ab — der Test darf
+       sich darauf nicht verlassen. Früher stand hier fest „erst Martins,
+       dann Freundl"; das lief monatelang, bis der Lauf über Mitternacht auf
+       einen anderen Wochentag fiel und die Vorauswahl kippte.
+
+       Geprüft wird die eigentliche Absicht: Der Wechsel tauscht den Katalog
+       wirklich aus — Martins führt „Semmel" als Nr. 1, Freundl
+       „Kaisersemmel". */
+    const ersteZeile = page.locator('#panel-baecker .bk-row').first();
+    const vorher = await ersteZeile.innerText();
+    const startFreundl = /Kaisersemmel/.test(vorher);
+
+    await page.click(startFreundl ? '.bk-btab-martins' : '.bk-btab-freundl');
     await page.waitForTimeout(600);
-    await expect(page.locator('#panel-baecker .bk-row').first()).toContainText('Kaisersemmel');
-    await expect(page.locator('#panel-baecker .bk-kontext .z1')).toContainText('Freundl');
+
+    const nachher = await ersteZeile.innerText();
+    expect(nachher, 'Der Wechsel hat den Katalog nicht getauscht').not.toBe(vorher);
+    if (startFreundl) {
+      expect(nachher).toContain('Semmel');
+      await expect(page.locator('#panel-baecker .bk-kontext .z1')).toContainText('Martin');
+    } else {
+      expect(nachher).toContain('Kaisersemmel');
+      await expect(page.locator('#panel-baecker .bk-kontext .z1')).toContainText('Freundl');
+    }
   });
 
   test('TC-B2-F19-05: Zähler zählt Bestellung und Ausdruck', async ({ page }) => {
@@ -474,8 +514,7 @@ test.describe('Zweite Bäckerei', () => {
         gedruckt_am: '', papierausdruck: true, druck_offen: true,
       }],
     });
-    await page.click('#panel-baecker .k-filter-btn:has-text("Verlauf")');
-    await page.waitForTimeout(700);
+    await verlaufOeffnen(page);
     await expect(page.locator('.bk-hist')).toContainText(NAME.freundl);
     await expect(page.locator('.bk-hist-druck')).toHaveCount(1);
     await expect(page.locator('.bk-hist-druck')).toContainText('Drucken');
@@ -609,8 +648,7 @@ test.describe('Zweite Bäckerei', () => {
     await page.goto(KIOSK_URL);
     await page.click('.k-tab[data-tab="baecker"]');
     await page.waitForSelector('#panel-baecker .bk-days', { timeout: 15000 });
-    await page.click('#panel-baecker .k-filter-btn:has-text("Verlauf")');
-    await page.waitForTimeout(700);
+    await verlaufOeffnen(page);
 
     // Vor dem Aufklappen wird nichts nachgeladen – der Verlauf bleibt schlank
     const vorher = abrufe.length;
@@ -645,8 +683,7 @@ test.describe('Zweite Bäckerei', () => {
     await page.goto(KIOSK_URL);
     await page.click('.k-tab[data-tab="baecker"]');
     await page.waitForSelector('#panel-baecker .bk-days', { timeout: 15000 });
-    await page.click('#panel-baecker .k-filter-btn:has-text("Verlauf")');
-    await page.waitForTimeout(700);
+    await verlaufOeffnen(page);
     await page.click('.bk-hist .m');
     await page.waitForTimeout(800);
     const nummern = await page.$$eval('.bk-hist-tab td.nr',

@@ -16,7 +16,12 @@
 // Eigenschaften, die dort nicht ausdrückbar sind: der Ablauf und die
 // Entscheidungen, die der Auftraggeber ausdrücklich verlangt hat.
 
-const { test, expect } = require('@playwright/test');
+/* Seit specs/kiosk-passwortabfrage steht vor dem Kiosk eine Passwortmaske.
+   Diese Datei lud weiterhin `@playwright/test` unmittelbar und sah deshalb
+   nur die Maske — alle 14 Prüfungen liefen in die Zeitüberschreitung und
+   meldeten „Target page, context or browser has been closed". Das sah nach
+   einem Browser-Absturz aus und verdeckte die einfache Ursache. */
+const { test, expect } = require('./_kiosk-angemeldet');
 
 const SEITE = '/kiosk-neu.html';
 
@@ -357,6 +362,7 @@ test.describe('Rückfrage', () => {
   });
 
   test('die Sendeknöpfe fragen vorher nach', async ({ page }) => {
+    let geprueft = 0;
     for (const [reiter, wort] of [['baecker', 'an bäckerei senden'], ['metzgerbest', 'bestellung senden']]) {
       await reiterOeffnen(page, reiter);
       const gefragt = await page.evaluate(async (w) => {
@@ -369,12 +375,24 @@ test.describe('Rückfrage', () => {
         const d = document.querySelector('.kneu-frage');
         const titel = d ? d.querySelector('.kneu-frage-titel').textContent : null;
         if (d) document.querySelector('.kneu-frage-nein').click();
+        /* Steht der Knopf da, ist aber nichts erfasst, antwortet der Kiosk
+           mit einem Hinweis statt mit der Rückfrage — das ist richtig so.
+           Diese Datei prüft mit ECHTEN Daten; ob an einem Tag etwas zu
+           senden ist, lässt sich nicht vorgeben. */
+        if (!titel) {
+          const toast = document.querySelector('.k-toast, .kneu-toast');
+          return toast ? 'nichts zu senden' : 'keine Rueckfrage';
+        }
         return titel;
       }, wort);
 
-      if (gefragt === 'kein Knopf') continue; // an diesem Tag nichts zu senden
-      expect(gefragt).toMatch(/senden\?$/);
+      if (gefragt === 'kein Knopf' || gefragt === 'nichts zu senden') continue;
+      expect(gefragt, `${reiter}: Der Sendeknopf fragt nicht nach`).toMatch(/senden\?$/);
+      geprueft++;
     }
+    /* Wenn an diesem Tag in KEINEM Reiter etwas zu senden war, hat der Fall
+       nichts geprüft — das gehört gesagt, statt stillschweigend grün zu sein. */
+    test.skip(geprueft === 0, 'An diesem Tag ist in keinem Reiter etwas zu senden');
   });
 });
 

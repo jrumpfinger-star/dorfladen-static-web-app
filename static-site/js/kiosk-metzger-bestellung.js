@@ -1382,8 +1382,27 @@ window.KMetzgerBest = (function () {
         _b.notiz = wert;
         markiereGeaendert();
         fuss();
+        notizKnopfAuffrischen();
       }
     });
+  }
+
+  /* Der Knopf trägt den erfassten Hinweis als Beschriftung — er steht aber
+     im Blatt hinter dem „i", und `fuss()` zeichnet nur die Fußzeile neu.
+     Nach dem Übernehmen blieb dort deshalb „Hinweis hinzufügen" stehen,
+     obwohl der Text gespeichert war: Man hielt die Erfassung für
+     gescheitert und tippte sie womöglich ein zweites Mal.
+
+     Neu gezeichnet wird nur dieser eine Knopf, nicht das ganze Blatt —
+     sonst schlösse sich ein offenes Blatt oder verlöre seine Rollposition.
+     (Spec metzger-hinweis-knopf, F1) */
+  function notizKnopfAuffrischen() {
+    var alt = document.querySelector('#mb-blatt .kn-knopf');
+    if (!alt) return;
+    var huelle = document.createElement('div');
+    huelle.innerHTML = notizKnopf();
+    var neu = huelle.firstElementChild;
+    if (neu && alt.parentNode) alt.parentNode.replaceChild(neu, alt);
   }
 
   function zu() {

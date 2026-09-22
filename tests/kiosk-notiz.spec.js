@@ -168,8 +168,42 @@ async function oeffneTab(page, opts) {
   return zustand;
 }
 
+/**
+ * Der Hinweis-Knopf — er liegt im Blatt hinter dem „i".
+ *
+ * Beim Straffen des Kopfbereichs sind die selten gebrauchten Schritte ins
+ * Blatt gewandert (Spec kiosk-erfassung-filter / kiosk-bestellreiter-mobil).
+ * Der Knopf steht seither in `.mb-blatt-wz` und ist erst sichtbar, wenn das
+ * Blatt offen ist. Tests, die ihn direkt suchten, liefen ins Leere — und
+ * die Folgeprüfungen dann in die Zeitüberschreitung.
+ */
+async function blattAuf(page) {
+  const blatt = page.locator('#mb-blatt');
+  if (!(await blatt.isVisible().catch(() => false))) {
+    await page.locator('#panel-metzgerbest .mb-mehr').click();
+    await blatt.waitFor({ state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(150);
+  }
+}
+
 function knopf(page) {
   return page.locator('#panel-metzgerbest .kn-knopf').first();
+}
+
+/** Öffnet das Blatt und gibt den Hinweis-Knopf zurück. */
+async function knopfSichtbar(page) {
+  await blattAuf(page);
+  return knopf(page);
+}
+
+/** Schließt das Blatt wieder — es liegt sonst über der Fußzeile. */
+async function blattZu(page) {
+  const blatt = page.locator('#mb-blatt');
+  if (await blatt.isVisible().catch(() => false)) {
+    await page.locator('#mb-blatt .mb-blatt-zu').click();
+    await blatt.waitFor({ state: 'hidden', timeout: 5000 });
+    await page.waitForTimeout(150);
+  }
 }
 
 async function schreibe(page, text) {
@@ -183,29 +217,29 @@ test.describe('Hinweis zur Bestellung', () => {
 
   test('TC-F1-01: Der Knopf steht in der Bestellansicht', async ({ page }) => {
     await oeffneTab(page);
-    await expect(knopf(page)).toBeVisible();
-    await expect(knopf(page)).toContainText('Hinweis hinzufügen');
+    await expect(await knopfSichtbar(page)).toBeVisible();
+    await expect(await knopfSichtbar(page)).toContainText('Hinweis hinzufügen');
   });
 
   test('TC-F1-02: Text erfassen und übernehmen', async ({ page }) => {
     await oeffneTab(page);
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await expect(page.locator('.kn-bg')).toBeVisible();
     await schreibe(page, 'Bitte erst ab 7 Uhr liefern');
     await page.locator('.kn-ok').click();
     await expect(page.locator('.kn-bg')).toHaveCount(0);
-    await expect(knopf(page)).toContainText('Hinweis ändern');
-    await expect(knopf(page)).toContainText('Bitte erst ab 7 Uhr liefern');
+    await expect(await knopfSichtbar(page)).toContainText('Hinweis ändern');
+    await expect(await knopfSichtbar(page)).toContainText('Bitte erst ab 7 Uhr liefern');
   });
 
   test('TC-F1-03: Abbrechen verwirft die Änderung', async ({ page }) => {
     await oeffneTab(page, { notiz: { html: '<p>Erst ab 7 Uhr</p>', text: 'Erst ab 7 Uhr' } });
-    await expect(knopf(page)).toContainText('Erst ab 7 Uhr');
-    await knopf(page).click();
+    await expect(await knopfSichtbar(page)).toContainText('Erst ab 7 Uhr');
+    await (await knopfSichtbar(page)).click();
     await schreibe(page, 'Ganz anders');
     await page.locator('.kn-abbruch').last().click();
     await expect(page.locator('.kn-bg')).toHaveCount(0);
-    await expect(knopf(page)).toContainText('Erst ab 7 Uhr');
+    await expect(await knopfSichtbar(page)).toContainText('Erst ab 7 Uhr');
   });
 
   test('TC-F1-04: Gesendete Bestellung ist nur lesbar', async ({ page }) => {
@@ -213,7 +247,7 @@ test.describe('Hinweis zur Bestellung', () => {
       status: 1,
       notiz: { html: '<p>Erst ab 7 Uhr</p>', text: 'Erst ab 7 Uhr' },
     });
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await expect(page.locator('.kn-feld')).toContainText('Erst ab 7 Uhr');
     await expect(page.locator('.kn-leiste')).toHaveCount(0);
     await expect(page.locator('.kn-ok')).toHaveCount(0);
@@ -222,15 +256,15 @@ test.describe('Hinweis zur Bestellung', () => {
 
   test('TC-F1-05: Leerer Text entfernt den Hinweis', async ({ page }) => {
     await oeffneTab(page, { notiz: { html: '<p>Erst ab 7 Uhr</p>', text: 'Erst ab 7 Uhr' } });
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await page.locator('.kn-feld').evaluate((el) => { el.innerHTML = ''; });
     await page.locator('.kn-ok').click();
-    await expect(knopf(page)).toContainText('Hinweis hinzufügen');
+    await expect(await knopfSichtbar(page)).toContainText('Hinweis hinzufügen');
   });
 
   test('TC-F2-06: Einfügen bringt keine fremde Gestaltung mit', async ({ page }) => {
     await oeffneTab(page);
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     const feld = page.locator('.kn-feld');
     await feld.click();
     // Einfügen mit Gestaltung nachstellen – der Kiosk nimmt nur den Text.
@@ -250,7 +284,7 @@ test.describe('Hinweis zur Bestellung', () => {
 
   test('TC-F5-01: Der Hinweis übersteht das Neuladen', async ({ page }) => {
     await oeffneTab(page);
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await schreibe(page, 'Bitte erst ab 7 Uhr liefern');
     await page.locator('.kn-ok').click();
     // Die stille Sicherung braucht ihre Ruhezeit.
@@ -258,16 +292,20 @@ test.describe('Hinweis zur Bestellung', () => {
     await page.reload();
     await page.locator('.k-tab[data-tab="metzgerbest"]').click();
     await page.locator('#metzgerbest-body .mb-row').first().waitFor({ timeout: 15000 });
-    await expect(knopf(page)).toContainText('Bitte erst ab 7 Uhr liefern');
+    await expect(await knopfSichtbar(page)).toContainText('Bitte erst ab 7 Uhr liefern');
   });
 
   test('TC-F5-02: Der Hinweis geht mit der Bestellung hinaus', async ({ page }) => {
     const zustand = await oeffneTab(page);
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await schreibe(page, 'Bitte erst ab 7 Uhr liefern');
     await page.locator('.kn-ok').click();
     await page.waitForTimeout(300);
 
+    /* Das Blatt hinter dem „i" bleibt nach dem Erfassen offen und liegt
+       über der Fußzeile — genau wie im Betrieb. Es wird geschlossen, bevor
+       gesendet wird. */
+    await blattZu(page);
     await page.locator('#panel-metzgerbest .mb-send').click();
     // Versanddialog bestätigen – der Knopf trägt dieselbe Beschriftung.
     await page.locator('.mb-dlg .mb-send, .k-modal-footer .k-btn-confirm')
@@ -282,7 +320,7 @@ test.describe('Hinweis zur Bestellung', () => {
 
   test('TC-F6-01/02: Dialog passt und Bedienelemente sind groß genug', async ({ page }) => {
     await oeffneTab(page);
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await expect(page.locator('.kn-bg')).toBeVisible();
     const mass = await page.evaluate(() => {
       const de = document.documentElement;
@@ -305,7 +343,7 @@ test.describe('Hinweis zur Bestellung', () => {
 
   test('TC-F6-03: Der Rest-Vorrat wird angezeigt und begrenzt', async ({ page }) => {
     await oeffneTab(page);
-    await knopf(page).click();
+    await (await knopfSichtbar(page)).click();
     await expect(page.locator('.kn-zaehler')).toContainText('Noch 1000 Zeichen frei');
     await page.locator('.kn-feld').evaluate((el) => {
       el.textContent = 'x'.repeat(1000);
