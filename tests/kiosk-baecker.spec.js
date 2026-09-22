@@ -607,6 +607,93 @@ test.describe('Bäcker – Senden (F7)', () => {
     await expect(page.locator('#k-toast')).toContainText('konnte nicht versendet werden');
     expect(dialoge).toHaveLength(0);   // kein natives alert()
   });
+
+  /* Aus dem Laden, zum Hochformat-Tablet: „Warum nutzt du hier nicht den
+     Platz senkrecht?" Die Vorschau deckelte die Liste fest auf 230 px –
+     auf einem 1200×2000-Schirm blieben darunter rund 600 px leer, während
+     die Liste selbst scrollen musste. Sie nimmt jetzt den freien Platz. */
+  test('TC-F7-05: Die Vorschau nutzt die Höhe statt sie leer zu lassen',
+    async ({ page }, testInfo) => {
+      // Mit den acht Standardpositionen läuft die Liste nirgends über – der
+      // gemeldete Fall träte gar nicht ein. Deshalb ein Katalog in der Größe
+      // einer echten Bestellung (26 Positionen wie im gemeldeten Bild).
+      const viele = [];
+      for (let i = 0; i < 26; i++) {
+        viele.push({
+          nummer: String(100 + i * 7), name: 'Testartikel ' + (i + 1),
+          aktiv: true, menge: 1 + (i % 4), retoure: 0,
+          vorbelegt: 1 + (i % 4), verlauf: [],
+        });
+      }
+      await openBaecker(page, { positionen: viele });
+      await page.locator('.bk-send').first().click();
+      await expect(page.locator('.bk-dlg')).toBeVisible();
+      await page.waitForTimeout(300);
+
+      const mass = await page.evaluate(() => {
+        const liste = document.querySelector('.bk-prev');
+        const fuss = document.querySelector('.bk-dlg-f');
+        const summe = document.querySelector('.bk-sum');
+        const koerper = document.querySelector('.bk-dlg-b');
+        if (!liste || !fuss) return null;
+        const l = liste.getBoundingClientRect();
+        return {
+          // Leerraum zwischen dem letzten Inhalt und der Fußzeile
+          luecke: fuss.getBoundingClientRect().top
+            - (summe ? summe.getBoundingClientRect().bottom : l.bottom),
+          listeHoch: l.height,
+          koerperHoch: koerper ? koerper.getBoundingClientRect().height : 0,
+          ueberlauf: liste.scrollHeight > liste.clientHeight + 1,
+          zeilen: liste.querySelectorAll('tr').length - 1,
+        };
+      });
+      expect(mass, 'Vorschau mit Liste und Fußzeile erwartet').not.toBeNull();
+      expect(mass.zeilen, 'alle 26 Positionen stehen in der Liste').toBe(26);
+
+      testInfo.annotations.push({
+        type: 'Messung',
+        description: `Liste ${Math.round(mass.listeHoch)} px in einem `
+          + `${Math.round(mass.koerperHoch)} px hohen Körper, `
+          + `Lücke ${Math.round(mass.luecke)} px, Überlauf: ${mass.ueberlauf}`,
+      });
+
+      // Der eigentliche Mangel war verschenkter Platz: Die Liste scrollte,
+      // obwohl darunter alles frei blieb. Das gilt auf jedem Schirm.
+      if (mass.ueberlauf) {
+        expect(mass.luecke,
+          `Liste scrollt, aber ${Math.round(mass.luecke)} px bleiben ungenutzt`)
+          .toBeLessThan(80);
+      }
+      // Der feste Deckel von 230 px darf nicht zurückkehren. Prüfbar nur
+      // dort, wo überhaupt mehr Platz da ist – auf kleinen Handys sind
+      // 200 px die ehrliche Obergrenze.
+      if (mass.koerperHoch > 500) {
+        expect(mass.listeHoch,
+          `Körper ${Math.round(mass.koerperHoch)} px, Liste aber nur `
+          + `${Math.round(mass.listeHoch)} px – der alte Deckel wirkt wieder`)
+          .toBeGreaterThan(230);
+      }
+    });
+
+  test('TC-F7-06: Die Vorschau zeigt alle Positionen, nicht nur 40', async ({ page }) => {
+    // Vor einem verbindlichen Versand muss sich jede Zeile nachsehen lassen.
+    // Früher endete die Liste bei 40 Zeilen mit „… n weitere".
+    const viele = [];
+    for (let i = 0; i < 46; i++) {
+      viele.push({
+        nummer: String(100 + i * 7), name: 'Testartikel ' + (i + 1),
+        aktiv: true, menge: 1, retoure: 0, vorbelegt: 1, verlauf: [],
+      });
+    }
+    await openBaecker(page, { positionen: viele });
+    await page.locator('.bk-send').first().click();
+    await expect(page.locator('.bk-dlg')).toBeVisible();
+
+    const zeilen = await page.locator('.bk-prev tr').count();
+    expect(zeilen - 1, 'alle 46 Positionen, keine bei 40 abgeschnitten').toBe(46);
+    await expect(page.locator('.bk-prev')).not.toContainText('weitere');
+    await expect(page.locator('.bk-sum')).toContainText('46 Positionen');
+  });
 });
 
 // ════════════════════════════════════════════════════

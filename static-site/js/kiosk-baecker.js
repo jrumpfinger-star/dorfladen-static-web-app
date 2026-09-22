@@ -1190,7 +1190,7 @@
 
     var h = '<div class="bk-dlg-h">' + luc('mail', 17) + ' '
       + (_korrektur ? 'Korrektur' : 'Bestellung') + ' an die Bäckerei senden</div>';
-    h += '<div class="bk-dlg-b">';
+    h += '<div class="bk-dlg-b bk-dlg-liste">';
     if (_b.testbetrieb) {
       h += '<div class="bk-test">' + luc('flask-conical', 14) + ' <b>Testbetrieb</b> – die Mail geht an '
         + esc(_b.empfaenger) + ', nicht an die Bäckerei.</div>';
@@ -1205,11 +1205,15 @@
     h += kv('Liefertag', _b.wochentag + ', ' + _b.datum_de
       + ' · Kd.-Nr. ' + _b.kd_nr + ' / Tour-Nr. ' + _b.tour_nr);
     h += '<div class="bk-prev"><table><tr><th>Nr</th><th>Artikel</th><th class="q">Menge</th><th class="q">Ret.</th></tr>';
-    pos.slice(0, 40).forEach(function (p) {
+    /* Alle Positionen, nicht die ersten 40: Die Liste war frueher auf 230 px
+       gedeckelt, da war eine Obergrenze folgerichtig. Jetzt nimmt sie den
+       verfuegbaren Platz und scrollt in sich - und vor einem verbindlichen
+       Versand muss sich jede Zeile nachsehen lassen. Der Katalog bei Freundl
+       fasst 47 Artikel, sieben waeren unter "weitere" verschwunden. */
+    pos.forEach(function (p) {
       h += '<tr><td>' + esc(p.nummer || '—') + '</td><td>' + esc(p.name)
         + '</td><td class="q">' + p.menge + '</td><td class="q">' + (p.retoure || '') + '</td></tr>';
     });
-    if (pos.length > 40) h += '<tr><td colspan="4" class="more">… ' + (pos.length - 40) + ' weitere</td></tr>';
     h += '</table></div>';
     h += '<div class="bk-sum">' + pos.length + ' Positionen · ' + stk + ' Stück</div>';
     h += '</div>';

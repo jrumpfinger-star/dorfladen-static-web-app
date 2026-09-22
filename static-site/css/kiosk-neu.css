@@ -718,6 +718,29 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .kal-modal-head{ flex:0 0 auto }
 .k-modal-body,
 .bk-dlg-b{ flex:1 1 auto; overflow-y:auto; min-height:0; max-height:none }
+
+/* Die Versandvorschau soll die Bestellung zeigen, nicht Leerraum.
+   Auf hohen Schirmen stand .bk-prev fest auf 230 px – unter der Liste blieb
+   dann die halbe Seite frei, während die Liste selbst scrollen musste.
+   Jetzt nimmt sie den Platz, den der Dialog übrig lässt.
+
+   flex-grow bleibt 0: Bei drei Artikeln soll kein leerer Kasten aufklaffen,
+   die Liste bleibt so hoch wie ihr Inhalt. Erst wenn sie nicht mehr passt,
+   schrumpft sie (flex-shrink:1) und scrollt in sich.
+
+   Kopfdaten und Summe bleiben dabei stehen – beim verbindlichen Senden
+   gehören Empfänger und Stückzahl ins Bild, nicht weggescrollt. */
+.bk-dlg-b.bk-dlg-liste{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.bk-dlg-b.bk-dlg-liste > .bk-prev{
+  flex:0 1 auto;
+  min-height:120px;
+  max-height:none;
+  overflow:auto;
+}
 .k-modal-footer,
 .bk-dlg-f,
 .kal-modal-foot,
