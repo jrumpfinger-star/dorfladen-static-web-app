@@ -1118,6 +1118,14 @@
     .k-order-dish{font-size:14px;color:var(--c-text)}
     .k-order-meta{font-size:13px;color:var(--c-muted);display:flex;gap:12px;flex-wrap:wrap}
     .k-order-note{font-size:13px;color:#92400e;font-style:italic;padding:6px 10px;border-radius:6px;margin-top:4px}
+    /* Sonderwunsch ausserhalb des Klappbereichs: eine Zeile, die auch an
+       einer zugeklappten Karte zu lesen ist. Die Karte dafuer aufzuklappen
+       hatte die ganze Uebersicht geopfert. */
+    .k-oc-wunsch{font-size:12.5px;color:#92400e;font-style:italic;line-height:1.35;
+      background:#fef3c7;border-top:1px solid #fde68a;padding:5px 12px;
+      display:flex;align-items:flex-start;gap:5px;overflow-wrap:anywhere}
+    .k-oc-wunsch strong{font-style:normal;font-weight:600;flex-shrink:0}
+    .k-oc-wunsch svg{flex-shrink:0;margin-top:2px}
     .k-order-mitnehmen{font-size:11px;background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
     .k-order-qty{display:flex;align-items:center;gap:4px;padding:6px 8px;border-left:1px solid var(--c-border)}
     .k-order-qty .qty-display{font-size:20px;font-weight:600;min-width:28px;text-align:center}
@@ -3155,13 +3163,11 @@ var K = (function(){
     var srcLabel = SRC_LABELS[o.quelle]||'Online';
     var srcCls = SRC_CLASS[o.quelle]||'src-online';
     var hasNote = o.anmerkung || o.kunde_kommentar;
-    /* Aufgeklappt, wenn es etwas zu lesen gibt: eine ungelesene Nachricht
-       oder ein Sonderwunsch. Der Wunsch gehoert zur Zubereitung und darf
-       nicht hinter einem zugeklappten Kopf verschwinden - er stand auch
-       bisher im Blick, damals allerdings nur, weil er faelschlich als
-       ungelesene Nachricht galt. */
+    /* Aufgeklappt nur bei einer ungelesenen Kundennachricht. Der
+       Sonderwunsch braucht das nicht mehr - er steht als eigene Zeile
+       ausserhalb des Klappbereichs und ist auch zugeklappt zu lesen. */
     var isOpen = o.id in _orderCardOpen ? _orderCardOpen[o.id]
-      : (_hasUnseenComment(o) || !!o.anmerkung);
+      : _hasUnseenComment(o);
     var html = '';
     html += '<div class="k-order st-'+o.status+(isOpen?'':' oc-collapsed')+'" id="oc-'+o.id+'">';
 
@@ -3202,23 +3208,31 @@ var K = (function(){
     html += '</span>';
     html += '</div>';
 
+    /* Der Sonderwunsch steht AUSSERHALB des Klappbereichs.
+       Erster Anlauf war, die Karte dafuer aufzuklappen - dann standen alle
+       Karten offen, samt Antwortfeld, und die Uebersicht war hin
+       („Warum werden jetzt die Sonderwuensche automatisch aufgeklappt?").
+       Hier bleibt er in einer Zeile sichtbar, ohne die Karte zu oeffnen.
+       Eine echte Kundennachricht bleibt davon unberuehrt - die gehoert in
+       den Verlauf und meldet sich weiterhin ueber NEU. */
+    var _eigenerWunsch = o.anmerkung && (_istVorOrt(o) || o.kommentar_gelesen || o.status===2);
+    if(_eigenerWunsch){
+      html += '<div class="k-oc-wunsch">'+luc('message-square',13)
+        + ' <strong>Sonderwunsch:</strong> '+esc(o.anmerkung)+'</div>';
+    }
+
     // ── Expandable body (details) ──
     html += '<div class="k-order-body">';
     html += '<div class="k-order-info">';
     // Bestellnummer + Telefon removed (irrelevant for daily operations)
-    if(o.anmerkung){
-      /* Vor Ort oder am Telefon hat das Personal den Wunsch selbst notiert.
-         „Nachricht vom Kunden" waere dann falsch, und ein „Gelesen"-Knopf
-         forderte dazu auf, den eigenen Text abzuhaken. Sichtbar bleibt der
-         Wunsch aber in jedem Fall - er gehoert zur Zubereitung. */
-      if(!_istVorOrt(o) && !o.kommentar_gelesen && o.status!==2){
-        html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;display:flex;align-items:flex-start;gap:6px;animation:kPulse 2s ease-in-out 3">';
-        html += '<div style="flex:1;min-width:0">'+luc('message-circle',14)+' <strong>Nachricht vom Kunden:</strong> '+esc(o.anmerkung)+'</div>';
-        html += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
-        html += '</div>';
-      } else {
-        html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' <strong>Sonderwunsch:</strong> '+esc(o.anmerkung)+'</div>';
-      }
+    if(o.anmerkung && !_eigenerWunsch){
+      /* Nur noch der Online-Fall: Dort hat der Kunde den Text selbst
+         geschrieben, „Nachricht vom Kunden" ist richtig und er darf
+         abgehakt werden. Der selbst notierte Wunsch steht oben. */
+      html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;display:flex;align-items:flex-start;gap:6px;animation:kPulse 2s ease-in-out 3">';
+      html += '<div style="flex:1;min-width:0">'+luc('message-circle',14)+' <strong>Nachricht vom Kunden:</strong> '+esc(o.anmerkung)+'</div>';
+      html += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
+      html += '</div>';
     }
     if(o.bestaetigung_text && (!Array.isArray(o.verlauf) || !o.verlauf.length)) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
     // Fortlaufender Chatverlauf (wie WhatsApp): Kunde links, Dorfladen rechts, neueste unten

@@ -1,6 +1,6 @@
 """Telefonisch erfasster Sonderwunsch ist keine ungelesene Kundennachricht.
 
-Spec: specs/mittagstisch-sonderwunsch/spec.md (TC-SW-06 … TC-SW-08)
+Spec: specs/mittagstisch-sonderwunsch/spec.md (TC-SW-09 … TC-SW-11)
 
 Aus dem Laden: „Bei telefonischer Bestellung kann es eigentlich keine
 Nachricht vom Kunden geben. Warum blinkt es trotzdem auf?" — und als
@@ -124,37 +124,37 @@ def main():
 
     print("\n1) Telefonisch erfasst: der eigene Wunsch gilt als gelesen")
     tel = anlegen(lunch, lunch.QUELLE_TELEFON)
-    pruefe("TC-SW-06  Anlage erfolgt", bool(tel))
+    pruefe("TC-SW-09  Anlage erfolgt", bool(tel))
     if tel:
-        pruefe("TC-SW-06  dl_kommentar_gelesen ist True",
+        pruefe("TC-SW-09  dl_kommentar_gelesen ist True",
                tel.get("dl_kommentar_gelesen") is True,
                f"war {tel.get('dl_kommentar_gelesen')!r}")
-        pruefe("TC-SW-06  der Wunsch wird trotzdem gespeichert",
+        pruefe("TC-SW-09  der Wunsch wird trotzdem gespeichert",
                tel.get("dl_anmerkung") == "ohne Beilage",
                f"war {tel.get('dl_anmerkung')!r}")
 
     print("\n2) Am Tresen erfasst: dasselbe")
     pers = anlegen(lunch, lunch.QUELLE_PERSONAL)
-    pruefe("TC-SW-07  Anlage erfolgt", bool(pers))
+    pruefe("TC-SW-10  Anlage erfolgt", bool(pers))
     if pers:
-        pruefe("TC-SW-07  dl_kommentar_gelesen ist True",
+        pruefe("TC-SW-10  dl_kommentar_gelesen ist True",
                pers.get("dl_kommentar_gelesen") is True,
                f"war {pers.get('dl_kommentar_gelesen')!r}")
 
     print("\n3) Online bestellt: der Kunde hat selbst geschrieben")
     onl = anlegen(lunch, lunch.QUELLE_ONLINE, datum=morgen(lunch))
-    pruefe("TC-SW-08  Anlage erfolgt",
+    pruefe("TC-SW-11  Anlage erfolgt",
            bool(onl), "Online-Anlage abgelehnt - der Fall bliebe ungeprueft")
     if onl:
-        pruefe("TC-SW-08  dl_kommentar_gelesen bleibt False",
+        pruefe("TC-SW-11  dl_kommentar_gelesen bleibt False",
                onl.get("dl_kommentar_gelesen") is False,
                f"war {onl.get('dl_kommentar_gelesen')!r}")
 
     print("\n4) Ohne Wunsch bleibt es unauffaellig")
     leer = anlegen(lunch, lunch.QUELLE_TELEFON, anmerkung="")
-    pruefe("TC-SW-08  Anlage erfolgt", bool(leer))
+    pruefe("TC-SW-11  Anlage erfolgt", bool(leer))
     if leer:
-        pruefe("TC-SW-08  auch ohne Anmerkung gesetzt (kein Sonderfall)",
+        pruefe("TC-SW-11  auch ohne Anmerkung gesetzt (kein Sonderfall)",
                leer.get("dl_kommentar_gelesen") is True,
                f"war {leer.get('dl_kommentar_gelesen')!r}")
 

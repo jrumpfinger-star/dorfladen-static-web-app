@@ -103,6 +103,40 @@ test.describe('Mittagstisch – Sonderwunsch am Telefon', () => {
         .not.toContain('Nachricht vom Kunden');
     });
 
+  /* Aus dem Laden, nachdem der erste Anlauf die Karte dafür aufklappte:
+     „Warum werden jetzt die Sonderwünsche automatisch aufgeklappt?"
+     Der Wunsch steht seitdem außerhalb des Klappbereichs – sichtbar,
+     ohne die Übersicht zu opfern. */
+  test('TC-SW-06: Die Karte bleibt dabei zugeklappt', async ({ page }) => {
+    await oeffneMittag(page, [
+      order('t1', { quelle: QUELLE_TELEFON, anmerkung: 'ohne Beilage' }),
+    ]);
+    const karte = page.locator('#mittag-orders .k-order').first();
+    await expect(karte, 'ein Sonderwunsch ist kein Grund aufzuklappen')
+      .toHaveClass(/oc-collapsed/);
+    // Trotzdem lesbar: die Zeile liegt außerhalb des Klappbereichs.
+    await expect(karte.locator('.k-oc-wunsch')).toBeVisible();
+    await expect(karte.locator('.k-oc-wunsch')).toContainText('ohne Beilage');
+  });
+
+  test('TC-SW-07: Das Antwortfeld bleibt eingeklappt', async ({ page }) => {
+    // Es stand bei jeder Karte offen und machte sie unnötig hoch.
+    await oeffneMittag(page, [
+      order('t1', { quelle: QUELLE_TELEFON, anmerkung: 'Reis und Pommes' }),
+    ]);
+    const karte = page.locator('#mittag-orders .k-order').first();
+    await expect(karte.locator('textarea')).toBeHidden();
+  });
+
+  test('TC-SW-08: Eine ungelesene Kundennachricht klappt weiterhin auf',
+    async ({ page }) => {
+      await oeffneMittag(page, [
+        order('o1', { quelle: QUELLE_ONLINE, anmerkung: 'Bitte ohne Zwiebeln' }),
+      ]);
+      const karte = page.locator('#mittag-orders .k-order').first();
+      await expect(karte).not.toHaveClass(/oc-collapsed/);
+    });
+
   test('TC-SW-02: Kein „Gelesen"-Knopf für den eigenen Text', async ({ page }) => {
     await oeffneMittag(page, [
       order('t1', { quelle: QUELLE_TELEFON, anmerkung: 'Reis und Pommes' }),

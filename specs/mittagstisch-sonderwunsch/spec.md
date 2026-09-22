@@ -45,13 +45,17 @@ gesetzt werden."*
 
 - Eine `anmerkung` einer **vor Ort oder telefonisch** erfassten Bestellung
   gilt **nicht** als ungelesene Nachricht.
-- Sie wird weiterhin angezeigt, aber als **„Sonderwunsch"** in ruhigem Gelb —
-  ohne Puls, ohne „Gelesen"-Knopf, ohne NEU.
-- Die Karte bleibt trotzdem **aufgeklappt**. Der Wunsch gehört zur
-  Zubereitung und darf nicht hinter einem zugeklappten Kopf verschwinden.
-  Bisher stand er im Blick, allerdings nur wegen des falschen Befunds.
-- Bei **Online**-Bestellungen bleibt alles wie bisher: Dort hat der Kunde
-  den Text selbst geschrieben, „Nachricht vom Kunden" ist richtig.
+- Sie steht als eigene Zeile **außerhalb des Klappbereichs**, am Fuß des
+  Kartenkopfs: „Sonderwunsch: ohne Beilage" in ruhigem Gelb — ohne Puls,
+  ohne „Gelesen"-Knopf, ohne NEU.
+- Die Karte bleibt dabei **zugeklappt**. Ein erster Anlauf ließ sie dafür
+  aufklappen; dann standen alle Karten offen, samt Antwortfeld, und die
+  Übersicht war hin (*„Warum werden jetzt die Sonderwünsche automatisch
+  aufgeklappt?"*). Gemessen: 124 px mit Wunsch statt rund 300 px offen.
+- Bei **Online**-Bestellungen mit ungelesener Anmerkung bleibt alles wie
+  bisher: Dort hat der Kunde den Text selbst geschrieben, „Nachricht vom
+  Kunden" ist richtig, die Karte klappt auf und er lässt sich abhaken.
+  Ist er einmal gelesen, rutscht er in dieselbe ruhige Zeile.
 - Ein **`kunde_kommentar`** meldet sich immer — auch an einer telefonisch
   erfassten Bestellung. Ein Kunde kann später über die App schreiben.
 - Beim **Anlegen** setzt der Server `dl_kommentar_gelesen` für telefonisch
@@ -70,10 +74,17 @@ gesetzt werden."*
 
 **TC-SW-05: Eine echte Kundennachricht meldet sich auch am Telefon.**
 
-**TC-SW-06/07: Telefon und Tresen legen mit `dl_kommentar_gelesen = true` an**
+**TC-SW-06: Die Karte bleibt dabei zugeklappt** — und die Wunschzeile ist
+trotzdem sichtbar.
+
+**TC-SW-07: Das Antwortfeld bleibt eingeklappt.**
+
+**TC-SW-08: Eine ungelesene Kundennachricht klappt weiterhin auf.**
+
+**TC-SW-09/10: Telefon und Tresen legen mit `dl_kommentar_gelesen = true` an**
 — geprüft am Rumpf, der wirklich nach Dataverse ginge.
 
-**TC-SW-08: Online legt mit `false` an.**
+**TC-SW-11: Online legt mit `false` an.**
 
 ## F2: Eine Karte mit Chat zieht die Nachbarn nicht mit
 
