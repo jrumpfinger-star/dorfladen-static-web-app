@@ -2128,6 +2128,15 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
     display:grid !important;
     grid-template-columns:repeat(auto-fill, minmax(330px, 1fr));
     gap:10px;
+    /* Jede Karte nur so hoch wie ihr Inhalt.
+       Aus dem Laden: „Es schaut blöd aus, wenn eine Bestellung mehrere
+       Chats beinhaltet, da alle anderen Kacheln dann auch die gleiche
+       Größe bekommen." Genau das tut ein Raster von sich aus – ohne
+       align-items zieht `stretch` jede Karte einer Zeile auf die Höhe der
+       höchsten. Eine Karte mit Chatverlauf ist schnell fünfmal so hoch wie
+       eine ohne; daneben standen dann drei fast leere Flächen.
+       (Spec mittagstisch-sonderwunsch, F2) */
+    align-items:start;
   }
 }
 

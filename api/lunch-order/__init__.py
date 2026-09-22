@@ -562,6 +562,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Telefonbestellungen werden sofort als bestätigt gespeichert
             initial_status = STATUS_BESTAETIGT if quelle in (QUELLE_TELEFON, QUELLE_PERSONAL) else STATUS_NEU
 
+            # Aus dem Laden: „Bei telefonischer Bestellung kann es eigentlich
+            # keine Nachricht vom Kunden geben." Richtig - den Sonderwunsch
+            # tippt hier das Personal selbst mit. Er gilt daher von vornherein
+            # als gelesen, sonst blinkt die eigene Eingabe als neue Nachricht
+            # zurueck und blockiert die Sammelbestaetigung.
+            selbst_erfasst = quelle in (QUELLE_TELEFON, QUELLE_PERSONAL)
+
             payload = {
                 "dl_name": name,
                 "dl_email": email,
@@ -581,6 +588,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "dl_erfasst_von": erfasst_von,
                 "dl_device_id": device_id,
                 "dl_notify_email": notify_email,
+                "dl_kommentar_gelesen": selbst_erfasst,
             }
 
             post_headers = {**headers, "Prefer": "return=representation"}

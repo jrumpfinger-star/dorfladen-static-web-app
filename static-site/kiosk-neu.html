@@ -1076,8 +1076,18 @@ var K = (function(){
   var _globalTodayNew = 0;
   var _msgOrders = []; // Nachrichten über alle Tage
 
+  /* Was zaehlt als ungelesene Nachricht?
+     Aus dem Laden: „Bei telefonischer Bestellung kann es eigentlich keine
+     Nachricht vom Kunden geben. Warum blinkt es trotzdem auf?"
+     Der Sonderwunsch einer telefonisch erfassten Bestellung steht im selben
+     Feld `anmerkung` wie der Wunsch aus dem Online-Formular - nur hat ihn
+     hier das Personal selbst getippt. Ihn als ungelesene Nachricht zu
+     fuehren, liess die Karte blinken, klappte sie auf und blockierte die
+     Sammelbestaetigung. Angezeigt wird der Wunsch weiterhin, aber als
+     Sonderwunsch (siehe renderOrder). */
   function _hasUnseenComment(o){
-    return !!((o.kunde_kommentar || o.anmerkung) && o.status!==2 && !o.kommentar_gelesen);
+    var vomKunden = o.kunde_kommentar || (o.anmerkung && !_istVorOrt(o));
+    return !!(vomKunden && o.status!==2 && !o.kommentar_gelesen);
   }
 
   function setMittagFilter(f){
@@ -1533,8 +1543,13 @@ var K = (function(){
     var srcLabel = SRC_LABELS[o.quelle]||'Online';
     var srcCls = SRC_CLASS[o.quelle]||'src-online';
     var hasNote = o.anmerkung || o.kunde_kommentar;
-    // Default collapsed unless user opened or has an unread customer message
-    var isOpen = o.id in _orderCardOpen ? _orderCardOpen[o.id] : _hasUnseenComment(o);
+    /* Aufgeklappt, wenn es etwas zu lesen gibt: eine ungelesene Nachricht
+       oder ein Sonderwunsch. Der Wunsch gehoert zur Zubereitung und darf
+       nicht hinter einem zugeklappten Kopf verschwinden - er stand auch
+       bisher im Blick, damals allerdings nur, weil er faelschlich als
+       ungelesene Nachricht galt. */
+    var isOpen = o.id in _orderCardOpen ? _orderCardOpen[o.id]
+      : (_hasUnseenComment(o) || !!o.anmerkung);
     var html = '';
     html += '<div class="k-order st-'+o.status+(isOpen?'':' oc-collapsed')+'" id="oc-'+o.id+'">';
 
@@ -1550,7 +1565,7 @@ var K = (function(){
     html += '<span class="k-order-st '+(STATUS_CLASS[o.status]||'stx-neu')+'">'+(STATUS[o.status]||'Neu')+'</span>';
     if(o.mitnehmen) html += '<span class="k-order-mitnehmen">'+luc('package',11)+' MIT</span>';
     if(_hasUnseenComment(o)) html += '<span style="background:#3b82f6;color:#fff;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;animation:kBlink 1s ease-in-out infinite">'+luc('message-circle',10)+' NEU</span>';
-    if(hasNote) html += '<span style="color:#92400e;font-size:11px" title="Anmerkung">'+luc('message-square',12)+'</span>';
+    if(hasNote) html += '<span style="color:#92400e;font-size:11px" title="Sonderwunsch">'+luc('message-square',12)+'</span>';
     // Kommunikationswege: 📲 Push (aktives Abo) / ✉️ E-Mail (gewuenscht)
     if(o.push_available) html += '<span title="Kunde erhält Push-Nachrichten" style="display:inline-flex;align-items:center;gap:2px;background:#ede9fe;color:#6d28d9;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">'+luc('smartphone',10)+' Push</span>';
     if(o.notify_email && o.email) html += '<span title="Kunde erhält E-Mails: '+esc(o.email)+'" style="display:inline-flex;align-items:center;gap:2px;background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">'+luc('mail',10)+' E-Mail</span>';
@@ -1580,13 +1595,17 @@ var K = (function(){
     html += '<div class="k-order-info">';
     // Bestellnummer + Telefon removed (irrelevant for daily operations)
     if(o.anmerkung){
-      if(!o.kommentar_gelesen && o.status!==2){
+      /* Vor Ort oder am Telefon hat das Personal den Wunsch selbst notiert.
+         „Nachricht vom Kunden" waere dann falsch, und ein „Gelesen"-Knopf
+         forderte dazu auf, den eigenen Text abzuhaken. Sichtbar bleibt der
+         Wunsch aber in jedem Fall - er gehoert zur Zubereitung. */
+      if(!_istVorOrt(o) && !o.kommentar_gelesen && o.status!==2){
         html += '<div class="k-order-note" style="background:#eff6ff;border-left:3px solid #3b82f6;color:#1e40af;display:flex;align-items:flex-start;gap:6px;animation:kPulse 2s ease-in-out 3">';
         html += '<div style="flex:1;min-width:0">'+luc('message-circle',14)+' <strong>Nachricht vom Kunden:</strong> '+esc(o.anmerkung)+'</div>';
         html += '<button class="k-btn k-btn-sm" style="padding:2px 8px;font-size:11px;background:#3b82f6;color:#fff;flex-shrink:0;white-space:nowrap" onclick="event.stopPropagation();K.markMsgRead(\''+o.id+'\')">'+luc('eye',11)+' Gelesen</button>';
         html += '</div>';
       } else {
-        html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' '+esc(o.anmerkung)+'</div>';
+        html += '<div class="k-order-note" style="background:#fef3c7">'+luc('message-square',14)+' <strong>Sonderwunsch:</strong> '+esc(o.anmerkung)+'</div>';
       }
     }
     if(o.bestaetigung_text && (!Array.isArray(o.verlauf) || !o.verlauf.length)) html += '<div class="k-order-note" style="background:#dcfce7;border-left:3px solid #16a34a;color:#166534">'+luc('check-circle',14)+' '+esc(o.bestaetigung_text)+'</div>';
@@ -2325,6 +2344,40 @@ var K = (function(){
     setTimeout(function(){ clearInterval(origInterval); }, 10000);
   })();
 
+  /* Sortierschluessel eines Stammkunden: Nachname zuerst.
+     Aus dem Laden: „Die Daten bitte nach Nachnamen sortiert anzeigen."
+     Der Server ordnet nach `dl_name`, und der beginnt mit dem Vornamen -
+     Christine Kastler stand also vor Maria Kailich.
+
+     Bevorzugt wird das gepflegte Feld `nachname`. Fehlt es, gilt das letzte
+     Wort des Namens; bei einem einzelnen Wort ("Martl") eben dieses. Das
+     ist eine Annahme, aber die einzige, die ohne saubere Daten traegt.
+
+     localeCompare mit 'de' setzt Umlaute dorthin, wo sie im Telefonbuch
+     stehen - sonst stuende Oesterle hinter Zwick. */
+  function _kundeSchluessel(c){
+    var nach = (c && c.nachname || '').trim();
+    if(!nach){
+      var teile = String(c && c.name || '').trim().split(/\s+/);
+      nach = teile[teile.length-1] || '';
+    }
+    var vor = (c && c.vorname || '').trim();
+    if(!vor){
+      var t2 = String(c && c.name || '').trim().split(/\s+/);
+      vor = t2.length > 1 ? t2.slice(0, -1).join(' ') : '';
+    }
+    return { nach: nach, vor: vor };
+  }
+
+  function _kundenSortiert(liste){
+    return (liste || []).slice().sort(function(a, b){
+      var ka = _kundeSchluessel(a), kb = _kundeSchluessel(b);
+      var n = ka.nach.localeCompare(kb.nach, 'de', { sensitivity: 'base' });
+      if(n !== 0) return n;
+      return ka.vor.localeCompare(kb.vor, 'de', { sensitivity: 'base' });
+    });
+  }
+
   function renderKunden(){
     if(kunden.length===0){
       document.getElementById('kunden-list').innerHTML = '<div class="k-empty"><div class="k-empty-icon">'+luc('user',24)+'</div>Keine Kunden gefunden</div>'+
@@ -2333,7 +2386,7 @@ var K = (function(){
       return;
     }
     var html = '';
-    kunden.forEach(function(c){
+    _kundenSortiert(kunden).forEach(function(c){
       var isOpen = c.id in _kundenCardOpen ? _kundenCardOpen[c.id] : false;
       var eName = esc(c.name).replace(/'/g,"\\'");
       var ePhone = esc(c.telefon||'').replace(/'/g,"\\'");
@@ -2538,7 +2591,8 @@ var K = (function(){
             html += '<div class="k-search-item si-frei" onclick="K.freierKunde()"><span class="si-name">'+luc('phone',14)+' Nur für diese Bestellung: "'+esc(q)+'"</span></div>';
             html += '<div class="k-search-item si-new" onclick="K.newOrderKunde()"><span class="si-name">'+luc('user-plus',14)+' "'+esc(q)+'" als neuen Kunden anlegen</span></div>';
           } else {
-            list.forEach(function(c){
+            // Gleiche Ordnung wie in der Kundenliste: nach Nachnamen.
+            _kundenSortiert(list).forEach(function(c){
               html += '<div class="k-search-item" onclick="K.selectOrderKunde(\''+c.id+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\',\''+esc(c.telefon).replace(/'/g,"\\'")+'\')"><span class="si-name">'+esc(c.name)+'</span><span class="si-phone">'+esc(c.telefon)+'</span></div>';
             });
           }
