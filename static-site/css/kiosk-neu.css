@@ -1678,10 +1678,16 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 
 #panel-mittag .k-sw-bar{
   display:grid;
-  grid-template-columns:auto 1fr auto;
+  grid-template-columns:auto auto auto;
   align-items:center;
   gap:10px;
-  width:100%;
+  /* Nach dem Inhalt, nicht nach dem Schirm. Auf 1650 px schob `width:100%`
+     den Pfeil ans äußerste rechte Ende und riss dazwischen eine große Lücke
+     auf – das war schon einmal behoben (7. September) und beim Umbau auf
+     das neue Gestaltungsblatt zurückgefallen. Schmale Schirme kappt
+     max-width, dort füllt das Band weiterhin die Breite. */
+  width:fit-content;
+  max-width:100%;
   min-height:var(--tap);
   padding:8px 12px;
   margin:0 0 var(--gap);
