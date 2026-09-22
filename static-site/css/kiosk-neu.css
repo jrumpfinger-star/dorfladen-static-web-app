@@ -2284,6 +2284,36 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   #panel-baecker .bk-days{ grid-template-columns:repeat(7,1fr) }
   #panel-baecker .bk-day{ padding:6px 9px }
 }
+
+/* Niedrige Schirme: die Tagesleiste in EINE rollbare Reihe ───────────────
+   Auf einem Telefon mit 360 x 640 brach die Leiste bei vier Spalten auf
+   zwei Reihen um und nahm 120 px — von 640 px Gesamthöhe. Für die
+   Artikelliste blieben 258 px, also drei Zeilen; gefordert sind vier.
+
+   Einreihig und waagerecht rollbar kostet sie rund 56 px. Die Kacheln
+   behalten ihre Antippgröße, und der gewählte Tag wird beim Zeichnen in
+   den Blick gerollt (`scroll-margin`), damit er nicht außerhalb liegt.
+
+   Nur für niedrige Schirme: Das Ladentablett (686 x 1095) und jedes
+   Tablet im Querformat behalten die Rasterform.
+   (Spec kiosk-bestellreiter-mobil, F1) */
+@media (max-width:559px) and (max-height:699px){
+  #panel-baecker .bk-days{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+  }
+  #panel-baecker .bk-days::-webkit-scrollbar{ display:none }
+  #panel-baecker .bk-day{
+    flex:0 0 auto;
+    min-width:64px;
+    scroll-snap-align:center;
+    scroll-margin-inline:8px;
+  }
+}
 #panel-baecker .bk-day.active{
   background:var(--gr);
   border-color:var(--gr);
@@ -2965,6 +2995,31 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
 /* Strukturelle Nicht-Liefertage (Di, Mi, Fr, Sa, So) verschwinden ganz. */
 #panel-metzgerbest .mb-days .mb-day.off[title*="liefert der Metzger nicht"]{
   display:none;
+}
+
+/* Niedrige Schirme: eine rollbare Reihe statt umbrechender Kacheln ──────
+   Bei 360 x 640 brach die Leiste auf zwei Reihen um und nahm 127 px. Mit
+   der Kontextzeile und der Suchzeile stand der feste Kopf bei 298 px —
+   46,6 % der Gesamthöhe, erlaubt sind 45 %. Für die Artikelliste blieb zu
+   wenig übrig.
+
+   Einreihig und waagerecht rollbar kostet sie rund 56 px. Antippgröße und
+   Kachelbreite bleiben; der gewählte Tag rollt sich beim Zeichnen in den
+   Blick. Nur für niedrige Schirme — das Ladentablett behält die
+   umbrechende Form. (Spec kiosk-bestellreiter-mobil, F1) */
+@media (max-width:559px) and (max-height:699px){
+  #panel-metzgerbest .mb-days{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+  }
+  #panel-metzgerbest .mb-days::-webkit-scrollbar{ display:none }
+  #panel-metzgerbest .mb-day{
+    scroll-snap-align:center;
+    scroll-margin-inline:8px;
+  }
 }
 
 #panel-metzgerbest .mb-day{
