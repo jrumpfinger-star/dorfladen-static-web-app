@@ -567,7 +567,16 @@
 
   function zeitKurz(iso) {
     if (!iso) return '';
-    var d = new Date(iso);
+    /* Zeitstempel ohne Zonenangabe stammen aus der Zeit, als der Server
+       `datetime.now()` schrieb – auf Azure ist das UTC. Der Browser liest
+       einen solchen String als *lokale* Zeit und zeigte ihn dadurch zwei
+       Stunden zu frueh, nach 22 Uhr sogar mit dem Vortag. Gemeldet wurde
+       das am Sendestempel. Neue Stempel tragen die Zone mit, deshalb ist
+       das Fehlen ein eindeutiges Kennzeichen fuer einen Altwert.
+       (Spec baecker-sendezeitpunkt, F1) */
+    var text = String(iso);
+    var hatZone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(text);
+    var d = new Date(hatZone ? text : text + 'Z');
     if (isNaN(d.getTime())) return iso;
     return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '. '
       + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ' Uhr';

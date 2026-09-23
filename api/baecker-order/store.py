@@ -44,6 +44,47 @@ from shared import feiertage  # noqa: E402
 ENTITY = "dl_seiteninhalts"
 PK = "dl_seiteninhaltid"
 
+
+def _zone():
+    """Die Zeitzone des Ladens.
+
+    Rueckfall auf feste +2 Stunden nur, falls die Zeitzonendaten fehlen -
+    das ist im Sommer richtig und im Winter eine Stunde daneben, immer noch
+    besser als UTC.
+    """
+    try:
+        from zoneinfo import ZoneInfo
+        return ZoneInfo("Europe/Berlin")
+    except Exception:
+        from datetime import timezone
+        return timezone(timedelta(hours=2))
+
+
+def jetzt_lokal():
+    """Der aktuelle Zeitpunkt in Berliner Zeit, **mit** Zeitzonenangabe.
+
+    Azure Functions laufen in UTC. Ein blankes ``datetime.now()`` liefert
+    dort also Weltzeit und schreibt sie ohne Kennzeichnung fort. Gemeldet
+    wurde das am Sendestempel: „Das gesendete Datum wird falsch angezeigt."
+    Eine um 13:59 versandte Bestellung trug 11:59, und zwischen 22 Uhr und
+    Mitternacht stand sogar der Vortag da.
+
+    Der Zeitstempel traegt die Zone mit (``...+02:00``), damit der Kiosk ihn
+    nicht erneut raten muss.
+    """
+    return datetime.now(_zone())
+
+
+def heute_lokal():
+    """Der heutige Kalendertag im Laden.
+
+    Nicht ``date.today()``: Zwischen 22 Uhr (MESZ) und Mitternacht steht in
+    UTC noch der Vortag. Dann galt ein bereits gelieferter Tag als bestellbar
+    und die Tagesleiste begann einen Tag zu frueh.
+    """
+    return jetzt_lokal().date()
+
+
 KEY_ARTIKEL = "baecker_artikel"     # Altschluessel, nur noch fuer die Bruecke
 KEY_CONFIG = "baecker_config"
 KEY_ORDER = "baecker_order_"        # gemeinsamer Praefix ALLER Bestellungen
@@ -579,7 +620,7 @@ def bestellschluss_tag(datum_iso):
 
 def naechster_bestelltag(cfg, ab=None, max_tage=14):
     """Naechster Bestelltag ab morgen (bzw. ab dem angegebenen Datum)."""
-    start = ab or (date.today() + timedelta(days=1))
+    start = ab or (heute_lokal() + timedelta(days=1))
     for i in range(max_tage):
         d = start + timedelta(days=i)
         if ist_bestelltag(cfg, d.isoformat()):

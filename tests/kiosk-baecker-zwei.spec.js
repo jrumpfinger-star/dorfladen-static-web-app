@@ -155,7 +155,10 @@ function bestellung(bk, datum, opts) {
           : {}),
     // Ein Druckvermerk steht VORNE im Protokoll und trägt weder Positionen
     // noch Stückzahl – genau daran ist die Statuszeile zerbrochen (F34-05).
-    protokoll: (gesendet || druckOffen)
+    // `opts.protokoll` setzt beides ausser Kraft: F36 braucht einen ganz
+    // bestimmten Zeitstempel, um die Zeitzone zu pruefen.
+    protokoll: opts.protokoll ? opts.protokoll
+      : (gesendet || druckOffen)
       ? (opts.druckVermerk
           ? [{ zeit: datum + 'T11:05:00', art: 'gedruckt', wer: 'Anna' },
              { zeit: datum + 'T10:42:00', art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }]
@@ -1254,4 +1257,73 @@ test.describe('Bäcker – Ausdruck bildet das Blatt ab (F35)', () => {
       expect(raender.oben, 'keine waagerechte Linie oben').toBeGreaterThan(0);
       expect(raender.unten, 'keine waagerechte Linie unten').toBeGreaterThan(0);
     });
+});
+
+// ════════════════════════════════════════════════════════════
+//  F36 – Der Sendezeitpunkt steht in Ladenzeit
+// ════════════════════════════════════════════════════════════
+// Aus dem Laden: „Das gesendete Datum wird falsch angezeigt. Es ist nicht
+// das Datum, wann gesendet wurde."
+//
+// Azure Functions laufen in UTC. Der Server schrieb `datetime.now()` und
+// damit Weltzeit – ohne Kennzeichnung. Der Browser liest einen solchen
+// String als lokale Zeit; eine um 13:59 versandte Bestellung erschien
+// dadurch als 11:59, ein Versand um 00:30 rutschte auf den Vortag.
+//
+// Neue Stempel tragen die Zone mit. Für den Altbestand gilt: fehlt die
+// Zone, war es UTC. Geprüft wird ausschließlich die sichtbare Anzeige –
+// ein erster Entwurf bildete die Umrechnung im Test nach und hätte damit
+// jeden Fehler im Kiosk mitgemacht.
+
+test.describe('Bäcker – Sendezeitpunkt in Ladenzeit (F36)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  /** Öffnet einen gesendeten Tag mit genau diesem Zeitstempel im Protokoll. */
+  async function mitStempel(page, zeit) {
+    const tag = tagNurFuer('freundl');
+    await openBaecker(page, {
+      gesendet: [{ datum: tag.datum, bk: 'freundl' }],
+      protokoll: [{ zeit, art: 'gesendet', wer: 'Anna', positionen: 3, stueck: 90 }],
+    });
+    await tagWaehlen(page, tag.datum);
+    return page.locator('#panel-baecker .bk-kontext').innerText();
+  }
+
+  test('TC-B2-F36-01: Ein Stempel mit Zone behält seine Stunde', async ({ page }) => {
+    // Genau der gemeldete Fall: versandt um 13:59, angezeigt als 11:59.
+    const text = await mitStempel(page, '2026-09-22T13:59:00+02:00');
+    expect(text).toContain('Gesendet');
+    expect(text, 'die Stunde muss 13 bleiben').toContain('13:59');
+    expect(text).not.toContain('11:59');
+  });
+
+  test('TC-B2-F36-02: Ein Altwert ohne Zone gilt als Weltzeit', async ({ page }) => {
+    /* So steht es im Altbestand, den der Server vor der Umstellung
+       geschrieben hat: 11:59 UTC ist 13:59 im Laden. Ohne Umrechnung
+       bliebe jede alte Bestellung dauerhaft zwei Stunden zu früh. */
+    const text = await mitStempel(page, '2026-09-22T11:59:00');
+    expect(text, 'Altwerte werden als UTC gelesen').toContain('13:59');
+  });
+
+  test('TC-B2-F36-03: Nach Mitternacht bleibt der Tag richtig', async ({ page }) => {
+    /* Der zweite Teil der Meldung: „Es ist nicht das Datum." Ein Versand um
+       00:30 Ladenzeit stand in UTC als 22:30 des VORTAGS. */
+    const text = await mitStempel(page, '2026-09-23T00:30:00+02:00');
+    expect(text, 'der 23. darf nicht zum 22. werden').toContain('23.09.');
+    expect(text).toContain('00:30');
+  });
+
+  test('TC-B2-F36-04: Ein Altwert vor Mitternacht rückt auf den Folgetag',
+    async ({ page }) => {
+      // 22:30 UTC am 22. ist 00:30 am 23. im Laden.
+      const text = await mitStempel(page, '2026-09-22T22:30:00');
+      expect(text).toContain('23.09.');
+      expect(text).toContain('00:30');
+    });
+
+  test('TC-B2-F36-05: Ein unlesbarer Stempel stürzt nicht ab', async ({ page }) => {
+    const text = await mitStempel(page, 'kein-datum');
+    expect(text).toContain('Gesendet');
+    await expect(page.locator('#panel-baecker .bk-row').first()).toBeVisible();
+  });
 });

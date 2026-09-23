@@ -356,7 +356,7 @@ def _build_entwurf(url, hdrs, cfg, bk, datum_iso):
         "korrektur_moeglich": gesendet and store.korrektur_moeglich(cfg, datum_iso),
         # Ein vergangener, gesendeter Liefertag ist zum Nachsehen da.
         # (Spec bestellung-loeschen, F12)
-        "nur_lesen": bool(datum_iso < date.today().isoformat() and gesendet),
+        "nur_lesen": bool(datum_iso < store.heute_lokal().isoformat() and gesendet),
         "hat_entwurf": hat_entwurf,
         "vorlage_datum": quelle,
         "vorlage_datum_de": store.datum_de(quelle) if quelle else "",
@@ -396,7 +396,7 @@ def _letzte_tage(url, hdrs, cfg, anzahl=3):
     im Read Modus." Die Tagesleiste zeigte bisher nur ab heute.
     (Spec bestellung-loeschen, F11)
     """
-    heute = date.today().isoformat()
+    heute = store.heute_lokal().isoformat()
     nach_tag = {}
     for bk, d, data in store.bestellungen(url, hdrs):
         if not d or d >= heute:
@@ -449,7 +449,7 @@ def _uebersicht(url, hdrs, cfg):
     am Samstag sind es zwei. Daraus ergeben sich die Farbpunkte, „1 von 2"
     und der Zaehler am Tab.
     """
-    heute = date.today()
+    heute = store.heute_lokal()
     # Die letzten gesendeten Tage stehen vorn - nur lesbar.
     tage = _letzte_tage(url, hdrs, cfg)
     druck_offen_gesamt = 0
@@ -549,7 +549,7 @@ def _uebersicht(url, hdrs, cfg):
                 continue
             try:
                 h, m = (int(x) for x in schluss.split(":"))
-                jetzt = datetime.now()
+                jetzt = store.jetzt_lokal()
                 if (jetzt.hour, jetzt.minute) >= (h, m):
                     blinkt = True
             except Exception:
@@ -607,7 +607,7 @@ def _bestellbar(datum_iso):
     Doppelklick darf keine sinnlose Bestellung ausloesen.
     """
     try:
-        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > date.today()
+        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > store.heute_lokal()
     except ValueError:
         return False
 
@@ -690,7 +690,7 @@ def _senden(url, hdrs, cfg, bk, datum_iso, body, korrektur=False):
                     "versuchen Sie es erneut.", 502)
 
     eintrag = {
-        "zeit": datetime.now().isoformat(timespec="seconds"),
+        "zeit": store.jetzt_lokal().isoformat(timespec="seconds"),
         "art": "korrektur" if korrektur else "gesendet",
         "wer": (body.get("wer") or "").strip() or "Kiosk",
         "positionen": len(versand),
@@ -737,7 +737,7 @@ def _gedruckt(url, hdrs, cfg, bk, datum_iso, body):
         return _err("Die Bestellung wurde noch nicht gesendet \u2013 "
                     "ein Ausdruck ergibt erst danach Sinn.")
 
-    order["gedruckt_am"] = datetime.now().isoformat(timespec="seconds")
+    order["gedruckt_am"] = store.jetzt_lokal().isoformat(timespec="seconds")
     order["protokoll"] = [{
         "zeit": order["gedruckt_am"],
         "art": "gedruckt",
