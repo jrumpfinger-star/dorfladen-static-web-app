@@ -22,10 +22,17 @@ import json
 import logging
 import os
 import statistics
+import sys
 from datetime import date, datetime
 
 import msal
 import requests
+
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier selbst gesetzt, damit
+# das Modul auch beim direkten Import (Pruefwerkzeuge in tools/) laedt.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.zeit import heute_lokal  # noqa: E402
 
 ENTITY = "dl_seiteninhalts"
 PK = "dl_seiteninhaltid"
@@ -288,7 +295,7 @@ def bestellbar(datum_iso):
     Doppelklick darf keine sinnlose Bestellung ausloesen (Spec F1.3).
     """
     try:
-        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > date.today()
+        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > heute_lokal()
     except (ValueError, TypeError):
         return False
 
@@ -312,7 +319,7 @@ def vorschlagstermin(heute=None):
 
     Nur eine Vorbelegung des Datumsfelds; frei aenderbar (Spec F1.1).
     """
-    heute = heute or date.today()
+    heute = heute or heute_lokal()
     tage = 7 - heute.weekday() or 7          # heute Montag -> naechster Montag
     return date.fromordinal(heute.toordinal() + tage).isoformat()
 

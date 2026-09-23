@@ -1,3 +1,4 @@
+from shared.zeit import jetzt_lokal  # noqa: E402
 """
 Fleisch-Vorbestellung API
 POST:  Place a meat pre-order (no JWT required, Name+Telefon only)
@@ -339,7 +340,7 @@ def _format_date_de(d):
 
 def _generate_bestellnummer():
     """Generate order number: FM-YYYYMMDD-XXXX"""
-    now = datetime.utcnow() + timedelta(hours=2)
+    now = jetzt_lokal()
     tag = now.strftime("%Y%m%d")
     suffix = uuid.uuid4().hex[:4].upper()
     return f"FM-{tag}-{suffix}"
@@ -397,7 +398,7 @@ def _handle_post(req, token, base_url, hdrs):
         )
 
     # Calculate delivery day
-    now = datetime.utcnow() + timedelta(hours=2)  # CET approximation
+    now = jetzt_lokal()
     if gewuenschter_liefertag:
         # Validate requested delivery date against available dates
         alle = _calc_liefertage_voraus(now, cfg["liefertage"], cfg["bestellschluss_h"])
@@ -592,7 +593,7 @@ def _handle_get(req, token, base_url, hdrs):
     if info == "1":
         config = _load_cms_config(base_url, hdrs)
         cfg = _get_config_values(config)
-        now = datetime.utcnow() + timedelta(hours=2)
+        now = jetzt_lokal()
         termine = _calc_next_two_liefertage(now, cfg["liefertage"], cfg["bestellschluss_h"])
         alle_termine = _calc_liefertage_voraus(now, cfg["liefertage"], cfg["bestellschluss_h"])
         return func.HttpResponse(

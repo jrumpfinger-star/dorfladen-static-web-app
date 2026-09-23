@@ -1,3 +1,4 @@
+from shared.zeit import jetzt_lokal  # noqa: E402
 """
 Auth Register API – Customer registration with SEPA mandate.
 POST: {email, passwort, vorname, nachname, telefon, strasse, plz, ort, iban, kontoinhaber, sepa_zustimmung, dsgvo_zustimmung, agb_zustimmung}
@@ -92,7 +93,7 @@ def _validate_email(email):
 
 def _generate_mandatsreferenz():
     """Generate unique SEPA mandate reference: DL-YYYY-XXXXX"""
-    now = datetime.utcnow()
+    now = jetzt_lokal()
     return f"DL-{now.year}-{uuid.uuid4().hex[:5].upper()}"
 
 
@@ -220,7 +221,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     iban_encrypted = _encrypt_iban(iban)
 
     # Create customer record
-    now = datetime.utcnow()
+    now = jetzt_lokal()
     mandatsdatum = now.strftime("%Y-%m-%d")
     mandatsdatum_display = now.strftime("%d.%m.%Y")
 

@@ -16,6 +16,12 @@ import sys
 import msal
 import requests
 
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier gesetzt, damit der
+# Zeitzonen-Helfer erreichbar ist (siehe shared/zeit.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.zeit import heute_iso, heute_lokal, jetzt_lokal  # noqa: E402
+
 
 ENTITY_SET = "dl_mittagsbestellungs"
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
@@ -79,14 +85,12 @@ def _heute_lokal():
     Stunden hinterher. Ein Tagesfilter auf UTC-Basis wuerde die
     Bestellungen von gestern nach Mitternacht noch bis zu zwei Stunden
     mitliefern. (Spec mittagstisch-abgeholt-sichtbar, F2)
+
+    Die Rechnung selbst steht seit der modulweiten Umstellung in
+    ``shared/zeit.py`` - hier bleibt nur der Name, den bestehende Aufrufe
+    und ein Waechter verwenden.
     """
-    try:
-        from zoneinfo import ZoneInfo
-        tz = ZoneInfo("Europe/Berlin")
-    except Exception:
-        from datetime import timezone
-        tz = timezone(timedelta(hours=2))      # Rueckfall: CEST
-    return datetime.now(tz).strftime("%Y-%m-%d")
+    return heute_iso()
 
 
 # Bestellquellen
@@ -413,7 +417,7 @@ def _archive_old_orders(base_url, headers):
     if not isinstance(archive, dict):
         archive = {}
     meta = archive.get("_meta") or {}
-    today_local = (datetime.utcnow() + timedelta(hours=2)).date()
+    today_local = heute_lokal()
     # Gate: nur einmal pro Tag den (teureren) Loesch-/Aggregationslauf machen.
     if str(meta.get("last_run", ""))[:10] == today_local.isoformat():
         return archive
@@ -540,7 +544,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             # ── Bestellzeitsperre: Online-Bestellungen für heute nur bis Bestellschluss ──
             if quelle == QUELLE_ONLINE and datum:
-                now_local = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
+                now_local = jetzt_lokal()
                 today_str = now_local.strftime("%Y-%m-%d")
                 if datum == today_str:
                     now_h = now_local.hour + now_local.minute / 60.0
@@ -557,7 +561,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             status_code=400, headers=get_cors_headers(),
                         )
 
-            bestellnr = f"MT-{datetime.utcnow().strftime('%y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
+            bestellnr = f"MT-{jetzt_lokal().strftime('%y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
 
             # Telefonbestellungen werden sofort als bestätigt gespeichert
             initial_status = STATUS_BESTAETIGT if quelle in (QUELLE_TELEFON, QUELLE_PERSONAL) else STATUS_NEU
@@ -846,7 +850,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         _, archive = _read_config_json(base_url, headers, ARCHIVE_CONFIG_KEY)
                     except Exception:
                         archive = {}
-                window_from = (datetime.utcnow() - timedelta(days=days)).date().isoformat()
+                window_from = (heute_lokal() - timedelta(days=days)).isoformat()
                 if isinstance(archive, dict):
                     for aday, aslot in archive.items():
                         if aday == "_meta" or not isinstance(aslot, dict):

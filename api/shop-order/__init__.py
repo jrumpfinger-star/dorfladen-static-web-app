@@ -1,3 +1,4 @@
+from shared.zeit import jetzt_lokal  # noqa: E402
 """
 Shop Order API
 POST: Place a new order (requires JWT)
@@ -196,7 +197,7 @@ def _calc_abholdatum():
     After 16:00 → day after next business day morning
     Skip Sundays and Bavarian public holidays
     """
-    now = datetime.utcnow() + timedelta(hours=2)  # CET/CEST approximation
+    now = jetzt_lokal()
     hour = now.hour
 
     if hour < BESTELLSCHLUSS_HOUR:
@@ -223,7 +224,7 @@ def _parse_zeitslot(raw):
 
 def _generate_bestellnummer():
     """Generate unique order number: DL-YYYYMMDD-XXXX"""
-    now = datetime.utcnow() + timedelta(hours=2)
+    now = jetzt_lokal()
     return f"DL-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
 
 
@@ -713,7 +714,7 @@ def _handle_patch(req, dv_token, base_url, headers):
             )
         status = order.get("dl_status", 0)
         abholdatum = order.get("dl_abholdatum", "")
-        now_local = datetime.utcnow() + timedelta(hours=2)
+        now_local = jetzt_lokal()
         today = now_local.strftime("%Y-%m-%d")
 
         # Storno-Frist: 1h vor Öffnungszeit des gewählten Zeitslots am Abholtag

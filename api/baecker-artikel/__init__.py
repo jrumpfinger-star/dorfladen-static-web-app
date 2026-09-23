@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
+from shared.zeit import heute_iso  # noqa: E402
 import store  # noqa: E402
 import rechnung_parser  # noqa: E402
 
@@ -164,7 +165,7 @@ def _rechnung(url, hdrs, bk, rec_id, artikel, body):
         zusammenfassung["meldung"] = "Alle Artikel sind bereits aktuell."
         return _ok(zusammenfassung)
 
-    heute = datetime.now().date().isoformat()
+    heute = heute_iso()
     wer = (body.get("wer") or "Rechnung").strip()
     liste = list(artikel)
     for eintrag in geaendert:
@@ -278,7 +279,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "aktiv": bool(body.get("aktiv", True)),
                 "bestellt_in": 0,
                 "summe": 0,
-                "angelegt_am": datetime.now().date().isoformat(),
+                "angelegt_am": heute_iso(),
                 "angelegt_von": (body.get("wer") or "Kiosk").strip(),
             }
             if body.get("nur_wochentag") not in (None, ""):

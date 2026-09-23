@@ -1,4 +1,4 @@
-﻿"""Datenschicht der Metzger-Bestellung (Spec F1, F4, F7, F9, F12, F15).
+"""Datenschicht der Metzger-Bestellung (Spec F1, F4, F7, F9, F12, F15).
 
 Wie bei der Baecker-Bestellung liegt alles als JSON im generischen
 Schluessel-/Wert-Speicher ``dl_seiteninhalts``. Dadurch ist **keine
@@ -17,10 +17,18 @@ Der Kiosk ist damit ab dem ersten Aufruf brauchbar, auch ohne Seed-Lauf.
 import json
 import logging
 import os
+import sys
 from datetime import date, datetime, timedelta
 
 import msal
 import requests
+
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier selbst gesetzt, damit
+# metzger_store.py auch dann laedt, wenn es direkt importiert wird
+# (Pruefwerkzeuge in tools/) und nicht ueber die Azure-Function.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.zeit import heute_lokal  # noqa: E402
 
 import metzger_portionen as P
 
@@ -263,7 +271,7 @@ def naechster_bestelltag(cfg, ab=None, max_tage=14):
     laengst da. Die Bestellung darf auch zwei oder drei Tage vorher raus -
     sie gilt dann fuer den naechsten so erreichbaren Liefertag.
     """
-    start = ab or (date.today() + timedelta(days=1))
+    start = ab or (heute_lokal() + timedelta(days=1))
     for i in range(max_tage):
         d = start + timedelta(days=i)
         if ist_bestelltag(cfg, d.isoformat()):
@@ -278,7 +286,7 @@ def bestellbar(datum_iso):
     Doppelklick darf keine sinnlose Bestellung ausloesen.
     """
     try:
-        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > date.today()
+        return datetime.strptime(datum_iso, "%Y-%m-%d").date() > heute_lokal()
     except (ValueError, TypeError):
         return False
 
@@ -442,7 +450,7 @@ def sortiere_vorschlaege(liste, heute=None):
     Die Rechnungen sind nur der Startbestand; was die Verkaeuferin tatsaechlich
     bestellt hat, gehoert nach oben.
     """
-    heute = heute or date.today()
+    heute = heute or heute_lokal()
     liste.sort(key=lambda e: (0 if e.get("quelle") == "bestellung" else 1,
                               -_punkte(e, heute)))
     del liste[MAX_VORSCHLAEGE:]
@@ -451,7 +459,7 @@ def sortiere_vorschlaege(liste, heute=None):
 
 def lerne(vorschlaege, positionen, datum_iso):
     """Eine gesendete Bestellung in die Vorschlaege einarbeiten (F4)."""
-    heute = date.today()
+    heute = heute_lokal()
     for p in positionen:
         nummer = p.get("nummer")
         if not nummer or not p.get("portionen"):

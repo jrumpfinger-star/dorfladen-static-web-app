@@ -93,23 +93,19 @@ jeden Fehler im Kiosk mitgemacht. Die Gegenprobe (Korrektur entfernt) lässt
 TC-B2-F36-02 und -04 fehlschlagen; die drei übrigen decken das Sollverhalten
 der Server-Seite ab, die der Python-Wächter sichert.
 
-## Offen: derselbe Fehler in anderen Modulen
+## Erledigt: derselbe Fehler in anderen Modulen
 
-Gemessen über alle API-Module — Aufrufe ohne Zeitzone:
+Gemessen über alle API-Module — Aufrufe ohne Zeitzone: **53 Stellen**, jede
+einzeln bewertet. **35 waren Fehler und sind behoben**, 18 sind geprüft und
+bewusst belassen (Zeitstempel mit `Z`, Stichtage über Wochen, JWT-Felder).
 
-| Modul | Stellen |
-|---|---|
-| `metzger-order` | 9 |
-| `baecker-order` | 8 → **behoben** |
-| `lunch-order` | 7 (davon 4 bereits mit Zone) |
-| `shop-order` | 4 |
-| `kalender`, `getraenke-order`, `fleisch-order`, `shop-articles` | je 3 |
-| weitere 13 Module | je 1–2 |
+Am ernstesten waren zwei, die hier nicht zu vermuten waren: `auth-register`
+schrieb das **SEPA-Mandatsdatum** aus `utcnow()`, und `metzger-order` setzte
+das Erstellungsdatum **auf das versendete Bestelldokument**.
 
-Nicht jede Stelle ist ein Fehler — für einen Dateinamen oder eine laufende
-Nummer ist die Zone gleichgültig. Wo aber ein Tag oder ein Zeitpunkt
-angezeigt oder verglichen wird, gilt dasselbe wie hier. Das gehört geprüft,
-ist aber eine eigene Aufgabe: Jede Stelle braucht eine Einzelbewertung.
+Der gemeinsame Helfer steht in `api/shared/zeit.py`; dieses Modul leitet
+darauf weiter, damit es nur eine Wahrheit gibt. Einzelheiten und die
+vollständige Bewertung: [zeitzone-projektweit](../zeitzone-projektweit/spec.md).
 
 ## Betroffene Dateien
 

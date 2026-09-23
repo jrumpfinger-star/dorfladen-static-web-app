@@ -5,6 +5,13 @@ import re
 import msal
 import requests
 
+import sys
+
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier gesetzt, damit
+# der Zeitzonen-Helfer erreichbar ist (siehe shared/zeit.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.zeit import stempel_lokal  # noqa: E402
+
 def normalize_warengruppe(name):
     """Merge groups that differ only by MwSt rate or date suffix, rename/merge display names."""
     name = re.sub(r'\s*\(?\d+%\)?', '', name)   # remove 7%, 19%, (7%), (19%)
@@ -288,7 +295,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             total += 1
 
         result = {
-            "generated": datetime.now().isoformat(),
+            "generated": stempel_lokal(),
             "total": total,
             "skipped_old": skipped,
             "warengruppen": len(groups),

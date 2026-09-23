@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
+from shared.zeit import jetzt_lokal        # noqa: E402
 import getraenke_store as store           # noqa: E402
 
 DATUM = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -222,7 +223,7 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     })
     protokoll = order.get("protokoll") or []
     protokoll.append({
-        "zeit": datetime.now().isoformat(timespec="seconds"),
+        "zeit": jetzt_lokal().isoformat(timespec="seconds"),
         "was": "korrigiert" if korrektur else "gesendet",
         "an": cfg.get("empfaenger"),
         "wer": (body.get("wer") or "Kiosk"),

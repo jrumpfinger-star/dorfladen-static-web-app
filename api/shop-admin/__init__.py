@@ -5,6 +5,14 @@ import msal
 import requests
 from datetime import datetime, timedelta
 
+import sys
+
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier gesetzt, damit der
+# Zeitzonen-Helfer erreichbar ist (siehe shared/zeit.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.zeit import heute_lokal  # noqa: E402
+
 
 DEFAULT_URL_SETTING = "DV_DEFAULT_URL"
 DEFAULT_URL_FALLBACK = "https://orgab4e2f00.crm16.dynamics.com"
@@ -162,8 +170,8 @@ def _get_order(req, base_url, headers):
 
 
 def _dashboard(req, base_url, headers):
-    today = datetime.utcnow().date().isoformat()
-    future = (datetime.utcnow().date() + timedelta(days=14)).isoformat()
+    today = heute_lokal().isoformat()
+    future = (heute_lokal() + timedelta(days=14)).isoformat()
     # Include: all open/in-progress orders (any date) + future orders (any status)
     url = f"{base_url}/api/data/v9.2/{ENTITY_SET}?$select={_select_fields()}&$filter=(dl_status lt 3) or (dl_abholdatum ge '{today}' and dl_abholdatum le '{future}')&$orderby=dl_abholdatum asc,createdon desc&$top=300"
     r = requests.get(url, headers=headers, timeout=60)

@@ -4,6 +4,13 @@ import os
 import msal
 import requests
 
+import sys
+
+# ``shared`` liegt eine Ebene hoeher. Der Pfad wird hier gesetzt, damit
+# der Zeitzonen-Helfer erreichbar ist (siehe shared/zeit.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.zeit import jetzt_lokal  # noqa: E402
+
 def get_token(url_setting_name="DV_DEFAULT_URL"):
     from shared.dataverse import get_tenant_id, get_client_id
     tenant_id = get_tenant_id()
@@ -101,7 +108,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 # Default: active items for target week, based on dl_kalenderwoche/dl_jahr
                 # Ab Samstag/Sonntag: nächste Woche anzeigen
                 from datetime import timedelta
-                now = datetime.utcnow()
+                now = jetzt_lokal()
                 if now.weekday() >= 5:  # 5=Saturday, 6=Sunday
                     now = now + timedelta(days=(7 - now.weekday()))  # shift to next Monday
                 # ISO week number

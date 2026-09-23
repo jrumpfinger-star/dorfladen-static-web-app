@@ -12,6 +12,13 @@ import json
 import logging
 import os
 import re
+import sys
+
+# `shared` liegt eine Ebene hoeher - der Pfad wird hier gesetzt, damit der
+# Zeitzonen-Helfer erreichbar ist (siehe shared/zeit.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.zeit import heute_iso  # noqa: E402
 import msal
 import requests
 from datetime import datetime, timedelta
@@ -184,7 +191,7 @@ def _load_freigaben(base_url, headers):
             logging.warning(f"[shop-articles] freigaben query returned {r.status_code}")
             return None
         items = r.json().get("value", [])
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = heute_iso()
         result = {}
         for f in items:
             sc = (f.get("dl_strichcode") or "").strip()

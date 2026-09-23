@@ -1,4 +1,4 @@
-﻿"""Endpunkt der Metzger-Bestellung (Spec F1, F7, F11, F12, F14, F15).
+"""Endpunkt der Metzger-Bestellung (Spec F1, F7, F11, F12, F14, F15).
 
 Routen (``metzger-order/{datum?}/{aktion?}``)::
 
@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared.auth import admin_auth_guard  # noqa: E402
+from shared.zeit import heute_lokal, jetzt_lokal  # noqa: E402
 from shared import richtext                # noqa: E402
 import metzger_portionen as P              # noqa: E402
 import metzger_store as store              # noqa: E402
@@ -172,7 +173,7 @@ def _letzte_tage(alle, anzahl=3):
     vorige Woche rausging, war nur ueber den Verlauf erreichbar.
     (Spec bestellung-loeschen, F11)
     """
-    heute = date.today().isoformat()
+    heute = heute_lokal().isoformat()
     aus = []
     for o in alle:                       # `alle` ist absteigend sortiert
         d = o.get("datum") or ""
@@ -203,7 +204,7 @@ def _uebersicht(url, hdrs, cfg):
         anzahl = sum(1 for p in o.get("positionen", [])
                      if P.normalisiere_position(p).get("portionen"))
         bekannt[o.get("datum")] = {"status": st, "positionen": anzahl}
-    heute = date.today()
+    heute = heute_lokal()
     tage = []
     # Zuerst die letzten gesendeten Tage - nur lesbar.
     for o in _letzte_tage(alle):
@@ -269,7 +270,7 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     try:
         anhang = build_pdf(artikel, positionen, datum_iso,
                            kd_nr=cfg.get("kd_nr", ""), korrektur=korrektur,
-                           erstellt=datetime.now().strftime("%d.%m.%Y %H:%M"),
+                           erstellt=jetzt_lokal().strftime("%d.%m.%Y %H:%M"),
                            notiz=notiz)
     except Exception as e:
         logging.error(f"[metzger] PDF fehlgeschlagen: {e}")
@@ -302,7 +303,7 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     })
     protokoll = order.get("protokoll") or []
     protokoll.append({
-        "zeit": datetime.now().isoformat(timespec="seconds"),
+        "zeit": jetzt_lokal().isoformat(timespec="seconds"),
         "was": "korrigiert" if korrektur else "gesendet",
         "an": cfg.get("empfaenger"),
         "wer": (body.get("wer") or "Kiosk"),
@@ -419,7 +420,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Ein vergangener, gesendeter Liefertag ist zum Nachsehen da.
             # Korrigieren laesst er sich nicht mehr - die Ware ist geliefert.
             # (Spec bestellung-loeschen, F12)
-            "nur_lesen": bool(datum < date.today().isoformat()
+            "nur_lesen": bool(datum < heute_lokal().isoformat()
                               and order.get("status") in (store.STATUS_GESENDET,
                                                           store.STATUS_KORRIGIERT)),
             "config": {k: v for k, v in cfg.items() if not k.startswith("_")},

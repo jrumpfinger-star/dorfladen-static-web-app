@@ -137,8 +137,13 @@ def main():
     pruefe("TC-A05  kein utcnow() im mode=my-Zweig",
            "utcnow()" not in zweig, zweig[:200])
     pruefe("TC-A05  nutzt den Berlin-Helfer", "_heute_lokal()" in zweig)
+    # Die Rechnung selbst steht seit der projektweiten Umstellung in
+    # shared/zeit.py. Geprueft wird deshalb dort - und vor allem am
+    # Verhalten eine Zeile weiter unten, das ueberdauert jeden Umbau.
+    gemeinsam = open(os.path.join(API, "shared", "zeit.py"),
+                     encoding="utf-8-sig").read()
     pruefe("TC-A05  Helfer kennt Europe/Berlin",
-           'ZoneInfo("Europe/Berlin")' in quelle)
+           'ZoneInfo("Europe/Berlin")' in gemeinsam)
 
     # Der Helfer muss auch wirklich den Berliner Tag liefern.
     pruefe("TC-A05  Helfer liefert den Berliner Tag",

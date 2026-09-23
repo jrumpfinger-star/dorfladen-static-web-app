@@ -28,6 +28,13 @@ bewusst als Text modelliert (neue, selbst kontrollierte Entität).
 import json
 import logging
 import os
+import sys
+
+# `shared` liegt eine Ebene hoeher - der Pfad wird hier gesetzt, damit der
+# Zeitzonen-Helfer erreichbar ist (siehe shared/zeit.py).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from shared.zeit import heute_lokal, stempel_utc  # noqa: E402
 from datetime import date, datetime
 
 import azure.functions as func
@@ -262,7 +269,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             bis = (req.params.get("bis") or "").strip()
             if not von or not bis:
                 # Default: aktuelle ISO-Woche (Mo–So)
-                today = date.today()
+                today = heute_lokal()
                 monday = today.fromordinal(today.toordinal() - today.weekday())
                 von = monday.isoformat()
                 bis = (monday.fromordinal(monday.toordinal() + 6)).isoformat()
@@ -300,7 +307,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "dl_serie_id": record_id,
                     "dl_datum": override_datum,
                     "dl_status": status,
-                    "dl_erledigt_am": datetime.utcnow().isoformat() if status == "erledigt" else None,
+                    "dl_erledigt_am": stempel_utc() if status == "erledigt" else None,
                 }
                 # Bestehendes Override für dieses Datum ersetzen
                 _delete_override(base_url, headers, record_id, override_datum)
@@ -353,7 +360,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     return _err("Ungültiger Status.")
                 patch["dl_status"] = status
                 patch["dl_erledigt_am"] = (
-                    datetime.utcnow().isoformat() if status == "erledigt" else None
+                    stempel_utc() if status == "erledigt" else None
                 )
             if not patch:
                 return _err("Keine Änderung übergeben.")
