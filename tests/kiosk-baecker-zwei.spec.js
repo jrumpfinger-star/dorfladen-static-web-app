@@ -488,7 +488,10 @@ test.describe('Zweite Bäckerei', () => {
   });
 
   test('TC-B2-F23-05: „Später drucken" vermerkt nichts', async ({ page }) => {
-    const mo = tagNurFuer('freundl').datum;
+    // tagBestellbarFuer statt tagNurFuer: Faellt der erste Freundl-Tag auf
+    // HEUTE, ist die Ware laengst da, der Tag ist gesperrt und der
+    // Sende-Knopf fehlt. Der Test kippte dann je nach Wochentag.
+    const mo = tagBestellbarFuer('freundl').datum;
     await openBaecker(page);
     await tagWaehlen(page, mo);
     await page.evaluate(() => { window.open = () => null; });
@@ -507,7 +510,7 @@ test.describe('Zweite Bäckerei', () => {
 
   test('TC-B2-F23-01: Druckschritt erscheint nach dem Senden', async ({ page }) => {
     await openBaecker(page);
-    await tagWaehlen(page, tagNurFuer('freundl').datum);
+    await tagWaehlen(page, tagBestellbarFuer('freundl').datum);
     await page.click('#panel-baecker .bk-foot .bk-send');
     await page.waitForTimeout(400);
     await page.click('#bk-send-btn');
