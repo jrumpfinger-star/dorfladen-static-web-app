@@ -327,9 +327,25 @@ window.KMetzgerBest = (function () {
     if (!el) return;
     var faellig = false;
     if (!_testbetrieb) {
-      var heute = new Date().toISOString().slice(0, 10);
+      /* Erinnert wird an den Liefertag von MORGEN - fuer ihn ist heute der
+         letzte Tag. Frueher stand hier der HEUTIGE Liefertag. Das forderte
+         etwas Unmoegliches: „Der heutige Tag ist nie mehr bestellbar, auch
+         wenn er ein Bestelltag ist - die Ware ist laengst gepackt" (Spec
+         metzger-bestellung F1). Ein liegengebliebener Entwurf von heute
+         liess den Reiter dann bis Mitternacht blinken, ohne dass sich
+         etwas tun liess; der Tag war nicht einmal anwaehlbar.
+         (Spec metzger-erinnerung-liefertag) */
+      var m = new Date();
+      m.setDate(m.getDate() + 1);
+      // Bewusst aus den ORTSZEIT-Feldern gebaut: toISOString() rechnet nach
+      // UTC um und liefert nachts den falschen Tag.
+      var morgen = m.getFullYear() + '-' + ('0' + (m.getMonth() + 1)).slice(-2)
+        + '-' + ('0' + m.getDate()).slice(-2);
       (_tage || []).forEach(function (t) {
-        if (t.datum === heute && t.bestelltag && !t.status) faellig = true;
+        // Gesendet (1) und korrigiert (2) sind erledigt; Entwurf (0) und
+        // „noch gar nichts" (undefined) sind es nicht.
+        if (t.datum === morgen && t.bestelltag
+            && t.status !== 1 && t.status !== 2) faellig = true;
       });
       if (faellig) {
         var schluss = (_cfg.bestellschluss || '12:00').split(':');
