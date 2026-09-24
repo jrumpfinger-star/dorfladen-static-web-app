@@ -150,6 +150,26 @@ test.describe('App-Installation auf Android', () => {
         .toMatch(/Liste\s*\n?\s*<strong>aller Apps<\/strong>|aller Apps/);
     });
 
+  test('TC-PWA-09 Der Firefox-Weg verspricht keine sicheren Benachrichtigungen',
+    async () => {
+      /* Nachgemessen: Gecko stellt PushManager, serviceWorker und
+         Notification bereit — technisch geht Push also. Auf Android bleibt
+         es aber unzuverlässig, weil Firefox selbst erreichbar sein muss und
+         das System ihn im Hintergrund stoppt. Genau das wurde gemeldet.
+         Die Seite sagte vorher schlicht „Benachrichtigungen gehen trotzdem". */
+      const text = quelle('app.html');
+      // Am Abschnitt anschneiden, nicht an der gleichnamigen Schaltfläche
+      // in der Auswahlleiste – beide tragen `data-weg="android-firefox"`.
+      const teil = text.split('id="android-firefox"')[1] || '';
+      const abschnitt = teil.split('</section>')[0];
+      expect(abschnitt, 'Firefox-Abschnitt nicht gefunden').toBeTruthy();
+      expect(abschnitt, 'die alte Zusage steht wieder da')
+        .not.toContain('Benachrichtigungen gehen trotzdem');
+      expect(abschnitt, 'der Vorbehalt fehlt').toMatch(/unzuverlässig|Hintergrund/);
+      expect(abschnitt, 'der verlässliche Weg wird nicht genannt')
+        .toContain('Chrome');
+    });
+
   // ── Im Browser gegengeprüft ─────────────────────────────────────────
   test('TC-PWA-08 Der Browser findet Manifest und Symbole', async ({ page, request }) => {
     await page.goto(url('app.html'));

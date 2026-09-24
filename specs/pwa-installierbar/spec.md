@@ -119,6 +119,35 @@ WebAPK anlegt — das entscheidet ein Google-Dienst zur Installationszeit und
 setzt die Play-Dienste voraus. Geprüft wird deshalb die **Bedingung**, die in
 unserer Hand liegt. Das genügt: Sie war der Grund.
 
+## F3: Firefox verspricht keine sicheren Benachrichtigungen
+
+Nachgemessen an der Gecko-Maschine: `PushManager`, `serviceWorker` und
+`Notification` sind **alle vorhanden** — technisch kann Firefox also Push,
+und unser Code schließt ihn nicht aus (er prüft nur Fähigkeiten).
+
+| | Chromium | Firefox (Gecko) |
+|---|---|---|
+| `PushManager` | ja | **ja** |
+| `serviceWorker` | ja | **ja** |
+| `Notification` | ja | **ja** |
+| `onbeforeinstallprompt` | ja | **nein** |
+
+Das fehlende `onbeforeinstallprompt` bestätigt nebenbei: Der Knopf „Jetzt
+installieren" kann in Firefox nie erscheinen — dort ist der Verweis auf
+Chrome der einzige Weg, und genau das sagt die Seite bereits.
+
+Die Seite behauptete aber schlicht **„Benachrichtigungen gehen trotzdem"**.
+Das ist zu zuversichtlich: Anders als Chrome, dessen Zustellung über einen
+ohnehin laufenden Systemdienst geht, muss **Firefox selbst erreichbar
+bleiben**. Android stoppt Apps im Hintergrund, um Akku zu sparen — dann kommt
+nichts an, ohne dass ein Fehler zu sehen wäre. Genau das wurde gemeldet.
+
+Der Text nennt jetzt den Vorbehalt und den verlässlichen Weg.
+
+**TC-PWA-09: Der Firefox-Weg verspricht keine sicheren Benachrichtigungen** —
+die alte Zusage darf nicht zurückkehren, der Vorbehalt und der Hinweis auf
+Chrome müssen stehen.
+
 ## Betroffene Dateien
 
 | Datei | Änderung |
