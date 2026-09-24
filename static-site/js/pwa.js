@@ -1,20 +1,12 @@
 // PWA Install – shared across all pages
 
-// Stabile Geraete-Kennung (pro Browser-Profil, ueberlebt Endpoint-Refresh /
-// Neu-Abonnieren). Wird beim Abonnieren mitgeschickt, damit der Server alte
-// Subscriptions DESSELBEN Geraets ersetzt -> keine doppelten Push-Nachrichten.
-function dlPushDeviceId(){
-  try{
-    var k='dl_push_device_id';
-    var v=localStorage.getItem(k);
-    if(!v){
-      if(window.crypto&&crypto.randomUUID){ v=crypto.randomUUID(); }
-      else { v='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10); }
-      localStorage.setItem(k,v);
-    }
-    return v;
-  }catch(e){ return ''; }
-}
+/* Die Geraete-Kennung steht seit der Aufteilung in js/geraete-id.js.
+   Sie wird hier benutzt (siehe unten beim Push-Abo), aber nicht mehr
+   definiert: Seiten, die nur die Kennung brauchen, sollen nicht diese
+   ganze Datei laden muessen. Genau daran ist die Bestellseite frueher
+   gescheitert. `geraete-id.js` muss deshalb VOR dieser Datei geladen
+   werden - das prueft tools/geraete_id_test.py.
+   (Spec geraete-kennung, F1) */
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').then(function(reg){

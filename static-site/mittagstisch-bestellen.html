@@ -17,6 +17,7 @@
   <meta property="og:site_name" content="Dorfladen Oberornau">
   <meta property="og:locale" content="de_DE">
   <script src="/js/theme.js"></script>
+  <script src="/js/geraete-id.js"></script>
   <style>
     :root{--c-pri:var(--dl-green,#2d5016);--c-acc:#bd8b5c;--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--c-green:var(--dl-green-action,#2e7d4f);--c-red:var(--dl-red,#dc2626);--radius:14px}
     html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-green:#5cb85f}
@@ -633,7 +634,14 @@ if(window!==window.parent){
         wochentag_label: selectedDish.wochentag_label || '',
         mitnehmen: mitnehmen,
         notify_email: notifyEmail,
-        device_id: (window.dlPushDeviceId?dlPushDeviceId():''),
+        /* Ohne E-Mail ist die Geraete-Kennung der EINZIGE Weg, die
+           Bestellung spaeter wiederzufinden. Frueher stand hier ein
+           Ausweichzweig `window.dlPushDeviceId ? ... : ''`, und weil diese
+           Seite die Datei gar nicht lud, griff er immer: Jede Bestellung
+           wurde ohne Kennung gespeichert. Der Aufruf ist jetzt direkt —
+           faellt die Datei aus, soll das auffallen und nicht still eine
+           unauffindbare Bestellung erzeugen. (Spec geraete-kennung, F2) */
+        device_id: dlPushDeviceId(),
         quelle: 0
       })
     })
@@ -726,7 +734,7 @@ if(window!==window.parent){
       reg.pushManager.getSubscription().then(function(existing){
         if(existing){
           fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
+            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:dlPushDeviceId()})});
           return;
         }
         if(Notification.permission==='granted'){
@@ -761,7 +769,7 @@ if(window!==window.parent){
       for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
       reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:arr}).then(function(sub){
         fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:(window.dlPushDeviceId?dlPushDeviceId():'')})});
+          body:JSON.stringify({subscription:sub.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:dlPushDeviceId()})});
       });
     });
   }
