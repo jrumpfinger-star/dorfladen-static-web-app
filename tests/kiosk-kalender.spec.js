@@ -877,4 +877,126 @@ test.describe('Kiosk-Kalender', () => {
     await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
     expect(st.posts[0].serie_bis).toBe('');
   });
+
+  // ══════════════════════════════════════════════════
+  //  F22 – Der Tag ist im Dialog wählbar
+  // ══════════════════════════════════════════════════
+  // Aus dem Laden: „Bei einer Vorbestellung aus dem Nachrichtenchat kann
+  // der Tag nicht ausgewählt werden für den Termin. Es wird immer heute
+  // angelegt."
+
+  test('TC-F22-01: Aus einer Nachricht heraus lässt sich der Tag wählen',
+    async ({ page }) => {
+      /* Der gemeldete Fall. `neuAus` wechselt in den Kalender — dabei
+         setzt `onShow` auf heute. Ohne eigenes Feld hatte der Dialog
+         keine Möglichkeit mehr, auf einen anderen Tag zu zeigen. */
+      const st = makeState();
+      await installRoutes(page, st);
+      await page.goto(origin + '/kiosk');
+      await page.evaluate(() => window.KalenderKiosk.neuAus({
+        titel: 'Hendl mit Kartoffelsalat',
+        kategorie: 'vorbestellung', kunde: 'Franz Huber',
+      }));
+      await page.locator('#kal-modal').waitFor({ state: 'visible' });
+
+      const feld = page.locator('#kal-datum');
+      await expect(feld, 'kein Feld für den Tag').toBeVisible();
+
+      const uebermorgen = await page.evaluate(() => {
+        const d = new Date(); d.setDate(d.getDate() + 2);
+        const p = (n) => (n < 10 ? '0' : '') + n;
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      });
+      await feld.fill(uebermorgen);
+      await feld.dispatchEvent('change');
+      await page.locator('.kal-add').click();
+
+      await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
+      expect(st.posts[0].datum, 'landet trotzdem auf heute').toBe(uebermorgen);
+      expect(st.posts[0].titel).toBe('Hendl mit Kartoffelsalat');
+    });
+
+  test('TC-F22-02: „Morgen" genügt ein Antippen', async ({ page }) => {
+    // Der Alltagsfall soll ohne Datumsfeld auskommen.
+    const st = makeState();
+    await openKalender(page, st);
+    await openAdd(page);
+
+    const morgen = await page.evaluate(() => {
+      const d = new Date(); d.setDate(d.getDate() + 1);
+      const p = (n) => (n < 10 ? '0' : '') + n;
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    });
+    await page.locator('#kal-title').fill('Semmeln zurücklegen');
+    await page.locator(`#kal-tagpills [data-tag="${morgen}"]`).click();
+    await page.locator('.kal-add').click();
+
+    await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
+    expect(st.posts[0].datum).toBe(morgen);
+  });
+
+  test('TC-F22-03: Ohne Zutun bleibt es beim angetippten Tag', async ({ page }) => {
+    /* Gegenprobe zur Bequemlichkeit: Wer in der Tagesleiste einen Tag
+       wählt und dann den Dialog öffnet, soll genau diesen Tag bekommen —
+       das Feld darf die Auswahl nicht überschreiben. */
+    const st = makeState();
+    await openKalender(page, st);   // wechselt auf Dienstag dieser Woche
+    await openAdd(page);
+
+    await expect(page.locator('#kal-datum')).toHaveValue(st.di);
+    await page.locator('#kal-title').fill('Kasse abrechnen');
+    await page.locator('.kal-add').click();
+
+    await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
+    expect(st.posts[0].datum).toBe(st.di);
+  });
+
+  test('TC-F22-04: Nach dem Speichern springt die Ansicht auf den Tag',
+    async ({ page }) => {
+      /* Sonst legt man eine Vorbestellung für nächste Woche an und blickt
+         weiter auf den heutigen Tag — es sieht aus, als wäre nichts
+         passiert. */
+      const st = makeState();
+      await openKalender(page, st);
+      await openAdd(page);
+
+      const inNeunTagen = await page.evaluate(() => {
+        const d = new Date(); d.setDate(d.getDate() + 9);
+        const p = (n) => (n < 10 ? '0' : '') + n;
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      });
+      await page.locator('#kal-title').fill('Kuchen für Geburtstag');
+      await page.locator('#kal-datum').fill(inNeunTagen);
+      await page.locator('#kal-datum').dispatchEvent('change');
+      await page.locator('.kal-add').click();
+
+      await expect.poll(() => st.posts.length, { timeout: 8000 }).toBe(1);
+      await expect(page.locator(`.kal-day[data-day="${inNeunTagen}"]`),
+        'die Woche des Eintrags wird nicht gezeigt').toHaveClass(/active/);
+    });
+
+  test('TC-F22-05: Ein Serienende vor dem Starttag geht nicht durch',
+    async ({ page }) => {
+      /* Die Prüfung hing am angetippten Tag der Leiste. Wird der Start im
+         Dialog nach hinten geschoben, muss sie mitwandern. */
+      const st = makeState();
+      await openKalender(page, st);
+      await openAdd(page);
+
+      const spaet = await page.evaluate(() => {
+        const d = new Date(); d.setDate(d.getDate() + 20);
+        const p = (n) => (n < 10 ? '0' : '') + n;
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      });
+      await page.locator('#kal-title').fill('Serie zu spaet');
+      await page.locator('#kal-datum').fill(spaet);
+      await page.locator('#kal-datum').dispatchEvent('change');
+      await page.locator('#kal-recurpills [data-newrecur="weekly"]').click();
+      await page.locator('#kal-endepills [data-ende="datum"]').click();
+      await page.locator('#kal-ende-datum').fill(st.today);
+      await page.locator('.kal-add').click();
+      await page.waitForTimeout(800);
+
+      expect(st.posts.length, 'Serie endet vor ihrem Beginn').toBe(0);
+    });
 });

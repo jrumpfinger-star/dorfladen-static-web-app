@@ -1098,6 +1098,31 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   margin-top:6px;
   font-size:12px; color:#6b7280;
 }
+
+/* ── Tageswahl im Terminfenster ─────────────────────────────────────────
+   Aus dem Laden: „Bei einer Vorbestellung aus dem Nachrichtenchat kann
+   der Tag nicht ausgewählt werden … Es wird immer heute angelegt." Der
+   Dialog nahm bis dahin stumm den in der Tagesleiste angetippten Tag —
+   an der kommt aber nicht vorbei, wer aus einer Nachricht heraus öffnet.
+   (Spec kalender-datum-waehlbar) */
+.kal-datum-box{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+}
+.kal-tagpills{ flex:1 1 auto; min-width:0 }
+.kal-datum{
+  flex:0 0 auto;
+  min-height:var(--tap-min);
+  padding:8px 12px;
+  border:1px solid var(--c-border,#d1d5db);
+  border-radius:10px;
+  font-size:15px;
+  box-sizing:border-box;
+}
+.kal-datum-hint{
+  margin-top:6px;
+  font-size:12px; color:#6b7280;
+}
+.kal-datum-hint:empty{ display:none }
 .kal-toolbar{ position:sticky; top:0; z-index:20; background:var(--c-bg); padding:6px 0 }
 
 /* Kontakt: Nachrichtenkarten. */

@@ -42,6 +42,7 @@
     newCat: 'aufgabe',  // Dialog: gewählte Kategorie
     newRecur: '',       // Dialog: gewählte Wiederholung
     newEnde: '',        // Dialog: gewähltes Serienende ('', 'w1', …, 'datum')
+    newDatum: '',       // Dialog: gewählter Tag (ISO) — siehe dlgDatum()
     newWeekdays: []     // Dialog: gewählte ISO-Wochentage (1=Mo … 7=So)
   };
 
@@ -69,6 +70,35 @@
     var a = dates[0], b = dates[6];
     var mon = ['Jan', 'Feb', 'März', 'Apr', 'Mai', 'Juni', 'Juli', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
     return a.getDate() + '.–' + b.getDate() + '. ' + mon[b.getMonth()] + ' ' + b.getFullYear();
+  }
+
+  /* Der Tag, auf den der offene Dialog gerade zeigt.
+     Frueher nahm das Speichern stur state.selected — den in der Tagesleiste
+     angetippten Tag. Wer den Dialog aus einer Kundennachricht heraus
+     oeffnet, kommt an dieser Leiste aber nie vorbei: Der Tabwechsel setzt
+     auf heute, und eine Vorbestellung fuer Freitag landete am heutigen Tag.
+     (Spec kalender-datum-waehlbar) */
+  function dlgDatum() {
+    return state.newDatum || state.selected || todayIso();
+  }
+
+  /** Verschiebt einen ISO-Tag um n Tage. */
+  function isoPlus(start, n) {
+    var d = new Date(start + 'T12:00:00');
+    if (isNaN(d.getTime())) return start;
+    d.setDate(d.getDate() + n);
+    return iso(d);
+  }
+
+  /** Wie viele Wochen liegt ein Tag von der laufenden Woche entfernt? */
+  function wochenAbstand(zielIso) {
+    var ziel = new Date(zielIso + 'T12:00:00');
+    if (isNaN(ziel.getTime())) return 0;
+    var montagZiel = new Date(ziel);
+    montagZiel.setDate(ziel.getDate() - ((ziel.getDay() + 6) % 7));
+    montagZiel.setHours(12, 0, 0, 0);
+    var montagHeute = mondayOf(0);
+    return Math.round((montagZiel - montagHeute) / (7 * 86400000));
   }
   function isoWeek(d) {
     var t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -127,6 +157,12 @@
           '<label class="kal-fld kal-title-wrap"><span>Was ist zu tun / reserviert?</span>' +
             '<textarea id="kal-title" rows="1" placeholder="z. B. „Brotbestellung Fam. Huber abholbereit“…" autocomplete="off"></textarea>' +
             '<div class="kal-title-dd" id="kal-title-dd" hidden></div></label>' +
+          '<div class="kal-fld"><span>Tag</span>' +
+            '<div class="kal-datum-box">' +
+              '<div class="kal-pills kal-tagpills" id="kal-tagpills"></div>' +
+              '<input type="date" id="kal-datum" class="kal-datum" aria-label="Datum des Eintrags">' +
+            '</div>' +
+            '<div class="kal-datum-hint" id="kal-datum-hint"></div></div>' +
           '<div class="kal-fld"><span>Zeitpunkt</span>' +
             '<div class="kal-modal-time">' +
               '<div class="kal-toggle"><button type="button" class="on" data-ad="1">Ganztags</button><button type="button" data-ad="0">Uhrzeit</button></div>' +
@@ -232,11 +268,18 @@
       if (e.key === 'Escape' && !modal.hidden) closeDialog();
     });
     if (!state.selected) state.selected = todayIso();
+    var datumFeld = document.getElementById('kal-datum');
+    if (datumFeld) {
+      datumFeld.addEventListener('change', function () {
+        if (datumFeld.value) setDatum(datumFeld.value);
+        else setDatum(todayIso());
+      });
+    }
     state.built = true;
   }
 
   function onClick(e) {
-    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl],[data-tp],[data-tpq],[data-ende]');
+    var b = e.target.closest('[data-act],[data-cat],[data-ad],[data-newcat],[data-newrecur],[data-wd],[data-kunde],[data-titlepick],[data-tpl],[data-tp],[data-tpq],[data-ende],[data-tag]');
     if (!b) return;
     if (b.dataset.act === 'prev') { state.weekOffset--; load(); }
     else if (b.dataset.act === 'next') { state.weekOffset++; load(); }
@@ -250,6 +293,7 @@
     else if (b.dataset.newcat !== undefined) { setCat(b.dataset.newcat); }
     else if (b.dataset.newrecur !== undefined) { setRecur(b.dataset.newrecur); }
     else if (b.dataset.ende !== undefined) { setEnde(b.dataset.ende); }
+    else if (b.dataset.tag !== undefined) { setDatum(b.dataset.tag); }
     else if (b.dataset.wd !== undefined) { toggleWeekday(parseInt(b.dataset.wd, 10), b); }
     else if (b.dataset.kunde !== undefined) { setKunde(b.dataset.kunde, b.dataset.kid); }
     else if (b.dataset.titlepick !== undefined) { setTitle(b.dataset.titlepick); }
@@ -335,7 +379,7 @@
       var feld = document.getElementById('kal-ende-datum');
       return (feld && feld.value) || '';
     }
-    var start = new Date((state.selected || todayIso()) + 'T12:00:00');
+    var start = new Date(dlgDatum() + 'T12:00:00');
     if (isNaN(start.getTime())) return '';
     var d = new Date(start.getTime());
     // Der Starttag zählt mit: „1 Woche" heißt sieben Tage ab Start, also
@@ -362,7 +406,7 @@
       // Ein leeres Datumsfeld hilft niemandem: Vorschlag ist ein Monat.
       if (state.newEnde === 'datum' && !feld.value) feld.value = endeDatum('m1');
       // Vor dem Starttag ergibt ein Ende keinen Sinn.
-      if (state.selected) feld.min = state.selected;
+      feld.min = dlgDatum();
     }
     zeigeEnde();
   }
@@ -505,6 +549,7 @@
     setCat(vor.kategorie || 'aufgabe');
     setRecur('');
     setAllday(true);
+    setDatum(vor.datum || state.selected || todayIso());
     m.hidden = false;
     setTimeout(function () {
       var feld = document.getElementById('kal-title');
@@ -517,6 +562,50 @@
 
   function closeDialog() {
     var m = document.getElementById('kal-modal'); if (m) m.hidden = true;
+  }
+
+  /* Tageswahl im Dialog. Drei Schnellknoepfe decken den Alltag ab
+     (heute, morgen, uebermorgen); fuer alles Weitere steht das
+     Datumsfeld daneben. */
+  function setDatum(wert) {
+    var d = wert || todayIso();
+    state.newDatum = d;
+    var feld = document.getElementById('kal-datum');
+    if (feld) { feld.value = d; feld.min = todayIso(); }
+    renderTagPills();
+    zeigeTag();
+    // Ein Serienende vor dem neuen Starttag ergibt keinen Sinn mehr.
+    var ende = document.getElementById('kal-ende-datum');
+    if (ende) {
+      ende.min = d;
+      if (ende.value && ende.value < d) ende.value = '';
+    }
+    zeigeEnde();
+  }
+
+  function renderTagPills() {
+    var wrap = document.getElementById('kal-tagpills');
+    if (!wrap) return;
+    var heute = todayIso();
+    var wahl = [
+      { iso: heute, name: 'Heute' },
+      { iso: isoPlus(heute, 1), name: 'Morgen' },
+      { iso: isoPlus(heute, 2), name: 'Übermorgen' }
+    ];
+    wrap.innerHTML = wahl.map(function (w) {
+      return '<button type="button" class="kal-pill'
+        + (w.iso === state.newDatum ? ' active' : '') + '" data-tag="' + w.iso + '">'
+        + esc(w.name) + '</button>';
+    }).join('');
+  }
+
+  /** Schreibt den gewählten Tag in Klartext an — „25.09." allein verrät
+      den Wochentag nicht, und genau der wird im Laden genannt. */
+  function zeigeTag() {
+    var hint = document.getElementById('kal-datum-hint');
+    if (!hint) return;
+    var d = dlgDatum();
+    hint.textContent = d === todayIso() ? '' : 'Eintrag für ' + deLong(d);
   }
 
   function setAllday(v) {
@@ -707,11 +796,12 @@
     if (state.newRecur && state.newEnde === 'datum' && !serieBis) {
       toast('Bitte ein Enddatum für die Serie wählen.', 'err'); return;
     }
-    if (serieBis && serieBis < state.selected) {
+    if (serieBis && serieBis < dlgDatum()) {
       toast('Die Serie kann nicht enden, bevor sie beginnt.', 'err'); return;
     }
+    var zielTag = dlgDatum();
     var body = {
-      titel: t, datum: state.selected, ganztags: state.allday,
+      titel: t, datum: zielTag, ganztags: state.allday,
       uhrzeit: state.allday ? '' : uhr,
       kategorie: state.newCat,
       wiederholung: state.newRecur,
@@ -731,6 +821,11 @@
         title.value = ''; document.getElementById('kal-kunde').value = '';
         toast('Eintrag gespeichert.');
         closeDialog();
+        /* Zum gespeicherten Tag springen. Sonst legt man eine Vorbestellung
+           fuer Freitag an und blickt weiter auf den heutigen Tag — es sieht
+           aus, als waere nichts passiert. */
+        state.selected = zielTag;
+        state.weekOffset = wochenAbstand(zielTag);
         load();
       })
       .catch(function () { toast('Speichern fehlgeschlagen.', 'err'); });
