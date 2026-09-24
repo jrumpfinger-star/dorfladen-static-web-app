@@ -93,3 +93,54 @@ weiter. Gestaltung in
 - Beschränkt der Server sich wieder auf Online, fällt die Zählung auf `0`.
 - Fällt das `title` am Balken weg, fällt **TC-VC-04** — die übrigen zehn
   bleiben grün.
+
+## Nachtrag: „Der Verlauf konnte nicht geladen werden" (Ausfall im Laden)
+
+Nach der Auslieferung meldete der Kiosk genau das. Gemessen an der Live-API:
+
+```
+GET /api/lunch-order?mode=tagesverlauf&days=7   → 502
+GET /api/lunch-order?mode=stats                 → 200 (der alte Weg lief)
+```
+
+Auch `days=1` fiel — es lag also nicht an der Datenmenge. Ursache war der
+OData-Filter, und zwar gleich **zweifach**:
+
+1. **`dl_datum` ist ein Textfeld.** Der Vergleich stand ohne
+   Anführungszeichen da; Dataverse wies ihn mit **400** ab. Dieselbe Falle
+   steht seit 2026-06-22 in der Testchronik (T12 `mode=my`).
+2. **Zwei Schreibweisen nebeneinander:** `2026-09-24` und
+   `2026-09-24T00:00:00Z` (Testchronik 2026-06-21, T4). Da als Zeichenkette
+   verglichen wird, hätte eine Obergrenze `le '<heute>'` ausgerechnet den
+   heutigen Tag verschluckt — **ohne Fehlermeldung**, der Chart hätte still
+   `0` gezeigt.
+
+Korrigiert zu `dl_datum ge '<von>' and dl_datum lt '<folgetag>'`: Die Quotes
+machen den Ausdruck gültig, das `lt` gegen den Folgetag fängt beide
+Schreibweisen.
+
+### Warum der Wächter das durchgelassen hat
+
+Der Ersatzspeicher im Test gab **jeden** Satz zurück, egal welcher Filter
+gestellt wurde — der Filter wurde nie ausgewertet. Er bildet jetzt beide
+Eigenheiten von Dataverse nach: unquotierter Vergleich gegen ein Textfeld
+ergibt **400**, und verglichen wird lexikografisch.
+
+### Gegenprobe zum Nachtrag
+
+- Quotes entfernt → **jeder** Fall fällt, beginnend bei **TC-VC-S1** mit
+  `war 502: Verlauf konnte nicht geladen werden (400)` — wörtlich der
+  Ausfall aus dem Laden.
+- Nur die Obergrenze auf `le '<heute>'` zurückgedreht → **TC-VC-S2** fällt
+  mit `waren 0 statt 7`: der heutige Tag verschwindet stillschweigend.
+- Neue Fälle: **TC-VC-S9** (Quotes an beiden Grenzen), **TC-VC-S10** (beide
+  Schreibweisen des heutigen Tages zählen mit, ältere Tage bleiben draußen).
+
+### Offen — nicht angefasst
+
+`api/lunch-order/__init__.py` Zeile ~428 (Archivlauf) trägt **denselben**
+Fehler: `dl_datum lt {cutoff}T00:00:00Z` ohne Anführungszeichen. Dort bricht
+der 400er still per `break` ab, das heißt: **dieser Archivlauf hat noch nie
+etwas archiviert.** Eine Korrektur würde sofort echtes Löschen und
+Zusammenfassen auslösen — das gehört bewusst entschieden und nicht nebenbei
+mitgeliefert.

@@ -19,6 +19,7 @@ Ausfuehren:  python tests/test_mittagstisch_verlauf.py
 import importlib.util
 import json
 import os
+import re
 import sys
 from datetime import timedelta
 
@@ -83,23 +84,63 @@ def rumpf(antwort):
 
 
 class Speicher:
-    """Ersatz-Dataverse. Merkt sich die gestellte Abfrage."""
+    """Ersatz-Dataverse. Wertet den OData-Filter WIRKLICH aus.
+
+    Das ist der Kern dieses Waechters, und er ist teuer gelernt: Vorher gab
+    dieser Speicher schlicht alle Saetze zurueck, egal was gefragt wurde. Der
+    Test war gruen, der Rueckblick im Laden meldete trotzdem „Der Verlauf
+    konnte nicht geladen werden" -- der Filter war fehlerhaft, und niemand
+    hat es gemerkt.
+
+    Zwei Eigenheiten von Dataverse werden deshalb hier nachgebildet:
+
+    1. `dl_datum` ist ein TEXTFELD. Ein Vergleich ohne Anfuehrungszeichen
+       wird abgewiesen (400), nicht etwa still ignoriert.
+    2. Verglichen wird als Zeichenkette, nicht als Datum. Deshalb sortiert
+       „2026-09-24T00:00:00Z" HINTER „2026-09-24" -- was eine Obergrenze
+       `le '2026-09-24'` den letzten Tag kosten wuerde.
+    """
 
     def __init__(self, saetze=None, status=200):
         self.saetze = list(saetze or [])
         self.status = status
         self.abfragen = []
 
+    @staticmethod
+    def _bedingungen(url):
+        teil = url.split("$filter=", 1)[1].split("&", 1)[0] if "$filter=" in url else ""
+        return re.findall(r"dl_datum\s+(ge|gt|le|lt|eq)\s+(\S+)", teil)
+
     def get(self, url, **kw):
         self.abfragen.append(url)
         if self.status != 200:
             return Antwort(self.status, {})
-        return Antwort(200, {"value": self.saetze})
+
+        treffer = list(self.saetze)
+        for op, roh in self._bedingungen(url):
+            if not (roh.startswith("'") and roh.endswith("'")):
+                # So antwortet Dataverse auf einen unquotierten Vergleich
+                # gegen ein Textfeld.
+                return Antwort(400, {"error": {
+                    "message": f"Invalid comparison for text field: dl_datum {op} {roh}"}})
+            wert = roh[1:-1]
+            pruef = {
+                "ge": lambda d: d >= wert, "gt": lambda d: d > wert,
+                "le": lambda d: d <= wert, "lt": lambda d: d < wert,
+                "eq": lambda d: d == wert,
+            }[op]
+            treffer = [s for s in treffer if pruef(s.get("dl_datum") or "")]
+        return Antwort(200, {"value": treffer})
 
 
-def satz(datum, gericht, menge=1, status=0, quelle=1):
+def satz(datum, gericht, menge=1, status=0, quelle=1, lang=True):
+    """Ein Bestelldatensatz.
+
+    `lang` bildet die ausfuehrliche Schreibweise „…T00:00:00Z" nach, die in
+    der Tabelle neben der kurzen „YYYY-MM-DD" steht (Testchronik 2026-06-21).
+    """
     return {
-        "dl_datum": datum + "T00:00:00Z",
+        "dl_datum": datum + ("T00:00:00Z" if lang else ""),
         "dl_gericht": gericht,
         "dl_menge": menge,
         "dl_status": status,
@@ -204,6 +245,50 @@ def main():
            "createdon" not in sp.abfragen[0])
     pruefe("TC-VC-S5  der Gerichtname wird geladen",
            "dl_gericht" in sp.abfragen[0])
+
+    # ── TC-VC-S9: der Filter muss Anfuehrungszeichen tragen ───────────
+    # Der Ausfall im Laden: „Der Verlauf konnte nicht geladen werden."
+    # `dl_datum` ist ein TEXTFELD; ohne Anfuehrungszeichen weist Dataverse
+    # den Ausdruck ab. Der Ersatzspeicher oben tut jetzt dasselbe -- deshalb
+    # faellt dieser Fall, sobald die Quotes wieder verschwinden.
+    # (Testchronik 2026-06-22, T12 mode=my)
+    sp = Speicher([satz(heute_s, "Hendl", 2)])
+    antwort = lauf(sp)
+    pruefe("TC-VC-S9  die Abfrage laeuft ueberhaupt durch",
+           antwort.status_code == 200,
+           f"war {antwort.status_code} - Abfrage: "
+           f"{sp.abfragen[0][:200] if sp.abfragen else '-'}")
+    bed = Speicher._bedingungen(sp.abfragen[0])
+    pruefe("TC-VC-S9  beide Datumsgrenzen stehen in Anfuehrungszeichen",
+           bed and all(w.startswith("'") and w.endswith("'") for _op, w in bed),
+           f"Bedingungen: {bed}")
+    pruefe("TC-VC-S9  und die Portionen kommen wirklich an",
+           rumpf(antwort)["verlauf"][-1]["portionen"] == 2,
+           f"heute: {rumpf(antwort)['verlauf'][-1]}")
+
+    # ── TC-VC-S10: der letzte Tag geht in KEINER Schreibweise verloren ─
+    # In der Tabelle stehen „2026-09-24" und „2026-09-24T00:00:00Z"
+    # nebeneinander. Verglichen wird als Zeichenkette, also sortiert die
+    # lange Form HINTER der kurzen. Eine Obergrenze `le '<heute>'` wuerde
+    # ausgerechnet den heutigen Tag verschlucken -- den wichtigsten der
+    # ganzen Reihe. (Testchronik 2026-06-21, T4)
+    sp = Speicher([
+        satz(heute_s, "Hendl", 3, lang=True),
+        satz(heute_s, "Fisch", 2, lang=False),
+    ])
+    heute_fach = rumpf(lauf(sp))["verlauf"][-1]
+    pruefe("TC-VC-S10  beide Schreibweisen des heutigen Tages zaehlen mit",
+           heute_fach["portionen"] == 5,
+           f"waren {heute_fach['portionen']} statt 5 - Abfrage: "
+           f"{sp.abfragen[0][:200]}")
+
+    # Und der Tag DAVOR der Reihe faellt weiterhin heraus.
+    davor = (heute - timedelta(days=7)).isoformat()
+    sp = Speicher([satz(davor, "Zu alt", 9), satz(heute_s, "Hendl", 1)])
+    reihe = rumpf(lauf(sp))["verlauf"]
+    pruefe("TC-VC-S10  aeltere Tage bleiben draussen",
+           sum(t["portionen"] for t in reihe) == 1,
+           f"Summe: {sum(t['portionen'] for t in reihe)}")
 
     # ── TC-VC-S6: Zeitraum ist einstellbar und gedeckelt ──────────────
     sp = Speicher([])

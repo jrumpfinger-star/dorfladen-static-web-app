@@ -911,10 +911,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 # Gefiltert wird über den Mittagstisch-Tag, nicht über das
                 # Anlagedatum: Eine am Montag für Freitag aufgenommene
                 # Bestellung gehört auf den Freitag.
+                #
+                # Zwei Fallstricke, beide schon einmal teuer bezahlt:
+                #
+                # 1. `dl_datum` ist ein TEXTFELD. Ohne Anführungszeichen
+                #    weist Dataverse den Ausdruck ab (Testchronik 2026-06-22,
+                #    T12 mode=my). Genau das liess den Rueckblick anfangs mit
+                #    „Der Verlauf konnte nicht geladen werden" auflaufen.
+                # 2. In der Tabelle stehen ZWEI Schreibweisen nebeneinander:
+                #    „2026-09-24" und „2026-09-24T00:00:00Z" (Testchronik
+                #    2026-06-21, T4). Eine Obergrenze `le '2026-09-24'` wuerde
+                #    den letzten Tag in der langen Schreibweise verlieren --
+                #    ausgerechnet HEUTE, den wichtigsten Tag der Reihe.
+                #    Deshalb `lt` gegen den FOLGETAG: das faengt beide.
+                nach_bis = (bis + timedelta(days=1)).isoformat()
                 verlauf_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
-                    f"?$filter=dl_datum ge {von.isoformat()}T00:00:00Z"
-                    f" and dl_datum le {bis.isoformat()}T23:59:59Z"
+                    f"?$filter=dl_datum ge '{von.isoformat()}'"
+                    f" and dl_datum lt '{nach_bis}'"
                     f"&$select=dl_datum,dl_status,dl_menge,dl_gericht,dl_quelle"
                     f"&$top=5000"
                 )
