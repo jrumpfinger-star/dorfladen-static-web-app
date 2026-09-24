@@ -674,6 +674,15 @@
       <button class="k-modal-close" onclick="K.closeModal('modal-order')">✕</button>
     </div>
     <div class="k-modal-body">
+      <!-- Für welchen Tag? Ohne diese Zeile ist am Dialog nicht zu sehen,
+           welcher Tagesreiter dahinter gewählt ist – eine telefonische
+           Bestellung landete unbemerkt am falschen Tag. -->
+      <div id="no-tag" class="k-field" style="display:flex;align-items:center;gap:7px;
+           background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;
+           padding:10px 12px;margin-bottom:14px;font-size:13.5px;color:#166534">
+        <i data-lucide="calendar" style="width:16px;height:16px;flex-shrink:0"></i>
+        <span>Liefertag: <strong id="no-tag-text"></strong></span>
+      </div>
       <!-- Step 1: Kunde -->
       <div class="k-field" style="position:relative">
         <label>Kunde *</label>
@@ -2515,42 +2524,133 @@ var K = (function(){
     document.getElementById('no-note').value = '';
     document.getElementById('no-mitnehmen').checked = false;
 
+    // Den gewählten Liefertag anschreiben (siehe #no-tag).
+    var tagEl = document.getElementById('no-tag-text');
+    if(tagEl) tagEl.textContent = _swDatumLang();
+
     // Load dishes for picker
     if(dishes.length===0){
       fetch(API+'/wochenplan')
         .then(function(r){return r.json();})
         .then(function(data){
           dishes = (data.data||[]).filter(function(d){return d.dl_gericht && d.dl_preis;});
-          renderDishPicker();
-        });
+          ladePlanFuer(_mittagDatum||today(), renderDishPicker);
+        })
+        .catch(function(){ renderDishPicker(); });
     } else {
-      renderDishPicker();
+      ladePlanFuer(_mittagDatum||today(), renderDishPicker);
     }
     openModal('modal-order');
   }
 
+  /* Der Wochenplan wird standardmäßig nur für die LAUFENDE Woche geladen.
+     Die Tagesleiste reicht aber bis fünf Tage voraus und damit oft in die
+     nächste Woche. Für solche Tage wird der Plan gezielt nachgeladen —
+     mit demselben Filter, den der Server sonst selbst bildet. */
+  var _planExtra = [];          // Gerichte fremder Wochen
+  var _planGeladen = {};        // "2026-40" -> true, verhindert Doppelabrufe
+
+  function _isoWoche(d){
+    // ISO-8601: Die Woche gehört dem Jahr, in dem ihr Donnerstag liegt.
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var tag = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - tag);
+    var start = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return {
+      kw: Math.ceil((((t - start) / 86400000) + 1) / 7),
+      jahr: t.getUTCFullYear()
+    };
+  }
+
+  function _alleGerichte(){
+    return dishes.concat(_planExtra);
+  }
+
+  /** Stellt sicher, dass der Plan zum Zieltag vorliegt, dann `fertig()`. */
+  function ladePlanFuer(ziel, fertig){
+    var d = new Date(ziel + 'T12:00:00');
+    if(isNaN(d.getTime())){ fertig(); return; }
+    var w = _isoWoche(d);
+    var schluessel = w.jahr + '-' + w.kw;
+
+    // Liegt in den bereits geladenen Daten schon etwas aus dieser Woche,
+    // genügt das - der Standardabruf deckt die laufende Woche ab.
+    var vorhanden = _alleGerichte().some(function(g){
+      return g.dl_kalenderwoche === w.kw && g.dl_jahr === w.jahr;
+    });
+    if(vorhanden || _planGeladen[schluessel]){ fertig(); return; }
+
+    _planGeladen[schluessel] = true;
+    var filter = 'dl_status eq 101001 and dl_kalenderwoche eq ' + w.kw
+               + ' and dl_jahr eq ' + w.jahr;
+    fetch(API + '/wochenplan?$filter=' + encodeURIComponent(filter))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var neu = (data.data||[]).filter(function(g){
+          return g.dl_gericht && g.dl_preis;
+        });
+        _planExtra = _planExtra.concat(neu);
+      })
+      .catch(function(){ /* Ohne Plan bleibt die ehrliche Leermeldung. */ })
+      .then(function(){ fertig(); });
+  }
+
   function renderDishPicker(){
-    // Filter to today's weekday
-    var todayDay = new Date().getDay(); // 0=Sun,1=Mon...6=Sat
-    var dvDay = todayDay===0?null:(100999+todayDay); // 101000=Mo,...101005=Sa
-    var todayDishes = dvDay ? dishes.filter(function(d){return d.dl_wochentag===dvDay;}) : [];
-    if(todayDishes.length===0) todayDishes = dishes; // Fallback: show all
+    /* Gerichte des GEWAEHLTEN Tages, nicht die von heute.
+       Gemeldet: „Es sollte auch möglich sein eine telefonische Bestellung
+       für die folgenden Tage erfassen zu können. Es wird momentan immer
+       das Menü des heutigen Tages angezeigt."
+       Hier stand `new Date()` – der Tagesreiter darueber wurde ignoriert.
+       Schwerer wog die Folge: Das Datum der Bestellung stammt aus dem
+       Gericht, also wurde sie auch noch auf heute gebucht und tauchte
+       unter dem gewaehlten Tag nie auf. (Spec mittag-telefon-tagwahl) */
+    var ziel = _mittagDatum || today();
+    var zielDatum = new Date(ziel + 'T12:00:00');
+    var alle = _alleGerichte();
+
+    // Erste Wahl: das Gericht traegt genau dieses Datum.
+    var tagDishes = alle.filter(function(d){ return d.dl_datum === ziel; });
+
+    // Zweite Wahl: derselbe Wochentag. Der Wochenplan wird teils ohne
+    // Datum gepflegt, dann traegt nur `dl_wochentag`.
+    if(tagDishes.length===0){
+      var wt = zielDatum.getDay();                 // 0=So,1=Mo…6=Sa
+      var dvDay = wt===0 ? null : (100999+wt);     // 101000=Mo…101005=Sa
+      var w = _isoWoche(zielDatum);
+      tagDishes = dvDay ? alle.filter(function(d){
+        return d.dl_wochentag===dvDay && !d.dl_datum
+          && (d.dl_kalenderwoche==null || d.dl_kalenderwoche===w.kw);
+      }) : [];
+    }
 
     var html = '';
-    todayDishes.forEach(function(d,i){
+    if(tagDishes.length===0){
+      /* Lieber ehrlich leer als das falsche Menue: Frueher fiel die Liste
+         auf ALLE Gerichte zurueck. Wer nicht genau hinsah, bestellte ein
+         Gericht, das es an dem Tag gar nicht gibt. */
+      html = '<div class="k-dish-leer" style="padding:14px;border:1px dashed var(--c-border);'
+           + 'border-radius:8px;color:var(--c-muted);font-size:13px;text-align:center">'
+           + 'Für ' + esc(_swDatumLang()) + ' ist noch kein Gericht im Wochenplan.'
+           + '</div>';
+      document.getElementById('no-dishes').innerHTML = html;
+      window._noDishes = [];
+      return;
+    }
+
+    tagDishes.forEach(function(d,i){
       var p = d.dl_preis?(d.dl_preis.toFixed(2).replace('.',',')+' €'):'';
       var day = DAY_FULL[d.dl_wochentag]||'';
       html += '<div class="k-dish-opt" data-idx="'+i+'" onclick="K.pickDish('+i+')">';
       html += '<span class="do-name">'+esc(d.dl_gericht)+'</span>';
-      if(day && todayDishes.length>2) html += '<span class="do-day">'+day+'</span>';
+      if(day && tagDishes.length>2) html += '<span class="do-day">'+day+'</span>';
       html += '<span class="do-price">'+p+'</span>';
       html += '</div>';
     });
     document.getElementById('no-dishes').innerHTML = html;
     // Store reference
-    window._noDishes = todayDishes;
+    window._noDishes = tagDishes;
     // Auto-select if only one dish available
-    if(todayDishes.length===1){ pickDish(0); }
+    if(tagDishes.length===1){ pickDish(0); }
   }
 
   function pickDish(idx){
@@ -2719,7 +2819,11 @@ var K = (function(){
       gericht_id: selectedDish.dl_wochenplanid||'',
       menge: noQty,
       preis: selectedDish.dl_preis||0,
-      datum: selectedDish.dl_datum||today(),
+      /* Der GEWAEHLTE Tag bestimmt das Datum, nicht das Gericht. Frueher
+         stand hier `selectedDish.dl_datum||today()` - damit landete eine
+         Bestellung fuer morgen auf dem heutigen Tag und war unter dem
+         gewaehlten Reiter nicht zu finden. */
+      datum: _mittagDatum||today(),
       anmerkung: document.getElementById('no-note').value.trim(),
       wochentag_label: DAY_FULL[selectedDish.dl_wochentag]||'',
       mitnehmen: document.getElementById('no-mitnehmen').checked,

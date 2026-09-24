@@ -17,24 +17,47 @@ test.use({ serviceWorkers: 'block' });
 const BASE = process.env.TEST_URL || 'https://witty-island-064f9d903.7.azurestaticapps.net';
 const KIOSK_URL = /localhost|127\.0\.0\.1/.test(BASE) ? `${BASE}/kiosk.html` : `${BASE}/kiosk`;
 
+/* Der Kiosk läuft in diesen Tests mit fest gestellter Uhr (siehe
+   `oeffneDialog`). Die Gerichtedaten müssen auf DENSELBEN Tag lauten —
+   sonst beschreibt der Mock eine Lage, die es nicht geben kann.
+
+   Früher stand hier das echte Tagesdatum, während die Uhr auf März stand.
+   Das fiel nur deshalb nicht auf, weil die Gerichteauswahl bei fehlender
+   Übereinstimmung auf ALLE Gerichte zurückfiel. Genau dieser Notnagel ist
+   entfallen — er zeigte das Menü des falschen Tages.
+   (Spec mittag-telefon-tagwahl, F1) */
+const TESTTAG = '2026-03-04';
+
 function heute() {
-  const d = new Date();
-  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)
-    + '-' + ('0' + d.getDate()).slice(-2);
+  return TESTTAG;
 }
 
-/* Wochentag als Dataverse-Wert: 101000 = Montag … 101005 = Samstag.
-   Sonntag hat keinen — dann greift im Kiosk der Rückfall auf alle. */
+/* Wochentag als Dataverse-Wert: 101000 = Montag … 101005 = Samstag. */
 function wochentagWert() {
-  const t = new Date().getDay();
+  const t = new Date(TESTTAG + 'T12:00:00').getDay();
   return t === 0 ? 101000 : 100999 + t;
+}
+
+/** ISO-Kalenderwoche – der Kiosk gleicht sie beim Nachladen ab. */
+function isoWoche(datumIso) {
+  const d = new Date(datumIso + 'T12:00:00');
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const tag = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - tag);
+  const start = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return {
+    kw: Math.ceil((((t - start) / 86400000) + 1) / 7),
+    jahr: t.getUTCFullYear(),
+  };
 }
 
 const GERICHT = {
   dl_gericht: 'Hähnchenbrustfilet mit Currysoße und Reis',
   dl_preis: 9.8,
-  dl_datum: heute(),
+  dl_datum: TESTTAG,
   dl_wochentag: wochentagWert(),
+  dl_kalenderwoche: isoWoche(TESTTAG).kw,
+  dl_jahr: isoWoche(TESTTAG).jahr,
   dl_wochenplanid: 'wp-1',
 };
 
