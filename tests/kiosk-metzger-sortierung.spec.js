@@ -400,3 +400,100 @@ test.describe('Metzger – Warengruppen aufklappen', () => {
         .toBeGreaterThan(0);
     });
 });
+
+// ═══════════════════════════════════════════════════════════
+//  Artikelmaske: kein Wegklicken, alle Einheiten sichtbar
+// ═══════════════════════════════════════════════════════════
+// Aus dem Laden: „Bei Bestellung Metzger schließt sich Dialog, wenn klick
+// auf außerhalb. Außerdem werden die Vorbelegungen nicht komplett
+// angezeigt."
+
+test.describe('Metzger – Artikelmaske (F21)', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  async function maskeAuf(page) {
+    await oeffne(page);
+    await page.evaluate(() => window.KMetzgerBest.sub('artikel'));
+    await page.waitForTimeout(600);
+    await page.evaluate(() => window.KMetzgerBest.neuerArtikel());
+    await page.locator('#mb-a-name').waitFor({ state: 'visible', timeout: 8000 });
+  }
+
+  test('TC-F21-01: Ein Klick daneben verwirft nichts', async ({ page }) => {
+    /* Der gemeldete Fall. Bei einer Maske mit Eingaben ist Wegklicken
+       kein bequemer Ausweg, sondern Datenverlust — ohne Nachfrage und
+       ohne Weg zurück. */
+    await maskeAuf(page);
+    await page.locator('#mb-a-name').fill('Testwurst fein');
+
+    // Auf den abgedunkelten Rand klicken, weit weg vom Blatt.
+    await page.locator('.mb-overlay').click({ position: { x: 5, y: 5 } });
+    await page.waitForTimeout(500);
+
+    await expect(page.locator('#mb-a-name'), 'Maske ist zu — Eingabe weg')
+      .toBeVisible();
+    await expect(page.locator('#mb-a-name')).toHaveValue('Testwurst fein');
+  });
+
+  test('TC-F21-02: „Abbrechen" schließt weiterhin', async ({ page }) => {
+    // Der bewusste Weg hinaus muss bleiben.
+    await maskeAuf(page);
+    await page.locator('.mb-dlg [data-ab]').click();
+    await page.waitForTimeout(400);
+    await expect(page.locator('#mb-a-name')).toHaveCount(0);
+  });
+
+  test('TC-F21-03: Escape schließt ebenfalls', async ({ page }) => {
+    // Eine bewusste Handlung, kein Fehlgriff.
+    await maskeAuf(page);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+    await expect(page.locator('#mb-a-name')).toHaveCount(0);
+  });
+
+  test('TC-F21-04: Alle Einheiten sind sichtbar', async ({ page }) => {
+    /* Sieben Einheiten (kg, g, Stück, cm, Größe, Schale, Beutel). In der
+       schmalen Maske lagen die letzten hinter einer Rollkante, die
+       niemand vermutet. */
+    await maskeAuf(page);
+    const mass = await page.evaluate(() => {
+      const box = document.querySelector('.mb-dlg .mb-einh');
+      if (!box) return null;
+      const r = box.getBoundingClientRect();
+      const knoepfe = [...box.querySelectorAll('button')];
+      return {
+        anzahl: knoepfe.length,
+        verdeckt: knoepfe.filter((b) => {
+          const q = b.getBoundingClientRect();
+          return q.right > r.right + 1 || q.left < r.left - 1;
+        }).map((b) => b.textContent.trim()),
+      };
+    });
+    expect(mass, 'Einheitenzeile nicht gefunden').not.toBeNull();
+    expect(mass.anzahl, 'weniger als sieben Einheiten').toBeGreaterThanOrEqual(7);
+    expect(mass.verdeckt, `verdeckt: ${mass.verdeckt.join(', ')}`).toHaveLength(0);
+  });
+
+  test('TC-F21-05: In der Bestellliste bleibt das Rollen', async ({ page }) => {
+    /* Dort ist es richtig: Die Zeile steht über die ganze Breite, und
+       jede Artikelzeile soll gleich hoch bleiben. Geprüft wird die Regel
+       selbst — die Zeile entsteht erst beim Aufklappen einer Position. */
+    await oeffne(page);
+    const regeln = await page.evaluate(() => {
+      const raus = [];
+      for (const bl of document.styleSheets) {
+        let r;
+        try { r = bl.cssRules; } catch (e) { continue; }
+        for (const x of r || []) {
+          if (x.selectorText && /\.mb-erf\s+\.mb-einh/.test(x.selectorText)
+              && !/\.mb-dlg/.test(x.selectorText)) {
+            raus.push(x.style.flexWrap);
+          }
+        }
+      }
+      return raus;
+    });
+    expect(regeln, 'keine Regel für .mb-erf .mb-einh gefunden')
+      .toContain('nowrap');
+  });
+});

@@ -3873,6 +3873,18 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
   overflow-x:auto; scrollbar-width:none }
 .mb-erf .mb-einh::-webkit-scrollbar{ display:none }
 .mb-erf .mb-einh button{ flex:0 0 auto; min-height:36px }
+
+/* In der Artikelmaske brechen die Einheiten UM, statt seitlich zu rollen.
+   Aus dem Laden: „Außerdem werden die Vorbelegungen nicht komplett
+   angezeigt." In der Bestellliste ist das Rollen richtig — dort steht die
+   Zeile über die ganze Breite und jede Zeile soll gleich hoch bleiben. Im
+   schmalen Blatt der Maske ist es das Gegenteil: Von sieben Einheiten sind
+   vier zu sehen, die übrigen liegen hinter einer Kante, die niemand
+   vermutet. Dort ist Umbrechen die ehrlichere Lösung — die Maske rollt
+   ohnehin. (Spec metzger-dialog-sicher, F2) */
+.mb-dlg .mb-erf{ flex-wrap:wrap }
+.mb-dlg .mb-erf .mb-einh{ flex-wrap:wrap; overflow-x:visible; flex:1 1 100% }
+.mb-dlg .mb-mengen .mb-kach{ flex-wrap:wrap; overflow-x:visible }
 .mb-mengen{ display:flex; gap:5px; align-items:center }
 .mb-mengen .mb-kach{ flex:1 1 auto; min-width:0; flex-wrap:nowrap;
   overflow-x:auto; scrollbar-width:none; gap:4px }

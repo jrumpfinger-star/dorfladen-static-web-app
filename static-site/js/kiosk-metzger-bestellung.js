@@ -2007,12 +2007,9 @@ window.KMetzgerBest = (function () {
       + '<div class="mb-dlg-acts">'
       + '<button class="mb-btn" data-ab>Abbrechen</button>'
       + '<button class="mb-send" data-ok>' + (neu ? 'Anlegen' : 'Speichern')
-      + '</button></div>');
+      + '</button></div>', true);   // sicher: kein Wegklicken (Datenverlust)
 
     w.querySelector('[data-ab]').onclick = function () { w.remove(); stammEnde(); };
-    // Klick auf den abgedunkelten Rand schliesst ebenfalls (huelle()) - dann
-    // muss die Pseudo-Position genauso abgeraeumt werden.
-    w.addEventListener('click', function (ev) { if (ev.target === w) stammEnde(); });
     w.querySelector('[data-ok]').onclick = function () {
       var lies = function (id) {
         var f = document.getElementById(id);
@@ -2181,19 +2178,39 @@ window.KMetzgerBest = (function () {
   //  Dialoge (keine nativen alert/confirm, Konstitution 6)
   // ══════════════════════════════════════════════════
 
-  function huelle(inhalt) {
+  /**
+   * Dialoghülle.
+   *
+   * ``sicher`` schaltet das Schließen durch Klick daneben ab. Aus dem Laden:
+   * „Bei Bestellung Metzger schließt sich Dialog, wenn klick auf außerhalb."
+   * Bei einer Maske mit Eingaben ist das kein bequemer Ausweg, sondern
+   * Datenverlust — ein Fehlgriff neben das Blatt, und alles Getippte ist
+   * weg, ohne Nachfrage und ohne Weg zurück.
+   *
+   * Bei reinen Rückfragen („Wirklich löschen?") bleibt es, wie es war:
+   * Dort gibt es nichts zu verlieren, und Wegtippen ist die schnellste Art
+   * abzubrechen. (Spec metzger-dialog-sicher)
+   */
+  function huelle(inhalt, sicher) {
     var w = document.createElement('div');
     w.className = 'mb-overlay';
     w.innerHTML = '<div class="mb-dlg">' + inhalt + '</div>';
     document.body.appendChild(w);
-    w.addEventListener('click', function (ev) { if (ev.target === w) w.remove(); });
+    if (!sicher) {
+      w.addEventListener('click', function (ev) { if (ev.target === w) w.remove(); });
+    }
+    // Die Esc-Taste schliesst weiterhin - sie ist eine bewusste Handlung,
+    // kein Fehlgriff.
+    w.__zu = function () { w.remove(); document.removeEventListener('keydown', esc_); };
+    function esc_(ev) { if (ev.key === 'Escape') w.__zu(); }
+    document.addEventListener('keydown', esc_);
     return w;
   }
 
-  function dialog(inhalt, knopf, aktion) {
+  function dialog(inhalt, knopf, aktion, sicher) {
     var w = huelle(inhalt + '<div class="mb-dlg-acts">'
       + '<button class="mb-btn" data-ab>Abbrechen</button>'
-      + '<button class="mb-send" data-ok>' + esc(knopf) + '</button></div>');
+      + '<button class="mb-send" data-ok>' + esc(knopf) + '</button></div>', sicher);
     w.querySelector('[data-ab]').onclick = function () { w.remove(); };
     w.querySelector('[data-ok]').onclick = function () {
       w.remove();
