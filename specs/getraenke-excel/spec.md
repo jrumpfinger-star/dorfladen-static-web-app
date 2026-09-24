@@ -151,8 +151,31 @@ und spitze Klammern im Namen (die brächen rohes XML).
 
 **TC-GX-11: Der Dateiname nennt Tag und Art.**
 
+**TC-GX-12: Zelltypen** — die Menge ist eine **Zahl** (sonst ließe sich in
+Excel nichts summieren), die Artikelnummer bleibt **Text** (sonst fielen
+führende Nullen weg, und der Lieferant suchte eine Nummer, die es so nicht
+gibt).
+
 Dazu in `tests/test_getraenke_order.py`: Beim Senden **hängt die Mappe
 wirklich an**, heißt `.xlsx`, ist gültig und enthält die Nummer.
+
+### Gegengeprüft mit dem echten Excel
+
+Ein selbst gebautes Format darf man nicht nur mit dem eigenen Leser prüfen —
+der macht dieselben Annahmen. Die Musterdatei wurde deshalb **in Excel
+geöffnet** (über COM):
+
+| | |
+|---|---|
+| Öffnen | ohne Warnung, ohne Reparaturhinweis |
+| Blattname | `Bestellung` |
+| Bereich | `A1:C30` |
+| Menge C17 | `Double` = 25 — rechenbar |
+| Artikelnummer A17 | `String` — führende Nullen blieben erhalten |
+| Spaltenbreiten | 11,3 / 48,1 / 7,3 |
+| Fixierung | ab Zeile 16 (Spaltenkopf bleibt stehen) |
+
+Alle Umlaute kamen richtig an („Getränke Kratzer", „Flötzinger").
 
 ## Musterdatei
 

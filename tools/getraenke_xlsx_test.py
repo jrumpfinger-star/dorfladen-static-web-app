@@ -169,6 +169,26 @@ pruefe(X.dateiname("2026-09-29") == "Bestellung-Dorfladen-Oberornau-2026-09-29.x
 pruefe(X.dateiname("2026-09-29", True).startswith("Korrektur"),
        X.dateiname("2026-09-29", True))
 
+print("\n12) Zelltypen: Mengen rechenbar, Nummern als Text")
+# Die Menge muss eine ZAHL sein, sonst laesst sich in Excel nichts
+# summieren. Die Artikelnummer bleibt Text - sonst fielen fuehrende
+# Nullen weg, und Kratzer sucht eine Nummer, die es so nicht gibt.
+z = zipfile.ZipFile(BytesIO(daten))
+blatt = z.read("xl/worksheets/sheet1.xml").decode("utf-8")
+root = ET.fromstring(blatt)
+zahl, text = [], []
+for row in root.iter(NS + "row"):
+    for c in row.findall(NS + "c"):
+        if c.get("t") == "inlineStr":
+            wert = "".join(t.text or "" for t in c.iter(NS + "t"))
+            text.append(wert)
+        elif c.find(NS + "v") is not None:
+            zahl.append(c.find(NS + "v").text)
+pruefe("25" in zahl, f"Menge 25 als Zahl (Zahlen: {zahl})")
+pruefe("30" in zahl, "Summe als Zahl")
+pruefe("40015" in text, "Artikelnummer als Text - fuehrende Nullen blieben so erhalten")
+pruefe("40015" not in zahl, "und nicht als Zahl")
+
 print()
 if fehler:
     print(f"{len(fehler)} Pruefung(en) fehlgeschlagen.")
