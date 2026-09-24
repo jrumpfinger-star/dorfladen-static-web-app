@@ -220,3 +220,87 @@ test.describe('Mittagstisch – Telefonbestellung für einen anderen Tag', () =>
       }
     });
 });
+
+// ════════════════════════════════════════════════════
+//  Freies Gericht außerhalb des Wochenplans
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „Bei telefonischer Bestellung soll es auch möglich sein,
+// ein Gericht außerhalb des Mittagsplans einzugeben, z. B. Currywurst mit
+// Pommes. Dieses sollte dann auch bei der Übersicht Mittagstisch angezeigt
+// werden können."
+//
+// Zugleich der Ausweg aus einer Sackgasse: Ist für den Tag noch nichts
+// gepflegt, ließ sich vorher gar nichts erfassen.
+
+test.describe('Mittagstisch – Gericht außerhalb des Plans', () => {
+
+  test('TC-FG-01: Es gibt einen Weg zum freien Gericht', async ({ page }) => {
+    await oeffneDialog(page, iso(MORGEN));
+    await expect(page.locator('#no-frei-auf')).toBeVisible();
+  });
+
+  test('TC-FG-02: Auch ohne Gericht im Plan', async ({ page }) => {
+    /* Der gemeldete Zustand aus dem Bild: „Für Freitag ist noch kein
+       Gericht im Wochenplan." Vorher eine Sackgasse. */
+    await oeffneDialog(page, iso(MORGEN), [HEUTE_GERICHT]);
+    await expect(page.locator('#no-dishes')).toContainText('kein Gericht');
+    await expect(page.locator('#no-frei-auf')).toBeVisible();
+  });
+
+  test('TC-FG-03: Das freie Gericht wird gesendet', async ({ page }) => {
+    await oeffneDialog(page, iso(MORGEN));
+    const gesendet = sammle(page);
+    await page.locator('#no-frei-auf').click();
+    await page.locator('#no-frei-name').fill('Currywurst mit Pommes');
+    await page.locator('#no-frei-preis').fill('8,50');
+    await page.locator('#no-kunde-search').fill('Frau Huber');
+    await page.evaluate(() => window.K.submitNewOrder());
+    await page.waitForTimeout(900);
+
+    expect(gesendet.length, 'nichts gesendet').toBe(1);
+    expect(gesendet[0].gericht).toBe('Currywurst mit Pommes');
+    expect(gesendet[0].preis).toBe(8.5);
+    // Ohne Planeintrag gibt es keine Kennung – das Feld bleibt leer.
+    expect(gesendet[0].gericht_id).toBe('');
+    // Der gewählte Tag zählt weiterhin.
+    expect(gesendet[0].datum).toBe(iso(MORGEN));
+  });
+
+  test('TC-FG-04: Ohne Preis geht es auch', async ({ page }) => {
+    // Am Telefon ist der Preis oft nicht zur Hand.
+    await oeffneDialog(page, iso(MORGEN));
+    const gesendet = sammle(page);
+    await page.locator('#no-frei-auf').click();
+    await page.locator('#no-frei-name').fill('Leberkäs-Semmel');
+    await page.locator('#no-kunde-search').fill('Herr Meier');
+    await page.evaluate(() => window.K.submitNewOrder());
+    await page.waitForTimeout(900);
+    expect(gesendet.length).toBe(1);
+    expect(gesendet[0].gericht).toBe('Leberkäs-Semmel');
+    expect(gesendet[0].preis).toBe(0);
+  });
+
+  test('TC-FG-05: Ein leeres Feld gilt nicht als Auswahl', async ({ page }) => {
+    /* Sonst ginge eine Bestellung ohne Gerichtsnamen raus. */
+    await oeffneDialog(page, iso(MORGEN));
+    const gesendet = sammle(page);
+    await page.locator('#no-frei-auf').click();
+    await page.locator('#no-frei-name').fill('Currywurst');
+    await page.locator('#no-frei-name').fill('');
+    await page.locator('#no-kunde-search').fill('Frau Huber');
+    await page.evaluate(() => window.K.submitNewOrder());
+    await page.waitForTimeout(700);
+    expect(gesendet, 'leeres Gericht wurde gesendet').toHaveLength(0);
+  });
+
+  test('TC-FG-06: Beim Öffnen ist das Feld wieder leer', async ({ page }) => {
+    // Sonst stünde die Eingabe der letzten Bestellung noch da.
+    await oeffneDialog(page, iso(MORGEN));
+    await page.locator('#no-frei-auf').click();
+    await page.locator('#no-frei-name').fill('Currywurst');
+    await page.evaluate(() => window.K.openNewOrder());
+    await page.waitForTimeout(600);
+    await expect(page.locator('#no-frei-name')).toHaveValue('');
+    await expect(page.locator('#no-frei-feld')).toBeHidden();
+  });
+});

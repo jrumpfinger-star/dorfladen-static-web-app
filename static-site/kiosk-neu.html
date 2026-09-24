@@ -713,6 +713,33 @@
       <div class="k-field">
         <label>Gericht *</label>
         <div class="k-dish-pick" id="no-dishes"></div>
+        <!-- Gericht außerhalb des Wochenplans. Aus dem Laden: „Bei
+             telefonischer Bestellung soll es auch möglich sein, ein
+             Gericht außerhalb des Mittagsplans einzugeben, z. B.
+             Currywurst mit Pommes."
+             Zugleich der Ausweg, wenn für den Tag noch nichts gepflegt
+             ist — vorher ließ sich dann gar nichts erfassen.
+             (Spec mittag-freies-gericht) -->
+        <div id="no-frei-box" style="margin-top:8px">
+          <button type="button" class="k-btn k-btn-outline k-btn-sm"
+                  id="no-frei-auf" onclick="K.freiesGerichtAuf()"
+                  style="font-size:13px">+ Anderes Gericht eingeben</button>
+          <div id="no-frei-feld" style="display:none;margin-top:8px">
+            <input type="text" id="no-frei-name" maxlength="120"
+                   placeholder="z. B. Currywurst mit Pommes"
+                   oninput="K.freiesGerichtTipp()"
+                   style="width:100%;padding:10px 12px;border:1px solid #d1d5db;
+                          border-radius:8px;font-size:14px;box-sizing:border-box">
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+              <label style="font-size:12px;color:#6b7280;white-space:nowrap">Preis €</label>
+              <input type="text" id="no-frei-preis" inputmode="decimal"
+                     placeholder="z. B. 8,50" oninput="K.freiesGerichtTipp()"
+                     style="width:110px;padding:8px 10px;border:1px solid #d1d5db;
+                            border-radius:8px;font-size:14px;box-sizing:border-box">
+              <span style="font-size:11px;color:#9ca3af">optional</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Step 3: Menge -->
@@ -2533,6 +2560,17 @@ var K = (function(){
     var tagEl = document.getElementById('no-tag-text');
     if(tagEl) tagEl.textContent = _swDatumLang();
 
+    // Freies Gericht zurücksetzen – sonst stünde die Eingabe der letzten
+    // Bestellung noch da (Spec mittag-freies-gericht).
+    var fn = document.getElementById('no-frei-name');
+    var fp = document.getElementById('no-frei-preis');
+    var ff = document.getElementById('no-frei-feld');
+    var fa = document.getElementById('no-frei-auf');
+    if(fn) fn.value = '';
+    if(fp) fp.value = '';
+    if(ff) ff.style.display = 'none';
+    if(fa) fa.style.display = '';
+
     // Load dishes for picker
     if(dishes.length===0){
       fetch(API+'/wochenplan')
@@ -2665,6 +2703,47 @@ var K = (function(){
     window._noDishes = tagDishes;
     // Auto-select if only one dish available
     if(tagDishes.length===1){ pickDish(0); }
+  }
+
+  /* Gericht ausserhalb des Wochenplans (Spec mittag-freies-gericht).
+
+     `selectedDish` bekommt dieselbe Form wie ein Planeintrag, nur ohne
+     `dl_wochenplanid` - der Server nimmt `gericht_id` leer entgegen. In
+     der Uebersicht erscheint es damit wie jedes andere Gericht, denn die
+     gruppiert nach dem TEXT, nicht nach der Kennung. */
+  function freiesGerichtAuf(){
+    var feld = document.getElementById('no-frei-feld');
+    var knopf = document.getElementById('no-frei-auf');
+    if(!feld) return;
+    feld.style.display = '';
+    if(knopf) knopf.style.display = 'none';
+    var eing = document.getElementById('no-frei-name');
+    if(eing) eing.focus();
+  }
+
+  function freiesGerichtTipp(){
+    var name = (document.getElementById('no-frei-name') || {}).value || '';
+    name = name.trim();
+    if(!name){
+      // Leert man das Feld wieder, gilt keine Auswahl - sonst ginge eine
+      // Bestellung ohne Gerichtsnamen raus.
+      if(selectedDish && selectedDish._frei) selectedDish = null;
+      return;
+    }
+    var roh = ((document.getElementById('no-frei-preis') || {}).value || '')
+      .trim().replace(',', '.');
+    var preis = parseFloat(roh);
+    selectedDish = {
+      _frei: true,
+      dl_gericht: name,
+      dl_wochenplanid: '',
+      dl_preis: isNaN(preis) ? 0 : preis,
+      dl_wochentag: null
+    };
+    // Eine im Plan gewaehlte Kachel loest sich damit ab.
+    document.querySelectorAll('.k-dish-opt').forEach(function(el){
+      el.classList.remove('selected');
+    });
   }
 
   function pickDish(idx){
@@ -5280,6 +5359,7 @@ var K = (function(){
     showStornoDialog: showStornoDialog,
     openNewOrder: openNewOrder,
     pickDish: pickDish,
+    freiesGerichtAuf: freiesGerichtAuf, freiesGerichtTipp: freiesGerichtTipp,
     noQty: noQtyChange,
     searchOrderKunde: searchOrderKunde,
     selectOrderKunde: selectOrderKunde,
