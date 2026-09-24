@@ -518,3 +518,92 @@ test.describe('Kontakt – wieder als ungelesen (K9)', () => {
       .toHaveCount(0);
   });
 });
+// ════════════════════════════════════════════════════
+//  K10 – Aus einer Nachricht in den Kalender
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „Es waere auch schoen, wenn z.B. eine Bestellung ueber
+// Nachrichten in den Kalender uebertragen werden koennte."
+//
+// Uebernommen wird der Wortlaut als Titel und der Name als Kunde, Kategorie
+// „Vorbestellung". GESPEICHERT wird nicht: Die Nachricht sagt nicht, WANN
+// abgeholt wird. Ein Knopf, der ungefragt einen Termin anlegt, erzeugt
+// Eintraege am falschen Tag.
+
+test.describe('Kontakt – in den Kalender (K10)', () => {
+
+  const karte = (page, name) =>
+    page.locator('#kontakt-list .kk-card').filter({ hasText: name });
+
+  /** Konversation aufklappen und die Blasen zeigen. */
+  async function verlaufOeffnen(page, name) {
+    await openKontakt(page);
+    await karte(page, name).locator('.kk-name').click();
+    await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(1);
+  }
+
+  test('TC-KK-01: Kundennachrichten tragen den Kalenderknopf',
+    async ({ page }) => {
+      await verlaufOeffnen(page, 'Bert Ungelesen');
+      // Verlauf: eine eigene Antwort, eine Kundennachricht.
+      await expect(page.locator('#kontakt-list .kk-kal')).toHaveCount(1);
+    });
+
+  test('TC-KK-02: An der eigenen Antwort steht keiner', async ({ page }) => {
+    /* Dort waere er sinnlos - wir bestellen nichts bei uns selbst. */
+    await verlaufOeffnen(page, 'Bert Ungelesen');
+    const beiUns = await page.evaluate(() =>
+      [...document.querySelectorAll('#kontakt-list .kk-thread > div')]
+        .filter((b) => b.textContent.includes('Dorfladen'))
+        .some((b) => b.querySelector('.kk-kal')));
+    expect(beiUns, 'Kalenderknopf an der eigenen Antwort').toBe(false);
+  });
+
+  test('TC-KK-03: Der Klick oeffnet den Kalender vorbefuellt',
+    async ({ page }) => {
+      await verlaufOeffnen(page, 'Bert Ungelesen');
+      await page.locator('#kontakt-list .kk-kal').first().click();
+      await page.waitForTimeout(600);
+
+      const dlg = page.locator('#kal-modal');
+      await expect(dlg, 'Kalenderdialog nicht offen').toBeVisible();
+      await expect(page.locator('#kal-title'))
+        .toHaveValue('Ist der Mittagstisch noch offen?');
+      await expect(page.locator('#kal-kunde')).toHaveValue('Bert Ungelesen');
+    });
+
+  test('TC-KK-04: Die Kategorie steht auf Vorbestellung', async ({ page }) => {
+    await verlaufOeffnen(page, 'Bert Ungelesen');
+    await page.locator('#kontakt-list .kk-kal').first().click();
+    await page.waitForTimeout(600);
+    const aktiv = await page.evaluate(() => {
+      const el = document.querySelector('#kal-catpills .kal-pill.active');
+      return el ? (el.dataset.newcat || el.textContent.trim()) : '(keine)';
+    });
+    expect(aktiv, `aktive Kategorie: ${aktiv}`).toBe('vorbestellung');
+  });
+
+  test('TC-KK-05: Es wird nichts still gespeichert', async ({ page }) => {
+    /* Der wichtigste Fall. Datum und Uhrzeit kennt nur der Mensch —
+       ein ungefragt angelegter Eintrag stuende am falschen Tag. */
+    const posts = [];
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /\/api\/kalender/.test(r.url())) posts.push(r.url());
+    });
+    await verlaufOeffnen(page, 'Bert Ungelesen');
+    await page.locator('#kontakt-list .kk-kal').first().click();
+    await page.waitForTimeout(900);
+    expect(posts, `es wurde gespeichert: ${posts.join(', ')}`).toHaveLength(0);
+  });
+
+  test('TC-KK-06: Der Titel laesst sich ergaenzen, nicht nur ersetzen',
+    async ({ page }) => {
+      // Der Text ist vorbefuellt, der Schreibzeiger steht am ENDE –
+      // sonst loescht das erste Zeichen die ganze Uebernahme.
+      await verlaufOeffnen(page, 'Bert Ungelesen');
+      await page.locator('#kontakt-list .kk-kal').first().click();
+      await page.waitForTimeout(600);
+      await page.keyboard.type(' – Rückruf');
+      await expect(page.locator('#kal-title'))
+        .toHaveValue('Ist der Mittagstisch noch offen? – Rückruf');
+    });
+});

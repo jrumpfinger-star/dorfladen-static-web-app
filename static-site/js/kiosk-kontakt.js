@@ -171,8 +171,18 @@
         ticks = '<span class="kk-ticks'+(gelesen?'':' pending')+'" title="'+(gelesen?'Von uns gelesen':'Noch nicht gelesen')+'">'+TICKS+'</span>';
       }
       var delBtn = m.t ? ('<span onclick="event.stopPropagation();KKontakt.deleteMsg(\''+t.id+'\',\''+m.t+'\')" title="Nachricht löschen" style="cursor:pointer;color:#cbd5e1;font-size:12px;flex-shrink:0">✕</span>') : '';
+      /* „In den Kalender" nur an KUNDEN-Nachrichten und nur, wenn Text da
+         ist. Aus dem Laden: „Es wäre auch schön, wenn z.B. eine Bestellung
+         über Nachrichten in den Kalender übertragen werden könnte."
+         An der eigenen Antwort wäre der Knopf sinnlos, an einem reinen
+         Bild gäbe es nichts zu übernehmen. (Spec kontakt-in-kalender) */
+      var kalBtn = (!mine && (m.text || '').trim())
+        ? ('<span onclick="event.stopPropagation();KKontakt.inKalender(\''+t.id+'\',\''+(m.t||'')+'\')"'
+           + ' title="Als Vorbestellung in den Kalender übernehmen"'
+           + ' style="cursor:pointer;color:#9ca3af;font-size:12px;flex-shrink:0" class="kk-kal">🗓</span>')
+        : '';
       h += '<div style="align-self:'+side+';max-width:80%;background:'+bg+';border:1px solid '+bd+';border-radius:10px;padding:6px 9px;font-size:14px;line-height:1.4">'
-         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="flex:1;min-width:0;font-size:10px;font-weight:500;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+ticks+delBtn+'</div>'+inner+'</div>';
+         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="flex:1;min-width:0;font-size:10px;font-weight:500;color:'+col+'">'+lbl+(m.t?(' · '+fmtTime(m.t)):'')+devInfo+'</span>'+ticks+kalBtn+delBtn+'</div>'+inner+'</div>';
     });
     h+='</div>';
     return h;
@@ -345,6 +355,38 @@
       });
   }
 
+  /* Eine Kundennachricht als Vorbestellung in den Kalender uebernehmen.
+
+     Aus dem Laden: „Es waere auch schoen, wenn z.B. eine Bestellung ueber
+     Nachrichten in den Kalender uebertragen werden koennte."
+
+     Uebernommen wird der Wortlaut als Titel und der Name als Kunde; die
+     Kategorie steht auf „Vorbestellung". Gespeichert wird NICHT - die
+     Nachricht sagt nicht, WANN abgeholt wird. Ein Knopf, der ungefragt
+     einen Termin anlegt, erzeugt Eintraege am falschen Tag.
+     (Spec kontakt-in-kalender) */
+  function inKalender(id, zeit){
+    var t=_threads.find(function(x){return x.id===id;});
+    if(!t) return;
+    var m=(t.verlauf||[]).find(function(x){ return x && x.t===zeit; });
+    var text=((m&&m.text)||'').trim();
+    if(!text){
+      if(window.K&&K.toast) K.toast('Diese Nachricht hat keinen Text zum Übernehmen.');
+      return;
+    }
+    if(!window.KalenderKiosk||!KalenderKiosk.neuAus){
+      if(window.K&&K.toast) K.toast('Der Kalender ist gerade nicht bereit.');
+      return;
+    }
+    // Der Kunde heisst im Kalender „kunde_freitext" - Web-Nachrichten
+    // haben in der Regel keine Stammkundennummer.
+    KalenderKiosk.neuAus({
+      titel: text,
+      kunde: (t.name||'').trim(),
+      kategorie: 'vorbestellung'
+    });
+  }
+
   function send(id){
     var ta=document.getElementById('kk-rpt-'+id);
     var text=(ta&&ta.value||'').trim();
@@ -463,6 +505,7 @@
 
   window.KKontakt = {
     onShow:onShow, reload:reload, toggle:toggle, markUnread:markUnread,
+    inKalender:inKalender,
     send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom,
     emoji:emoji, toggleSel:toggleSel, clearSel:clearSel, deleteOne:deleteOne, deleteSelected:deleteSelected, deleteMsg:deleteMsg
   };

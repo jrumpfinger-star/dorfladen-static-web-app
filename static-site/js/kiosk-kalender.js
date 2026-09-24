@@ -479,11 +479,22 @@
     });
   }
 
-  function openDialog() {
+  /**
+   * Dialog für einen neuen Eintrag öffnen.
+   *
+   * ``vor`` befüllt ihn vor, ohne zu speichern — gedacht für die
+   * Übernahme aus einer Kundennachricht („Bitte 1 Holzofenbrot Roggen").
+   * Bewusst nur vorbefüllt: Die Nachricht sagt nicht, WANN abgeholt wird.
+   * Ein Knopf, der ungefragt einen Termin anlegt, erzeugt Einträge am
+   * falschen Tag — die sind schlimmer als gar keine.
+   * (Spec kontakt-in-kalender)
+   */
+  function openDialog(vor) {
     var m = document.getElementById('kal-modal'); if (!m) return;
+    vor = vor || {};
     // Felder zurücksetzen; Standard = Ganztags, Kategorie Aufgabe, Einmalig
-    document.getElementById('kal-title').value = '';
-    document.getElementById('kal-kunde').value = '';
+    document.getElementById('kal-title').value = vor.titel || '';
+    document.getElementById('kal-kunde').value = vor.kunde || '';
     document.getElementById('kal-time').value = '09:00';
     autoGrow();
     state.newWeekdays = [];
@@ -491,11 +502,17 @@
     renderTemplates();
     hideKundeDd();
     hideTitleDd();
-    setCat('aufgabe');
+    setCat(vor.kategorie || 'aufgabe');
     setRecur('');
     setAllday(true);
     m.hidden = false;
-    setTimeout(function () { document.getElementById('kal-title').focus(); }, 30);
+    setTimeout(function () {
+      var feld = document.getElementById('kal-title');
+      feld.focus();
+      // Bei Vorbefüllung ans Ende springen statt alles zu markieren –
+      // der Text soll ergänzt, nicht versehentlich überschrieben werden.
+      if (vor.titel) feld.setSelectionRange(feld.value.length, feld.value.length);
+    }, 30);
   }
 
   function closeDialog() {
@@ -909,7 +926,18 @@
       state.showDone = false;
       build(); syncFilterUI(); load(); startPoll();
     },
-    reload: load
+    reload: load,
+
+    /* Einen Eintrag aus einer anderen Ansicht heraus anlegen - etwa aus
+       einer Kundennachricht. Wechselt in den Kalender und oeffnet den
+       Dialog vorbefuellt. Gespeichert wird NICHT: Datum und Uhrzeit
+       kennt nur der Mensch. (Spec kontakt-in-kalender) */
+    neuAus: function (vor) {
+      if (window.K && K.switchTab) K.switchTab('kalender');
+      // Der Tabwechsel baut die Ansicht neu auf; erst danach steht der
+      // Dialog im Dokument.
+      setTimeout(function () { openDialog(vor || {}); }, 120);
+    }
   };
 
   // Badge beim Laden der Kiosk-Seite füllen (auch ohne Tab-Besuch) + periodisch.
