@@ -90,10 +90,11 @@ function tagesleiste() {
   return out;
 }
 
-async function mockApi(page) {
+async function mockApi(page, opts) {
   const j = (o) => ({ status: 200, contentType: 'application/json',
     body: JSON.stringify(o) });
   const datum = naechsterTag();
+  const positionen = (opts && opts.positionen) || [];
 
   await page.route('**/api/metzger-order**', (route) => {
     const url = route.request().url();
@@ -107,7 +108,7 @@ async function mockApi(page) {
     if (/metzger-order\/\d{4}-\d{2}-\d{2}/.test(url)) {
       return route.fulfill(j({
         success: true,
-        bestellung: { datum, status: 0, positionen: [], protokoll: [] },
+        bestellung: { datum, status: 0, positionen: positionen, protokoll: [] },
         artikel: ARTIKEL, vorschlaege: [], letzte: null,
         bestelltag: true, bestellbar: true,
         config: CONFIG, testbetrieb: true, summen: {},
@@ -125,8 +126,8 @@ async function mockApi(page) {
   });
 }
 
-async function oeffne(page, reiter) {
-  await mockApi(page);
+async function oeffne(page, reiter, opts) {
+  await mockApi(page, opts);
   await page.goto(KIOSK_URL);
   await page.waitForTimeout(2200);
   await page.evaluate(() => window.K.switchTab('metzgerbest'));
@@ -137,9 +138,11 @@ async function oeffne(page, reiter) {
   }
 }
 
-/** Die Gruppenüberschriften der Bestellliste, in Anzeigereihenfolge. */
+/** Die Gruppennamen der Bestellliste, in Anzeigereihenfolge.
+ *  Gelesen wird `.mb-gn` — der Kopf trägt seit dem Aufklappen auch
+ *  einen Pfeil und einen Zähler. */
 async function gruppen(page) {
-  return page.evaluate(() => [...document.querySelectorAll('#mb-liste .mb-grp')]
+  return page.evaluate(() => [...document.querySelectorAll('#mb-liste .mb-grp .mb-gn')]
     .map((el) => el.textContent.trim()));
 }
 
@@ -260,5 +263,140 @@ test.describe('Metzger – Sortierung nach Gruppe und Nummer', () => {
       const g = await gruppen(page);
       expect(g.length, 'Bestellliste ist mitgefiltert').toBeGreaterThan(1);
       await expect(page.locator('#mb-q')).toHaveValue('');
+    });
+});
+
+// ════════════════════════════════════════════════════════════
+//  Warengruppen auf- und zuklappen
+// ════════════════════════════════════════════════════════════
+// Aus dem Laden: „kann man die Liste nach Gruppen aufklappbar darstellen?"
+// Bei über hundert Artikeln passen eingeklappt alle Gruppen auf einen Blick.
+
+test.describe('Metzger – Warengruppen aufklappen', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  const zeilen = (page) => page.locator('#mb-liste .mb-row');
+  const arows = (page) => page.locator('.mb-artikel .mb-arow');
+  const koepfe = (page) => page.locator('#mb-liste .mb-grp');
+
+  test('TC-MK-01: Beim Öffnen sind alle Gruppen aufgeklappt',
+    async ({ page }) => {
+      // Nichts verstecken, was bisher zu sehen war.
+      await oeffne(page);
+      expect(await zeilen(page).count()).toBe(ARTIKEL.length);
+    });
+
+  test('TC-MK-02: Ein Klick auf den Kopf klappt die Gruppe zu',
+    async ({ page }) => {
+      await oeffne(page);
+      const vorher = await zeilen(page).count();
+      await koepfe(page).first().click();
+      await page.waitForTimeout(400);
+      const nachher = await zeilen(page).count();
+      expect(nachher, 'nichts ausgeblendet').toBeLessThan(vorher);
+      // Der Kopf bleibt stehen – sonst käme man nicht wieder heran.
+      await expect(koepfe(page).first()).toBeVisible();
+      await expect(koepfe(page).first()).toHaveClass(/zu/);
+    });
+
+  test('TC-MK-03: Ein zweiter Klick klappt sie wieder auf',
+    async ({ page }) => {
+      await oeffne(page);
+      const vorher = await zeilen(page).count();
+      await koepfe(page).first().click();
+      await page.waitForTimeout(400);
+      await koepfe(page).first().click();
+      await page.waitForTimeout(400);
+      expect(await zeilen(page).count()).toBe(vorher);
+    });
+
+  test('TC-MK-04: Der zugeklappte Kopf nennt die erfassten Positionen',
+    async ({ page }) => {
+      /* Sonst verschwände die eigene Eingabe hinter einem zugeklappten
+         Block und man hielte die Bestellung für unvollständig. */
+      await oeffne(page, null, {
+        positionen: [{
+          nummer: 2, name: 'Lende Schwein',
+          portionen: [{ anzahl: 1, menge: 2, einheit: 'kg', vakuum: false }],
+        }],
+      });
+      // Vorbedingung: Die Position ist wirklich da, sonst prüfte der Fall nichts.
+      await expect(page.locator('#mb-liste .mb-chip').first(),
+        'keine Position erfasst — der Fall prüfte nichts').toBeVisible();
+
+      await page.evaluate(() => window.KMetzgerBest.klapp('b', 'Fleisch frisch'));
+      await page.waitForTimeout(400);
+      const kopf = koepfe(page).first();
+      await expect(kopf).toHaveClass(/zu/);
+      await expect(kopf.locator('.mb-gz'),
+        'der Zähler verschweigt die erfasste Position').toContainText('1 erfasst');
+    });
+
+  test('TC-MK-04b: Ohne Erfasstes nennt der Kopf die Artikelzahl',
+    async ({ page }) => {
+      await oeffne(page);
+      await page.evaluate(() => window.KMetzgerBest.klapp('b', 'Fleisch frisch'));
+      await page.waitForTimeout(400);
+      const zaehler = await koepfe(page).first().locator('.mb-gz').innerText();
+      expect(zaehler).not.toContain('erfasst');
+      expect(zaehler.trim()).toMatch(/^\d+$/);
+    });
+
+  test('TC-MK-05: Beim Suchen ist alles offen', async ({ page }) => {
+    /* Ein Treffer darf nicht hinter einem zugeklappten Block liegen —
+       man hielte ihn sonst für nicht vorhanden. */
+    await oeffne(page);
+    await page.evaluate(() => window.KMetzgerBest.klapp('b', 'Fleisch frisch'));
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.KMetzgerBest.such('Lende'));
+    await page.waitForTimeout(500);
+    await expect(page.locator('#mb-liste')).toContainText('Lende Schwein');
+  });
+
+  test('TC-MK-06: Die Verwaltung ist ebenfalls aufklappbar',
+    async ({ page }) => {
+      await oeffne(page, 'artikel');
+      const vorher = await arows(page).count();
+      expect(vorher).toBe(ARTIKEL.length);
+      await page.locator('.mb-artikel .mb-grp').first().click();
+      await page.waitForTimeout(400);
+      expect(await arows(page).count()).toBeLessThan(vorher);
+    });
+
+  test('TC-MK-07: „Alle zuklappen" räumt die Verwaltung auf',
+    async ({ page }) => {
+      await oeffne(page, 'artikel');
+      await page.evaluate(() => window.KMetzgerBest.klappAlle('a', true));
+      await page.waitForTimeout(400);
+      expect(await arows(page).count(), 'noch Zeilen sichtbar').toBe(0);
+      // Die Gruppenköpfe bleiben – sonst wäre die Seite leer.
+      expect(await page.locator('.mb-artikel .mb-grp').count())
+        .toBeGreaterThan(0);
+      await expect(page.locator('.mb-aklapp')).toContainText('Alle aufklappen');
+    });
+
+  test('TC-MK-08: Die beiden Ansichten klappen unabhängig voneinander',
+    async ({ page }) => {
+      /* Wer den Stamm aufräumt, will deshalb nicht die Bestellliste
+         zugeklappt vorfinden. */
+      await oeffne(page, 'artikel');
+      await page.evaluate(() => window.KMetzgerBest.klappAlle('a', true));
+      await page.waitForTimeout(400);
+      await page.evaluate(() => window.KMetzgerBest.sub('bestellung'));
+      await page.waitForTimeout(700);
+      expect(await zeilen(page).count(), 'Bestellliste ist mitgeklappt')
+        .toBe(ARTIKEL.length);
+    });
+
+  test('TC-MK-09: Eine Sprungmarke öffnet die zugeklappte Gruppe',
+    async ({ page }) => {
+      await oeffne(page);
+      await page.evaluate(() => window.KMetzgerBest.klappAlle('b', true));
+      await page.waitForTimeout(400);
+      expect(await zeilen(page).count()).toBe(0);
+      await page.evaluate(() => window.KMetzgerBest.spring(1));
+      await page.waitForTimeout(500);
+      expect(await zeilen(page).count(), 'Sprung öffnet nicht')
+        .toBeGreaterThan(0);
     });
 });

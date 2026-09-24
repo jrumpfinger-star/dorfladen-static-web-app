@@ -334,9 +334,29 @@ html.k-embed .k-tabs{display:none!important}
    (Spec metzger-tablett-hoch, F3) */
 .mb-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--mb-sp,100%),1fr));
   gap:4px 10px;align-items:stretch}
+/* Der Gruppenkopf ist ein Knopf: Er klappt die Warengruppe auf und zu.
+   Aus dem Laden: „kann man die Liste nach Gruppen aufklappbar
+   darstellen?" Bei über hundert Artikeln passen eingeklappt alle neun
+   Gruppen auf einen Blick. Das Aussehen der früheren Überschrift
+   bleibt — sie sah richtig aus, sie war nur nicht bedienbar. */
 .mb-grp{grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;
   letter-spacing:.4px;color:#6b7280;margin:12px 0 2px;border-bottom:1px solid var(--c-border,#e5e7eb);
-  padding-bottom:4px}
+  padding-bottom:4px;
+  display:flex;align-items:center;gap:8px;width:100%;
+  background:none;border-top:0;border-left:0;border-right:0;
+  text-align:left;cursor:pointer;font-family:inherit;
+  /* 32 px statt 44: Der Kopf ist eine Zwischenüberschrift, kein
+     Bedienfeld in der Zeilenflucht. Mit 44 px wüchse die Liste um
+     neun mal 12 px, ohne dass jemand danach zielt. */
+  min-height:32px}
+.mb-grp:hover{color:#374151;background:rgba(0,0,0,.02)}
+.mb-grp:focus-visible{outline:2px solid var(--c-green,#2e7d4f);outline-offset:1px}
+.mb-grp .mb-gp{flex:0 0 auto;font-size:10px;line-height:1;width:10px}
+.mb-grp .mb-gn{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+/* Zähler rechts: eingeklappt sagt er, was sich dahinter verbirgt. */
+.mb-grp .mb-gz{flex:0 0 auto;font-weight:600;color:#9ca3af;
+  font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0}
+.mb-grp .mb-gz.voll{color:var(--c-green,#2e7d4f)}
 .mb-row{background:#fff;border-radius:8px;padding:4px 8px;box-shadow:0 1px 2px rgba(0,0,0,.05);
   border-left:4px solid transparent;display:grid;grid-template-columns:46px minmax(0,1fr) auto;
   gap:4px 8px;align-items:center;scroll-margin-top:120px;scroll-margin-bottom:90px}

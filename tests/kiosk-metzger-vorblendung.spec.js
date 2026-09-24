@@ -771,8 +771,16 @@ test.describe('Artikelliste auf allen Breiten', () => {
       if (!z.length) return null;
       const panel = document.getElementById('panel-metzgerbest');
       const pr = panel.getBoundingClientRect();
-      const oben = z[0].getBoundingClientRect().top;
-      const spalten = z.filter((r) => Math.abs(r.getBoundingClientRect().top - oben) < 2).length;
+      /* Die Spaltenzahl NICHT an der ersten Zeile ablesen: Seit die
+         Artikelliste nach Warengruppen aufklappbar ist, steht vor jeder
+         Gruppe eine Überschrift über die volle Breite. Gehört die erste
+         Zeile zu einer Gruppe mit nur einem Artikel, steht sie allein in
+         ihrer Rasterzeile — und die Liste sähe einspaltig aus, obwohl sie
+         es nicht ist. Die Zahl der verschiedenen linken Kanten ist die
+         verlässliche Größe; TC-A03/A04 messen längst so.
+         (Spec metzger-artikel-sortierung) */
+      const spalten = new Set(
+        z.map((r) => Math.round(r.getBoundingClientRect().left))).size;
       const hoehe = Math.round(z[0].getBoundingClientRect().height);
       const raus = z.some((r) => [...r.querySelectorAll('.mb-btn')].some((b) => {
         const q = b.getBoundingClientRect();

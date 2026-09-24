@@ -4267,6 +4267,9 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 }
 .mb-asuche:focus{ outline:2px solid var(--gr, #2e7d4f); outline-offset:1px }
 
+/* „Alle zuklappen" steht zwischen Suche und „+ Neuer Artikel". */
+.mb-aklapp{ flex:0 0 auto; white-space:nowrap }
+
 /* Leermeldung, wenn die Suche nichts findet. */
 .mb-aleer{
   padding:22px 16px;

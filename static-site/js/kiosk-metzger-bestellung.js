@@ -29,6 +29,10 @@ window.KMetzgerBest = (function () {
   // beiden Reiter zeigen verschiedene Listen, und ein beim Umschalten
   // mitwanderndes Suchwort hätte den Artikelstamm unerwartet gefiltert.
   var _asuche = '';
+  // Eingeklappte Warengruppen, je Ansicht getrennt: 'b' Bestellliste,
+  // 'a' Artikelstamm. Die beiden sind verschiedene Aufgaben - wer den
+  // Stamm aufraeumt, will deshalb nicht die Bestellliste zugeklappt haben.
+  var _zu = { b: {}, a: {} };
   // Vorgabe ist die kurze Liste: nur was der Metzger uns schon geliefert hat.
   // Von 84 Formularzeilen sind das 57 - der Rest steht nur auf dem Papier.
   var _umfang = 'ueblich';        // ueblich | alle | best (Spec F7)
@@ -705,18 +709,60 @@ window.KMetzgerBest = (function () {
     });
   }
 
+  /**
+   * Die sichtbaren Artikel als Bloecke je Warengruppe.
+   * Reihenfolge der Bloecke ist die der sortierten Liste.
+   */
+  function gruppenBloecke(liste, nimm) {
+    var raus = [], nach = {};
+    liste.forEach(function (a) {
+      if (nimm && !nimm(a)) return;
+      var g = a.gruppe || '';
+      if (!(g in nach)) { nach[g] = { name: g, artikel: [] }; raus.push(nach[g]); }
+      nach[g].artikel.push(a);
+    });
+    return raus;
+  }
+
+  /** Ist dieser Block eingeklappt? Beim Suchen ist immer alles offen. */
+  function istZu(wo, gruppe) {
+    if (wo === 'b' ? _suche : _asuche) return false;
+    return !!(_zu[wo] && _zu[wo][gruppe]);
+  }
+
+  /** Kopfzeile eines Blocks: Name, Zähler, Pfeil. */
+  function gruppenKopf(wo, name, gi, zu, anzahl, erfasst) {
+    var id = wo === 'b' ? ' id="mb-g' + gi + '"' : '';
+    var zusatz = erfasst
+      ? '<span class="mb-gz voll">' + erfasst + ' erfasst</span>'
+      : '<span class="mb-gz">' + anzahl + '</span>';
+    return '<button type="button" class="mb-grp' + (zu ? ' zu' : '') + '"' + id
+      + ' aria-expanded="' + (zu ? 'false' : 'true') + '"'
+      + ' onclick="KMetzgerBest.klapp(\'' + wo + '\',\'' + jsText(name) + '\')">'
+      + '<span class="mb-gp">' + (zu ? '\u25B8' : '\u25BE') + '</span>'
+      + '<span class="mb-gn">' + esc(name) + '</span>'
+      + zusatz + '</button>';
+  }
+
   function liste() {
     var h = '<div class="mb-liste k-liste" id="mb-liste">';
-    var gruppe = null, gi = -1, treffer = 0;
-    nachGruppeUndNummer(_artikel).forEach(function (a) {
-      var p = positionVon(a);
-      if (!sichtbar(a, p)) return;
-      if (a.gruppe !== gruppe) {
-        gruppe = a.gruppe; gi++;
-        h += '<div class="mb-grp" id="mb-g' + gi + '">' + esc(gruppe) + '</div>';
-      }
-      treffer++;
-      h += zeile(a, p);
+    var treffer = 0;
+    var bloecke = gruppenBloecke(nachGruppeUndNummer(_artikel), function (a) {
+      return sichtbar(a, positionVon(a));
+    });
+    bloecke.forEach(function (b, gi) {
+      var zu = istZu('b', b.name);
+      /* Der Zähler am eingeklappten Kopf nennt die ERFASSTEN Positionen.
+         Ohne ihn verschwände die eigene Eingabe hinter einem zugeklappten
+         Block — man hielte die Bestellung für unvollständig. */
+      var erfasst = 0;
+      b.artikel.forEach(function (a) { if (bestellt(positionVon(a))) erfasst++; });
+      treffer += b.artikel.length;
+      h += gruppenKopf('b', b.name, gi, zu, b.artikel.length, erfasst);
+      if (zu) return;
+      b.artikel.forEach(function (a) {
+        h += zeile(a, positionVon(a));
+      });
     });
     // Zusatzpositionen, die zu keinem Katalogartikel gehoeren (F8)
     var extra = (_b.positionen || []).filter(function (p) {
@@ -1496,11 +1542,46 @@ window.KMetzgerBest = (function () {
 
   function filter(alle) { umfang(alle ? 'alle' : 'ueblich'); }
 
+  /** Eine Warengruppe auf- oder zuklappen. */
+  function klapp(wo, gruppe) {
+    // Offene Aenderungen an einer Portion nicht verlieren (wie bei `zu`).
+    if (wo === 'b') schreibeDurch();
+    if (!_zu[wo]) _zu[wo] = {};
+    if (_zu[wo][gruppe]) delete _zu[wo][gruppe];
+    else _zu[wo][gruppe] = true;
+    render();
+  }
+
+  /** Alle Gruppen einer Ansicht zu- oder aufklappen. */
+  function klappAlle(wo, zu) {
+    if (wo === 'b') schreibeDurch();
+    _zu[wo] = {};
+    if (zu) {
+      var quelle = wo === 'b'
+        ? gruppenBloecke(nachGruppeUndNummer(_artikel), function (a) {
+          return sichtbar(a, positionVon(a));
+        })
+        : gruppenBloecke(artikelSortiert());
+      quelle.forEach(function (b) { _zu[wo][b.name] = true; });
+    }
+    render();
+  }
+
   function spring(i) {
     blatt(false);
     // Die Sprungmarken stehen jetzt im Filterblatt — das schliesst sich hier.
     var fb = document.querySelector('#panel-metzgerbest .k-filterblatt');
     if (fb) fb.hidden = true;
+    /* Ist die Zielgruppe eingeklappt, wird sie geoeffnet. Ein Sprung auf
+       einen zugeklappten Block sieht sonst aus, als sei nichts passiert. */
+    var bloecke = gruppenBloecke(nachGruppeUndNummer(_artikel), function (a) {
+      return sichtbar(a, positionVon(a));
+    });
+    var ziel = bloecke[i];
+    if (ziel && _zu.b && _zu.b[ziel.name]) {
+      delete _zu.b[ziel.name];
+      render();
+    }
     var el = document.getElementById('mb-g' + i);
     if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
@@ -1757,6 +1838,11 @@ window.KMetzgerBest = (function () {
   function artikelKopf() {
     var alle = _artikel.length;
     var zahl = artikelSortiert().length;
+    // „Alle zuklappen" nur anbieten, wenn überhaupt noch etwas offen ist.
+    var bloecke = gruppenBloecke(artikelSortiert());
+    var zugeklappt = bloecke.length > 0 && bloecke.every(function (b) {
+      return istZu('a', b.name);
+    });
     return '<div class="mb-akopf">'
       + '<span class="mb-azahl">'
       + (_asuche ? zahl + ' von ' + alle : alle + ' Artikel')
@@ -1768,6 +1854,9 @@ window.KMetzgerBest = (function () {
       + ' placeholder="Artikel oder Nummer suchen \u2026"'
       + ' value="' + esc(_asuche) + '"'
       + ' oninput="KMetzgerBest.asuch(this.value)">'
+      + '<button class="mb-btn mb-aklapp"'
+      + ' onclick="KMetzgerBest.klappAlle(\'a\',' + (zugeklappt ? 'false' : 'true') + ')">'
+      + (zugeklappt ? 'Alle aufklappen' : 'Alle zuklappen') + '</button>'
       + '<button class="mb-send" onclick="KMetzgerBest.neuerArtikel()">'
       + '+ Neuer Artikel</button></div>';
   }
@@ -1796,30 +1885,42 @@ window.KMetzgerBest = (function () {
       return '<div class="mb-artikel"><div class="mb-aleer">'
         + 'Kein Artikel zu \u201E' + esc(_asuche) + '\u201C.</div></div>';
     }
-    return '<div class="mb-artikel">' + liste.map(function (a) {
-      var st = standardText(a);
-      var ruf = "KMetzgerBest.bearbeiten('" + jsText(a.name) + "')";
-      return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
-        + '<span class="mb-nr' + (a.nummer ? '' : ' leer') + '">'
-        + esc(a.nummer || '–') + '</span>'
-        + '<span class="mb-aname">'
-        /* Der Name braucht ein EIGENES Element: als nackter Textknoten
-           waere er ein anonymes Flex-Element — nicht adressierbar, also
-           ohne `min-width:0` und ohne Auslassungspunkte. Lange Namen
-           waeren hart abgeschnitten worden und haetten die Vorgabe
-           verdraengt. (Spec metzger-artikelliste, F9) */
-        + '<span class="mb-atxt">' + esc(a.name) + '</span>'
-        + '<span class="mb-astd' + (st ? '' : ' leer') + '">'
-        + (st ? 'Vorgabe: ' + esc(st) : 'keine Vorgabe') + '</span></span>'
-        + '<span class="mb-agrp">' + esc(a.gruppe || '') + '</span>'
-        + '<span class="mb-apreis">' + (a.preis
-          ? String(a.preis).replace('.', ',') + ' €/kg' : '—') + '</span>'
-        + '<button class="mb-btn" onclick="' + ruf + '">Bearbeiten</button>'
-        + '<button class="mb-btn" onclick="KMetzgerBest.aktiv(\''
-        + jsText(a.name) + '\',' + (a.aktiv === false) + ')">'
-        + (a.aktiv === false ? 'Einblenden' : 'Ausblenden') + '</button>'
-        + '</div>';
-    }).join('') + '</div>';
+    /* Nach Warengruppen aufklappbar. Bei über hundert Artikeln ist die
+       flache Liste unübersichtlich — eingeklappt passen alle neun Gruppen
+       auf einen Blick, und man öffnet nur die gesuchte. */
+    var h = '<div class="mb-artikel">';
+    gruppenBloecke(liste).forEach(function (b, gi) {
+      var zu = istZu('a', b.name);
+      h += gruppenKopf('a', b.name, gi, zu, b.artikel.length, 0);
+      if (zu) return;
+      h += b.artikel.map(artikelZeile).join('');
+    });
+    return h + '</div>';
+  }
+
+  function artikelZeile(a) {
+    var st = standardText(a);
+    var ruf = "KMetzgerBest.bearbeiten('" + jsText(a.name) + "')";
+    return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
+      + '<span class="mb-nr' + (a.nummer ? '' : ' leer') + '">'
+      + esc(a.nummer || '–') + '</span>'
+      + '<span class="mb-aname">'
+      /* Der Name braucht ein EIGENES Element: als nackter Textknoten
+         waere er ein anonymes Flex-Element — nicht adressierbar, also
+         ohne `min-width:0` und ohne Auslassungspunkte. Lange Namen
+         waeren hart abgeschnitten worden und haetten die Vorgabe
+         verdraengt. (Spec metzger-artikelliste, F9) */
+      + '<span class="mb-atxt">' + esc(a.name) + '</span>'
+      + '<span class="mb-astd' + (st ? '' : ' leer') + '">'
+      + (st ? 'Vorgabe: ' + esc(st) : 'keine Vorgabe') + '</span></span>'
+      + '<span class="mb-agrp">' + esc(a.gruppe || '') + '</span>'
+      + '<span class="mb-apreis">' + (a.preis
+        ? String(a.preis).replace('.', ',') + ' €/kg' : '—') + '</span>'
+      + '<button class="mb-btn" onclick="' + ruf + '">Bearbeiten</button>'
+      + '<button class="mb-btn" onclick="KMetzgerBest.aktiv(\''
+      + jsText(a.name) + '\',' + (a.aktiv === false) + ')">'
+      + (a.aktiv === false ? 'Einblenden' : 'Ausblenden') + '</button>'
+      + '</div>';
   }
 
   /** Text für ein onclick-Attribut: erst fürs Skript, dann fürs HTML. */
@@ -2165,6 +2266,7 @@ window.KMetzgerBest = (function () {
 
   return {
     onShow: onShow, sub: sub, tag: tag, such: such, asuch: asuch,
+    klapp: klapp, klappAlle: klappAlle,
     filter: filter, spring: spring,
     blatt: blatt, umfang: umfang, umschalten: umschalten,
     freiTipp: freiTipp, frei: frei, hinweisBlatt: hinweisBlatt,
