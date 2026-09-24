@@ -59,13 +59,21 @@ async function mockApi(page, opts = {}) {
   // Serverzustand nachbilden: ein PATCH markiert die Konversation dauerhaft
   // als gelesen, damit ein Neuladen nicht wieder "ungelesen" liefert.
   const readIds = new Set();
+  const unreadIds = new Set();
   page.on('request', (req) => {
     if (req.method() === 'PATCH' && /contact-message/.test(req.url())) {
       let body = {};
       try { body = JSON.parse(req.postData() || '{}'); } catch (e) { /* ignore */ }
       patches.push({ url: req.url(), body });
       const m = /contact-message\/([^/?]+)/.exec(req.url());
-      if (m && body.kommentar_gelesen) readIds.add(m[1]);
+      if (m && body.kommentar_gelesen === true) readIds.add(m[1]);
+      // Der Weg zurueck muss der Server ebenfalls behalten - sonst kaeme
+      // eine wieder auf ungelesen gesetzte Konversation nach dem Neuladen
+      // als gelesen zurueck, und der Waechter prueft nur die Anzeige.
+      if (m && body.kommentar_gelesen === false) {
+        readIds.delete(m[1]);
+        unreadIds.add(m[1]);
+      }
     }
   });
 
@@ -97,7 +105,9 @@ async function mockApi(page, opts = {}) {
     const json = (o) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
     if (route.request().method() !== 'GET') return json({ success: true });
     const list = threads().map((t) => Object.assign({}, t, {
-      kommentar_gelesen: opts.allRead || t.kommentar_gelesen || readIds.has(t.id),
+      kommentar_gelesen: unreadIds.has(t.id)
+        ? false
+        : (opts.allRead || t.kommentar_gelesen || readIds.has(t.id)),
     }));
     if (/mode=unread/.test(url)) {
       return json({ success: true, unread_count: list.filter((t) => !t.kommentar_gelesen).length });
@@ -401,5 +411,110 @@ test.describe('Kontakt – Einfügen aus der Zwischenablage (K5)', () => {
     }, id);
     await page.waitForTimeout(500);
     await expect(page.locator('#kontakt-list img[src^="data:image"]')).toHaveCount(0);
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  K9 – Wieder als ungelesen markieren
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „nachrichten sollen auch wieder als ungelesen markiert
+// werden koennen."
+//
+// Wer eine Nachricht aufklappt, hat sie damit schon als gelesen markiert —
+// auch wenn er sie nur kurz ueberflogen hat und sich spaeter darum
+// kuemmern wollte. Ohne Weg zurueck verschwindet sie aus „Neue
+// Nachrichten" und der Zaehler faellt auf null.
+
+test.describe('Kontakt – wieder als ungelesen (K9)', () => {
+
+  /** Die Karte einer Konversation ueber ihren Namen finden. */
+  const karte = (page, name) =>
+    page.locator('#kontakt-list .kk-card').filter({ hasText: name });
+
+  test('TC-KU-01: Eine gelesene Konversation traegt einen Knopf',
+    async ({ page }) => {
+      await openKontakt(page);
+      const k = karte(page, 'Anna Gelesen');
+      await expect(k.locator('button.kk-ticks')).toHaveCount(1);
+      await expect(k.locator('button.kk-ticks'))
+        .toHaveAttribute('title', /ungelesen/i);
+    });
+
+  test('TC-KU-02: Eine ungelesene hat keinen — dort waere er sinnlos',
+    async ({ page }) => {
+      await openKontakt(page);
+      await expect(karte(page, 'Bert Ungelesen').locator('button.kk-ticks'))
+        .toHaveCount(0);
+    });
+
+  test('TC-KU-03: Der Klick meldet es dem Server', async ({ page }) => {
+    await openKontakt(page);
+    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await page.waitForTimeout(600);
+    const raus = page.__patches.filter((p) => p.body.kommentar_gelesen === false);
+    expect(raus.length, 'kein PATCH mit kommentar_gelesen:false').toBe(1);
+    expect(raus[0].url).toContain('c1');
+  });
+
+  test('TC-KU-04: Sie rutscht zurueck zu den neuen Nachrichten',
+    async ({ page }) => {
+      /* Mit `allRead` sind zunaechst alle gelesen. Wird dann EINE wieder
+         auf ungelesen gesetzt, muss sie unter „Neue Nachrichten" stehen
+         und die uebrigen unter „Bereits gelesen". (Ohne allRead waeren
+         hinterher alle drei ungelesen — dann entfallen die Ueberschriften
+         zu Recht, und der Fall prueefte nichts.) */
+      await openKontakt(page, { allRead: true });
+      await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+      await page.waitForTimeout(700);
+
+      // Jetzt traegt sie die gruene Zahl statt des Hakens.
+      await expect(karte(page, 'Anna Gelesen').locator('button.kk-ticks'))
+        .toHaveCount(0);
+
+      const lage = await page.evaluate(() => {
+        const kinder = [...document.querySelectorAll(
+          '#kontakt-list .kk-sec, #kontakt-list .kk-card')];
+        let abschnitt = '';
+        for (const el of kinder) {
+          if (el.classList.contains('kk-sec')) { abschnitt = el.textContent.trim(); continue; }
+          if (el.textContent.includes('Anna Gelesen')) return abschnitt;
+        }
+        return '(kein Abschnitt)';
+      });
+      expect(lage, `steht unter „${lage}"`).toMatch(/Neue Nachrichten/i);
+    });
+
+  test('TC-KU-05: Der Klick klappt die Karte nicht auf', async ({ page }) => {
+    /* Der Haken sitzt in der Kopfzeile, und die ist anklickbar. Ohne
+       stopPropagation klappte der Verlauf auf — und `toggle()` haette sie
+       im selben Atemzug wieder als gelesen markiert. */
+    await openKontakt(page);
+    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await page.waitForTimeout(700);
+    await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(0);
+    const raus = page.__patches.filter((p) => p.body.kommentar_gelesen === true);
+    expect(raus.length, 'wurde sofort wieder als gelesen gemeldet').toBe(0);
+  });
+
+  test('TC-KU-06: Ein offener Verlauf wird zugeklappt', async ({ page }) => {
+    await openKontakt(page);
+    await karte(page, 'Anna Gelesen').locator('.kk-name').click();
+    await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(1);
+    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await page.waitForTimeout(700);
+    await expect(page.locator('#kontakt-list .kk-thread'),
+      'bliebe er offen, waere die naechste Beruehrung wieder „gelesen"')
+      .toHaveCount(0);
+  });
+
+  test('TC-KU-07: Es ueberlebt das Neuladen', async ({ page }) => {
+    // Sonst waere es nur eine Anzeige, die beim naechsten Blick weg ist.
+    await openKontakt(page);
+    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await page.waitForTimeout(700);
+    await page.evaluate(() => window.KKontakt.reload());
+    await page.waitForTimeout(900);
+    await expect(karte(page, 'Anna Gelesen').locator('button.kk-ticks'))
+      .toHaveCount(0);
   });
 });

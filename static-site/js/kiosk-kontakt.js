@@ -211,12 +211,20 @@
     h+='<span class="kk-prev" style="min-width:0;color:'+(unread?'#111827':'#6b7280')+';font-weight:'+(unread?'700':'400')+';font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(lastTxt)+'</span>';
     h+='<span class="kk-time" style="font-size:11px;color:'+(unread?'#16a34a':'#9ca3af')+';font-weight:'+(unread?'700':'400')+';white-space:nowrap">'+fmtTime(lastTs(t))+'</span>';
     h+='</span>';
-    // Status: ungelesen -> gruene Zahl, gelesen -> blauer Doppelhaken (WhatsApp-Metapher)
+    // Status: ungelesen -> gruene Zahl, gelesen -> blauer Doppelhaken
+    // (WhatsApp-Metapher). Der Haken ist zugleich der Weg zurueck:
+    // Aus dem Laden: „nachrichten sollen auch wieder als ungelesen
+    // markiert werden koennen." Wer eine Nachricht aufklappt, hat sie
+    // damit schon als gelesen markiert - auch wenn er sie nur kurz
+    // ueberflogen hat und sich spaeter darum kuemmern wollte.
+    // (Spec kontakt-ungelesen)
     h+='<span class="kk-state">';
     if(unread){
       h+='<span title="'+uc+' neue Nachricht(en)" style="background:#25D366;color:#fff;font-size:12px;font-weight:600;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)">'+uc+'</span>';
     } else {
-      h+='<span class="kk-ticks" title="Gelesen">'+TICKS+'</span>';
+      h+='<button type="button" class="kk-ticks kk-ticks-btn" title="Gelesen – klicken, um wieder als ungelesen zu markieren"'
+        + ' aria-label="Wieder als ungelesen markieren"'
+        + ' onclick="event.stopPropagation();KKontakt.markUnread(\''+t.id+'\')">'+TICKS+'</button>';
     }
     h+='</span>';
     h+='</div>';
@@ -304,6 +312,37 @@
   function markRead(id){
     fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({kommentar_gelesen:true})})
       .then(function(){ pollBadge(); }).catch(function(){});
+  }
+
+  /* Wieder auf ungelesen setzen (Spec kontakt-ungelesen).
+
+     Drei Dinge muessen zusammenpassen, sonst wirkt es halb:
+     1. Der Server merkt es sich - sonst ist es nach dem naechsten Laden weg.
+     2. Die Konversation rutscht zurueck nach „Neue Nachrichten"; dafuer
+        muss `_unreadAtLoad` mitgezogen werden, das sonst die Gruppierung
+        waehrend einer Sitzung festhaelt.
+     3. Ein offener Verlauf wird zugeklappt. Bliebe er offen, markierte ihn
+        `toggle()` beim naechsten Antippen sofort wieder als gelesen - und
+        beim Zuklappen saehe man gar nicht, dass sich etwas getan hat. */
+  function markUnread(id){
+    var t=_threads.find(function(x){return x.id===id;});
+    if(!t) return;
+    t.kommentar_gelesen=false;
+    _unreadAtLoad[id]=true;
+    delete _open[id];
+    render();
+    fetch(API+'/contact-message/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({kommentar_gelesen:false})})
+      .then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(res){
+        if(res&&res.success){ pollBadge(); return; }
+        // Nicht stillschweigend so tun, als waere es gespeichert.
+        t.kommentar_gelesen=true; delete _unreadAtLoad[id]; render();
+        if(window.K&&K.toast) K.toast('Konnte nicht als ungelesen markiert werden.');
+      })
+      .catch(function(){
+        t.kommentar_gelesen=true; delete _unreadAtLoad[id]; render();
+        if(window.K&&K.toast) K.toast('Konnte nicht als ungelesen markiert werden.');
+      });
   }
 
   function send(id){
@@ -423,7 +462,7 @@
   }
 
   window.KKontakt = {
-    onShow:onShow, reload:reload, toggle:toggle,
+    onShow:onShow, reload:reload, toggle:toggle, markUnread:markUnread,
     send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom,
     emoji:emoji, toggleSel:toggleSel, clearSel:clearSel, deleteOne:deleteOne, deleteSelected:deleteSelected, deleteMsg:deleteMsg
   };

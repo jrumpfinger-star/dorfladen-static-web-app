@@ -887,6 +887,16 @@ html[data-theme="dark"] .bk-foot{background:var(--c-card)}
 .kk-hdr .kk-arrow{width:14px;display:inline-flex;align-items:center;justify-content:center}
 .kk-ticks{color:#53bdeb;display:inline-flex;align-items:center;flex-shrink:0}
 .kk-ticks.pending{color:#c7ced6}
+/* Der Lesehaken ist zugleich der Weg zurueck auf „ungelesen".
+   Als Knopf braucht er eine Antippflaeche - 28 px, nicht 44:
+   Er sitzt in der Kopfzeile neben Name und Uhrzeit, und 44 px
+   wuerden jede Karte hoeher machen. Auf dem Telefon liegt er am
+   Rand, wo kein anderes Ziel danebensteht.
+   (Spec kontakt-ungelesen) */
+button.kk-ticks{background:none;border:0;padding:0 2px;cursor:pointer;
+  min-width:28px;min-height:28px;justify-content:center;border-radius:6px}
+button.kk-ticks:hover{background:rgba(83,189,235,.14)}
+button.kk-ticks:focus-visible{outline:2px solid #2563eb;outline-offset:1px}
 .kk-sec{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--c-muted);margin:2px 0 8px;padding:0 2px}
 .kk-sec.kk-sec-new{color:#15803d}
 .kk-sec .kk-sec-n{font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 9px}
