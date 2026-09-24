@@ -96,3 +96,45 @@ Namen wären eine Falle für den Nächsten.
 | [kiosk-kontakt.js](../../static-site/js/kiosk-kontakt.js) | `markUnread`, Haken als Knopf |
 | [kiosk-klassisch.html](../../static-site/kiosk-klassisch.html) | `button.kk-ticks` |
 | [kiosk-kontakt-haken.spec.js](../../tests/kiosk-kontakt-haken.spec.js) | 7 Fälle, Mock erweitert |
+## F4: Der Haken in der Nachricht
+
+Nachgereicht: *„Kann auch eine einzelne Nachricht als ungelesen
+gekennzeichnet werden?"*
+
+**Ehrliche Antwort: nicht wirklich — und das hat einen Grund.** Ein
+Lesezustand *je Nachricht* wird nicht gespeichert. Es gibt nur
+`dl_kommentar_gelesen` für die Konversation; der Zustand der einzelnen
+Blase wird daraus **abgeleitet**:
+
+> Kundennachrichten am **Ende** des Verlaufs gelten als ungelesen, solange
+> die Konversation nicht als gelesen markiert ist.
+
+Der Haken in der Blase ist trotzdem ein Knopf — er markiert die
+**Konversation**. Damit stehen genau die Kundennachrichten am Ende wieder
+offen, in aller Regel das Gemeinte. Der Titel sagt es ausdrücklich
+(„…die Konversation wieder als ungelesen markieren"), damit niemand mehr
+erwartet als geschieht.
+
+**Eine Erkenntnis aus dem Prüfen:** Im *offenen* Verlauf kann eine Blase
+nie ungelesen sein — `toggle()` markiert die Konversation beim Aufklappen.
+Ein Test, der eine offene ungelesene Blase erwartet, prüft etwas
+Unmögliches; mein erster Entwurf tat genau das. Sichtbar wird die Wirkung
+an der **Karte**, die danach die grüne Zahl trägt.
+
+**TC-KB-01: Eine gelesene Blase trägt einen Knopf.**
+
+**TC-KB-02: Der Titel sagt, dass die Konversation gemeint ist.**
+
+**TC-KB-03: Die Wirkung ist an der Karte zu sehen.**
+
+**TC-KB-04: Der Klick meldet es dem Server.**
+
+**TC-KB-05: Der Klick klappt den Verlauf zu.**
+
+### Was ein echter Lesezustand je Nachricht bräuchte
+
+Ein Feld am Verlaufseintrag (etwa `gelesen_bis`) statt am Datensatz. Das
+wäre eine Änderung am Datenmodell und an jeder Stelle, die den Verlauf
+schreibt — lohnend erst, wenn im Laden tatsächlich einzelne Nachrichten
+einer langen Unterhaltung getrennt vorgemerkt werden sollen. Bisher ist
+das nicht der Fall.

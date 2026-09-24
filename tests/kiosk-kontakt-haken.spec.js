@@ -449,7 +449,7 @@ test.describe('Kontakt – wieder als ungelesen (K9)', () => {
 
   test('TC-KU-03: Der Klick meldet es dem Server', async ({ page }) => {
     await openKontakt(page);
-    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks').click();
     await page.waitForTimeout(600);
     const raus = page.__patches.filter((p) => p.body.kommentar_gelesen === false);
     expect(raus.length, 'kein PATCH mit kommentar_gelesen:false').toBe(1);
@@ -464,11 +464,11 @@ test.describe('Kontakt – wieder als ungelesen (K9)', () => {
          hinterher alle drei ungelesen — dann entfallen die Ueberschriften
          zu Recht, und der Fall prueefte nichts.) */
       await openKontakt(page, { allRead: true });
-      await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+      await karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks').click();
       await page.waitForTimeout(700);
 
       // Jetzt traegt sie die gruene Zahl statt des Hakens.
-      await expect(karte(page, 'Anna Gelesen').locator('button.kk-ticks'))
+      await expect(karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks'))
         .toHaveCount(0);
 
       const lage = await page.evaluate(() => {
@@ -489,7 +489,7 @@ test.describe('Kontakt – wieder als ungelesen (K9)', () => {
        stopPropagation klappte der Verlauf auf — und `toggle()` haette sie
        im selben Atemzug wieder als gelesen markiert. */
     await openKontakt(page);
-    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks').click();
     await page.waitForTimeout(700);
     await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(0);
     const raus = page.__patches.filter((p) => p.body.kommentar_gelesen === true);
@@ -500,7 +500,7 @@ test.describe('Kontakt – wieder als ungelesen (K9)', () => {
     await openKontakt(page);
     await karte(page, 'Anna Gelesen').locator('.kk-name').click();
     await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(1);
-    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks').click();
     await page.waitForTimeout(700);
     await expect(page.locator('#kontakt-list .kk-thread'),
       'bliebe er offen, waere die naechste Beruehrung wieder „gelesen"')
@@ -510,11 +510,11 @@ test.describe('Kontakt – wieder als ungelesen (K9)', () => {
   test('TC-KU-07: Es ueberlebt das Neuladen', async ({ page }) => {
     // Sonst waere es nur eine Anzeige, die beim naechsten Blick weg ist.
     await openKontakt(page);
-    await karte(page, 'Anna Gelesen').locator('button.kk-ticks').click();
+    await karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks').click();
     await page.waitForTimeout(700);
     await page.evaluate(() => window.KKontakt.reload());
     await page.waitForTimeout(900);
-    await expect(karte(page, 'Anna Gelesen').locator('button.kk-ticks'))
+    await expect(karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks'))
       .toHaveCount(0);
   });
 });
@@ -606,4 +606,72 @@ test.describe('Kontakt – in den Kalender (K10)', () => {
       await expect(page.locator('#kal-title'))
         .toHaveValue('Ist der Mittagstisch noch offen? – Rückruf');
     });
+});
+// ════════════════════════════════════════════════════
+//  K11 – Der Haken an der einzelnen Nachricht
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „Kann auch eine einzelne Nachricht als ungelesen
+// gekennzeichnet werden?"
+//
+// Ehrlich dazu: Ein Lesezustand JE NACHRICHT wird nicht gespeichert — es
+// gibt nur ein Feld für die Konversation. Der Zustand der einzelnen Blase
+// wird daraus abgeleitet. Ein Klick auf den Haken IN der Blase markiert
+// deshalb die Konversation; damit stehen genau die Kundennachrichten am
+// Ende wieder offen. Der Titel sagt das ausdrücklich.
+
+test.describe('Kontakt – Haken in der Blase (K11)', () => {
+
+  const karte = (page, name) =>
+    page.locator('#kontakt-list .kk-card').filter({ hasText: name });
+
+  async function verlaufOeffnen(page, name, opts) {
+    await openKontakt(page, opts);
+    await karte(page, name).locator('.kk-name').click();
+    await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(1);
+  }
+
+  test('TC-KB-01: Eine gelesene Blase traegt einen Knopf', async ({ page }) => {
+    await verlaufOeffnen(page, 'Anna Gelesen');
+    const knopf = page.locator('#kontakt-list .kk-thread button.kk-ticks');
+    await expect(knopf).not.toHaveCount(0);
+  });
+
+  test('TC-KB-02: Der Titel sagt, dass die Konversation gemeint ist',
+    async ({ page }) => {
+      /* Sonst erwartet man mehr, als geschieht — ein Lesezustand je
+         Nachricht wird nicht gespeichert. */
+      await verlaufOeffnen(page, 'Anna Gelesen');
+      await expect(page.locator('#kontakt-list .kk-thread button.kk-ticks').first())
+        .toHaveAttribute('title', /Konversation/i);
+    });
+
+  test('TC-KB-03: Die Wirkung ist an der Karte zu sehen', async ({ page }) => {
+    /* Im offenen Verlauf kann eine Blase NIE ungelesen sein - `toggle()`
+       markiert die Konversation beim Aufklappen als gelesen. Sichtbar wird
+       die Wirkung deshalb an der Karte: Sie traegt danach die gruene Zahl
+       statt des Hakens. Ein Test, der eine offene ungelesene Blase
+       erwartet, prueft etwas Unmoegliches. */
+    await verlaufOeffnen(page, 'Anna Gelesen', { allRead: true });
+    await page.locator('#kontakt-list .kk-thread button.kk-ticks').first().click();
+    await page.waitForTimeout(800);
+    await expect(karte(page, 'Anna Gelesen').locator('.kk-state button.kk-ticks'),
+      'die Karte zeigt weiter den Haken').toHaveCount(0);
+  });
+
+  test('TC-KB-04: Der Klick meldet es dem Server', async ({ page }) => {
+    await verlaufOeffnen(page, 'Anna Gelesen');
+    await page.locator('#kontakt-list .kk-thread button.kk-ticks').first().click();
+    await page.waitForTimeout(700);
+    const raus = page.__patches.filter((p) => p.body.kommentar_gelesen === false);
+    expect(raus.length, 'kein PATCH mit kommentar_gelesen:false').toBe(1);
+  });
+
+  test('TC-KB-05: Der Klick klappt den Verlauf zu', async ({ page }) => {
+    // Bliebe er offen, gaelte die Konversation beim naechsten Blick
+    // sofort wieder als gelesen.
+    await verlaufOeffnen(page, 'Anna Gelesen');
+    await page.locator('#kontakt-list .kk-thread button.kk-ticks').first().click();
+    await page.waitForTimeout(800);
+    await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(0);
+  });
 });

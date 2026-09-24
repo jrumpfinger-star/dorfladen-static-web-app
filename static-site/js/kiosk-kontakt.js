@@ -168,7 +168,28 @@
       var ticks='';
       if(!mine){
         var gelesen = idx < firstUnread;
-        ticks = '<span class="kk-ticks'+(gelesen?'':' pending')+'" title="'+(gelesen?'Von uns gelesen':'Noch nicht gelesen')+'">'+TICKS+'</span>';
+        /* Der Haken an der einzelnen Nachricht ist ebenfalls der Weg
+           zurueck. Aus dem Laden: „Kann auch eine einzelne Nachricht als
+           ungelesen gekennzeichnet werden?"
+
+           Ehrlich dazu: Ein Lesezustand JE NACHRICHT wird nicht
+           gespeichert - es gibt nur ein Feld fuer die Konversation. Der
+           Zustand der einzelnen Blase wird daraus abgeleitet (oben,
+           `firstUnread`): Kundennachrichten am Ende gelten als ungelesen.
+
+           Ein Klick markiert deshalb die KONVERSATION als ungelesen.
+           Damit stehen genau die Kundennachrichten am Ende wieder offen -
+           in aller Regel das, was gemeint ist. Der Titel sagt es
+           ausdruecklich, damit niemand mehr erwartet als geschieht.
+           (Spec kontakt-ungelesen, F4) */
+        ticks = gelesen
+          ? ('<button type="button" class="kk-ticks kk-ticks-btn"'
+             + ' title="Von uns gelesen – klicken, um die Konversation wieder'
+             + ' als ungelesen zu markieren"'
+             + ' aria-label="Konversation wieder als ungelesen markieren"'
+             + ' onclick="event.stopPropagation();KKontakt.markUnread(\''+t.id+'\')">'
+             + TICKS+'</button>')
+          : ('<span class="kk-ticks pending" title="Noch nicht gelesen">'+TICKS+'</span>');
       }
       var delBtn = m.t ? ('<span onclick="event.stopPropagation();KKontakt.deleteMsg(\''+t.id+'\',\''+m.t+'\')" title="Nachricht löschen" style="cursor:pointer;color:#cbd5e1;font-size:12px;flex-shrink:0">✕</span>') : '';
       /* „In den Kalender" nur an KUNDEN-Nachrichten und nur, wenn Text da
