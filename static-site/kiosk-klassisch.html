@@ -3282,6 +3282,16 @@ var K = (function(){
       html += '<span style="color:#16a34a">'+luc('check-circle',16)+'</span>';
       html += '<button class="k-btn k-btn-sm k-btn-outline" title="Versehentlich abgeholt? Zur\u00fcck auf Offen" onclick="K.resetStatus(\''+o.id+'\')">'+luc('rotate-ccw',13)+' <span class="oc-btn-label">Zur\u00fcck</span></button>';
     }
+    /* Endgültig löschen. Aus dem Laden: „Telefonbestellung sollen auch
+       gelöscht werden können und nicht nur storniert." Eine Fehleingabe
+       oder Testbestellung bleibt sonst für immer in Listen und Zählern
+       stehen.
+       Nur für telefonisch/am Tresen aufgenommene Bestellungen: Eine
+       Online-Bestellung sieht der Kunde in seiner Übersicht, dort bleibt
+       es beim Stornieren. (Spec telefon-bestellung-loeschen) */
+    if(_istVorOrt(o)){
+      html += '<button class="k-btn k-btn-sm k-btn-outline k-oc-del" title="Bestellung endg\u00fcltig l\u00f6schen" aria-label="Bestellung endg\u00fcltig l\u00f6schen" onclick="event.stopPropagation();K.showDeleteDialog(\''+o.id+'\')">'+luc('trash-2',13)+'</button>';
+    }
     html += '</span>';
     html += '</span>';
     html += '</div>';
@@ -3795,6 +3805,42 @@ var K = (function(){
       })
       .catch(function(e){toast('Verbindungsfehler \u2013 bitte erneut versuchen');});
     });
+  }
+
+  /* Eine telefonisch aufgenommene Bestellung endgültig entfernen.
+     Aus dem Laden: „Telefonbestellung sollen auch gelöscht werden können
+     und nicht nur storniert." Eine Fehleingabe bleibt sonst in jeder
+     Liste und in jedem Zähler stehen.
+     Der Weg ist bewusst zweistufig: Was weg ist, ist weg — im Gegensatz
+     zur Stornierung gibt es keinen Weg zurück.
+     (Spec telefon-bestellung-loeschen) */
+  function showDeleteDialog(id){
+    var o = orders.find(function(x){return x.id===id;});
+    var name = o ? (o.name||'ohne Namen') : '';
+    var was = o && o.gericht ? '«'+esc(o.gericht)+'»' : 'die Bestellung';
+    dlConfirm({
+      icon:'trash-2',
+      title:'Bestellung l\u00f6schen?',
+      msg:'<b>'+esc(name)+'</b> \u2013 '+was+' wird endg\u00fcltig entfernt. '
+        + 'Das l\u00e4sst sich nicht r\u00fcckg\u00e4ngig machen. '
+        + 'Soll die Bestellung nur abgesagt werden, nehmen Sie stattdessen „Stornieren".',
+      ok:'Endg\u00fcltig l\u00f6schen',
+      color:'#dc2626'
+    }, function(){ deleteOrder(id); });
+  }
+
+  function deleteOrder(id){
+    fetch(API+'/lunch-order/'+id,{method:'DELETE'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.success){
+          toast('Bestellung gel\u00f6scht');
+          loadOrders();
+        } else {
+          toast('L\u00f6schen fehlgeschlagen: '+(res.error||'Unbekannter Fehler'));
+        }
+      })
+      .catch(function(){ toast('Verbindungsfehler \u2013 bitte erneut versuchen'); });
   }
 
   function showConfirmDialog(id){
@@ -7026,6 +7072,7 @@ var K = (function(){
     hideReplyDialog: hideReplyDialog,
     sendReply: sendReply,
     showStornoDialog: showStornoDialog,
+    showDeleteDialog: showDeleteDialog,
     openNewOrder: openNewOrder,
     pickDish: pickDish,
     freiesGerichtAuf: freiesGerichtAuf, freiesGerichtTipp: freiesGerichtTipp,

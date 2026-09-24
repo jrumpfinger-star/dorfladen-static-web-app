@@ -65,7 +65,7 @@ def _headers(token):
 def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Max-Age": "86400",
         "Content-Type": "application/json; charset=utf-8",
@@ -1091,6 +1091,62 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             return func.HttpResponse(
                 json.dumps({"success": False, "error": f"Update fehlgeschlagen ({pr.status_code})"}, ensure_ascii=False),
+                status_code=500, headers=get_cors_headers(),
+            )
+
+        # ── DELETE: Telefonbestellung endgültig entfernen ──
+        # Aus dem Laden: „Telefonbestellung sollen auch gelöscht werden
+        # können und nicht nur storniert." Eine Fehleingabe oder eine
+        # Testbestellung bleibt sonst für immer in Listen und Zählern
+        # stehen.
+        #
+        # Nur telefonisch oder am Tresen aufgenommene Bestellungen. Eine
+        # Online-Bestellung gehört dem Kunden: Er sieht sie in seiner
+        # Bestellübersicht, und sie verschwinden zu lassen wäre für ihn
+        # nicht nachvollziehbar. Dort bleibt es bei der Stornierung.
+        # (Spec telefon-bestellung-loeschen)
+        if req.method == "DELETE" and record_id:
+            pruef_url = (
+                f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
+                f"?$select=dl_quelle,dl_bestellnummer,dl_name"
+            )
+            pruef = requests.get(pruef_url, headers=headers, timeout=15)
+            if pruef.status_code == 404:
+                # Schon weg: Für den Anrufenden ist das Ziel erreicht.
+                return func.HttpResponse(
+                    json.dumps({"success": True, "message": "Bestellung war bereits gelöscht"}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+            if pruef.status_code != 200:
+                return func.HttpResponse(
+                    json.dumps({"success": False, "error": "Bestellung konnte nicht geprüft werden"}, ensure_ascii=False),
+                    status_code=500, headers=get_cors_headers(),
+                )
+            quelle = pruef.json().get("dl_quelle", QUELLE_ONLINE)
+            if quelle == QUELLE_ONLINE:
+                return func.HttpResponse(
+                    json.dumps({
+                        "success": False,
+                        "error": "Online-Bestellungen können nur storniert werden – der Kunde sieht sie in seiner Übersicht.",
+                    }, ensure_ascii=False),
+                    status_code=403, headers=get_cors_headers(),
+                )
+
+            dr = requests.delete(
+                f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})",
+                headers=headers, timeout=20,
+            )
+            if dr.status_code in (200, 204):
+                logging.info(
+                    f"[lunch-order] geloescht id={record_id} "
+                    f"nr={pruef.json().get('dl_bestellnummer', '')} quelle={quelle}"
+                )
+                return func.HttpResponse(
+                    json.dumps({"success": True, "message": "Bestellung gelöscht"}, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+            return func.HttpResponse(
+                json.dumps({"success": False, "error": f"Löschen fehlgeschlagen ({dr.status_code})"}, ensure_ascii=False),
                 status_code=500, headers=get_cors_headers(),
             )
 

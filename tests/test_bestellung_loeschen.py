@@ -122,7 +122,8 @@ def lade(pfad, name):
     # Die Anmeldung an Dataverse wird nicht geprueft - sie wuerde hier
     # nach aussen gehen. Ersetzt wird nur der Token-Abruf; alles Weitere
     # laeuft durch den echten Code.
-    modul.store.get_token = lambda: "test-token"
+    if hasattr(modul, "store"):
+        modul.store.get_token = lambda: "test-token"
     return modul
 
 
@@ -326,8 +327,115 @@ def getraenke_tests():
            and pos[0].get("gebinde") == "20x0,5",
            f"Position: {pos}")
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  Mittagstisch: telefonische Bestellung loeschen
+# ══════════════════════════════════════════════════════════════════════
+# Aus dem Laden: „Telefonbestellung sollen auch geloescht werden koennen
+# und nicht nur storniert."
+#
+# Der heikle Punkt ist die Abgrenzung: Eine ONLINE-Bestellung gehoert dem
+# Kunden - er sieht sie in seiner Uebersicht. Wuerde sie hier still
+# verschwinden, koennte er sich das nicht erklaeren. Geprueft wird
+# deshalb vor allem, dass der Server das selbst sicherstellt und sich
+# nicht auf einen fehlenden Knopf im Kiosk verlaesst.
+
+class Mittagsspeicher:
+    """Ersatz-Dataverse fuer dl_mittagsbestellungs."""
+
+    def __init__(self, saetze=None):
+        self.saetze = dict(saetze or {})   # record_id -> Felder
+        self.geloescht = []
+        self.delete_status = 204
+
+    def get(self, url, **kw):
+        rec = url.split("(")[-1].split(")")[0]
+        daten = self.saetze.get(rec)
+        if daten is None:
+            return Antwort(404, {})
+        return Antwort(200, dict(daten))
+
+    def post(self, url, **kw):
+        return Antwort(201, {})
+
+    def patch(self, url, **kw):
+        return Antwort(204, {})
+
+    def delete(self, url, **kw):
+        rec = url.split("(")[-1].split(")")[0]
+        self.geloescht.append(rec)
+        self.saetze.pop(rec, None)
+        return Antwort(self.delete_status, {})
+
+
+def mittagstisch_tests():
+    print("\nMittagstisch")
+    lunch = lade("lunch-order/__init__.py", "lunch_order_test")
+    # Dieses Modul meldet sich selbst an, nicht ueber shared.store.
+    lunch.get_token = lambda: "test-token"
+
+    def lauf(dv, rec_id):
+        requests.get, requests.post = dv.get, dv.post
+        requests.patch, requests.delete = dv.patch, dv.delete
+        return lunch.main(Anfrage(method="DELETE", route={"id": rec_id}))
+
+    # TC-TL-S1: telefonische Bestellung verschwindet wirklich
+    dv = Mittagsspeicher({"rec-tel": {"dl_quelle": 1, "dl_name": "Anruf",
+                                      "dl_bestellnummer": "B-1"}})
+    antwort = lauf(dv, "rec-tel")
+    pruefe("TC-TL-S1  Loeschen meldet Erfolg", antwort.status_code == 200,
+           f"war {antwort.status_code}: {rumpf(antwort)}")
+    pruefe("TC-TL-S1  der Datensatz ist weg", dv.geloescht == ["rec-tel"],
+           f"geloescht: {dv.geloescht}")
+
+    # TC-TL-S2: am Tresen aufgenommen — dasselbe Recht
+    dv = Mittagsspeicher({"rec-tresen": {"dl_quelle": 2, "dl_name": "Tresen"}})
+    antwort = lauf(dv, "rec-tresen")
+    pruefe("TC-TL-S2  Personal-Aufnahme ist loeschbar",
+           antwort.status_code == 200, f"war {antwort.status_code}")
+    pruefe("TC-TL-S2  der Datensatz ist weg", dv.geloescht == ["rec-tresen"])
+
+    # TC-TL-S3: Online-Bestellung NICHT — der Kunde sieht sie
+    dv = Mittagsspeicher({"rec-online": {"dl_quelle": 0, "dl_name": "Online"}})
+    antwort = lauf(dv, "rec-online")
+    pruefe("TC-TL-S3  Online-Bestellung wird abgewiesen",
+           antwort.status_code == 403, f"war {antwort.status_code}")
+    pruefe("TC-TL-S3  und bleibt bestehen", dv.geloescht == [],
+           f"geloescht: {dv.geloescht}")
+    pruefe("TC-TL-S3  mit einer Begruendung fuer den Menschen",
+           "storniert" in rumpf(antwort).get("error", ""),
+           f"Antwort: {rumpf(antwort)}")
+
+    # TC-TL-S4: unbekannte Bestellung gilt als erledigt, nicht als Fehler.
+    # Zwei Personen am selben Tablet duerfen sich nicht gegenseitig eine
+    # Fehlermeldung erzeugen, wenn beide dasselbe wegraeumen wollen.
+    dv = Mittagsspeicher()
+    antwort = lauf(dv, "gibt-es-nicht")
+    pruefe("TC-TL-S4  bereits geloescht gilt als Erfolg",
+           antwort.status_code == 200, f"war {antwort.status_code}")
+    pruefe("TC-TL-S4  und loescht nichts", dv.geloescht == [])
+
+    # TC-TL-S5: Streikt Dataverse, darf kein Erfolg gemeldet werden.
+    dv = Mittagsspeicher({"rec-tel": {"dl_quelle": 1}})
+    dv.delete_status = 500
+    antwort = lauf(dv, "rec-tel")
+    pruefe("TC-TL-S5  Fehler wird durchgereicht", antwort.status_code == 500,
+           f"war {antwort.status_code}")
+
+    # TC-TL-S6: Ohne Kennung wird gar nichts geloescht.
+    dv = Mittagsspeicher({"rec-tel": {"dl_quelle": 1}})
+    requests.get, requests.post = dv.get, dv.post
+    requests.patch, requests.delete = dv.patch, dv.delete
+    antwort = lunch.main(Anfrage(method="DELETE", route={}))
+    pruefe("TC-TL-S6  ohne Kennung kein Loeschen", dv.geloescht == [],
+           f"geloescht: {dv.geloescht}")
+    pruefe("TC-TL-S6  und eine klare Absage", antwort.status_code == 405,
+           f"war {antwort.status_code}")
+
+
 if __name__ == "__main__":
     metzger_tests()
     baecker_tests()
     getraenke_tests()
+    mittagstisch_tests()
     print("\nAlle Pruefungen bestanden.")
