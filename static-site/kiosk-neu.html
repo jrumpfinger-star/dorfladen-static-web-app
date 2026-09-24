@@ -157,7 +157,11 @@
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')" style="color:#dc2626"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <button class="k-filter-btn" id="mt-src-toggle" onclick="K.toggleQuelleFilter()" style="display:none;color:#92400e"><i data-lucide="phone" style="width:14px;height:14px"></i> <span class="k-filter-label">Nur Telefon</span> <span class="k-filter-count" id="mt-fc-telefon">0</span></button>
-      <span id="mt-toggle-wrap" style="margin-left:auto;display:none"></span>
+      <!-- Kleiner Rückblick. Aus dem Laden: „Bei Mittagstisch wäre ein
+           kleiner Chart schön, in dem die Bestellungen der letzten 7 Tage
+           dargestellt werden." (Spec mittag-verlauf-chart) -->
+      <button class="k-filter-btn" id="mt-verlauf-btn" onclick="K.zeigeVerlauf()" title="Bestellungen der letzten 7 Tage" aria-label="Bestellungen der letzten 7 Tage" style="margin-left:auto;color:#1e463a"><i data-lucide="bar-chart-3" style="width:14px;height:14px"></i> <span class="k-filter-label">7 Tage</span></button>
+      <span id="mt-toggle-wrap" style="display:none"></span>
     </div>
     <div id="mittag-orders"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="loader" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
@@ -2143,6 +2147,145 @@ var K = (function(){
       })
       .catch(function(e){toast('Verbindungsfehler \u2013 bitte erneut versuchen');});
     });
+  }
+
+  /* ── Kleiner Rückblick: die letzten sieben Tage ────────────────────
+     Aus dem Laden: „Bei Mittagstisch wäre ein kleiner Chart schön, in dem
+     die Bestellungen der letzten 7 Tage dargestellt werden. Er sollte
+     einfach als Popup aufrufbar sein über ein passendes Icon. Stornierte
+     Bestellungen sollen nicht berücksichtigt werden." Dazu: „Wenn möglich,
+     sollten als Tooltip die Anzahl der einzelnen Gerichte angezeigt
+     werden können."
+     (Spec mittag-verlauf-chart) */
+  var _verlaufDaten = null;
+
+  function zeigeVerlauf(){
+    var bg = document.getElementById('mt-verlauf-bg');
+    if(!bg){
+      bg = document.createElement('div');
+      bg.id = 'mt-verlauf-bg';
+      bg.className = 'k-modal-bg';
+      bg.innerHTML =
+        '<div class="k-modal mt-vl-karte" role="dialog" aria-modal="true" aria-labelledby="mt-vl-titel">'
+        + '<div class="mt-vl-kopf">'
+        +   '<h3 id="mt-vl-titel">'+luc('bar-chart-3',18)+' Die letzten 7 Tage</h3>'
+        +   '<button class="k-btn k-btn-outline k-btn-sm" aria-label="Schlie\u00dfen" onclick="K.schliesseVerlauf()">'+luc('x',16)+'</button>'
+        + '</div>'
+        + '<div id="mt-vl-inhalt"><div class="k-empty">Laden\u2026</div></div>'
+        + '</div>';
+      document.body.appendChild(bg);
+      // Klick auf den Rand schliesst - hier gehen keine Eingaben verloren.
+      bg.addEventListener('click', function(e){ if(e.target===bg) schliesseVerlauf(); });
+    }
+    bg.style.display = 'flex';
+    _verlaufEsc(true);
+    reinitIcons();
+
+    fetch(API+'/lunch-order?mode=tagesverlauf&days=7')
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(!res || !res.success){ zeichneVerlauf(null); return; }
+        _verlaufDaten = res.verlauf || [];
+        zeichneVerlauf(_verlaufDaten);
+      })
+      .catch(function(){ zeichneVerlauf(null); });
+  }
+
+  function schliesseVerlauf(){
+    var bg = document.getElementById('mt-verlauf-bg');
+    if(bg) bg.style.display = 'none';
+    _verlaufEsc(false);
+  }
+
+  function _verlaufEscTaste(e){ if(e.key==='Escape') schliesseVerlauf(); }
+  function _verlaufEsc(an){
+    document.removeEventListener('keydown', _verlaufEscTaste);
+    if(an) document.addEventListener('keydown', _verlaufEscTaste);
+  }
+
+  /** Kürzel wie „Do 25.09." – im Laden wird nach Wochentagen gesprochen. */
+  function _vlTag(iso){
+    var d = new Date(iso+'T12:00:00');
+    if(isNaN(d.getTime())) return iso;
+    var wt = ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()];
+    return wt+' '+('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+  }
+
+  function zeichneVerlauf(reihe){
+    var ziel = document.getElementById('mt-vl-inhalt');
+    if(!ziel) return;
+    if(!reihe){
+      ziel.innerHTML = '<div class="k-empty">Der Verlauf konnte nicht geladen werden.</div>';
+      return;
+    }
+    var hoechst = 0;
+    reihe.forEach(function(t){ if(t.portionen>hoechst) hoechst = t.portionen; });
+    var summe = reihe.reduce(function(a,t){ return a+t.portionen; }, 0);
+
+    if(summe===0){
+      ziel.innerHTML = '<div class="k-empty">In den letzten 7 Tagen wurde nichts bestellt.</div>';
+      return;
+    }
+
+    var html = '<div class="mt-vl-balken">';
+    reihe.forEach(function(t, i){
+      // Auch der Nullbalken braucht eine sichtbare Grundlinie, sonst
+      // sieht ein Ruhetag aus wie fehlende Daten.
+      var anteil = hoechst>0 ? Math.round(t.portionen/hoechst*100) : 0;
+      var heute = t.datum===today();
+      html += '<button type="button" class="mt-vl-tag'+(heute?' ist-heute':'')+'"'
+        + ' data-vl="'+i+'" aria-label="'+esc(_vlTag(t.datum))+': '+t.portionen+' Portionen"'
+        + ' title="'+esc(_vlTooltip(t))+'">';
+      html += '<span class="mt-vl-wert">'+t.portionen+'</span>';
+      html += '<span class="mt-vl-saeule"><span class="mt-vl-fuell" style="height:'+Math.max(anteil,2)+'%"></span></span>';
+      html += '<span class="mt-vl-datum">'+esc(_vlTag(t.datum))+'</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+    html += '<div class="mt-vl-fuss">Gesamt <b>'+summe+' Portionen</b> \u00b7 ohne stornierte Bestellungen</div>';
+    html += '<div id="mt-vl-detail" class="mt-vl-detail"></div>';
+    ziel.innerHTML = html;
+
+    ziel.querySelectorAll('.mt-vl-tag').forEach(function(b){
+      b.addEventListener('click', function(){ _vlDetail(parseInt(b.dataset.vl,10)); });
+    });
+    // Der jüngste Tag mit Bestellungen steht offen – ein leeres Feld
+    // unter dem Diagramm sagt niemandem, dass dort etwas zu holen ist.
+    for(var i=reihe.length-1;i>=0;i--){ if(reihe[i].portionen>0){ _vlDetail(i); break; } }
+  }
+
+  /** Der Text, den der Mauszeiger zeigt: Gerichte mit ihrer Anzahl. */
+  function _vlTooltip(t){
+    if(!t.portionen) return _vlTag(t.datum)+': keine Bestellungen';
+    var zeilen = (t.gerichte||[]).map(function(g){ return g.portionen+'\u00d7 '+g.name; });
+    return _vlTag(t.datum)+' \u2013 '+t.portionen+' Portionen\n'+zeilen.join('\n');
+  }
+
+  function _vlDetail(i){
+    var ziel = document.getElementById('mt-vl-detail');
+    if(!ziel || !_verlaufDaten || !_verlaufDaten[i]) return;
+    var t = _verlaufDaten[i];
+    document.querySelectorAll('.mt-vl-tag').forEach(function(b){
+      b.classList.toggle('gewaehlt', parseInt(b.dataset.vl,10)===i);
+    });
+    var html = '<div class="mt-vl-detail-kopf">'+esc(_vlTag(t.datum))
+      + ' \u00b7 <b>'+t.portionen+'</b> '+(t.portionen===1?'Portion':'Portionen')
+      + ' \u00b7 '+t.bestellungen+' '+(t.bestellungen===1?'Bestellung':'Bestellungen')+'</div>';
+    if(!t.gerichte || !t.gerichte.length){
+      html += '<div class="mt-vl-leer">keine Bestellungen an diesem Tag</div>';
+    } else {
+      html += '<ul class="mt-vl-liste">';
+      t.gerichte.forEach(function(g){
+        html += '<li><span class="mt-vl-n">'+g.portionen+'\u00d7</span> '+esc(g.name)+'</li>';
+      });
+      html += '</ul>';
+      if(t.online || t.vor_ort){
+        html += '<div class="mt-vl-quellen">'+luc('globe',12)+' '+t.online+' online \u00b7 '
+          + luc('phone',12)+' '+t.vor_ort+' telefonisch/vor Ort</div>';
+      }
+    }
+    ziel.innerHTML = html;
+    reinitIcons();
   }
 
   /* Eine telefonisch aufgenommene Bestellung endgültig entfernen.
@@ -5411,6 +5554,8 @@ var K = (function(){
     sendReply: sendReply,
     showStornoDialog: showStornoDialog,
     showDeleteDialog: showDeleteDialog,
+    zeigeVerlauf: zeigeVerlauf,
+    schliesseVerlauf: schliesseVerlauf,
     openNewOrder: openNewOrder,
     pickDish: pickDish,
     freiesGerichtAuf: freiesGerichtAuf, freiesGerichtTipp: freiesGerichtTipp,

@@ -888,6 +888,105 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200, headers=get_cors_headers(),
                 )
 
+            # ── Tagesverlauf für den kleinen Chart im Kiosk ──
+            # Aus dem Laden: „Bei Mittagstisch wäre ein kleiner Chart
+            # schön, in dem die Bestellungen der letzten 7 Tage dargestellt
+            # werden. … Stornierte Bestellungen sollen nicht berücksichtigt
+            # werden." Und: „Wenn möglich, sollten als Tooltip die Anzahl
+            # der einzelnen Gerichte angezeigt werden können."
+            #
+            # Der vorhandene mode=stats taugt dafür nicht: Er kennt nur
+            # Online-Bestellungen und lädt die Gerichtnamen gar nicht.
+            # Im Kiosk zählen aber beide Wege — im Laden wird die Hälfte
+            # telefonisch bestellt. (Spec mittag-verlauf-chart)
+            if req.params.get("mode") == "tagesverlauf":
+                try:
+                    tage = int(req.params.get("days", "7"))
+                except ValueError:
+                    tage = 7
+                tage = max(1, min(tage, 31))
+
+                bis = heute_lokal()
+                von = bis - timedelta(days=tage - 1)
+                # Gefiltert wird über den Mittagstisch-Tag, nicht über das
+                # Anlagedatum: Eine am Montag für Freitag aufgenommene
+                # Bestellung gehört auf den Freitag.
+                verlauf_url = (
+                    f"{base_url}/api/data/v9.2/{ENTITY_SET}"
+                    f"?$filter=dl_datum ge {von.isoformat()}T00:00:00Z"
+                    f" and dl_datum le {bis.isoformat()}T23:59:59Z"
+                    f"&$select=dl_datum,dl_status,dl_menge,dl_gericht,dl_quelle"
+                    f"&$top=5000"
+                )
+                je_tag = {}
+                naechste = verlauf_url
+                while naechste:
+                    vr = requests.get(naechste, headers=headers, timeout=30)
+                    if vr.status_code != 200:
+                        return func.HttpResponse(
+                            json.dumps({"success": False,
+                                        "error": f"Verlauf konnte nicht geladen werden ({vr.status_code})"},
+                                       ensure_ascii=False),
+                            status_code=502, headers=get_cors_headers(),
+                        )
+                    leib = vr.json()
+                    for satz in leib.get("value", []):
+                        # Stornierte bleiben draussen - sie wurden nie gekocht.
+                        if satz.get("dl_status") == STATUS_STORNIERT:
+                            continue
+                        tag = (satz.get("dl_datum") or "").split("T")[0]
+                        if not tag:
+                            continue
+                        try:
+                            menge = int(satz.get("dl_menge", 1) or 1)
+                        except (TypeError, ValueError):
+                            menge = 1
+                        fach = je_tag.setdefault(
+                            tag, {"portionen": 0, "bestellungen": 0,
+                                  "online": 0, "vor_ort": 0, "gerichte": {}})
+                        fach["portionen"] += menge
+                        fach["bestellungen"] += 1
+                        if satz.get("dl_quelle", QUELLE_ONLINE) == QUELLE_ONLINE:
+                            fach["online"] += menge
+                        else:
+                            fach["vor_ort"] += menge
+                        name = (satz.get("dl_gericht") or "ohne Gericht").strip()
+                        fach["gerichte"][name] = fach["gerichte"].get(name, 0) + menge
+                    naechste = leib.get("@odata.nextLink")
+
+                # Jeden Tag ausgeben, auch die leeren - eine Lücke in der
+                # Reihe ist eine Aussage (Ruhetag, nichts bestellt) und
+                # darf nicht stillschweigend zusammenrutschen.
+                reihe = []
+                for i in range(tage):
+                    tag = (von + timedelta(days=i)).isoformat()
+                    fach = je_tag.get(tag) or {
+                        "portionen": 0, "bestellungen": 0,
+                        "online": 0, "vor_ort": 0, "gerichte": {}}
+                    gerichte = sorted(
+                        ({"name": n, "portionen": m} for n, m in fach["gerichte"].items()),
+                        key=lambda g: (-g["portionen"], g["name"]))
+                    reihe.append({
+                        "datum": tag,
+                        "portionen": fach["portionen"],
+                        "bestellungen": fach["bestellungen"],
+                        "online": fach["online"],
+                        "vor_ort": fach["vor_ort"],
+                        "gerichte": gerichte,
+                    })
+
+                return func.HttpResponse(
+                    json.dumps({
+                        "success": True,
+                        "von": von.isoformat(),
+                        "bis": bis.isoformat(),
+                        "tage": tage,
+                        "verlauf": reihe,
+                        "hinweis": "ohne stornierte Bestellungen",
+                    }, ensure_ascii=False),
+                    status_code=200, headers=get_cors_headers(),
+                )
+
             # Statusseite: Bestellung per Bestellnummer + Verifikation (E-Mail ODER Geraete-ID).
             if nr_filter and (email_filter or device_filter):
                 if email_filter:

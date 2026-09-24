@@ -42,9 +42,11 @@ function bestellungen() {
 }
 
 /** Fängt alle Löschaufrufe ab und merkt sie sich. */
-function mockApi(page) {
+async function mockApi(page) {
   const geloescht = [];
-  page.route('**/api/**', async (route) => {
+  /* Ohne `await` ist die Route unter Last nicht sicher registriert, bevor
+     `page.goto` die ersten Aufrufe absetzt. */
+  await page.route('**/api/**', async (route) => {
     const req = route.request();
     const url = req.url();
     const json = (o) => route.fulfill({
@@ -66,7 +68,7 @@ function mockApi(page) {
 }
 
 async function openMittag(page) {
-  const geloescht = mockApi(page);
+  const geloescht = await mockApi(page);
   await page.goto(KIOSK_URL);
   await page.click('[data-tab="mittag"]');
   await page.waitForTimeout(1500);

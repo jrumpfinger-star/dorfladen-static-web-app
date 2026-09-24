@@ -1125,6 +1125,89 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .kal-datum-hint:empty{ display:none }
 .kal-toolbar{ position:sticky; top:0; z-index:20; background:var(--c-bg); padding:6px 0 }
 
+/* ── Mittagstisch: Rückblick auf sieben Tage ────────────────────────────
+   Aus dem Laden: „Bei Mittagstisch wäre ein kleiner Chart schön, in dem
+   die Bestellungen der letzten 7 Tage dargestellt werden. Er sollte
+   einfach als Popup aufrufbar sein über ein passendes Icon."
+   Gezeichnet mit gewöhnlichen Kästen statt einer Diagrammbibliothek —
+   sieben Balken brauchen kein zusätzliches Paket, und der Kiosk läuft
+   auch ohne Netz weiter. (Spec mittag-verlauf-chart) */
+.mt-vl-karte{ max-width:640px; width:100%; padding:16px 18px }
+.mt-vl-kopf{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:14px;
+}
+.mt-vl-kopf h3{
+  display:flex; align-items:center; gap:8px;
+  margin:0; font-size:17px; color:var(--c-pri,#1e463a);
+}
+.mt-vl-balken{
+  display:flex; align-items:flex-end; gap:6px;
+  height:170px; padding:4px 0;
+}
+.mt-vl-tag{
+  flex:1 1 0; min-width:0;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  height:100%;
+  background:none; border:0; padding:2px 0; cursor:pointer;
+  font:inherit; color:inherit;
+  border-radius:8px;
+}
+.mt-vl-tag:hover{ background:#f3f7f4 }
+.mt-vl-tag.gewaehlt{ background:#e8f5e9 }
+.mt-vl-wert{
+  font-size:13px; font-weight:600; color:#1e463a;
+  font-variant-numeric:tabular-nums;
+}
+/* Die Säule trägt die Höhe; der Wert darüber und das Datum darunter
+   bleiben dadurch auf einer Linie, egal wie hoch der Balken ist. */
+.mt-vl-saeule{
+  flex:1 1 auto; width:100%;
+  display:flex; align-items:flex-end; justify-content:center;
+  min-height:0;
+}
+.mt-vl-fuell{
+  width:72%; max-width:46px;
+  background:linear-gradient(180deg,#4b8f6b,#2e7d4f);
+  border-radius:5px 5px 2px 2px;
+  min-height:3px;
+}
+.mt-vl-tag.ist-heute .mt-vl-fuell{
+  background:linear-gradient(180deg,#f0a437,#d97706);
+}
+.mt-vl-datum{
+  font-size:11px; color:#5a7566; white-space:nowrap;
+}
+.mt-vl-fuss{
+  margin-top:10px; padding-top:8px;
+  border-top:1px solid var(--c-border,#e5e7eb);
+  font-size:12px; color:#6b7280;
+}
+.mt-vl-detail{ margin-top:10px }
+.mt-vl-detail-kopf{ font-size:13px; color:#1e463a; margin-bottom:6px }
+.mt-vl-liste{ list-style:none; margin:0; padding:0 }
+.mt-vl-liste li{
+  display:flex; gap:8px; align-items:baseline;
+  padding:4px 0; border-bottom:1px dotted var(--c-border,#e5e7eb);
+  font-size:14px;
+}
+.mt-vl-liste li:last-child{ border-bottom:0 }
+.mt-vl-n{
+  flex:0 0 auto; min-width:34px; text-align:right;
+  font-weight:600; color:#2e7d4f; font-variant-numeric:tabular-nums;
+}
+.mt-vl-quellen{
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  margin-top:8px; font-size:12px; color:#6b7280;
+}
+.mt-vl-leer{ font-size:13px; color:#9ca3af }
+
+@media (max-width:480px){
+  .mt-vl-balken{ height:140px; gap:3px }
+  .mt-vl-datum{ font-size:10px }
+  .mt-vl-wert{ font-size:12px }
+}
+
 /* Kontakt: Nachrichtenkarten. */
 .kk-card{ border-radius:var(--r-m); box-shadow:var(--schatten-1) }
 .kk-sec{ scroll-margin-top:60px }
