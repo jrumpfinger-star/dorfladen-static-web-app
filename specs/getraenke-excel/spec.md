@@ -183,6 +183,36 @@ Alle Umlaute kamen richtig an („Getränke Kratzer", „Flötzinger").
 `Getränke/Muster-Bestellformular-Kratzer.xlsx` aus dem echten Katalog — zum
 Ansehen, bevor die erste Bestellung rausgeht.
 
+## Die Nummern müssen im Laden nachgezogen werden
+
+**Der Code allein genügt nicht.** `vorlage/katalog.json` ist nur der
+*Startbestand*: Sobald in Dataverse ein Katalog liegt, wird die Vorlage nicht
+mehr gelesen (`load_artikel`: „ohne gespeicherten Bestand greift die
+Vorlage"). Die im Repo geänderten Nummern kämen also nie an.
+
+Gegen die Produktion gemessen (24.09.2026, nach dem Ausrollen):
+
+| | |
+|---|---|
+| Code ausgerollt | **ja** — `getraenke_xlsx.py` und der Anhang sind live |
+| Live-Katalog | 50 Artikel, **6 Platzhalter noch vorhanden** |
+
+Dafür gibt es `tools/getraenke_nummern_nachziehen.py`. Es liest den
+**Live**-Katalog, ersetzt die fünf belegten Platzhalter, prüft auf doppelte
+Nummern und schreibt zurück:
+
+```
+python tools/getraenke_nummern_nachziehen.py              nur anzeigen
+python tools/getraenke_nummern_nachziehen.py --schreiben
+```
+
+Es braucht dieselben App-Settings wie die API (`DV_*`) und läuft deshalb
+dort, wo die hinterlegt sind — nicht auf einem Rechner ohne Zugangsdaten.
+
+Bis dahin bleibt in der Mappe bei diesen sechs Artikeln die Nummernspalte
+leer. Das ist der gewollte Rückfall aus F1: lieber leer als eine Nummer, die
+es beim Lieferanten nicht gibt.
+
 ## Betroffene Dateien
 
 | Datei | Änderung |
@@ -192,4 +222,5 @@ Ansehen, bevor die erste Bestellung rausgeht.
 | [getraenke_store.py](../../api/getraenke-order/getraenke_store.py) | Kopfangaben in der Konfiguration |
 | [vorlage/katalog.json](../../api/getraenke-order/vorlage/katalog.json) | fünf echte Artikelnummern |
 | [getraenke_mockup_xlsx.py](../../tools/getraenke_mockup_xlsx.py) | neu: Musterdatei |
-| [getraenke_xlsx_test.py](../../tools/getraenke_xlsx_test.py) | neu, elf Abschnitte |
+| [getraenke_nummern_nachziehen.py](../../tools/getraenke_nummern_nachziehen.py) | neu: Nummern im Live-Katalog |
+| [getraenke_xlsx_test.py](../../tools/getraenke_xlsx_test.py) | neu, zwölf Abschnitte |
