@@ -1129,6 +1129,52 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .kk-card{ border-radius:var(--r-m); box-shadow:var(--schatten-1) }
 .kk-sec{ scroll-margin-top:60px }
 
+/* ── Antwortfeld im Verlauf ─────────────────────────────────────────────
+   Aus dem Laden: „Die Nachrichtenbox ist sowohl auf dem Handy, als auch
+   auf dem mobile zu klein. Die Box muss auch mit dem Text mitwachsen."
+
+   Bisher teilten sich Textfeld und drei Knöpfe eine einzige Flex-Zeile.
+   Auf dem Handy blieb dem Feld keine Breite mehr — bei 320 px rund ein
+   Drittel —, und es war genau eine Zeile hoch. Jetzt steht das Feld über
+   die ganze Breite, die Knöpfe darunter.
+   (Spec kontakt-antwortfeld) */
+.kk-reply{
+  display:flex; flex-direction:column; gap:8px;
+  margin-top:8px;
+}
+/* Die Grundregel `.k-app textarea` ist spezifischer und setzt die Höhe mit
+   `!important` — ohne `.k-app` davor bliebe von diesem Block nichts übrig. */
+.k-app .kk-rpt{
+  width:100%;
+  box-sizing:border-box;
+  padding:10px 12px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  /* Unter 16px zoomt iOS beim Hineintippen in das Feld und der Verlauf
+     rutscht aus dem Bild. */
+  font-size:16px;
+  line-height:1.45;
+  resize:none;
+  overflow-y:hidden;
+  min-height:112px !important;  /* rund vier Zeilen — Antworten sind selten einzeilig */
+  max-height:40vh;              /* darüber wird gerollt, sonst verdeckt das Feld den Verlauf */
+}
+.k-app .kk-rpt:focus{ outline:2px solid #2563eb; outline-offset:-1px; border-color:#2563eb }
+.kk-reply-tools{
+  display:flex; gap:8px; align-items:center; justify-content:flex-end;
+  flex-wrap:wrap;
+}
+/* Der Senden-Knopf ist der einzige Weg hinaus, seit Enter umbricht —
+   er darf nicht der kleinste Knopf der Zeile sein. */
+.kk-reply-tools .kk-send{ margin-left:auto; min-height:var(--tap-min) }
+.kk-reply-tools .k-btn{ min-height:var(--tap-min) }
+
+@media (max-width:480px){
+  .k-app .kk-rpt{ min-height:128px !important }
+  /* Auf dem Handy trägt der Senden-Knopf die ganze Restbreite. */
+  .kk-reply-tools .kk-send{ flex:1 1 auto; justify-content:center }
+}
+
 /* Der Kopf „Kundennachrichten … Aktualisieren" passte bei 320 px nicht in
    eine Zeile und wurde zum Rollstreifen. Er bricht jetzt um. */
 #panel-kontakt #kontakt-filter-bar{ flex-wrap:wrap; overflow:visible; row-gap:6px }

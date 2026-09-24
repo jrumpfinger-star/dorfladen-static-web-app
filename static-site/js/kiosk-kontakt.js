@@ -275,12 +275,14 @@
         h+='</div>';
       }
       // reply row
-      h+='<div style="display:flex;gap:6px;align-items:center;margin-top:8px">';
-      h+='<textarea id="kk-rpt-'+t.id+'" placeholder="'+(_pendingImg[t.id]?'Bildunterschrift (optional)…':'Antwort an Kunde…')+'" maxlength="1000" rows="1" style="flex:1;font-family:'+CHATFONT+';padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:none;overflow:hidden;min-height:38px" oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();KKontakt.send(\''+t.id+'\')}"></textarea>';
+      h+='<div class="kk-reply">';
+      h+='<textarea id="kk-rpt-'+t.id+'" class="kk-rpt" placeholder="'+(_pendingImg[t.id]?'Bildunterschrift (optional)…':'Antwort an Kunde…')+'" maxlength="1000" rows="3" style="font-family:'+CHATFONT+'" oninput="KKontakt.grow(this)" onkeydown="KKontakt.taste(event,\''+t.id+'\')"></textarea>';
+      h+='<div class="kk-reply-tools">';
       h+='<button type="button" class="k-btn k-btn-outline k-btn-sm kk-emoji-btn" title="Emoji" style="padding:6px 8px;font-size:18px;line-height:1" onclick="KKontakt.emoji(\'kk-rpt-'+t.id+'\',this)">😊</button>';
       h+='<input type="file" accept="image/*" id="kk-img-'+t.id+'" style="display:none" onchange="KKontakt.stageImage(\''+t.id+'\',this.files[0])">';
       h+='<button class="k-btn k-btn-outline k-btn-sm" title="Foto anhängen" style="padding:8px 10px" onclick="document.getElementById(\'kk-img-'+t.id+'\').click()"><i data-lucide="image" style="width:16px;height:16px"></i></button>';
-      h+='<button class="k-btn k-btn-sm" style="padding:8px 14px;background:#2563eb;color:#fff" onclick="KKontakt.send(\''+t.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i></button>';
+      h+='<button class="k-btn k-btn-sm kk-send" title="Antwort senden" style="padding:8px 14px;background:#2563eb;color:#fff" onclick="KKontakt.send(\''+t.id+'\')"><i data-lucide="send" style="width:14px;height:14px"></i> <span class="kk-send-txt">Senden</span></button>';
+      h+='</div>';
       h+='</div>';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">';
       h+='<span style="font-size:11px;color:#9ca3af">Tipp: *fett* · _kursiv_ · ~durchgestrichen~ · <b>HTML erlaubt</b> z.B. &lt;b&gt;, &lt;a href&gt;, &lt;br&gt;</span>';
@@ -318,7 +320,7 @@
     }
     host.innerHTML=html;
     // Entwuerfe wiederherstellen
-    Object.keys(_draft).forEach(function(id){ var ta=document.getElementById('kk-rpt-'+id); if(ta && _draft[id]){ ta.value=_draft[id]; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; } });
+    Object.keys(_draft).forEach(function(id){ var ta=document.getElementById('kk-rpt-'+id); if(ta && _draft[id]){ ta.value=_draft[id]; grow(ta); } });
     if(window.lucide) lucide.createIcons();
     updateActions();
     // Auto-scroll offene Verlaeufe ans Ende – auch nachdem Bilder geladen sind
@@ -329,6 +331,34 @@
       toBottom();
       el.querySelectorAll('img').forEach(function(img){ if(!img.complete){ img.addEventListener('load',toBottom,{once:true}); img.addEventListener('error',toBottom,{once:true}); } });
     });
+  }
+
+  /* Das Antwortfeld waechst mit dem Text.
+
+     Aus dem Laden: „Die Nachrichtenbox ist sowohl auf dem Handy, als auch
+     auf dem mobile zu klein. Die Box muss auch mit dem Text mitwachsen."
+     Die Hoehe muss vor dem Messen zurueckgesetzt werden, sonst kann das
+     Feld nur wachsen und nie wieder schrumpfen. Nach oben deckelt
+     `max-height` aus dem Stylesheet; ab dort wird gerollt, damit die Box
+     den Verlauf nicht aus dem Bild schiebt. (Spec kontakt-antwortfeld) */
+  function grow(ta){
+    if(!ta) return;
+    ta.style.height='auto';
+    var max=parseInt(getComputedStyle(ta).maxHeight,10);
+    var h=ta.scrollHeight;
+    if(!isNaN(max) && h>max){ ta.style.height=max+'px'; ta.style.overflowY='auto'; }
+    else { ta.style.height=h+'px'; ta.style.overflowY='hidden'; }
+  }
+
+  /* Enter macht einen Zeilenumbruch, nicht mehr das Absenden.
+
+     Bisher schickte Enter die Antwort ab (Umbruch nur mit Umschalt). Im
+     Laden wird aber mehrzeilig geantwortet, und eine halbe Nachricht ist
+     beim Kunden nicht zurueckzuholen. Gesendet wird ueber den Knopf;
+     Strg/Cmd+Enter bleibt als Abkuerzung fuer die Tastatur. */
+  function taste(ev,id){
+    if(ev.key!=='Enter') return;
+    if(ev.ctrlKey || ev.metaKey){ ev.preventDefault(); send(id); }
   }
 
   function toggle(id){
@@ -528,6 +558,7 @@
     onShow:onShow, reload:reload, toggle:toggle, markUnread:markUnread,
     inKalender:inKalender,
     send:send, stageImage:stageImage, removeImage:removeImage, pollBadge:pollBadge, zoom:zoom,
+    grow:grow, taste:taste,
     emoji:emoji, toggleSel:toggleSel, clearSel:clearSel, deleteOne:deleteOne, deleteSelected:deleteSelected, deleteMsg:deleteMsg
   };
 })();

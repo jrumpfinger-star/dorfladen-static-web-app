@@ -675,3 +675,129 @@ test.describe('Kontakt – Haken in der Blase (K11)', () => {
     await expect(page.locator('#kontakt-list .kk-thread')).toHaveCount(0);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  F23 – Das Antwortfeld
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „Die Nachrichtenbox ist sowohl auf dem Handy, als auch auf
+// dem mobile zu klein. Die Box muss auch mit dem Text mitwachsen und Enter
+// auf der Tastatur muss einen Zeilenumbruch erzeugen und nicht den Chat
+// abschicken."
+
+test.describe('Kontakt – Antwortfeld (F23)', () => {
+
+  /** Öffnet die erste Konversation und gibt das Antwortfeld zurück. */
+  async function feld(page) {
+    await openKontakt(page);
+    await cards(page).first().click();
+    const ta = page.locator('textarea[id^="kk-rpt-"]').first();
+    await expect(ta).toBeVisible({ timeout: 10000 });
+    return ta;
+  }
+
+  /** Zählt abgesendete Antworten mit. Gesendet wird als PATCH mit
+      `personal_antwort` — nicht als eigener POST. */
+  function sendungen(page) {
+    return () => (page.__patches || [])
+      .filter((p) => p.body && p.body.personal_antwort !== undefined).length;
+  }
+
+  test('TC-F23-01: Enter bricht um und schickt nichts ab', async ({ page }) => {
+    /* Der gemeldete Fall. Im Laden wird mehrzeilig geantwortet — eine
+       halbe Nachricht ist beim Kunden nicht zurückzuholen. */
+    const ta = await feld(page);
+    const raus = sendungen(page);
+
+    await ta.click();
+    await page.keyboard.type('Erste Zeile');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Zweite Zeile');
+    await page.waitForTimeout(400);
+
+    expect(await ta.inputValue(), 'kein Zeilenumbruch im Feld')
+      .toBe('Erste Zeile\nZweite Zeile');
+    expect(raus(), 'Enter hat die Antwort abgeschickt').toBe(0);
+    await expect(ta, 'das Feld ist verschwunden').toBeVisible();
+  });
+
+  test('TC-F23-02: Strg+Enter schickt weiterhin ab', async ({ page }) => {
+    // Die Abkürzung für die Tastatur bleibt — nur nicht mehr auf Enter allein.
+    const ta = await feld(page);
+    const raus = sendungen(page);
+
+    await ta.click();
+    await page.keyboard.type('Kurze Antwort');
+    await page.keyboard.press('Control+Enter');
+    await page.waitForTimeout(900);
+
+    expect(raus(), 'Strg+Enter sendet nicht').toBe(1);
+  });
+
+  test('TC-F23-03: Das Feld wächst mit dem Text', async ({ page }) => {
+    const ta = await feld(page);
+    const vorher = (await ta.boundingBox()).height;
+
+    await ta.click();
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.type(`Zeile ${i + 1}`);
+      await page.keyboard.press('Enter');
+    }
+    await page.waitForTimeout(300);
+    const nachher = (await ta.boundingBox()).height;
+
+    expect(nachher, `Höhe unverändert bei ${vorher}px`).toBeGreaterThan(vorher + 20);
+  });
+
+  test('TC-F23-04: Es schrumpft auch wieder', async ({ page }) => {
+    /* Gegenstück zu TC-F23-03: Wer den Text wieder löscht, soll den
+       Verlauf zurückbekommen — ein Feld, das nur wachsen kann, frisst
+       die halbe Seite. */
+    const ta = await feld(page);
+    const leer = (await ta.boundingBox()).height;
+
+    await ta.click();
+    await page.keyboard.type('a\nb\nc\nd\ne\nf\ng\nh');
+    await page.waitForTimeout(300);
+    const voll = (await ta.boundingBox()).height;
+    expect(voll).toBeGreaterThan(leer);
+
+    await ta.fill('');
+    await ta.dispatchEvent('input');
+    await page.waitForTimeout(300);
+    expect((await ta.boundingBox()).height,
+      'bleibt aufgeblaeht').toBeLessThanOrEqual(leer + 2);
+  });
+
+  test('TC-F23-05: Das Feld nutzt die ganze Breite', async ({ page }) => {
+    /* Der zweite Teil der Meldung. Bisher teilten sich Feld und drei
+       Knöpfe eine Flex-Zeile; auf dem Handy blieb dem Feld rund ein
+       Drittel. Jetzt steht es allein über die volle Breite. */
+    const ta = await feld(page);
+    const mass = await ta.evaluate((el) => ({
+      feld: el.getBoundingClientRect().width,
+      zeile: el.parentElement.getBoundingClientRect().width,
+      hoehe: el.getBoundingClientRect().height,
+    }));
+    expect(mass.feld / mass.zeile,
+      `Feld ${Math.round(mass.feld)}px von ${Math.round(mass.zeile)}px`)
+      .toBeGreaterThan(0.9);
+    expect(mass.hoehe, 'nur eine Zeile hoch').toBeGreaterThanOrEqual(110);
+  });
+
+  test('TC-F23-06: Sehr lange Texte sprengen die Seite nicht', async ({ page }) => {
+    // Ohne Deckel schiebt ein langer Text den Verlauf aus dem Bild.
+    const ta = await feld(page);
+    await ta.fill(Array.from({ length: 40 }, (_, i) => `Zeile ${i}`).join('\n'));
+    await ta.dispatchEvent('input');
+    await page.waitForTimeout(300);
+
+    const mass = await ta.evaluate((el) => ({
+      hoehe: el.getBoundingClientRect().height,
+      schirm: window.innerHeight,
+      rollt: getComputedStyle(el).overflowY,
+    }));
+    expect(mass.hoehe, 'Feld ist höher als der halbe Schirm')
+      .toBeLessThanOrEqual(mass.schirm * 0.5);
+    expect(mass.rollt, 'kein Rollen trotz Deckel').toBe('auto');
+  });
+});
