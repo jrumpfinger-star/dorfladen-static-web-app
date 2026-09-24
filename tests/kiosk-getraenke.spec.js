@@ -945,3 +945,101 @@ test.describe('Getränke – Artikelpflege (F20)', () => {
     expect(posts[0].nummer, 'leer statt „KA"').toBe('');
   });
 });
+// ════════════════════════════════════════════════════
+//  GV – Verlauf: Status, Zeitpunkt und Urheber
+//  Aus dem Laden: „Könnte man auch bei Getränken die letzten historischen
+//  Bestellungen hier anzeigen lassen wie bei Metzger oder Bäcker mit
+//  Status usw.?"   (Spec specs/getraenke-verlauf-status/spec.md)
+// ════════════════════════════════════════════════════
+
+test.describe('Getränke – Verlauf mit Status (GV)', () => {
+
+  const VERLAUF = [
+    {
+      datum: '2026-09-30', datum_de: '30.09.2026', kw: 40, status: 1,
+      summen: { kisten: 27, positionen: 3 },
+      positionen: [{ nummer: '101', name: 'Augustiner Hell', gebinde: '20x0,50', menge: 18 }],
+      protokoll: [{ zeit: '2026-09-24T18:07:12', was: 'gesendet', wer: 'Kiosk' }],
+    },
+    {
+      // Zweimal angefasst: erst gesendet, dann korrigiert. Der JÜNGSTE
+      // Eintrag muss erscheinen - siehe TC-GV-04.
+      datum: '2026-09-23', datum_de: '23.09.2026', kw: 39, status: 2,
+      summen: { kisten: 12, positionen: 2 },
+      positionen: [],
+      protokoll: [
+        { zeit: '2026-09-17T09:15:00', was: 'gesendet', wer: 'Anna' },
+        { zeit: '2026-09-18T16:42:30', was: 'korrigiert', wer: 'Bernd' },
+      ],
+    },
+    {
+      // Altbestand ohne Protokoll - es darf nichts erfunden werden.
+      datum: '2026-09-16', datum_de: '16.09.2026', kw: 38, status: 1,
+      summen: { kisten: 5, positionen: 1 }, positionen: [], protokoll: [],
+    },
+  ];
+
+  async function verlaufReiter(page) {
+    await oeffneTab(page, { verlauf: VERLAUF });
+    await klickeSubtab(page, 'verlauf');
+    await page.locator('.gk-vrow').first().waitFor({ timeout: 15000 });
+  }
+
+  const zeileVon = (page, datum) =>
+    page.locator('.gk-vrow').filter({ hasText: datum }).first();
+
+  test('TC-GV-01: Eine gesendete Bestellung zeigt den Status „Gesendet"', async ({ page }) => {
+    await verlaufReiter(page);
+    const z = zeileVon(page, '30.09.2026');
+    await expect(z.locator('.gk-vstatus b')).toHaveText('Gesendet');
+    await expect(z).toHaveClass(/\bok\b/);
+  });
+
+  test('TC-GV-02: Eine korrigierte Bestellung ist als solche erkennbar', async ({ page }) => {
+    await verlaufReiter(page);
+    const z = zeileVon(page, '23.09.2026');
+    await expect(z.locator('.gk-vstatus b')).toHaveText('Korrigiert');
+    await expect(z).toHaveClass(/\bkorr\b/);
+    // Die Farbe muss sich von „gesendet" unterscheiden, sonst sagt sie nichts.
+    const a = await z.locator('.gk-vstatus b').evaluate((e) => getComputedStyle(e).color);
+    const b = await zeileVon(page, '30.09.2026').locator('.gk-vstatus b')
+      .evaluate((e) => getComputedStyle(e).color);
+    expect(a).not.toBe(b);
+  });
+
+  test('TC-GV-03: Uhrzeit und Urheber stehen dabei', async ({ page }) => {
+    await verlaufReiter(page);
+    const s = zeileVon(page, '30.09.2026').locator('.gk-vstatus span');
+    await expect(s).toContainText('18:07');
+    await expect(s).toContainText('Kiosk');
+  });
+
+  test('TC-GV-04: Gezeigt wird der JÜNGSTE Protokolleintrag', async ({ page }) => {
+    await verlaufReiter(page);
+    const s = zeileVon(page, '23.09.2026').locator('.gk-vstatus span');
+    /* Der Bäcker stellt neue Einträge vorn ein und liest protokoll[0];
+       Getränke hängen an. Wer die Bäcker-Zeile blind übernimmt, zeigt
+       hier „09:15 · Anna" - den ersten Versand statt der Korrektur. */
+    await expect(s).toContainText('16:42');
+    await expect(s).toContainText('Bernd');
+    await expect(s).not.toContainText('09:15');
+    await expect(s).not.toContainText('Anna');
+  });
+
+  test('TC-GV-05: Ohne Protokoll wird keine Uhrzeit erfunden', async ({ page }) => {
+    await verlaufReiter(page);
+    const z = zeileVon(page, '16.09.2026');
+    await expect(z.locator('.gk-vstatus b')).toHaveText('Gesendet');
+    await expect(z.locator('.gk-vstatus span')).toHaveCount(0);
+  });
+
+  test('TC-GV-06: Aufklappen und Positionsliste gehen weiter', async ({ page }) => {
+    await verlaufReiter(page);
+    const z = zeileVon(page, '30.09.2026');
+    await z.locator('.gk-vkopf').click();
+    await expect(z.locator('.gk-vtab')).toBeVisible();
+    await expect(z.locator('.gk-vtab')).toContainText('Augustiner Hell');
+    // Der Status bleibt beim Aufklappen stehen.
+    await expect(z.locator('.gk-vstatus b')).toHaveText('Gesendet');
+  });
+});

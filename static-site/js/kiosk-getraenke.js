@@ -1410,6 +1410,27 @@ window.KGetraenke = (function () {
      (Spec bestellung-loeschen, F1/F14) */
   var _vOffen = {};
 
+  /* Uhrzeit aus dem Protokoll, kurz. Das Protokoll speichert ISO-Zeit in
+     Ortszeit ("2026-09-24T18:07:12"). */
+  function zeitKurz(iso) {
+    var s = String(iso || '');
+    var m = /T(\d{2}:\d{2})/.exec(s);
+    return m ? m[1] : '';
+  }
+
+  /* Der JÜNGSTE Protokolleintrag.
+
+     Aufpassen: Die drei Lieferanten speichern unterschiedlich. Der Bäcker
+     stellt neue Einträge VORN ein (`[eintrag] + protokoll`) und liest
+     deshalb `protokoll[0]`. Getränke und Metzger HÄNGEN AN — hier ist der
+     letzte der jüngste. Wer die Bäcker-Zeile blind übernimmt, zeigt bei
+     einer korrigierten Bestellung den ersten Versand an, mit falscher
+     Uhrzeit und falschem Wort. (Spec getraenke-verlauf-status, TC-GV-04) */
+  function letzterProtokoll(v) {
+    var p = (v && v.protokoll) || [];
+    return p.length ? p[p.length - 1] : null;
+  }
+
   function verlaufAnsicht() {
     if (!_verlauf.length) {
       return '<div class="k-empty">Es wurde noch keine Bestellung \u00fcber den '
@@ -1418,16 +1439,26 @@ window.KGetraenke = (function () {
     return '<div class="gk-panel"><h3>Gesendete Bestellungen</h3><div class="gk-verlauf">'
       + _verlauf.map(function (v) {
           var offen = !!_vOffen[v.datum];
-          var h = '<div class="gk-vrow' + (offen ? ' auf' : '') + '">';
+          var korr = v.status === 2;
+          var h = '<div class="gk-vrow' + (offen ? ' auf' : '')
+            + (korr ? ' korr' : ' ok') + '">';
           h += '<button class="gk-vkopf" onclick="KGetraenke.verlaufAuf(\''
             + v.datum + '\')" aria-expanded="' + (offen ? 'true' : 'false') + '">'
             + '<span class="pf">' + (offen ? '\u25be' : '\u25b8') + '</span>'
             + '<span class="tx"><b>' + esc(v.datum_de || v.datum) + ' \u00b7 KW '
             + (v.kw || '') + '</b>'
             + '<span>' + (v.summen ? v.summen.kisten + ' Kisten \u00b7 '
-              + v.summen.positionen + ' Positionen' : '')
-            + (v.status === 2 ? ' \u00b7 zuletzt korrigiert' : '') + '</span></span>'
+              + v.summen.positionen + ' Positionen' : '') + '</span></span>'
             + '</button>';
+          /* Status als eigenes Feld – wie bei Bäcker und Metzger. Aus dem
+             Laden: „… wie bei Metzger oder Bäcker mit Status usw."
+             Fehlt das Protokoll, bleibt die Zeile weg; eine erfundene
+             Uhrzeit wäre schlimmer als keine. (Spec F1–F3) */
+          var p = letzterProtokoll(v);
+          h += '<div class="gk-vstatus"><b>' + (korr ? 'Korrigiert' : 'Gesendet') + '</b>'
+            + (p ? '<span>' + esc(zeitKurz(p.zeit))
+                 + (p.wer ? ' \u00b7 ' + esc(p.wer) : '') + '</span>' : '')
+            + '</div>';
           h += '<button class="gk-btn weg" onclick="KGetraenke.bestellungWeg(\''
             + v.datum + '\',' + (v.status || 0) + ')">L\u00f6schen</button>';
           if (offen) h += verlaufListe(v);
