@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from shared.auth import admin_auth_guard  # noqa: E402
 from shared.zeit import jetzt_lokal        # noqa: E402
 import getraenke_store as store           # noqa: E402
+import getraenke_xlsx                     # noqa: E402
 
 DATUM = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -51,15 +52,25 @@ def _ok(payload, status=200):
     )
 
 
-def _send_mail(to_email, to_name, subject, body_text):
+def _send_mail(to_email, to_name, subject, body_text, anhang=None,
+               anhang_name=""):
     """Mailversand ueber den bestehenden Graph-Weg aus shop-notify."""
     pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "shop-notify", "__init__.py")
     spec = importlib.util.spec_from_file_location("shop_notify_mail", pfad)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+    anhaenge = None
+    if anhang:
+        anhaenge = [{
+            "name": anhang_name,
+            "content": anhang,
+            "type": "application/vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet",
+        }]
     return mod.send_email(
         to_email, to_name, subject, body_text,
+        attachments=anhaenge,
         # Kein Shop-Knopf: Der Lieferant bestellt nicht in unserem Laden.
         mit_shop_link=False,
         # Kopie in den Laden, damit dort nachvollziehbar bleibt, was
@@ -198,10 +209,37 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
 
     notiz = (body.get("notiz") or "").strip()
     text = _mail_text(datum_iso, cfg, positionen, korrektur, notiz)
+
+    # Excel-Formular als Anhang. Aus der Beschwerde des Lieferanten:
+    #   „diese Uebersicht ist fuer uns sehr unguenstig. Bitte nehmen Sie
+    #    zukuenftig unsere Bestellliste inkl. Bestell-Nr."
+    # Der Text bleibt in der Mail - er ist im Laden eingeuebt und dient als
+    # Sicherheitsnetz, falls der Anhang einmal haengen bleibt.
+    # (Spec getraenke-excel)
+    try:
+        mappe = getraenke_xlsx.build_xlsx(
+            positionen,
+            datum_de=store.datum_de(datum_iso),
+            wochentag=store.wochentag(datum_iso),
+            kd_nr=cfg.get("kd_nr", ""),
+            tour=cfg.get("tour", ""),
+            korrektur=korrektur,
+            notiz=notiz,
+            erstellt=jetzt_lokal().strftime("%d.%m.%Y %H:%M"),
+            cfg=cfg,
+        )
+        mappe_name = getraenke_xlsx.dateiname(datum_iso, korrektur)
+    except Exception as e:
+        # Ohne Anhang ist die Bestellung immer noch vollstaendig lesbar -
+        # der Versand darf daran nicht scheitern.
+        logging.error(f"[getraenke] Excel fehlgeschlagen: {e}")
+        mappe, mappe_name = None, ""
+
     try:
         erfolg = _send_mail(cfg.get("empfaenger"),
                             cfg.get("empfaenger_name", ""),
-                            _betreff(datum_iso, korrektur), text)
+                            _betreff(datum_iso, korrektur), text,
+                            anhang=mappe, anhang_name=mappe_name)
     except Exception as e:
         logging.error(f"[getraenke] Mailversand fehlgeschlagen: {e}")
         erfolg = False

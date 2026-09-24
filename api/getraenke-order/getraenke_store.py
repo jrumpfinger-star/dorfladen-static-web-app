@@ -63,6 +63,14 @@ DEFAULT_CONFIG = {
     "lieferant_mail": LIEFERANT_MAIL,
     "kd_nr": "15554",
     "tour": "1",
+    # Kopfangaben fuer das Bestellformular. Sie stehen hier und nicht fest im
+    # Code, damit sich eine neue Telefonnummer im CMS aendern laesst.
+    # Quelle: das Formular, das Kratzer selbst schickt (BESTELLFORMULAR.pdf).
+    "lieferant_fax": "08122 944150",
+    "absender": "Dorfladen Oberornau UG",
+    "absender_strasse": "Dorfplatz 1",
+    "absender_ort": "84419 Obertaufkirchen",
+    "absender_telefon": "01578-5234667",
 }
 
 MAX_MENGE = 99

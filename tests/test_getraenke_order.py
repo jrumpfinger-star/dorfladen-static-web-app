@@ -152,8 +152,10 @@ def baue_umgebung():
     artikel_api.admin_auth_guard = lambda req: None
     MAILS.clear()
 
-    def kein_versand(to_email, to_name, subject, body_text):
-        MAILS.append({"an": to_email, "betreff": subject, "text": body_text})
+    def kein_versand(to_email, to_name, subject, body_text,
+                     anhang=None, anhang_name=""):
+        MAILS.append({"an": to_email, "betreff": subject, "text": body_text,
+                      "anhang": anhang, "anhang_name": anhang_name})
         return True
 
     order_api._send_mail = kein_versand
@@ -241,6 +243,25 @@ def test_entwurf_senden_korrektur():
     pruefe("Die Bestellung wird gesendet", d.get("success") is True)
     pruefe("Status ist gesendet", d["status"] == store.STATUS_GESENDET)
     pruefe("Genau eine Mail", len(MAILS) == 1)
+
+    # Die Excel-Mappe geht mit. Genau darum hatte der Lieferant gebeten:
+    # „Bitte nehmen Sie zukuenftig unsere Bestellliste inkl. Bestell-Nr."
+    # (Spec getraenke-excel)
+    anhang = MAILS[0].get("anhang")
+    pruefe("Eine Excel-Mappe haengt an", bool(anhang),
+           f"anhang={type(anhang).__name__}")
+    pruefe("Der Dateiname endet auf .xlsx",
+           str(MAILS[0].get("anhang_name", "")).endswith(".xlsx"),
+           MAILS[0].get("anhang_name"))
+    if anhang:
+        import zipfile as _zip
+        from io import BytesIO as _BIO
+        pruefe("Die Mappe ist eine gueltige Datei",
+               _zip.ZipFile(_BIO(anhang)).testzip() is None)
+        blatt = _zip.ZipFile(_BIO(anhang)).read(
+            "xl/worksheets/sheet1.xml").decode("utf-8")
+        pruefe("Die Bestell-Nr. steht in der Mappe", ">40015<" in blatt,
+               "Nummer 40015 fehlt")
 
     text = MAILS[0]["text"]
     pruefe("Betreff nennt die Kalenderwoche",
