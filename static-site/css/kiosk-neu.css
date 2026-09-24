@@ -4246,8 +4246,36 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   padding:0 2px 4px }
 /* Kopfzeile ueber dem Artikelstamm: Anzahl links, Anlegen rechts. */
 .mb-akopf{ display:flex; align-items:center; justify-content:space-between;
-  gap:10px; margin:0 0 10px }
-.mb-azahl{ font-size:.85rem; color:#5c6b66; font-weight:600 }
+  gap:10px; margin:0 0 10px; flex-wrap:wrap }
+.mb-azahl{ font-size:.85rem; color:#5c6b66; font-weight:600; flex:0 0 auto }
+
+/* Suche im Artikelstamm. Sie steht zwischen Zähler und „+ Neuer Artikel"
+   und nimmt den Platz, der übrig bleibt. `min-width` verhindert, dass sie
+   auf schmalen Schirmen zum Schlitz schrumpft — dann bricht die Zeile
+   lieber um (flex-wrap oben). */
+.mb-asuche{
+  flex:1 1 220px;
+  min-width:170px;
+  height:38px;
+  padding:0 12px;
+  border:1px solid var(--line, #d9e2dd);
+  border-radius:var(--r-s, 8px);
+  background:var(--karte, #fff);
+  color:inherit;
+  font-size:.9rem;
+  font-family:inherit;
+}
+.mb-asuche:focus{ outline:2px solid var(--gr, #2e7d4f); outline-offset:1px }
+
+/* Leermeldung, wenn die Suche nichts findet. */
+.mb-aleer{
+  padding:22px 16px;
+  text-align:center;
+  color:var(--mut, #5c6b66);
+  font-size:.9rem;
+  border:1px dashed var(--line, #d9e2dd);
+  border-radius:var(--r-m, 10px);
+}
 
 /* Die Artikelmaske hat sechs Felder - zweispaltig, damit sie ohne Rollen
    auf einen Blick passt.

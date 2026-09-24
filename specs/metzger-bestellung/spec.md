@@ -109,8 +109,8 @@ Werkzeug: [tools/metzger_formular_katalog.py](../../tools/metzger_formular_katal
   je Artikel aus der Bestell- und Lieferhistorie.
 - **Vakuumieren** je Portion als Ja/Nein erfassen und laufend zählen.
 - **Geschätzter Bestellwert** aus den Preisen der letzten Rechnung.
-- Reihenfolge und Bezeichnungen **wie auf dem Papier**, damit die gewohnte
-  Reihenfolge erhalten bleibt.
+- Sortiert **nach Warengruppe, darin aufsteigend nach Artikelnummer**;
+  Bezeichnungen wie auf dem Papier.
 - Nach dem Versand sind die Werte **gesperrt**; Änderungen nur über eine
   ausdrückliche **Korrektur**.
 - **Erinnerung**: ab Bestellschluss blinkt der Reiter, bis die Mail raus ist.
@@ -152,8 +152,13 @@ Werkzeug: [tools/metzger_formular_katalog.py](../../tools/metzger_formular_katal
    den Rechnungen, danach zählt jede gesendete Bestellung mit — Bestellungen
    ranken immer vor abgeleiteten Lieferwerten, und Älteres verliert über eine
    Halbwertszeit von acht Wochen an Gewicht.
-7. **Reihenfolge und Nummernspalte:** Die **Formularreihenfolge** des Papiers,
-   unverändert. Die **Artikelnummer steht an erster Stelle in einer eigenen
+7. **Reihenfolge und Nummernspalte:** Sortiert nach **Warengruppe, darin
+   aufsteigend nach Artikelnummer** — siehe
+   [metzger-artikel-sortierung](../metzger-artikel-sortierung/spec.md).
+   Die frühere Regel „Formularreihenfolge des Papiers, unverändert" ist
+   **abgelöst**: Sie ließ jeden nachträglich angelegten Artikel am Listenende
+   einen zweiten Block mit derselben Gruppenüberschrift eröffnen.
+   Die **Artikelnummer steht an erster Stelle in einer eigenen
    Spalte** (F3), damit sie senkrecht scanbar ist. Warengruppen sind
    Zwischenüberschriften und reine Lesehilfe; sie erscheinen **nicht** im
    Dokument.
@@ -993,7 +998,8 @@ laut Rechnungen mindestens einmal geliefert wurden. Ein Umschalter „Übliche
 Artikel / Alle Artikel" holt die restlichen bei Bedarf dazu.
 
 - Vorgabe beim Öffnen ist **„Übliche Artikel"**; die Auswahl wird nicht gemerkt.
-- „Alle Artikel" zeigt den vollständigen Formularbestand in Papierreihenfolge.
+- „Alle Artikel" zeigt den vollständigen Formularbestand, sortiert nach
+  Warengruppe und Artikelnummer.
 - Der Umschalter besteht aus zwei direkt tippbaren Knöpfen, nicht aus einer
   Auswahlliste (F17).
 - Die Suche greift immer auf **alle** Artikel zu: Was in „Übliche" nicht sichtbar

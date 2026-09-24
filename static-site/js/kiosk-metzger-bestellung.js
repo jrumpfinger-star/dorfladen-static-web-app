@@ -25,6 +25,10 @@ window.KMetzgerBest = (function () {
   var _datum = '';
   var _sub = 'bestellung';
   var _suche = '';
+  // Eigene Suche im Reiter „Artikel". Bewusst getrennt von `_suche`: Die
+  // beiden Reiter zeigen verschiedene Listen, und ein beim Umschalten
+  // mitwanderndes Suchwort hätte den Artikelstamm unerwartet gefiltert.
+  var _asuche = '';
   // Vorgabe ist die kurze Liste: nur was der Metzger uns schon geliefert hat.
   // Von 84 Formularzeilen sind das 57 - der Rest steht nur auf dem Papier.
   var _umfang = 'ueblich';        // ueblich | alle | best (Spec F7)
@@ -612,7 +616,9 @@ window.KMetzgerBest = (function () {
 
   function sprungleiste() {
     var gruppen = [];
-    _artikel.forEach(function (a) {
+    // Dieselbe Reihenfolge wie die Liste, sonst zeigen die Sprungmarken
+    // auf die falschen Abschnitte.
+    nachGruppeUndNummer(_artikel).forEach(function (a) {
       if (a.aktiv !== false && gruppen.indexOf(a.gruppe) < 0) gruppen.push(a.gruppe);
     });
     if (gruppen.length < 2) return '';
@@ -653,10 +659,56 @@ window.KMetzgerBest = (function () {
       || String(a.nummer || '').indexOf(s) >= 0;
   }
 
+  /**
+   * Der Artikelstamm, nach Gruppe und darin aufsteigend nach Nummer.
+   *
+   * Aus dem Laden, zweifach gemeldet:
+   *   „Es sollte auch nach Gruppe und dann aufsteigend nach Nummer sortiert
+   *    werden."
+   *   „Warum erscheint Schnitzel vom Strohschwein in einer eigenen Gruppe
+   *    Fleisch frisch?"
+   *
+   * Beides hat dieselbe Wurzel. Die Listen liefen bis dahin in der
+   * **Reihenfolge des Katalogs**, und ein neu angelegter Artikel wird hinten
+   * angehaengt. Traegt er eine Gruppe, die weiter oben schon vorkam, beginnt
+   * am Listenende ein ZWEITER Block mit derselben Ueberschrift - genau der
+   * gemeldete Fall (Nr. 3, Fleisch frisch). Nach Gruppen zu sortieren fuehrt
+   * die Bloecke zusammen und ordnet zugleich die Nummern.
+   *
+   * Die frueher begruendete Formularreihenfolge („wie auf dem Papier") gilt
+   * nicht mehr - ausdruecklich verworfen: „Das kann ignoriert werden und
+   * macht keinen Sinn." (Spec metzger-artikel-sortierung)
+   *
+   * Die **Reihenfolge der Gruppen** bleibt die des Katalogs, also die
+   * gewohnte Abschnittsfolge (Fleisch frisch, Braet & Leberkaese, Schinken &
+   * Speck, Salami …). Alphabetisch zu ordnen wuerde sie ohne Gewinn zerreissen.
+   *
+   * Artikel **ohne Nummer** stehen am Ende ihrer Gruppe: Sie lassen sich
+   * nicht einreihen, und es sind gerade die, die der Metzger nicht nummeriert.
+   */
+  function nachGruppeUndNummer(liste) {
+    var folge = {};                       // Gruppe -> Rang beim ersten Auftreten
+    _artikel.forEach(function (a) {
+      var g = a.gruppe || '';
+      if (!(g in folge)) folge[g] = Object.keys(folge).length;
+    });
+    return liste.slice().sort(function (x, y) {
+      var gx = folge[x.gruppe || ''], gy = folge[y.gruppe || ''];
+      if (gx === undefined) gx = 999;
+      if (gy === undefined) gy = 999;
+      if (gx !== gy) return gx - gy;
+      var nx = parseInt(x.nummer, 10), ny = parseInt(y.nummer, 10);
+      var fx = isNaN(nx), fy = isNaN(ny);
+      if (fx !== fy) return fx ? 1 : -1;          // ohne Nummer ans Ende
+      if (fx) return (x.name || '').localeCompare(y.name || '', 'de');
+      return nx - ny;
+    });
+  }
+
   function liste() {
     var h = '<div class="mb-liste k-liste" id="mb-liste">';
     var gruppe = null, gi = -1, treffer = 0;
-    _artikel.forEach(function (a) {
+    nachGruppeUndNummer(_artikel).forEach(function (a) {
       var p = positionVon(a);
       if (!sichtbar(a, p)) return;
       if (a.gruppe !== gruppe) {
@@ -1427,6 +1479,21 @@ window.KMetzgerBest = (function () {
     _offen = null; _entwurf = null; render();
   }
   function such(v) { _suche = v; render(); }
+
+  /* Suche im Artikelstamm. Der Rollstand der Liste wird zurueckgesetzt,
+     der Eingabestand aber gehalten - sonst verliert das Feld nach jedem
+     Zeichen den Fokus, weil `render()` das Markup neu baut. */
+  function asuch(v) {
+    _asuche = v;
+    render();
+    var el = document.getElementById('mb-aq');
+    if (el) {
+      el.focus();
+      var n = el.value.length;
+      try { el.setSelectionRange(n, n); } catch (e) { /* type=search */ }
+    }
+  }
+
   function filter(alle) { umfang(alle ? 'alle' : 'ueblich'); }
 
   function spring(i) {
@@ -1688,14 +1755,48 @@ window.KMetzgerBest = (function () {
      Sie gehört in den festen Kopf, nicht in die rollende Liste — bei über
      hundert Artikeln war „+ Neuer Artikel" nach dem ersten Rollen weg. */
   function artikelKopf() {
+    var alle = _artikel.length;
+    var zahl = artikelSortiert().length;
     return '<div class="mb-akopf">'
-      + '<span class="mb-azahl">' + _artikel.length + ' Artikel</span>'
+      + '<span class="mb-azahl">'
+      + (_asuche ? zahl + ' von ' + alle : alle + ' Artikel')
+      + '</span>'
+      /* Eigene Suche für die Verwaltung. Die Suche im Bestellreiter filtert
+         eine andere Liste und darf hier nicht mitwirken — sonst stünde man
+         beim Umschalten unversehens vor einem gefilterten Artikelstamm. */
+      + '<input type="search" class="mb-asuche" id="mb-aq"'
+      + ' placeholder="Artikel oder Nummer suchen \u2026"'
+      + ' value="' + esc(_asuche) + '"'
+      + ' oninput="KMetzgerBest.asuch(this.value)">'
       + '<button class="mb-send" onclick="KMetzgerBest.neuerArtikel()">'
       + '+ Neuer Artikel</button></div>';
   }
 
+  /** Trifft die Verwaltungssuche auf diesen Artikel zu? */
+  function passtZurArtikelsuche(a) {
+    if (!_asuche) return true;
+    var s = _asuche.toLowerCase();
+    return (a.name || '').toLowerCase().indexOf(s) >= 0
+      || String(a.nummer || '').indexOf(s) >= 0
+      || (a.gruppe || '').toLowerCase().indexOf(s) >= 0;
+  }
+
+  /**
+   * Der Artikelstamm für die Verwaltung: gesucht und sortiert.
+   * Die Ordnung ist dieselbe wie in der Bestellliste — siehe
+   * `nachGruppeUndNummer`.
+   */
+  function artikelSortiert() {
+    return nachGruppeUndNummer(_artikel.filter(passtZurArtikelsuche));
+  }
+
   function artikelAnsicht() {
-    return '<div class="mb-artikel">' + _artikel.map(function (a) {
+    var liste = artikelSortiert();
+    if (!liste.length) {
+      return '<div class="mb-artikel"><div class="mb-aleer">'
+        + 'Kein Artikel zu \u201E' + esc(_asuche) + '\u201C.</div></div>';
+    }
+    return '<div class="mb-artikel">' + liste.map(function (a) {
       var st = standardText(a);
       var ruf = "KMetzgerBest.bearbeiten('" + jsText(a.name) + "')";
       return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
@@ -2063,7 +2164,8 @@ window.KMetzgerBest = (function () {
   }
 
   return {
-    onShow: onShow, sub: sub, tag: tag, such: such, filter: filter, spring: spring,
+    onShow: onShow, sub: sub, tag: tag, such: such, asuch: asuch,
+    filter: filter, spring: spring,
     blatt: blatt, umfang: umfang, umschalten: umschalten,
     freiTipp: freiTipp, frei: frei, hinweisBlatt: hinweisBlatt,
     edit: edit, feld: feld, anz: anz, einheit: einheit, kachel: kachel,
