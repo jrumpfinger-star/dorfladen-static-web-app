@@ -57,7 +57,11 @@ function gericht(datum, name, preis) {
     dl_wochenplanid: 'wp-' + iso(datum),
     dl_gericht: name,
     dl_preis: preis,
-    dl_datum: iso(datum),
+    /* MIT Zeitanteil, genau wie Dataverse liefert ("2026-09-25T00:00:00Z").
+       Mein erster Mock schrieb nur "2026-09-25" - damit ging der
+       Vergleich im Kiosk scheinbar auf, und der gemeldete Fehler
+       ("Es wird kein Gericht vorgeblendet") blieb unentdeckt. */
+    dl_datum: iso(datum) + 'T00:00:00Z',
     dl_wochentag: wtWert(datum),
     dl_kalenderwoche: w.kw,
     dl_jahr: w.jahr,

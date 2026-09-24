@@ -2608,8 +2608,14 @@ var K = (function(){
     var zielDatum = new Date(ziel + 'T12:00:00');
     var alle = _alleGerichte();
 
+    /* Das Datum kommt aus Dataverse mit Zeitanteil ("2026-09-25T00:00:00Z").
+       Ein Vergleich gegen "2026-09-25" schlaegt damit IMMER fehl - genau
+       das war der gemeldete Fehler: „Es wird kein Gericht vorgeblendet."
+       Deshalb auf die ersten zehn Zeichen kuerzen. */
+    var tagOf = function(d){ return String(d.dl_datum || '').slice(0, 10); };
+
     // Erste Wahl: das Gericht traegt genau dieses Datum.
-    var tagDishes = alle.filter(function(d){ return d.dl_datum === ziel; });
+    var tagDishes = alle.filter(function(d){ return tagOf(d) === ziel; });
 
     // Zweite Wahl: derselbe Wochentag. Der Wochenplan wird teils ohne
     // Datum gepflegt, dann traegt nur `dl_wochentag`.
@@ -2618,8 +2624,11 @@ var K = (function(){
       var dvDay = wt===0 ? null : (100999+wt);     // 101000=Mo…101005=Sa
       var w = _isoWoche(zielDatum);
       tagDishes = dvDay ? alle.filter(function(d){
-        return d.dl_wochentag===dvDay && !d.dl_datum
-          && (d.dl_kalenderwoche==null || d.dl_kalenderwoche===w.kw);
+        if(d.dl_wochentag!==dvDay) return false;
+        // Traegt es ein Datum, muss es passen - sonst waere es das
+        // Gericht einer anderen Woche.
+        if(tagOf(d)) return tagOf(d) === ziel;
+        return d.dl_kalenderwoche==null || d.dl_kalenderwoche===w.kw;
       }) : [];
     }
 
