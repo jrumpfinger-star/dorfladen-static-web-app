@@ -10,6 +10,12 @@
 <script src="/js/theme.js"></script>
 <link rel="stylesheet" href="/css/mobile.css">
 <link rel="icon" href="/favicon.ico">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2d5016">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dorfladen">
+<link rel="apple-touch-icon" href="/images/icon-192.png">
 </head>
 <body>
 <!-- MOBILE HEADER -->
@@ -219,9 +225,14 @@
       <li>
         <div class="app-text">
           <h3>„App installieren“ wählen</h3>
-          <p>Im Menü steht <strong>„App installieren“</strong>. Bei manchen
-            Geräten heißt es <strong>„Zum Startbildschirm hinzufügen“</strong> —
-            das ist dasselbe.</p>
+          <p>Im Menü steht <strong>„App installieren“</strong>. Bei neueren
+            Geräten heißt der Eintrag <strong>„Zum Startbildschirm
+            hinzufügen“</strong>; dann erscheint danach noch eine Auswahl.</p>
+          <p class="app-wenn">Wird dort <strong>„Installieren“</strong> und
+            <strong>„Verknüpfung erstellen“</strong> angeboten, wählen Sie
+            unbedingt <strong>„Installieren“</strong>. Eine Verknüpfung legt
+            nur ein Symbol ab — sie erscheint nicht bei Ihren Apps, und
+            Benachrichtigungen kommen darüber nicht an.</p>
         </div>
         <img src="/images/anleitung/android-installieren.svg" alt="Das Chrome-Menü mit dem hervorgehobenen Eintrag „App installieren“." loading="lazy" width="300" height="560">
       </li>
@@ -242,6 +253,18 @@
         <img src="/images/anleitung/startbildschirm.svg" alt="Der Startbildschirm mit dem neuen grünen Dorfladen-Symbol." loading="lazy" width="300" height="560">
       </li>
     </ol>
+
+    <div class="app-kasten app-kasten-wichtig">
+      <h3>So erkennen Sie, dass es geklappt hat</h3>
+      <p>Wischen Sie auf dem Startbildschirm nach oben, bis die Liste
+        <strong>aller Apps</strong> erscheint. Steht der Dorfladen dort neben
+        Ihren übrigen Apps, ist alles richtig — dann funktionieren auch die
+        Benachrichtigungen.</p>
+      <p><strong>Liegt das Symbol nur auf dem Startbildschirm</strong> und
+        fehlt in der App-Liste, wurde bloß eine Verknüpfung angelegt. Halten
+        Sie das Symbol gedrückt, entfernen Sie es und gehen Sie die Schritte
+        noch einmal durch — diesmal mit <strong>„Installieren“</strong>.</p>
+    </div>
   </section>
 
   <!-- ══════════════ Weg 4: Samsung Internet ══════════════ -->
