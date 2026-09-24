@@ -242,6 +242,35 @@ def _find_thread(base_url, headers, device_id, email):
     return None
 
 
+def _quittieren(verlauf, gelesen):
+    """Zustellung (und ggf. Lesen) an UNSEREN Antworten vermerken.
+
+    Aufgerufen, wenn das Geraet des Kunden den Verlauf abruft. Was wir damit
+    wirklich belegen koennen:
+      zug  – der Abruf hat stattgefunden, die Antwort ist auf dem Geraet.
+      gel  – der Abruf kam aus dem GEOEFFNETEN Chatfenster, der Kunde hatte
+             die Nachricht also vor Augen.
+    Ein Mobilfunk-Zustellbericht ist das nicht; wer die Seite nie oeffnet,
+    bekommt keinen Haken. Dafuer steht hinter jeder Stufe ein echter Abruf.
+
+    Erste Quittung zaehlt: gesetzte Zeitstempel werden nie ueberschrieben.
+    Kundennachrichten bleiben unberuehrt. Rueckgabe: True, wenn sich etwas
+    geaendert hat – nur dann wird geschrieben. (Spec kontakt-zustellstatus)
+    """
+    jetzt = _now_iso()
+    geaendert = False
+    for m in (verlauf or []):
+        if not isinstance(m, dict) or m.get("who") != "dorfladen":
+            continue
+        if not m.get("zug"):
+            m["zug"] = jetzt
+            geaendert = True
+        if gelesen and not m.get("gel"):
+            m["gel"] = jetzt
+            geaendert = True
+    return geaendert
+
+
 def _thread_devices(verlauf):
     """Alle Geraete-IDs, von denen der Kunde in diesem Thread geschrieben hat."""
     devs = []
@@ -389,8 +418,32 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         status_code=200, headers=get_cors_headers(),
                     )
                 item = _find_thread(base_url, headers, device_id, email)
+                if not item:
+                    return func.HttpResponse(
+                        json.dumps({"success": True, "thread": None}, ensure_ascii=False),
+                        status_code=200, headers=get_cors_headers(),
+                    )
+                # Zustellung quittieren: Der Abruf IST der Beleg, dass unsere
+                # Antworten auf dem Geraet des Kunden angekommen sind. Steht der
+                # Chat dabei offen (gelesen=1), hatte er sie auch vor Augen.
+                # Geschrieben wird nur, wenn sich wirklich etwas aendert – sonst
+                # loeste jede Hintergrundabfrage (alle 45 s) einen PATCH aus.
+                verlauf = _parse_verlauf(item.get("dl_chatverlauf"))
+                gelesen = (req.params.get("gelesen") or "") == "1"
+                if _quittieren(verlauf, gelesen):
+                    item["dl_chatverlauf"] = json.dumps(verlauf, ensure_ascii=False)
+                    try:
+                        requests.patch(
+                            f"{base_url}/api/data/v9.2/{ENTITY_SET}({item.get('dl_kontaktnachrichtid')})",
+                            headers=headers,
+                            json={"dl_chatverlauf": item["dl_chatverlauf"]}, timeout=30,
+                        )
+                    except Exception as qe:
+                        # Die Quittung ist Beiwerk – der Kunde bekommt trotzdem
+                        # seinen Verlauf zu sehen.
+                        logging.warning(f"[contact-message] Quittung nicht gespeichert: {qe}")
                 return func.HttpResponse(
-                    json.dumps({"success": True, "thread": _serialize(item) if item else None}, ensure_ascii=False),
+                    json.dumps({"success": True, "thread": _serialize(item)}, ensure_ascii=False),
                     status_code=200, headers=get_cors_headers(),
                 )
 

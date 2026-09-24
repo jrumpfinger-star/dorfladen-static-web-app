@@ -16,10 +16,16 @@
       return (JSON.parse(localStorage.getItem('dl_lunch_customer')||'{}').email||'').trim().toLowerCase();
     }catch(e){ return ''; }
   }
-  function myUrl(){
+  /* Der Abruf des Verlaufs ist zugleich die Quittung an den Laden: Er belegt,
+     dass unsere Antworten auf diesem Geraet angekommen sind. `gelesen` sagt
+     zusaetzlich, dass der Kunde das Chatfenster dabei OFFEN hatte – nur dann
+     hatte er sie wirklich vor Augen. Die Hintergrundabfrage fuer den roten
+     Punkt ruft deshalb ohne. (Spec kontakt-zustellstatus, F6) */
+  function myUrl(gelesen){
     var dv=devId(), em=custEmail(), q=API+'/contact-message?mode=my';
     if(dv) q+='&device_id='+encodeURIComponent(dv);
     if(em) q+='&email='+encodeURIComponent(em);
+    if(gelesen) q+='&gelesen=1';
     return q;
   }
   function geraet(){
@@ -276,7 +282,7 @@
 
   function loadThread(scroll){
     var dv=devId(), em=custEmail(); if(!dv && !em){ renderMsgs(); return; }
-    fetch(myUrl()).then(function(r){return r.json();}).then(function(res){
+    fetch(myUrl(_open)).then(function(r){return r.json();}).then(function(res){
       if(res&&res.success){ _thread=res.thread; renderMsgs(); if(_open) markSeen(); }
     }).catch(function(){});
   }

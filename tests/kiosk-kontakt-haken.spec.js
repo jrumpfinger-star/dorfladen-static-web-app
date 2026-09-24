@@ -178,19 +178,30 @@ test.describe('Kontakt – Lesehaken (K2)', () => {
     const gelesen = cards(page).filter({ hasText: 'Anna Gelesen' });
     await gelesen.locator('.kk-hdr').click();
     await expect(gelesen.locator('.kk-thread')).toBeVisible();
-    // Kundennachricht ist gelesen -> Haken ohne "pending"
-    await expect(gelesen.locator('.kk-thread .kk-ticks')).toHaveCount(1);
-    await expect(gelesen.locator('.kk-thread .kk-ticks.pending')).toHaveCount(0);
+    // Der Haken am KUNDEN hängt an unserem Lesezustand. Er trägt kein
+    // data-zustell – das sitzt nur an unseren eigenen Antworten.
+    const kunde = gelesen.locator('.kk-thread .kk-ticks:not([data-zustell])');
+    await expect(kunde).toHaveCount(1);
+    await expect(kunde).not.toHaveClass(/pending/);
+    await expect(kunde).toHaveAttribute('title', /Von uns gelesen/);
   });
 
-  test('K2-03: eigene Nachrichten tragen keinen Lesehaken', async ({ page }) => {
+  test('K2-03: eigene Nachrichten tragen den Zustellhaken, nicht unseren Lesehaken', async ({ page }) => {
     await openKontakt(page);
 
     const gelesen = cards(page).filter({ hasText: 'Anna Gelesen' });
     await gelesen.locator('.kk-hdr').click();
     await expect(gelesen.locator('.kk-thread')).toBeVisible();
-    // 2 Nachrichten im Verlauf, aber nur die des Kunden hat einen Haken
-    await expect(gelesen.locator('.kk-thread .kk-ticks')).toHaveCount(1);
+    // Zwei Nachrichten, zwei Haken – aber mit verschiedener Bedeutung.
+    // An unserer eigenen Antwort steht der Weg zum Kunden (Spec
+    // kontakt-zustellstatus); hier ohne `zug`, also erst „gesendet".
+    const eigen = gelesen.locator('.kk-thread [data-zustell]');
+    await expect(eigen).toHaveCount(1);
+    await expect(eigen).toHaveAttribute('data-zustell', 'gesendet');
+    // Und der Weg zurück (Konversation wieder auf ungelesen) hängt
+    // weiterhin NUR an der Kundennachricht.
+    await expect(gelesen.locator('.kk-thread button.kk-ticks')).toHaveCount(1);
+    await expect(gelesen.locator('.kk-thread button.kk-ticks[data-zustell]')).toHaveCount(0);
   });
 });
 

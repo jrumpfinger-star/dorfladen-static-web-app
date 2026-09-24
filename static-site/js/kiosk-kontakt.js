@@ -16,6 +16,37 @@
   var EMOJIS = ['😊','😀','😄','😍','👍','🙏','🎉','❤️','😅','😉','🙂','😢','😮','😡','👏','🙌','🤝','✅','❗','❓','🔥','⭐','☕','🥨','🍞','🧀','🥩','🍰','🛒','📦','📮','🕒'];
   // Doppelhaken wie in WhatsApp – blau = gelesen, grau = zugestellt/noch ungelesen
   var TICKS = '<svg viewBox="0 0 18 12" width="17" height="12" aria-hidden="true" style="display:block"><path d="M1 6.6 3.6 9.2 9.1 2.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 6.6 10 9.2 16.5 1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // Einzelhaken: abgeschickt, aber noch von keinem Kundengeraet abgerufen.
+  var TICK1 = '<svg viewBox="0 0 18 12" width="17" height="12" aria-hidden="true" style="display:block"><path d="M3.5 6.6 6.1 9.2 13.5 1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  /* Zustellhaken an UNSEREN Antworten. Aus dem Laden: „Kann auch angezeigt
+     werden, ob eine ausgehende Nachricht geliefert und gelesen wurde wie in
+     WhatsApp?"
+
+     Drei Stufen, jede durch einen echten Abruf belegt (Spec
+     kontakt-zustellstatus):
+       kein zug  – abgeschickt, das Kundengeraet hat den Verlauf nie geholt
+       zug       – auf dem Geraet des Kunden angekommen
+       gel       – der Kunde hatte den Chat dabei offen
+
+     Wichtig fuers Verstaendnis: Der Haken an den KUNDEN-Blasen bedeutet etwas
+     anderes – dort heisst er „wir haben gelesen". Die Titel sagen deshalb
+     jeweils ausdruecklich, wer gelesen hat. */
+  function zustellHaken(m){
+    if(m.gel){
+      return '<span class="kk-ticks" data-zustell="gelesen"'
+        + ' title="Vom Kunden gelesen · '+esc(fmtTime(m.gel))+'"'
+        + ' aria-label="Vom Kunden gelesen">'+TICKS+'</span>';
+    }
+    if(m.zug){
+      return '<span class="kk-ticks pending" data-zustell="zugestellt"'
+        + ' title="Zugestellt · '+esc(fmtTime(m.zug))
+        + ' – vom Kunden noch nicht geöffnet" aria-label="Zugestellt">'+TICKS+'</span>';
+    }
+    return '<span class="kk-ticks pending" data-zustell="gesendet"'
+      + ' title="Gesendet – noch nicht beim Kunden angekommen"'
+      + ' aria-label="Gesendet">'+TICK1+'</span>';
+  }
 
   function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function luc(name){ return '<i data-lucide="'+name+'" style="width:14px;height:14px"></i>'; }
@@ -164,9 +195,12 @@
       var inner='';
       if(m.datei){ inner += '<img src="/api/tagesbild?datei='+encodeURIComponent(m.datei)+'" alt="" style="max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:zoom-in;margin-bottom:'+(m.text?'4px':'0')+'" onclick="KKontakt.zoom(this.src)">'; }
       if(m.text){ inner += '<span style="white-space:pre-wrap;word-break:break-word">'+(mine?fmtHtml(m.text):fmtText(m.text))+'</span>'; }
-      // Lesehaken an Kundennachrichten: gesetzt, sobald wir sie gelesen haben
+      // Haken: an unseren Antworten der Zustellweg zum Kunden, an
+      // Kundennachrichten unser eigener Lesezustand – zwei Dinge, ein Symbol.
       var ticks='';
-      if(!mine){
+      if(mine){
+        ticks = zustellHaken(m);
+      } else {
         var gelesen = idx < firstUnread;
         /* Der Haken an der einzelnen Nachricht ist ebenfalls der Weg
            zurueck. Aus dem Laden: „Kann auch eine einzelne Nachricht als
