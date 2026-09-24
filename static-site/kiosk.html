@@ -2546,7 +2546,14 @@ var K = (function(){
     document.getElementById('no-kunde-results').classList.remove('show');
     document.getElementById('no-kunde-selected').style.display = 'none';
     document.getElementById('no-kunde-new').style.display = 'none';
-    document.getElementById('no-kunde-search').style.display = '';
+    /* Versteckt wird die ganze Zeile (Suchfeld + „+ Neu"), also
+       `parentElement` — siehe selectOrderKunde/newOrderKunde. Hier stand
+       bis dahin das Feld selbst, dessen `display` nie jemand gesetzt
+       hatte. Die Zeile blieb deshalb weg, sobald einmal ein Kunde gewählt
+       war: Ab der zweiten telefonischen Bestellung stand nur noch das
+       Etikett „Kunde *" da, ohne Eingabefeld. Zurück kam es nur über
+       „✕ Ändern". (Spec telefon-kunde-wieder-da) */
+    document.getElementById('no-kunde-search').parentElement.style.display = '';
     document.getElementById('no-qty').textContent = '1';
     document.getElementById('no-note').value = '';
     document.getElementById('no-mitnehmen').checked = false;

@@ -305,3 +305,95 @@ test.describe('Bestellschluss bremst die telefonische Aufnahme nicht', () => {
       expect(titel, 'Die Uhrzeit folgt der CMS-Angabe nicht').toContain('14:15');
     });
 });
+
+// ════════════════════════════════════════════════════
+//  T09 – Das Kundenfeld kommt wieder
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „Es kommt vor, dass nach mehreren Telefonbestellungen auf
+// einmal der Kunde nicht mehr eingebbar und auswählbar ist."
+
+test.describe('Telefonbestellung – Kundenfeld nach mehreren Aufnahmen', () => {
+
+  /** Nimmt eine Bestellung mit frei eingetipptem Namen auf. */
+  async function bestellen(page, name) {
+    await waehleGericht(page);
+    await page.locator('#no-kunde-search').fill(name);
+    await page.evaluate(() => window.K.freierKunde());
+    await page.waitForTimeout(200);
+    await page.evaluate(() => window.K.submitNewOrder());
+    await page.waitForTimeout(700);
+  }
+
+  /** Ist die Zeile mit Suchfeld und „+ Neu" sichtbar? */
+  async function feldDa(page) {
+    return page.evaluate(() => {
+      const f = document.getElementById('no-kunde-search');
+      if (!f) return { da: false, grund: 'Feld fehlt ganz' };
+      const r = f.getBoundingClientRect();
+      return {
+        da: r.width > 0 && r.height > 0,
+        zeile: f.parentElement.style.display,
+        selbst: f.style.display,
+      };
+    });
+  }
+
+  test('TC-T09-01: Nach der ersten Aufnahme steht das Kundenfeld wieder da',
+    async ({ page }) => {
+      /* Der gemeldete Fall. Wird ein Kunde gewählt, versteckt der Kiosk
+         die ganze Zeile (Suchfeld + „+ Neu"). Beim nächsten Öffnen wurde
+         aber nur das Feld selbst zurückgesetzt — die Zeile blieb weg. */
+      await oeffneDialog(page);
+      await bestellen(page, 'Frau Huber');
+
+      await page.evaluate(() => window.K.openNewOrder());
+      await page.waitForTimeout(400);
+
+      const m = await feldDa(page);
+      expect(m.da, `Zeile: "${m.zeile}", Feld: "${m.selbst}"`).toBe(true);
+    });
+
+  test('TC-T09-02: Auch nach drei Aufnahmen hintereinander',
+    async ({ page }) => {
+      // Der Nutzer spricht von „mehreren" — der Weg muss beliebig oft gehen.
+      await oeffneDialog(page);
+      for (const n of ['Erster Anruf', 'Zweiter Anruf', 'Dritter Anruf']) {
+        await bestellen(page, n);
+        await page.evaluate(() => window.K.openNewOrder());
+        await page.waitForTimeout(400);
+        const m = await feldDa(page);
+        expect(m.da, `nach „${n}" weg — Zeile: "${m.zeile}"`).toBe(true);
+      }
+    });
+
+  test('TC-T09-03: Auch nach „+ Neu" kommt die Zeile zurück',
+    async ({ page }) => {
+      /* Der zweite Weg, der die Zeile versteckt: die Kundenneuanlage.
+         Wer sie öffnet und den Dialog dann abbricht, darf beim nächsten
+         Mal nicht vor einem leeren Etikett stehen. */
+      await oeffneDialog(page);
+      await page.evaluate(() => window.K.newOrderKunde());
+      await page.waitForTimeout(300);
+      await page.evaluate(() => window.K.openNewOrder());
+      await page.waitForTimeout(400);
+
+      const m = await feldDa(page);
+      expect(m.da, `Zeile: "${m.zeile}"`).toBe(true);
+      await expect(page.locator('#no-kunde-new'),
+        'die Neuanlage steht noch offen').toBeHidden();
+    });
+
+  test('TC-T09-04: Der zuvor gewählte Kunde ist nicht mehr vorbelegt',
+    async ({ page }) => {
+      /* Sonst ginge die zweite Bestellung stillschweigend an den Kunden
+         der ersten — schlimmer als ein fehlendes Feld. */
+      await oeffneDialog(page);
+      await bestellen(page, 'Frau Huber');
+
+      await page.evaluate(() => window.K.openNewOrder());
+      await page.waitForTimeout(400);
+
+      await expect(page.locator('#no-kunde-selected')).toBeHidden();
+      await expect(page.locator('#no-kunde-search')).toHaveValue('');
+    });
+});
