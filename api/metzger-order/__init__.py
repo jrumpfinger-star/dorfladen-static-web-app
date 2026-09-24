@@ -267,6 +267,11 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     notiz = richtext.notiz_aus(body.get("notiz"))
 
     rec_id, artikel = store.load_artikel(url, hdrs)
+    # Dieselbe Ordnung wie am Schirm: nach Warengruppe, darin nach Nummer.
+    # Wer im Laden erfasst, prueft danach den Ausdruck - laufen die Listen
+    # auseinander, muss man bei jeder Zeile suchen.
+    # (Spec metzger-artikel-sortierung, F1)
+    artikel = store.nach_gruppe_und_nummer(artikel)
     try:
         anhang = build_pdf(artikel, positionen, datum_iso,
                            kd_nr=cfg.get("kd_nr", ""), korrektur=korrektur,

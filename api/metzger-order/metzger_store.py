@@ -291,6 +291,41 @@ def bestellbar(datum_iso):
         return False
 
 
+def nach_gruppe_und_nummer(artikel):
+    """Artikel nach Warengruppe, darin aufsteigend nach Nummer.
+
+    Dieselbe Ordnung wie im Kiosk (`nachGruppeUndNummer` in
+    kiosk-metzger-bestellung.js). Beide muessen uebereinstimmen: Wer im Laden
+    am Schirm erfasst, prueft danach den Ausdruck - laufen die Listen
+    auseinander, muss man bei jeder Zeile suchen.
+
+    Die **Reihenfolge der Gruppen** ist die des Katalogs, also die gewohnte
+    Abschnittsfolge. Alphabetisch zu ordnen wuerde sie ohne Gewinn zerreissen.
+
+    Artikel **ohne Nummer** stehen am Ende ihrer Gruppe, dort nach Namen.
+
+    Die frueher geltende Formularreihenfolge ist abgeloest: Ein nachtraeglich
+    angelegter Artikel wird hinten angehaengt und eroeffnete dadurch einen
+    zweiten Block derselben Gruppe. (Spec metzger-artikel-sortierung)
+    """
+    folge = {}
+    for a in artikel:
+        g = a.get("gruppe") or ""
+        if g not in folge:
+            folge[g] = len(folge)
+
+    def schluessel(a):
+        g = a.get("gruppe") or ""
+        try:
+            nr = int(a.get("nummer"))
+            ohne = 0
+        except (TypeError, ValueError):
+            nr, ohne = 0, 1
+        return (folge.get(g, 999), ohne, nr, (a.get("name") or "").lower())
+
+    return sorted(artikel, key=schluessel)
+
+
 def datum_de(datum_iso):
     try:
         d = datetime.strptime(datum_iso, "%Y-%m-%d")

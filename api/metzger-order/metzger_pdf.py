@@ -2,8 +2,15 @@
 
 Vom Papierformular gibt es nur einen Scan, keine ausfuellbare Vorlage. Das
 Formular wird deshalb neu gesetzt - im selben Aufbau wie das Papier: Nummer,
-Bezeichnung, Bestellung. **Alle** Katalogzeilen erscheinen in der gewohnten
-Reihenfolge; nicht bestellte tragen einen Strich, genau wie auf dem Zettel.
+Bezeichnung, Bestellung. **Alle** Katalogzeilen erscheinen; nicht bestellte
+tragen einen Strich, genau wie auf dem Zettel.
+
+Die Reihenfolge ist die des Kiosks: nach **Warengruppe, darin aufsteigend
+nach Nummer**. Frueher war es die Reihenfolge des Papiers - die hielt aber
+nicht: Ein nachtraeglich angelegter Artikel wird hinten angehaengt und stand
+dann weit weg von seiner Gruppe. Entscheidend ist, dass Schirm und Ausdruck
+dieselbe Folge zeigen; wer erfasst hat, prueft danach den Ausdruck.
+(Spec metzger-artikel-sortierung)
 
 Zeichensatz
 -----------
@@ -81,7 +88,9 @@ def build_pdf(artikel, positionen, datum_iso, kd_nr="", korrektur=False,
               erstellt="", notiz=None):
     """Formular-PDF als ``bytes``.
 
-    ``artikel``    Katalog in Formularreihenfolge (alle Zeilen)
+    ``artikel``    Katalog, bereits sortiert (alle Zeilen). Die Reihenfolge
+                   kommt von ``store.nach_gruppe_und_nummer`` - hier wird
+                   sie nur noch abgearbeitet.
     ``positionen`` erfasste Positionen der Bestellung
     ``notiz``      optionaler Hinweis des Dorfladens (F3); ohne ihn sieht das
                    Blatt aus wie bisher
