@@ -69,19 +69,107 @@
   function lastReply(t){ if(!t||!t.verlauf) return null; for(var i=t.verlauf.length-1;i>=0;i--){ if(t.verlauf[i].who==='dorfladen') return t.verlauf[i]; } return null; }
   function seenKey(){ return 'dl_kontakt_seen'; }
 
+  /* Wie viele Antworten des Dorfladens sind seit dem letzten Öffnen dazu-
+     gekommen? Aus dem Laden: „Wie kann der Kunde sehen, dass er neue
+     Nachrichten empfangen hat? Sollte dies nicht bei ,Schreib uns' mit
+     einem Badge gekennzeichnet werden?"
+
+     Der gespeicherte Stand hat die Form „<zeit>|<text>"; der Zeitanteil
+     davor ist genau der Zeitstempel der zuletzt gesehenen Antwort. So
+     bleibt der alte Eintrag im Speicher weiterverwendbar — niemand muss
+     den Chat erst einmal öffnen, damit die Zählung stimmt.
+     (Spec kontakt-kunde-feld-badge, F3) */
+  function gesehenSeit(){
+    try{ return (localStorage.getItem(seenKey())||'').split('|')[0]||''; }catch(e){ return ''; }
+  }
+  function neueAntworten(t){
+    var seit=gesehenSeit(), n=0;
+    ((t&&t.verlauf)||[]).forEach(function(m){
+      if(m && m.who==='dorfladen' && String(m.t||'') > seit) n++;
+    });
+    return n;
+  }
+  /* Ein Punkt von 14 px ging neben dem Knopf unter. Das Badge nennt jetzt
+     die Anzahl; ab zehn bleibt es bei „9+", sonst wüchse es dem Knopf
+     davon. (Spec F4/F5) */
+  function setzeBadge(n){
+    var dot=document.getElementById('hp-chat-dot'); if(!dot) return;
+    if(n>0){
+      dot.textContent = n>9 ? '9+' : String(n);
+      dot.setAttribute('aria-label', n===1 ? 'Eine neue Antwort' : n+' neue Antworten');
+      dot.style.display='flex';
+    }else{
+      dot.textContent='';
+      dot.removeAttribute('aria-label');
+      dot.style.display='none';
+    }
+  }
+
   // ── Flag pruefen ──
+  /* Aus dem Laden: „Warum ist auf Desktop ,Schreib uns' ein WhatsApp-Aufruf?
+     Muss genauso wie bei mobile sein."
+
+     Es ist keine Frage der Bildschirmgröße. Die Umschaltung hing an einer
+     einzigen Abfrage, und deren Fehlschlag wurde STILL verschluckt
+     (`.catch(function(){})`). Klemmte `/api/cms-config` auch nur einmal —
+     kalt angelaufene Funktion, kurzer Netzaussetzer —, blieb der Chat für
+     den ganzen Besuch aus, und der Besucher sah den alten WhatsApp-Knopf.
+     Kein Hinweis, keine Meldung. Auf dem Telefon fiel es nie auf, weil
+     `mobile.css` den WhatsApp-Knopf ohnehin per Regel ausblendet.
+
+     Drei Dinge dagegen: den letzten bekannten Stand merken und sofort
+     anwenden, bei Fehlschlag zweimal nachfassen, und das Ergebnis
+     korrigieren, sobald die Abfrage doch noch durchkommt.
+     (Spec kontakt-float-zuverlaessig) */
+  var MERKER='dl_kontakt_an';
+  var _an=false;
+
+  function merke(an){ try{ localStorage.setItem(MERKER, an?'1':'0'); }catch(e){} }
+  function gemerkt(){ try{ return localStorage.getItem(MERKER)==='1'; }catch(e){ return false; } }
+
   function init(){
+    if(gemerkt()) enable();
+    hole(0);
+  }
+
+  function hole(versuch){
     fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(res){
       var flags={}; if(res&&res.success&&res.data){ flags=res.data.feature_flags; if(typeof flags==='string'){try{flags=JSON.parse(flags);}catch(e){flags={};}} }
-      if(flags && flags.kiosk_kontakt===true){ enable(); }
-    }).catch(function(){});
+      var an = !!(flags && flags.kiosk_kontakt===true);
+      merke(an);
+      if(an) enable(); else disable();
+    }).catch(function(){
+      // Zweimal nachfassen, mit wachsendem Abstand. Erst danach bleibt es
+      // beim gemerkten Stand.
+      if(versuch<2) setTimeout(function(){ hole(versuch+1); }, 1500*(versuch+1));
+    });
+  }
+
+  /* Der Chat ist aus (Merkmal abgeschaltet): alles zurückbauen, damit der
+     WhatsApp-Knopf wieder erscheint. */
+  function disable(){
+    if(!_an) return;
+    _an=false;
+    if(_pollTimer){ clearInterval(_pollTimer); _pollTimer=null; }
+    ['hp-chat-float','hp-chat-ov','hp-chat-wa-aus'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.remove();
+    });
   }
 
   function enable(){
+    if(_an) return;
+    _an=true;
     buildFloat();
     buildOverlay();
+    /* Der WhatsApp-Knopf wird per REGEL ausgeblendet, nicht per Inline-Stil
+       am Element — genauso, wie es `mobile.css` auf dem Telefon tut. So
+       kann ihn nichts versehentlich wieder einblenden. */
+    if(!document.getElementById('hp-chat-wa-aus')){
+      var st=document.createElement('style'); st.id='hp-chat-wa-aus';
+      st.textContent='#hp-wa-float{display:none!important}';
+      document.head.appendChild(st);
+    }
     // 1:1-"Frage"-WhatsApp-Einstiege auf den Chat umbiegen (Gruppe bleibt).
-    var wa=document.getElementById('hp-wa-float'); if(wa) wa.style.display='none';
     document.querySelectorAll('a[href*="wa.me"]').forEach(function(a){
       var href=''; try{ href=decodeURIComponent(a.getAttribute('href')||''); }catch(e){ href=a.getAttribute('href')||''; }
       if(/Frage/i.test(href) && !/Gruppe/i.test(href)){
@@ -91,7 +179,7 @@
     });
     // Auto-Open per ?chat=1 (z.B. aus Push-Notification)
     try{ if(new URLSearchParams(location.search).get('chat')==='1'){ setTimeout(openChat,300); } }catch(e){}
-    // Hintergrund: neue Antwort? -> roter Punkt am Float
+    // Hintergrund: neue Antwort? -> Badge am Float
     pollDot(); setInterval(pollDot, 45000);
   }
 
@@ -109,7 +197,7 @@
     b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:9px;padding:13px 20px 13px 16px;border:none;border-radius:30px;background:#2e7d4f;color:#fff;font-size:15px;font-weight:700;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.28);cursor:pointer';
     b.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
       +'<span>Schreib uns</span>'
-      +'<span id="hp-chat-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#dc2626;border:2px solid #fff"></span>';
+      +'<span id="hp-chat-dot" style="display:none;position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;background:#dc2626;border:2px solid #fff;color:#fff;font-size:12px;font-weight:700;line-height:1;align-items:center;justify-content:center"></span>';
     b.onclick=openChat;
     document.body.appendChild(b);
   }
@@ -140,14 +228,24 @@
         +'</details>'
         +'<label id="hp-chat-push-row" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;margin-bottom:6px"><input type="checkbox" id="hp-chat-push-opt" checked> 📲 Antworten als App-Benachrichtigung</label>'
         +'<div id="hp-chat-preview" style="display:none;align-items:center;gap:8px;margin-bottom:6px;padding:6px;background:#f3f4f6;border-radius:10px"><img id="hp-chat-prev-img" alt="" style="height:52px;width:52px;object-fit:cover;border-radius:6px"><span style="flex:1;font-size:12px;color:#6b7280">Bild bereit – Unterschrift optional</span><button id="hp-chat-prev-x" type="button" aria-label="Bild entfernen" style="background:none;border:none;font-size:18px;color:#6b7280;cursor:pointer;line-height:1">✕</button></div>'
-        +'<div style="display:flex;gap:6px;align-items:flex-end">'
+        /* Feld oben über die ganze Breite, Knöpfe darunter.
+
+           Gemessen auf dem Telefon: Vorher teilten sich Feld und drei
+           Knöpfe EINE Flex-Reihe – das Feld bekam 221 px von 355 px, also
+           knapp zwei Drittel. Aus dem Laden kam prompt „die Nachrichtenbox
+           ist zu klein". Genau dieselbe Ursache lag zuvor schon im Kiosk
+           vor; dort wurde sie behoben, hier blieb sie stehen.
+           (Spec kontakt-kunde-feld-badge, F1) */
+        +'<div style="display:flex;flex-direction:column;gap:6px">'
           +'<input type="file" accept="image/*" id="hp-chat-file" style="display:none">'
-          +'<button id="hp-chat-emoji" type="button" title="Emoji" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center">😊</button>'
-          +'<button id="hp-chat-imgbtn" title="Foto senden" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></button>'
-          +'<textarea id="hp-chat-input" rows="2" maxlength="1000" placeholder="Nachricht schreiben…" style="flex:1;min-width:0;min-height:60px;padding:12px 13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;font-family:inherit;line-height:1.4;resize:none;overflow:hidden;max-height:150px;box-sizing:border-box"></textarea>'
-          +'<button id="hp-chat-send" style="background:#2e7d4f;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>'
-        +'</div>'
-      +'</div>';
+          +'<textarea id="hp-chat-input" rows="3" maxlength="1000" placeholder="Nachricht schreiben…" style="width:100%;box-sizing:border-box;min-height:84px;padding:12px 13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;font-family:inherit;line-height:1.4;resize:none;overflow:hidden;max-height:190px"></textarea>'
+          +'<div style="display:flex;gap:6px;align-items:center">'
+            +'<button id="hp-chat-emoji" type="button" title="Emoji" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center">😊</button>'
+            +'<button id="hp-chat-imgbtn" title="Foto senden" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;width:38px;height:38px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></button>'
+            +'<span style="flex:1"></span>'
+            +'<button id="hp-chat-send" style="background:#2e7d4f;border:none;border-radius:10px;min-width:88px;height:40px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;color:#fff;font-size:14px;font-weight:600;font-family:inherit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Senden</button>'
+          +'</div>'
+        +'</div>'      +'</div>';
     document.body.appendChild(ov);
 
     document.getElementById('hp-chat-close').onclick=closeChat;
@@ -224,7 +322,7 @@
   function openChat(){
     var ov=document.getElementById('hp-chat-ov'); if(!ov) return;
     ov.style.display='flex'; _open=true;
-    document.getElementById('hp-chat-dot').style.display='none';
+    setzeBadge(0);
     if(isMobile()){ if(window.dlLockScroll) dlLockScroll(); fitMobile(); bindVV(); }
     if(!_histPushed){ _histPushed=true; try{ history.pushState({dlChat:1},''); }catch(e){} }
     loadThread(true);
@@ -246,7 +344,7 @@
   function markSeen(){
     var lr=lastReply(_thread);
     try{ localStorage.setItem(seenKey(), lr?((lr.t||'')+'|'+(lr.text||lr.datei||'')):''); }catch(e){}
-    var dot=document.getElementById('hp-chat-dot'); if(dot) dot.style.display='none';
+    setzeBadge(0);
   }
 
   function pollDot(){
@@ -254,10 +352,8 @@
     fetch(myUrl()).then(function(r){return r.json();}).then(function(res){
       if(!res||!res.success||!res.thread) return;
       _thread=res.thread;
-      var lr=lastReply(_thread); if(!lr) return;
-      var cur=(lr.t||'')+'|'+(lr.text||lr.datei||'');
-      var seen=''; try{ seen=localStorage.getItem(seenKey())||''; }catch(e){}
-      if(cur!==seen && !_open){ var dot=document.getElementById('hp-chat-dot'); if(dot) dot.style.display='block'; }
+      if(_open) return;
+      setzeBadge(neueAntworten(_thread));
     }).catch(function(){});
   }
 

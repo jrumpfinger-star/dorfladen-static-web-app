@@ -1043,3 +1043,64 @@ test.describe('Getränke – Verlauf mit Status (GV)', () => {
     await expect(z.locator('.gk-vstatus b')).toHaveText('Gesendet');
   });
 });
+
+
+// ════════════════════════════════════════════════════
+//  GK – Kompakte Artikelkarte auf Tablet und Rechner
+//  Aus dem Laden: „Könnte die Darstellung nicht übersichtlicher und
+//  kompakter sein."   (Spec specs/getraenke-kompakte-liste/spec.md)
+// ════════════════════════════════════════════════════
+
+test.describe('Getränke – kompakte Bestellliste (GK)', () => {
+
+  async function hoehen(page, opts = {}) {
+    await oeffneTab(page, opts);
+    return page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#getraenke-body .gk-row')];
+      return rows.map((r) => Math.round(r.getBoundingClientRect().height));
+    });
+  }
+
+  test('TC-GK-01: Die Artikelkarte bleibt flach', async ({ page }, info) => {
+    test.skip(info.project.name === 'mobile', 'das Telefon hat einen eigenen Aufbau');
+    const h = await hoehen(page);
+    /* Gemessen vor der Änderung: auf dem Rechner 103–152 px, weil die
+       Bedienzeile in der schmalen Spalte umbrach - Zähler oben, Vorschläge
+       darunter. Auf dem iPad waren es bei einer Spalte 54 px. */
+    expect(Math.max(...h), `Kartenhöhen ${h.join(', ')}`).toBeLessThanOrEqual(70);
+  });
+
+  test('TC-GK-02: Auch mit erfasster Menge bleibt sie flach', async ({ page }, info) => {
+    test.skip(info.project.name === 'mobile', 'das Telefon hat einen eigenen Aufbau');
+    const h = await hoehen(page, {
+      status: 1, positionen: [{ nummer: ARTIKEL[0].nummer, menge: 18 }],
+    });
+    expect(Math.max(...h), `Kartenhöhen ${h.join(', ')}`).toBeLessThanOrEqual(70);
+  });
+
+  test('TC-GK-03: Zähler und Vorschläge stehen nebeneinander', async ({ page }, info) => {
+    test.skip(info.project.name === 'mobile', 'das Telefon hat einen eigenen Aufbau');
+    await oeffneTab(page, {});
+    const gleich = await page.evaluate(() => {
+      const r = document.querySelector('#getraenke-body .gk-row');
+      const step = r.querySelector('.gk-step');
+      const sugg = r.querySelector('.gk-sugg');
+      if (!step || !sugg) return null;
+      // Gleiche Mittellinie heisst: eine Zeile, kein Umbruch.
+      const a = step.getBoundingClientRect(), b = sugg.getBoundingClientRect();
+      return Math.abs((a.top + a.height / 2) - (b.top + b.height / 2)) < 6;
+    });
+    expect(gleich, 'Zähler und Vorschläge liegen nicht auf einer Linie').toBe(true);
+  });
+
+  test('TC-GK-04: Die Vorschläge bleiben auch bei erfasster Menge erreichbar', async ({ page }, info) => {
+    test.skip(info.project.name === 'mobile', 'auf dem Telefon fehlt dafür der Platz');
+    await oeffneTab(page, {
+      status: 1, positionen: [{ nummer: ARTIKEL[0].nummer, menge: 18 }],
+    });
+    // Mit „letzte N" springt man von einer geänderten Menge zurück - das
+    // darf die kompaktere Darstellung nicht kosten.
+    const z = page.locator('.gk-row.has').first();
+    await expect(z.locator('.gk-sugg button').first()).toBeVisible();
+  });
+});

@@ -3929,6 +3929,68 @@ html[data-theme="dark"] .mb-kontext{ background:var(--c-surf2, #1f2933) }
   .gk-geb-klein{ display:none }
   #panel-getraenke .gk-nm .gk-pr{ display:none }
 }
+
+/* ── Getränke: flache Artikelkarte auch auf Tablet und Rechner ──────────
+   Aus dem Laden: „Könnte die Darstellung nicht übersichtlicher und
+   kompakter sein."
+
+   Gemessen mit vier Artikeln, gleiche Daten, alle vier Ansichten:
+
+     iPad mini (768)    54 px je Karte
+     Ladentablett (686) 82 px
+     Handy (375)        55–90 px
+     Rechner (1280)     103–152 px   ← der Ausreißer
+
+   Die Ursache ist nicht die Karte, sondern das Zusammenspiel mit der
+   Mehrspaltigkeit: Ab zwei Spalten wird jede Spalte so schmal, dass die
+   Bedienzeile umbricht — Zähler oben, Vorschlagsknöpfe darunter. Die
+   zweite Spalte halbiert zwar die Zeilenzahl, verdoppelt aber die
+   Zeilenhöhe. Der Gewinn verpufft fast vollständig.
+
+   Für das Telefon war die Lösung längst erarbeitet (Block oben): Zähler
+   und Vorschläge werden Teil desselben Rasters, statt in einem eigenen
+   Flex-Kasten zu sitzen, der umbrechen darf. Genau das gilt jetzt auch
+   hier — auf breiten Ansichten ist dafür sogar mehr Platz.
+
+   (Spec specs/getraenke-kompakte-liste/spec.md) */
+@media (min-width:560px){
+  /* Die eigentliche Ursache steckte in der Rasterdefinition: Die
+     Namensspalte war mit `minmax(120px, var(--gk-namensp))` auf bis zu
+     250 px festgenagelt. Für Vorschläge und Zähler blieb nur der Rest —
+     in der zweiten Spalte zu wenig, also brachen sie um.
+
+     Jetzt darf der Name schrumpfen (`minmax(0,1fr)`), und die beiden
+     Bedienelemente bekommen ihre natürliche Breite (`auto auto`). Damit
+     ist die Zeile immer einzeilig.
+
+     Belegt durch die Gegenprobe: Mit dem alten Raster misst die Karte
+     wieder 98 px, und TC-GK-01/02/03 fallen. Das Auflösen des
+     Zwischenkastens (`display:contents`) allein ändert dagegen nichts —
+     es macht die Absicht nur lesbar, indem Name, Vorschläge und Zähler
+     tatsächlich zu dritt im selben Raster stehen. */
+  #panel-getraenke .gk-chips{ display:contents }
+  #panel-getraenke .gk-zeile{
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:0 8px;
+    align-items:center;
+  }
+  /* Der Zähler gehört ans rechte Ende — die Vorschläge davor. Im Markup
+     steht der Zähler zuerst, deshalb die Reihenfolge hier drehen. */
+  #panel-getraenke .gk-sugg{ order:2; flex-wrap:nowrap }
+  #panel-getraenke .gk-step{ order:3 }
+
+  /* Die Vorschlagsknöpfe bleiben ausdrücklich auch dort stehen, wo schon
+     eine Menge erfasst ist. Auf dem Telefon werden sie dann ausgeblendet,
+     weil der Platz fehlt — hier wäre das ein Verlust ohne Gegenwert: Mit
+     „letzte 10" springt man von einer geänderten Menge zurück, und genau
+     diese Rückkehr ist im Laden der häufige Fall. Der Gewinn stammt
+     vollständig aus der Anordnung, nicht aus dem Weglassen. */
+
+  /* Lange Namen dürfen die Zeile nicht aufblähen. */
+  #panel-getraenke .gk-nm{
+    overflow:hidden; text-overflow:ellipsis;
+  }
+}
 /* Am Listenende: anlegen und leeren (Spec kiosk-bestellreiter-mobil, F2). */
 .gk-listenende{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px }
 .gk-listenende > button{ flex:1 1 140px; min-height:var(--tap, 48px) }

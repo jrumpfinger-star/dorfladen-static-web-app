@@ -189,6 +189,54 @@ pruefe("30" in zahl, "Summe als Zahl")
 pruefe("40015" in text, "Artikelnummer als Text - fuehrende Nullen blieben so erhalten")
 pruefe("40015" not in zahl, "und nicht als Zahl")
 
+
+# ══════════════════════════════════════════════════════════════════════
+# 13) Der Kopf: kompakt und nicht fixiert
+#
+# Aus dem Laden: „Der Header der Excelliste verbraucht zu viele Spalten
+# (16). Bitte Daten horizontal verteilen. Ausserdem sollte der Header der
+# Liste nicht fixiert sein."
+#
+# Gemeint waren die sechzehn ZEILEN, die der Kopf untereinander belegte -
+# die Artikelliste begann erst in Zeile 16, und genau diese sechzehn
+# Zeilen blieben beim Rollen stehen.
+# (Spec specs/getraenke-excel-kopf/spec.md)
+# ══════════════════════════════════════════════════════════════════════
+print("\n13) Kopf kompakt und nicht fixiert")
+
+daten13 = mappe()
+tab13 = zellen(daten13)
+
+kopfzeile = next(i for i, z in enumerate(tab13) if "Art.-Nr." in z)
+# Vorher stand der Spaltenkopf in Zeile 16 (Index 15).
+pruefe(kopfzeile <= 10,
+       f"die Artikelliste beginnt in Zeile {kopfzeile + 1} (vorher 16)")
+
+# Horizontal verteilt heisst: im Kopf stehen Angaben auch rechts der
+# Bezeichnungsspalte, nicht alles untereinander in A und B.
+kopfbereich = tab13[:kopfzeile]
+rechts = [z[3:] for z in kopfbereich if len(z) > 3]
+gefuellt = [w for z in rechts for w in z if str(w).strip()]
+pruefe(len(gefuellt) >= 4,
+       f"der Kopf nutzt auch die rechten Spalten ({len(gefuellt)} Angaben)")
+
+# Der Liefertag ist die wichtigste Angabe - er steht ganz oben.
+pruefe(any("29.09.2026" in str(w) for w in tab13[0]),
+       "der Liefertag steht in der ersten Zeile")
+
+# Und nichts ist eingefroren.
+with zipfile.ZipFile(BytesIO(daten13)) as z13:
+    blatt = z13.read("xl/worksheets/sheet1.xml").decode("utf-8")
+pruefe("state=\"frozen\"" not in blatt, "kein eingefrorener Bereich")
+pruefe("<pane " not in blatt, "und gar keine Fensterteilung")
+
+# Trotz Umbau muss jede Kopfangabe erhalten geblieben sein.
+flach13 = [str(w) for z in tab13 for w in z]
+for erwartet in (CFG["lieferant_fax"], str(CFG["kd_nr"]),
+                 CFG["absender_telefon"], CFG["absender_strasse"]):
+    pruefe(erwartet in flach13, f"Kopfangabe erhalten: {erwartet}")
+
+
 print()
 if fehler:
     print(f"{len(fehler)} Pruefung(en) fehlgeschlagen.")

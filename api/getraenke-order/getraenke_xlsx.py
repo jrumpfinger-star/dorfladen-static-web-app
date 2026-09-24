@@ -32,7 +32,13 @@ from xml.sax.saxutils import escape
 # breiter als dessen 10,14 - sonst passen die Kopfbeschriftungen
 # („Liefertag", „Kd.-Nr.") nicht, und die fünfstelligen Artikelnummern
 # stehen ohnehin darin bequem.
-BREITEN = [12.0, 48.86, 8.0]
+#
+# D und E tragen nur den Kopf. Aus dem Laden: „Der Header der Excelliste
+# verbraucht zu viele Spalten (16). Bitte Daten horizontal verteilen."
+# Gemeint waren die sechzehn ZEILEN, die der Kopf untereinander belegte -
+# die Artikelliste begann erst in Zeile 16. Jetzt stehen Absender und
+# Kontaktangaben nebeneinander, und die Liste beginnt in Zeile 9.
+BREITEN = [12.0, 48.86, 8.0, 13.0, 24.0]
 KOPF = ["Art.-Nr.", "Bezeichnung", "Menge"]
 
 
@@ -57,11 +63,14 @@ def _zelle(ref, wert, stil=0):
             f'<is><t xml:space="preserve">{text}</t></is></c>')
 
 
-def _blatt(zeilen, kopfzeilen):
+def _blatt(zeilen):
     """Das Arbeitsblatt als XML.
 
-    ``kopfzeilen`` bleiben beim Rollen stehen und werden beim Drucken auf
-    jeder Seite wiederholt - bei über fünfzig Artikeln sonst mühsam.
+    Bewusst OHNE eingefrorene Kopfzeilen. Sie waren einmal gut gemeint -
+    bei über fünfzig Artikeln muss man sonst raten, welche Spalte welche
+    ist. Nur: Der Kopf umfasste sechzehn Zeilen, und die blieben beim
+    Rollen allesamt stehen. Aus dem Laden: „Außerdem sollte der Header der
+    Liste nicht fixiert sein." (Spec getraenke-excel-kopf)
     """
     cols = "".join(
         f'<col min="{i+1}" max="{i+1}" width="{b}" customWidth="1"/>'
@@ -74,19 +83,10 @@ def _blatt(zeilen, kopfzeilen):
             for i, (w, s) in enumerate(werte))
         xml.append(f'<row r="{nr}">{zellen}</row>')
 
-    frieren = ""
-    if kopfzeilen:
-        frieren = (f'<sheetView workbookViewId="0">'
-                   f'<pane ySplit="{kopfzeilen}" topLeftCell="A{kopfzeilen+1}"'
-                   f' activePane="bottomLeft" state="frozen"/>'
-                   f'</sheetView>')
-    else:
-        frieren = '<sheetView workbookViewId="0"/>'
-
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        f'<sheetViews>{frieren}</sheetViews>'
+        '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
         f'<cols>{cols}</cols>'
         f'<sheetData>{"".join(xml)}</sheetData>'
         '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6"'
@@ -197,45 +197,57 @@ def build_xlsx(positionen, datum_de, wochentag, kd_nr="", tour="",
     c = cfg or {}
     titel = "Korrektur der Bestellung" if korrektur else "Bestellung"
 
-    def zeile(links="", rechts="", stil_l=0, stil_r=0):
-        return [(links, stil_l), (rechts, stil_r), ("", 0)]
+    def zeile(*werte):
+        """Eine Zeile aus (Wert, Stil)-Paaren, auf die Spaltenzahl gefüllt."""
+        aus = list(werte)
+        while len(aus) < len(BREITEN):
+            aus.append(("", 0))
+        return aus
 
     # ── Kopf ────────────────────────────────────────────────────────────
-    # Aufbau wie auf dem Formular des Lieferanten: oben der Titel, darunter
-    # an WEN es geht und von WEM es kommt. Aus dem Laden: „bau auch einen
-    # sinnvollen Header in Excel, so dass der Kunde weiß, von wem die
-    # Bestellung stammt."
-    zeilen = [zeile(titel, "", 2)]
-    zeilen.append(zeile("", ""))
-
+    # Aus dem Laden: „bau auch einen sinnvollen Header in Excel, so dass
+    # der Kunde weiß, von wem die Bestellung stammt." — und später: „Der
+    # Header verbraucht zu viele Spalten (16). Bitte Daten horizontal
+    # verteilen."
+    #
+    # Deshalb zwei Blöcke NEBENEINANDER statt einer langen Spalte: links
+    # wer schreibt und an wen, rechts die Nummern, über die der Lieferant
+    # uns zuordnet. Der Liefertag steht oben neben dem Titel — er ist die
+    # wichtigste Angabe des ganzen Blattes.
     empf = c.get("name") or "Getr\u00e4nke Kratzer"
-    zeilen.append(zeile("An", empf, 3, 1))
-    if c.get("lieferant_fax"):
-        zeilen.append(zeile("Fax", c["lieferant_fax"], 3))
-    zeilen.append(zeile("", ""))
-
     absender = c.get("absender") or "Dorfladen Oberornau UG"
-    zeilen.append(zeile("Von", absender, 3, 1))
+
+    # (Beschriftung, Wert, Stil des Wertes) — leere Einträge fallen weg,
+    # damit keine Lücke entsteht, wenn eine Angabe fehlt.
+    links = [("An", empf, 1), ("Von", absender, 1)]
     for feld in ("absender_strasse", "absender_ort"):
         if c.get(feld):
-            zeilen.append(zeile("", c[feld]))
+            links.append(("", c[feld], 0))
+
+    rechts = []
+    if c.get("lieferant_fax"):
+        rechts.append(("Fax", c["lieferant_fax"], 0))
     if c.get("absender_telefon"):
-        zeilen.append(zeile("Telefon", c["absender_telefon"], 3))
+        rechts.append(("Telefon", c["absender_telefon"], 0))
     if kd_nr:
-        # Die Kundennummer ist das, womit der Lieferant uns zuordnet -
-        # sie gehoert in den Kopf, nicht in eine Fusszeile.
-        zeilen.append(zeile("Kd.-Nr.", str(kd_nr), 3, 1))
+        # Die Kundennummer ist das, womit der Lieferant uns zuordnet.
+        rechts.append(("Kd.-Nr.", str(kd_nr), 1))
     if tour:
-        zeilen.append(zeile("Tour", str(tour), 3))
-
-    zeilen.append(zeile("", ""))
-    zeilen.append(zeile("Liefertag", f"{wochentag}, {datum_de}", 3, 1))
+        rechts.append(("Tour", str(tour), 0))
     if erstellt:
-        zeilen.append(zeile("Erstellt", erstellt, 3))
-    zeilen.append(zeile("", ""))
+        rechts.append(("Erstellt", erstellt, 0))
 
-    kopfzeilen_bis = len(zeilen) + 1          # Spaltenkopf mit einfrieren
-    zeilen.append([(KOPF[0], 1), (KOPF[1], 1), (KOPF[2], 1)])
+    zeilen = [zeile((titel, 2), ("", 0), ("", 0),
+                    ("Liefertag", 3), (f"{wochentag}, {datum_de}", 1))]
+    zeilen.append(zeile())
+
+    for i in range(max(len(links), len(rechts))):
+        lb, lw, ls = links[i] if i < len(links) else ("", "", 0)
+        rb, rw, rs = rechts[i] if i < len(rechts) else ("", "", 0)
+        zeilen.append(zeile((lb, 3), (lw, ls), ("", 0), (rb, 3), (rw, rs)))
+
+    zeilen.append(zeile())
+    zeilen.append(zeile((KOPF[0], 1), (KOPF[1], 1), (KOPF[2], 1)))
 
     gesamt = 0
     for p in positionen:
@@ -252,20 +264,20 @@ def build_xlsx(positionen, datum_de, wochentag, kd_nr="", tour="",
         geb = (p.get("gebinde") or "").strip()
         if geb and geb not in bez:
             bez = f"{bez} {geb}".strip()
-        zeilen.append([
+        zeilen.append(zeile(
             (_nummer_kurz(p.get("nummer")), 0),
             (bez, 0),
             (menge, 0),
-        ])
+        ))
 
-    zeilen.append([("", 0), ("", 0), ("", 0)])
-    zeilen.append([("", 0), ("Summe Kisten", 1), (gesamt, 1)])
+    zeilen.append(zeile())
+    zeilen.append(zeile(("", 0), ("Summe Kisten", 1), (gesamt, 1)))
 
     if (notiz or "").strip():
-        zeilen.append([("", 0), ("", 0), ("", 0)])
-        zeilen.append([("Hinweis vom Dorfladen:", 1), ("", 0), ("", 0)])
+        zeilen.append(zeile())
+        zeilen.append(zeile(("Hinweis vom Dorfladen:", 1)))
         for stueck in str(notiz).strip().splitlines():
-            zeilen.append([(stueck, 0), ("", 0), ("", 0)])
+            zeilen.append(zeile((stueck, 0)))
 
     puffer = BytesIO()
     with zipfile.ZipFile(puffer, "w", zipfile.ZIP_DEFLATED) as z:
@@ -274,7 +286,7 @@ def build_xlsx(positionen, datum_de, wochentag, kd_nr="", tour="",
         z.writestr("xl/workbook.xml", _workbook("Bestellung"))
         z.writestr("xl/_rels/workbook.xml.rels", _WB_RELS)
         z.writestr("xl/styles.xml", _STYLES)
-        z.writestr("xl/worksheets/sheet1.xml", _blatt(zeilen, kopfzeilen_bis))
+        z.writestr("xl/worksheets/sheet1.xml", _blatt(zeilen))
     return puffer.getvalue()
 
 
