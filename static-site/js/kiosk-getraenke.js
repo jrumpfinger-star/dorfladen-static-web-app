@@ -1145,9 +1145,26 @@ window.KGetraenke = (function () {
   //  Artikelpflege (Spec F11)
   // ══════════════════════════════════════════════════
 
+  /** ``KA40015`` -> ``40015``. Die Nummer des Lieferanten ohne unser Kürzel.
+   *
+   *  Aus dem Laden: „Auch sehe ich die Kratzer Bestellnummer nicht."
+   *  Sie stand da — aber mit dem vorangestellten ``KA``, das nur wir
+   *  vergeben, damit die Quelle erkennbar bleibt. Auf dem Formular des
+   *  Lieferanten steht die blanke Zahl; so wird sie jetzt auch angezeigt.
+   *  Eine Hausnummer ohne echte Entsprechung bleibt, wie sie ist — sonst
+   *  sähe sie wie eine Lieferantennummer aus. (Spec getraenke-artikelpflege)
+   */
+  function nrKurz(nummer) {
+    var n = String(nummer || '').trim();
+    var m = /^KA0*(\d+)$/.exec(n);
+    return m ? m[1] : n;
+  }
+
   function artikelAnsicht() {
     if (!_artikel.length) return '<div class="k-empty">Es sind noch keine Artikel hinterlegt.</div>';
-    var html = '<div class="gk-panel"><h3>Artikel bei ' + esc(_cfg.name || 'Kratzer') + '</h3>'
+    var html = '<div class="gk-panel">'
+      + '<div class="gk-akopf"><h3>Artikel bei ' + esc(_cfg.name || 'Kratzer') + '</h3>'
+      + '<button class="gk-neu" id="gk-art-neu">+ Neuer Artikel</button></div>'
       + '<p style="font-size:12px;color:#6b7280;line-height:1.5;margin:0 0 10px">'
       + 'Ausgeblendete Artikel verschwinden aus der Bestellliste, bleiben aber hier '
       + 'stehen. Gel\u00f6scht wird nichts \u2014 sonst rissen L\u00fccken in Vorbelegung '
@@ -1159,16 +1176,204 @@ window.KGetraenke = (function () {
         html += '<div class="gk-grp" style="margin-top:14px">' + esc(gruppe) + '</div>';
       }
       html += '<div class="gk-arow' + (a.aktiv === false ? ' aus' : '') + '">'
-        + '<span class="gk-anr">' + esc(a.nummer || '\u2014') + '</span>'
+        + '<span class="gk-anr" title="Artikelnummer bei ' + esc(_cfg.name || 'Kratzer') + '">'
+        + esc(nrKurz(a.nummer) || '\u2014') + '</span>'
         + '<span class="gk-anm">' + esc(a.name)
         + (a.aktiv === false ? '<span class="gk-tag aus">ausgeblendet</span>' : '') + '</span>'
         + '<span class="gk-anr">' + esc(a.gebinde || '\u2014') + '</span>'
         + '<span class="gk-anr">' + (a.preis ? eur(a.preis) : 'ohne Preis') + '</span>'
+        + '<button data-bearb="' + i + '">Bearbeiten</button>'
         + '<button data-aktiv="' + i + '">'
         + (a.aktiv === false ? 'Einblenden' : 'Ausblenden') + '</button>'
         + '</div>';
     });
     return html + '</div>';
+  }
+
+  /** Maske zum Ändern eines Artikels (Spec getraenke-artikelpflege, F2). */
+  function artikelBearbeiten(i) {
+    var a = _artikel[i];
+    if (!a) return;
+    var gebinde = [];
+    _artikel.forEach(function (x) {
+      if (x.gebinde && gebinde.indexOf(x.gebinde) < 0) gebinde.push(x.gebinde);
+    });
+    var o = blatt('gk-edit-blatt',
+      '<header><h3>Artikel bearbeiten</h3>'
+      + '<p>' + esc(a.name) + (a.gebinde ? ' \u00b7 ' + esc(a.gebinde) : '') + '</p></header>'
+      + '<div class="gk-body">'
+      +   '<div class="gk-feld"><label for="gke-name">Bezeichnung *</label>'
+      +     '<input type="text" id="gke-name" autocomplete="off" value="' + esc(a.name || '') + '"></div>'
+      +   '<div class="gk-feld"><label for="gke-text">Bezeichnung f\u00fcr die Bestellmail</label>'
+      +     '<input type="text" id="gke-text" autocomplete="off" value="' + esc(a.bestelltext || '') + '">'
+      +     '<span class="hilf">Genau so, wie es der Lieferant lesen soll.</span></div>'
+      +   '<div class="gk-feldreihe">'
+      +     '<div class="gk-feld"><label for="gke-gebinde">Gebinde</label>'
+      +       '<input type="text" id="gke-gebinde" list="gke-gl" value="' + esc(a.gebinde || '') + '">'
+      +       '<datalist id="gke-gl">' + gebinde.map(function (g) {
+                return '<option value="' + esc(g) + '">';
+              }).join('') + '</datalist></div>'
+      +     '<div class="gk-feld"><label for="gke-preis">Preis je Kiste</label>'
+      +       '<input type="text" id="gke-preis" inputmode="decimal" value="'
+      +       (a.preis ? String(a.preis).replace('.', ',') : '') + '"></div>'
+      +   '</div>'
+      +   '<div class="gk-feldreihe">'
+      +     '<div class="gk-feld"><label for="gke-nr">Artikel-Nr. bei '
+      +       esc(_cfg.name || 'Kratzer') + '</label>'
+      +       '<input type="text" id="gke-nr" inputmode="numeric" value="'
+      +       esc(nrKurz(a.nummer)) + '" placeholder="z. B. 50071">'
+      +       '<span class="hilf">Nur die Zahl \u2014 das K\u00fcrzel setzen wir selbst davor.</span></div>'
+      +     '<div class="gk-feld"><label for="gke-gruppe">Warengruppe</label>'
+      +       '<select id="gke-gruppe">' + _gruppen.map(function (g) {
+                return '<option value="' + esc(g) + '"'
+                  + (g === a.gruppe ? ' selected' : '') + '>' + esc(g) + '</option>';
+              }).join('') + '</select></div>'
+      +   '</div>'
+      +   '<div class="gk-warn" id="gke-warn" hidden></div>'
+      + '</div>'
+      + '<footer><button class="ok" id="gke-ok">Speichern</button>'
+      + '<button class="zu" id="gke-zu">Abbrechen</button></footer>');
+
+    $('gke-zu').onclick = function () { o.remove(); };
+    $('gke-ok').onclick = function () {
+      var name = ($('gke-name').value || '').trim();
+      if (!name) {
+        var w = $('gke-warn');
+        w.textContent = 'Bitte eine Bezeichnung eintragen.'; w.hidden = false;
+        return;
+      }
+      var roh = ($('gke-nr').value || '').trim();
+      // Wer die Zahl eintippt, bekommt das Kuerzel dazu. Wer eine
+      // Hausnummer stehen laesst, behaelt sie.
+      var neueNr = roh ? (/^\d+$/.test(roh) ? 'KA' + roh : roh) : '';
+      $('gke-ok').disabled = true;
+      fetch(API + '/getraenke-artikel', {
+        method: 'PATCH', headers: authHeaders(),
+        body: JSON.stringify({
+          alt_nummer: a.nummer || '', alt_name: a.nummer ? '' : a.name,
+          name: name,
+          bestelltext: ($('gke-text').value || '').trim(),
+          gebinde: ($('gke-gebinde').value || '').trim(),
+          gruppe: $('gke-gruppe').value,
+          preis: ($('gke-preis').value || '').trim(),
+          nummer: neueNr
+        })
+      }).then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (res) {
+          $('gke-ok').disabled = false;
+          if (res && res.artikel) {
+            _artikel = res.artikel; o.remove(); zeichne();
+            toast('Artikel gespeichert.');
+            return;
+          }
+          var w = $('gke-warn');
+          w.textContent = (res && res.error) || 'Konnte nicht gespeichert werden.';
+          w.hidden = false;
+        }).catch(function () {
+          $('gke-ok').disabled = false;
+          var w = $('gke-warn');
+          w.textContent = 'Verbindungsfehler \u2014 bitte erneut versuchen.';
+          w.hidden = false;
+        });
+    };
+  }
+
+  /** Neuen Artikel dauerhaft anlegen (Spec getraenke-artikelpflege, F3).
+   *
+   *  Nicht zu verwechseln mit `anlegenOeffnen()`: Das legt einen
+   *  **Zusatzartikel für eine einzelne Bestellung** an. Hier geht es um
+   *  den Stamm — der Artikel bleibt und steht künftig in der Liste.
+   */
+  function artikelNeu() {
+    var gebinde = [];
+    _artikel.forEach(function (x) {
+      if (x.gebinde && gebinde.indexOf(x.gebinde) < 0) gebinde.push(x.gebinde);
+    });
+    var o = blatt('gk-anlg-blatt',
+      '<header><h3>Neuer Artikel</h3>'
+      + '<p>Dauerhaft im Artikelstamm \u2014 er steht danach in der Bestellliste.</p></header>'
+      + '<div class="gk-body">'
+      +   '<div class="gk-feld"><label for="gka-name">Bezeichnung *</label>'
+      +     '<input type="text" id="gka-name" autocomplete="off" placeholder="z. B. Aho Rhabarber PET"></div>'
+      +   '<div class="gk-feld"><label for="gka-text">Bezeichnung f\u00fcr die Bestellmail</label>'
+      +     '<input type="text" id="gka-text" autocomplete="off" placeholder="optional \u2014 sonst Bezeichnung + Gebinde">'
+      +     '<span class="hilf">Genau so, wie es der Lieferant lesen soll.</span></div>'
+      +   '<div class="gk-feldreihe">'
+      +     '<div class="gk-feld"><label for="gka-gebinde">Gebinde</label>'
+      +       '<input type="text" id="gka-gebinde" list="gka-gl" placeholder="12x0,50">'
+      +       '<datalist id="gka-gl">' + gebinde.map(function (g) {
+                return '<option value="' + esc(g) + '">';
+              }).join('') + '</datalist></div>'
+      +     '<div class="gk-feld"><label for="gka-preis">Preis je Kiste</label>'
+      +       '<input type="text" id="gka-preis" inputmode="decimal" placeholder="optional, z. B. 6,69"></div>'
+      +   '</div>'
+      +   '<div class="gk-feldreihe">'
+      +     '<div class="gk-feld"><label for="gka-nr">Artikel-Nr. bei '
+      +       esc(_cfg.name || 'Kratzer') + '</label>'
+      +       '<input type="text" id="gka-nr" inputmode="numeric" placeholder="z. B. 50071">'
+      +       '<span class="hilf">Nur die Zahl. Leer lassen, wenn unbekannt \u2014 '
+      +       'eine erfundene Nummer w\u00e4re schlimmer.</span></div>'
+      +     '<div class="gk-feld"><label for="gka-gruppe">Warengruppe</label>'
+      +       '<select id="gka-gruppe">' + _gruppen.map(function (g) {
+                return '<option value="' + esc(g) + '">' + esc(g) + '</option>';
+              }).join('') + '</select></div>'
+      +   '</div>'
+      +   '<div class="gk-warn" id="gka-warn" hidden></div>'
+      + '</div>'
+      + '<footer><button class="ok" id="gka-ok">Anlegen</button>'
+      + '<button class="zu" id="gka-zu">Abbrechen</button></footer>');
+
+    $('gka-zu').onclick = function () { o.remove(); };
+    $('gka-ok').onclick = function () { artikelNeuSenden(o, false); };
+  }
+
+  function artikelNeuSenden(o, trotzdem) {
+    var name = ($('gka-name').value || '').trim();
+    var w = $('gka-warn');
+    if (!name) {
+      w.textContent = 'Bitte eine Bezeichnung eintragen.'; w.hidden = false;
+      return;
+    }
+    var roh = ($('gka-nr').value || '').trim();
+    $('gka-ok').disabled = true;
+    fetch(API + '/getraenke-artikel', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({
+        name: name,
+        bestelltext: ($('gka-text').value || '').trim(),
+        gebinde: ($('gka-gebinde').value || '').trim(),
+        gruppe: $('gka-gruppe').value,
+        preis: ($('gka-preis').value || '').trim(),
+        nummer: roh ? (/^\d+$/.test(roh) ? 'KA' + roh : roh) : '',
+        trotzdem: !!trotzdem
+      })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; })
+        .then(function (j) { return { s: r.status, j: j }; });
+    }).then(function (res) {
+      $('gka-ok').disabled = false;
+      if (res.j && res.j.artikel) {
+        _artikel = res.j.artikel; o.remove(); zeichne();
+        toast('Artikel angelegt.');
+        return;
+      }
+      /* 409 heisst: Es gibt schon einen mit diesem Namen. Das ist kein
+         Fehler, sondern eine Rueckfrage - zwei Sorten koennen gleich
+         heissen und sich im Gebinde unterscheiden. */
+      if (res.s === 409) {
+        w.innerHTML = esc(res.j.error || 'Gibt es schon.')
+          + ' <button class="ok" id="gka-doch" style="margin-left:8px">Trotzdem anlegen</button>';
+        w.hidden = false;
+        $('gka-doch').onclick = function () { artikelNeuSenden(o, true); };
+        return;
+      }
+      w.textContent = (res.j && res.j.error) || 'Konnte nicht angelegt werden.';
+      w.hidden = false;
+    }).catch(function () {
+      $('gka-ok').disabled = false;
+      w.textContent = 'Verbindungsfehler \u2014 bitte erneut versuchen.';
+      w.hidden = false;
+    });
   }
 
   function artikelUmschalten(i) {
@@ -1304,9 +1509,14 @@ window.KGetraenke = (function () {
 
   // Ein Zuhoerer fuer die Artikelpflege - die Liste wird komplett neu gebaut.
   document.addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('button[data-aktiv]') : null;
-    if (!b || !host() || !host().contains(b)) return;
-    artikelUmschalten(Number(b.dataset.aktiv));
+    if (!e.target.closest || !host()) return;
+    var b = e.target.closest('button[data-aktiv]');
+    if (b && host().contains(b)) { artikelUmschalten(Number(b.dataset.aktiv)); return; }
+    // Bearbeiten und Anlegen im Artikelreiter (Spec getraenke-artikelpflege).
+    var eb = e.target.closest('button[data-bearb]');
+    if (eb && host().contains(eb)) { artikelBearbeiten(Number(eb.dataset.bearb)); return; }
+    var nb = e.target.closest('#gk-art-neu');
+    if (nb && host().contains(nb)) { artikelNeu(); }
   });
 
   return {

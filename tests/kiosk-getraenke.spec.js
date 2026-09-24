@@ -635,21 +635,28 @@ test.describe('Getränke-Bestellung im Kiosk', () => {
     await oeffneTab(page);
     await klickeSubtab(page, 'artikel');
     const r = page.locator('.gk-arow').filter({ hasText: 'Augustiner Hell' }).first();
-    await expect(r).toContainText('KA40015');
+    // Die Nummer steht ohne unser Kürzel da – auf dem Formular des
+    // Lieferanten ist es die blanke Zahl (Spec getraenke-artikelpflege, F1).
+    await expect(r).toContainText('40015');
+    await expect(r).not.toContainText('KA40015');
     await expect(r).toContainText('20x0,50');
     await expect(r).toContainText('13,75');
     // Ausgeblendete Artikel bleiben in der Pflege stehen.
     await expect(page.locator('.gk-arow').filter({ hasText: 'Alte Sorte' })).toContainText('ausgeblendet');
-    // Gelöscht wird nie (Spec F11.3).
-    await expect(page.locator('.gk-arow button')).toHaveCount(await page.locator('.gk-arow').count());
+    /* Gelöscht wird nie (Spec F11.3). Je Zeile stehen seit der
+       Artikelpflege ZWEI Knöpfe – Bearbeiten und Aus-/Einblenden. */
+    await expect(page.locator('.gk-arow button'))
+      .toHaveCount(await page.locator('.gk-arow').count() * 2);
     await expect(page.getByRole('button', { name: /löschen/i })).toHaveCount(0);
   });
 
   test('TC-F11-02: Ausblenden nimmt den Artikel aus der Bestellliste', async ({ page }) => {
     await oeffneTab(page);
     await klickeSubtab(page, 'artikel');
+    // Gezielt den Aus-/Einblenden-Knopf: „Bearbeiten" steht seit der
+    // Artikelpflege davor und wäre sonst der erste Treffer.
     await page.locator('.gk-arow').filter({ hasText: 'Augustiner Hell' })
-      .locator('button').click();
+      .locator('button[data-aktiv]').click();
     await expect(page.locator('.gk-arow').filter({ hasText: 'Augustiner Hell' }))
       .toContainText('ausgeblendet', { timeout: 8000 });
     await klickeSubtab(page, 'bestellung');
@@ -807,5 +814,134 @@ test.describe('Getränke-Einstellungen im CMS', () => {
     await page.locator('#gkcfg-empfaenger').fill('bestellung@getraenke-kratzer.de');
     await expect(page.locator('#gkcfg-echthinweis')).toBeVisible();
     await expect(page.locator('#gkcfg-testhinweis')).toBeHidden();
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  F20 – Artikelpflege im Reiter „Artikel"
+// ════════════════════════════════════════════════════
+// Aus dem Laden: „Getränke können nicht bearbeitet werden und neue
+// hinzugefügt werden. Auch sehe ich die Kratzer Bestellnummer nicht."
+//
+// Der Server konnte beides längst (POST/PATCH) — es fehlte die Bedienung.
+// Und die Nummer stand da, aber mit unserem Kürzel `KA` davor.
+
+test.describe('Getränke – Artikelpflege (F20)', () => {
+
+  async function artikelReiter(page, opts) {
+    const gesendet = await oeffneTab(page, opts);
+    await page.locator('.gk-sub[data-sub="artikel"], [data-sub="artikel"]').first().click();
+    await page.locator('.gk-arow').first().waitFor({ timeout: 10000 });
+    return gesendet;
+  }
+
+  test('TC-F20-01: Die Nummer steht ohne unser Kürzel da', async ({ page }) => {
+    /* Der gemeldete Fall: Angezeigt wurde `KA40015`. Auf dem Formular des
+       Lieferanten steht die blanke Zahl — so bekommt er sie auch zurück. */
+    await artikelReiter(page);
+    const nummern = await page.evaluate(() =>
+      [...document.querySelectorAll('.gk-arow .gk-anr')]
+        .map((e) => e.textContent.trim()));
+    expect(nummern, 'kein KA-Kürzel sichtbar')
+      .not.toContain('KA40015');
+    expect(nummern).toContain('40015');
+  });
+
+  test('TC-F20-02: Jede Zeile hat einen Bearbeiten-Knopf', async ({ page }) => {
+    await artikelReiter(page);
+    const zeilen = await page.locator('.gk-arow').count();
+    const knoepfe = await page.locator('.gk-arow button[data-bearb]').count();
+    expect(knoepfe, `${zeilen} Zeilen, ${knoepfe} Knöpfe`).toBe(zeilen);
+  });
+
+  test('TC-F20-03: Es gibt „+ Neuer Artikel"', async ({ page }) => {
+    await artikelReiter(page);
+    await expect(page.locator('#gk-art-neu')).toBeVisible();
+  });
+
+  test('TC-F20-04: Die Maske ist vorbefüllt', async ({ page }) => {
+    await artikelReiter(page);
+    await page.locator('.gk-arow button[data-bearb]').first().click();
+    await expect(page.locator('#gk-edit-blatt')).toBeVisible();
+    await expect(page.locator('#gke-name')).toHaveValue('Augustiner Hell');
+    // Auch hier die blanke Nummer, nicht KA40015.
+    await expect(page.locator('#gke-nr')).toHaveValue('40015');
+    await expect(page.locator('#gke-gebinde')).toHaveValue('20x0,50');
+  });
+
+  test('TC-F20-05: Speichern sendet ein PATCH mit KA-Kürzel',
+    async ({ page }) => {
+      /* Eingetippt wird die blanke Zahl — das Kürzel setzen wir selbst
+         davor, sonst fände der Server den Artikel später nicht wieder. */
+      const patches = [];
+      page.on('request', (r) => {
+        if (r.method() === 'PATCH' && /getraenke-artikel/.test(r.url())) {
+          try { patches.push(JSON.parse(r.postData() || '{}')); } catch (e) { /* egal */ }
+        }
+      });
+      await artikelReiter(page);
+      await page.locator('.gk-arow button[data-bearb]').first().click();
+      await page.locator('#gke-nr').fill('50071');
+      await page.locator('#gke-preis').fill('14,90');
+      await page.locator('#gke-ok').click();
+      await page.waitForTimeout(900);
+
+      expect(patches.length, 'kein PATCH gesendet').toBe(1);
+      expect(patches[0].nummer, 'Kürzel fehlt').toBe('KA50071');
+      expect(patches[0].preis).toBe('14,90');
+      expect(patches[0].alt_nummer, 'der alte Schlüssel muss mit').toBe('KA40015');
+    });
+
+  test('TC-F20-06: Ohne Bezeichnung wird nicht gespeichert', async ({ page }) => {
+    const patches = [];
+    page.on('request', (r) => {
+      if (r.method() === 'PATCH' && /getraenke-artikel/.test(r.url())) patches.push(1);
+    });
+    await artikelReiter(page);
+    await page.locator('.gk-arow button[data-bearb]').first().click();
+    await page.locator('#gke-name').fill('');
+    await page.locator('#gke-ok').click();
+    await page.waitForTimeout(600);
+    expect(patches, 'leerer Name wurde gesendet').toHaveLength(0);
+    await expect(page.locator('#gke-warn')).toBeVisible();
+  });
+
+  test('TC-F20-07: Anlegen sendet ein POST', async ({ page }) => {
+    const posts = [];
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /getraenke-artikel/.test(r.url())) {
+        try { posts.push(JSON.parse(r.postData() || '{}')); } catch (e) { /* egal */ }
+      }
+    });
+    await artikelReiter(page);
+    await page.locator('#gk-art-neu').click();
+    await expect(page.locator('#gk-anlg-blatt')).toBeVisible();
+    await page.locator('#gka-name').fill('Aho Rhabarber PET');
+    await page.locator('#gka-gebinde').fill('12x0,50');
+    await page.locator('#gka-nr').fill('58999');
+    await page.locator('#gka-ok').click();
+    await page.waitForTimeout(900);
+
+    expect(posts.length, 'kein POST gesendet').toBe(1);
+    expect(posts[0].name).toBe('Aho Rhabarber PET');
+    expect(posts[0].nummer).toBe('KA58999');
+  });
+
+  test('TC-F20-08: Eine leere Nummer bleibt leer', async ({ page }) => {
+    /* Kein erfundenes Kürzel auf nichts: „KA" allein wäre keine Nummer,
+       sähe aber wie eine aus. */
+    const posts = [];
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && /getraenke-artikel/.test(r.url())) {
+        try { posts.push(JSON.parse(r.postData() || '{}')); } catch (e) { /* egal */ }
+      }
+    });
+    await artikelReiter(page);
+    await page.locator('#gk-art-neu').click();
+    await page.locator('#gka-name').fill('Ohne Nummer');
+    await page.locator('#gka-ok').click();
+    await page.waitForTimeout(900);
+    expect(posts.length).toBe(1);
+    expect(posts[0].nummer, 'leer statt „KA"').toBe('');
   });
 });

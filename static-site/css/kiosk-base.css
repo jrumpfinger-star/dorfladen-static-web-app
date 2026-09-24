@@ -1575,6 +1575,18 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
   border-radius:9px;min-height:38px;padding:0 12px;font-size:12px;font-weight:600;cursor:pointer}
 .gk-arow button:hover{border-color:#2e7d4f;color:#2e7d4f}
 
+/* Kopf des Artikelstamms: Titel links, „+ Neuer Artikel" rechts.
+   Aus dem Laden: „Getränke können nicht bearbeitet werden und neue
+   hinzugefügt werden." Beides konnte der Server längst — es fehlte
+   nur die Bedienung. (Spec getraenke-artikelpflege) */
+.gk-akopf{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.gk-akopf h3{margin:0}
+.gk-neu{border:0;background:#2e7d4f;color:#fff;border-radius:9px;
+  min-height:38px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer}
+.gk-neu:hover{background:#25633f}
+.gk-neu:focus-visible{outline:2px solid #1b5e20;outline-offset:2px}
+
 /* Blaetter: Versandvorschau und Artikel anlegen (Constitution 6 - kein confirm) */
 .gk-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;
   display:flex;align-items:center;justify-content:center;padding:14px}
