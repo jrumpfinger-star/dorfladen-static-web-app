@@ -808,7 +808,12 @@ test.describe('Bäcker – Verlauf (F10)', () => {
     await expect(eintraege).toHaveCount(2);
     await expect(eintraege.nth(0)).toContainText('Freitag');
     await expect(eintraege.nth(0)).toContainText('28 Positionen');
-    await expect(eintraege.nth(1)).toContainText('korrigiert');
+    await expect(eintraege.nth(1)).toContainText(/korrigiert/i);
+    /* Gross- statt Kleinschreibung seit der Harmonisierung: Der Status
+       steht jetzt bei allen drei Lieferanten als eigenes Feld mit
+       „Gesendet" bzw. „Korrigiert". Geprüft wird das Wort, nicht die
+       Schreibweise. (Spec listen-harmonie) */
+    await expect(eintraege.nth(1).locator('.dl-vstatus b')).toHaveText('Korrigiert');
   });
 });
 

@@ -1624,34 +1624,45 @@
     var kopf = '<div class="bk-sticky">' + subTabs() + '</div>';
     if (!_verlauf) return kopf + '<div class="k-empty">Laden…</div>';
     if (!_verlauf.length) return kopf + '<div class="k-empty">Noch keine Bestellungen.</div>';
-    var h = kopf;
+    var h = kopf + '<div class="dl-vliste">';
     _verlauf.forEach(function (e) {
-      var st = e.status === 2 ? 'korrigiert' : e.status === 1 ? 'gesendet' : 'nicht bestellt';
       var cls = e.status >= 1 ? 'ok' : 'off';
+      if (e.status === 2) cls = 'korr';
       if (e.druck_offen) cls += ' druck';
+      /* Beim Bäcker steht der JÜNGSTE Protokolleintrag VORN
+         (`[eintrag] + protokoll`) — anders als bei Metzger und Getränken,
+         die anhängen. Deshalb hier [0] und dort [länge-1]. */
       var p = (e.protokoll && e.protokoll[0]) || null;
       var schluessel = e.baeckerei + '|' + e.datum;
       var offen = _verlaufOffen[schluessel];
 
-      h += '<div class="bk-hist ' + cls + (offen ? ' auf' : '') + '">';
-      // Die ganze Zeile klappt auf – die Zahl allein sagt nicht, WAS bestellt
-      // wurde. Geladen wird erst beim Aufklappen, damit der Verlauf schlank
-      // bleibt (bis zu 60 Einträge × rund 30 Positionen).
-      h += '<div class="d" onclick="KBaecker.verlaufAuf(\'' + esc(e.baeckerei) + '\',\'' + e.datum + '\')">'
+      h += '<div class="dl-vzeile bk-hist ' + cls + (offen ? ' auf' : '') + '">';
+      /* Die ganze Zeile klappt auf – die Zahl allein sagt nicht, WAS
+         bestellt wurde. Geladen wird erst beim Aufklappen, damit der
+         Verlauf schlank bleibt (bis zu 60 Einträge × rund 30 Positionen).
+         Derselbe Baustein wie bei Metzger und Getränken, nur mit den
+         Größen des Bäckers in der Unterzeile. (Spec listen-harmonie) */
+      h += '<button type="button" class="dl-vkopf d"'
+        + ' onclick="KBaecker.verlaufAuf(\'' + esc(e.baeckerei) + '\',\'' + e.datum + '\')"'
+        + ' aria-expanded="' + (offen ? 'true' : 'false') + '">'
         + '<span class="pf">' + (offen ? '▾' : '▸') + '</span>'
-        + '<span><b>' + esc(e.wochentag) + '</b><span>' + esc(e.datum_de) + '</span></span></div>';
-      h += '<div class="m" onclick="KBaecker.verlaufAuf(\'' + esc(e.baeckerei) + '\',\'' + e.datum + '\')">'
-        + '<i class="bk-dot bk-dot-' + esc(e.baeckerei) + '"></i> '
-        + esc(e.baeckerei_name || '') + '<span>' + e.positionen + ' Positionen · '
-        + e.stueck + ' Stück</span></div>';
-      h += '<div class="s">' + st
-        + (p ? '<span>' + esc(zeitKurz(p.zeit)) + ' · ' + esc(p.wer) + '</span>' : '') + '</div>';
+        + '<span class="tx"><b>' + esc(e.wochentag) + ', ' + esc(e.datum_de) + '</b>'
+        + '<span><i class="bk-dot bk-dot-' + esc(e.baeckerei) + '"></i> '
+        + esc(e.baeckerei_name || '') + ' · ' + e.positionen + ' Positionen · '
+        + e.stueck + ' Stück</span></span></button>';
+      h += '<span class="dl-vstatus s"><b>'
+        + (e.status === 2 ? 'Korrigiert' : e.status === 1 ? 'Gesendet' : 'Nicht bestellt')
+        + '</b>'
+        + (p ? '<span>' + esc(zeitKurz(p.zeit)) + ' · ' + esc(p.wer) + '</span>' : '')
+        + '</span>';
       // Nachdrucken, wo ein Ausdruck gefordert ist – Papier geht verloren.
       if (e.status >= 1 && e.papierausdruck) {
         h += '<button class="bk-btn bk-hist-druck' + (e.druck_offen ? ' primary' : '') + '"'
           + ' onclick="event.stopPropagation();KBaecker.nachdruck(\'' + esc(e.baeckerei)
           + '\',\'' + e.datum + '\')">' + luc('printer', 14) + ' '
           + (e.druck_offen ? 'Drucken' : 'Erneut') + '</button>';
+      } else {
+        h += '<span></span>';
       }
       /* „Löschen" steht in der zugeklappten Zeile. Vorher lag es hinter dem
          Aufklappen — aus dem Laden kam prompt „ich hab doch gesagt, dass
@@ -1664,17 +1675,17 @@
       if (offen) h += verlaufListe(schluessel, e);
       h += '</div>';
     });
-    return h;
+    return h + '</div>';
   }
 
   // Aufgeklappte Positionsliste einer Bestellung.
   function verlaufListe(schluessel, e) {
     var daten = _verlaufDetail[schluessel];
     if (daten === 'laedt') {
-      return '<div class="bk-hist-liste"><div class="k-empty" style="padding:14px">Laden…</div></div>';
+      return '<div class="dl-vliste2 bk-hist-liste"><div class="k-empty" style="padding:14px">Laden…</div></div>';
     }
     if (daten === 'fehler') {
-      return '<div class="bk-hist-liste"><div class="bk-hist-leer">'
+      return '<div class="dl-vliste2 bk-hist-liste"><div class="dl-vleer bk-hist-leer">'
         + 'Die Positionen konnten nicht geladen werden.</div></div>';
     }
     var pos = (daten || []).filter(function (x) {
@@ -1687,22 +1698,22 @@
       return na - nb;
     });
     if (!pos.length) {
-      return '<div class="bk-hist-liste"><div class="bk-hist-leer">'
+      return '<div class="dl-vliste2 bk-hist-liste"><div class="dl-vleer bk-hist-leer">'
         + 'Für diesen Tag wurde nichts bestellt.</div></div>';
     }
     var stk = pos.reduce(function (s, x) { return s + (x.menge || 0); }, 0);
     var hatRet = pos.some(function (x) { return (x.retoure || 0) > 0; });
-    var h = '<div class="bk-hist-liste"><table class="bk-hist-tab">';
+    var h = '<div class="dl-vliste2 bk-hist-liste"><table class="dl-vtab bk-hist-tab">';
     h += '<thead><tr><th>Nr.</th><th>Artikel</th>'
       + (hatRet ? '<th class="r">Retour</th>' : '') + '<th class="r">Menge</th></tr></thead><tbody>';
     pos.forEach(function (x) {
-      h += '<tr><td class="nr">' + esc(x.nummer || '') + '</td>'
+      h += '<tr><td class="nr2 nr">' + esc(x.nummer || '') + '</td>'
         + '<td>' + esc(x.name || '') + (x.zusatz ? ' <span class="zx">nur heute</span>' : '') + '</td>'
         + (hatRet ? '<td class="r ret">' + (x.retoure ? esc(String(x.retoure)) : '–') + '</td>' : '')
         + '<td class="r"><b>' + esc(String(x.menge || 0)) + '</b></td></tr>';
     });
     h += '</tbody></table>';
-    h += '<div class="bk-hist-fuss"><span>' + pos.length + ' Positionen · ' + stk + ' Stück</span>'
+    h += '<div class="dl-vfuss bk-hist-fuss"><span>' + pos.length + ' Positionen · ' + stk + ' Stück</span>'
       + '<button class="bk-btn" onclick="event.stopPropagation();KBaecker.tagAusVerlauf(\''
       + e.datum + '\',\'' + esc(e.baeckerei) + '\')">' + luc('external-link', 14)
       + ' Im Bestell-Tab öffnen</button></div>';

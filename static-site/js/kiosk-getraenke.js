@@ -1556,29 +1556,27 @@ window.KGetraenke = (function () {
       return '<div class="k-empty">Es wurde noch keine Bestellung \u00fcber den '
         + 'Kiosk versendet.</div>';
     }
-    return '<div class="gk-panel"><h3>Gesendete Bestellungen</h3><div class="gk-verlauf">'
+    return '<div class="gk-panel"><h3>Gesendete Bestellungen</h3><div class="dl-vliste">'
       + _verlauf.map(function (v) {
           var offen = !!_vOffen[v.datum];
           var korr = v.status === 2;
-          var h = '<div class="gk-vrow' + (offen ? ' auf' : '')
+          var p = letzterProtokoll(v);
+          var h = '<div class="dl-vzeile gk-vrow' + (offen ? ' auf' : '')
             + (korr ? ' korr' : ' ok') + '">';
-          h += '<button class="gk-vkopf" onclick="KGetraenke.verlaufAuf(\''
-            + v.datum + '\')" aria-expanded="' + (offen ? 'true' : 'false') + '">'
+          h += '<button type="button" class="dl-vkopf gk-vkopf"'
+            + ' onclick="KGetraenke.verlaufAuf(\'' + v.datum + '\')"'
+            + ' aria-expanded="' + (offen ? 'true' : 'false') + '">'
             + '<span class="pf">' + (offen ? '\u25be' : '\u25b8') + '</span>'
             + '<span class="tx"><b>' + esc(v.datum_de || v.datum) + ' \u00b7 KW '
             + (v.kw || '') + '</b>'
             + '<span>' + (v.summen ? v.summen.kisten + ' Kisten \u00b7 '
               + v.summen.positionen + ' Positionen' : '') + '</span></span>'
             + '</button>';
-          /* Status als eigenes Feld – wie bei Bäcker und Metzger. Aus dem
-             Laden: „… wie bei Metzger oder Bäcker mit Status usw."
-             Fehlt das Protokoll, bleibt die Zeile weg; eine erfundene
-             Uhrzeit wäre schlimmer als keine. (Spec F1–F3) */
-          var p = letzterProtokoll(v);
-          h += '<div class="gk-vstatus"><b>' + (korr ? 'Korrigiert' : 'Gesendet') + '</b>'
+          h += '<span class="dl-vstatus gk-vstatus"><b>' + (korr ? 'Korrigiert' : 'Gesendet') + '</b>'
             + (p ? '<span>' + esc(zeitKurz(p.zeit))
                  + (p.wer ? ' \u00b7 ' + esc(p.wer) : '') + '</span>' : '')
-            + '</div>';
+            + '</span>';
+          h += '<span></span>';
           h += '<button class="gk-btn weg" onclick="KGetraenke.bestellungWeg(\''
             + v.datum + '\',' + (v.status || 0) + ')">L\u00f6schen</button>';
           if (offen) h += verlaufListe(v);
@@ -1589,18 +1587,24 @@ window.KGetraenke = (function () {
   function verlaufListe(v) {
     var pos = v.positionen || [];
     if (!pos.length) {
-      return '<div class="gk-vliste"><div class="gk-vleer">'
+      return '<div class="dl-vliste2 gk-vliste"><div class="dl-vleer">'
         + 'Zu dieser Bestellung sind keine Positionen hinterlegt.</div></div>';
     }
-    var h = '<div class="gk-vliste"><table class="gk-vtab">'
+    var kisten = 0;
+    var h = '<div class="dl-vliste2 gk-vliste"><table class="dl-vtab gk-vtab">'
       + '<thead><tr><th>Nr.</th><th>Artikel</th><th class="r">Kisten</th></tr></thead><tbody>';
     pos.forEach(function (p) {
-      h += '<tr><td class="nr">' + esc(p.nummer || '') + '</td>'
+      kisten += Number(p.menge || 0);
+      h += '<tr><td class="nr2 nr">' + esc(p.nummer || '') + '</td>'
         + '<td>' + esc(p.name || '')
-        + (p.gebinde ? ' <span class="gb">' + esc(p.gebinde) + '</span>' : '')
+        + (p.gebinde ? ' <span class="dl-tag gb">' + esc(p.gebinde) + '</span>' : '')
         + '</td><td class="r"><b>' + esc(String(p.menge || 0)) + '</b></td></tr>';
     });
-    return h + '</tbody></table></div>';
+    h += '</tbody></table><div class="dl-vfuss"><span>' + pos.length
+      + ' Positionen \u00b7 ' + kisten + ' Kisten</span>'
+      + (_cfg.empfaenger ? '<span>an ' + esc(_cfg.empfaenger) + '</span>' : '')
+      + '</div></div>';
+    return h;
   }
 
   function verlaufAuf(datum) {

@@ -245,13 +245,36 @@ def _verlauf(url, hdrs):
     out = []
     for o in store.bestellungen(url, hdrs):
         if o.get("status") in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT):
-            s = P.summen([P.normalisiere_position(p)
-                          for p in o.get("positionen", [])])
+            positionen = [P.normalisiere_position(p)
+                          for p in o.get("positionen", [])]
+            s = P.summen(positionen)
             out.append({
                 "datum": o.get("datum"),
                 "wochentag": store.wochentag(o.get("datum", "")),
                 "status": o.get("status"),
                 "summen": s,
+                # Aus dem Laden: „Gleiches gilt bei Verlauf." Der Metzger
+                # konnte seine Positionen als Einziger NICHT aufklappen -
+                # man sah nur Zahlen und musste das Formular oeffnen, um
+                # zu erfahren, WAS bestellt wurde. Die Positionen reisen
+                # deshalb jetzt mit; der Verlauf umfasst nur wenige
+                # Bestellungen, ein zweiter Abruf je Aufklappen waere
+                # Aufwand ohne Gegenwert.
+                #
+                # Die Menge kommt aus `position_text()` - derselben
+                # Funktion, die Formular und Mail benutzen. Eine eigene
+                # Darstellung zu erfinden hiesse, dass der Verlauf etwas
+                # anderes zeigen koennte als das, was der Metzger bekommen
+                # hat. (Spec listen-harmonie)
+                "positionen": [
+                    {"nummer": p.get("nummer") or "",
+                     "name": p.get("name", ""),                     "menge": P.position_text(p, mit_vakuum=False),
+                     "einheit": "",
+                     "hinweis": p.get("hinweis", ""),
+                     "vakuum": any(b.get("vakuum")
+                                   for b in p.get("portionen", []))}
+                    for p in positionen if P.bestellt(p)
+                ],
                 "protokoll": o.get("protokoll", []),
                 "hat_dokument": bool(o.get("dokument")),
             })

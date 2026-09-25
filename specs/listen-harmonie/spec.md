@@ -131,8 +131,66 @@ Laden als „schwer lesbar" auffielen.
   bei 1600. Der gemeinsame Baustein rechnet mit der verfügbaren Breite;
   die Zahl ist kein fester Wert mehr. Geprüft wird jetzt das Wachsen.
 
+## Der Verlauf — ebenfalls ein Baustein
+
+Vorher:
+
+| Verlauf | Aufbau | Positionen aufklappbar | Status |
+|---|---|---|---|
+| Bäcker | Raster 150 · 1fr · auto×3 | ja | eigene Spalte |
+| **Metzger** | Flex | **nein** | Textmarke in der Zeile |
+| Getränke | Flex mit Umbruch | ja | eigene Spalte |
+
+Der Metzger war der Einzige, dessen Verlauf sich **nicht aufklappen**
+ließ: Man sah nur Zahlen — „14 Positionen · 23,4 kg" — und musste das
+Formular öffnen, um zu erfahren, *was* bestellt wurde.
+
+Jetzt für alle drei: `.dl-vliste` / `.dl-vzeile` mit Farbstreifen links
+(gesendet grün, korrigiert bernstein), aufklappbarem Kopf, Status mit
+Uhrzeit und Urheber, Schaltflächen rechts.
+
+**Serverseitig ergänzt:** `api/metzger-order` schickt die Positionen jetzt
+im Verlauf mit. Die Menge kommt aus `position_text()` — **derselben**
+Funktion, die Formular und Mail benutzen. Eine eigene Darstellung zu
+erfinden hieße, dass der Verlauf etwas anderes zeigen könnte als das, was
+der Metzger bekommen hat.
+
+**Lieferantenspezifisch bleibt:**
+
+| | Unterzeile | erster Knopf |
+|---|---|---|
+| Getränke | Kisten · Positionen | — |
+| Metzger | Positionen · kg · vakuumiert | Formular |
+| Bäcker | Positionen · Stück | Erneut drucken |
+
+### Testfälle Verlauf
+
+`tests/kiosk-listen-harmonie.spec.js` (Abschnitt LV):
+
+| Fall | Erwartung |
+|---|---|
+| TC-LV-01 | der Verlauf benutzt den gemeinsamen Baustein |
+| TC-LV-02 | Status, Uhrzeit und Urheber als eigenes Feld |
+| TC-LV-03 | korrigiert ist farblich abgesetzt, jüngster Eintrag |
+| TC-LV-04 | die Positionen lassen sich aufklappen |
+| TC-LV-05 | nichts ragt heraus, kein Querrollen |
+
+`tests/test_metzger_verlauf.py` (Abschnitt MV) prüft die Serverseite:
+nur Gesendetes, Positionen dabei, Nullpositionen draußen, Menge als
+lesbarer Text, Summen und Protokoll unverändert. **13 Prüfungen.**
+
+### Gegenproben Verlauf
+
+- Aufklappen abgeschaltet → **TC-LV-04** fällt, die vier übrigen bleiben grün.
+- Positionen serverseitig wieder entfernt → **TC-MV-02** fällt.
+
+### Angepasster Altfall
+
+`TC-F10-01` (Bäcker) erwartete klein geschriebenes „korrigiert". Der
+Status steht jetzt bei allen drei als eigenes Feld mit „Gesendet" bzw.
+„Korrigiert". Geprüft wird das Wort, nicht die Schreibweise.
+
 ## Offen
 
-Der **Verlauf** ist noch nicht umgestellt — dafür liegt der Entwurf im
-Mockup bereit (`mockups/listen-harmonie-mockup.html`). Die Artikellisten
-waren der Teil, an dem die Kritik hing.
+Nichts mehr aus dieser Meldung. Artikel **und** Verlauf laufen auf dem
+gemeinsamen Baustein.

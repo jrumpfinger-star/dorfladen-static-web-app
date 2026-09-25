@@ -176,3 +176,129 @@ test.describe('Listen harmonisiert – Getränke (LH)', () => {
     await expect(zeile.locator('.dl-ik').last()).not.toHaveClass(/\ban\b/);
   });
 });
+
+// ════════════════════════════════════════════════════
+//  LV – Der Verlauf, ebenfalls ein Baustein
+//
+//  Aus dem Laden: „Gleiches gilt bei Verlauf. Alles schaut anders aus."
+//  Vorher: Bäcker aufklappbar mit Statusspalte, Metzger weder noch
+//  (Status nur als Textmarke mitten in der Zeile), Getränke dazwischen.
+// ════════════════════════════════════════════════════
+
+const VERLAUF = [
+  { datum: '2026-09-30', datum_de: '30.09.2026', kw: 40, status: 1,
+    summen: { kisten: 27, positionen: 2 },
+    positionen: [
+      { nummer: '40015', name: 'Augustiner Hell', gebinde: '20x0,50', menge: 18 },
+      { nummer: '40120', name: 'Tegernseer Hell', gebinde: '20x0,50', menge: 9 },
+    ],
+    protokoll: [{ zeit: '2026-09-24T18:07:00', was: 'gesendet', wer: 'Kiosk' }] },
+  { datum: '2026-09-23', datum_de: '23.09.2026', kw: 39, status: 2,
+    summen: { kisten: 12, positionen: 1 }, positionen: [],
+    protokoll: [
+      { zeit: '2026-09-17T09:15:00', was: 'gesendet', wer: 'Anna' },
+      { zeit: '2026-09-18T16:42:00', was: 'korrigiert', wer: 'Bernd' },
+    ] },
+];
+
+async function getraenkeVerlauf(page) {
+  await page.route('**/api/**', (route) => {
+    const u = route.request().url();
+    const j = (o) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(o),
+    });
+    if (u.includes('cms-config')) {
+      return j({ success: true, data: { feature_flags: { kiosk_getraenke: true } } });
+    }
+    if (u.includes('getraenke-artikel')) {
+      return j({ success: true, artikel: GETRAENKE, gruppen: ['Bier'], pfand: {} });
+    }
+    if (u.includes('mode=verlauf')) return j({ success: true, verlauf: VERLAUF });
+    if (/getraenke-order\/\d{4}/.test(u)) {
+      return j({
+        success: true,
+        bestellung: { datum: '2026-09-30', kw: 40, status: 0, positionen: [], protokoll: [] },
+        artikel: GETRAENKE, gruppen: ['Bier'], pfand: {}, letzte: null,
+        bestellbar: true, config: { name: 'Getränke Kratzer' }, testbetrieb: true, summen: {},
+      });
+    }
+    if (u.includes('getraenke-order')) {
+      return j({
+        success: true, termin: '2026-09-30', kw: 40, letzte: null,
+        config: { name: 'Getränke Kratzer' }, testbetrieb: true, verlauf: VERLAUF,
+      });
+    }
+    return j({ success: true, data: [], orders: [] });
+  });
+  await page.goto(KIOSK_URL);
+  await page.locator('.k-tab[data-tab="getraenke"]').click();
+  await page.waitForTimeout(900);
+  const fest = page.locator('#panel-getraenke .gk-fest .gk-sub[data-sub="verlauf"]');
+  if (await fest.count() && await fest.first().isVisible()) {
+    await fest.first().dispatchEvent('click');
+  } else {
+    await page.locator('#gk-mehr').click();
+    await page.locator('#gk-blatt .gk-sub[data-sub="verlauf"]').dispatchEvent('click');
+  }
+  await page.locator('#panel-getraenke .dl-vzeile').first().waitFor({ timeout: 15000 });
+}
+
+test.describe('Listen harmonisiert – Verlauf (LV)', () => {
+
+  test('TC-LV-01: Der Verlauf benutzt den gemeinsamen Baustein', async ({ page }) => {
+    await getraenkeVerlauf(page);
+    await expect(page.locator('#panel-getraenke .dl-vliste')).toHaveCount(1);
+    await expect(page.locator('#panel-getraenke .dl-vzeile')).toHaveCount(VERLAUF.length);
+  });
+
+  test('TC-LV-02: Status, Uhrzeit und Urheber stehen als eigenes Feld', async ({ page }) => {
+    await getraenkeVerlauf(page);
+    const erste = page.locator('#panel-getraenke .dl-vzeile').first();
+    await expect(erste.locator('.dl-vstatus b')).toHaveText('Gesendet');
+    await expect(erste.locator('.dl-vstatus span')).toContainText('18:07');
+    await expect(erste.locator('.dl-vstatus span')).toContainText('Kiosk');
+    await expect(erste).toHaveClass(/\bok\b/);
+  });
+
+  test('TC-LV-03: Eine korrigierte Bestellung ist farblich abgesetzt', async ({ page }) => {
+    await getraenkeVerlauf(page);
+    const zweite = page.locator('#panel-getraenke .dl-vzeile').nth(1);
+    await expect(zweite).toHaveClass(/\bkorr\b/);
+    await expect(zweite.locator('.dl-vstatus b')).toHaveText('Korrigiert');
+    // Der JÜNGSTE Protokolleintrag, nicht der erste.
+    await expect(zweite.locator('.dl-vstatus span')).toContainText('16:42');
+    await expect(zweite.locator('.dl-vstatus span')).not.toContainText('09:15');
+  });
+
+  test('TC-LV-04: Die Positionen lassen sich aufklappen', async ({ page }) => {
+    await getraenkeVerlauf(page);
+    const erste = page.locator('#panel-getraenke .dl-vzeile').first();
+    await expect(erste.locator('.dl-vtab')).toHaveCount(0);
+    await erste.locator('.dl-vkopf').click();
+    await expect(erste.locator('.dl-vtab')).toBeVisible();
+    await expect(erste.locator('.dl-vtab')).toContainText('Augustiner Hell');
+    // Die Fußzeile zählt zusammen, was in der Tabelle steht.
+    await expect(erste.locator('.dl-vfuss')).toContainText('27 Kisten');
+  });
+
+  test('TC-LV-05: Nichts ragt aus der Verlaufszeile', async ({ page }) => {
+    await getraenkeVerlauf(page);
+    const raus = await page.evaluate(() => {
+      const aus = [];
+      document.querySelectorAll('#panel-getraenke .dl-vzeile').forEach((z) => {
+        const rz = z.getBoundingClientRect();
+        z.querySelectorAll(':scope > *').forEach((k) => {
+          const r = k.getBoundingClientRect();
+          if (r.width > 0 && Math.round(r.right) > Math.round(rz.right) + 1) {
+            aus.push(k.className);
+          }
+        });
+      });
+      return aus;
+    });
+    expect(raus, JSON.stringify(raus)).toEqual([]);
+    const quer = await page.evaluate(() =>
+      Math.round(document.documentElement.scrollWidth) > window.innerWidth + 1);
+    expect(quer, 'die Seite rollt waagerecht').toBe(false);
+  });
+});

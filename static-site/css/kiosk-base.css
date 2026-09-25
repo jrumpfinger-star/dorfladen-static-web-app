@@ -497,7 +497,7 @@ font-weight:600;
 .mb-send{margin-left:auto;background:#2e7d4f;color:#fff;border:0;border-radius:10px;
   min-height:42px;padding:0 18px;font-size:14px;font-weight:600;cursor:pointer}
 /* Verlauf, Artikel, Einstellungen */
-.mb-vrow,.mb-arow{background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:5px;
+.mb-vrow-alt{background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:5px;
   box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .mb-vmeta{font-size:12px;color:#6b7280;flex:1}
 .mb-arow.aus{opacity:.55}
@@ -822,6 +822,62 @@ font-weight:600;
   .dl-nm .dl-sub{white-space:normal;overflow:visible;overflow-wrap:anywhere}
 }
 
+/* ── Verlauf: derselbe Gedanke, andere Spalten ─────────────────────
+   Aus dem Laden: „Gleiches gilt bei Verlauf. Alles schaut anders aus."
+
+   Vorher:
+     Baecker    Raster 150|1fr|auto×3   aufklappbar   Status in Spalte
+     Metzger    Flex                    NICHT         Textmarke in Zeile
+     Getraenke  Flex mit Umbruch        aufklappbar   Status in Spalte
+
+   Jetzt eine Zeile fuer alle drei: Farbstreifen links (gesendet /
+   korrigiert), aufklappbarer Kopf, Status mit Uhrzeit und Urheber,
+   Schaltflaechen rechts. (Spec listen-harmonie) */
+.dl-vliste{display:grid;gap:6px;grid-template-columns:1fr;align-items:start}
+@media(min-width:1000px){ .dl-vliste{grid-template-columns:1fr 1fr;gap:6px 12px} }
+.dl-vzeile{background:#fff;border:1px solid var(--c-border,#e5e7eb);
+  border-left:4px solid #d1d5db;border-radius:9px;padding:8px 11px;
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;
+  align-items:center;gap:8px 10px}
+.dl-vzeile.ok{border-left-color:#2e7d4f}
+.dl-vzeile.korr{border-left-color:#d97706}
+.dl-vzeile.auf{background:#fcfcfd}
+.dl-vkopf{display:flex;align-items:center;gap:8px;min-width:0;background:none;
+  border:0;padding:0;font:inherit;text-align:left;cursor:pointer;min-height:44px}
+.dl-vkopf .pf{flex:0 0 auto;color:var(--c-muted,#6b7280);font-size:11px;width:11px}
+.dl-vkopf .tx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.dl-vkopf .tx b{font-size:13.5px;font-weight:600}
+.dl-vkopf .tx span{font-size:11.5px;color:var(--c-muted,#6b7280);
+  font-variant-numeric:tabular-nums}
+.dl-vstatus{text-align:right;font-size:12px;line-height:1.3;white-space:nowrap}
+.dl-vstatus b{display:block;font-weight:600;color:#166534;font-size:12.5px}
+.dl-vzeile.korr .dl-vstatus b{color:#b45309}
+.dl-vzeile.off .dl-vstatus b{color:var(--c-muted,#6b7280)}
+.dl-vstatus span{display:block;font-size:11px;color:var(--c-muted,#6b7280);
+  font-variant-numeric:tabular-nums}
+.dl-vliste2{grid-column:1/-1;border-top:1px solid var(--c-border,#e5e7eb);
+  margin-top:7px;padding-top:7px}
+.dl-vtab{width:100%;border-collapse:collapse;font-size:12.5px}
+.dl-vtab th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--c-muted,#6b7280);padding:2px 6px;
+  border-bottom:1px solid var(--c-border,#e5e7eb)}
+.dl-vtab td{padding:4px 6px;border-bottom:1px solid #f4f6f5}
+.dl-vtab .r{text-align:right;font-variant-numeric:tabular-nums}
+.dl-vtab .nr2{color:var(--c-muted,#6b7280);font-variant-numeric:tabular-nums;width:56px}
+.dl-vfuss{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  margin-top:6px;font-size:12px;color:var(--c-muted,#6b7280);
+  font-variant-numeric:tabular-nums}
+.dl-vleer{font-size:12.5px;color:var(--c-muted,#6b7280);padding:6px}
+/* Gemessen bei 375 px: Die vier Spalten passten nicht nebeneinander,
+   das Datum brach Wort fuer Wort um - "Mi.," / "30.09.2026" / "KW".
+   Hier zwei Reihen: oben der Kopf, darunter Status und Knoepfe. */
+@media(max-width:560px){
+  .dl-vzeile{grid-template-columns:minmax(0,1fr) auto auto}
+  .dl-vkopf{grid-column:1 / -1}
+  .dl-vstatus{grid-column:1;text-align:left}
+  .dl-vfuss{flex-direction:column;align-items:flex-start;gap:2px}
+}
+
 /* Artikelverwaltung */
 /* .bk-artgrid traegt jetzt zusaetzlich .dl-liste. */
 /* Die Baecker-Zeile steht jetzt auf .dl-zeile (Spec listen-harmonie).
@@ -840,7 +896,8 @@ font-weight:600;
 .bk-sw::after{content:none}
 .bk-note{font-size:12px;color:var(--c-muted);background:#f9fafb;border-left:3px solid #d1d5db;border-radius:8px;padding:10px 13px;margin:12px 0;line-height:1.55}
 /* Verlauf */
-.bk-hist{display:grid;grid-template-columns:150px 1fr auto auto auto;align-items:center;gap:12px;background:#fff;border:1px solid var(--c-border);border-left:4px solid #d1d5db;border-radius:9px;padding:11px 13px;margin-bottom:6px;min-height:56px}
+/* .bk-hist steht jetzt auf .dl-vzeile (Spec listen-harmonie). */
+.bk-hist{margin-bottom:0}
 .bk-hist.ok{border-left-color:#16a34a}
 /* Steht der Ausdruck noch aus, gilt der Tag nicht als fertig – muss
    deshalb NACH .ok stehen, sonst gewinnt Gruen. */
@@ -938,13 +995,13 @@ font-weight:600;
   /* Schmalschirm: der gemeinsame Baustein regelt das (Spec listen-harmonie). */
   
   
-  .bk-hist{grid-template-columns:1fr auto;grid-template-areas:"d s" "m m" "b w" "l l";row-gap:5px}
-  .bk-hist .d{grid-area:d}.bk-hist .m{grid-area:m}.bk-hist .s{grid-area:s}
-  .bk-hist-liste{grid-area:l}
-  .bk-hist-druck{grid-area:b;justify-self:start}
+  /* Schmalschirm: der gemeinsame Baustein regelt das. */
+  
+  
+  
   /* „Löschen" teilt sich die Zeile mit „Drucken"; ohne Drucken steht es
      allein rechts. (Spec bestellung-loeschen, F16) */
-  .bk-hist-weg{grid-area:w;justify-self:end}
+  
   .bk-two{grid-template-columns:1fr}
 }
 html[data-theme="dark"] .bk-row,html[data-theme="dark"] .bk-art,html[data-theme="dark"] .bk-hist,

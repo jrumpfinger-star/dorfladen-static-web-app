@@ -1765,27 +1765,81 @@ window.KMetzgerBest = (function () {
   //  Weitere Unterreiter
   // ══════════════════════════════════════════════════
 
+  var _mbVOffen = {};
+
   function verlaufAnsicht() {
     if (!_verlauf.length) {
       return '<div class="k-empty">Noch keine gesendete Bestellung. '
         + 'Sobald die erste raus ist, steht sie hier.</div>';
     }
-    return '<div class="mb-verlauf">' + _verlauf.map(function (v) {
-      return '<div class="mb-vrow"><div><b>' + esc(v.wochentag) + ', '
-        + esc(datumDe(v.datum)) + '</b>'
-        + (v.status === 2 ? ' <span class="mb-tag ex">korrigiert</span>' : '')
-        + '</div><div class="mb-vmeta">' + v.summen.positionen + ' Positionen · '
-        + String(v.summen.kg).replace('.', ',') + ' kg · '
-        + v.summen.vakuum + ' vakuumiert</div>'
-        + (v.hat_dokument
-          ? '<a class="mb-btn" target="_blank" rel="noopener" href="' + API
-            + '/metzger-order/' + encodeURIComponent(v.datum)
-            + '/dokument">Formular ansehen</a>' : '')
-        // Testbestellungen sollen verschwinden koennen (Spec F1).
-        + '<button class="mb-btn weg" onclick="KMetzgerBest.bestellungWeg(\''
-        + v.datum + '\',' + (v.status || 0) + ')">Löschen</button>'
-        + '</div>';
+    /* Derselbe Baustein wie bei Bäcker und Getränken. Aus dem Laden:
+       „Gleiches gilt bei Verlauf. Alles schaut anders aus." Neu ist hier
+       vor allem das Aufklappen — beim Metzger gab es das bisher nicht,
+       man sah nur Zahlen und musste das Formular öffnen, um zu erfahren,
+       WAS bestellt wurde. (Spec listen-harmonie) */
+    return '<div class="dl-vliste mb-verlauf">' + _verlauf.map(function (v) {
+      var offen = !!_mbVOffen[v.datum];
+      var korr = v.status === 2;
+      var p = (v.protokoll || []).length
+        ? v.protokoll[v.protokoll.length - 1] : null;
+      var s = v.summen || {};
+      var h = '<div class="dl-vzeile mb-vrow' + (offen ? ' auf' : '')
+        + (korr ? ' korr' : ' ok') + '">';
+      h += '<button type="button" class="dl-vkopf"'
+        + ' onclick="KMetzgerBest.verlaufAuf(\'' + v.datum + '\')"'
+        + ' aria-expanded="' + (offen ? 'true' : 'false') + '">'
+        + '<span class="pf">' + (offen ? '\u25be' : '\u25b8') + '</span>'
+        + '<span class="tx"><b>' + esc(v.wochentag) + ', ' + esc(datumDe(v.datum)) + '</b>'
+        + '<span>' + (s.positionen || 0) + ' Positionen \u00b7 '
+        + String(s.kg === undefined ? 0 : s.kg).replace('.', ',') + ' kg \u00b7 '
+        + (s.vakuum || 0) + ' vakuumiert</span></span></button>';
+      h += '<span class="dl-vstatus"><b>' + (korr ? 'Korrigiert' : 'Gesendet') + '</b>'
+        + (p ? '<span>' + esc(zeitKurz(p.zeit))
+             + (p.wer ? ' \u00b7 ' + esc(p.wer) : '') + '</span>' : '')
+        + '</span>';
+      h += v.hat_dokument
+        ? ('<a class="mb-btn" target="_blank" rel="noopener" href="' + API
+           + '/metzger-order/' + encodeURIComponent(v.datum) + '/dokument">Formular</a>')
+        : '<span></span>';
+      // Testbestellungen sollen verschwinden koennen (Spec F1).
+      h += '<button class="mb-btn weg" onclick="KMetzgerBest.bestellungWeg(\''
+        + v.datum + '\',' + (v.status || 0) + ')">Löschen</button>';
+      if (offen) h += verlaufPositionen(v);
+      return h + '</div>';
     }).join('') + '</div>';
+  }
+
+  /* Die Positionen einer gesendeten Bestellung. Sie reisen im Verlauf
+     mit — ein zweiter Abruf je Aufklappen wäre Aufwand ohne Gegenwert. */
+  function verlaufPositionen(v) {
+    var pos = (v.positionen || []).filter(function (p) {
+      return Number(p && p.menge) > 0;
+    });
+    if (!pos.length) {
+      return '<div class="dl-vliste2"><div class="dl-vleer">'
+        + 'Zu dieser Bestellung sind keine Positionen hinterlegt.</div></div>';
+    }
+    var h = '<div class="dl-vliste2"><table class="dl-vtab">'
+      + '<thead><tr><th>Nr.</th><th>Artikel</th><th class="r">Menge</th></tr></thead><tbody>';
+    pos.forEach(function (p) {
+      h += '<tr><td class="nr2">' + esc(p.nummer || '') + '</td>'
+        + '<td>' + esc(p.name || '')
+        + (p.vakuum ? ' <span class="dl-tag">vak.</span>' : '')
+        + '</td><td class="r"><b>' + esc(String(p.menge))
+        + (p.einheit ? ' ' + esc(p.einheit) : '') + '</b></td></tr>';
+    });
+    var s = v.summen || {};
+    return h + '</tbody></table><div class="dl-vfuss"><span>'
+      + (s.positionen || pos.length) + ' Positionen \u00b7 '
+      + String(s.kg === undefined ? 0 : s.kg).replace('.', ',') + ' kg</span>'
+      + (_cfg && _cfg.empfaenger ? '<span>an ' + esc(_cfg.empfaenger) + '</span>' : '')
+      + '</div></div>';
+  }
+
+  function verlaufAuf(datum) {
+    if (_mbVOffen[datum]) delete _mbVOffen[datum];
+    else _mbVOffen[datum] = true;
+    zeichne();
   }
 
   /* Eine Bestellung aus dem Verlauf entfernen. Die Rückfrage sagt
@@ -2314,7 +2368,7 @@ window.KMetzgerBest = (function () {
     edit: edit, feld: feld, anz: anz, einheit: einheit, kachel: kachel,
     vakAn: vakAn, pad: pad, nimm: nimm, vorschau: vorschau, kurz: kurz,
     weg: weg, allesWeg: allesWeg, loeschen: loeschen,
-    bestellungWeg: bestellungWeg,
+    bestellungWeg: bestellungWeg, verlaufAuf: verlaufAuf,
     hinweis: hinweis, hinweisWeg: hinweisWeg, editHinweis: editHinweis, zu: zu,
     notizOeffnen: notizOeffnen,
     zusatz: zusatz, zusatzWeg: zusatzWeg, frueher: frueher,
