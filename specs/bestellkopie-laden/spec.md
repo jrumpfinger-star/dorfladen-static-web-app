@@ -191,6 +191,45 @@ Die Werte sind im CMS unter *Kontaktdaten* und im Kiosk unter
 höchstens 5 Minuten zwischengespeichert (F6), danach greift eine
 Änderung von selbst.
 
+### Nachtrag 25.09.2026: Die Notmaßnahme war nur halb zurückgestellt
+
+Rückmeldung aus dem Laden: „Warum geht die Kopie immer noch an
+`info@dorfladenoberornau.onmicrosoft.com`?"
+
+Live aus Dataverse ausgelesen — und der Befund ist ein schlichtes
+Überbleibsel:
+
+| Schlüssel | Stand 25.09.2026 |
+|---|---|
+| `metzger_config.empfaenger` | `info@metzgerei-mair.de` ✔ zurückgestellt |
+| `getraenke_config.empfaenger` | `bestellung@getraenke-kratzer.de` ✔ zurückgestellt |
+| `baecker_config.*.empfaenger` | echte Bäckereiadressen ✔ |
+| `shop_kontakt.kopie_an` | `info@dorfladenoberornau.onmicrosoft.com` ✘ **vergessen** |
+
+Die drei Bestellziele zeigen längst wieder auf die Lieferanten; nur das
+vierte Feld der Tabelle oben blieb stehen. Deshalb war die Kopie als
+einziger Wert noch auf dem Notbehelf.
+
+**Erklärung A gilt damit als ausgeschlossen.** Nachgemessen:
+`getuserrealm` meldet für `dorfladen-oberornau.de` weiterhin
+`NameSpaceType=Unknown`, für `…onmicrosoft.com` dagegen `Managed`. Eine
+Domäne, die in keinem Tenant verifiziert ist, kann dort auch keine
+*Akzeptierte Domäne* sein — Exchange schlägt also den MX nach und
+liefert nach außen an IONOS. Der damalige Unzustellbarkeitsbericht kam
+demnach von IONOS (Erklärung B) und betraf den Zustand des dortigen
+Postfachs.
+
+Der Wert steht wieder auf `info@dorfladen-oberornau.de`. Am **echten**
+Codepfad nachgewiesen (`shop-notify.get_contact_info()` mit der
+Live-Konfiguration): `_kopie_adresse()` → `info@dorfladen-oberornau.de`.
+
+**Das Restrisiko ist bewusst klein gehalten:** Schlägt die Zustellung
+doch fehl, trifft es nur die *Kopie*. Die Bestellung selbst geht an eine
+davon unabhängige Lieferantenadresse, geht also nicht verloren — anders
+als im ursprünglichen Fall oben, wo die abprallende Adresse der einzige
+Empfänger war. Zurückstellen genügt im CMS unter *Kontaktdaten*, Feld
+*Kopie an*.
+
 ### Behebung der eigentlichen Ursache
 
 **Bei Erklärung A** — Microsoft 365 Admin Center → *Einstellungen →
