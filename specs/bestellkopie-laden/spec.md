@@ -210,27 +210,76 @@ Die drei Bestellziele zeigen längst wieder auf die Lieferanten; nur das
 vierte Feld der Tabelle oben blieb stehen. Deshalb war die Kopie als
 einziger Wert noch auf dem Notbehelf.
 
-**Erklärung A gilt damit als ausgeschlossen.** Nachgemessen:
-`getuserrealm` meldet für `dorfladen-oberornau.de` weiterhin
-`NameSpaceType=Unknown`, für `…onmicrosoft.com` dagegen `Managed`. Eine
-Domäne, die in keinem Tenant verifiziert ist, kann dort auch keine
-*Akzeptierte Domäne* sein — Exchange schlägt also den MX nach und
-liefert nach außen an IONOS. Der damalige Unzustellbarkeitsbericht kam
-demnach von IONOS (Erklärung B) und betraf den Zustand des dortigen
-Postfachs.
+**Erklärung A gilt damit als ausgeschlossen** — mit zwei unabhängigen
+Verfahren nachgemessen:
 
-Der Wert steht wieder auf `info@dorfladen-oberornau.de`. Am **echten**
-Codepfad nachgewiesen (`shop-notify.get_contact_info()` mit der
-Live-Konfiguration): `_kopie_adresse()` → `info@dorfladen-oberornau.de`.
+| Prüfung | `dorfladen-oberornau.de` | `…onmicrosoft.com` (Kontrolle) |
+|---|---|---|
+| `getuserrealm` | `NameSpaceType=Unknown` | `Managed` |
+| `/v2.0/.well-known/openid-configuration` | **HTTP 400** | HTTP 200 → Tenant `acfaedd4-…` |
 
-**Das Restrisiko ist bewusst klein gehalten:** Schlägt die Zustellung
-doch fehl, trifft es nur die *Kopie*. Die Bestellung selbst geht an eine
-davon unabhängige Lieferantenadresse, geht also nicht verloren — anders
-als im ursprünglichen Fall oben, wo die abprallende Adresse der einzige
-Empfänger war. Zurückstellen genügt im CMS unter *Kontaktdaten*, Feld
-*Kopie an*.
+Eine Domäne, die in keinem Tenant liegt, kann dort auch keine
+*Akzeptierte Domäne* sein. Exchange schlägt also den MX nach und liefert
+nach außen an IONOS.
+
+> **Korrektur einer eigenen Fehlannahme.** Hier stand zwischenzeitlich,
+> daraus folge Erklärung B: Das Postfach bei IONOS existiere nicht. Der
+> Laden hat das widerlegt — an `info@dorfladen-oberornau.de` **kommt von
+> anderen Absendern Post an**, es ist ein echtes, gesundes Postfach. Die
+> Annahme stützte sich allein auf den Wortlaut des alten Rückläufers,
+> nicht auf eine Messung.
+
+### Auflösung: Die Zustellung läuft — sie ist nur langsam
+
+Die Sonden kamen an. Belegt durch die Ansicht im Postfach:
+
+| Sonde | Beleg |
+|---|---|
+| `Zustelltest Bestellkopie 20:15:50` | liegt im Postfach, `An: info@dorfladen-oberornau.de` |
+| `SONDE 1 Kontrolle 20:27:14` | `To: Josef Rumpfinger <jrumpfinger@t-online.de>`, **`Cc: You`** |
+
+Die zweite Zeile ist der harte Beweis: Der An-Empfänger wird
+ausgeschrieben, der Kopie-Empfänger dagegen als *You* aufgelöst. Das
+gelingt dem Mailprogramm nur, wenn das gelesene Postfach selbst der
+Kopie-Empfänger ist — also `info@dorfladen-oberornau.de`.
+
+> **Zweite Korrektur einer eigenen Fehlannahme.** Um 20:25 lautete die
+> Rückmeldung „kommt nicht an", und ich habe daraus geschlossen, die
+> Adresse sei unzustellbar, und den Wert vorsorglich zurückgestellt. Das
+> war falsch: Die Mail von 20:15:50 war zu diesem Zeitpunkt lediglich
+> **noch unterwegs**. Eine Abwesenheit nach neun Minuten ist kein
+> Messwert — bei einem fremden Absender ist eine Verzögerung normal
+> (Graue Liste: Der erste Zustellversuch eines unbekannten Absenders
+> wird planmäßig abgewiesen und erst beim Wiederholen angenommen).
+>
+> **Lehre:** „Ist noch nicht da" und „kommt nicht an" sind zwei
+> verschiedene Aussagen. Für die zweite braucht es entweder einen
+> Rückläufer oder eine Wartezeit jenseits der üblichen Wiederholung.
+
+Damit sind **alle drei** Erklärungen vom Tisch: Exchange beansprucht die
+Domäne nicht (A), das Postfach existiert und ist gesund (B), und ein
+Filter hält nichts zurück (C). Es gab schlicht nichts zu beheben.
+
+### Stand des Werts
+
+`shop_kontakt.kopie_an` = `info@dorfladen-oberornau.de`.
+
+Zweifach gegengelesen:
+
+| Prüfung | Ergebnis |
+|---|---|
+| `shop-notify.get_contact_info()` + `_kopie_adresse()` (Live-Konfiguration) | `info@dorfladen-oberornau.de` |
+| ausgelieferte API `GET /api/cms-config` | `info@dorfladen-oberornau.de` |
+
+Änderbar im CMS unter *Kontaktdaten → Kopie an*; die Kontaktdaten werden
+höchstens 5 Minuten gehalten (F6).
 
 ### Behebung der eigentlichen Ursache
+
+> **Hinweis (25.09.2026):** Dieser Abschnitt ist **Geschichte**. Beide
+> Erklärungen wurden inzwischen widerlegt (siehe „Auflösung" oben); die
+> Zustellung an `info@dorfladen-oberornau.de` funktioniert. Der Abschnitt
+> bleibt stehen, weil er den damaligen Erkenntnisstand dokumentiert.
 
 **Bei Erklärung A** — Microsoft 365 Admin Center → *Einstellungen →
 Domänen*: Ist `dorfladen-oberornau.de` dort gelistet, im Exchange Admin
