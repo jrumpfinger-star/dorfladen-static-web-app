@@ -155,3 +155,4 @@ test.describe('Mittagstisch: Telefonbestellung löschen', () => {
         'Karte ist nebenbei aufgeklappt').toBeHidden();
     });
 });
+

@@ -1893,33 +1893,57 @@ window.KMetzgerBest = (function () {
       var zu = istZu('a', b.name);
       h += gruppenKopf('a', b.name, gi, zu, b.artikel.length, 0);
       if (zu) return;
-      h += b.artikel.map(artikelZeile).join('');
+      /* Der Gruppenblock trägt das Raster: Die Zeilen stehen mehrspaltig,
+         sobald Platz ist — je Gruppe für sich, damit keine Zeile aus einer
+         anderen Warengruppe danebenrutscht. (Spec listen-harmonie) */
+      h += '<div class="dl-liste">' + b.artikel.map(artikelZeile).join('') + '</div>';
     });
     return h + '</div>';
   }
 
+  /* Zwei Symbole statt zweier Textknöpfe — derselbe Baustein wie beim
+     Bäcker und bei Getränken. Aus dem Laden: „Harmonisiere die Listen bei
+     Bäcker, Metzger und Getränke, so dass sie alle ähnlich bedienbar sind
+     und aussehen." Die Beschriftung bleibt im `aria-label`, damit sie
+     vorgelesen wird und die Wächter sie finden. (Spec listen-harmonie) */
+  var IK_STIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var IK_AUGE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>'
+    + '<circle cx="12" cy="12" r="3"/></svg>';
+  var IK_AUGE_ZU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="m3 3 18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7'
+    + 'a18 18 0 0 1-2.4 3.4M6.6 6.6A18 18 0 0 0 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4-.8"/></svg>';
+
   function artikelZeile(a) {
     var st = standardText(a);
     var ruf = "KMetzgerBest.bearbeiten('" + jsText(a.name) + "')";
-    return '<div class="mb-arow' + (a.aktiv === false ? ' aus' : '') + '">'
-      + '<span class="mb-nr' + (a.nummer ? '' : ' leer') + '">'
-      + esc(a.nummer || '–') + '</span>'
-      + '<span class="mb-aname">'
+    var aus = a.aktiv === false;
+    return '<div class="dl-zeile mb-arow' + (aus ? ' aus' : '') + '">'
+      + '<span class="dl-nr mb-nr' + (a.nummer ? '' : ' leer') + '">'
+      + esc(a.nummer || '\u2013') + '</span>'
+      + '<span class="dl-nm mb-aname">'
       /* Der Name braucht ein EIGENES Element: als nackter Textknoten
-         waere er ein anonymes Flex-Element — nicht adressierbar, also
-         ohne `min-width:0` und ohne Auslassungspunkte. Lange Namen
-         waeren hart abgeschnitten worden und haetten die Vorgabe
-         verdraengt. (Spec metzger-artikelliste, F9) */
-      + '<span class="mb-atxt">' + esc(a.name) + '</span>'
-      + '<span class="mb-astd' + (st ? '' : ' leer') + '">'
+         waere er ein anonymes Element — nicht adressierbar, also ohne
+         `min-width:0` und ohne Auslassungspunkte. Lange Namen waeren hart
+         abgeschnitten worden. (Spec metzger-artikelliste, F9) */
+      + '<b class="mb-atxt">' + esc(a.name) + '</b>'
+      + '<span class="dl-sub mb-astd' + (st ? '' : ' leer') + '">'
       + (st ? 'Vorgabe: ' + esc(st) : 'keine Vorgabe') + '</span></span>'
-      + '<span class="mb-agrp">' + esc(a.gruppe || '') + '</span>'
-      + '<span class="mb-apreis">' + (a.preis
-        ? String(a.preis).replace('.', ',') + ' €/kg' : '—') + '</span>'
-      + '<button class="mb-btn" onclick="' + ruf + '">Bearbeiten</button>'
-      + '<button class="mb-btn" onclick="KMetzgerBest.aktiv(\''
-      + jsText(a.name) + '\',' + (a.aktiv === false) + ')">'
-      + (a.aktiv === false ? 'Einblenden' : 'Ausblenden') + '</button>'
+      + '<span class="dl-meta mb-apreis"><b>' + (a.preis
+        ? String(a.preis).replace('.', ',') + ' \u20AC' : '\u2014') + '</b>'
+      + (a.preis ? 'je kg' : esc(a.gruppe || 'ohne Preis')) + '</span>'
+      + '<button class="dl-ik" onclick="' + ruf + '" title="Bearbeiten"'
+      + ' aria-label="Bearbeiten: ' + esc(a.name) + '">' + IK_STIFT + '</button>'
+      + '<button class="dl-ik' + (aus ? '' : ' an') + '"'
+      + ' onclick="KMetzgerBest.aktiv(\'' + jsText(a.name) + '\',' + aus + ')"'
+      + ' title="' + (aus ? 'Ausgeblendet \u2014 klicken zum Einblenden'
+                          : 'Sichtbar \u2014 klicken zum Ausblenden') + '"'
+      + ' aria-label="' + (aus ? 'Einblenden: ' : 'Ausblenden: ') + esc(a.name) + '">'
+      + (aus ? IK_AUGE_ZU : IK_AUGE) + '</button>'
       + '</div>';
   }
 

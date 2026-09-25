@@ -182,12 +182,19 @@ async function mockApi(page, opts = {}) {
       });
     }
     if (/getraenke-order\/\d{4}-\d{2}-\d{2}/.test(url)) {
+      // Welcher Tag wurde angefragt? Nur so lässt sich belegen, dass ein
+      // Klick in der Terminleiste WIRKLICH die alte Bestellung holt und
+      // nicht immer dieselbe Antwort (Spec getraenke-terminleiste, TC-GT-08).
+      const gefragt = (/getraenke-order\/(\d{4}-\d{2}-\d{2})/.exec(url) || [])[1] || tag;
+      const proTag = (opts.proTag || {})[gefragt];
       return route.fulfill({
         status: 200, contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          bestellung: { datum: tag, kw: kalenderwoche(tag),
-                        status: opts.status || 0, positionen: opts.positionen || [], protokoll: [] },
+          bestellung: { datum: gefragt, kw: kalenderwoche(gefragt),
+                        status: proTag ? proTag.status : (opts.status || 0),
+                        positionen: proTag ? proTag.positionen : (opts.positionen || []),
+                        protokoll: [] },
           artikel: ARTIKEL, gruppen: GRUPPEN, pfand: PFAND,
           letzte: LETZTE, bestellbar: true,
           config: CONFIG, testbetrieb: true, summen: {},
@@ -1104,3 +1111,118 @@ test.describe('Getränke – kompakte Bestellliste (GK)', () => {
     await expect(z.locator('.gk-sugg button').first()).toBeVisible();
   });
 });
+
+// ════════════════════════════════════════════════════
+//  GT – Terminleiste: alte Bestellungen auswählen und ansehen
+//
+//  Aus dem Laden: „Ich kann aber hier immer noch nicht alte Bestellungen
+//  auswählen, wie bei Metzger, und diese ansehen."
+//
+//  Anders als beim Metzger gibt es keine festen Liefertage — die Leiste
+//  entsteht aus dem Verlauf plus dem aktuellen Termin.
+//  (Spec specs/getraenke-terminleiste/spec.md)
+// ════════════════════════════════════════════════════
+
+test.describe('Getränke – Terminleiste (GT)', () => {
+
+  function verlauf(n) {
+    const aus = [];
+    for (let i = 1; i <= n; i++) {
+      const tag = '2026-09-' + String(30 - i).padStart(2, '0');
+      aus.push({
+        datum: tag, datum_de: tag, kw: 39, status: i % 2 ? 1 : 2,
+        summen: { kisten: 10 + i, positionen: i + 1 },
+        positionen: [], protokoll: [],
+      });
+    }
+    return aus;
+  }
+
+  const plaettchen = (page) => page.locator('#getraenke-body .gk-day');
+
+  test('TC-GT-01: Die Leiste zeigt die vorhandenen Bestellungen', async ({ page }) => {
+    await oeffneTab(page, { verlauf: verlauf(3) });
+    // Drei aus dem Verlauf plus der aktuelle Termin.
+    await expect(plaettchen(page)).toHaveCount(4);
+  });
+
+  test('TC-GT-02: Der gezeigte Termin ist hervorgehoben', async ({ page }) => {
+    await oeffneTab(page, { verlauf: verlauf(3) });
+    await expect(page.locator('#getraenke-body .gk-day.on')).toHaveCount(1);
+  });
+
+  test('TC-GT-03: Ein Klick lädt die alte Bestellung', async ({ page }) => {
+    const gerufen = [];
+    page.on('request', (r) => {
+      const m = /getraenke-order\/(\d{4}-\d{2}-\d{2})(\?|$)/.exec(r.url());
+      if (m) gerufen.push(m[1]);
+    });
+    await oeffneTab(page, { verlauf: verlauf(3) });
+    const alt = plaettchen(page).last();
+    const tag = await alt.getAttribute('data-tag');
+    await alt.click();
+    await expect.poll(() => gerufen.includes(tag), { timeout: 10000 }).toBe(true);
+    // Und die Hervorhebung wandert mit.
+    await expect(page.locator(`#getraenke-body .gk-day[data-tag="${tag}"]`))
+      .toHaveClass(/\bon\b/);
+  });
+
+  test('TC-GT-04: Status und Anzahl stehen auf dem Plättchen', async ({ page }) => {
+    await oeffneTab(page, { verlauf: verlauf(3) });
+    // Der erste Verlaufseintrag trägt Status 1 und 2 Positionen.
+    const p = page.locator('#getraenke-body .gk-day[data-tag="2026-09-29"]');
+    await expect(p.locator('.d3')).toContainText('gesendet');
+    await expect(p.locator('.d3')).toContainText('2 Pos.');
+  });
+
+  test('TC-GT-05: Die Leiste bleibt ein Sprungbrett, kein zweiter Verlauf', async ({ page }) => {
+    await oeffneTab(page, { verlauf: verlauf(12) });
+    const n = await plaettchen(page).count();
+    expect(n, `${n} Plättchen`).toBeLessThanOrEqual(8);
+  });
+
+  test('TC-GT-06: Ohne Verlauf gibt es keine leere Leiste', async ({ page }) => {
+    await oeffneTab(page, { verlauf: [] });
+    await expect(plaettchen(page)).toHaveCount(0);
+    await expect(page.locator('#getraenke-body .gk-days')).toHaveCount(0);
+  });
+
+  test('TC-GT-07: Der aktuelle Termin steht dabei, auch ungesendet', async ({ page }) => {
+    // Der Termin des Tages taucht im Verlauf NICHT auf - er ist noch offen.
+    await oeffneTab(page, { verlauf: verlauf(3) });
+    const tage = await plaettchen(page).evaluateAll(
+      (els) => els.map((e) => e.getAttribute('data-tag')));
+    const aktuell = await page.locator('#getraenke-body .gk-day.on')
+      .getAttribute('data-tag');
+    expect(tage).toContain(aktuell);
+    // Und er steht vorne - der jüngste Termin zuerst.
+    expect(tage[0]).toBe(aktuell);
+  });
+
+  test('TC-GT-08: Die alte Bestellung wird mit ihrem Inhalt angezeigt', async ({ page }) => {
+    /* Der Kern des Wunsches: „… und diese ansehen." Ein Klick, der nur das
+       Datum wechselt, aber weiter die aktuelle Bestellung zeigt, wäre
+       wertlos. Deshalb liefert der Mock je Tag einen ANDEREN Inhalt. */
+    const alt = '2026-09-29';
+    await oeffneTab(page, {
+      verlauf: verlauf(3),
+      positionen: [],                       // der aktuelle Termin ist leer
+      proTag: {
+        [alt]: { status: 1, positionen: [{ nummer: ARTIKEL[0].nummer, menge: 17 }] },
+      },
+    });
+
+    // Vorher: nichts erfasst.
+    await expect(page.locator('#getraenke-body .gk-row.has')).toHaveCount(0);
+
+    await page.locator(`#getraenke-body .gk-day[data-tag="${alt}"]`).click();
+
+    // Nachher: die Menge der alten Bestellung steht im Formular.
+    const zeile = page.locator('#getraenke-body .gk-row.has').first();
+    await expect(zeile).toBeVisible({ timeout: 10000 });
+    await expect(zeile.locator('input[type="number"]')).toHaveValue('17');
+    // Und die Fußzeile zählt sie mit.
+    await expect(page.locator('#gk-foot')).toContainText('17');
+  });
+});
+

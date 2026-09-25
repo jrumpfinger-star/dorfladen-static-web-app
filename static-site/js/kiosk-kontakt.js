@@ -178,7 +178,7 @@
       while(i>=0 && verlauf[i] && verlauf[i].who==='kunde') i--;
       return i+1;
     })();
-    var h='<div class="kk-thread" style="font-family:'+CHATFONT+';display:flex;flex-direction:column;gap:6px;max-height:60vh;min-height:320px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
+    var h='<div class="kk-thread" style="font-family:'+CHATFONT+';display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding:8px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f7">';
     verlauf.forEach(function(m, idx){
       if(!m) return;
       var mine = m.who==='dorfladen';
@@ -357,15 +357,60 @@
     Object.keys(_draft).forEach(function(id){ var ta=document.getElementById('kk-rpt-'+id); if(ta && _draft[id]){ ta.value=_draft[id]; grow(ta); } });
     if(window.lucide) lucide.createIcons();
     updateActions();
-    // Auto-scroll offene Verlaeufe ans Ende – auch nachdem Bilder geladen sind
-    // (Bilder vergroessern nachtraeglich die Hoehe und wuerden die letzte
-    // Nachricht sonst nach unten aus dem Blickfeld schieben).
+    /* Der Verlauf bekommt die Höhe, die nach der Antwortbox WIRKLICH übrig
+       ist — und rollt dann ans Ende. Siehe passeVerlaufHoehe(). */
+    passeVerlaufHoehe();
     host.querySelectorAll('.kk-thread').forEach(function(el){
       var toBottom=function(){ el.scrollTop=el.scrollHeight; };
       toBottom();
-      el.querySelectorAll('img').forEach(function(img){ if(!img.complete){ img.addEventListener('load',toBottom,{once:true}); img.addEventListener('error',toBottom,{once:true}); } });
+      el.querySelectorAll('img').forEach(function(img){ if(!img.complete){ img.addEventListener('load',function(){ passeVerlaufHoehe(); toBottom(); },{once:true}); img.addEventListener('error',toBottom,{once:true}); } });
     });
   }
+
+  /* ── Höhe des Verlaufs ─────────────────────────────────────────────────
+     Aus dem Laden: „Bitte die Anzeige der Nachrichten je nach Bildschirm-
+     höhe einschränken und scrollen, da ansonsten alle anderen Chats
+     verschwinden und man für den aktuellsten nach unten scrollen muss. Der
+     aktuelle Beitrag und die Antwortbox müssen immer sichtbar sein."
+
+     Gemessen auf dem Rechner (Fenster 800 px), mit nur ZWEI Nachrichten:
+
+       Verlauf      320 px   (die alte `min-height` – auch wenn weniger da ist)
+       Antwortbox   164 px
+       Karte        710 px
+       Unterkante der Antwortbox: 1084 px  ← 284 px unter dem Sichtbaren
+
+     Die alte Regel `max-height:60vh` griff also am falschen Ende: Sie
+     begrenzte den Verlauf auf einen ANTEIL des Fensters, ohne zu wissen,
+     was unter ihm noch steht. Bei 800 px durfte er allein 480 px nehmen –
+     für Antwortbox und Hinweiszeile blieb nichts.
+
+     Jetzt wird gerechnet, nicht geschätzt: vom Fenster abgezogen wird, wo
+     der Verlauf beginnt, und alles, was in der Karte UNTER ihm steht
+     (Bildvorschau, Antwortbox, Hinweiszeile). Was übrig bleibt, ist seine
+     Höhe. Damit endet die Karte immer im Bild — und weil der Verlauf ans
+     Ende rollt, steht die jüngste Nachricht direkt über der Antwortbox.
+     (Spec kontakt-verlauf-hoehe) */
+  var VERLAUF_MIN = 120;   // darunter wäre der Verlauf nicht mehr lesbar
+  var VERLAUF_LUFT = 12;   // Rand zum Fensterboden
+
+  function passeVerlaufHoehe(){
+    var host=document.getElementById('kontakt-list'); if(!host) return;
+    host.querySelectorAll('.kk-thread').forEach(function(el){
+      var karte=el.closest ? el.closest('.kk-card') : null;
+      if(!karte) return;
+      var rv=el.getBoundingClientRect(), rk=karte.getBoundingClientRect();
+      // Alles, was in der Karte unter dem Verlauf steht. Unabhängig von
+      // dessen eigener Höhe – deshalb auch bei wiederholtem Aufruf stabil.
+      var darunter=Math.max(0, rk.bottom - rv.bottom);
+      var platz=Math.round(window.innerHeight - rv.top - darunter - VERLAUF_LUFT);
+      el.style.minHeight='0px';
+      el.style.maxHeight=Math.max(VERLAUF_MIN, platz)+'px';
+    });
+  }
+
+  /* Dreht jemand das Tablett, stimmt die gerechnete Höhe nicht mehr. */
+  window.addEventListener('resize', function(){ passeVerlaufHoehe(); });
 
   /* Das Antwortfeld waechst mit dem Text.
 
@@ -402,6 +447,25 @@
       if(t && !t.kommentar_gelesen){ markRead(id); t.kommentar_gelesen=true; }
     }
     render();
+    /* Die aufgeklappte Karte in den Blick holen und ERST DANN die Höhe des
+       Verlaufs rechnen: Sie hängt davon ab, wo die Karte steht. Wer eine
+       Konversation weit unten öffnet, bekäme sonst einen winzigen Verlauf.
+       (Spec kontakt-verlauf-hoehe, F4) */
+    if(_open[id]) inDenBlick(id);
+  }
+
+  function inDenBlick(id){
+    var host=document.getElementById('kontakt-list'); if(!host) return;
+    var karte=null;
+    host.querySelectorAll('.kk-card').forEach(function(c){
+      var k=c.querySelector('.kk-hdr');
+      if(k && k.getAttribute('onclick') && k.getAttribute('onclick').indexOf("'"+id+"'")>-1) karte=c;
+    });
+    if(!karte) return;
+    try{ karte.scrollIntoView({block:'start', behavior:'auto'}); }catch(e){ karte.scrollIntoView(true); }
+    passeVerlaufHoehe();
+    var th=karte.querySelector('.kk-thread');
+    if(th) th.scrollTop=th.scrollHeight;
   }
 
   function markRead(id){

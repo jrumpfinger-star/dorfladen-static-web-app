@@ -203,6 +203,12 @@ window.KGetraenke = (function () {
         _cfg = d.config || {};
         _testbetrieb = !!d.testbetrieb;
         _datum = d.termin || '';
+        /* Der Verlauf wird hier gleich mitgeladen — er speist die
+           Terminleiste über der Liste. Aus dem Laden: „Ich kann hier immer
+           noch nicht alte Bestellungen auswählen, wie bei Metzger."
+           Schlägt er fehl, fehlt nur die Leiste; die Bestellung selbst darf
+           daran nicht hängen. (Spec getraenke-terminleiste) */
+        ladeVerlauf().then(function () { if (_geladen) zeichne(); });
         return ladeTag(_datum);
       })
       .catch(function () {
@@ -348,6 +354,7 @@ window.KGetraenke = (function () {
        unterhalb des Bildschirms, und der Kopf scrollte mit weg. */
     h.innerHTML = '<div class="gk-fest">' + subs()
       + kontextZeile(kw)
+      + terminleiste()
       +   '<div class="gk-bar k-suchzeile">'
       +     '<input type="search" id="gk-q" placeholder="Getr\u00e4nk oder Gebinde suchen \u2026" value="' + esc(_suche) + '">'
       +     KFilter.markup(umfaenge(), _filter)
@@ -423,6 +430,83 @@ window.KGetraenke = (function () {
 
   function ikone(name) {
     return '<i data-lucide="' + name + '"></i>';
+  }
+
+  /* ── Terminleiste ──────────────────────────────────────────────────────
+     Aus dem Laden: „Ich kann aber hier immer noch nicht alte Bestellungen
+     auswählen, wie bei Metzger, und diese ansehen."
+
+     Der Metzger hat FESTE Liefertage und kann deshalb eine fortlaufende
+     Woche zeigen. Getränke werden unregelmäßig bestellt — es gibt keinen
+     Rhythmus, aus dem sich Tage errechnen ließen. Die Leiste entsteht
+     darum aus den TATSÄCHLICH vorhandenen Bestellungen: dem Verlauf plus
+     dem aktuellen Termin. Das ist zugleich ehrlicher — angezeigt wird, was
+     es wirklich gibt.
+
+     Vorher steckte der Termin allein als Datumsfeld im Blatt hinter dem
+     „i". Wer eine alte Bestellung ansehen wollte, musste wissen, dass das
+     Feld dort ist, UND ihr Datum auswendig kennen.
+     (Spec getraenke-terminleiste) */
+  var TERMINE_MAX = 8;
+
+  function termine() {
+    var liste = [], gesehen = {};
+    // Der aktuelle Termin zuerst - er steht noch nicht im Verlauf, solange
+    // nichts gesendet wurde. (F8)
+    if (_datum) {
+      liste.push({ datum: _datum, status: _status,
+                   positionen: summen().positionen });
+      gesehen[_datum] = true;
+    }
+    (_verlauf || []).forEach(function (v) {
+      if (!v || !v.datum || gesehen[v.datum]) return;
+      gesehen[v.datum] = true;
+      liste.push({ datum: v.datum, status: v.status,
+                   positionen: (v.summen && v.summen.positionen) || 0 });
+    });
+    // Der jüngste links: Beim Metzger läuft die Woche vorwärts, hier ist
+    // der neueste Termin der wichtigste. (F9)
+    liste.sort(function (a, b) { return a.datum < b.datum ? 1 : -1; });
+    return liste.slice(0, TERMINE_MAX);
+  }
+
+  function terminleiste() {
+    var t = termine();
+    // Eine Leiste mit einem einzigen Plättchen ist kein Sprungbrett,
+    // sondern Lärm - dann steht der Termin ohnehin in der Kontextzeile. (F7)
+    if (t.length < 2) return '';
+    var h = '<div class="gk-days-lbl">Bestellung w\u00e4hlen</div><div class="gk-days">';
+    t.forEach(function (e) {
+      var st;
+      if (e.status === 2) st = '\u2713 korrigiert';
+      else if (e.status === 1) st = '\u2713 gesendet';
+      else if (e.positionen) st = 'Entwurf';
+      else st = 'offen';
+      if (e.positionen) st += ' \u00b7 ' + e.positionen + ' Pos.';
+
+      var cls = 'gk-day';
+      if (e.datum === _datum) cls += ' on';
+      if (e.status === 1) cls += ' sent';
+      if (e.status === 2) cls += ' korr';
+
+      var d = new Date(e.datum + 'T00:00:00');
+      var wt = isNaN(d.getTime()) ? '' : TAGE[(d.getDay() + 6) % 7].slice(0, 2);
+      h += '<button type="button" class="' + cls + '" data-tag="' + esc(e.datum) + '"'
+        + ' title="' + esc(deutsch(e.datum)) + ' \u2013 ' + esc(st) + '">'
+        + esc(wt)
+        + '<span class="d2">' + e.datum.slice(8) + '.' + e.datum.slice(5, 7) + '.</span>'
+        + '<span class="d3">' + esc(st) + '</span></button>';
+    });
+    return h + '</div>';
+  }
+
+  function tagWaehlen(datum) {
+    if (!datum || datum === _datum) return;
+    _datum = datum;
+    _suche = '';
+    ladeTag(_datum).catch(function () {
+      toast('Der Termin konnte nicht geladen werden.');
+    });
   }
 
   function detailBlatt(kw) {
@@ -711,6 +795,9 @@ window.KGetraenke = (function () {
   }
 
   function bindeBestellung() {
+    host().querySelectorAll('.gk-day').forEach(function (b) {
+      b.onclick = function () { tagWaehlen(b.dataset.tag); };
+    });
     $('gk-datum').addEventListener('change', function (e) {
       var neu = e.target.value;
       if (!neu) return;
@@ -1160,6 +1247,23 @@ window.KGetraenke = (function () {
     return m ? m[1] : n;
   }
 
+  /* Zwei Symbole statt zweier Textknöpfe. Aus dem Laden: „Es ist sehr viel
+     Luft in der Zeile, weil die Breite nicht dynamisch ausgenutzt wird."
+     „Bearbeiten" und „Ausblenden" kosteten zusammen rund 170 px — mehr als
+     der Artikelname selbst. Der Bäcker macht es seit Langem mit Symbolen
+     vor. (Spec listen-harmonie) */
+  var IK_STIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var IK_AUGE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>'
+    + '<circle cx="12" cy="12" r="3"/></svg>';
+  var IK_AUGE_ZU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="m3 3 18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7'
+    + 'a18 18 0 0 1-2.4 3.4M6.6 6.6A18 18 0 0 0 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4-.8"/></svg>';
+
   function artikelAnsicht() {
     if (!_artikel.length) return '<div class="k-empty">Es sind noch keine Artikel hinterlegt.</div>';
     var html = '<div class="gk-panel">'
@@ -1170,23 +1274,39 @@ window.KGetraenke = (function () {
       + 'stehen. Gel\u00f6scht wird nichts \u2014 sonst rissen L\u00fccken in Vorbelegung '
       + 'und Verlauf.</p>';
     var gruppe = null;
+    var offen = false;
     _artikel.forEach(function (a, i) {
       if (a.gruppe !== gruppe) {
+        if (offen) html += '</div>';
         gruppe = a.gruppe;
-        html += '<div class="gk-grp" style="margin-top:14px">' + esc(gruppe) + '</div>';
+        html += '<div class="gk-grp" style="margin-top:14px">' + esc(gruppe) + '</div>'
+          + '<div class="dl-liste">';
+        offen = true;
       }
-      html += '<div class="gk-arow' + (a.aktiv === false ? ' aus' : '') + '">'
-        + '<span class="gk-anr" title="Artikelnummer bei ' + esc(_cfg.name || 'Kratzer') + '">'
+      var aus = a.aktiv === false;
+      /* `gk-anr` bleibt an Nummer und Preis: Die Wächter prüfen darüber,
+         dass die Nummer ohne Kürzel dasteht und die Preisspalte gepflegt
+         werden kann (TC-F20-01, TC-F19). */
+      html += '<div class="dl-zeile gk-arow' + (aus ? ' aus' : '') + '">'
+        + '<span class="dl-nr gk-anr' + (nrKurz(a.nummer) ? '' : ' leer') + '"'
+        + ' title="Artikelnummer bei ' + esc(_cfg.name || 'Kratzer') + '">'
         + esc(nrKurz(a.nummer) || '\u2014') + '</span>'
-        + '<span class="gk-anm">' + esc(a.name)
-        + (a.aktiv === false ? '<span class="gk-tag aus">ausgeblendet</span>' : '') + '</span>'
-        + '<span class="gk-anr">' + esc(a.gebinde || '\u2014') + '</span>'
-        + '<span class="gk-anr">' + (a.preis ? eur(a.preis) : 'ohne Preis') + '</span>'
-        + '<button data-bearb="' + i + '">Bearbeiten</button>'
-        + '<button data-aktiv="' + i + '">'
-        + (a.aktiv === false ? 'Einblenden' : 'Ausblenden') + '</button>'
+        + '<span class="dl-nm gk-anm"><b>' + esc(a.name)
+        + (aus ? ' <span class="dl-tag">ausgeblendet</span>' : '') + '</b>'
+        + '<span class="dl-sub">' + esc(a.gebinde || '\u2014') + '</span></span>'
+        + '<span class="dl-meta gk-anr"><b>'
+        + (a.preis ? eur(a.preis) : '\u2014') + '</b>'
+        + (a.preis ? 'je Kiste' : 'ohne Preis') + '</span>'
+        + '<button class="dl-ik" data-bearb="' + i + '" title="Bearbeiten"'
+        + ' aria-label="' + esc(a.name) + ' bearbeiten">' + IK_STIFT + '</button>'
+        + '<button class="dl-ik' + (aus ? '' : ' an') + '" data-aktiv="' + i + '"'
+        + ' title="' + (aus ? 'Ausgeblendet \u2014 klicken zum Einblenden'
+                            : 'Sichtbar \u2014 klicken zum Ausblenden') + '"'
+        + ' aria-label="' + esc(a.name) + (aus ? ' einblenden' : ' ausblenden') + '">'
+        + (aus ? IK_AUGE_ZU : IK_AUGE) + '</button>'
         + '</div>';
     });
+    if (offen) html += '</div>';
     return html + '</div>';
   }
 

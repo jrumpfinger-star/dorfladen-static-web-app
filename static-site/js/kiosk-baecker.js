@@ -1453,24 +1453,32 @@
       var g = a.gruppe || gruppeVon(a.nummer);
       if (g !== letzte) {
         if (offen) { h += '</div>'; }
-        h += '<div class="bk-grp">' + esc(g) + '</div><div class="bk-artgrid">';
+        h += '<div class="bk-grp">' + esc(g) + '</div><div class="bk-artgrid dl-liste">';
         letzte = g;
         offen = true;
       }
       var key = String(a.nummer || '').trim() || (a.name || '').toLowerCase();
-      h += '<div class="bk-art' + (a.aktiv ? '' : ' off') + '" data-artkey="' + esc(key) + '">';
-      h += '<div class="nr">' + esc(a.nummer || '—') + '</div>';
-      h += '<div class="nm">' + esc(a.name);
-      if (a.angelegt_am) h += '<div class="sub">am ' + esc(a.angelegt_am) + ' angelegt</div>';
-      h += '</div>';
-      h += '<div class="use">' + (a.bestellt_in
-        ? a.bestellt_in + '×<span class="w"> bestellt</span>'
-        : '<span class="w">noch </span>nie<span class="w"> bestellt</span>') + '</div>';
-      h += '<button class="bk-edit" type="button" title="Nummer und Bezeichnung ändern" onclick="KBaecker.bearbeiten(\''
-        + esc(key) + '\')">' + luc('pencil', 15) + '</button>';
-      h += '<button class="bk-sw' + (a.aktiv ? '' : ' off') + '" title="'
-        + (a.aktiv ? 'Ausblenden' : 'Einblenden') + '" onclick="KBaecker.aktiv(\''
-        + esc(key) + '\',' + (a.aktiv ? 'false' : 'true') + ')"></button>';
+      /* Derselbe Baustein wie bei Metzger und Getränken. Der Bäcker war
+         das Vorbild — er behält seine Symbolknöpfe, bekommt aber die
+         gemeinsame Zeile und die Meta-Spalte mit Tabellenziffern.
+         (Spec listen-harmonie) */
+      h += '<div class="dl-zeile bk-art' + (a.aktiv ? '' : ' off aus') + '" data-artkey="' + esc(key) + '">';
+      h += '<div class="dl-nr nr' + (a.nummer ? '' : ' leer') + '">' + esc(a.nummer || '—') + '</div>';
+      h += '<div class="dl-nm nm"><b>' + esc(a.name) + '</b>';
+      h += '<span class="dl-sub sub">'
+        + (a.angelegt_am ? 'am ' + esc(a.angelegt_am) + ' angelegt' : '\u2014')
+        + '</span></div>';
+      h += '<div class="dl-meta use"><b>' + (a.bestellt_in ? a.bestellt_in + ' \u00d7' : 'nie')
+        + '</b><span class="w">bestellt</span></div>';
+      h += '<button class="dl-ik bk-edit" type="button" title="Nummer und Bezeichnung ändern"'
+        + ' aria-label="Bearbeiten: ' + esc(a.name) + '"'
+        + ' onclick="KBaecker.bearbeiten(\'' + esc(key) + '\')">' + luc('pencil', 15) + '</button>';
+      h += '<button class="dl-ik bk-sw' + (a.aktiv ? ' an' : ' off') + '" title="'
+        + (a.aktiv ? 'Sichtbar — klicken zum Ausblenden' : 'Ausgeblendet — klicken zum Einblenden') + '"'
+        + ' aria-label="' + (a.aktiv ? 'Ausblenden: ' : 'Einblenden: ') + esc(a.name) + '"'
+        + ' onclick="KBaecker.aktiv(\''
+        + esc(key) + '\',' + (a.aktiv ? 'false' : 'true') + ')">'
+        + (a.aktiv ? luc('eye', 16) : luc('eye-off', 16)) + '</button>';
       h += '</div>';
     });
     if (offen) { h += '</div>'; }

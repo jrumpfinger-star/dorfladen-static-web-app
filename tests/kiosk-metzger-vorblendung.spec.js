@@ -685,28 +685,38 @@ test.describe('Artikelliste aufgeräumt', () => {
       expect(treffer).toBe(false);
     });
 
-  test('TC-A03/A04: Warengruppe und Preis stehen in einer Flucht',
+  test('TC-A03/A04: Die Preisspalte steht in einer Flucht',
     async ({ page }) => {
-      // F8 lässt die Zeile unter 640 px bewusst umbrechen. Diese Flucht
-      // gilt daher für den breiten Schirm — deshalb hier festgelegt,
-      // statt sie dem Gerät des Laufs zu überlassen.
+      /* Früher prüfte dieser Fall Warengruppe UND Preis. Die Warengruppe
+         steht seit der Harmonisierung nicht mehr in der Zeile, sondern im
+         Gruppenkopf darüber, unter dem die Zeile einsortiert ist — sie
+         dort zu wiederholen war Doppelung. Die Absicht des Falls bleibt:
+         Die rechten Kanten dürfen nicht von Zeile zu Zeile wandern.
+         (Spec listen-harmonie; zuvor metzger-artikelliste F2/F3) */
       await page.setViewportSize({ width: 1280, height: 900 });
       await oeffneTab(page, { viele: true });
       await artikelBereich(page);
       await page.locator('.mb-arow').first().waitFor({ timeout: 8000 });
 
       const flucht = await page.evaluate(() => {
-        const rows = [...document.querySelectorAll('#panel-metzgerbest .mb-arow')]
-          .slice(0, 8);
-        const kante = (sel, seite) => rows.map((r) => {
-          const el = r.querySelector(sel);
-          return el ? Math.round(el.getBoundingClientRect()[seite]) : null;
-        });
-        return { grp: kante('.mb-agrp', 'right'), preis: kante('.mb-apreis', 'right') };
+        // Nur Zeilen DERSELBEN Rasterspalte vergleichen: Bei mehreren
+        // Spalten haben Nachbarzeilen naturgemäß andere rechte Kanten.
+        const liste = document.querySelector('#panel-metzgerbest .dl-liste');
+        if (!liste) return null;
+        const spalten = getComputedStyle(liste).gridTemplateColumns.split(' ').length;
+        const zeilen = [...liste.querySelectorAll('.mb-arow')];
+        const ersteSpalte = zeilen.filter((_, i) => i % spalten === 0).slice(0, 6);
+        return {
+          spalten: spalten,
+          preis: ersteSpalte.map((r) => {
+            const e = r.querySelector('.mb-apreis');
+            return e ? Math.round(e.getBoundingClientRect().right) : null;
+          }),
+        };
       });
-      // F2/F3: rechtsbündig, also eine gemeinsame rechte Kante.
-      expect(new Set(flucht.grp).size).toBe(1);
-      expect(new Set(flucht.preis).size).toBe(1);
+      expect(flucht, 'keine Artikelliste gefunden').not.toBeNull();
+      expect(new Set(flucht.preis).size,
+        `Preiskanten: ${JSON.stringify(flucht.preis)}`).toBe(1);
     });
 
   test('TC-A05: Die Zeile bleibt einreihig, die Antippgröße bleibt gewahrt',
@@ -718,18 +728,21 @@ test.describe('Artikelliste aufgeräumt', () => {
 
       const mass = await page.evaluate(() => {
         const r = document.querySelector('#panel-metzgerbest .mb-arow');
-        const b = [...r.querySelectorAll('.mb-btn')];
+        // Seit der Harmonisierung sind es Symbolknöpfe (.dl-ik) statt
+        // beschrifteter. Die Antippgröße bleibt dieselbe Grundsatzfrage.
+        const b = [...r.querySelectorAll('.dl-ik')];
         return {
           zeile: r.getBoundingClientRect().height,
           knopf: Math.min(...b.map((e) => e.getBoundingClientRect().height)),
+          anzahl: b.length,
           reihen: new Set(b.map((e) => Math.round(e.getBoundingClientRect().top))).size,
         };
       });
+      expect(mass.anzahl, 'zwei Schaltflächen je Zeile').toBe(2);
       // TC-A05: die projektweite Antippgröße --tap-min bleibt unangetastet.
-      expect(mass.knopf).toBeGreaterThanOrEqual(44);
-      // F2: beide Schaltflächen stehen nebeneinander, nicht untereinander.
-      // Zu wenige Rasterspalten liessen „Ausblenden" in eine zweite Reihe
-      // fallen und bliesen die Zeile auf 110 px auf.
+      expect(mass.knopf,
+        `Antippgröße ${mass.knopf}px`).toBeGreaterThanOrEqual(44);
+      // Beide Schaltflächen stehen nebeneinander, nicht untereinander.
       expect(mass.reihen).toBe(1);
       expect(mass.zeile).toBeLessThanOrEqual(mass.knopf + 20);
     });
@@ -812,14 +825,21 @@ test.describe('Artikelliste auf allen Breiten', () => {
     }
   });
 
-  test('TC-A08: breite Schirme nutzen die Breite für zwei Spalten', async ({ browser }) => {
+  test('TC-A08: breite Schirme nutzen die Breite für mehr Spalten', async ({ browser }) => {
     test.setTimeout(180000);
-    const schmal = await beiBreite(browser, 1280, lage);
+    /* Die Absicht bleibt: „Du berücksichtigst die Breite nicht." Früher
+       war die Schwelle fest auf 1500 px verdrahtet und ergab dort genau
+       zwei Spalten. Der gemeinsame Baustein rechnet stattdessen mit der
+       verfügbaren Breite (`minmax(min(340px,100%),1fr)`) — die Zahl der
+       Spalten ist damit kein fester Wert mehr, wohl aber ihr Wachsen.
+       (Spec listen-harmonie) */
+    const schmal = await beiBreite(browser, 1024, lage);
     const breit = await beiBreite(browser, 1600, lage);
 
-    expect(schmal.spalten).toBe(1);
-    expect(breit.spalten).toBe(2);
-    // Vorher standen auf 1600 px genauso viele Artikel wie auf 1280 px.
+    expect(breit.spalten,
+      `1024 px: ${schmal.spalten} Spalten, 1600 px: ${breit.spalten}`)
+      .toBeGreaterThan(schmal.spalten);
+    // Vorher standen auf dem breiten Schirm genauso viele Artikel im Bild.
     expect(breit.imBild).toBeGreaterThan(schmal.imBild);
   });
 

@@ -2156,6 +2156,51 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   margin:0;
 }
 
+/* ── Schmale Karte: Kennzeichen bekommen eine eigene Zeile ──────────────
+   Aus dem Laden: „Der Preis wird nicht komplett in einigen Kacheln
+   angezeigt."
+
+   Gemessen mit denselben Bestellungen über alle Breiten:
+
+     Fenster   Karte   Kennzeichen hat / braucht   gequetscht
+     1280 px   496     172 / 172                   nein
+      768 px   639     315 / 315                   nein
+      686 px   557     233 / 233                   nein
+      375 px   334      47 /  73                   JA
+
+   Nicht der Preis war zu schmal — der Kennzeichenblock war es. Er steht in
+   Spalte 1 (`minmax(0,1fr)`) und darf deshalb unter seine Inhaltsbreite
+   schrumpfen. Ab etwa 410 px Kartenbreite bleibt für ihn weniger als die
+   73 px, die „BESTÄTIGT" braucht: Die Kennzeichen laufen über ihren Kasten
+   hinaus und zeichnen über den Preis. Von „8,80 €" blieb „80 €" übrig.
+
+   Betroffen sind das Telefon (Karte 334 px) und jeder breite Schirm, auf
+   dem das Raster vier Spalten legt — dort misst die Karte rund 340 px.
+   Genau diese Lage zeigt das eingereichte Bild.
+
+   Deshalb eine BEHÄLTERabfrage statt einer Fensterabfrage: Entscheidend
+   ist die Breite der KARTE, nicht die des Fensters. Bei 1516 px Fenster
+   und vier Spalten ist die Karte schmal, bei 1280 px und zwei Spalten
+   breit — eine Fensterabfrage träfe beides falsch.
+
+   Die Schwelle 430 px steht über dem gemessenen Bruchpunkt (73 + 203
+   Knöpfe + 44 Preis + 40 Menge + Abstände ≈ 412 px).
+   (Spec getraenke-…/mittag-preis-kachel) */
+#panel-mittag .k-order{ container-type:inline-size }
+
+@container (max-width:430px){
+  #panel-mittag .k-order-hdr{
+    /* Preis und Menge nach ihrem Inhalt, der Rest ist Spielraum. */
+    grid-template-columns:auto auto minmax(0,1fr) auto;
+  }
+  #panel-mittag .k-order-hdr .k-oc-price{ grid-column:1; grid-row:2 }
+  #panel-mittag .k-order-hdr .k-oc-qty{ grid-column:2; grid-row:2 }
+  /* Volle Breite in einer eigenen Zeile: Hier dürfen die Kennzeichen
+     umbrechen, statt über den Preis zu laufen. */
+  #panel-mittag .k-order-hdr .k-oc-badges{ grid-column:1 / 4; grid-row:3 }
+  #panel-mittag .k-order-hdr .k-oc-actions{ grid-row:1 / 4 }
+}
+
 /* Kennzeichen ruhig und einheitlich - vorher sechs Formen nebeneinander.
    Die Schrift bleibt bei 11 px: Darunter sind „Online", „Telefon" und
    „Bestätigt" in Grossbuchstaben in Eile nicht mehr sicher zu unterscheiden,
@@ -4576,177 +4621,42 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 }
 .mb-kopffest .mb-akopf{ margin:6px 0 0 }
 
-/* ══ Artikelstamm: eine ruhige Liste statt hundert Kaertchen ══════════
-   Rueckmeldung: „So viel Leerraum." Die Zeile war ein Flexbau mit
-   .mb-aname{flex:1} – der Name dehnte sich ueber den freien Platz und
-   drueckte alles Uebrige an den Rand. Warengruppe und Preis sprangen
-   dadurch von Zeile zu Zeile. Jetzt feste Spalten, also eine Flucht.
-   (Spec metzger-artikelliste, F2–F7) */
+/* ══ Artikelstamm: der gemeinsame Listenbaustein ══════════════════════
+   Früher hatte diese Liste ein eigenes Sechs-Spalten-Raster (Nummer,
+   Bezeichnung, Warengruppe, Preis, zwei Textknöpfe) mit festen Breiten
+   und drei Bruchstellen. Sie steht jetzt auf `.dl-zeile` — demselben
+   Baustein wie Bäcker und Getränke.
+
+   Was dabei erhalten bleibt, weil es teuer gelernt wurde:
+     · Bezeichnung und Vorgabe UNTEREINANDER, nicht nebeneinander
+       (nebeneinander wurden beide gekappt: „Hackfleisch gemisc…").
+     · Beide werden UMGEBROCHEN, nicht abgeschnitten — „2 × 500 g,
+       6 × 250 g (vak.)" ist gekappt wertlos.
+     · Die Breite wird genutzt: mehrspaltig, sobald Platz ist.
+   Die Warengruppe entfällt in der Zeile — sie steht bereits im
+   Gruppenkopf darüber, unter dem die Zeile einsortiert ist.
+   (Spec listen-harmonie; zuvor metzger-artikelliste F2–F10) */
 #panel-metzgerbest .mb-artikel{
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 1px 3px rgba(0,0,0,.07);
-  overflow:hidden;
-}
-#panel-metzgerbest .mb-artikel .mb-arow{
-  display:grid;
-  /* Sechs Kinder, also sechs Spalten: Nummer, Bezeichnung (mit Vorgabe),
-     Warengruppe, Preis und die beiden Schaltflaechen. Mit nur fuenf
-     Spalten fiel „Ausblenden" in eine zweite Rasterreihe und die Zeile
-     wurde 110 statt 48 px hoch. (Spec metzger-artikelliste, F2/F5) */
-  /* Feste Spaltenbreiten statt `auto`: Jede Zeile ist ein EIGENES Raster,
-     `auto` richtet sich also pro Zeile nach dem Inhalt — die Spalten
-     standen dadurch nicht in einer Flucht (gemessen: Warengruppe mal bei
-     875, mal bei 880 px). Feste Breiten halten die Flucht ueber alle
-     102 Zeilen. (Spec metzger-artikelliste, F2/F3) */
-  grid-template-columns:44px minmax(0,1fr) 116px 74px 104px 104px;
-  align-items:center;
-  gap:10px;
   background:transparent;
   border-radius:0;
   box-shadow:none;
-  margin:0;
-  padding:6px 12px;
-  border-top:1px solid #eef1f0;
+  overflow:visible;
 }
-#panel-metzgerbest .mb-artikel .mb-arow:first-child{ border-top:0 }
-#panel-metzgerbest .mb-artikel .mb-arow:hover{ background:#f7faf8 }
-#panel-metzgerbest .mb-artikel .mb-arow.aus{ opacity:1; background:#fbfcfc }
-#panel-metzgerbest .mb-artikel .mb-arow.aus .mb-aname{ color:#8a9491 }
+/* Die Gruppenblöcke tragen das Raster; die Liste selbst bleibt ein
+   schlichter Stapel aus Kopf und Block. */
+#panel-metzgerbest .mb-artikel .dl-liste{ margin:0 0 10px }
 
-#panel-metzgerbest .mb-artikel .mb-nr{
-  min-height:0; padding:2px 0;
-  font-size:.75rem; font-variant-numeric:tabular-nums;
-  text-align:center; color:#6b7280;
-}
-#panel-metzgerbest .mb-artikel .mb-aname{
-  flex:none; min-width:0;
-  font-size:.92rem; line-height:1.25;
-  /* Bezeichnung und Vorgabe UNTEREINANDER. Nebeneinander wurden beide
-     abgeschnitten („Hackfleisch gemisc…", „6 × 250 g (va…") — und es
-     kostet keine Hoehe: Die Zeile wird ohnehin von der 44 px hohen
-     Schaltflaeche bestimmt, zwei Textzeilen (rund 32 px) passen
-     hinein. (Spec metzger-artikelliste, F9) */
-  flex-direction:column; align-items:stretch; gap:1px;
-  overflow:hidden;
-}
-/* Der Name darf schrumpfen, die Vorgabe rueckt nach. `min-width:0` ist
-   noetig, weil Flex-Elemente sonst nie unter ihre Mindestbreite gehen
-   und die Vorgabe aus der Spalte draengen wuerden. */
-#panel-metzgerbest .mb-artikel .mb-atxt{
-  flex:0 1 auto; min-width:0;
-  /* Umbrechen statt kappen: „Die Vorgaben muessen schon lesbar sein und
-     auch die Bezeichnung." Ein abgeschnittener Artikelname hilft
-     niemandem. Die Zeile wird nur dann hoeher, wenn der Name wirklich
-     lang ist. (Spec metzger-artikelliste, F9) */
-  overflow:visible; white-space:normal; overflow-wrap:anywhere;
-}
+/* Die Vorgabe ist die wichtigste Zusatzangabe des Metzgers — sie darf,
+   anders als sonst im Baustein, umbrechen statt zu kürzen. */
 #panel-metzgerbest .mb-artikel .mb-astd{
-  font-size:.75rem; line-height:1.2;
-  min-width:0;
-  flex:0 1 auto;
-  /* Auch die Vorgabe wird umgebrochen statt gekappt: „2 × 500 g,
-     6 × 250 g (vak.)" ist abgeschnitten wertlos. */
-  overflow:visible; white-space:normal; overflow-wrap:anywhere;
+  white-space:normal; overflow:visible; overflow-wrap:anywhere;
+  color:#4a7c59;
 }
-/* Wichtig: NICHT `justify-self:end` — dann schrumpft die Box auf die
-   Textbreite und die linke Kante wandert mit der Textlaenge. Die Box
-   fuellt die Spalte, nur der Text wird rechts ausgerichtet. So stehen
-   beide Kanten fest. (Spec metzger-artikelliste, F2/F3) */
-#panel-metzgerbest .mb-artikel .mb-agrp{
-  text-align:right;
-  font-size:.72rem; color:#8a9491;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+#panel-metzgerbest .mb-artikel .mb-astd.leer{ color:#9aa3a0; font-style:italic }
+#panel-metzgerbest .mb-artikel .mb-atxt{
+  white-space:normal; overflow:visible; overflow-wrap:anywhere;
 }
-#panel-metzgerbest .mb-artikel .mb-apreis{
-  text-align:right;
-  font-size:.78rem; color:#4b5563;
-  font-variant-numeric:tabular-nums;   /* Betraege stehen untereinander */
-  white-space:nowrap;
-}
-
-/* Die beiden Schaltflaechen als eigene Gruppe, damit sie umbrechen
-   koennen, ohne das Raster zu sprengen. */
-/* Die Schaltflaechen behalten ueberall die projektweite Antippgroesse.
-   Sie wird in dieser Datei mit `min-height:var(--tap-min) !important`
-   gesetzt — eine bewusste Grundsatzentscheidung, die hier nicht
-   ausgehebelt wird. Der Platzgewinn kommt stattdessen aus der
-   einzeiligen Zeile und aus der Nutzung der Breite (siehe unten).
-   (Spec metzger-artikelliste, F5) */
-#panel-metzgerbest .mb-artikel .mb-arow .mb-btn{
-  padding:0 10px;
-  width:100%;
-  font-size:.8rem; border-radius:8px; white-space:nowrap;
-  display:inline-flex; align-items:center; justify-content:center;
-}
-
-#panel-metzgerbest .mb-artikel .mb-arow .mb-btn:first-of-type{
-  background:#2e7d4f; color:#fff; border-color:#2e7d4f; font-weight:600;
-}
-#panel-metzgerbest .mb-artikel .mb-arow .mb-btn:last-of-type{
-  background:#fff; color:#4b5563;
-}
-
-/* Schmale Schirme: Angaben und Schaltflaechen in eigene Reihen. */
-/* Mittlere Breiten (641–1023 px): Der Bezeichnung fehlt Platz, sie wurde
-   gekappt. Die Warengruppe ist hier die entbehrlichste Angabe — ohne sie
-   sind Bezeichnung und Vorgabe wieder vollstaendig lesbar, und die Zeile
-   bleibt einreihig. (Spec metzger-artikelliste, F9) */
-@media (min-width:641px) and (max-width:1023px){
-  #panel-metzgerbest .mb-artikel .mb-arow{
-    grid-template-columns:40px minmax(0,1fr) 70px 100px 100px;
-  }
-  #panel-metzgerbest .mb-artikel .mb-agrp{ display:none }
-}
-
-@media (max-width:640px){
-  #panel-metzgerbest .mb-artikel .mb-arow{
-    grid-template-columns:38px minmax(0,1fr) auto;
-    row-gap:6px; padding:8px 10px;
-  }
-  /* Auf dem Telefon ist Umbrechen besser als Kappen: Die Zeile ist hier
-     ohnehin mehrreihig, und ein abgeschnittener Artikelname hilft
-     niemandem. (Spec metzger-artikelliste, F9) */
-  #panel-metzgerbest .mb-artikel .mb-atxt,
-  #panel-metzgerbest .mb-artikel .mb-astd{
-    white-space:normal; overflow:visible; text-overflow:clip;
-  }
-  /* Hier ist die Spalte zu schmal fuer zwei Angaben nebeneinander — die
-     Vorgabe rueckt wieder unter den Namen. (Spec metzger-artikelliste, F9) */
-  #panel-metzgerbest .mb-artikel .mb-aname{
-    flex-direction:column; align-items:stretch; gap:2px;
-  }
-  #panel-metzgerbest .mb-artikel .mb-agrp{ grid-column:2; justify-self:start; text-align:left }
-  #panel-metzgerbest .mb-artikel .mb-apreis{ grid-column:3 }
-  #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:first-of-type{ grid-column:2 }
-  #panel-metzgerbest .mb-artikel .mb-arow .mb-btn:last-of-type{ grid-column:3 }
-}
-
-/* Breite Schirme: zwei Artikel nebeneinander ───────────────────────────
-   Rueckmeldung: „Du beruecksichtigst die Breite nicht." Auf 1600 px
-   stand die Liste einspaltig, rechts blieb Leerraum, und von 102
-   Artikeln waren 16 zu sehen. Zwei Spalten verdoppeln das, ohne dass
-   die Zeile enger wird als noetig. (Spec metzger-artikelliste, F10) */
-@media (min-width:1500px){
-  #panel-metzgerbest .mb-artikel{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    column-gap:10px;
-  }
-  /* In der halben Breite muessen die festen Spalten schmaler werden,
-     sonst wird die Bezeichnung gedrueckt und die Zeile bricht um. */
-  #panel-metzgerbest .mb-artikel .mb-arow{
-    grid-template-columns:36px minmax(0,1fr) 92px 66px 92px 92px;
-    padding-left:10px; padding-right:10px;
-    gap:8px;
-  }
-  #panel-metzgerbest .mb-artikel .mb-arow .mb-btn{ padding:0 6px; font-size:.75rem }
-  #panel-metzgerbest .mb-artikel .mb-agrp{ font-size:.68rem }
-  /* Die obere Trennlinie entfaellt sonst nur bei der ersten Zeile —
-     bei zwei Spalten stehen die ersten ZWEI Zeilen oben. */
-  #panel-metzgerbest .mb-artikel .mb-arow:nth-child(2){ border-top:0 }
-  #panel-metzgerbest .mb-artikel .mb-arow:nth-child(odd){ border-right:1px solid #eef1f0 }
-}
+#panel-metzgerbest .mb-artikel .dl-zeile.aus .dl-nm{ color:#8a9491 }
 
 /* Ein vorgeblendeter Hinweis ist keine Menge, sondern Text — er wird
    kursiv gesetzt, damit er in der Reihe der Mengen-Kacheln nicht als

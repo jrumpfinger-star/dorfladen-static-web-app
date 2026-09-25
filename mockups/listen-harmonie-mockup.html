@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Listen harmonisieren — Bäcker · Metzger · Getränke (Mockup)</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   EIN Listenbaustein für alle drei Lieferanten.
+
+   Aus dem Laden: „Die Anzeige ist lieblos, die Schriftarten entsprechen
+   nicht dem Standard und die Texte sind daher schwer lesbar. Es ist sehr
+   viel Luft in der Zeile, weil die Breite nicht dynamisch ausgenutzt wird.
+   Warum erfindest du das Rad immer wieder neu, wenn es gute Beispiele wie
+   beim Bäcker gibt? Harmonisiere die Listen bei Bäcker, Metzger und
+   Getränke."   Und: „Gleiches gilt bei Verlauf. Alles schaut anders aus."
+
+   Gemessen am Bestand — dreimal dieselbe Liste, dreimal anders gebaut:
+
+     Artikelzeile   Aufbau                  Schrift Nr./Meta   Knöpfe
+     Bäcker         Raster 54|1fr|auto|34|46  13,5 px          2 Symbole
+     Metzger        Flex                      12 px            2 Texte
+     Getränke       Flex mit Umbruch          11 px Monospace  2 Texte
+
+     Verlaufszeile  Aufbau                  aufklappbar   Status
+     Bäcker         Raster 150|1fr|auto×3   ja            eigene Spalte
+     Metzger        Flex                    nein          Textmarke
+     Getränke       Flex mit Umbruch        ja            seit gestern
+
+   Die Monospace-Schrift bei Getränken war der Grund für „schwer lesbar":
+   Sie ist für Zahlenkolonnen gedacht, stand hier aber auch an Gebinde und
+   Preis — und in 11 px. Die Luft in der Zeile kam vom `flex:1` am Namen:
+   Er schob alles Übrige an den rechten Rand, statt die Breite zu nutzen.
+
+   Vorbild ist der Bäcker, wie gewünscht: festes Raster, Nummernplättchen,
+   Name mit Unterzeile, Symbolknöpfe. Ergänzt um das, was dort fehlte —
+   eine Meta-Spalte mit Tabellenziffern, damit Preise und Mengen
+   untereinander stehen.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --pri:#2d5016; --gr:#2e7d4f; --gr-l:#dcfce7; --gr-d:#166534;
+  --amb:#b45309; --amb-l:#fef3c7; --amb-b:#fcd34d;
+  --red:#b42318; --red-l:#fef2f2; --red-b:#e7c9c9;
+  --blu:#1d4ed8; --blu-l:#eff6ff;
+  --bg:#f0f2f5; --karte:#fff; --ink:#1f2937; --mut:#6b7280;
+  --line:#e5e7eb; --r:12px; --r-s:9px; --tap:44px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif}
+.wrap{max-width:1400px;margin:0 auto;padding:14px 14px 80px}
+h1{font-size:19px;margin:0 0 3px}
+h2{font-size:15px;margin:26px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--line)}
+.sub{color:var(--mut);font-size:12.5px;line-height:1.55;margin:0 0 14px}
+.sub b{color:var(--ink)}
+
+/* ── Reiter wie im Kiosk ─────────────────────────────────────────────── */
+.tabs{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.tab{border:1.5px solid var(--line);background:var(--karte);border-radius:var(--r-s);
+  padding:0 15px;min-height:38px;font:inherit;font-size:13.5px;font-weight:600;
+  color:var(--mut);cursor:pointer;display:inline-flex;align-items:center}
+.tab.on{background:var(--pri);border-color:var(--pri);color:#fff}
+
+/* ── Kopf einer Liste ────────────────────────────────────────────────── */
+.lkopf{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.lkopf h3{margin:0;font-size:13px;font-weight:700;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--mut)}
+.lkopf .sp{flex:1}
+.btn{border:1.5px solid var(--line);background:var(--karte);color:var(--ink);
+  border-radius:var(--r-s);min-height:var(--tap);padding:0 14px;font:inherit;
+  font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;
+  align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--gr);color:var(--gr)}
+.btn.primary{background:var(--gr);border-color:var(--gr);color:#fff}
+.btn.primary:hover{background:var(--gr-d);color:#fff}
+.btn.weg{border-color:var(--red-b);color:var(--red)}
+.btn.weg:hover{background:var(--red-l);border-color:var(--red)}
+.btn .c{background:rgba(0,0,0,.08);border-radius:999px;padding:1px 7px;font-size:12px}
+.btn.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.on .c{background:rgba(255,255,255,.22)}
+
+/* ── Warengruppe ─────────────────────────────────────────────────────── */
+.grp{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--mut);margin:16px 0 6px;padding:0 0 4px 2px;
+  border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.grp .n{margin-left:auto;font-weight:600;color:var(--gr);text-transform:none;letter-spacing:0}
+
+/* ═══ DER gemeinsame Listenbaustein ═══════════════════════════════════ */
+/* Die Breite wird ausgenutzt: sobald 340 px frei sind, kommt eine Spalte
+   dazu. Bei 50 Artikeln halbiert das die Rollstrecke.
+
+   340 px ist gemessen, nicht geschätzt. Bei 320 px passten zwar zwei Spalten
+   aufs Ladentablett, aber elf Texte wurden gekürzt — schon „20 × 0,50 l ·
+   Mehrweg" ging nicht mehr hinein, und die Zeilen wuchsen auf 87 px. Bei 340
+   bleibt alles lesbar und die Zeile 54 px hoch.
+
+   `min(340px, 100%)` statt schlicht `340px`: Auf einem 375-px-Handy wäre
+   die Spalte sonst breiter als das Fenster — gemessen 380 px Zeile in
+   375 px Fenster, die Seite rollte waagerecht und der letzte Symbolknopf
+   stand ausserhalb. Der `min()`-Anteil deckelt die Spalte auf die
+   verfügbare Breite. */
+.liste{display:grid;gap:6px 12px;
+  grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));align-items:start}
+
+/* Eine Zeile: Nummer · Name+Unterzeile · Meta · zwei Symbolknöpfe.
+   Genau das Raster des Bäckers — nur um die Meta-Spalte ergänzt. */
+.zeile{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto auto;
+  align-items:center;gap:10px;background:var(--karte);
+  border:1px solid var(--line);border-radius:var(--r-s);padding:7px 10px;
+  min-height:var(--tap)}
+.zeile.aus{opacity:.55;background:#fafafa}
+
+/* Das Nummernplättchen: Tabellenziffern, damit die Nummern untereinander
+   stehen — aber KEINE Monospace-Schrift, die war der Lesbarkeitsbruch. */
+.nr{font-size:12px;font-weight:600;color:var(--mut);background:#f3f4f6;
+  border-radius:5px;padding:3px 0;text-align:center;
+  font-variant-numeric:tabular-nums}
+.nr.leer{color:#c3c8ce}
+
+.nm{min-width:0;line-height:1.3}
+.nm b{display:block;font-weight:600;font-size:13.5px;overflow-wrap:anywhere}
+.nm .sub2{display:block;font-size:11.5px;color:var(--mut);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Meta rechtsbündig mit Tabellenziffern: Preise und Mengen stehen damit
+   spaltenweise untereinander, auch ohne Tabelle. */
+.meta{text-align:right;font-size:12px;color:var(--mut);white-space:nowrap;
+  font-variant-numeric:tabular-nums;line-height:1.3}
+.meta b{display:block;color:var(--ink);font-weight:600;font-size:12.5px}
+
+/* Symbolknöpfe statt Textknöpfe: „Bearbeiten"/„Ausblenden" kosteten in der
+   Getränkeliste zusammen rund 170 px — mehr als der Artikelname selbst. */
+.ik{width:38px;height:38px;border:1.5px solid var(--line);background:var(--karte);
+  border-radius:var(--r-s);cursor:pointer;display:inline-flex;align-items:center;
+  justify-content:center;color:var(--mut);padding:0}
+.ik:hover{border-color:var(--gr);color:var(--gr);background:#f6fbf8}
+.ik svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.ik.an{border-color:var(--gr);color:var(--gr)}
+.ik.aus svg{opacity:.55}
+
+.tag{display:inline-flex;align-items:center;gap:3px;border-radius:999px;
+  padding:1px 7px;font-size:10.5px;font-weight:600;letter-spacing:.02em;
+  text-transform:uppercase;border:1px solid transparent;white-space:nowrap}
+.tag.gr{background:var(--gr-l);border-color:#cfe6d9;color:var(--gr-d)}
+.tag.am{background:var(--amb-l);border-color:var(--amb-b);color:var(--amb)}
+.tag.gy{background:#f3f4f6;border-color:var(--line);color:var(--mut)}
+.tag.bl{background:var(--blu-l);border-color:#bfdbfe;color:var(--blu)}
+
+/* ═══ Verlauf — derselbe Baustein, andere Spalten ═════════════════════ */
+.vliste{display:grid;gap:6px;grid-template-columns:1fr;align-items:start}
+@media(min-width:1000px){ .vliste{grid-template-columns:1fr 1fr;gap:6px 12px} }
+
+.vzeile{background:var(--karte);border:1px solid var(--line);
+  border-left:4px solid #d1d5db;border-radius:var(--r-s);padding:8px 11px;
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;
+  align-items:center;gap:8px 10px}
+.vzeile.ok{border-left-color:var(--gr)}
+.vzeile.korr{border-left-color:var(--amb)}
+.vzeile.auf{background:#fcfcfd}
+.vkopf{display:flex;align-items:center;gap:8px;min-width:0;background:none;
+  border:0;padding:0;font:inherit;text-align:left;cursor:pointer;
+  min-height:var(--tap)}
+.vkopf .pf{flex:0 0 auto;color:var(--mut);font-size:11px;width:11px}
+.vkopf .tx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.vkopf .tx b{font-size:13.5px;font-weight:600}
+.vkopf .tx span{font-size:11.5px;color:var(--mut);
+  font-variant-numeric:tabular-nums}
+/* Status als eigenes Feld — beim Metzger stand er nur als Textmarke, bei
+   Getränken als Anhängsel in der grauen Unterzeile. */
+.vstatus{text-align:right;font-size:12px;line-height:1.3;white-space:nowrap}
+.vstatus b{display:block;font-weight:600;color:var(--gr-d);font-size:12.5px}
+.vzeile.korr .vstatus b{color:var(--amb)}
+.vstatus span{display:block;font-size:11px;color:var(--mut);
+  font-variant-numeric:tabular-nums}
+
+.vliste2{grid-column:1/-1;border-top:1px solid var(--line);margin-top:7px;padding-top:7px}
+.vtab{width:100%;border-collapse:collapse;font-size:12.5px}
+.vtab th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--mut);padding:2px 6px;
+  border-bottom:1px solid var(--line)}
+.vtab td{padding:4px 6px;border-bottom:1px solid #f4f6f5}
+.vtab .r{text-align:right;font-variant-numeric:tabular-nums}
+.vtab .nr2{color:var(--mut);font-variant-numeric:tabular-nums;width:52px}
+.vfuss{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  margin-top:6px;font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+
+/* ── Verlauf auf dem Telefon ─────────────────────────────────────────────
+   Gemessen bei 375 px: Die vier Spalten (Kopf · Status · zwei Knöpfe)
+   passten nicht nebeneinander. Das Datum brach Wort für Wort um —
+   „Mi.," / „30.09.2026" / „·" / „KW" / „40" — und war unlesbar.
+   Deshalb hier zwei Reihen: oben der Kopf über die volle Breite, darunter
+   Status und Knöpfe. */
+@media (max-width:560px){
+  .vzeile{grid-template-columns:minmax(0,1fr) auto auto}
+  .vkopf{grid-column:1 / -1}
+  .vstatus{grid-column:1;text-align:left}
+  .vtab td,.vtab th{padding:4px 4px}
+  .vfuss{flex-direction:column;align-items:flex-start;gap:2px}
+
+  /* Die Unterzeile wurde hier gekürzt — aus „Vorgabe: 2 kg · vakuumiert"
+     wurde „Vorgabe: 2 kg · vaku…", aus „am 14.03.2026 angelegt" wurde
+     „am 14.03.2026 angel…". Auf dem Telefon ist Höhe billiger als eine
+     verlorene Angabe: Sie darf umbrechen statt abzuschneiden. */
+  .nm .sub2{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+}
+
+/* ── Vergleichskasten vorher/nachher ─────────────────────────────────── */
+.vgl{background:var(--karte);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;margin:0 0 16px}
+.vgl table{width:100%;border-collapse:collapse;font-size:12.5px}
+.vgl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--mut);padding:4px 8px;border-bottom:1px solid var(--line)}
+.vgl td{padding:5px 8px;border-bottom:1px solid #f4f6f5;vertical-align:top}
+.vgl .alt{color:var(--red)}
+.vgl .neu{color:var(--gr-d);font-weight:600}
+.hinw{background:#fffdf5;border:1px solid var(--amb-b);border-radius:var(--r-s);
+  padding:9px 12px;font-size:12.5px;line-height:1.55;margin:10px 0 0}
+.note{font-size:12px;color:var(--mut);line-height:1.5;margin:10px 0 0}
+
+/* ── Alt-Ansicht zum Vergleich ───────────────────────────────────────── */
+.alt-gk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 9px;
+  background:#fff;border-bottom:1px solid var(--line)}
+.alt-gk .anm{font-weight:600;font-size:13px;flex:1;min-width:120px;color:#7c2d12}
+.alt-gk .anr{font-size:11px;color:var(--mut);font-family:ui-monospace,Consolas,monospace}
+.alt-gk button{border:1.5px solid var(--line);background:#fff;color:var(--mut);
+  border-radius:8px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Listen harmonisieren — Bäcker · Metzger · Getränke</h1>
+<p class="sub">
+  Aus dem Laden: <b>„Warum erfindest du das Rad immer wieder neu, wenn es gute
+  Beispiele wie beim Bäcker gibt? Harmonisiere die Listen bei Bäcker, Metzger und
+  Getränke, so dass sie alle ähnlich bedienbar sind und aussehen."</b>
+  Und zum Verlauf: <b>„Gleiches gilt bei Verlauf. Alles schaut anders aus."</b>
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2>Was heute auseinanderläuft</h2>
+
+<div class="vgl">
+  <table>
+    <tr><th>Artikelliste</th><th>Aufbau</th><th>Schrift für Nr. und Meta</th><th>Knöpfe</th></tr>
+    <tr><td><b>Bäcker</b></td><td>Raster 54 · 1fr · auto · 34 · 46</td>
+        <td>13,5 px, Tabellenziffern</td><td class="neu">2 Symbole</td></tr>
+    <tr><td><b>Metzger</b></td><td>Flex</td>
+        <td>12 px</td><td class="alt">2 Textknöpfe</td></tr>
+    <tr><td><b>Getränke</b></td><td>Flex mit Umbruch</td>
+        <td class="alt">11 px Monospace</td><td class="alt">2 Textknöpfe</td></tr>
+  </table>
+  <table style="margin-top:14px">
+    <tr><th>Verlauf</th><th>Aufbau</th><th>Positionen aufklappbar</th><th>Status</th></tr>
+    <tr><td><b>Bäcker</b></td><td>Raster 150 · 1fr · auto×3</td>
+        <td class="neu">ja</td><td class="neu">eigene Spalte</td></tr>
+    <tr><td><b>Metzger</b></td><td>Flex</td>
+        <td class="alt">nein</td><td class="alt">Textmarke in der Zeile</td></tr>
+    <tr><td><b>Getränke</b></td><td>Flex mit Umbruch</td>
+        <td class="neu">ja</td><td>eigene Spalte (seit gestern)</td></tr>
+  </table>
+
+  <div class="hinw">
+    <b>Warum es „schwer lesbar" wirkte:</b> Die Monospace-Schrift ist für
+    Zahlenkolonnen gedacht. Bei Getränken stand sie auch an <b>Gebinde</b> und
+    <b>Preis</b> — und in 11 px. <b>Woher die Luft in der Zeile kam:</b> Der Name
+    trug <code>flex:1</code> und schob alles Übrige an den rechten Rand, statt
+    die Breite zu nutzen. Und die Liste war <b>einspaltig</b> — auf dem
+    Rechner bleiben damit zwei Drittel der Breite ungenutzt.
+  </div>
+</div>
+
+<h3 style="font-size:13px;color:var(--mut);margin:0 0 6px">So sieht die Getränkeliste heute aus</h3>
+<div style="background:#fff;border:1px solid var(--line);border-radius:var(--r-s);overflow:hidden;margin-bottom:8px">
+  <div class="alt-gk"><span class="anr">40015</span><span class="anm">Augustiner Hell</span>
+    <span class="anr">20x0,50</span><span class="anr">13,75 €</span>
+    <button>Bearbeiten</button><button>Ausblenden</button></div>
+  <div class="alt-gk"><span class="anr">40349</span><span class="anm">Tegernseer Hell</span>
+    <span class="anr">20x0,50</span><span class="anr">13,75 €</span>
+    <button>Bearbeiten</button><button>Ausblenden</button></div>
+  <div class="alt-gk"><span class="anr">56180</span><span class="anm">Aho Individual Classic Glas</span>
+    <span class="anr">12x0,75</span><span class="anr">5,30 €</span>
+    <button>Bearbeiten</button><button>Ausblenden</button></div>
+</div>
+<p class="note">Eine Spalte, Monospace in 11 px, und zwischen Name und Gebinde
+  klafft die halbe Zeile. Die beiden Textknöpfe kosten zusammen rund 170 px —
+  mehr als der Artikelname selbst.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2>Vorschlag: ein Baustein, drei Lieferanten</h2>
+
+<div class="tabs">
+  <button class="tab">Bestellung</button>
+  <button class="tab on">Artikel</button>
+  <button class="tab">Verlauf</button>
+</div>
+
+<!-- ───────── GETRÄNKE ───────── -->
+<div class="lkopf">
+  <h3>Artikel bei Getränke Kratzer</h3>
+  <span class="sp"></span>
+  <button class="btn on">Aktiv <span class="c">47</span></button>
+  <button class="btn">Alle <span class="c">50</span></button>
+  <button class="btn primary">＋ Neuer Artikel</button>
+</div>
+
+<div class="grp">Bier <span class="n">3 Artikel</span></div>
+<div class="liste">
+  <div class="zeile">
+    <span class="nr">40015</span>
+    <span class="nm"><b>Augustiner Hell</b><span class="sub2">20 × 0,50 l · Mehrweg</span></span>
+    <span class="meta"><b>13,75 €</b>je Kiste</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar — klicken zum Ausblenden"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr">40349</span>
+    <span class="nm"><b>Tegernseer Hell</b><span class="sub2">20 × 0,50 l · Mehrweg</span></span>
+    <span class="meta"><b>13,75 €</b>je Kiste</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile aus">
+    <span class="nr">40350</span>
+    <span class="nm"><b>Tegernseer Hell <span class="tag gy">ausgeblendet</span></b><span class="sub2">24 × 0,33 l · Mehrweg</span></span>
+    <span class="meta"><b>13,45 €</b>je Kiste</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik aus" title="Ausgeblendet — klicken zum Einblenden"><svg viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-2.4 3.4M6.6 6.6A18 18 0 0 0 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4-.8"/></svg></button>
+  </div>
+</div>
+
+<div class="grp">Mineralwasser Glas 0,75 l <span class="n">3 Artikel</span></div>
+<div class="liste">
+  <div class="zeile">
+    <span class="nr">56180</span>
+    <span class="nm"><b>Aho Individual Classic Glas</b><span class="sub2">12 × 0,75 l · Mehrweg</span></span>
+    <span class="meta"><b>5,30 €</b>je Kiste</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr">56181</span>
+    <span class="nm"><b>Aho Individual Sanft Glas</b><span class="sub2">12 × 0,75 l · Mehrweg</span></span>
+    <span class="meta"><b>5,55 €</b>je Kiste</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr">56182</span>
+    <span class="nm"><b>Aho Individual Naturell Glas</b><span class="sub2">12 × 0,75 l · Mehrweg</span></span>
+    <span class="meta"><b>4,80 €</b>je Kiste</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+</div>
+
+<p class="note"><b>Dieselbe Zeile, andere Unterzeile:</b> Getränke tragen dort das
+  Gebinde, der Metzger die hinterlegte Vorgabe, der Bäcker das Anlagedatum. Der
+Aufbau bleibt überall gleich — und die Breite wird genutzt. Gemessen über alle
+Auflösungen des Projekts: Handy (375) und Ladentablett (686) einspaltig,
+iPad mini (768) zweispaltig, Rechner ab 1280 dreispaltig. Kein Querrollen,
+kein Element über den Rand, Antippflächen 38 px (Symbole) und 44 px (Knöpfe).</p>
+
+<!-- ───────── METZGER ───────── -->
+<div class="lkopf" style="margin-top:22px">
+  <h3>Artikel bei Metzgerei Mair</h3>
+  <span class="sp"></span>
+  <button class="btn on">Aktiv <span class="c">112</span></button>
+  <button class="btn">Alle <span class="c">128</span></button>
+  <button class="btn primary">＋ Neuer Artikel</button>
+</div>
+
+<div class="grp">Wurstwaren <span class="n">3 von 34</span></div>
+<div class="liste">
+  <div class="zeile">
+    <span class="nr">204</span>
+    <span class="nm"><b>Leberkäse</b><span class="sub2">Vorgabe: 2 kg · vakuumiert</span></span>
+    <span class="meta"><b>12,90 €</b>je kg</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr">211</span>
+    <span class="nm"><b>Wiener Würstchen</b><span class="sub2">Vorgabe: 3 kg</span></span>
+    <span class="meta"><b>10,40 €</b>je kg</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr leer">—</span>
+    <span class="nm"><b>Schinkenwurst am Stück</b><span class="sub2">keine Vorgabe</span></span>
+    <span class="meta"><b>—</b>ohne Preis</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+</div>
+
+<!-- ───────── BÄCKER ───────── -->
+<div class="lkopf" style="margin-top:22px">
+  <h3>Artikel bei Bäckerei Bachmeier</h3>
+  <span class="sp"></span>
+  <button class="btn on">Aktiv <span class="c">38</span></button>
+  <button class="btn">Alle <span class="c">44</span></button>
+  <button class="btn primary">＋ Neuer Artikel</button>
+</div>
+
+<div class="grp">Brot <span class="n">3 von 12</span></div>
+<div class="liste">
+  <div class="zeile">
+    <span class="nr">101</span>
+    <span class="nm"><b>Holzofenbrot Roggen 1 kg</b><span class="sub2">am 14.03.2026 angelegt</span></span>
+    <span class="meta"><b>48 ×</b>bestellt</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr">102</span>
+    <span class="nm"><b>Bauernlaib dunkel</b><span class="sub2">am 14.03.2026 angelegt</span></span>
+    <span class="meta"><b>31 ×</b>bestellt</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+  <div class="zeile">
+    <span class="nr">108</span>
+    <span class="nm"><b>Dinkelvollkorn 750 g</b><span class="sub2">am 02.09.2026 angelegt</span></span>
+    <span class="meta"><b>nie</b>bestellt</span>
+    <button class="ik" title="Bearbeiten"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+    <button class="ik an" title="Sichtbar"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+</div>
+
+<p class="note">Artikel werden nie gelöscht, sondern nur ausgeblendet — sonst
+  wären alte Bestellungen im Verlauf unvollständig. Dieser Satz steht heute nur
+  beim Bäcker und bei Getränken; künftig überall gleich.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2>Verlauf — ebenfalls ein Baustein</h2>
+
+<div class="tabs">
+  <button class="tab">Bestellung</button>
+  <button class="tab">Artikel</button>
+  <button class="tab on">Verlauf</button>
+</div>
+
+<div class="lkopf">
+  <h3>Gesendete Bestellungen · Getränke Kratzer</h3>
+  <span class="sp"></span>
+  <button class="btn">7 Tage</button>
+  <button class="btn on">Alle</button>
+</div>
+
+<div class="vliste">
+  <div class="vzeile ok auf">
+    <button class="vkopf"><span class="pf">▾</span><span class="tx">
+      <b>Mi., 30.09.2026 · KW 40</b><span>27 Kisten · 3 Positionen</span></span></button>
+    <span class="vstatus"><b>Gesendet</b><span>24.09. 18:07 · Kiosk</span></span>
+    <button class="btn">Formular</button>
+    <button class="btn weg">Löschen</button>
+    <div class="vliste2">
+      <table class="vtab">
+        <thead><tr><th>Nr.</th><th>Artikel</th><th class="r">Kisten</th></tr></thead>
+        <tbody>
+          <tr><td class="nr2">40015</td><td>Augustiner Hell <span class="tag gy">20×0,50</span></td><td class="r"><b>18</b></td></tr>
+          <tr><td class="nr2">40349</td><td>Tegernseer Hell <span class="tag gy">20×0,50</span></td><td class="r"><b>2</b></td></tr>
+          <tr><td class="nr2">56181</td><td>Aho Individual Sanft Glas <span class="tag gy">12×0,75</span></td><td class="r"><b>7</b></td></tr>
+        </tbody>
+      </table>
+      <div class="vfuss"><span>3 Positionen · 27 Kisten</span><span>an bestellung@getraenke-kratzer.de</span></div>
+    </div>
+  </div>
+
+  <div class="vzeile korr">
+    <button class="vkopf"><span class="pf">▸</span><span class="tx">
+      <b>Di., 23.09.2026 · KW 39</b><span>12 Kisten · 2 Positionen</span></span></button>
+    <span class="vstatus"><b>Korrigiert</b><span>18.09. 16:42 · Bernd</span></span>
+    <button class="btn">Formular</button>
+    <button class="btn weg">Löschen</button>
+  </div>
+
+  <div class="vzeile ok">
+    <button class="vkopf"><span class="pf">▸</span><span class="tx">
+      <b>Mi., 16.09.2026 · KW 38</b><span>5 Kisten · 1 Position</span></span></button>
+    <span class="vstatus"><b>Gesendet</b><span>11.09. 09:15 · Anna</span></span>
+    <button class="btn">Formular</button>
+    <button class="btn weg">Löschen</button>
+  </div>
+</div>
+
+<div class="lkopf" style="margin-top:22px">
+  <h3>Gesendete Bestellungen · Metzgerei Mair</h3>
+</div>
+<div class="vliste">
+  <div class="vzeile ok">
+    <button class="vkopf"><span class="pf">▸</span><span class="tx">
+      <b>Donnerstag, 25.09.2026</b><span>14 Positionen · 23,4 kg · 6 vakuumiert</span></span></button>
+    <span class="vstatus"><b>Gesendet</b><span>24.09. 07:50 · Kiosk</span></span>
+    <button class="btn">Formular</button>
+    <button class="btn weg">Löschen</button>
+  </div>
+  <div class="vzeile korr">
+    <button class="vkopf"><span class="pf">▸</span><span class="tx">
+      <b>Dienstag, 23.09.2026</b><span>11 Positionen · 18,0 kg · 4 vakuumiert</span></span></button>
+    <span class="vstatus"><b>Korrigiert</b><span>22.09. 15:12 · Anna</span></span>
+    <button class="btn">Formular</button>
+    <button class="btn weg">Löschen</button>
+  </div>
+</div>
+
+<div class="lkopf" style="margin-top:22px">
+  <h3>Gesendete Bestellungen · Bäckerei Bachmeier</h3>
+</div>
+<div class="vliste">
+  <div class="vzeile ok">
+    <button class="vkopf"><span class="pf">▸</span><span class="tx">
+      <b>Freitag, 26.09.2026</b><span>9 Positionen · 64 Stück</span></span></button>
+    <span class="vstatus"><b>Gesendet</b><span>25.09. 17:05 · Kiosk</span></span>
+    <button class="btn">Erneut drucken</button>
+    <button class="btn weg">Löschen</button>
+  </div>
+  <div class="vzeile ok">
+    <button class="vkopf"><span class="pf">▸</span><span class="tx">
+      <b>Donnerstag, 25.09.2026</b><span>8 Positionen · 51 Stück</span></span></button>
+    <span class="vstatus"><b>Gesendet</b><span>24.09. 17:02 · Kiosk</span></span>
+    <button class="btn">Erneut drucken</button>
+    <button class="btn weg">Löschen</button>
+  </div>
+</div>
+
+<div class="hinw" style="margin-top:16px">
+  <b>Was je Lieferant unterschiedlich bleibt — und bleiben muss:</b>
+  Die Unterzeile trägt die Größen des jeweiligen Hauses (Kisten · Positionen /
+  Positionen · kg · vakuumiert / Positionen · Stück), und der erste Knopf heißt
+  dort „Formular", wo es ein Dokument gibt, und „Erneut drucken", wo ein
+  Papierausdruck gefordert ist. Alles Übrige — Aufbau, Schrift, Status,
+  Aufklappen, Farbstreifen links — ist gleich.
+</div>
+
+<p class="note" style="margin-top:14px">
+  <b>Nächster Schritt:</b> Ist der Entwurf recht, werden die drei Artikellisten
+  und die drei Verlaufslisten auf diesen Baustein umgestellt — eine gemeinsame
+  CSS-Grundlage statt dreier Eigenbauten. Die Wächter der bestehenden Listen
+  bleiben dabei maßgeblich: Sie prüfen Verhalten (Sortierung, Ausblenden,
+  Löschen), nicht Aussehen, und müssen durchlaufen.
+</p>
+
+</div>
+</body>
+</html>
