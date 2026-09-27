@@ -1159,10 +1159,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Kunden.
             #
             # Der Schutz laeuft ueber denselben Weg wie beim Kalender:
-            # read_auth_guard verlangt das Kiosk-Token, aber NUR wenn
-            # CMS_AUTH_ENFORCE gesetzt ist. Solange nicht, aendert sich
-            # nichts - der Code kann gefahrlos vorauslaufen, bis der
-            # Kiosk das Token nachweislich mitschickt.
+            # read_auth_guard verlangt das Kiosk-Token. Aber mit einem
+            # EIGENEN Schalter: CMS_AUTH_ENFORCE gilt fuer 25 Endpunkte
+            # auf einmal, und wer nur diese Liste schliessen will,
+            # muesste den gesamten Schreibbetrieb von CMS und Kiosk mit
+            # umlegen. Genau daran hing der Schutz monatelang fest.
+            #
+            # LUNCH_LIST_ENFORCE=1 schliesst allein diese Liste. Schlaegt
+            # etwas fehl, betrifft es nichts sonst. CMS_AUTH_ENFORCE
+            # wirkt weiterhin mit - wer es setzt, bekommt beides.
+            #
+            # Solange keiner von beiden gesetzt ist, aendert sich nichts.
             #
             # Die Kundenwege oben sind davon nicht beruehrt: mode=my
             # haengt am Anmeldezeichen oder an der Geraete-Kennung, die
@@ -1170,7 +1177,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # bekommen kein Kiosk-Token.
             # (Spec bestellliste-schuetzen)
             from shared.auth import read_auth_guard  # noqa: E402
-            _lese_sperre = read_auth_guard(req)
+            _lese_sperre = read_auth_guard(req, "LUNCH_LIST_ENFORCE")
             if _lese_sperre is not None:
                 return _lese_sperre
 

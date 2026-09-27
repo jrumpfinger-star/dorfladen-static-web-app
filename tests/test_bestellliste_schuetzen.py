@@ -152,6 +152,7 @@ def main():
 
     def hole(params=None, kopf=None, erzwingen=True):
         os.environ["CMS_AUTH_ENFORCE"] = "true" if erzwingen else ""
+        os.environ["LUNCH_LIST_ENFORCE"] = ""
         dv = Speicher(bestand)
         requests.get, requests.post = dv.get, dv.post
         requests.patch, requests.delete = dv.patch, dv.delete
@@ -226,7 +227,64 @@ def main():
            antwort.status_code == 200 and len(namen(d)) == 3,
            f"war {antwort.status_code}, bekam {namen(d)}")
 
+    # ── TC-BL-08 bis 10: Der EIGENE Schalter.
+    # CMS_AUTH_ENFORCE gilt fuer 25 Endpunkte auf einmal. Wer nur diese
+    # Liste schliessen will, muesste den gesamten Schreibbetrieb von CMS
+    # und Kiosk mit umlegen - eine Entscheidung, die niemand nebenbei
+    # trifft. Genau daran hing der Schutz monatelang fest.
+    def hole2(cms, eigen, kopf=None, params=None):
+        os.environ["CMS_AUTH_ENFORCE"] = cms
+        os.environ["LUNCH_LIST_ENFORCE"] = eigen
+        dv = Speicher(bestand)
+        requests.get, requests.post = dv.get, dv.post
+        requests.patch, requests.delete = dv.patch, dv.delete
+        antwort = lunch.main(Anfrage(params=params or {"datum": heute},
+                                     headers=kopf or {}))
+        try:
+            daten = json.loads(antwort.get_body().decode("utf-8"))
+        except Exception:
+            daten = {}
+        return antwort, daten
+
+    print("\nTC-BL-08  LUNCH_LIST_ENFORCE allein schliesst die Liste")
+    antwort, d = hole2("", "1")
+    pruefe("TC-BL-08  ohne Token abgewiesen", antwort.status_code == 401,
+           f"war {antwort.status_code}, Namen: {namen(d)}")
+    antwort, d = hole2("", "1", kopf={"X-CMS-Auth": TOKEN})
+    pruefe("TC-BL-08  mit Token kommt der Kiosk durch",
+           antwort.status_code == 200 and len(namen(d)) == 3,
+           f"war {antwort.status_code}, bekam {namen(d)}")
+
+    print("\nTC-BL-09  Der eigene Schalter laesst die Kundenwege in Ruhe")
+    # Das ist der Punkt, an dem die Entkopplung sich beweisen muss: Wer
+    # nur die Liste schliesst, darf niemandem die Kachel nehmen.
+    antwort, d = hole2("", "1", params={"mode": "my", "device_id": "geraet-gast"})
+    pruefe("TC-BL-09  der Gast sieht seine Bestellung weiterhin",
+           antwort.status_code == 200 and namen(d) == ["Gast"],
+           f"war {antwort.status_code}, bekam {namen(d)}")
+    antwort, d = hole2("", "1", params={"nr": "ML-1", "email": ANNA})
+    pruefe("TC-BL-09  die Statusseite arbeitet weiter",
+           antwort.status_code == 200, f"war {antwort.status_code}")
+
+    print("\nTC-BL-10  Beide Schalter zusammen und einzeln")
+    antwort, _ = hole2("1", "", kopf={})
+    pruefe("TC-BL-10  CMS_AUTH_ENFORCE allein wirkt weiterhin",
+           antwort.status_code == 401, f"war {antwort.status_code}")
+    antwort, _ = hole2("1", "1", kopf={})
+    pruefe("TC-BL-10  beide zusammen ebenso",
+           antwort.status_code == 401, f"war {antwort.status_code}")
+    antwort, d = hole2("", "", kopf={})
+    pruefe("TC-BL-10  keiner von beiden - alles offen wie bisher",
+           antwort.status_code == 200 and len(namen(d)) == 3,
+           f"war {antwort.status_code}")
+    # Unsinnige Werte zaehlen als "aus" - ein Tippfehler im Portal darf
+    # nicht versehentlich sperren.
+    antwort, d = hole2("", "vielleicht", kopf={})
+    pruefe("TC-BL-10  ein unsinniger Wert sperrt nicht",
+           antwort.status_code == 200, f"war {antwort.status_code}")
+
     os.environ["CMS_AUTH_ENFORCE"] = ""
+    os.environ["LUNCH_LIST_ENFORCE"] = ""
 
     print()
     if _fehler:

@@ -106,19 +106,60 @@ holt sich damit auch kein frisches Admin-Token. Ist das alte Token weg
 (neues Gerät, geleerter Speicher), stünde der Laden vor einer leeren
 Liste.
 
-**Vor dem Einschalten ist deshalb zu prüfen:** Trägt das Ladentablett
-`cms_auth_token` im Speicher? Falls nicht, genügt eine einmalige
-Anmeldung über die Passwortmaske — sie holt das Token mit.
+### Nachtrag 27.09.2026: ein eigener Schalter löst den Knoten
 
-Einschalten für `dorfladen-website`:
+Der Schutz hing an einer Entscheidung, die viel zu groß war für ihn:
+`CMS_AUTH_ENFORCE` gilt für **25 Endpunkte** auf einmal. Wer nur diese
+eine Liste schließen wollte, hätte den gesamten Schreibbetrieb von CMS
+und Kiosk mit umlegen müssen. Genau daran hing der Schutz fest — nicht
+an der Technik, sondern an der Größe der Entscheidung.
+
+**`LUNCH_LIST_ENFORCE=1` schließt allein diese Liste.** Schlägt etwas
+fehl, betrifft es nichts sonst: kein CMS, keine Bäcker- oder
+Metzgerbestellung, keine Bilder, keine Push-Nachrichten.
 
 ```
 az staticwebapp appsettings set --name dorfladen-website \
    --subscription 89dd5962-2356-4f41-aa6b-ab6c0e054877 \
-   --setting-names CMS_AUTH_ENFORCE=1
+   --setting-names LUNCH_LIST_ENFORCE=1
 ```
 
-Rückgängig: denselben Befehl mit `CMS_AUTH_ENFORCE=`.
+Zurückstellen: derselbe Befehl mit leerem Wert.
+
+`CMS_AUTH_ENFORCE` wirkt weiterhin mit — wer T10 später angeht, bekommt
+beides. Die beiden sind ein **ODER**, keine Bedingung (`TC-BL-10`).
+
+### Was dabei nicht passieren darf
+
+Wer nur die Liste schließt, darf **niemandem die Kachel nehmen**.
+`TC-BL-09` belegt das für beide Kundenwege: Geräte-Kennung und
+Bestellnummer arbeiten weiter, auch wenn der Schalter gesetzt ist. Das
+ist der Fall, der den Laden am nächsten Morgen träfe.
+
+### Vorher zu prüfen
+
+Am Ladentablett, ob `cms_auth_token` im Speicher liegt. Falls nicht,
+genügt eine Anmeldung über die Passwortmaske — sie holt das Token mit.
+
+**Entwarnung zum Risiko:** `admin-auth.js` fängt eine **401** ab und
+zeigt den gewohnten Passwort-Dialog, statt still zu scheitern; danach
+wird der Aufruf wiederholt. Ein fehlendes Token bedeutet also einen
+zusätzlichen Handgriff, keinen Ausfall. Offen bleibt allein, ob der
+Dialog unter Fully Kiosk sichtbar ist — das lässt sich nur am Gerät
+prüfen.
+
+### Reihenfolge zum Einschalten
+
+1. Am Tablett prüfen, ob `cms_auth_token` vorhanden ist
+2. `LUNCH_LIST_ENFORCE=1` setzen
+3. Im Kiosk den Mittagstisch öffnen — die Liste muss stehen
+4. Von außen `GET /api/lunch-order` — muss 401 geben
+5. Die Kachel auf der Startseite prüfen
+
+Ein kurzes Einschalten allein zum Ausprobieren wurde für
+`CMS_AUTH_ENFORCE` erwogen und **verworfen** — mit dem eigenen Schalter
+erübrigt sich das: Er ist klein genug, um ihn gefahrlos zu setzen und
+wieder zurückzunehmen.
 
 ## Was noch nicht bewiesen ist
 
@@ -199,6 +240,9 @@ Zurückstellen; die Wirkung tritt nach dem Neustart der Funktionen ein.
 | TC-BL-05 | B2 | `mode=my` mit Anmeldezeichen **ohne** Token → die eigene Bestellung |
 | TC-BL-06 | B2 | Statusseite `nr=` **ohne** Token → die Bestellung |
 | TC-BL-07 | B3 | ohne `CMS_AUTH_ENFORCE` bleibt alles wie bisher |
+| TC-BL-08 | B3 | `LUNCH_LIST_ENFORCE` **allein** schließt die Liste — mit Token kommt der Kiosk durch |
+| TC-BL-09 | B2 | der eigene Schalter lässt **beide Kundenwege** in Ruhe |
+| TC-BL-10 | B3 | beide Schalter einzeln und zusammen; ein unsinniger Wert sperrt **nicht** |
 
 ### Anzeige — [tests/kiosk-bestellliste-token.spec.js](../../tests/kiosk-bestellliste-token.spec.js)
 
@@ -220,3 +264,4 @@ Kundenwege, merkt es der Laden am nächsten Morgen.
 | `admin-auth.js` zurück ans Seitenende | **TC-BL-A1** fällt mit „2 von 2 Abfragen ohne Token" (nachgestellt) |
 | `mode=my` nicht ausnehmen | **TC-BL-A2** fällt — Kiosk-Token im Browser jeder Kundin |
 | Guard vor die Kundenwege ziehen | **TC-BL-04/05/06** fallen |
+| eigenen Schalter ignorieren (`return False`) | **TC-BL-08** fällt mit `war 200, Namen: ['Anna', 'Bert', 'Gast']` (nachgestellt) |

@@ -16,11 +16,34 @@ import azure.functions as func
 MUTATING_METHODS = ("POST", "PUT", "PATCH", "DELETE")
 
 
+def _wahr(wert):
+    return str(wert or "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def enforcement_enabled():
     """True, wenn die Auth-Prüfung aktiv erzwungen werden soll."""
-    return os.environ.get("CMS_AUTH_ENFORCE", "").strip().lower() in (
-        "1", "true", "yes", "on",
-    )
+    return _wahr(os.environ.get("CMS_AUTH_ENFORCE"))
+
+
+def read_enforcement_enabled(schalter=None):
+    """Wie ``enforcement_enabled``, aber mit **eigenem** Schalter je Endpunkt.
+
+    Warum es den braucht: ``CMS_AUTH_ENFORCE`` gilt für **25** Endpunkte
+    auf einmal (alle mit ``admin_auth_guard``). Wer nur EINE offene
+    Leseschnittstelle schließen will, müsste den gesamten Schreibbetrieb
+    von CMS und Kiosk mit umlegen - eine Entscheidung, die niemand
+    nebenbei trifft. Genau daran hing der Schutz der Mittagstisch-Liste
+    monatelang fest (Spec bestellliste-schuetzen, T10).
+
+    Mit einem eigenen Schalter wird die Entscheidung klein: Schlägt etwas
+    fehl, betrifft es nur diesen einen Endpunkt.
+
+    Der gemeinsame Schalter wirkt weiterhin - wer ihn setzt, bekommt
+    beides. Der eigene ist ein ODER, keine Bedingung.
+    """
+    if enforcement_enabled():
+        return True
+    return bool(schalter) and _wahr(os.environ.get(schalter))
 
 
 def _expected_token():
@@ -60,7 +83,7 @@ def admin_auth_guard(req):
     return None
 
 
-def read_auth_guard(req):
+def read_auth_guard(req, schalter=None):
     """Zusätzliche **Lese**-Prüfung für rein interne Endpunkte (z. B. Kalender).
 
     Blockiert ``GET`` ohne gültiges Token, aber **nur** wenn ``CMS_AUTH_ENFORCE``
@@ -68,8 +91,13 @@ def read_auth_guard(req):
     auch das Lesen absichern wollen, rufen dies zusätzlich zu
     ``admin_auth_guard`` auf; bestehende (öffentlich lesbare) Endpunkte bleiben
     unberührt, weil sie diese Funktion nicht verwenden.
+
+    ``schalter`` nennt wahlweise ein **eigenes** App-Setting (z. B.
+    ``LUNCH_LIST_ENFORCE``). Dann lässt sich dieser eine Endpunkt
+    absichern, ohne die 25 Schreib-Endpunkte mit umzulegen - siehe
+    ``read_enforcement_enabled``.
     """
-    if req.method == "GET" and enforcement_enabled():
+    if req.method == "GET" and read_enforcement_enabled(schalter):
         if not token_valid(req):
             return unauthorized_response()
     return None
