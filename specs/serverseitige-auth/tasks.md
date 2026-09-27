@@ -39,6 +39,22 @@ erfolgt zuletzt.
   > durchläuft die Passwortmaske morgens nicht mehr — dabei wird auch
   > kein frisches Token geholt. Eine einmalige Anmeldung über die Maske
   > genügt.
+  >
+  > **Entwarnung zum Risiko:** `admin-auth.js` fängt eine 401-Antwort ab
+  > und zeigt den gewohnten Passwort-Dialog, statt still zu scheitern —
+  > danach wird der Aufruf wiederholt. Ein fehlendes Token bedeutet also
+  > einen zusätzlichen Handgriff, keinen Ausfall. Offen bleibt allein,
+  > ob der Dialog unter Fully Kiosk sichtbar ist; das lässt sich nur am
+  > Gerät prüfen.
+  >
+  > **Reihenfolge zum Einschalten:**
+  > 1. Am Tablett prüfen, ob `cms_auth_token` vorhanden ist
+  > 2. `CMS_AUTH_ENFORCE=1` setzen
+  > 3. Im Kiosk den Mittagstisch öffnen — die Liste muss stehen
+  > 4. Von außen `GET /api/lunch-order` — muss 401 geben
+  > 5. Die Kachel auf der Startseite prüfen
+  >
+  > Zurückstellen: `CMS_AUTH_ENFORCE=` (leer).
 
 ## Traceability
 | Requirement | Test Cases | Tasks |

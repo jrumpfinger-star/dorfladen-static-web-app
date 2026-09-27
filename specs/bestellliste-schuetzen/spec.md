@@ -141,6 +141,39 @@ Ein kurzes Einschalten in der Produktion wurde erwogen und **verworfen**:
 gesamten Schreibbetrieb von CMS und Kiosk mit umgelegt — für einen
 Erkenntnisgewinn, den die Wächter bereits liefern.
 
+### Nachtrag 27.09.2026: Das Risiko ist kleiner als angenommen
+
+Beim Nachlesen von
+[admin-auth.js](../../static-site/js/admin-auth.js) zeigt sich: Auf eine
+**401**-Antwort folgt **kein** leerer Bildschirm, sondern der gewohnte
+Passwort-Dialog — und danach wird der Aufruf automatisch wiederholt:
+
+```js
+return call.then(function (resp) {
+  if (resp.status !== 401) return resp;
+  function askAndRetry(errMsg) { … }   // Passwort erfragen, dann erneut
+```
+
+Seit dem Einbau gilt dieser Rückfall auch für die Bestellliste
+(`isLunchListe`). Fehlt am Ladentablett das Token, steht die Verkäuferin
+also vor derselben Passwortmaske, die ohnehin vor dem Kiosk liegt — kein
+Ausfall, sondern ein zusätzlicher Handgriff.
+
+**Damit bleibt als Restrisiko nur**, ob der Dialog unter Fully Kiosk
+sichtbar ist. Das lässt sich nur am Gerät selbst feststellen, und genau
+deshalb bleibt T10 offen.
+
+Betroffener Umfang, gezählt:
+
+| Schutzart | Endpunkte |
+|---|---|
+| Schreiben (`admin_auth_guard`) | 25 — `angebote`, `baecker-order`, `cms-config`, `kalender`, `metzger-order`, `news-save`, `push-send`, `shop-admin`, `wochenplan` u. a. |
+| Lesen (`read_auth_guard`) | 2 — `kalender`, `lunch-order` |
+
+Das Token schicken heute: `admin-auth.js` (für alle mutierenden Aufrufe,
+den Kalender und die Bestellliste), `kiosk-getraenke.js`,
+`kiosk-metzger-bestellung.js`, `kiosk-kalender.js`.
+
 **Empfohlene Reihenfolge**, wenn T10 angegangen wird:
 
 1. Am Ladentablett prüfen, ob `cms_auth_token` im Speicher liegt.
