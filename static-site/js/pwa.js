@@ -199,11 +199,26 @@ document.addEventListener('visibilitychange',function(){ if(document.visibilityS
   // muss nicht mehr an jeder einzelnen Oeffnen-/Schliessen-Stelle daran gedacht
   // werden – neue Overlays sind ohne Zusatzcode abgesichert.
   var _dlOvlTimer=0;
+  /* Das mt-popup (Bestellstatus im Rahmen) bringt seinen eigenen
+     History-Eintrag mit und steht deshalb bewusst nicht in der Liste
+     oben. Fuers ABRAEUMEN zaehlt es trotzdem: Wechselt ein Nutzer aus
+     einem Listen-Overlay direkt in das mt-popup, liegt dessen Eintrag
+     ueber unserem - ein history.back() aus removePopupState() traefe
+     dann ihn und schloesse das gerade geoeffnete Fenster sofort wieder.
+     Genau das war der Fall: Aus "Meine Bestellungen" liess sich keine
+     Bestellung mehr oeffnen, sobald mehr als eine vorlag (bei nur einer
+     gibt es kein Popup - deshalb fiel es lange nicht auf).
+     Zum ANLEGEN darf es nicht zaehlen, sonst laegen zwei Eintraege fuer
+     denselben Dialog vor und die Zurueck-Taste braeuchte zwei Druecke. */
+  function _dlMtPopupOffen(){
+    var ov=document.getElementById('mt-popup-overlay');
+    return !!(ov && ov.classList.contains('open'));
+  }
   function _dlOverlaySync(){
     _dlOvlTimer=0;
     var open=dlAnyOverlayOpen();
     if(open && !_popupStateActive){ window.pushPopupState(); }
-    else if(!open && _popupStateActive){ window.removePopupState(); }
+    else if(!open && _popupStateActive && !_dlMtPopupOffen()){ window.removePopupState(); }
   }
   function _dlOverlaySchedule(){
     if(_dlOvlTimer) return;
