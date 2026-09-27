@@ -68,20 +68,62 @@ sich, das Konto-Symbol zeigt sofort den Namen.
 eingebettetes Fenster) — das Konto-Symbol der Startseite aktualisiert
 sich ebenfalls, ohne dass dieses Fenster selbst schließt.
 
+### F3: Keine Überlappung, kein versehentliches Verwerfen
+
+#### F3 Description
+
+Nachgemeldet, nach dem ersten Ausprobieren: „Dialog ist nicht modal.
+Klick außerhalb schließt ihn. Außerdem Überlappung schließen."
+
+#### F3 Behaviour / Acceptance
+
+- Der eigene „Zur Startseite"-Knopf von `mein-konto.html` bleibt
+  **eingebettet verborgen** — er saß an derselben Stelle wie das
+  Schließen-Kreuz des Fensters (oben rechts) und überlappte sich
+  sichtbar damit. Direkt aufgerufen (eigene Adresse) bleibt er
+  sichtbar.
+- Ein Klick **außerhalb** von „Mein Konto" schließt es **nicht** — das
+  Fenster trägt Formulare (Anmeldung, Profil, Passwort), ein
+  versehentlicher Klick daneben darf die Eingaben nicht wortlos
+  verwerfen.
+- Die einfacheren Lese-Dialoge (Bestellstatus, CMS) behalten ihren
+  gewohnten Schnellschluss bei Klick daneben — der Schalter gilt gezielt
+  nur für „Mein Konto".
+
+#### F3 Test Cases
+
+**TC-KM-03:** Der eigene „Zur Startseite"-Knopf bleibt eingebettet
+verborgen (**TC-KM-03b:** direkt aufgerufen bleibt er sichtbar).
+
+**TC-KM-03c:** Ein Klick daneben schließt „Mein Konto" nicht.
+
+**TC-KM-03d:** Bei anderen Dialogen (Bestellstatus) schließt ein Klick
+daneben weiterhin — unter 600px übersprungen, da das Fenster dort per
+CSS randlos ist und es kein „daneben" gibt.
+
 ## Umsetzung
 
 - `static-site/index.html`: `dlOeffneKontoModal(e, el)` fängt den Klick
   ab; `closeMittagPopup()` ruft `dlKontoStand()`; der `message`-Listener
-  kennt jetzt `dlKontoGeaendert`.
+  kennt jetzt `dlKontoGeaendert`; `openMittagPopup(url, keinAussenKlick)`
+  trägt einen zweiten, optionalen Schalter, den nur „Mein Konto" setzt.
 - `static-site/mein-konto.html`: `zurueckZurStartseite()` ersetzt drei
   Stellen, die zuvor `location.href='/'` setzten (Anmelden, Abmelden,
-  „Zur Startseite"-Link im Kopf).
+  „Zur Startseite"-Link im Kopf); dieser Link bleibt eingebettet
+  verborgen.
 - `static-site/mittagstisch-bestellen.html`: `loginAbsenden()` schickt
   bei Erfolg `dlKontoGeaendert`, falls eingebettet.
 
 ## Gegenprobe
 
-Ohne die Änderungen an den drei Dateien (`git stash`) fallen fünf der
-sechs Wächter. **TC-KM-04 (Strg-Klick) bleibt absichtlich grün** — dieser
-Test prüft natives Browser-Verhalten, das durch die Änderung nicht
-zerstört werden darf, nicht etwas, das die Änderung neu erzeugt.
+Ohne die Änderungen an den betroffenen Dateien (`git stash`) fallen die
+jeweils zugehörigen Wächter. **TC-KM-04 (Strg-Klick) bleibt absichtlich
+grün** — dieser Test prüft natives Browser-Verhalten, das durch die
+Änderung nicht zerstört werden darf, nicht etwas, das die Änderung neu
+erzeugt.
+
+## Siehe auch
+
+`specs/konto-mobil-sichtbar/spec.md` — zwei weitere Funde beim ersten
+Ausprobieren auf dem Handy (kein sichtbarer Einstieg, Anmeldung aus dem
+Menü schloss sich sofort wieder).

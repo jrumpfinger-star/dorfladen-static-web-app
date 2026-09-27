@@ -86,6 +86,16 @@
 
   <span class="mob-header-title">Dorfladen Oberornau</span>
 
+  <!-- Anmelden auf dem Handy direkt sichtbar, nicht erst im Menue
+       versteckt - aus dem Laden gemeldet: "Anmeldung muss bei mobile
+       auf der Startseite sichtbar sein." (Spec konto-mobil-sichtbar) -->
+  <a href="/mein-konto" id="mob-header-konto" class="mob-header-konto"
+     title="Anmelden oder Konto anlegen" onclick="return dlOeffneKontoModal(event,this)">
+    <span class="mob-header-konto-ic" id="mob-header-konto-ic">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+  </a>
+
   <button class="mob-header-menu" aria-label="Men&uuml;" onclick="document.getElementById('mob-nav').classList.add('open');document.getElementById('mob-nav-ov').classList.add('open');if(window.pushPopupState)window.pushPopupState()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
 
 </header>
@@ -2299,6 +2309,22 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
         if(mtx) mtx.textContent = an ? (name ? ('Mein Konto · '+name) : 'Mein Konto')
                                      : 'Anmelden / Konto anlegen';
       }
+
+      var mh=document.getElementById('mob-header-konto');
+      if(mh){
+        var mhic=document.getElementById('mob-header-konto-ic');
+        mh.classList.toggle('an', an);
+        mh.title = an ? ('Angemeldet' + (k&&k.email ? (' als '+k.email) : '')) : 'Anmelden oder Konto anlegen';
+        if(mhic) mhic.textContent = an ? initialen(k) : '';
+        if(an && mhic && !mhic.textContent){
+          // Falls initialen() leer zurueckgibt (sollte nicht vorkommen,
+          // sicherheitshalber): das Symbol nicht leer stehen lassen.
+          mhic.textContent='?';
+        }
+        if(!an && mhic){
+          mhic.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        }
+      }
     };
     /* Zweimal aufrufen: sofort für den Fall, dass der Speicher schon
        gelesen werden kann, und nach dem Laden für die Symbole. */
@@ -2717,7 +2743,7 @@ html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:
 @media(max-width:600px){.mt-popup-overlay{padding:0}.mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}.mt-popup-iframe{border-radius:0}}
 </style>
 
-<div class="mt-popup-overlay" id="mt-popup-overlay" onclick="if(event.target===this)closeMittagPopup()">
+<div class="mt-popup-overlay" id="mt-popup-overlay" onclick="if(event.target===this && !_mtKeinAussenKlick)closeMittagPopup()">
   <div class="mt-popup-modal">
     <button class="mt-popup-close" onclick="closeMittagPopup()" title="Schließen">✕</button>
     <iframe class="mt-popup-iframe" id="mt-popup-iframe" style="height:90vh"></iframe>
@@ -2726,7 +2752,16 @@ html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:
 
 <script>
 var _mtPopupHist=false;
-function openMittagPopup(url){
+/* Fuer die meisten Dialoge (Bestellstatus, CMS) ist ein Klick daneben
+   ein bequemer Schnellschluss - nichts geht verloren. "Mein Konto"
+   traegt aber Formulare mit eingetippten Daten (Anmeldung, Profil
+   aendern, Passwort) - ein versehentlicher Klick daneben soll die
+   nicht wortlos verwerfen. Aus dem Laden: "Dialog ist nicht modal.
+   Klick ausserhalb schliesst ihn." Deshalb ein Schalter statt einer
+   pauschalen Aenderung fuer alle Dialoge. (Spec konto-modal) */
+var _mtKeinAussenKlick=false;
+function openMittagPopup(url, keinAussenKlick){
+  _mtKeinAussenKlick=!!keinAussenKlick;
   var iframe=document.getElementById('mt-popup-iframe');
   var sep=url.indexOf('?')>=0?'&':'?';
   iframe.src=url+sep+'_cb='+Date.now();
@@ -2776,7 +2811,7 @@ function openBestellstatus(nr){
 function dlOeffneKontoModal(e, el){
   if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1) return true;
   e.preventDefault();
-  openMittagPopup(el.getAttribute('href'));
+  openMittagPopup(el.getAttribute('href'), true);
   return false;
 }
 

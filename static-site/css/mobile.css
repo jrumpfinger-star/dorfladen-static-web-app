@@ -161,6 +161,37 @@ body.mob-home {
 .mob-header-menu:active {
   transform: scale(0.92);
 }
+/* Konto-Symbol in der mobilen Kopfleiste - dieselbe Groesse wie der
+   Menue-Knopf daneben, damit beide als zusammengehoeriges Paar wirken.
+   (Spec konto-mobil-sichtbar) */
+.mob-header-konto{
+  flex-shrink:0;
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: var(--m-primary-light);
+  color: var(--m-primary);
+  text-decoration:none;
+  margin-right:6px;
+  transition: all 0.2s ease;
+}
+.mob-header-konto:active{transform:scale(.92)}
+.mob-header-konto-ic{
+  display:flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+}
+/* Angemeldet: gefuellter Kreis mit Initialen statt Umriss - derselbe
+   Wechsel wie beim Symbol in der Desktop-Kopfleiste (.tb-konto.an). */
+.mob-header-konto.an .mob-header-konto-ic{
+  background: var(--m-primary);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
 
 /* === MOBILE BACK/HOME BUTTON (subpages) === */
 .mob-back{

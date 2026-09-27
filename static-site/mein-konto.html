@@ -183,8 +183,19 @@
     <h1>Mein Konto</h1>
     <p>Eigene Bestellungen auf allen Geräten</p>
   </div>
-  <a href="/" class="mk-zurueck" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">Zur Startseite</a>
+  <a href="/" class="mk-zurueck" id="mk-zurueck-link" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">Zur Startseite</a>
 </div>
+<script>
+/* Eingebettet uebernimmt das Schliessen-Kreuz des modalen Fensters
+   diese Aufgabe bereits - an derselben Stelle, oben rechts. Beide
+   nebeneinander stehen zu lassen ueberlappte sich sichtbar.
+   Dasselbe Muster wie in mittagstisch-bestellen.html.
+   (Spec konto-modal) */
+if(window!==window.parent){
+  var _mkZurueck=document.getElementById('mk-zurueck-link');
+  if(_mkZurueck) _mkZurueck.style.display='none';
+}
+</script>
 
 <div class="mk-box">
 

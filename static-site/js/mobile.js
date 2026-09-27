@@ -111,7 +111,20 @@
         mobNavEl.classList.remove('open');
         if(mobNavOv)mobNavOv.classList.remove('open');
         mobUnlockScroll();
-        if(window.removePopupState)window.removePopupState();
+        /* Frueher stand hier ein direkter Aufruf von removePopupState(),
+           der IMMER history.back() ausloeste - auch dann, wenn derselbe
+           Klick GERADE ein neues Fenster oeffnet (z.B. "Mein Konto" im
+           modalen Popup). Dessen eigener history.pushState() lag dann
+           bereits auf dem Stapel, und das nachtraegliche history.back()
+           holte ihn sofort wieder herunter: Das eben geoeffnete Fenster
+           schloss sich von selbst. Gemeldet als "Anmeldung auf mobile
+           funktioniert nicht aus Menü".
+           Der pwa.js-Beobachter (_dlOverlaySync) uebernimmt das Schliessen
+           des Verlaufseintrags jetzt automatisch, SOBALD kein Overlay
+           mehr offen ist - und wartet dafuer eigens auf ein offenes
+           mt-popup (_dlMtPopupOffen()). Ein zusaetzlicher direkter Aufruf
+           hier wuerde genau diese Absicherung umgehen.
+           (Spec konto-mobil-sichtbar) */
       });
     });
   }

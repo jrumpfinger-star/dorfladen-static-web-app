@@ -55,11 +55,19 @@ async function startseite(page) {
   await page.waitForTimeout(2500);
 }
 
+/* Auf schmalen Breiten ist #tb-konto unsichtbar (die Kopfleiste .tb
+   blendet dort aus) - dort zaehlt #mob-header-konto in der mobilen
+   Kopfzeile. Beide fuehren zu genau demselben dlOeffneKontoModal().
+   (Spec konto-mobil-sichtbar) */
+function kontoKnopf(page) {
+  return page.locator('#tb-konto:visible, #mob-header-konto:visible').first();
+}
+
 test('TC-KM-01: Ein Klick auf "Anmelden" öffnet das modale Fenster, keine neue Seite', async ({ page }) => {
   await mocks(page);
   await startseite(page);
 
-  await page.click('#tb-konto');
+  await kontoKnopf(page).click();
   await page.waitForTimeout(600);
 
   await expect(page.locator('#mt-popup-overlay'), 'Kein modales Fenster geöffnet.')
@@ -73,7 +81,7 @@ test('TC-KM-01: Ein Klick auf "Anmelden" öffnet das modale Fenster, keine neue 
 test('TC-KM-02: Das Schließen-Kreuz schließt das Fenster wieder', async ({ page }) => {
   await mocks(page);
   await startseite(page);
-  await page.click('#tb-konto');
+  await kontoKnopf(page).click();
   await expect(page.locator('#mt-popup-overlay')).toHaveClass(/open/);
 
   await page.click('.mt-popup-close');
@@ -82,18 +90,72 @@ test('TC-KM-02: Das Schließen-Kreuz schließt das Fenster wieder', async ({ pag
   await expect(page.locator('#mt-popup-overlay')).not.toHaveClass(/open/);
 });
 
-test('TC-KM-03: "Zur Startseite" im Fenster schließt es, statt die Homepage darin zu laden', async ({ page }) => {
+test('TC-KM-03: Der eigene "Zur Startseite"-Knopf bleibt eingebettet verborgen', async ({ page }) => {
+  /* Er würde sich sonst mit dem Schließen-Kreuz des Fensters
+     überlappen - beide sitzen oben rechts an derselben Stelle.
+     Genau das war gemeldet: "Überlappung schließen." Statt zwei
+     Wege zum Schließen zu zeigen, bleibt nur einer sichtbar - wie
+     in mittagstisch-bestellen.html schon gelöst. */
   await mocks(page);
   await startseite(page);
-  await page.click('#tb-konto');
+  await kontoKnopf(page).click();
   await page.waitForTimeout(600);
 
   const rahmen = page.frameLocator('#mt-popup-iframe');
-  await rahmen.locator('.mk-zurueck').click();
+  await expect(rahmen.locator('#mk-zurueck-link'),
+    'Der eingebettete "Zur Startseite"-Knopf überlappt das Schließen-Kreuz.')
+    .toBeHidden();
+});
+
+test('TC-KM-03b: Direkt aufgerufen (kein Fenster) bleibt "Zur Startseite" sichtbar', async ({ page }) => {
+  await mocks(page);
+  await page.goto(LOKAL ? `${BASE}/mein-konto.html` : `${BASE}/mein-konto`,
+    { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(500);
+  await expect(page.locator('#mk-zurueck-link')).toBeVisible();
+});
+
+test('TC-KM-03c: Ein Klick daneben schließt "Mein Konto" nicht', async ({ page }) => {
+  /* Die zweite Meldung: "Dialog ist nicht modal. Klick außerhalb
+     schließt ihn." Bei den einfachen Lese-Dialogen (Bestellstatus,
+     CMS) ist das ein bequemer Schnellschluss - hier aber trägt das
+     Fenster Formulare (Anmeldung, Profil, Passwort). Ein
+     versehentlicher Klick daneben darf das nicht wortlos verwerfen. */
+  await mocks(page);
+  await startseite(page);
+  await kontoKnopf(page).click();
+  await page.waitForTimeout(600);
+
+  await page.locator('#mt-popup-overlay').click({ position: { x: 5, y: 5 } });
   await page.waitForTimeout(400);
 
   await expect(page.locator('#mt-popup-overlay'),
-    'Das Fenster ist noch offen - "Zur Startseite" hat nicht geschlossen.')
+    'Ein Klick daneben hat "Mein Konto" doch geschlossen.')
+    .toHaveClass(/open/);
+});
+
+test('TC-KM-03d: Bei anderen Dialogen schließt ein Klick daneben weiterhin', async ({ page }) => {
+  /* Der Schalter ist bewusst nur für "Mein Konto" gesetzt - die
+     einfacheren Lese-Dialoge sollen ihren gewohnten Schnellschluss
+     behalten.
+
+     Auf schmaler Breite gibt es dafür keinen Platz: Unter 600px wird
+     das Fenster laut CSS randlos (`.mt-popup-overlay{padding:0}`) - es
+     gibt dort schlicht kein "daneben" zum Anklicken. Das ist Absicht
+     (volle Fläche auf dem Handy), kein Fall für diesen Wächter. */
+  const { width } = page.viewportSize();
+  test.skip(width < 600, 'Unter 600px gibt es keinen Rand zum Anklicken (Absicht).');
+
+  await mocks(page);
+  await startseite(page);
+  await page.evaluate(() => window.openMittagPopup('/bestellstatus.html'));
+  await page.waitForTimeout(600);
+
+  await page.locator('#mt-popup-overlay').click({ position: { x: 5, y: 5 } });
+  await page.waitForTimeout(400);
+
+  await expect(page.locator('#mt-popup-overlay'),
+    'Bestellstatus schließt nicht mehr bei Klick daneben.')
     .not.toHaveClass(/open/);
 });
 
@@ -103,7 +165,7 @@ test('TC-KM-04: Strg-Klick öffnet weiterhin einen echten neuen Tab', async ({ p
 
   const [neueSeite] = await Promise.all([
     context.waitForEvent('page'),
-    page.click('#tb-konto', { modifiers: ['Control'] }),
+    kontoKnopf(page).click({ modifiers: ['Control'] }),
   ]);
   await neueSeite.waitForURL(/mein-konto/, { timeout: 8000 }).catch(() => {});
   await neueSeite.waitForLoadState('domcontentloaded');
@@ -119,7 +181,7 @@ test('TC-KM-05: Nach dem Anmelden im Fenster zeigt das Konto-Symbol sofort den N
   await startseite(page);
   await expect(page.locator('#tb-konto-txt')).toHaveText('Anmelden');
 
-  await page.click('#tb-konto');
+  await kontoKnopf(page).click();
   await page.waitForTimeout(700);
   const rahmen = page.frameLocator('#mt-popup-iframe');
   await rahmen.locator('#mk-login-mail').fill(KUNDE.email);
