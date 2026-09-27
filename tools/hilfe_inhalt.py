@@ -104,13 +104,20 @@ im Laden essen.</p>
         "titel": "Wo sehe ich, ob meine Bestellung angekommen ist?",
         "kurz": "Bestellnummer eingeben und den Stand verfolgen.",
         "kw": ("bestellstatus bestellung status verfolgen wo ist meine bestellung "
-               "angekommen bestätigt abgeholt bestellnummer nachsehen prüfen"),
+               "angekommen bestätigt abgeholt bestellnummer nachsehen prüfen "
+               "meine bestellungen aktuell früher reiter ältere übersicht "
+               "offene bestellungen"),
         "text": f"""
 <p>Direkt nach dem Bestellen führt der Knopf {q('Bestellstatus ansehen')}
 zur Übersicht. Später finden Sie sie so wieder:</p>
 
 <ul>
   <li>Auf der Startseite unter <b>{q('Meine Vorbestellungen')}</b>.</li>
+  <li>Im Kasten <b>{q('Meine Bestellungen')}</b> oben auf der Startseite: Dort
+      stehen Mittagessen <i>und</i> Einkäufe zusammen. Der Reiter
+      <b>{q('Aktuell')}</b> zeigt alles ab gestern, <b>{q('Früher')}</b> die
+      älteren. Die rote Zahl daneben nennt die Bestellungen, die noch offen
+      sind.</li>
   <li>Über die Benachrichtigung, falls Sie eine bekommen haben - ein Tippen
       darauf öffnet genau Ihre Bestellung.</li>
   <li>Von Hand: Sie brauchen die <b>Bestellnummer</b> und die E-Mail-Adresse,
@@ -147,6 +154,11 @@ zur Übersicht. Später finden Sie sie so wieder:</p>
 und tippen Sie auf <b>{q('Stornieren')}</b>. Sie werden nach einem <b>Grund</b>
 gefragt - ohne Angabe wird nicht storniert. Ein Wort genügt; es hilft uns,
 die Planung zu verbessern.</p>
+
+<p>Sind Sie unter <a href="/mein-konto">Mein&nbsp;Konto</a> angemeldet, geht
+es auch von dort: Jede Bestellung, die noch nicht bestätigt ist, trägt
+den Knopf gleich in der Liste. Dort sehen Sie später auch wieder, welchen
+Grund Sie angegeben haben.</p>
 
 <div class="hinweis">
   <b>Nur solange {q('Eingegangen')} dasteht.</b> Sobald die Küche die
@@ -213,10 +225,18 @@ keine Lieferung nach Hause - {q('Abholen im Dorfladen')} ist der Weg.</p>
   <li>Bestellung abschicken und im Laden abholen. Bezahlt wird dort.</li>
 </ol>
 
-<p>Wenn Sie öfter bestellen, lohnt sich ein Konto unter
-{q('Anmelden / Konto')}: Dann sehen Sie unter {q('Meine Bestellungen')} alles
-auf einen Blick und müssen Ihre Angaben nicht jedes Mal neu eintippen.
-Pflicht ist das nicht.</p>
+<p>Wenn Sie öfter bestellen, lohnt sich ein kostenloses Konto unter
+<a href="/mein-konto">Mein&nbsp;Konto</a> — erreichbar über die
+Kopfleiste (am Rechner), das Menü&nbsp;☰ (am Handy) oder gleich nach dem
+Bestellen. Dafür genügen Name, E-Mail und ein Passwort;
+eine Bankverbindung brauchen Sie nur, wenn Sie im Dorfladen-Shop
+einkaufen möchten.</p>
+
+<p>Der Vorteil: Ihre Bestellungen erscheinen dann <b>auf jedem Gerät</b>,
+an dem Sie angemeldet sind — also auch am Rechner, wenn Sie mit dem Handy
+bestellt haben. Ohne Konto sehen Sie Ihre Bestellung weiterhin, aber nur
+auf dem Gerät, mit dem Sie bestellt haben. <b>Pflicht ist das
+nicht</b> — wer nur ab und zu bestellt, braucht kein Konto.</p>
 """,
     },
 

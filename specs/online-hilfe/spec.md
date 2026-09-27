@@ -143,6 +143,10 @@ Karte, Abschnitt und Suchdatensatz entstehen aus derselben Quelle
 
 - Die Zahl der Abschnitte entspricht der Zahl der Suchdatensätze.
 - Jede Kennung kommt in beiden vor.
+- **Auch der Fließtext stammt aus der Quelle.** Wird in die erzeugten
+  Dateien `hilfe.html` oder `homepage-anwenderhandbuch.html` von Hand
+  geschrieben, muss das auffallen — der nächste Lauf von
+  `hilfe_bauen.py` bzw. `handbuch_bauen.py` löscht solchen Text spurlos.
 - Übersicht und Antwort stehen an einer Stelle: Jeder Abschnitt trägt seinen
   Kurztext bereits im zugeklappten Zustand. Ein zusätzliches Kartenraster mit
   denselben Themen entfällt.
@@ -158,6 +162,23 @@ Karte, Abschnitt und Suchdatensatz entstehen aus derselben Quelle
 
 - **Expected:** Es gibt kein zweites Raster (`.hcard`), das dieselben Themen
   noch einmal führt.
+
+**TC-F4-03: Kein handgeschriebener Text in der Hilfe**
+
+- **Given:** Jeder Satz aus einem `.faq-a`-Block von `hilfe.html`.
+- **Expected:** Er kommt — von Auszeichnung, Leerraum und den
+  Anführungszeichen aus `q()` bereinigt — auch in `tools/hilfe_inhalt.py`
+  vor.
+- **Hintergrund:** Die Prüfung der Kennungen allein reichte nicht. Zweimal
+  wurde Text nur in die erzeugte Datei geschrieben (der Hinweis auf
+  „Mein Konto“, später die Bestellübersicht); beide Male blieb der
+  Kennungs-Wächter grün, weil kein Thema fehlte.
+
+**TC-F4-04: Kein handgeschriebener Text im Handbuch**
+
+- **Given:** Jeder Satz aus einem `.thema`-Abschnitt von
+  `homepage-anwenderhandbuch.html`.
+- **Expected:** Er kommt ebenfalls in `tools/hilfe_inhalt.py` vor.
 
 ### F5: Suchen mit und ohne Umlaute
 

@@ -32,6 +32,53 @@ function lies(datei) {
   return fs.readFileSync(path.join(__dirname, '..', datei), 'utf8');
 }
 
+/* ── Helfer für den Textvergleich Quelle ↔ erzeugte Datei ──────────────
+   Beide Seiten werden auf reinen Fließtext heruntergebrochen, damit
+   Auszeichnung, Zeilenumbrüche und die Anführungszeichen aus q() keinen
+   Unterschied machen. */
+
+function entferneTags(text) {
+  return text.replace(/<[^>]*>/g, ' ');
+}
+
+function normalisieren(text) {
+  return entferneTags(text)
+    .replace(/&nbsp;|\u00a0/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/[„“”"'‘’]/g, '"')
+    .replace(/[-‑–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* Die Quelle ist Python mit f-Strings. Alle Platzhalter darin sind
+   {q('…')} - das Anführungszeichen selbst fällt bei der Normalisierung
+   ohnehin weg, es genügt also, die Klammern abzustreifen. */
+function aufgeloesteQuelle() {
+  return lies('tools/hilfe_inhalt.py')
+    .replace(/\{q\((['"])([\s\S]*?)\1\)\}/g, '"$2"');
+}
+
+/* Nur die Antworttexte der Themen stammen aus der Quelle. Rahmen,
+   Suchfeld und Skript der Seite erzeugt hilfe_bauen.py selbst. */
+function saetzeAusHtml(html, muster) {
+  const bloecke = [...html.matchAll(muster
+    || /<div class="faq-a">([\s\S]*?)<\/div><\/div>/g)].map((m) => m[1]);
+  const saetze = [];
+  for (const block of bloecke) {
+    /* Ein Absatz- oder Zellenende trennt genauso wie ein Punkt. Ohne
+       diesen Schritt verschmelzen Überschrift und Kurztext des Handbuchs
+       zu einem Satz, den es in der Quelle so nie gab. */
+    const zerlegt = block.replace(/<\/(p|h[1-6]|li|td|th|tr|div|ol|ul|table)>/g, '\u0001');
+    for (const stueck of zerlegt.split('\u0001')) {
+      for (const satz of normalisieren(stueck).split(/(?<=[.!?:])\s+/)) {
+        if (satz.trim().length >= 40) saetze.push(satz.trim());
+      }
+    }
+  }
+  return saetze;
+}
+
 async function oeffneHilfe(page, anker) {
   await page.goto(HILFE_URL + (anker || ''), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.faq', { timeout: 15000 });
@@ -302,6 +349,29 @@ test('Die ausgelieferte Datei stammt aus dem Generator', () => {
     .toEqual([]);
 });
 
+/* Die Kennungen allein genügen nicht. Zweimal wurde Text von Hand in die
+   erzeugte hilfe.html geschrieben - einmal der Hinweis auf „Mein Konto",
+   einmal die neue Bestellübersicht. Beides hätte der nächste Lauf von
+   hilfe_bauen.py spurlos gelöscht, und der Wächter oben wäre grün
+   geblieben, weil keine einzige Kennung fehlte. Dieser Test vergleicht
+   deshalb den Fließtext. */
+test('TC-F4-03: Auch der Text der Hilfe stammt aus dem Generator', () => {
+  const quelle = normalisieren(aufgeloesteQuelle());
+  const html = lies('static-site/handbuch/hilfe.html');
+
+  const fremd = [];
+  for (const satz of saetzeAusHtml(html)) {
+    if (!quelle.includes(normalisieren(satz))) fremd.push(satz);
+  }
+
+  expect(fremd,
+    'Dieser Text steht in hilfe.html, aber nicht in tools/hilfe_inhalt.py. '
+    + 'Er wurde von Hand in die erzeugte Datei geschrieben und geht beim '
+    + 'nächsten python tools/hilfe_bauen.py verloren. Bitte in die Quelle '
+    + `eintragen:\n  - ${fremd.slice(0, 5).join('\n  - ')}`)
+    .toEqual([]);
+});
+
 /* ══════════════════════════════════════════════════════════════════════
    F9 — Das Besucher-Handbuch stammt aus derselben Quelle
    ══════════════════════════════════════════════════════════════════════ */
@@ -321,6 +391,23 @@ test('TC-F9-01: Alle Themen stehen auch im Handbuch', async ({ page }) => {
   expect(fehlend,
     `Im Handbuch fehlen: ${fehlend.join(', ')}. Bitte `
     + 'python tools/handbuch_bauen.py ausführen.').toEqual([]);
+});
+
+/* Dieselbe Falle wie bei der Hilfe: Das Handbuch entsteht aus derselben
+   Quelle, und auch hier stand bereits von Hand geschriebener Text. */
+test('TC-F4-04: Auch der Text des Handbuchs stammt aus dem Generator', () => {
+  const quelle = normalisieren(aufgeloesteQuelle());
+  const html = lies('static-site/handbuch/homepage-anwenderhandbuch.html');
+  const muster = /<section class="thema"[^>]*>([\s\S]*?)<\/section>/g;
+
+  const fremd = saetzeAusHtml(html, muster)
+    .filter((satz) => !quelle.includes(normalisieren(satz)));
+
+  expect(fremd,
+    'Dieser Text steht im Handbuch, aber nicht in tools/hilfe_inhalt.py. '
+    + 'Er geht beim nächsten python tools/handbuch_bauen.py verloren. '
+    + `Bitte in die Quelle eintragen:\n  - ${fremd.slice(0, 5).join('\n  - ')}`)
+    .toEqual([]);
 });
 
 test('TC-F9-02: Keine veralteten Aussagen im Handbuch', async ({ page }) => {
