@@ -397,6 +397,36 @@ def _get_bestellschluss(base_url, headers):
 # ── Archivierung: Bestellungen aelter als ~1 Monat werden zu dauerhaften
 #    Tages-Aggregaten verdichtet (Zahlen fuer die Statistik bleiben erhalten),
 #    die Detaildatensaetze werden geloescht. ────────────────────────────────
+#
+# ABGESCHALTET am 27.09.2026 - bewusst, nicht aus Versehen.
+#
+# Der Lauf hat noch NIE etwas archiviert: Sein OData-Filter vergleicht
+# dl_datum ohne Anfuehrungszeichen, und weil das ein Textfeld ist, weist
+# Dataverse mit 400 ab. Das `break` unten bricht still ab, seit es diesen
+# Code gibt.
+#
+# Nachgemessen, was eine Korrektur heute ausloesen wuerde:
+#
+#     90 Online-Bestellungen aelter als 31 Tage wuerden GELOESCHT
+#     26 betroffene Kundinnen und Kunden
+#     13 davon mit Nachrichtenverlauf   -> Text unwiederbringlich weg
+#      3 davon mit Storno-Grund         -> Text weg
+#     Zeitraum 22.06. bis 26.08.2026
+#
+# Vom 22.06. bliebe statt 25 Bestellungen nur {total:25, "0":22, "1":2,
+# "3":1} - Namen, Gerichte, Nachrichten und Gruende waeren fort.
+#
+# Dagegen steht kein Gewinn, der das aufwiegt: Der Bestand umfasst 278
+# Datensaetze, Platz ist kein Thema. Und die Nachrichtenverlaeufe sind
+# gerade jetzt wertvoll, wo Kundinnen aus ihrem Konto heraus schreiben
+# koennen (Spec bestellung-aendern).
+#
+# Wer den Lauf wieder anschalten will, muss ZWEI Dinge tun - und beide
+# bewusst: ARCHIVE_ENABLED auf True setzen UND den Filter reparieren
+# (dl_datum lt '<datum>' mit Anfuehrungszeichen). Der Schalter allein
+# aendert nichts, weil der kaputte Filter weiter abweist.
+# (Spec archivlauf-abschalten)
+ARCHIVE_ENABLED = False
 ARCHIVE_CONFIG_KEY = "lunch_stats_archive"
 ARCHIVE_AFTER_DAYS = 31  # ~1 Monat
 
@@ -458,6 +488,15 @@ def _archive_old_orders(base_url, headers):
     rec_id, archive = _read_config_json(base_url, headers, ARCHIVE_CONFIG_KEY)
     if not isinstance(archive, dict):
         archive = {}
+
+    # Abgeschaltet (siehe ARCHIVE_ENABLED oben): Die bereits verdichteten
+    # Zahlen werden weiterhin GELESEN und in der Statistik gezeigt - nur
+    # geloescht wird nichts mehr. Haetten wir hier ein leeres dict
+    # zurueckgegeben, waeren alte Statistikwerte auf einen Schlag
+    # verschwunden. (Spec archivlauf-abschalten)
+    if not ARCHIVE_ENABLED:
+        return archive
+
     meta = archive.get("_meta") or {}
     today_local = heute_lokal()
     # Gate: nur einmal pro Tag den (teureren) Loesch-/Aggregationslauf machen.
