@@ -1799,32 +1799,141 @@
     }catch(e){}
   })();
 
+  /* ── Meine Bestellungen: Shop UND Mittagstisch, in zwei Reitern ──
+     Aus dem Laden: „Hab Mittagessen bestellt, aber erscheint nicht in
+     Online-Einkauf. Es wäre auch schön, wenn hier erst nur die aktuellen
+     Einkäufe von gestern bis in die Zukunft dargestellt werden und in
+     einem weiteren Tab die älteren. Eventuell dann auch mit einem Badge
+     versehen, wie viele Bestellungen noch offen sind."
+
+     Drei Dinge waren zu tun:
+       1. Der Mittagstisch fehlte ganz - das Popup holte nur /api/shop-order.
+       2. Alles stand in einer Liste, auch Abholungen aus dem Juni.
+       3. Der Zähler nannte alle offenen, auch längst vergangene.
+
+     „Gestern" statt „heute" ist Absicht: Wer am Morgen nachsieht, hat
+     die gestrige Abholung vielleicht noch nicht erledigt.
+     (Spec bestelluebersicht) */
+  var RUECKBLICK_TAGE = 180;
+
+  function _gestern(){
+    var d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')
+      + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  /** Bringt Shop- und Mittagsbestellungen auf ein gemeinsames Format. */
+  function _vereinheitlichen(shop, mittag){
+    var aus = [];
+    (shop||[]).forEach(function(o){
+      var pos=[];
+      try{ pos = Array.isArray(o.positionen) ? o.positionen
+              : (typeof o.positionen_json==='string' ? JSON.parse(o.positionen_json) : []); }catch(e){}
+      var anzahl = pos.reduce(function(s,p){ return s+(p.menge||1); },0);
+      aus.push({
+        typ:'shop', roh:o,
+        nr:(o.bestellnummer||'').replace('DL-',''),
+        tag:(o.abholdatum||'').substring(0,10),
+        was:anzahl+' Artikel',
+        summe:o.gesamtsumme?parseFloat(o.gesamtsumme):0,
+        status:o.status||0,
+        /* Shop: abgeholt (3) und storniert (4) sind erledigt. */
+        offen:(o.status||0)<3
+      });
+    });
+    (mittag||[]).forEach(function(o){
+      var menge=o.menge||1;
+      aus.push({
+        typ:'mittag', roh:o,
+        nr:o.bestellnummer||'',
+        tag:(o.datum||'').substring(0,10),
+        was:o.gericht||'Mittagessen',
+        summe:(parseFloat(o.preis)||0)*menge,
+        status:o.status||0,
+        /* Mittagstisch: eingegangen (0) und bestätigt (1) sind offen;
+           storniert (2) und abgeholt (3) nicht. */
+        offen:(o.status===0||o.status===1)
+      });
+    });
+    // Neueste zuerst - was ansteht, gehört nach oben.
+    aus.sort(function(a,b){ return (b.tag||'').localeCompare(a.tag||''); });
+    return aus;
+  }
+
+  window._dlBestellungen={aktuell:[],frueher:[]};
+  window.dlOrdersTab=function(welcher){
+    var b=window._dlBestellungen;
+    document.querySelectorAll('.ord-tab').forEach(function(t){
+      t.classList.toggle('an', t.getAttribute('data-tab')===welcher);
+    });
+    renderOrdersPopup(welcher==='frueher' ? b.frueher : b.aktuell, welcher);
+  };
+
   // Shop-Bestellungen: Floating badge showing count of open orders
   function reloadShopOrders(){
     try{
       var token = localStorage.getItem('dl_shop_token')||'';
-      if(!token) return;
-      fetch('/api/shop-order',{headers:{'X-Shop-Token':token}})
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-          if(!res.success) return;
-          // Offene Bestellungen = noch nicht abgeholt (Status < 3) - wie im Shop unter "Meine Bestellungen",
-          // unabhaengig vom Abholdatum (sonst verschwinden noch offene Bestellungen mit vergangenem Abholtag)
-          var open = (res.orders||[]).filter(function(o){ return o.status < 3; });
-          var promoLink = document.getElementById('promo-orders-link');
-          var promoCount = document.getElementById('promo-orders-count');
-          var mobOrders = document.getElementById('mob-action-orders');
-          var mobOrdersSub = document.getElementById('mob-orders-sub');
-          if(!open.length){
-            if(promoLink) promoLink.style.display='none';
-            if(mobOrders) mobOrders.style.display='none';
-            renderOrdersPopup([]);
-            return;
+      var dev = '';
+      try{ dev=(localStorage.getItem('dl_push_device_id')||'').trim(); }catch(e){}
+
+      var leer = Promise.resolve({orders:[]});
+      var kopf = token ? {'X-Shop-Token':token} : {};
+
+      /* Der Shop braucht ein Konto, der Mittagstisch nicht - er findet
+         die Bestellung auch über die Geräte-Kennung. Wer ohne Konto
+         bestellt, soll seine Mittagessen trotzdem hier sehen. */
+      var shopP = token
+        ? fetch('/api/shop-order',{headers:kopf}).then(function(r){return r.json();}).catch(function(){return {orders:[]};})
+        : leer;
+      var mittagP = (token || dev)
+        ? fetch('/api/lunch-order?mode=my&tage_zurueck='+RUECKBLICK_TAGE
+                + (dev?('&device_id='+encodeURIComponent(dev)):''), {headers:kopf})
+            .then(function(r){return r.json();}).catch(function(){return {orders:[]};})
+        : leer;
+
+      Promise.all([shopP, mittagP]).then(function(erg){
+        var alle = _vereinheitlichen(
+          (erg[0]&&erg[0].success!==false)?erg[0].orders:[],
+          (erg[1]&&erg[1].success!==false)?erg[1].orders:[]);
+
+        var grenze = _gestern();
+        var aktuell = alle.filter(function(o){ return !o.tag || o.tag >= grenze; });
+        var frueher = alle.filter(function(o){ return o.tag && o.tag < grenze; });
+        window._dlBestellungen={aktuell:aktuell, frueher:frueher};
+
+        /* Der Zähler nennt die OFFENEN der aktuellen - das ist, was
+           wirklich noch aussteht. Vorher zählte er alle offenen, auch
+           Abholungen aus dem Juni, die nie abgeholt wurden. */
+        var offen = aktuell.filter(function(o){ return o.offen; }).length;
+
+        var promoLink = document.getElementById('promo-orders-link');
+        var promoCount = document.getElementById('promo-orders-count');
+        var mobOrders = document.getElementById('mob-action-orders');
+        var mobOrdersSub = document.getElementById('mob-orders-sub');
+
+        if(!alle.length){
+          if(promoLink) promoLink.style.display='none';
+          if(mobOrders) mobOrders.style.display='none';
+          renderOrdersPopup([], 'aktuell');
+          return;
+        }
+        if(promoLink){
+          promoLink.style.display='';
+          if(promoCount){
+            promoCount.textContent=offen;
+            /* Ohne offene Bestellungen keinen Zähler zeigen - eine
+               blanke Null sähe aus wie ein Fehler. */
+            promoCount.style.display = offen ? '' : 'none';
           }
-          if(promoLink){ promoLink.style.display=''; promoCount.textContent=open.length; }
-          if(mobOrders){ mobOrders.style.display=''; if(mobOrdersSub) mobOrdersSub.textContent=open.length+' offen'; }
-          renderOrdersPopup(open);
-        }).catch(function(){});
+        }
+        if(mobOrders){
+          mobOrders.style.display='';
+          if(mobOrdersSub) mobOrdersSub.textContent = offen
+            ? (offen+' offen') : (alle.length+' gesamt');
+        }
+        dlOrdersTab('aktuell');
+      }).catch(function(){});
     }catch(e){}
   }
   window.reloadShopOrders=reloadShopOrders;
@@ -1876,27 +1985,67 @@
   };
   window._shopOrders=[];
   window.showOrderDetail=showOrderDetail;
-  function renderOrdersPopup(orders){
-    window._shopOrders=orders;
-    var statusLabels=['Neu','In Bearbeitung','Bereit','Abgeholt'];
-    var statusColors=['#f59e0b','#3b82f6','#22c55e','#6b7280'];
-    var statusIcons=['\u23f3','\u2699\ufe0f','\u2705','\u2611\ufe0f'];
-    var html='';
-    orders.forEach(function(o,i){
-      var st=o.status||0;
-      var positionen=[];
-      try{positionen=Array.isArray(o.positionen)?o.positionen:(typeof o.positionen_json==='string'?JSON.parse(o.positionen_json):[]);}catch(e){}
-      var artikelCount=positionen.reduce(function(s,p){return s+(p.menge||1);},0);
-      var datum=o.abholdatum||'';
-      try{var dp=datum.substring(0,10).split('-');if(dp.length===3)datum=dp[2]+'.'+dp[1]+'.'+dp[0];}catch(e){}
+  function renderOrdersPopup(orders, welcher){
+    welcher = welcher || 'aktuell';
+    var b = window._dlBestellungen || {aktuell:[],frueher:[]};
+    var mittagStatus=['Eingegangen','Bestätigt','Storniert','Abgeholt'];
+    var mittagFarben=['#f59e0b','#22c55e','#ef4444','#6b7280'];
+    var shopStatus=['Neu','In Bearbeitung','Bereit','Abgeholt','Storniert'];
+    var shopFarben=['#f59e0b','#3b82f6','#22c55e','#6b7280','#ef4444'];
+
+    /* Die Reiter stehen immer da, auch wenn einer leer ist - sonst
+       verschwände der Rückblick genau dann, wenn man ihn sucht. */
+    var offenAkt = b.aktuell.filter(function(o){ return o.offen; }).length;
+    var html='<div class="ord-tabs">'
+      +'<button type="button" class="ord-tab'+(welcher==='aktuell'?' an':'')+'" data-tab="aktuell" onclick="dlOrdersTab(\'aktuell\')">'
+        +'Aktuell'+(offenAkt?('<span class="ord-tab-b">'+offenAkt+'</span>'):'')+'</button>'
+      +'<button type="button" class="ord-tab'+(welcher==='frueher'?' an':'')+'" data-tab="frueher" onclick="dlOrdersTab(\'frueher\')">'
+        +'Früher'+(b.frueher.length?('<span class="ord-tab-b grau">'+b.frueher.length+'</span>'):'')+'</button>'
+      +'</div>';
+
+    if(!orders.length){
+      html += '<div class="ord-leer">'
+        + (welcher==='frueher'
+            ? 'Keine älteren Bestellungen.'
+            : 'Zurzeit keine Bestellung.<br>Alles, was ab gestern ansteht, erscheint hier.')
+        + '</div>';
+      html+='<a href="/shop#meine-bestellungen" class="ord-all">Alle Bestellungen \u2192</a>';
+      document.getElementById('orders-body').innerHTML=html;
+      return;
+    }
+
+    // Für showOrderDetail: nur die Shop-Bestellungen, mit ihrem Index.
+    window._shopOrders = orders.filter(function(o){ return o.typ==='shop'; })
+                               .map(function(o){ return o.roh; });
+
+    orders.forEach(function(o){
+      var istShop = (o.typ==='shop');
+      var farbe = istShop ? (shopFarben[o.status]||'#6b7280') : (mittagFarben[o.status]||'#6b7280');
+      var label = istShop ? (shopStatus[o.status]||'Neu') : (mittagStatus[o.status]||'Eingegangen');
+      /* Kein Emoji als Kennzeichen: Der Teller (U+1F37D) fehlt in
+         manchen Zeichensätzen und erschien dann als leeres Rechteck.
+         Ein Wort sagt dasselbe, überall und auch für Vorleseprogramme.
+         (Spec bestelluebersicht) */
+      var art = istShop ? '' : 'Mittagstisch';
+      var datum = o.tag;
+      try{ var dp=datum.split('-'); if(dp.length===3) datum=dp[2]+'.'+dp[1]+'.'+dp[0]; }catch(e){}
       var slot='';
-      try{var zs=typeof o.abhol_zeitslot==='string'?JSON.parse(o.abhol_zeitslot):o.abhol_zeitslot;if(zs)slot=zs.label||'';if(zs&&zs.von)slot+=' ('+zs.von+'\u2013'+zs.bis+')';}catch(e){}
-      var summe=o.gesamtsumme?parseFloat(o.gesamtsumme).toFixed(2).replace('.',',')+'\u00a0\u20ac':'';
-      html+='<div class="ord-card" style="border-left:4px solid '+statusColors[st]+';cursor:pointer" onclick="showOrderDetail('+i+')">';
-      html+='<div class="ord-head"><span class="ord-nr">'+((o.bestellnummer||'').replace('DL-',''))+'</span><span class="ord-status" style="color:'+statusColors[st]+'">'+statusIcons[st]+' '+statusLabels[st]+'</span></div>';
+      if(istShop){
+        try{ var zs=typeof o.roh.abhol_zeitslot==='string'?JSON.parse(o.roh.abhol_zeitslot):o.roh.abhol_zeitslot;
+             if(zs){ slot=zs.label||''; if(zs.von) slot+=' ('+zs.von+'\u2013'+zs.bis+')'; } }catch(e){}
+      }
+      var summe = o.summe ? (o.summe.toFixed(2).replace('.',',')+'\u00a0\u20ac') : '';
+      /* Mittagsbestellungen führen auf ihre Statusseite, Shop-Bestellungen
+         in den vorhandenen Detaildialog. */
+      var klick = istShop
+        ? ('showOrderDetail('+window._shopOrders.indexOf(o.roh)+')')
+        : ("location.href='/bestellstatus?nr="+encodeURIComponent(o.nr)+"'");
+      html+='<div class="ord-card" style="border-left:4px solid '+farbe+';cursor:pointer" onclick="'+klick+'">';
+      html+='<div class="ord-head"><span class="ord-nr">'+(o.nr||'Bestellung')+'</span>'
+        +'<span class="ord-status" style="color:'+farbe+'">'+label+'</span></div>';
       html+='<div class="ord-details">';
-      html+='<span>'+artikelCount+' Artikel \u00b7 '+summe+'</span>';
-      if(datum)html+='<span>Abholung: '+datum+(slot?' '+slot:'')+'</span>';
+      html+='<span>'+(art?('<b class="ord-art">'+art+'</b> \u00b7 '):'')+o.was+(summe?(' \u00b7 '+summe):'')+'</span>';
+      if(datum) html+='<span>'+(istShop?'Abholung: ':'Am ')+datum+(slot?(' '+slot):'')+'</span>';
       html+='</div></div>';
     });
     html+='<a href="/shop#meine-bestellungen" class="ord-all">Alle Bestellungen \u2192</a>';
@@ -2008,6 +2157,22 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 .orders-modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1}
 .orders-modal-close:hover{background:rgba(255,255,255,.15)}
 .orders-body{padding:12px}
+/* Reiter „Aktuell" / „Früher" (Spec bestelluebersicht) */
+.ord-tabs{display:flex;gap:8px;margin-bottom:12px}
+.ord-tab{flex:1;min-height:40px;border:1px solid #e5e7eb;background:#fff;border-radius:10px;
+  font-family:inherit;font-size:.86rem;font-weight:600;color:#4b5563;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s}
+.ord-tab:hover{background:#f9fafb}
+.ord-tab.an{background:#1e3a2f;border-color:#1e3a2f;color:#fff}
+.ord-tab-b{min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#dc2626;color:#fff;
+  font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ord-tab-b.grau{background:#9ca3af}
+.ord-tab.an .ord-tab-b.grau{background:rgba(255,255,255,.3)}
+.ord-leer{text-align:center;color:#6b7280;font-size:.86rem;line-height:1.55;padding:22px 10px}
+.ord-art{background:#ecfdf5;color:#065f46;font-size:.72rem;font-weight:700;padding:1px 6px;border-radius:5px}
+html[data-theme="dark"] .ord-art{background:#12251c;color:#8fd6ad}
+html[data-theme="dark"] .ord-tab{background:#1b2228;border-color:#2c3a42;color:#c7d0cc}
+html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;color:#fff}
 .ord-card{display:block;background:#f9fafb;border-radius:10px;padding:12px 14px;margin-bottom:8px;text-decoration:none;color:inherit;transition:background .15s}
 .ord-card:hover{background:#f0fdf4}
 .ord-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -2062,7 +2227,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   <div class="orders-modal">
     <div class="orders-modal-head">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-      <h2>Online-Einkauf</h2>
+      <h2>Meine Bestellungen</h2>
       <button class="orders-modal-close" onclick="document.getElementById('orders-overlay').classList.remove('open');dlUnlockScroll()">&#10005;</button>
     </div>
     <div class="orders-body" id="orders-body"></div>
