@@ -128,6 +128,15 @@
 
   <a href="javascript:void(0)" onclick="openHilfePopup()" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="help-circle" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>Hilfe</a>
 
+  <!-- Mein Konto: der Weg zu den eigenen Bestellungen auf mehreren
+       Geraeten. Stand zuerst nur in der Fusszeile ganz unten und war
+       damit praktisch unauffindbar - aus dem Laden kam prompt die Frage
+       „Wo loggt man sich auf der Homepage ein?".
+       Bewusst OHNE Zwang: Wer nur ab und zu bestellt, braucht kein Konto,
+       die Kachel findet seine Bestellung weiterhin ueber das Geraet.
+       (Spec konto-ohne-bankdaten) -->
+  <a href="/mein-konto" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="user" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>Mein Konto</a>
+
   <!-- Dauerhaft sichtbar: Die beiden Eintraege darueber blendet pwa.js nur
        ein, wenn der Browser die Installation anbietet - auf dem iPhone also
        nie. Der Weg zur Anleitung muss davon unabhaengig sein. -->
@@ -466,6 +475,11 @@
     <span>Tel: <a href="tel:+4980826229991">08082 / 622 99 91</a> &middot; <a href="mailto:info@dorfladen-oberornau.de">info@dorfladen-oberornau.de</a></span>
 
     <div class="tb-legal">
+
+      <!-- Mein Konto: dieselbe Ueberlegung wie in der mobilen
+           Navigation - der Zugang muss sichtbar sein, nicht nur in der
+           Fusszeile ganz unten. (Spec konto-ohne-bankdaten) -->
+      <a href="/mein-konto" style="font-weight:600">Mein Konto</a>
 
       <a href="/impressum">Impressum</a>
 

@@ -272,7 +272,7 @@ if(window!==window.parent){
     <button class="submit-btn" id="submit-btn" onclick="submitOrder()">🍽 Jetzt bestellen</button>
 
     <div class="footer">
-      <a href="/" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zurück zum Dorfladen</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
+      <a href="/" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zurück zum Dorfladen</a> · <a href="/mein-konto">Mein Konto</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
     </div>
   </div>
 
@@ -289,6 +289,25 @@ if(window!==window.parent){
       <a class="success-btn" href="/bestellstatus" style="background:#2563eb">📋 Bestellstatus ansehen</a>
       <button class="success-btn" onclick="newOrder()">🍽 Weitere Bestellung</button>
       <a class="success-btn" href="/" style="background:#6b7280" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zur Startseite</a>
+    </div>
+    <!-- Der Weg zum Konto steht HIER, weil hier der Gedanke aufkommt:
+         Die Bestellung ist gerade aufgegeben, und die Frage „sehe ich das
+         auch am Rechner?" liegt nahe. Vorher gab es dafür nur einen Link
+         ganz unten in der Fußzeile der Startseite — praktisch unauffindbar.
+         Nur für Nicht-Angemeldete; wer ein Konto hat, wird nicht
+         behelligt. (Spec konto-ohne-bankdaten) -->
+    <div id="konto-hinweis" style="display:none;margin-top:14px;padding-top:13px;border-top:1px solid #e5e7eb">
+      <div style="font-size:13px;line-height:1.5;color:#4b5563">
+        Möchten Sie Ihre Bestellungen auch am Rechner oder Tablet sehen?
+      </div>
+      <a href="/mein-konto#neu" target="_blank" rel="noopener"
+         style="display:inline-block;margin-top:7px;font-size:13.5px;font-weight:600;color:#2e7d4f;text-decoration:underline">
+        Kostenloses Konto anlegen
+      </a>
+      <div style="font-size:11.5px;color:#9ca3af;margin-top:4px">
+        Name, E-Mail, Passwort — mehr nicht. Ohne Konto funktioniert alles
+        wie bisher auf diesem Gerät.
+      </div>
     </div>
   </div>
 </div>
@@ -675,6 +694,17 @@ if(window!==window.parent){
         // Save for bestellstatus page auto-login (E-Mail nur wenn vorhanden)
         try{ localStorage.setItem('bs_nr', res.bestellnummer||''); if(email){ localStorage.setItem('bs_email', email); } }catch(e){}
         if(notifyPush){ try{ registerPush(); }catch(e){} }
+        /* Den Kontohinweis nur zeigen, wenn er auch gelesen werden kann:
+           nicht für Angemeldete (die haben schon eins) und nicht im
+           eingebetteten Dialog, der sich nach 4 Sekunden von selbst
+           schließt. Ein Hinweis, den niemand zu Ende lesen kann, ist
+           kein Hinweis. (Spec konto-ohne-bankdaten) */
+        try{
+          var _hin=document.getElementById('konto-hinweis');
+          var _angemeldet=false;
+          try{ _angemeldet=!!(localStorage.getItem('dl_shop_token')||'').trim(); }catch(e){}
+          if(_hin && !_angemeldet && window===window.parent) _hin.style.display='';
+        }catch(e){}
         document.getElementById('success-overlay').classList.add('show');
         history.pushState({overlay:'success'},'');
         // Im eingebetteten Bestell-Dialog (geoeffnet aus der TagesInfo): nach kurzer

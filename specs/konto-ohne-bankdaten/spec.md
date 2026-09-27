@@ -121,6 +121,60 @@ Kachel-Logik soll bestehen bleiben."
 Der Weg zum Konto steht deshalb in der **Fußzeile**: immer da, stört
 niemanden, hängt an keinem Schalter.
 
+## Nachtrag: Der Zugang war nicht zu finden
+
+**Rückfrage aus dem Laden, kurz nach der Auslieferung:**
+
+> „Wie kann man ein Konto anlegen ohne Shop? Kann man dies bei der
+> Mittagessenbestellung tun? Wo loggt man sich auf der Homepage ein?"
+
+Drei Fragen, die alle dasselbe sagen. Nachgezählt:
+
+| Seite | Wege zum Konto |
+|---|---|
+| Startseite | **1** — ganz unten in der Fußzeile |
+| Bestellseite | **0** |
+| Tagesinfo, Bestellstatus | **0** |
+
+Die Funktion war gebaut, geprüft und ausgeliefert — und praktisch
+unsichtbar. Ein Link in der Fußzeile ist kein Zugang, sondern ein
+Fußnotenverweis.
+
+### Wo er jetzt steht
+
+| Ort | Für wen |
+|---|---|
+| Kopfleiste der Startseite (Rechner) | wer gezielt sucht |
+| Menü der Startseite (Handy) | dasselbe auf dem Telefon |
+| Fußzeile der Startseite | bleibt, schadet nicht |
+| Fußzeile des Bestellformulars | wer gerade bestellt |
+| **Erfolgsbildschirm nach der Bestellung** | der eigentliche Moment |
+
+Der letzte ist der wichtigste: Die Bestellung ist gerade aufgegeben, und
+die Frage „sehe ich das auch am Rechner?" liegt nahe. Der Link führt auf
+`/mein-konto#neu` — direkt ins Anlegen-Formular, ohne den Umweg über die
+Anmeldung. Wer von der Bestellung kommt, hat noch kein Konto.
+
+### Zwei Einschränkungen, mit Absicht
+
+**Nur für Nicht-Angemeldete.** Wer ein Konto hat, sieht den Hinweis
+nicht. Er ist ein Angebot, keine Werbung (`TC-MK-17`).
+
+**Nicht im eingebetteten Dialog.** Wird die Bestellseite aus der
+TagesInfo als Fenster geöffnet, schließt sie sich nach vier Sekunden von
+selbst. Ein Hinweis, den niemand zu Ende lesen kann, ist kein Hinweis.
+
+### Was die Fälle beim Bauen aufgedeckt haben
+
+`TC-MK-15` fiel zuerst — und der Grund war lehrreich: Ohne Wochenplan
+zeigt die Bestellseite nur „Kein aktueller Mittagstisch verfügbar" und
+rendert weder Formular noch Fußzeile. Der Mock lieferte eine leere Liste.
+Danach fiel er erneut, weil der Formularblock erst nach der **Gerichtswahl**
+erscheint. Der Fall wählt jetzt erst ein Gericht, wie ein Kunde es auch täte.
+
+Beides sind keine Fehler der Seite, sondern Fehler in meiner Annahme
+darüber, wann sie was zeigt.
+
 ## Testfälle
 
 ### Server — [tests/test_konto_ohne_bank.py](../../tests/test_konto_ohne_bank.py)
@@ -153,6 +207,16 @@ niemanden, hängt an keinem Schalter.
 | TC-MK-11 | — | kein waagerechtes Rollen |
 | TC-MK-12 | K1 | im Shop-Formular sind die Bankfelder **beim Öffnen** schon weg |
 | TC-MK-13 | K4 | Umschalten auf „einkaufen" bringt sie zurück |
+
+### Auffindbarkeit — [tests/mein-konto-auffindbar.spec.js](../../tests/mein-konto-auffindbar.spec.js)
+
+| ID | Prüft | Erwartung |
+|----|-------|-----------|
+| TC-MK-14 | K5 | die Startseite führt an **mindestens zwei** Stellen zum Konto, davon eine sichtbar |
+| TC-MK-15 | K5 | die Bestellseite führt zum Konto (nach der Gerichtswahl) |
+| TC-MK-16 | K5 | nach der Bestellung steht das Angebot da, mit `#neu` |
+| TC-MK-17 | — | wer angemeldet ist, sieht den Hinweis **nicht** |
+| TC-MK-18 | — | `#neu` öffnet direkt das Anlegen-Formular, nicht die Anmeldung |
 
 ### Ein Fehler, den TC-MK-12 gefunden hat
 
