@@ -109,6 +109,12 @@
     .field input:focus{border-color:var(--c-green);box-shadow:0 0 0 3px rgba(46,125,79,.12)}
     .field-hint{font-size:11px;color:var(--c-muted);margin-top:2px}
     .saved-badge{display:inline-block;font-size:11px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:6px;font-weight:600}
+    /* Konto-Hinweis in den Kundendaten: sagt, was ein Konto bringt, und
+       bietet die Anmeldung direkt hier an - ohne die Bestellung zu
+       verlassen. (Spec konto-waehrend-bestellung) */
+    .konto-status{font-size:12.5px;color:var(--c-muted);line-height:1.5;margin:-2px 0 10px}
+    .konto-status a{color:var(--c-green);font-weight:700;text-decoration:underline;cursor:pointer}
+    .konto-status b{color:var(--c-text)}
     .field-row{display:flex;gap:10px}
     .field-row .field{flex:1;min-width:0}
     @media(max-width:430px){.field-row{flex-direction:column;gap:0}}
@@ -236,6 +242,12 @@ if(window!==window.parent){
     <!-- Kundendaten -->
     <div class="form-card">
       <h3>👤 Ihre Daten <span class="saved-badge" id="saved-badge" style="display:none">✓ gespeichert</span></h3>
+      <div class="konto-status">
+        <span id="konto-status-aus">Schon ein Konto? <a href="javascript:void(0)" onclick="oeffneLoginModal()">Anmelden</a>
+          — dann werden Name und E-Mail ausgefüllt, und die Bestellung
+          erscheint auch auf Ihren anderen Geräten.</span>
+        <span id="konto-status-an" style="display:none">✓ Angemeldet als <b id="konto-status-name"></b></span>
+      </div>
       <div class="field">
         <label for="cust-name">Name *</label>
         <input type="text" id="cust-name" placeholder="Vor- und Nachname" autocomplete="name">
@@ -272,7 +284,7 @@ if(window!==window.parent){
     <button class="submit-btn" id="submit-btn" onclick="submitOrder()">🍽 Jetzt bestellen</button>
 
     <div class="footer">
-      <a href="/" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zurück zum Dorfladen</a> · <a href="/mein-konto">Mein Konto</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
+      <a href="/" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zurück zum Dorfladen</a> · <a href="/mein-konto" target="_blank" rel="noopener">Mein Konto</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
     </div>
   </div>
 
@@ -313,6 +325,37 @@ if(window!==window.parent){
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Anmelden, ohne die Bestellung zu verlassen.
+     Bisher gab es nur den Link „Mein Konto" ganz unten in der Fußzeile -
+     unbeschriftet, ohne Erklärung, und er hätte beim Klicken den
+     eingebetteten Bestell-Rahmen selbst umgeleitet und die halb
+     ausgefüllte Bestellung stillschweigend verworfen. Dieses Fenster löst
+     beides: sichtbar, erklärt, und die Bestellung bleibt erhalten, weil
+     kein Sprung stattfindet. (Spec konto-waehrend-bestellung) -->
+<div class="push-prompt-bg" id="login-modal" onclick="if(event.target===this)schliesseLoginModal()">
+  <div class="push-prompt" style="text-align:left">
+    <div class="push-prompt-icon" style="text-align:center">👤</div>
+    <h3 style="text-align:center">Anmelden</h3>
+    <p style="text-align:center">Mit Ihrem Dorfladen-Konto. Ihre Bestellung bleibt dabei erhalten.</p>
+    <div class="error-box" id="login-fehler" style="text-align:left"></div>
+    <div class="field">
+      <label for="login-mail">E-Mail</label>
+      <input type="email" id="login-mail" autocomplete="email" placeholder="ihre@email.de">
+    </div>
+    <div class="field">
+      <label for="login-pw">Passwort</label>
+      <input type="password" id="login-pw" autocomplete="current-password">
+    </div>
+    <div class="push-prompt-btns">
+      <button class="push-prompt-no" type="button" onclick="schliesseLoginModal()">Abbrechen</button>
+      <button class="push-prompt-yes" type="button" id="login-knopf" onclick="loginAbsenden()">Anmelden</button>
+    </div>
+    <p style="text-align:center;margin:14px 0 0;font-size:12.5px;color:var(--c-muted)">
+      Noch kein Konto? <a href="/mein-konto#neu" target="_blank" rel="noopener" style="color:var(--c-green);font-weight:700">Konto anlegen</a>
+    </p>
+  </div>
+</div>
 
 <!-- Push notification pre-prompt -->
 <div class="push-prompt-bg" id="push-prompt">
@@ -406,17 +449,101 @@ if(window!==window.parent){
        waere fuer die Kundin nicht nachvollziehbar verschwunden.
        (Spec meine-bestellungen-geraete, F5) */
     try{
-      var feld = document.getElementById('cust-email');
-      if(feld && !feld.value.trim()){
-        var konto = JSON.parse(localStorage.getItem('dl_shop_user')||'null');
-        if(konto && konto.email){
+      var konto = JSON.parse(localStorage.getItem('dl_shop_user')||'null');
+      if(konto){
+        var feld = document.getElementById('cust-email');
+        if(feld && !feld.value.trim() && konto.email){
           feld.value = konto.email;
           var merker = document.getElementById('saved-badge');
           if(merker) merker.style.display='';
         }
+        // Derselbe Gedanke gilt fuer den Namen - sonst tippt man ihn
+        // trotz Anmeldung jedes Mal von Hand. (Spec konto-waehrend-bestellung)
+        var nameFeld = document.getElementById('cust-name');
+        if(nameFeld && !nameFeld.value.trim()){
+          var voll = ((konto.vorname||'')+' '+(konto.nachname||'')).trim();
+          if(voll){
+            nameFeld.value = voll;
+            var merker2 = document.getElementById('saved-badge');
+            if(merker2) merker2.style.display='';
+          }
+        }
       }
     }catch(e){}
+    kontoStandAnzeigen();
   }
+
+  /* Zeigt an, ob gerade ein Konto angemeldet ist - und bietet sonst
+     die Anmeldung an. Wird nach dem Laden und nach jedem Anmelden
+     erneut aufgerufen. (Spec konto-waehrend-bestellung) */
+  function kontoStandAnzeigen(){
+    var konto=null, zeichen='';
+    try{ konto = JSON.parse(localStorage.getItem('dl_shop_user')||'null'); }catch(e){}
+    try{ zeichen = (localStorage.getItem('dl_shop_token')||'').trim(); }catch(e){}
+    var aus=document.getElementById('konto-status-aus');
+    var an=document.getElementById('konto-status-an');
+    if(zeichen && konto){
+      if(aus) aus.style.display='none';
+      if(an){
+        an.style.display='';
+        document.getElementById('konto-status-name').textContent =
+          konto.vorname || konto.email || 'Ihrem Konto';
+      }
+    } else {
+      if(aus) aus.style.display='';
+      if(an) an.style.display='none';
+    }
+  }
+
+  window.oeffneLoginModal = function(){
+    document.getElementById('login-fehler').style.display='none';
+    document.getElementById('login-mail').value='';
+    document.getElementById('login-pw').value='';
+    document.getElementById('login-modal').classList.add('open');
+  };
+  window.schliesseLoginModal = function(){
+    document.getElementById('login-modal').classList.remove('open');
+  };
+  window.loginAbsenden = function(){
+    var mail = document.getElementById('login-mail').value.trim();
+    var pw = document.getElementById('login-pw').value;
+    var fehlerEl = document.getElementById('login-fehler');
+    if(!mail || !pw){
+      fehlerEl.textContent='Bitte E-Mail und Passwort eingeben.';
+      fehlerEl.style.display='block';
+      return;
+    }
+    var knopf = document.getElementById('login-knopf');
+    knopf.disabled = true; knopf.textContent='Einen Moment …';
+    fehlerEl.style.display='none';
+    fetch(API+'/auth-login',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:mail,passwort:pw})
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        knopf.disabled=false; knopf.textContent='Anmelden';
+        if(res && res.success && res.token){
+          try{
+            localStorage.setItem('dl_shop_token', res.token);
+            localStorage.setItem('dl_shop_user', JSON.stringify(res.kunde||{email:mail}));
+          }catch(e){}
+          schliesseLoginModal();
+          // Die Bestellung bleibt unberuehrt - es findet kein Sprung
+          // statt. Nur die Kundendaten werden nachgezogen.
+          loadCustomer();
+          return;
+        }
+        fehlerEl.textContent = (res && (res.error||(res.errors||[]).join(' ')))
+          || 'Anmeldung nicht möglich. Bitte E-Mail und Passwort prüfen.';
+        fehlerEl.style.display='block';
+      })
+      .catch(function(){
+        knopf.disabled=false; knopf.textContent='Anmelden';
+        fehlerEl.textContent='Keine Verbindung. Bitte später noch einmal versuchen.';
+        fehlerEl.style.display='block';
+      });
+  };
   function saveCustomer(){
     var d = {
       name: document.getElementById('cust-name').value.trim(),
@@ -590,7 +717,7 @@ if(window!==window.parent){
       var dishDate = (dish.datum||'').split('T')[0];
       if(dishDate === todayISO && (now.getHours() + now.getMinutes()/60) >= _bsCfg){
         errEl.innerHTML = '⚠️ Der Bestellschluss für heute ('+BESTELLSCHLUSS_H+':'+(BESTELLSCHLUSS_M<10?'0':'')+BESTELLSCHLUSS_M+' Uhr) ist leider überschritten. Bestellungen für heute sind nicht mehr möglich.';
-        errEl.style.display = '';
+        errEl.style.display = 'block';
         var btn = document.getElementById('submit-btn');
         if(btn){ btn.disabled = true; btn.style.opacity = '.4'; }
       } else {
@@ -644,7 +771,7 @@ if(window!==window.parent){
     }
     if(errors.length){
       errEl.innerHTML = errors.join('<br>');
-      errEl.style.display='';
+      errEl.style.display='block';
       return;
     }
     errEl.style.display='none';
@@ -718,7 +845,7 @@ if(window!==window.parent){
         }
       } else {
         errEl.innerHTML = (res.errors || [res.error || 'Bestellung nicht möglich. Bitte prüfen Sie Ihre Eingaben.']).join('<br>');
-        errEl.style.display='';
+        errEl.style.display='block';
       }
     })
     .catch(function(e){
@@ -726,7 +853,7 @@ if(window!==window.parent){
       btn.textContent = '🍽 Jetzt bestellen';
       console.error('Bestellung fehlgeschlagen:',e);
       errEl.textContent = 'Verbindung fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
-      errEl.style.display='';
+      errEl.style.display='block';
     });
   };
 
@@ -835,6 +962,10 @@ if(window!==window.parent){
   loadCustomer();
   loadMenu();
 
+  // Eingabetaste sendet die Anmeldung ab - auf dem Handy der schnellste Weg.
+  document.getElementById('login-pw').addEventListener('keydown', function(e){
+    if(e.key==='Enter') loginAbsenden();
+  });
   // Re-register push when email changes (nur wenn App-Benachrichtigung gewählt)
   document.getElementById('cust-email').addEventListener('blur', function(){
     saveCustomer();
