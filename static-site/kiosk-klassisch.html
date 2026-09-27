@@ -1886,6 +1886,14 @@
     })();
   </script>
   <script src="/js/theme.js"></script>
+  <!-- admin-auth.js gehoert in den KOPF, nicht ans Seitenende.
+       Es umhuellt window.fetch und haengt das Kiosk-Token an. Stand es
+       weiter unten, liefen die ersten Abfragen des Kiosks - und genau
+       die holen die Bestellliste - noch am Wrapper vorbei. Gemessen: Drei
+       lunch-order-Aufrufe ohne Token, obwohl das Token im Speicher lag.
+       Die Datei braucht kein DOM; ihr Passwort-Dialog entsteht erst bei
+       Bedarf. (Spec bestellliste-schuetzen) -->
+  <script src="/js/admin-auth.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -7455,7 +7463,6 @@ var K = (function(){
 </script>
 <script src="/js/social.js?v=20260824b"></script>
 <script src="/js/social-poster.js?v=20260906b"></script>
-<script src="/js/admin-auth.js"></script>
 <script src="/js/kiosk-kalender.js"></script>
 <!-- Der Textgestalter für den Bestellhinweis wird von Bäcker und Metzger
      genutzt und muss deshalb vor beiden geladen sein. -->

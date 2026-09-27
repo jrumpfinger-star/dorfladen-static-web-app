@@ -30,6 +30,16 @@ erfolgt zuletzt.
 - [ ] **T10** Prod (`dorfladen-website`) aktivieren: `CMS_AUTH_ENFORCE=1` — bewusst
   **offen**, erst nach kurzem CMS-Check im Prod-Browser (Kiosk ist operativ kritisch).
 
+  > **Zusatz (27.09.2026):** An T10 hängt seit Spec
+  > [bestellliste-schuetzen](../bestellliste-schuetzen/spec.md) auch der
+  > Schutz der Mittagstisch-Liste — sie liefert bis dahin ungeschützt
+  > Namen und Adressen aller Kunden. Vor dem Einschalten ist zusätzlich
+  > zu prüfen, ob das **Ladentablett** `cms_auth_token` im Speicher hat:
+  > Der Kiosk merkt sich die Freigabe dauerhaft (`kiosk_auth_ok`) und
+  > durchläuft die Passwortmaske morgens nicht mehr — dabei wird auch
+  > kein frisches Token geholt. Eine einmalige Anmeldung über die Maske
+  > genügt.
+
 ## Traceability
 | Requirement | Test Cases | Tasks |
 | --- | --- | --- |

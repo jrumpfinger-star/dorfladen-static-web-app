@@ -98,8 +98,21 @@
     var isAdminCall = url.indexOf('/api/') !== -1 && MUT.indexOf(method) !== -1;
     // Kalender ist rein intern: auch lesende GETs tragen den Admin-Token.
     var isKalenderRead = method === 'GET' && url.indexOf('/api/kalender') !== -1;
+    /* Die Mittagstisch-LISTE ebenso: Sie liefert alle Bestellungen eines
+       Tages mit Namen, Adressen und Telefonnummern.
+       Ausgenommen bleiben die Kundenwege am selben Endpunkt — `mode=my`
+       hängt am Anmeldezeichen oder an der Geräte-Kennung, die
+       Statusseite an der Bestellnummer. Sie dürfen kein Kiosk-Token
+       brauchen, sonst könnte eine Kundin ihre eigene Bestellung nicht
+       mehr sehen. Diese Datei wird ohnehin nur im Kiosk und im CMS
+       geladen, nicht auf den Kundenseiten.
+       (Spec bestellliste-schuetzen) */
+    var isLunchListe = method === 'GET'
+      && url.indexOf('/api/lunch-order') !== -1
+      && url.indexOf('mode=my') === -1
+      && url.indexOf('nr=') === -1;
 
-    if (isAdminCall || isKalenderRead) {
+    if (isAdminCall || isKalenderRead || isLunchListe) {
       var tok = getToken();
       if (tok) {
         var h = headersToObj(init.headers);
@@ -111,7 +124,7 @@
     var call = _fetch.call(this, input, init);
     // 401-Fallback (Login-Dialog + Retry) gilt auch für lesende Kalender-GETs,
     // damit reine Betrachter sich anmelden können und nicht nur bei Schreib-Aktionen.
-    if (!isAdminCall && !isKalenderRead) return call;
+    if (!isAdminCall && !isKalenderRead && !isLunchListe) return call;
 
     return call.then(function (resp) {
       if (resp.status !== 401) return resp;

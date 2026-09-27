@@ -44,6 +44,15 @@ statisches Frontend (`static-site/`).
   `auth-reset`, `shop-order`, `lunch-order`, `fleisch-order`, `shop-favorites`,
   `push-subscribe`, `track`) wird von diesem Feature **nicht** verändert – diese
   haben ihre eigene Logik bzw. sind bewusst öffentlich.
+
+  > **Teilweise überholt (27.09.2026).** Für `lunch-order` stimmt das nur
+  > für die *Kundenwege* (`mode=my`, Statusseite per Bestellnummer). Der
+  > **Listenzweig** desselben Endpunkts ist kein Kundenweg, sondern die
+  > Arbeitsliste des Kiosks — und lieferte ungeschützt 200 Datensätze mit
+  > Namen, E-Mail-Adressen und Telefonnummern ins offene Netz. Dass beide
+  > unter derselben Adresse liegen, hat ihn hier mitgenommen.
+  > Er trägt seit Spec [bestellliste-schuetzen](../bestellliste-schuetzen/spec.md)
+  > einen `read_auth_guard` — scharf geschaltet wird er zusammen mit **T10**.
 - Kein vollwertiges Benutzer-/Rollen-System, keine Einzelnutzer-Logins fürs CMS
   (ein **gemeinsames statisches** Admin-Token genügt vorerst).
 - Keine Änderung der SWA-`staticwebapp.config.json`-Routen-Rollen (wird in der

@@ -1097,6 +1097,35 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 )
 
             # List: filter by date (default: today)
+            #
+            # Ab hier beginnt die Kiosk-Liste: ALLE Bestellungen eines
+            # Tages, mit Namen, E-Mail-Adressen und Telefonnummern. Sie
+            # war bis zum 27.09.2026 ohne jede Huerde aus dem Internet
+            # abrufbar - ein Aufruf von /api/lunch-order ohne einen
+            # einzigen Parameter lieferte 200 Datensaetze.
+            #
+            # Aufgefallen ist das nicht bei der Suche danach, sondern
+            # beim Absichern der E-Mail-Abfrage: Dort wurde der Filter
+            # geleert, und die Anfrage fiel bis hierher durch. Ein
+            # Waechter zeigte statt einer leeren Liste die Namen aller
+            # Kunden.
+            #
+            # Der Schutz laeuft ueber denselben Weg wie beim Kalender:
+            # read_auth_guard verlangt das Kiosk-Token, aber NUR wenn
+            # CMS_AUTH_ENFORCE gesetzt ist. Solange nicht, aendert sich
+            # nichts - der Code kann gefahrlos vorauslaufen, bis der
+            # Kiosk das Token nachweislich mitschickt.
+            #
+            # Die Kundenwege oben sind davon nicht beruehrt: mode=my
+            # haengt am Anmeldezeichen oder an der Geraete-Kennung, die
+            # Statusseite an der Bestellnummer. Beide brauchen und
+            # bekommen kein Kiosk-Token.
+            # (Spec bestellliste-schuetzen)
+            from shared.auth import read_auth_guard  # noqa: E402
+            _lese_sperre = read_auth_guard(req)
+            if _lese_sperre is not None:
+                return _lese_sperre
+
             filter_date = req.params.get("datum", "")
             status_filter = req.params.get("status", "")
 
