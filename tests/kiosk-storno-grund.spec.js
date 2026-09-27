@@ -137,3 +137,71 @@ test.describe('Storno-Grund im Kiosk', () => {
       }
     });
 });
+
+test.describe('Nachricht zu einer stornierten Bestellung', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  /* Seit die Kundin aus ihrem Konto heraus schreiben kann, liegt genau
+     nach einer Absage die Frage nahe: „Warum wurde storniert?"
+     Vorher blendete `_hasUnseenComment` alles mit Status 2 aus — die
+     Nachricht wäre in einem Feld gelandet, das niemand liest. */
+
+  async function mitNachricht(page, o) {
+    await page.route('**/api/**', async (route) => {
+      const url = route.request().url();
+      const json = (x) => route.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify(x),
+      });
+      if (url.includes('/api/cms-config')) {
+        return json({ success: true, data: { feature_flags: { kiosk_mittag: true } } });
+      }
+      if (url.includes('mode=unread_messages')) return json({ success: true, unread_count: 0 });
+      if (url.includes('mode=messages')) return json({ success: true, orders: [] });
+      if (url.includes('/api/lunch-order')) {
+        return json({ success: true, orders: [Object.assign({
+          id: 'b1', name: 'Josef Rumpfinger', quelle: 0, datum: heute(),
+          gericht: GERICHT, menge: 1, preis: 8.8, mitnehmen: false,
+          kommentar_gelesen: false, verlauf: [],
+        }, o)] });
+      }
+      return json({ success: true, orders: [], data: [] });
+    });
+    await page.goto(KIOSK_URL);
+    await page.click('[data-tab="mittag"]');
+    await page.waitForTimeout(1500);
+  }
+
+  test('TC-SG-07: Eine echte Nachricht meldet sich auch nach der Absage',
+    async ({ page }) => {
+      await mitNachricht(page, {
+        status: 2, storno_grund: 'Kundengrund: Termin verschoben',
+        kunde_kommentar: 'Warum wurde das abgesagt?',
+      });
+      await page.click('[data-mt-filter="storniert"]');
+      await page.waitForTimeout(600);
+      await expect(page.locator('#oc-b1'),
+        'die Nachricht zur stornierten Bestellung bleibt stumm')
+        .toContainText('NEU');
+    });
+
+  test('TC-SG-08: Der blosse Sonderwunsch meldet sich nicht mehr',
+    async ({ page }) => {
+      /* Die Gegenseite derselben Regel: Ein Sonderwunsch ist mit der
+         Stornierung erledigt und braucht keine Aufmerksamkeit. */
+      await mitNachricht(page, {
+        status: 2, storno_grund: 'Storniert: ausverkauft',
+        anmerkung: 'ohne Zwiebeln bitte',
+      });
+      await page.click('[data-mt-filter="storniert"]');
+      await page.waitForTimeout(600);
+      await expect(page.locator('#oc-b1'),
+        'der erledigte Sonderwunsch blinkt trotzdem')
+        .not.toContainText('NEU');
+    });
+
+  test('TC-SG-09: Bei offenen Bestellungen bleibt alles wie bisher',
+    async ({ page }) => {
+      await mitNachricht(page, { status: 0, anmerkung: 'ohne Zwiebeln bitte' });
+      await expect(page.locator('#oc-b1')).toContainText('NEU');
+    });
+});

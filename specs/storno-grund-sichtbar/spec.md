@@ -94,6 +94,45 @@ Vorwort im Text (`Kundengrund:` / `Storniert:`) bleibt stehen — es sagt,
 **Kontoseite** — [static-site/mein-konto.html](../../static-site/mein-konto.html):
 rote Zeile unter dem Status.
 
+## Ein Folgefund: Die Nachricht nach der Absage
+
+Seit die Kundin aus ihrem Konto heraus schreiben kann (Spec
+`bestellung-aendern`), liegt genau **nach** einer Absage die Frage nahe:
+„Warum wurde storniert?"
+
+Diese Nachricht wäre stumm geblieben. Der Kiosk entschied:
+
+```js
+return !!(vomKunden && o.status!==2 && !o.kommentar_gelesen);
+```
+
+Der Zusatz `o.status!==2` war richtig, solange niemand zu einer
+stornierten Bestellung schreiben konnte — eine abgesagte Bestellung
+braucht keine Aufmerksamkeit mehr. Mit dem neuen Nachrichtenfaden stimmt
+das nicht mehr: Die Kundin hätte in ein Feld geschrieben, das niemand
+liest.
+
+**Die Regel unterscheidet jetzt zwei Fälle:**
+
+| Was | Nach einer Stornierung |
+|---|---|
+| **Echte Nachricht** (`kunde_kommentar`) | meldet sich — gerade dann |
+| **Sonderwunsch** (`anmerkung`) | bleibt still, er ist erledigt |
+
+Der Server tat seinen Teil schon vorher richtig: `kunde_kommentar` setzt
+`dl_kommentar_gelesen = False`. Es fehlte allein die Anzeige.
+
+| ID | Prüft | Erwartung |
+|----|-------|-----------|
+| TC-SG-07 | — | echte Nachricht meldet sich auch nach der Absage |
+| TC-SG-08 | — | der blosse Sonderwunsch meldet sich **nicht** mehr |
+| TC-SG-09 | — | bei offenen Bestellungen bleibt alles wie bisher |
+
+Gegenprobe: Mit der alten Regel fällt **genau** TC-SG-07, die übrigen
+acht bleiben grün (nachgestellt). Die fünf Fälle in
+`kiosk-sonderwunsch-telefon.spec.js`, die dieselbe Funktion prüfen,
+bleiben ebenfalls grün.
+
 ## Testfälle
 
 ### Kiosk — [tests/kiosk-storno-grund.spec.js](../../tests/kiosk-storno-grund.spec.js)

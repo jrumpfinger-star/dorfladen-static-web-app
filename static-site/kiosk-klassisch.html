@@ -2950,10 +2950,23 @@ var K = (function(){
      hier das Personal selbst getippt. Ihn als ungelesene Nachricht zu
      fuehren, liess die Karte blinken, klappte sie auf und blockierte die
      Sammelbestaetigung. Angezeigt wird der Wunsch weiterhin, aber als
-     Sonderwunsch (siehe renderOrder). */
+     Sonderwunsch (siehe renderOrder).
+
+     Seit die Kundin aus ihrem Konto heraus schreiben kann (Spec
+     bestellung-aendern), wird zwischen den beiden Faellen genauer
+     unterschieden:
+
+       Eine ECHTE Nachricht (`kunde_kommentar`) zaehlt immer - auch nach
+       einer Stornierung. Gerade dann liegt die Frage nahe: „Warum wurde
+       abgesagt?" Wuerde sie stumm bleiben, haette die Kundin in ein
+       Feld geschrieben, das niemand liest.
+
+       Der blosse SONDERWUNSCH (`anmerkung`) ist mit der Stornierung
+       erledigt - er braucht keine Aufmerksamkeit mehr. */
   function _hasUnseenComment(o){
-    var vomKunden = o.kunde_kommentar || (o.anmerkung && !_istVorOrt(o));
-    return !!(vomKunden && o.status!==2 && !o.kommentar_gelesen);
+    if(o.kommentar_gelesen) return false;
+    if(o.kunde_kommentar) return true;
+    return !!(o.anmerkung && !_istVorOrt(o) && o.status!==2);
   }
 
   function setMittagFilter(f){
