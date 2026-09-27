@@ -99,6 +99,39 @@ QUELLE_TELEFON = 1
 QUELLE_PERSONAL = 2
 QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal"}
 
+# Anmeldezeichen des Kundenkontos (dasselbe wie im Shop).
+JWT_SECRET = os.environ.get("SHOP_JWT_SECRET",
+                            "dorfladen-shop-secret-change-in-production-2026")
+
+
+def _konto_mail(req):
+    """E-Mail des angemeldeten Kunden - oder leer.
+
+    Die Kopfzeile heisst ``X-Shop-Token`` und nicht ``Authorization``:
+    Azure Static Web Apps ersetzt ``Authorization`` unterwegs durch ein
+    eigenes, internes Zeichen. Der Rueckfall auf ``Bearer`` ist nur fuer
+    die Arbeit auf dem eigenen Rechner gedacht.
+
+    Rueckgabe ist bewusst die **Adresse aus dem Zeichen**, nicht die aus
+    der Anfrage: Nur so laesst sich keine fremde Adresse unterschieben.
+    (Spec meine-bestellungen-geraete, F3)
+    """
+    zeichen = req.headers.get("X-Shop-Token", "")
+    if not zeichen:
+        kopf = req.headers.get("Authorization", "")
+        if kopf.startswith("Bearer "):
+            zeichen = kopf[7:]
+    if not zeichen:
+        return ""
+    try:
+        import jwt as _jwt
+        daten = _jwt.decode(zeichen, JWT_SECRET, algorithms=["HS256"])
+        return (daten.get("email") or "").strip().lower()
+    except Exception:
+        # Abgelaufen, gefaelscht oder unlesbar - alles dasselbe Ergebnis:
+        # kein Nachweis. Kein Grund, das dem Aufrufer zu erklaeren.
+        return ""
+
 
 def _parse_verlauf(raw):
     """Parse the stored chat thread JSON into a list of message dicts."""
@@ -709,6 +742,41 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Abhaken heraus, war der Faden fuer die Kundin weg, obwohl das
             # Nachrichtenfeld weiterhin funktioniert.
             # (Spec mittagstisch-abgeholt-sichtbar, F1)
+            #
+            # Die E-Mail als Schluessel verlangt einen NACHWEIS. Vorher
+            # genuegte die blosse Adresse in der Adresszeile - wer die
+            # Adresse der Nachbarin kannte, las deren Bestellungen mit.
+            # Aufgefallen ist das erst, als die Adresse eingebbar werden
+            # sollte, damit man seine Bestellungen auf mehreren Geraeten
+            # sieht. Genau das macht der Nachweis jetzt moeglich.
+            #
+            # Die Geraete-Kennung bleibt ohne Nachweis gueltig: Sie ist ein
+            # Geheimnis dieses Browsers, niemand kann sie erraten, und wer
+            # ohne Konto bestellt, haette sonst gar keinen Zugang mehr.
+            # (Spec meine-bestellungen-geraete, F1/F3/F4)
+            if req.params.get("mode") == "my" and not nr_filter:
+                konto_mail = _konto_mail(req)
+                if konto_mail:
+                    # Das Zeichen sticht den Parameter. Wer mit seinem
+                    # eigenen Zeichen eine fremde Adresse anfragt, bekommt
+                    # seine eigenen Bestellungen - nicht die fremden.
+                    email_filter = konto_mail
+                else:
+                    email_filter = ""
+
+                # Bleibt kein Schluessel uebrig, ist die Antwort LEER - und
+                # zwar hier. Ohne diesen Riegel fiele die Anfrage in den
+                # allgemeinen Listenzweig weiter unten und lieferte die
+                # Bestellungen ALLER Kunden. Das war beim Bau dieser Regel
+                # der teuerste Fund: Die Absicherung der E-Mail haette den
+                # Schaden sonst vergroessert statt verkleinert.
+                if not email_filter and not device_filter:
+                    return func.HttpResponse(
+                        json.dumps({"success": True, "orders": [], "count": 0},
+                                   ensure_ascii=False),
+                        status_code=200, headers=get_cors_headers(),
+                    )
+
             if (email_filter or device_filter) and not nr_filter and req.params.get("mode") == "my":
                 # Berliner Kalendertag, nicht UTC: "Den ganzen Tag" heisst
                 # genau diesen Tag. (F2)

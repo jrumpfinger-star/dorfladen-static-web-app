@@ -1518,14 +1518,14 @@
 <script>
   // Cache lunch-order fetch for reuse (widget + tagesinfo markers)
   (function(){
-    var email = (localStorage.getItem('bs_email')||'').trim();
-    var dev = (localStorage.getItem('dl_push_device_id')||'').trim();
-    // Schluessel: E-Mail, sonst Geraete-ID (Bestellungen ohne E-Mail).
-    var q = email ? ('email='+encodeURIComponent(email)) : (dev ? ('device_id='+encodeURIComponent(dev)) : '');
-    if(q){
-      window._dlLunchOrderP=fetch('/api/lunch-order?mode=my&'+q)
-        .then(function(r){return r.json();}).catch(function(){return {success:false};});
-    }
+    /* Die Abfrage steht in js/geraete-id.js — Startseite und Tagesinfo
+       hatten sie vorher je als eigene Abschrift. Sie schickt die
+       Geraete-Kennung mit und, falls angemeldet, das Anmeldezeichen des
+       Kundenkontos. Die E-Mail steht bewusst NICHT mehr in der
+       Adresszeile: Der Server nimmt sie aus dem Zeichen, sonst koennte
+       jeder eine fremde eintragen.
+       (Spec meine-bestellungen-geraete, F1/F3/F4) */
+    if(window.dlMeineBestellungen) dlMeineBestellungen();
   })();
 </script>
 <script>

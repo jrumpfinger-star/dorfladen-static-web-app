@@ -1,9 +1,8 @@
 # Meine Mittagessen-Bestellungen auf allen Geräten
 
-> **Status: Entwurf — NICHT umsetzungsreif.**
-> Diese Spec enthält offene `[NEEDS CLARIFICATION]`-Punkte und darf nach
-> den Regeln des Projekts **nicht** nach `/sdd-plan` weitergereicht
-> werden, bevor sie entschieden sind.
+> **Status: umgesetzt am 27.09.2026** (Weg A — das vorhandene
+> Kundenkonto). Der Code-Weg ohne Passwort (Weg B) ist **nicht** gebaut;
+> er bleibt als Möglichkeit beschrieben.
 
 **Wunsch aus dem Laden (27.09.2026):** „Ich möchte, dass meine
 Mittagessenbestellungen auch auf der Homepage angezeigt werden können.
@@ -84,39 +83,127 @@ funktioniert. Wer kein Konto hat, bekommt den Code-Weg angeboten.
 - **F6** Der Nachweis hält ohne erneutes Anmelden; Richtwert sind die
   90 Tage des bestehenden Anmeldezeichens.
 
-## Offene Punkte
+## Entscheidungen
 
-- `[NEEDS CLARIFICATION]` **Reicht Weg A allein?** Oder ist die Hürde
-  „Konto anlegen" für die Stammkundschaft zu hoch und Weg B gehört von
-  Anfang an dazu?
-- `[NEEDS CLARIFICATION]` **Welcher Zeitraum?** Die Kachel zeigt heute
-  Bestellungen ab dem heutigen Tag. Soll es geräteübergreifend auch einen
-  Rückblick geben — und wenn ja, wie weit zurück?
-- `[NEEDS CLARIFICATION]` **Altbestellungen.** Wer ohne Konto bestellt
-  hat, hat keine Verknüpfung. Sollen solche Bestellungen nachträglich
-  über die Adresse zugeordnet werden — und ist das zulässig, obwohl die
-  Adresse damals nicht bestätigt wurde?
-- `[NEEDS CLARIFICATION]` **Umgang mit der offenen Abfrage.** Wird F3
-  scharf geschaltet, hört jeder heutige Aufruf mit blanker Adresse auf zu
-  wirken. Braucht es eine Übergangszeit, in der beides geht?
+Die Punkte, die als `[NEEDS CLARIFICATION]` offen waren, sind hier
+entschieden — mit der Begründung, die sie getragen hat.
 
-## Testfälle (Entwurf, noch nicht geschrieben)
+### Weg A allein, ohne den Code-Weg
+
+Weg A ist gebaut, Weg B nicht. Grund: A kostet fast nichts, weil das
+Konto samt bestätigter Adresse bereits existiert, und schließt die
+Sicherheitslücke gleich mit. B wäre ein eigenes Vorhaben mit Versand,
+Ablauffrist und Sperre gegen Ausprobieren. Ob es gebraucht wird, zeigt
+sich erst, wenn Kunden am Konto scheitern — vorher wäre es auf Verdacht
+gebaut.
+
+### Der Zeitraum bleibt unverändert
+
+Die Kachel zeigt weiterhin Bestellungen **ab heute**. Ein Rückblick ist
+ein eigener Wunsch und hat mit „auf mehreren Geräten" nichts zu tun.
+
+### Altbestellungen werden nicht nachgezogen
+
+Wer vor der Umstellung ohne Konto bestellt hat, sieht seine Bestellung
+weiter über die Geräte-Kennung — auf dem Gerät, auf dem er bestellt hat.
+Eine nachträgliche Zuordnung über die Adresse unterbliebe bewusst: Diese
+Adressen wurden nie bestätigt, und genau darauf beruht der Schutz.
+
+### Kein Übergang mit beiden Wegen
+
+Gemessen wurde, ob ein Übergang nötig ist — und die Zahlen sagen nein:
+
+| Erfassungstag | mit Geräte-Kennung | ohne |
+|---|---|---|
+| 26.09.2026 | 1 | 0 |
+| 25.09.2026 | 4 | 0 |
+| 24.09.2026 und früher | **0** | alle |
+
+Ein klarer Schnitt: Seit der Reparatur in Spec `geraete-kennung` trägt
+**jede** neue Bestellung eine Kennung. Die 188 älteren ohne Kennung
+liegen sämtlich in der Vergangenheit — für den heutigen Tag war keine
+einzige betroffen. Ein Übergang hätte die Lücke also nur länger
+offengehalten, ohne jemanden zu schützen.
+
+## Der teuerste Fund beim Bau
+
+Die Absicherung hätte den Schaden beinahe **vergrößert**.
+
+Wird `email_filter` geleert, weil kein Nachweis vorliegt, und ist auch
+keine Geräte-Kennung da, fällt die Anfrage weiter — in den allgemeinen
+Listenzweig, der für den Kiosk gedacht ist. Der antwortet mit **allen**
+Bestellungen.
+
+Aufgefallen ist das nur, weil `TC-MG-02` nicht bloß prüfte „keine fremde
+Bestellung", sondern die zurückgegebenen Namen verglich: Statt einer
+leeren Liste kamen `['Anna', 'Bert', 'Gast']`.
+
+Deshalb endet der Zweig jetzt ausdrücklich mit einer leeren Antwort,
+statt durchzufallen.
+
+> **Nebenbefund, nicht behoben:** Derselbe Listenzweig ist auch von außen
+> erreichbar. `GET /api/lunch-order` ohne jeden Parameter lieferte am
+> 27.09.2026 **200 Bestellungen** mit Namen und E-Mail-Adressen. Das ist
+> ein eigenständiger, älterer Mangel — der Kiosk selbst ist durch die
+> Anmeldung der Seite geschützt, seine Schnittstelle aber nicht. Eine
+> Korrektur muss den Kiosk-Zugang mit umbauen und gehört deshalb in ein
+> eigenes Vorhaben mit eigener Spec. **Bis dahin bleibt die Liste offen.**
+
+## Umsetzung
+
+**Server** — [api/lunch-order/\_\_init\_\_.py](../../api/lunch-order/__init__.py):
+`_konto_mail(req)` liest das Anmeldezeichen aus `X-Shop-Token`
+(nicht `Authorization` — Azure Static Web Apps ersetzt diese Kopfzeile
+unterwegs). Bei `mode=my` sticht die Adresse aus dem Zeichen den
+Parameter; ohne Zeichen wird der Parameter verworfen.
+
+**Gemeinsame Abfrage** —
+[static-site/js/geraete-id.js](../../static-site/js/geraete-id.js):
+`dlMeineBestellungen()`. Startseite und Tagesinfo hatten die Abfrage
+vorher je als eigene Abschrift.
+
+`dlGeraeteKennungLesen()` ist bewusst **nicht** `dlPushDeviceId()`: Jene
+legt eine Kennung an, wenn keine da ist. Auf der Startseite, die bei
+jedem Besuch fragt, bekäme so auch der eine Kennung verpasst, der nur den
+Speiseplan liest (`TC-GK-14`).
+
+**Vorbelegung** —
+[static-site/mittagstisch-bestellen.html](../../static-site/mittagstisch-bestellen.html):
+`loadCustomer()` setzt die Adresse des Kontos ein, aber nur in ein leeres
+Feld.
+
+## Testfälle
+
+### Server — [tests/test_meine_bestellungen.py](../../tests/test_meine_bestellungen.py)
 
 | ID | Prüft | Erwartung |
 |----|-------|-----------|
-| TC-MG-01 | F1/F2 | angemeldet auf Gerät B → Bestellung erscheint |
-| TC-MG-02 | F3 | Abfrage mit fremder Adresse **ohne** Anmeldezeichen → keine Daten |
-| TC-MG-03 | F3 | Abfrage mit Anmeldezeichen einer **anderen** Person → keine Daten |
-| TC-MG-04 | F4 | ohne Konto, aber mit Geräte-Kennung → Bestellung erscheint weiterhin |
-| TC-MG-05 | F5 | angemeldet bestellen → Adresse ist vorbelegt |
-| TC-MG-06 | F6 | nach Neuladen weiterhin sichtbar, ohne erneutes Anmelden |
+| TC-MG-01 | F1/F2 | angemeldet → eigene Bestellung, ohne Adresse in der Adresszeile |
+| TC-MG-02 | F3 | fremde Adresse **ohne** Nachweis → leere Liste |
+| TC-MG-03 | F3 | gültiger Nachweis, **fremde** Adresse angefragt → eigene Bestellungen |
+| TC-MG-04 | F4 | ohne Konto, nur Geräte-Kennung → Bestellung erscheint |
+| TC-MG-06 | F6 | abgelaufen, fremd unterschrieben, Unsinn → jeweils leer |
+| — | — | Konto sticht die Geräte-Kennung |
+| — | — | die Statusseite (Bestellnummer + Adresse) bleibt unberührt |
 
-## Gegenprobe (Entwurf)
+### Anzeige — [tests/geraete-kennung.spec.js](../../tests/geraete-kennung.spec.js)
 
-- Entfällt die Prüfung des Anmeldezeichens, fällt **TC-MG-02**.
-- Wird das Zeichen nicht gegen die angefragte Adresse geprüft, fällt
-  **TC-MG-03** — der gefährlichere Fall, weil er nur mit *zwei*
-  verschiedenen Konten auffällt.
-- Wird die Geräte-Kennung beim Absichern vergessen, fällt **TC-MG-04**.
-  Dieser Fall ist der Wächter gegen den Schaden, den die Absicherung
-  selbst anrichten könnte.
+| ID | Prüft | Erwartung |
+|----|-------|-----------|
+| TC-GK-10 | F3 | die Adresse steht **nicht** mehr in der Adresszeile |
+| TC-GK-13 | F1 | Angemeldete schicken `X-Shop-Token` mit |
+| TC-GK-14 | — | die Startseite legt ungefragt **keine** Kennung an |
+
+## Gegenprobe
+
+Alle drei nachgestellt, jede fällt genau dort, wo sie soll:
+
+| Rücknahme | Ergebnis |
+|---|---|
+| Parameter wieder ungeprüft übernehmen | **TC-MG-02** fällt mit `bekam ['Bert']` — die alte Lücke |
+| `email_filter or konto_mail` statt `konto_mail` | **TC-MG-03** fällt mit `bekam ['Bert']` — Anna bekäme Berts Daten |
+| Geräte-Kennung im Riegel vergessen | **TC-MG-04** fällt mit `bekam []` — jeder Kunde ohne Konto verlöre die Kachel |
+
+Der mittlere ist der gefährlichste: Er sieht nach einer harmlosen
+Vorsichtsmaßnahme aus („nimm den Parameter, sonst das Zeichen") und fällt
+nur auf, wenn man mit **zwei verschiedenen** Konten prüft.

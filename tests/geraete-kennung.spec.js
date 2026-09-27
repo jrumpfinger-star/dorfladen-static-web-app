@@ -152,27 +152,83 @@ test.describe('Geräte-Kennung – Bestellen ohne E-Mail', () => {
       .toContain('device_id=' + encodeURIComponent(kennung));
   });
 
-  test('TC-GK-10: Mit E-Mail hat diese Vorrang', async ({ page }) => {
-    // Die Gegenprobe: Wer eine E-Mail angibt, wird darüber gefunden –
-    // sie gilt über Geräte hinweg, die Kennung nur je Browser.
-    await mockApi(page);
-    await page.goto(seite('index'));
-    await page.evaluate(() => {
-      localStorage.setItem('bs_email', 'gast@example.org');
-      localStorage.setItem('dl_push_device_id', 'test-kennung-123');
-    });
-    const abfragen = [];
-    page.on('request', (r) => {
-      if (/lunch-order.*mode=my/.test(r.url())) abfragen.push(r.url());
-    });
-    await page.goto(seite('index'));
-    await page.waitForTimeout(2000);
+  test('TC-GK-10: Die E-Mail steht nicht mehr in der Adresszeile',
+    async ({ page }) => {
+      /* Bis 27.09.2026 galt hier das Gegenteil: „Mit E-Mail hat diese
+         Vorrang" — die Adresse stand offen in der Abfrage. Gemessen wurde
+         dann, dass der Server sie ungeprüft annahm: Wer die Adresse einer
+         Nachbarin kannte, las deren Bestellungen mit. Aufgefallen ist das
+         erst, als die Adresse eingebbar werden sollte, damit man seine
+         Bestellungen auf mehreren Geräten sieht.
 
-    expect(abfragen.length).toBeGreaterThan(0);
-    expect(abfragen[0]).toContain('email=');
-    expect(abfragen[0], 'bei vorhandener E-Mail keine Kennung')
-      .not.toContain('device_id=');
-  });
+         Seitdem gilt: Die Adresse kommt aus dem Anmeldezeichen des
+         Kundenkontos, nie aus der Adresszeile.
+         (Spec meine-bestellungen-geraete, F3) */
+      await mockApi(page);
+      await page.goto(seite('index'));
+      await page.evaluate(() => {
+        localStorage.setItem('bs_email', 'gast@example.org');
+        localStorage.setItem('dl_push_device_id', 'test-kennung-123');
+      });
+      const abfragen = [];
+      page.on('request', (r) => {
+        if (/lunch-order.*mode=my/.test(r.url())) abfragen.push(r.url());
+      });
+      await page.goto(seite('index'));
+      await page.waitForTimeout(2000);
+
+      expect(abfragen.length).toBeGreaterThan(0);
+      expect(abfragen[0], `die Adresse steht offen in: ${abfragen[0]}`)
+        .not.toContain('email=');
+      expect(abfragen[0], 'ohne Kennung findet die Seite gar nichts')
+        .toContain('device_id=test-kennung-123');
+    });
+
+  test('TC-GK-13: Angemeldete schicken ihr Anmeldezeichen mit',
+    async ({ page }) => {
+      /* Der Gegenbeweis zu TC-GK-10: Die Adresse verschwindet nicht
+         einfach, sie wechselt den Weg. Ohne die Kopfzeile käme niemand
+         mehr geräteübergreifend an seine Bestellungen.
+
+         `X-Shop-Token` und nicht `Authorization`: Azure Static Web Apps
+         ersetzt letztere unterwegs durch eine eigene Kopfzeile. */
+      await mockApi(page);
+      await page.goto(seite('index'));
+      await page.evaluate(() => {
+        localStorage.setItem('dl_shop_token', 'zeichen-abc');
+        localStorage.setItem('dl_push_device_id', 'test-kennung-123');
+      });
+      const kopfzeilen = [];
+      page.on('request', (r) => {
+        if (/lunch-order.*mode=my/.test(r.url())) kopfzeilen.push(r.headers());
+      });
+      await page.goto(seite('index'));
+      await page.waitForTimeout(2000);
+
+      expect(kopfzeilen.length).toBeGreaterThan(0);
+      expect(kopfzeilen[0]['x-shop-token'],
+        'ohne Anmeldezeichen bleibt die Kachel auf fremden Geräten leer')
+        .toBe('zeichen-abc');
+    });
+
+  test('TC-GK-14: Auch die Startseite legt ungefragt keine Kennung an',
+    async ({ page }) => {
+      /* Die Erweiterung von TC-GK-11 auf die Startseite. Sie fragt bei
+         JEDEM Besuch nach eigenen Bestellungen — würde sie dafür
+         `dlPushDeviceId()` benutzen, bekäme jeder Besucher eine Kennung
+         verpasst, auch wer nur den Speiseplan liest.
+
+         Verloren geht dadurch nichts: Wer keine Kennung hat, hat auch
+         keine Bestellung, die daran hängt. */
+      await mockApi(page);
+      await page.goto(seite('index'));
+      await page.waitForTimeout(1500);
+
+      const kennung = await page.evaluate(
+        () => localStorage.getItem('dl_push_device_id'));
+      expect(kennung, 'die Startseite hat ungefragt eine Kennung angelegt')
+        .toBeFalsy();
+    });
 
   test('TC-GK-11: Bloßes Blättern legt noch keine Kennung an',
     async ({ page }) => {

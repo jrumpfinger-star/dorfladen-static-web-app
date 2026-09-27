@@ -115,7 +115,23 @@ wäre so nutzlos wie gar keine.
 **TC-GK-09: Die Startseite sucht mit genau dieser Kennung** — der Beweis über
 die ganze Kette.
 
-**TC-GK-10: Mit E-Mail hat diese Vorrang** — sie gilt über Geräte hinweg.
+**TC-GK-10: Die E-Mail steht nicht mehr in der Adresszeile** — bis zum
+27.09.2026 stand hier das Gegenteil („Mit E-Mail hat diese Vorrang").
+Gemessen wurde dann, dass der Server die Adresse **ungeprüft** annahm:
+Wer die Adresse einer Nachbarin kannte, las deren Bestellungen mit.
+Seitdem kommt die Adresse aus dem Anmeldezeichen des Kundenkontos.
+Geräteübergreifend geht es weiterhin — nur über einen anderen Weg
+(Spec `meine-bestellungen-geraete`, F3).
+
+**TC-GK-13: Angemeldete schicken ihr Anmeldezeichen mit** — der
+Gegenbeweis zu TC-GK-10: Die Adresse verschwindet nicht, sie wechselt den
+Weg.
+
+**TC-GK-14: Auch die Startseite legt ungefragt keine Kennung an** — die
+Erweiterung von TC-GK-11. Die Startseite fragt bei **jedem** Besuch nach
+eigenen Bestellungen; benutzte sie dafür `dlPushDeviceId()`, bekäme jeder
+Besucher eine Kennung verpasst. Deshalb liest
+`dlGeraeteKennungLesen()` nur, statt anzulegen.
 
 **TC-GK-11: Bloßes Blättern legt noch keine Kennung an** — dafür steht die
 Funktion bereit.

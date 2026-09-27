@@ -379,6 +379,24 @@ if(window!==window.parent){
       if(d.phone) document.getElementById('cust-phone').value = d.phone;
       if(d.name || d.email) document.getElementById('saved-badge').style.display='';
     }catch(e){}
+    /* Wer angemeldet ist, bekommt die Adresse seines Kontos vorbelegt -
+       aber nur, wenn das Feld noch leer ist. Eine hier von Hand
+       eingetragene Adresse zu ueberschreiben waere uebergriffig.
+       Der Grund: Nur eine Bestellung mit DIESER Adresse taucht spaeter
+       auf den anderen Geraeten des Kontos auf. Eine abweichende Adresse
+       waere fuer die Kundin nicht nachvollziehbar verschwunden.
+       (Spec meine-bestellungen-geraete, F5) */
+    try{
+      var feld = document.getElementById('cust-email');
+      if(feld && !feld.value.trim()){
+        var konto = JSON.parse(localStorage.getItem('dl_shop_user')||'null');
+        if(konto && konto.email){
+          feld.value = konto.email;
+          var merker = document.getElementById('saved-badge');
+          if(merker) merker.style.display='';
+        }
+      }
+    }catch(e){}
   }
   function saveCustomer(){
     var d = {

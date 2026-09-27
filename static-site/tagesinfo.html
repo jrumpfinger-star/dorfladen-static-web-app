@@ -400,14 +400,10 @@ window.addEventListener('message',function(e){
 
   /* === "bestellt"-Markierungen fuer eigene Mittagsbestellungen (nur heute) === */
   function _ensureLunchOrderP(){
-    if(window._dlLunchOrderP) return window._dlLunchOrderP;
-    var email=(localStorage.getItem('bs_email')||'').trim();
-    var dev=(localStorage.getItem('dl_push_device_id')||'').trim();
-    var q = email ? ('email='+encodeURIComponent(email)) : (dev ? ('device_id='+encodeURIComponent(dev)) : '');
-    if(!q) return null;
-    window._dlLunchOrderP=fetch('/api/lunch-order?mode=my&'+q)
-      .then(function(r){return r.json();}).catch(function(){return {success:false};});
-    return window._dlLunchOrderP;
+    /* Die Abfrage steht in js/geraete-id.js - vorher lag hier eine
+       zweite Abschrift derselben Zeilen. (Spec meine-bestellungen-geraete) */
+    if(!window.dlMeineBestellungen) return null;
+    return dlMeineBestellungen();
   }
   function loadMyLunchOrderMarkers(){
     var p=_ensureLunchOrderP();

@@ -133,7 +133,17 @@ def main():
     # nachts auf - deshalb wird die Quelle geprueft, nicht die Uhrzeit.
     quelle = open(os.path.join(API, "lunch-order", "__init__.py"),
                   encoding="utf-8-sig").read()
-    zweig = quelle.split('req.params.get("mode") == "my"')[1][:900]
+    # Gesucht wird der Block, der die Kachel-Abfrage BAUT - erkennbar am
+    # Tagesfilter. Frueher stand hier schlicht "der Teil nach dem ersten
+    # mode==my". Das ging gut, solange es nur einen gab; seit die
+    # Nachweispruefung (Spec meine-bestellungen-geraete) einen zweiten
+    # Block davorsetzt, traf es den falschen und der Waechter fiel, ohne
+    # dass am Tagesfilter etwas faul war. Ein Merkmal haelt laenger als
+    # eine Position.
+    teile = quelle.split('req.params.get("mode") == "my"')
+    zweig = next((t[:900] for t in teile[1:] if "dl_datum ge" in t[:900]), "")
+    pruefe("TC-A05  der Abfragezweig wurde gefunden", bool(zweig),
+           "kein Block mit dl_datum ge")
     pruefe("TC-A05  kein utcnow() im mode=my-Zweig",
            "utcnow()" not in zweig, zweig[:200])
     pruefe("TC-A05  nutzt den Berlin-Helfer", "_heute_lokal()" in zweig)
