@@ -59,11 +59,11 @@ test.describe('Mein Konto: auffindbar', () => {
       /* Nicht nur in der Fußzeile: In der Kopfleiste (Rechner) und im
          Menü (Handy) — dort sucht man zuerst.
 
-         Gesucht wird mit `^=`, nicht `=`: Seit Spec `konto-icon` zeigt
-         der abgemeldete Zustand auf `/mein-konto#neu` (direkt ins
-         Anlegen-Formular). Ein Selektor auf die genaue Adresse hätte
-         ihn übersehen — und dieser Fall hätte gemeldet, der Zugang sei
-         verschwunden, obwohl er nur ein anderes Ziel bekam. */
+         Gesucht wird mit `^=`, nicht `=`: Die Ziele unterscheiden sich
+         je nach Beschriftung — „Anmelden" führt auf `/mein-konto`,
+         „Konto anlegen" auf `/mein-konto#neu`. Ein Selektor auf die
+         genaue Adresse hätte einen davon übersehen und gemeldet, der
+         Zugang sei verschwunden, obwohl er nur ein anderes Ziel hat. */
       await mockApi(page);
       await page.goto(`${BASE}/index.html`);
       await page.waitForTimeout(800);
@@ -161,13 +161,19 @@ test.describe('Mein Konto: auffindbar', () => {
   test('TC-MK-19: Auch die Bestellstatus-Seite führt zum Konto',
     async ({ page }) => {
       /* Wer seinen Bestellstatus sucht, ist genau der, den die Frage
-         „und auf dem anderen Gerät?" betrifft. */
+         „und auf dem anderen Gerät?" betrifft.
+
+         Das Ziel traegt `#neu`, weil der Link „Konto anlegen" verspricht.
+         Beschriftung und Ziel muessen zusammenpassen - andersherum war
+         es gemeldet worden: „Anmelden" fuehrte ins Anlegen-Formular.
+         (Spec anmelden-vor-registrieren) */
       await mockApi(page);
       await page.goto(`${BASE}/bestellstatus.html`);
       await page.waitForTimeout(900);
       const hinweis = page.locator('#bs-konto');
       await expect(hinweis).toBeVisible();
-      await expect(hinweis.locator('a')).toHaveAttribute('href', '/mein-konto');
+      await expect(hinweis.locator('a')).toContainText('Konto anlegen');
+      await expect(hinweis.locator('a')).toHaveAttribute('href', '/mein-konto#neu');
     });
 
   test('TC-MK-20: Angemeldete sehen ihn auch dort nicht',

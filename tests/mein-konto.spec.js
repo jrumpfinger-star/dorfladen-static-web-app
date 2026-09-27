@@ -67,6 +67,29 @@ async function mockApi(page, opts = {}) {
 
 const seite = () => `${BASE}/mein-konto.html`;
 
+/* Seit „nach dem Anmelden zur Startseite" (Spec anmelden-vor-registrieren)
+   fuehrt der Anmeldevorgang von dieser Seite weg. Wer die Kontoseite
+   angemeldet betrachten will - etwa ueber den Link „Mein Konto" -, bringt
+   sein Anmeldezeichen mit. Genau diesen Zustand stellen die Tests unten
+   her; dass das Anmelden selbst zur Startseite fuehrt, prueft TC-AR-03. */
+async function angemeldetOeffnen(page) {
+  await page.goto(seite());
+  /* Bewusst nicht per addInitScript: Das liefe bei JEDEM Seitenaufruf
+     erneut - auch auf der Startseite, zu der das Abmelden springt. Das
+     Zeichen waere dort sofort wieder da und TC-MK-10 haette einen Fehler
+     gemeldet, den es nicht gibt. */
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem('dl_shop_token', 'zeichen-xyz');
+      localStorage.setItem('dl_shop_user', JSON.stringify({
+        email: 'anna@example.com', vorname: 'Anna', nachname: 'Beispiel',
+      }));
+    } catch (e) {}
+  });
+  await page.reload();
+  await page.waitForTimeout(1200);
+}
+
 test.describe('Mein Konto – ohne aktiven Bestellshop', () => {
   test.use({ serviceWorkers: 'block' });
 
@@ -153,14 +176,10 @@ test.describe('Mein Konto – ohne aktiven Bestellshop', () => {
       expect(g.register.length, 'trotz Abweichung gesendet').toBe(0);
     });
 
-  test('TC-MK-06: Nach dem Anmelden stehen die eigenen Bestellungen da',
+  test('TC-MK-06: Angemeldet stehen die eigenen Bestellungen da',
     async ({ page }) => {
-      const g = await mockApi(page);
-      await page.goto(seite());
-      await page.fill('#mk-login-mail', 'anna@example.com');
-      await page.fill('#mk-login-pw', 'geheim123');
-      await page.click('#mk-login-knopf');
-      await page.waitForTimeout(1200);
+      await mockApi(page);
+      await angemeldetOeffnen(page);
 
       await expect(page.locator('#mk-angemeldet')).toBeVisible();
       await expect(page.locator('#mk-liste')).toContainText('Dampfnudeln');
@@ -173,11 +192,7 @@ test.describe('Mein Konto – ohne aktiven Bestellshop', () => {
          der Adresszeile, könnte jeder eine fremde eintragen.
          (Spec meine-bestellungen-geraete, F3) */
       const g = await mockApi(page);
-      await page.goto(seite());
-      await page.fill('#mk-login-mail', 'anna@example.com');
-      await page.fill('#mk-login-pw', 'geheim123');
-      await page.click('#mk-login-knopf');
-      await page.waitForTimeout(1200);
+      await angemeldetOeffnen(page);
 
       expect(g.lunch.length, 'keine Abfrage gestellt').toBeGreaterThan(0);
       const a = g.lunch[g.lunch.length - 1];
@@ -202,26 +217,21 @@ test.describe('Mein Konto – ohne aktiven Bestellshop', () => {
   test('TC-MK-09: Ohne Bestellung steht ein Satz da, nicht nichts',
     async ({ page }) => {
       await mockApi(page, { keineBestellungen: true });
-      await page.goto(seite());
-      await page.fill('#mk-login-mail', 'anna@example.com');
-      await page.fill('#mk-login-pw', 'geheim123');
-      await page.click('#mk-login-knopf');
-      await page.waitForTimeout(1200);
+      await angemeldetOeffnen(page);
       await expect(page.locator('#mk-liste')).toContainText('keine Bestellung');
     });
 
   test('TC-MK-10: Abmelden räumt das Anmeldezeichen weg',
     async ({ page }) => {
       await mockApi(page);
-      await page.goto(seite());
-      await page.fill('#mk-login-mail', 'anna@example.com');
-      await page.fill('#mk-login-pw', 'geheim123');
-      await page.click('#mk-login-knopf');
-      await page.waitForTimeout(1000);
+      await angemeldetOeffnen(page);
       await page.click('#mk-abmelden');
-      await page.waitForTimeout(400);
 
-      await expect(page.locator('#mk-anmelden')).toBeVisible();
+      /* Das Abmelden fuehrt zur Startseite (Spec
+         anmelden-vor-registrieren). Der Speicher gehoert derselben
+         Herkunft, laesst sich dort also weiter pruefen - und das ist der
+         eigentliche Punkt: Das Zeichen darf nicht liegen bleiben. */
+      await page.waitForURL((u) => !/mein-konto/.test(u.pathname), { timeout: 10000 });
       const zeichen = await page.evaluate(() => localStorage.getItem('dl_shop_token'));
       expect(zeichen, 'das Anmeldezeichen liegt noch im Browser').toBeFalsy();
     });

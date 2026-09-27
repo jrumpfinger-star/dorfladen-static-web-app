@@ -237,6 +237,12 @@ an dem Sie angemeldet sind — also auch am Rechner, wenn Sie mit dem Handy
 bestellt haben. Ohne Konto sehen Sie Ihre Bestellung weiterhin, aber nur
 auf dem Gerät, mit dem Sie bestellt haben. <b>Pflicht ist das
 nicht</b> — wer nur ab und zu bestellt, braucht kein Konto.</p>
+
+<p><b>An- und abmelden:</b> Der Knopf {q('Anmelden')} oben rechts führt zur
+Anmeldung. Haben Sie noch kein Konto, tippen Sie dort auf
+{q('Noch kein Konto? Konto anlegen')}. Nach dem Anmelden sind Sie wieder
+auf der Startseite — oben rechts steht dann Ihr Name. Zum Abmelden tippen
+Sie darauf und dann auf {q('Abmelden')}.</p>
 """,
     },
 

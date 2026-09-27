@@ -2279,9 +2279,14 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
           if(ic) ic.textContent=initialen(k);
           if(tx) tx.textContent=name||'Mein Konto';
         } else {
-          /* Direkt ins Anlegen-Formular: Wer hier klickt und kein Konto
-             hat, will eins - die Anmeldemaske wäre ein Umweg. */
-          el.href='/mein-konto#neu';
+          /* Zur Anmeldung, nicht zum Anlegen. Der Knopf heißt
+             „Anmelden" - wer ihn drückt, will sich in aller Regel
+             anmelden. Direkt ins Anlegen-Formular zu springen war ein
+             Widerspruch zur Beschriftung und traf vor allem die, die
+             längst ein Konto haben. Wer keines hat, findet gleich unter
+             dem Formular „Noch kein Konto? Konto anlegen".
+             (Spec anmelden-vor-registrieren) */
+          el.href='/mein-konto';
           el.title='Anmelden oder Konto anlegen';
           if(tx) tx.textContent='Anmelden';
         }
@@ -2290,7 +2295,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
       var mob=document.getElementById('mob-konto');
       if(mob){
         var mtx=document.getElementById('mob-konto-txt');
-        mob.href = an ? '/mein-konto' : '/mein-konto#neu';
+        mob.href = '/mein-konto';
         if(mtx) mtx.textContent = an ? (name ? ('Mein Konto · '+name) : 'Mein Konto')
                                      : 'Anmelden / Konto anlegen';
       }

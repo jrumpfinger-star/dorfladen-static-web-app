@@ -473,7 +473,12 @@
             localStorage.setItem('dl_shop_token',res.token);
             localStorage.setItem('dl_shop_user',JSON.stringify(res.kunde||{email:mail}));
           }catch(e){}
-          angemeldetZeigen();
+          /* Zurück zur Startseite: Dort steht der Name im Konto-Symbol
+             und die Bestellungen stehen im Kasten „Meine Bestellungen".
+             Auf dieser Seite zu bleiben liess den Eindruck entstehen,
+             man sei in einem eigenen Bereich gelandet und muesse sich
+             erst wieder heraussuchen. (Spec anmelden-vor-registrieren) */
+          location.href='/';
           return;
         }
         fehler('mk-anmelde-fehler',
@@ -583,7 +588,10 @@
       localStorage.removeItem('dl_shop_token');
       localStorage.removeItem('dl_shop_user');
     }catch(e){}
-    zeigen('mk-anmelden');
+    /* Wie beim Anmelden zurueck zur Startseite. Die leere Anmeldemaske
+       stehen zu lassen sah aus, als sei das Abmelden fehlgeschlagen.
+       (Spec anmelden-vor-registrieren) */
+    location.href='/';
   }
 
   /* ── Stornieren ──

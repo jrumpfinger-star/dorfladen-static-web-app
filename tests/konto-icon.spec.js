@@ -65,13 +65,15 @@ test.describe('Mein Konto: Icon zeigt den Anmeldestatus', () => {
     }
   });
 
-  test('TC-KI-02: Abgemeldet führt der Weg direkt ins Anlegen-Formular',
+  test('TC-KI-02: Abgemeldet führt der Weg zur Anmeldung',
     async ({ page }) => {
-      /* Der zweite Teil der Meldung: „Von hier aus sollte man sich auch
-         neu registrieren können." Wer hier klickt und kein Konto hat,
-         will eins — die Anmeldemaske wäre ein Umweg. */
+      /* Aus dem Laden nachgereicht: „Macht es nicht mehr Sinn, sich
+         anzumelden und nachzufragen, ob schon registriert?" Stimmt — der
+         Knopf heißt „Anmelden", führte aber ins Anlegen-Formular. Wer
+         noch kein Konto hat, findet gleich darunter „Noch kein Konto?
+         Konto anlegen". */
       await seite(page, false);
-      await expect(page.locator('#tb-konto')).toHaveAttribute('href', '/mein-konto#neu');
+      await expect(page.locator('#tb-konto')).toHaveAttribute('href', '/mein-konto');
     });
 
   test('TC-KI-03: Angemeldet stehen Name und Initialen da', async ({ page }) => {
@@ -116,7 +118,7 @@ test.describe('Mein Konto: Icon zeigt den Anmeldestatus', () => {
   test('TC-KI-06: Auch das Handy-Menü zeigt den Zustand', async ({ page }) => {
     await seite(page, false);
     await expect(page.locator('#mob-konto-txt')).toContainText('Anmelden');
-    await expect(page.locator('#mob-konto')).toHaveAttribute('href', '/mein-konto#neu');
+    await expect(page.locator('#mob-konto')).toHaveAttribute('href', '/mein-konto');
   });
 
   test('TC-KI-07: Angemeldet nennt das Handy-Menü den Namen',
