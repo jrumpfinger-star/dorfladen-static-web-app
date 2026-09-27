@@ -1,9 +1,8 @@
 # Die Bestellliste ist kein öffentliches Verzeichnis
 
-> **Status: vorbereitet, NICHT scharf geschaltet.**
-> Der Code ist ausgeliefert und ändert vorerst **nichts**. Die
-> Durchsetzung hängt an `CMS_AUTH_ENFORCE`, das in der Produktion
-> bewusst nicht gesetzt ist (siehe „Warum nicht sofort scharf").
+> **Status: SCHARF seit 27.09.2026** über den eigenen Schalter
+> `LUNCH_LIST_ENFORCE=1`. Der gemeinsame Schalter `CMS_AUTH_ENFORCE`
+> bleibt weiterhin aus — T10 ist davon unberührt.
 
 ## Befund
 
@@ -160,6 +159,33 @@ Ein kurzes Einschalten allein zum Ausprobieren wurde für
 `CMS_AUTH_ENFORCE` erwogen und **verworfen** — mit dem eigenen Schalter
 erübrigt sich das: Er ist klein genug, um ihn gefahrlos zu setzen und
 wieder zurückzunehmen.
+
+### Eingeschaltet am 27.09.2026 — was danach gemessen wurde
+
+`LUNCH_LIST_ENFORCE=1` gesetzt (15 statt 14 Einstellungen, alle übrigen
+unversehrt). Unmittelbar danach gegen die Live-Seite geprüft:
+
+| Prüfung | Ergebnis |
+|---|---|
+| Liste **ohne** Token | **HTTP 401** — die Lücke ist zu |
+| Liste **mit** dem echten Kiosk-Token | HTTP 200, 200 Bestellungen — der Kiosk arbeitet |
+| Liste mit **falschem** Token | HTTP 401 — richtig abgewiesen |
+| Kundenweg Geräte-Kennung | HTTP 200 — unberührt |
+| Kundenweg Bestellnummer | HTTP 404 (Nummer gibt es nicht) — also erreichbar |
+| `cms-config`, `wochenplan`, `hours` | HTTP 200 — unberührt |
+
+Damit ist belegt, dass die Sperre greift **und** der Betrieb läuft.
+
+**Was sich nicht aus der Ferne prüfen lässt:** ob das Ladentablett sein
+`cms_auth_token` noch im Speicher hat. Fehlt es, erscheint dort beim
+Öffnen des Mittagstischs der gewohnte Passwort-Dialog — einmal das
+Kiosk-Passwort eingeben, danach ist Ruhe. Zurückstellen jederzeit:
+
+```
+az staticwebapp appsettings set --name dorfladen-website \
+   --subscription 89dd5962-2356-4f41-aa6b-ab6c0e054877 \
+   --setting-names LUNCH_LIST_ENFORCE=
+```
 
 ## Was noch nicht bewiesen ist
 

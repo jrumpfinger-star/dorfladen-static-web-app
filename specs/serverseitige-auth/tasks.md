@@ -30,15 +30,17 @@ erfolgt zuletzt.
 - [ ] **T10** Prod (`dorfladen-website`) aktivieren: `CMS_AUTH_ENFORCE=1` — bewusst
   **offen**, erst nach kurzem CMS-Check im Prod-Browser (Kiosk ist operativ kritisch).
 
-  > **Zusatz (27.09.2026):** An T10 hängt seit Spec
-  > [bestellliste-schuetzen](../bestellliste-schuetzen/spec.md) auch der
-  > Schutz der Mittagstisch-Liste — sie liefert bis dahin ungeschützt
-  > Namen und Adressen aller Kunden. Vor dem Einschalten ist zusätzlich
-  > zu prüfen, ob das **Ladentablett** `cms_auth_token` im Speicher hat:
-  > Der Kiosk merkt sich die Freigabe dauerhaft (`kiosk_auth_ok`) und
-  > durchläuft die Passwortmaske morgens nicht mehr — dabei wird auch
-  > kein frisches Token geholt. Eine einmalige Anmeldung über die Maske
-  > genügt.
+  > **Zusatz (27.09.2026):** An T10 hing bis dahin auch der Schutz der
+  > Mittagstisch-Liste (Spec
+  > [bestellliste-schuetzen](../bestellliste-schuetzen/spec.md)). **Das
+  > ist erledigt und hängt nicht mehr hier:** Die Liste trägt seit dem
+  > 27.09.2026 einen **eigenen** Schalter `LUNCH_LIST_ENFORCE=1`, der
+  > gesetzt und live verifiziert ist — ohne Token 401, mit Kiosk-Token
+  > 200, Kundenwege unberührt.
+  >
+  > T10 betrifft damit wieder nur das, wofür es gedacht war: die 25
+  > Endpunkte mit `admin_auth_guard` (Schreibzugriffe von CMS und
+  > Kiosk).
   >
   > **Entwarnung zum Risiko:** `admin-auth.js` fängt eine 401-Antwort ab
   > und zeigt den gewohnten Passwort-Dialog, statt still zu scheitern —
@@ -50,9 +52,8 @@ erfolgt zuletzt.
   > **Reihenfolge zum Einschalten:**
   > 1. Am Tablett prüfen, ob `cms_auth_token` vorhanden ist
   > 2. `CMS_AUTH_ENFORCE=1` setzen
-  > 3. Im Kiosk den Mittagstisch öffnen — die Liste muss stehen
-  > 4. Von außen `GET /api/lunch-order` — muss 401 geben
-  > 5. Die Kachel auf der Startseite prüfen
+  > 3. Im CMS etwas speichern — muss durchgehen
+  > 4. Im Kiosk eine Bestellung bestätigen — muss durchgehen
   >
   > Zurückstellen: `CMS_AUTH_ENFORCE=` (leer).
 
