@@ -148,14 +148,31 @@
     .mk-nutzer-txt{flex:1;min-width:0}
     .mk-nutzer-txt b{display:block;font-size:14px}
     .mk-nutzer-txt small{font-size:11.5px;color:var(--c-muted);overflow-wrap:anywhere}
+    .mk-kopf-akt{display:flex;gap:6px;flex-shrink:0}
     /* 40 px Höhe: Darunter wird das Treffen mit dem Finger zur
        Glückssache. Gemessen waren es 24 px — zu wenig, gerade für den,
        der sich auf einem geteilten Gerät wieder abmelden will.
        (Spec bestellung-aendern) */
-    .mk-abmelden{font-size:12.5px;color:var(--c-red);cursor:pointer;
-      background:none;border:1px solid #fca5a5;border-radius:9px;
-      font-family:inherit;padding:0 12px;min-height:40px;flex-shrink:0}
+    .mk-profil-btn,.mk-abmelden{font-size:12.5px;cursor:pointer;
+      background:none;border-radius:9px;font-family:inherit;padding:0 11px;
+      min-height:40px;flex-shrink:0;display:flex;align-items:center;gap:5px}
+    .mk-profil-btn{color:var(--c-green);border:1px solid #bbd8c6}
+    .mk-profil-btn:hover{background:#f0fdf4}
+    .mk-abmelden{color:var(--c-red);border:1px solid #fca5a5}
     .mk-abmelden:hover{background:#fef2f2}
+
+    /* Profil bearbeiten: Abschnitte fuer E-Mail und Passwort trennen
+       sich sichtbar vom harmlosen Teil (Name/Telefon) - wer nur den
+       Namen aendern will, soll das nicht mit Passwortfeldern verwechseln.
+       (Spec konto-profil-bearbeiten) */
+    .mk-abschnitt{margin:18px 0 14px;padding-top:14px;border-top:1px solid var(--c-rand)}
+    .mk-abschnitt h3{font-size:13.5px;font-weight:600;margin-bottom:3px;
+      display:flex;align-items:center;gap:6px}
+    .mk-abschnitt-sub{font-size:12px;color:var(--c-muted);margin-bottom:11px;line-height:1.5}
+    .mk-hinweis-klein{font-size:11.5px;color:var(--c-muted);margin-top:3px}
+    .mk-akt-reihe{display:flex;gap:9px;margin-top:16px}
+    .mk-akt-reihe .mk-knopf{margin-top:0}
+    .mk-akt-reihe .mk-knopf.zweit{flex:0 0 130px}
   </style>
 </head>
 <body>
@@ -179,7 +196,10 @@
         <b id="mk-name">—</b>
         <small id="mk-mail">—</small>
       </div>
-      <button class="mk-abmelden" id="mk-abmelden">Abmelden</button>
+      <div class="mk-kopf-akt">
+        <button class="mk-profil-btn" id="mk-zu-profil">✎ Profil</button>
+        <button class="mk-abmelden" id="mk-abmelden">Abmelden</button>
+      </div>
     </div>
     <h2>Meine Bestellungen</h2>
     <p class="mk-sub">Alles, was heute oder später ansteht — auf jedem Gerät,
@@ -264,6 +284,73 @@
     <button class="mk-knopf zweit" id="mk-zurueck-anmelden">Zur Anmeldung</button>
   </div>
 
+  <!-- ── Profil bearbeiten ──
+       Aus dem Laden: "Es muss auch hier moeglich sein, sein Profil
+       (Konto) zu bearbeiten und zu aendern, wie es Standard ist in
+       Online-Anwendungen." Bisher gab es nur "Abmelden".
+       Name/Telefon aendern sich ohne Huerde; E-Mail und Passwort
+       verlangen das aktuelle Passwort - wie beim Online-Banking ueblich.
+       (Spec konto-profil-bearbeiten) -->
+  <div class="mk-karte" id="mk-profil" style="display:none">
+    <h2>Profil bearbeiten</h2>
+    <p class="mk-sub">Ihre Angaben — nur Sie sehen diese Seite.</p>
+
+    <div class="mk-meldung mk-fehler" id="pf-fehler"></div>
+    <div class="mk-meldung mk-ok" id="pf-ok"></div>
+
+    <div class="mk-reihe">
+      <div class="mk-feld">
+        <label for="pf-vorname">Vorname</label>
+        <input type="text" id="pf-vorname" autocomplete="given-name">
+      </div>
+      <div class="mk-feld">
+        <label for="pf-nachname">Nachname</label>
+        <input type="text" id="pf-nachname" autocomplete="family-name">
+      </div>
+    </div>
+    <div class="mk-feld">
+      <label for="pf-telefon">Telefon (optional)</label>
+      <input type="tel" id="pf-telefon" placeholder="08082 …" autocomplete="tel">
+    </div>
+
+    <div class="mk-abschnitt">
+      <h3>✉️ E-Mail-Adresse</h3>
+      <p class="mk-abschnitt-sub">Ändern Sie diese, wird ein neuer Bestätigungslink
+         an die neue Adresse geschickt — wie bei der ersten Anmeldung.</p>
+      <div class="mk-feld">
+        <label for="pf-email">E-Mail</label>
+        <input type="email" id="pf-email" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="mk-abschnitt">
+      <h3>🔒 Passwort ändern</h3>
+      <p class="mk-abschnitt-sub">Leer lassen, wenn Sie es nicht ändern möchten.</p>
+      <div class="mk-feld">
+        <label for="pf-neu-pw">Neues Passwort (mindestens 8 Zeichen)</label>
+        <input type="password" id="pf-neu-pw" autocomplete="new-password">
+      </div>
+      <div class="mk-feld">
+        <label for="pf-neu-pw2">Neues Passwort wiederholen</label>
+        <input type="password" id="pf-neu-pw2" autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="mk-abschnitt">
+      <div class="mk-feld" style="margin-bottom:4px">
+        <label for="pf-akt-pw">Aktuelles Passwort</label>
+        <input type="password" id="pf-akt-pw" autocomplete="current-password">
+        <div class="mk-hinweis-klein">Nur nötig, wenn Sie oben die E-Mail-Adresse
+           oder das Passwort ändern.</div>
+      </div>
+    </div>
+
+    <div class="mk-akt-reihe">
+      <button class="mk-knopf zweit" id="pf-abbrechen">Abbrechen</button>
+      <button class="mk-knopf" id="pf-speichern">Änderungen speichern</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- Storno-Rückfrage. Der Grund ist Pflicht — die Küche plant nach
@@ -299,7 +386,7 @@
     });
   }
   function zeigen(welche){
-    ['mk-angemeldet','mk-anmelden','mk-neu','mk-bestaetigen'].forEach(function(id){
+    ['mk-angemeldet','mk-anmelden','mk-neu','mk-bestaetigen','mk-profil'].forEach(function(id){
       var el=$(id); if(el) el.style.display=(id===welche)?'':'none';
     });
   }
@@ -594,6 +681,105 @@
     location.href='/';
   }
 
+  /* ── Profil bearbeiten ──
+     Name/Telefon aendern sich ohne Huerde; E-Mail und Passwort verlangen
+     das aktuelle Passwort. Dieselbe Regel steckt im Server
+     (api/auth-profile) - hier wird sie nur vorab geprueft, damit ein
+     Tippfehler nicht erst nach einer Anfrage auffaellt.
+     (Spec konto-profil-bearbeiten) */
+  function profilOeffnen(){
+    var k=konto();
+    if(!k) return;
+    $('pf-vorname').value=k.vorname||'';
+    $('pf-nachname').value=k.nachname||'';
+    $('pf-telefon').value=k.telefon||'';
+    $('pf-email').value=k.email||'';
+    $('pf-neu-pw').value=''; $('pf-neu-pw2').value=''; $('pf-akt-pw').value='';
+    fehler('pf-fehler',''); fehler('pf-ok','');
+    zeigen('mk-profil');
+
+    // Das Telefon steht nicht im gespeicherten Konto-Objekt (kam nie
+    // vom Server zurueck) - deshalb frisch von dort holen, wenn vorhanden.
+    fetch(API+'/auth-profile',{headers:{'X-Shop-Token':zeichen()}})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res && res.success && res.profil){
+          $('pf-telefon').value=res.profil.telefon||'';
+        }
+      })
+      .catch(function(){});
+  }
+
+  function profilSpeichern(){
+    var vorname=$('pf-vorname').value.trim();
+    var nachname=$('pf-nachname').value.trim();
+    var telefon=$('pf-telefon').value.trim();
+    var email=$('pf-email').value.trim().toLowerCase();
+    var neuPw=$('pf-neu-pw').value;
+    var neuPw2=$('pf-neu-pw2').value;
+    var aktPw=$('pf-akt-pw').value;
+    var k=konto()||{};
+
+    if(!vorname || !nachname){
+      fehler('pf-fehler','Vorname und Nachname dürfen nicht leer sein.'); return;
+    }
+    var emailGeaendert = email !== (k.email||'');
+    var pwGeaendert = !!neuPw;
+    if(pwGeaendert && neuPw.length<8){
+      fehler('pf-fehler','Das neue Passwort muss mindestens 8 Zeichen lang sein.'); return;
+    }
+    if(pwGeaendert && neuPw!==neuPw2){
+      fehler('pf-fehler','Die beiden neuen Passwörter stimmen nicht überein.'); return;
+    }
+    if((emailGeaendert || pwGeaendert) && !aktPw){
+      fehler('pf-fehler','Bitte geben Sie Ihr aktuelles Passwort ein, um E-Mail oder Passwort zu ändern.');
+      return;
+    }
+
+    var body={vorname:vorname, nachname:nachname, telefon:telefon};
+    if(emailGeaendert) body.email=email;
+    if(pwGeaendert) body.neues_passwort=neuPw;
+    if(emailGeaendert || pwGeaendert) body.aktuelles_passwort=aktPw;
+
+    var knopf=$('pf-speichern');
+    knopf.disabled=true; knopf.textContent='Wird gespeichert …';
+    fehler('pf-fehler',''); fehler('pf-ok','');
+
+    fetch(API+'/auth-profile',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','X-Shop-Token':zeichen()},
+      body:JSON.stringify(body)
+    })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        knopf.disabled=false; knopf.textContent='Änderungen speichern';
+        if(res && res.success){
+          try{
+            if(res.token) localStorage.setItem('dl_shop_token', res.token);
+            localStorage.setItem('dl_shop_user', JSON.stringify(res.kunde));
+          }catch(e){}
+          var k2=res.kunde||{};
+          var name=((k2.vorname||'')+' '+(k2.nachname||'')).trim()||k2.email||'';
+          $('mk-name').textContent=name;
+          $('mk-mail').textContent=k2.email||'';
+          var initialen=((k2.vorname||' ')[0]||'')+((k2.nachname||' ')[0]||'');
+          $('mk-initialen').textContent=(initialen.trim()||'?').toUpperCase();
+
+          var text='Gespeichert.';
+          if(res.email_bestaetigung_gesendet) text+=' Ein Bestätigungslink wurde an die neue Adresse geschickt.';
+          fehler('pf-ok', text);
+          $('pf-neu-pw').value=''; $('pf-neu-pw2').value=''; $('pf-akt-pw').value='';
+          return;
+        }
+        fehler('pf-fehler',
+          esc((res && ((res.errors||[]).join(' ') || res.error)) || 'Änderung nicht möglich.'));
+      })
+      .catch(function(){
+        knopf.disabled=false; knopf.textContent='Änderungen speichern';
+        fehler('pf-fehler','Keine Verbindung. Bitte später noch einmal versuchen.');
+      });
+  }
+
   /* ── Stornieren ──
      Der Weg ist derselbe wie auf der Bestellstatus-Seite:
      PATCH mit kunde_storno und einem Grund. Der Server laesst das nur
@@ -665,6 +851,9 @@
   $('mk-login-knopf').addEventListener('click',anmelden);
   $('mk-neu-knopf').addEventListener('click',kontoAnlegen);
   $('mk-abmelden').addEventListener('click',abmelden);
+  $('mk-zu-profil').addEventListener('click',profilOeffnen);
+  $('pf-speichern').addEventListener('click',profilSpeichern);
+  $('pf-abbrechen').addEventListener('click',function(){ zeigen('mk-angemeldet'); });
   $('mk-zu-konto').addEventListener('click',function(){ fehler('mk-neu-fehler',''); zeigen('mk-neu'); });
   $('mk-zu-anmelden').addEventListener('click',function(){ fehler('mk-anmelde-fehler',''); zeigen('mk-anmelden'); });
   $('mk-zurueck-anmelden').addEventListener('click',function(){ zeigen('mk-anmelden'); });

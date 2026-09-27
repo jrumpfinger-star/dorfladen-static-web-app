@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil bearbeiten — Vorschau, noch nichts live</title>
+<style>
+  b,strong{font-weight:600}
+  :root{--c-pri:#2d5016;--c-green:#2e7d4f;--c-red:#dc2626;--c-bg:#f5f0eb;
+        --c-card:#fff;--c-text:#2c2c2c;--c-muted:#6b7280;--c-rand:#e2e8f0;--radius:16px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+       background:var(--c-bg);color:var(--c-text);min-height:100vh}
+
+  /* ── Erklaerender Rahmen um die eigentliche Vorschau ── */
+  .erklaer{max-width:640px;margin:0 auto;padding:18px 16px 0}
+  .erklaer .marke{display:inline-block;font-size:11px;font-weight:800;
+    padding:2px 9px;border-radius:20px;background:#fef3c7;color:#92400e;margin-bottom:8px}
+  .erklaer h1{font-size:19px;margin-bottom:6px}
+  .erklaer p{font-size:13.5px;color:var(--c-muted);line-height:1.55;margin-bottom:8px}
+  .erklaer code{background:#eef2f0;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  .erklaer .hinweis{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;
+    border-radius:10px;padding:10px 13px;font-size:13px;line-height:1.5;margin:12px 0}
+  .trenn{max-width:640px;margin:20px auto 0;border-top:2px dashed #d6cdbf}
+  .trenn-txt{max-width:640px;margin:0 auto;padding:10px 16px 0;font-size:12px;
+    color:var(--c-muted);text-align:center}
+
+  /* ── Ab hier: 1:1 die Klassen aus static-site/mein-konto.html ── */
+  .mk-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;
+    padding:9px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+  .mk-header h1{font-size:15px;font-weight:600;line-height:1.15}
+  .mk-header p{font-size:11px;opacity:.82;line-height:1.1}
+  .mk-logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+  .mk-head-txt{flex:1;min-width:0}
+  .mk-zurueck{color:#fff;text-decoration:none;font-size:12px;opacity:.9;
+    border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 10px;white-space:nowrap}
+
+  .mk-box{max-width:520px;margin:14px auto 0;padding:0 16px 40px}
+  .mk-karte{background:var(--c-card);border-radius:var(--radius);
+    box-shadow:0 2px 12px rgba(0,0,0,.08);padding:20px;margin-bottom:14px}
+  .mk-karte h2{font-size:16px;font-weight:600;margin-bottom:6px}
+  .mk-karte p.mk-sub{font-size:13px;color:var(--c-muted);line-height:1.5;margin-bottom:14px}
+
+  .mk-nutzer{display:flex;align-items:center;gap:10px;margin-bottom:14px;
+    padding-bottom:12px;border-bottom:1px solid var(--c-rand)}
+  .mk-avatar{width:38px;height:38px;border-radius:50%;background:var(--c-green);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:15px;flex-shrink:0}
+  .mk-nutzer-txt{flex:1;min-width:0}
+  .mk-nutzer-txt b{display:block;font-size:14px}
+  .mk-nutzer-txt small{font-size:11.5px;color:var(--c-muted);overflow-wrap:anywhere}
+  .mk-kopf-akt{display:flex;gap:6px;flex-shrink:0}
+  .mk-profil-btn,.mk-abmelden{font-size:12.5px;cursor:pointer;
+    background:none;border-radius:9px;font-family:inherit;padding:0 11px;
+    min-height:40px;flex-shrink:0;display:flex;align-items:center;gap:5px}
+  .mk-profil-btn{color:var(--c-green);border:1px solid #bbd8c6}
+  .mk-profil-btn:hover{background:#f0fdf4}
+  .mk-abmelden{color:var(--c-red);border:1px solid #fca5a5}
+  .mk-abmelden:hover{background:#fef2f2}
+
+  .mk-feld{margin-bottom:11px}
+  .mk-feld label{display:block;font-size:12px;font-weight:600;margin-bottom:4px}
+  .mk-feld input{width:100%;padding:10px 12px;border:1px solid var(--c-rand);
+    border-radius:10px;font-size:15px;font-family:inherit;background:var(--c-card);color:var(--c-text)}
+  .mk-feld input:focus{outline:2px solid var(--c-green);outline-offset:-1px}
+  .mk-feld .mk-hinweis-klein{font-size:11.5px;color:var(--c-muted);margin-top:3px}
+  .mk-reihe{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:380px){.mk-reihe{grid-template-columns:1fr}}
+
+  .mk-abschnitt{margin:18px 0 14px;padding-top:14px;border-top:1px solid var(--c-rand)}
+  .mk-abschnitt h3{font-size:13.5px;font-weight:600;margin-bottom:3px;
+    display:flex;align-items:center;gap:6px}
+  .mk-abschnitt .mk-abschnitt-sub{font-size:12px;color:var(--c-muted);margin-bottom:11px;line-height:1.5}
+
+  .mk-knopf{width:100%;padding:12px;border:0;border-radius:10px;background:var(--c-green);
+    color:#fff;font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;min-height:46px}
+  .mk-knopf:hover{filter:brightness(1.07)}
+  .mk-knopf:disabled{opacity:.6;cursor:default}
+  .mk-knopf.zweit{background:transparent;color:var(--c-green);
+    border:1px solid var(--c-green);margin-top:8px}
+  .mk-akt-reihe{display:flex;gap:9px;margin-top:16px}
+  .mk-akt-reihe .mk-knopf{margin-top:0}
+  .mk-akt-reihe .mk-knopf.zweit{flex:0 0 130px}
+
+  .mk-meldung{border-radius:10px;padding:10px 12px;font-size:13px;
+    line-height:1.5;margin-bottom:12px;display:none}
+  .mk-fehler{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+  .mk-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+
+  .verstecken{display:none !important}
+</style>
+</head>
+<body>
+
+<div class="erklaer">
+  <span class="marke">VORSCHAU — noch nichts live</span>
+  <h1>Profil bearbeiten</h1>
+  <p>Aus dem Laden: <em>„Es muss auch hier möglich sein, sein Profil (Konto)
+     zu bearbeiten und zu ändern, wie es Standard ist in
+     Online-Anwendungen."</em> Bisher gab es unter „Mein Konto" nur einen
+     einzigen Knopf: <b>Abmelden</b>. Kein Weg, Name, E-Mail oder Passwort
+     zu ändern.</p>
+  <p>Diese Seite zeigt den geplanten Weg — <b>klickbar, mit erfundenen
+     Testdaten</b>, ohne echte Verbindung zum Server. Der Server-Teil
+     (<code>api/auth-profile</code>) steht bereits und ist durch 21
+     Wächter abgesichert; hier geht es nur um Aussehen und Ablauf.</p>
+  <div class="hinweis">
+    <b>Zwei Stufen an Sicherheit, wie beim Online-Banking üblich:</b>
+    Name und Telefon lassen sich sofort ändern. Für <b>E-Mail</b> und
+    <b>Passwort</b> wird zusätzlich das <b>aktuelle Passwort</b> verlangt —
+    beides gilt als sicherheitsrelevant.
+  </div>
+  <p><b>Zum Ausprobieren:</b> Auf „✎ Profil" tippen. Änderungen an Name/
+     Telefon speichern sofort. Für E-Mail oder ein neues Passwort ohne das
+     aktuelle Passwort erscheint eine verständliche Fehlermeldung.</p>
+</div>
+
+<div class="trenn"></div>
+<p class="trenn-txt">↓ Ab hier: 1:1 dieselben Bausteine wie in static-site/mein-konto.html ↓</p>
+
+<div class="mk-header">
+  <div class="mk-logo">🛒</div>
+  <div class="mk-head-txt">
+    <h1>Mein Konto</h1>
+    <p>Eigene Bestellungen auf allen Geräten</p>
+  </div>
+  <a href="#" class="mk-zurueck" onclick="return false">Zur Startseite</a>
+</div>
+
+<div class="mk-box">
+
+  <!-- ── Angemeldet: Bestellungen (unveraendert) ── -->
+  <div class="mk-karte" id="ansicht-bestellungen">
+    <div class="mk-nutzer">
+      <div class="mk-avatar" id="mk-initialen">AB</div>
+      <div class="mk-nutzer-txt">
+        <b id="mk-name">Anna Beispiel</b>
+        <small id="mk-mail">anna@example.com</small>
+      </div>
+      <div class="mk-kopf-akt">
+        <button class="mk-profil-btn" onclick="zuProfil()">✎ Profil</button>
+        <button class="mk-abmelden">Abmelden</button>
+      </div>
+    </div>
+    <h2>Meine Bestellungen</h2>
+    <p class="mk-sub">Alles, was heute oder später ansteht — auf jedem Gerät,
+       an dem Sie angemeldet sind.</p>
+    <div style="text-align:center;color:var(--c-muted);font-size:13.5px;padding:18px 8px;line-height:1.55">
+      (Bestellliste hier unverändert — nicht Teil dieser Vorschau)
+    </div>
+  </div>
+
+  <!-- ── Neu: Profil bearbeiten ── -->
+  <div class="mk-karte verstecken" id="ansicht-profil">
+    <h2>Profil bearbeiten</h2>
+    <p class="mk-sub">Ihre Angaben — nur Sie sehen diese Seite.</p>
+
+    <div class="mk-meldung mk-fehler" id="pf-fehler"></div>
+    <div class="mk-meldung mk-ok" id="pf-ok"></div>
+
+    <div class="mk-reihe">
+      <div class="mk-feld">
+        <label for="pf-vorname">Vorname</label>
+        <input type="text" id="pf-vorname" value="Anna" autocomplete="given-name">
+      </div>
+      <div class="mk-feld">
+        <label for="pf-nachname">Nachname</label>
+        <input type="text" id="pf-nachname" value="Beispiel" autocomplete="family-name">
+      </div>
+    </div>
+    <div class="mk-feld">
+      <label for="pf-telefon">Telefon (optional)</label>
+      <input type="tel" id="pf-telefon" value="" placeholder="08082 …" autocomplete="tel">
+    </div>
+
+    <div class="mk-abschnitt">
+      <h3>✉️ E-Mail-Adresse</h3>
+      <p class="mk-abschnitt-sub">Ändern Sie diese, wird ein neuer Bestätigungslink
+         an die neue Adresse geschickt — wie bei der ersten Anmeldung.</p>
+      <div class="mk-feld">
+        <label for="pf-email">E-Mail</label>
+        <input type="email" id="pf-email" value="anna@example.com" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="mk-abschnitt">
+      <h3>🔒 Passwort ändern</h3>
+      <p class="mk-abschnitt-sub">Leer lassen, wenn Sie es nicht ändern möchten.</p>
+      <div class="mk-feld">
+        <label for="pf-neu-pw">Neues Passwort (mindestens 8 Zeichen)</label>
+        <input type="password" id="pf-neu-pw" autocomplete="new-password">
+      </div>
+      <div class="mk-feld">
+        <label for="pf-neu-pw2">Neues Passwort wiederholen</label>
+        <input type="password" id="pf-neu-pw2" autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="mk-abschnitt">
+      <div class="mk-feld" style="margin-bottom:4px">
+        <label for="pf-akt-pw">Aktuelles Passwort</label>
+        <input type="password" id="pf-akt-pw" autocomplete="current-password"
+               placeholder="Testpasswort: geheim123">
+        <div class="mk-hinweis-klein">Nur nötig, wenn Sie oben die E-Mail-Adresse
+           oder das Passwort ändern.</div>
+      </div>
+    </div>
+
+    <div class="mk-akt-reihe">
+      <button class="mk-knopf zweit" onclick="zuBestellungen()">Abbrechen</button>
+      <button class="mk-knopf" id="pf-speichern" onclick="speichern()">Änderungen speichern</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Nur fuer diese Vorschau: erfundene Testdaten, keine echte Anfrage ──
+  var ECHTES_PASSWORT = 'geheim123';
+  var stand = { vorname:'Anna', nachname:'Beispiel', email:'anna@example.com', telefon:'' };
+
+  function $(id){ return document.getElementById(id); }
+  function meldung(id, text, art){
+    ['pf-fehler','pf-ok'].forEach(function(mid){ $(mid).style.display='none'; });
+    if(!text) return;
+    var el = $(id);
+    el.textContent = text;
+    el.style.display = 'block';
+  }
+
+  function zuProfil(){
+    $('pf-vorname').value = stand.vorname;
+    $('pf-nachname').value = stand.nachname;
+    $('pf-telefon').value = stand.telefon;
+    $('pf-email').value = stand.email;
+    $('pf-neu-pw').value = '';
+    $('pf-neu-pw2').value = '';
+    $('pf-akt-pw').value = '';
+    meldung(null, '');
+    $('ansicht-bestellungen').classList.add('verstecken');
+    $('ansicht-profil').classList.remove('verstecken');
+  }
+  function zuBestellungen(){
+    $('ansicht-profil').classList.add('verstecken');
+    $('ansicht-bestellungen').classList.remove('verstecken');
+  }
+
+  function speichern(){
+    var vorname = $('pf-vorname').value.trim();
+    var nachname = $('pf-nachname').value.trim();
+    var telefon = $('pf-telefon').value.trim();
+    var email = $('pf-email').value.trim().toLowerCase();
+    var neuPw = $('pf-neu-pw').value;
+    var neuPw2 = $('pf-neu-pw2').value;
+    var aktPw = $('pf-akt-pw').value;
+
+    if(!vorname || !nachname){
+      meldung('pf-fehler','Vorname und Nachname dürfen nicht leer sein.'); return;
+    }
+    var emailGeaendert = email !== stand.email;
+    var pwGeaendert = !!neuPw;
+
+    if(pwGeaendert && neuPw.length < 8){
+      meldung('pf-fehler','Das neue Passwort muss mindestens 8 Zeichen lang sein.'); return;
+    }
+    if(pwGeaendert && neuPw !== neuPw2){
+      meldung('pf-fehler','Die beiden neuen Passwörter stimmen nicht überein.'); return;
+    }
+    if((emailGeaendert || pwGeaendert) && !aktPw){
+      // Genau die Regel aus api/auth-profile: sicherheitsrelevante
+      // Aenderungen verlangen das aktuelle Passwort.
+      meldung('pf-fehler','Bitte geben Sie Ihr aktuelles Passwort ein, um E-Mail oder Passwort zu ändern.');
+      return;
+    }
+    if((emailGeaendert || pwGeaendert) && aktPw !== ECHTES_PASSWORT){
+      meldung('pf-fehler','Das aktuelle Passwort stimmt nicht.'); return;
+    }
+
+    // "Speichern": in der echten Seite ein PATCH an /api/auth-profile.
+    stand = { vorname:vorname, nachname:nachname, email:email, telefon:telefon };
+    $('mk-name').textContent = vorname + ' ' + nachname;
+    $('mk-mail').textContent = email;
+    $('mk-initialen').textContent = ((vorname[0]||'')+(nachname[0]||'')).toUpperCase();
+
+    var text = 'Gespeichert.';
+    if(emailGeaendert) text += ' Ein Bestätigungslink wurde an die neue Adresse geschickt.';
+    meldung('pf-ok', text);
+    $('pf-neu-pw').value=''; $('pf-neu-pw2').value=''; $('pf-akt-pw').value='';
+  }
+</script>
+
+</body>
+</html>
