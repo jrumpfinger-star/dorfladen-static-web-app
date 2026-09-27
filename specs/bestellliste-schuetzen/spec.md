@@ -120,6 +120,39 @@ az staticwebapp appsettings set --name dorfladen-website \
 
 Rückgängig: denselben Befehl mit `CMS_AUTH_ENFORCE=`.
 
+## Was noch nicht bewiesen ist
+
+Die Sperre ist in Wächtern geprüft, aber **nicht in einer laufenden
+Umgebung mit aktiver Durchsetzung**. Der Grund:
+
+| Umgebung | `CMS_AUTH_ENFORCE` | Version |
+|---|---|---|
+| `dorfladen-website` (Produktion) | nicht gesetzt | 1.7.91 — hat den Code |
+| `dorfladen-bestellsystem` (Test) | `1` | 1.6.29 — **hat den Code nicht** |
+
+Die Testumgebung hätte die Durchsetzung, bekommt aber keine
+Auslieferungen mehr. Die Produktion hat den Code, aber nicht die
+Durchsetzung. Es gibt also zurzeit keinen Ort, an dem sich beides
+zugleich beobachten ließe.
+
+Ein kurzes Einschalten in der Produktion wurde erwogen und **verworfen**:
+`CMS_AUTH_ENFORCE` ist ein gemeinsamer Schalter für **25 Endpunkte**
+(alle mit `admin_auth_guard`). Ein Versuch „nur mal sehen" hätte den
+gesamten Schreibbetrieb von CMS und Kiosk mit umgelegt — für einen
+Erkenntnisgewinn, den die Wächter bereits liefern.
+
+**Empfohlene Reihenfolge**, wenn T10 angegangen wird:
+
+1. Am Ladentablett prüfen, ob `cms_auth_token` im Speicher liegt.
+   Falls nicht: einmal über die Passwortmaske anmelden.
+2. `CMS_AUTH_ENFORCE=1` setzen.
+3. Im Kiosk den Mittagstisch öffnen — die Liste muss stehen.
+4. Von außen `GET /api/lunch-order` aufrufen — muss 401 geben.
+5. Die Kachel auf der Startseite prüfen — muss weiter funktionieren.
+
+Schlägt Schritt 3 fehl, genügt `CMS_AUTH_ENFORCE=` (leer) zum
+Zurückstellen; die Wirkung tritt nach dem Neustart der Funktionen ein.
+
 ## Testfälle
 
 ### Server — [tests/test_bestellliste_schuetzen.py](../../tests/test_bestellliste_schuetzen.py)
