@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meine Bestellungen auf allen Geräten — Vorschläge</title>
+<style>
+  :root{
+    --gruen:#166534; --gruen-h:#15803d; --rand:#e2e8f0; --grau:#64748b;
+    --bg:#f8fafc; --karte:#fff; --dunkel:#0f172a;
+    --warn-bg:#fef2f2; --warn-rand:#fecaca; --warn-txt:#991b1b;
+    --ok-bg:#f0fdf4; --ok-rand:#bbf7d0; --ok-txt:#166534;
+    --info-bg:#eff6ff; --info-rand:#bfdbfe; --info-txt:#1d4ed8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--dunkel);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  header{background:var(--gruen); color:#fff; padding:18px 16px}
+  header h1{margin:0; font-size:19px; font-weight:800}
+  header p{margin:4px 0 0; font-size:13px; opacity:.9}
+  main{max-width:1100px; margin:0 auto; padding:16px}
+
+  h2{font-size:17px; margin:26px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--rand)}
+  h3{font-size:15px; margin:0 0 8px}
+  p{margin:0 0 10px}
+
+  .karte{background:var(--karte); border:1px solid var(--rand); border-radius:12px; padding:14px; margin-bottom:12px}
+  .hinweis{border-radius:10px; padding:11px 13px; font-size:13.5px; margin:10px 0}
+  .warn{background:var(--warn-bg); border:1px solid var(--warn-rand); color:var(--warn-txt)}
+  .ok{background:var(--ok-bg); border:1px solid var(--ok-rand); color:var(--ok-txt)}
+  .info{background:var(--info-bg); border:1px solid var(--info-rand); color:var(--info-txt)}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0}
+  th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--rand); vertical-align:top}
+  th{background:#f1f5f9; font-weight:700; font-size:12.5px}
+  code{background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:12.5px;
+       font-family:ui-monospace,SFMono-Regular,Consolas,monospace; overflow-wrap:anywhere}
+
+  /* Die Varianten stehen nebeneinander, sobald Platz ist. min() verhindert,
+     dass eine Spalte auf dem Handy breiter wird als das Fenster. */
+  .spalten{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); gap:12px}
+
+  .var{background:var(--karte); border:1px solid var(--rand); border-radius:12px; padding:14px;
+       display:flex; flex-direction:column}
+  .var.empf{border:2px solid var(--gruen)}
+  .var.nein{border:1px solid var(--warn-rand); background:#fffbfb}
+  .marke{display:inline-block; font-size:11px; font-weight:800; padding:2px 8px;
+         border-radius:20px; margin-bottom:8px; letter-spacing:.02em}
+  .m-empf{background:var(--gruen); color:#fff}
+  .m-ok{background:#e0e7ff; color:#3730a3}
+  .m-nein{background:#fee2e2; color:#991b1b}
+  .var ul{margin:8px 0 0; padding-left:18px; font-size:13.5px}
+  .var li{margin-bottom:4px}
+  .var .fuss{margin-top:auto; padding-top:10px; font-size:12.5px; color:var(--grau)}
+
+  /* ── Handy-Nachbildung ── */
+  .buehne{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:14px; margin-top:10px}
+  .geraet{background:#fff; border:1px solid var(--rand); border-radius:14px; overflow:hidden;
+          box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .g-kopf{background:#1e293b; color:#fff; font-size:11.5px; padding:6px 11px; display:flex;
+          justify-content:space-between; align-items:center}
+  .g-leib{padding:12px; background:var(--bg)}
+  .g-titel{font-size:12px; color:var(--grau); margin-bottom:7px; font-weight:600}
+
+  .mt-karte{background:#fff; border:1px solid var(--info-rand); border-radius:12px; padding:10px 11px}
+  .mt-kopf{display:flex; align-items:baseline; gap:8px}
+  .mt-kopf b{font-size:13px; flex:1; min-width:0}
+  .mt-preis{font-weight:800; font-size:14px; white-space:nowrap}
+  .mt-marken{display:flex; gap:5px; flex-wrap:wrap; margin-top:4px}
+  .mt-st{font-size:10px; padding:1px 7px; border-radius:7px; font-weight:700}
+  .st-neu{background:#fef3c7; color:#f59e0b}
+  .st-ok{background:#d1fae5; color:#10b981}
+  .st-storno{background:#fee2e2; color:#ef4444}
+  .mt-ger{font-weight:600; font-size:13px; line-height:1.25; margin-top:5px; overflow-wrap:anywhere}
+  .mt-sub{font-size:11px; color:var(--grau); margin-top:2px}
+
+  .leer{background:#fff; border:1px dashed #cbd5e1; border-radius:12px; padding:16px 12px;
+        text-align:center; color:var(--grau); font-size:13px}
+
+  .feld{width:100%; padding:9px 11px; border:1px solid #cbd5e1; border-radius:9px;
+        font-size:14px; font-family:inherit; margin-bottom:8px; background:#fff}
+  .knopf{width:100%; padding:10px; border:0; border-radius:9px; background:var(--gruen);
+         color:#fff; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit}
+  .knopf:hover{background:var(--gruen-h)}
+  .knopf.zweit{background:#fff; color:var(--gruen); border:1px solid var(--gruen); margin-top:6px}
+
+  .code-felder{display:flex; gap:6px; justify-content:center; margin:10px 0}
+  .code-felder span{width:34px; height:42px; border:1px solid #cbd5e1; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:700; background:#fff}
+
+  .schritte{counter-reset:s; list-style:none; padding:0; margin:10px 0}
+  .schritte li{counter-increment:s; position:relative; padding-left:34px; margin-bottom:10px; font-size:13.5px}
+  .schritte li::before{content:counter(s); position:absolute; left:0; top:0; width:24px; height:24px;
+    background:var(--gruen); color:#fff; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:12px; font-weight:700}
+
+  .fuss{margin:26px 0 12px; padding:12px; background:#fff; border:1px solid var(--rand);
+        border-radius:10px; font-size:12.5px; color:var(--grau)}
+  @media(max-width:420px){
+    main{padding:12px}
+    .karte,.var{padding:12px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Meine Mittagessen-Bestellungen auf allen Geräten</h1>
+  <p>Drei Wege zum Ziel — Entwurf zur Entscheidung, noch nichts gebaut</p>
+</header>
+
+<main>
+
+<h2>Was heute schon funktioniert</h2>
+
+<div class="karte">
+  <p>Die Kachel auf der Startseite gibt es bereits, und der Server kann
+     Bestellungen <strong>sowohl</strong> über die E-Mail-Adresse
+     <strong>als auch</strong> über eine Geräte-Kennung finden. Fehlt also
+     nicht viel — aber genau an der entscheidenden Stelle.</p>
+
+  <div class="buehne">
+    <div class="geraet">
+      <div class="g-kopf"><span>Handy — hier wurde bestellt</span><span>✓</span></div>
+      <div class="g-leib">
+        <div class="g-titel">Startseite → Mittagstisch</div>
+        <div class="mt-karte">
+          <div class="mt-kopf"><b>Ihre Bestellung</b><span class="mt-preis">7,80&nbsp;€</span></div>
+          <div class="mt-marken"><span class="mt-st st-storno">Storniert</span></div>
+          <div class="mt-ger">Dampfnudeln mit Vanillesoße</div>
+          <div class="mt-sub">Di., 29. Sep. · 1 Portion</div>
+        </div>
+        <p style="font-size:12px;color:var(--grau);margin:8px 0 0">
+          Funktioniert, weil beim Bestellen <code>bs_email</code> in diesem
+          Browser abgelegt wurde.</p>
+      </div>
+    </div>
+
+    <div class="geraet">
+      <div class="g-kopf"><span>Rechner / Tablet — dasselbe Konto</span><span>✕</span></div>
+      <div class="g-leib">
+        <div class="g-titel">Startseite → Mittagstisch</div>
+        <div class="leer">Keine Bestellung sichtbar</div>
+        <p style="font-size:12px;color:var(--grau);margin:8px 0 0">
+          Dieser Browser kennt die Adresse nicht — und es gibt keinen Weg,
+          sie ihm zu nennen. <strong>Das ist die Lücke.</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Der Haken, der die Lösung bestimmt</h2>
+
+<div class="hinweis warn">
+  <strong>Die Bestellabfrage ist heute ungeschützt.</strong> Am 27.09.2026
+  gegen die Live-Seite gemessen — ohne Anmeldung, ohne Token:
+  <table style="margin-top:8px">
+    <tr><th>Aufruf</th><th>Antwort</th></tr>
+    <tr>
+      <td><code>mode=my&amp;email=jrumpfinger@t-online.de</code></td>
+      <td>HTTP&nbsp;200 — <strong>1 Treffer</strong> mit Name, Gericht, Datum, Status</td>
+    </tr>
+    <tr>
+      <td><code>mode=my&amp;email=…@example.com</code></td>
+      <td>HTTP&nbsp;200 — 0 Treffer</td>
+    </tr>
+  </table>
+  <p style="margin:8px 0 0">Heute fällt das nicht auf, weil es <em>keinen
+     Weg gibt, eine Adresse einzugeben</em> — nur wer auf dem Gerät bestellt
+     hat, sieht etwas. <strong>Ein einfaches E-Mail-Feld würde diese Lücke
+     zur Funktion erheben:</strong> Wer die Adresse einer Nachbarin kennt,
+     läse deren Bestellungen mit.</p>
+</div>
+
+<div class="hinweis ok">
+  <strong>Die gute Nachricht:</strong> Für den Shop gibt es bereits ein
+  vollständiges Kundenkonto — Registrierung, Anmeldung, Bestätigung der
+  E-Mail-Adresse und Passwort-Zurücksetzen
+  (<code>api/auth-login</code>, <code>auth-register</code>,
+  <code>auth-verify</code>, <code>auth-reset</code>). Die Anmeldung hält
+  90&nbsp;Tage. Diese Grundlage ist da und geprüft — sie muss nur mit dem
+  Mittagstisch verbunden werden.
+</div>
+
+<h2>Drei Wege</h2>
+
+<div class="spalten">
+
+  <div class="var empf">
+    <span class="marke m-empf">Empfehlung</span>
+    <h3>A — Das vorhandene Konto nutzen</h3>
+    <p style="font-size:13.5px">Wer im Shop angemeldet ist, sieht seine
+       Mittagessen-Bestellungen überall — <strong>ohne einen einzigen
+       zusätzlichen Handgriff</strong>.</p>
+    <ul>
+      <li>Baut auf Vorhandenem auf, nichts Neues zu erfinden</li>
+      <li>Die Adresse ist <strong>bestätigt</strong> — niemand kann eine
+          fremde eintragen</li>
+      <li>Anmeldung hält 90 Tage</li>
+      <li>Schließt zugleich die Lücke oben</li>
+    </ul>
+    <div class="fuss">Hürde: Wer kein Konto hat, muss eins anlegen.
+      Für Laufkundschaft, die nur einmal bestellt, ist das viel verlangt.</div>
+  </div>
+
+  <div class="var">
+    <span class="marke m-ok">Ergänzung</span>
+    <h3>B — Code per E-Mail, ohne Passwort</h3>
+    <p style="font-size:13.5px">Die Kundin tippt ihre Adresse ein und
+       bekommt eine sechsstellige Zahl zugeschickt. Nach der Eingabe ist
+       das Gerät dauerhaft freigeschaltet.</p>
+    <ul>
+      <li>Kein Passwort, keine Registrierung</li>
+      <li>Beweist trotzdem, dass die Adresse ihr gehört</li>
+      <li>Vertraut aus dem Onlinebanking</li>
+    </ul>
+    <div class="fuss">Aufwand: neuer Endpunkt, Code-Versand, Ablauffrist,
+      Sperre gegen Ausprobieren. Setzt voraus, dass die Kundin gerade an
+      ihre Mails kommt.</div>
+  </div>
+
+  <div class="var nein">
+    <span class="marke m-nein">Abzuraten</span>
+    <h3>C — Einfach ein E-Mail-Feld</h3>
+    <p style="font-size:13.5px">„Ihre E-Mail eingeben" — fertig, die
+       Bestellungen erscheinen. Technisch in einer halben Stunde gebaut.</p>
+    <ul>
+      <li>Jede beliebige Adresse zeigt fremde Bestellungen</li>
+      <li>Sichtbar wären Name, Gericht, Preis, Nachrichten</li>
+      <li>Im Dorf, wo man die Adressen der Nachbarn kennt, besonders heikel</li>
+    </ul>
+    <div class="fuss">Hier nur aufgeführt, damit die Entscheidung
+      bewusst fällt — nicht zur Umsetzung empfohlen.</div>
+  </div>
+
+</div>
+
+<h2>So sähe der empfohlene Weg aus</h2>
+
+<p style="font-size:13.5px;color:var(--grau)">A und B schließen sich nicht
+  aus. Der Vorschlag verbindet beide: Wer ein Konto hat, merkt nichts —
+  es funktioniert einfach. Wer keins hat, bekommt den Code-Weg angeboten.</p>
+
+<div class="buehne">
+
+  <div class="geraet">
+    <div class="g-kopf"><span>Schritt 1 — Neues Gerät</span><span>1/3</span></div>
+    <div class="g-leib">
+      <div class="g-titel">Startseite → Mittagstisch</div>
+      <div class="karte" style="margin:0;padding:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:3px">Ihre Bestellungen sehen</div>
+        <p style="font-size:12px;color:var(--grau);margin-bottom:9px">
+          Einmal bestätigen — danach auf diesem Gerät dauerhaft sichtbar.</p>
+        <button class="knopf">Anmelden</button>
+        <button class="knopf zweit">Code per E-Mail anfordern</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="geraet">
+    <div class="g-kopf"><span>Schritt 2 — Code eingeben</span><span>2/3</span></div>
+    <div class="g-leib">
+      <div class="g-titel">Nur beim Weg ohne Konto</div>
+      <div class="karte" style="margin:0;padding:12px">
+        <p style="font-size:12.5px;margin-bottom:6px">
+          Wir haben eine Zahl an<br><strong>j…r@t-online.de</strong> geschickt.</p>
+        <div class="code-felder">
+          <span>4</span><span>1</span><span>7</span><span>2</span><span>0</span><span>6</span>
+        </div>
+        <button class="knopf">Bestätigen</button>
+        <p style="font-size:11px;color:var(--grau);margin:7px 0 0;text-align:center">
+          Gültig für 15 Minuten</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="geraet">
+    <div class="g-kopf"><span>Schritt 3 — Fertig</span><span>3/3</span></div>
+    <div class="g-leib">
+      <div class="g-titel">Startseite → Mittagstisch</div>
+      <div class="mt-karte">
+        <div class="mt-kopf"><b>Ihre Bestellung</b><span class="mt-preis">7,80&nbsp;€</span></div>
+        <div class="mt-marken"><span class="mt-st st-storno">Storniert</span></div>
+        <div class="mt-ger">Dampfnudeln mit Vanillesoße</div>
+        <div class="mt-sub">Di., 29. Sep. · 1 Portion</div>
+      </div>
+      <p style="font-size:11.5px;color:var(--grau);margin:8px 0 0">
+        Bleibt 90 Tage bestehen — ohne erneutes Anmelden.</p>
+    </div>
+  </div>
+
+</div>
+
+<h2>Was dafür zu bauen wäre</h2>
+
+<div class="karte">
+  <table>
+    <tr><th>Schritt</th><th>Betrifft</th><th>Umfang</th></tr>
+    <tr>
+      <td><strong>1. Abfrage absichern</strong><br>
+        <span style="color:var(--grau);font-size:12.5px">Token statt blanker Adresse</span></td>
+      <td><code>api/lunch-order</code> (<code>mode=my</code>)</td>
+      <td>mittel — muss die Geräte-Kennung weiter zulassen, sonst verlieren
+          alle bisherigen Kunden ihre Kachel</td>
+    </tr>
+    <tr>
+      <td><strong>2. Angemeldete erkennen</strong><br>
+        <span style="color:var(--grau);font-size:12.5px">Konto → Kachel</span></td>
+      <td><code>index.html</code>, <code>tagesinfo.html</code></td>
+      <td>klein — <code>dl_shop_user</code> steht bereits im Browser</td>
+    </tr>
+    <tr>
+      <td><strong>3. Bestellung mit Konto verknüpfen</strong></td>
+      <td><code>mittagstisch-bestellen.html</code></td>
+      <td>klein — E-Mail des Kontos vorbelegen</td>
+    </tr>
+    <tr>
+      <td><strong>4. Code-Weg (Variante B)</strong></td>
+      <td>neuer Endpunkt + Kachel</td>
+      <td>groß — nur nötig, wenn ohne Konto gewünscht</td>
+    </tr>
+  </table>
+
+  <div class="hinweis info" style="margin-bottom:0">
+    <strong>Vorschlag zum Zuschnitt:</strong> Die Schritte 1–3 lösen das
+    gemeldete Problem für alle, die ein Konto haben, und schließen
+    nebenbei die Sicherheitslücke. Schritt 4 ist ein eigenes Vorhaben und
+    lohnt sich erst, wenn sich zeigt, dass zu viele Kunden am Konto
+    scheitern.
+  </div>
+</div>
+
+<h2>Was noch zu entscheiden ist</h2>
+
+<div class="karte">
+  <ol class="schritte">
+    <li><strong>Reicht das Konto?</strong> Oder ist die Hürde für die
+        Stammkundschaft zu hoch und es braucht von Anfang an den Code-Weg?</li>
+    <li><strong>Wie weit zurück?</strong> Heute zeigt die Kachel nur
+        Bestellungen ab heute. Soll es auf mehreren Geräten auch einen
+        Rückblick geben — und wenn ja, wie weit?</li>
+    <li><strong>Was passiert mit bestehenden Bestellungen?</strong> Wer
+        ohne Konto bestellt hat, hat keine Verknüpfung. Sollen die über
+        die E-Mail-Adresse nachträglich zugeordnet werden?</li>
+  </ol>
+</div>
+
+<div class="fuss">
+  <strong>Stand:</strong> Entwurf vom 27.09.2026, noch nichts umgesetzt.
+  Die Messwerte oben stammen aus echten Aufrufen gegen die Live-Seite;
+  die abgebildete Bestellung ist die tatsächliche vom 29.09.2026.
+  Die Bildschirme sind Nachbildungen zur Veranschaulichung, keine
+  laufende Oberfläche.
+</div>
+
+</main>
+</body>
+</html>
