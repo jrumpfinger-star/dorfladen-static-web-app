@@ -1287,6 +1287,12 @@
       background:#fef3c7;border-top:1px solid #fde68a;padding:5px 12px;
       display:flex;align-items:flex-start;gap:5px;overflow-wrap:anywhere}
     .k-oc-wunsch strong{font-style:normal;font-weight:600;flex-shrink:0}
+    /* Storno-Grund: rot statt bernstein, damit er sich vom Sonderwunsch
+       unterscheidet — beide können an derselben Karte stehen.
+       (Spec storno-grund-sichtbar) */
+    .k-oc-storno{font-size:12.5px;color:#991b1b;line-height:1.35;
+      background:#fef2f2;border-top:1px solid #fecaca;padding:5px 12px;
+      display:flex;align-items:flex-start;gap:5px;overflow-wrap:anywhere}
     .k-oc-wunsch svg{flex-shrink:0;margin-top:2px}
     .k-order-mitnehmen{font-size:11px;background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
     .k-order-qty{display:flex;align-items:center;gap:4px;padding:6px 8px;border-left:1px solid var(--c-border)}
@@ -3472,6 +3478,18 @@ var K = (function(){
     if(_eigenerWunsch){
       html += '<div class="k-oc-wunsch">'+luc('message-square',13)
         + ' <strong>Sonderwunsch:</strong> '+esc(o.anmerkung)+'</div>';
+    }
+    /* Der Grund einer Stornierung — in derselben Zeile sichtbar, ohne
+       die Karte zu öffnen. Er wird beim Stornieren VERLANGT und ging
+       bis dahin trotzdem verloren: gespeichert, aber nie zurückgegeben.
+       Aus dem Laden: „Wenn eine Bestellung storniert wird vom Kunden,
+       sieht man den Grund nicht."
+       Das Vorwort („Kundengrund:" bzw. „Storniert:") steht schon im
+       Text selbst und sagt zugleich, WER abgesagt hat — deshalb wird es
+       nicht abgeschnitten. (Spec storno-grund-sichtbar) */
+    if(o.status===2 && o.storno_grund){
+      html += '<div class="k-oc-storno">'+luc('x-circle',13)
+        + ' '+esc(o.storno_grund)+'</div>';
     }
 
     // ── Expandable body (details) ──

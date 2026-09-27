@@ -85,6 +85,61 @@
     .mk-datum{font-size:12px;color:var(--c-muted);margin-top:2px}
     .mk-leer{text-align:center;color:var(--c-muted);font-size:13.5px;padding:18px 8px;line-height:1.55}
 
+    /* Aktionen je Bestellung. Die Knöpfe sind 40 px hoch — mit einem
+       Finger getroffen werden muss auch der, der nicht gut sieht. */
+    .mk-akt{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .mk-akt button,.mk-akt a{flex:1 1 130px;min-height:40px;border-radius:9px;
+      font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:5px;
+      text-decoration:none;padding:0 10px;border:1px solid var(--c-rand);
+      background:var(--c-card);color:var(--c-text)}
+    .mk-akt .mk-storno{border-color:#fca5a5;color:var(--c-red)}
+    .mk-akt .mk-storno:hover{background:#fef2f2}
+    .mk-akt a:hover{background:var(--c-bg)}
+
+    /* Nachrichten zur Bestellung. Aufklappbar, damit die Übersicht
+       nicht in Textwänden untergeht. (Spec bestellung-aendern) */
+    .mk-chat{display:none;margin-top:10px;padding-top:10px;
+      border-top:1px solid var(--c-rand)}
+    .mk-chat.auf{display:block}
+    .mk-msgs{max-height:210px;overflow-y:auto;margin-bottom:9px}
+    .mk-msg{font-size:13px;line-height:1.45;padding:7px 11px;border-radius:11px;
+      margin-bottom:6px;max-width:85%;overflow-wrap:anywhere}
+    .mk-msg.von-laden{background:#f1f5f9;color:var(--c-text);
+      border-bottom-left-radius:3px}
+    .mk-msg.von-mir{background:#dcfce7;color:#14532d;margin-left:auto;
+      border-bottom-right-radius:3px}
+    html[data-theme="dark"] .mk-msg.von-laden{background:#26313a}
+    html[data-theme="dark"] .mk-msg.von-mir{background:#1e3a29;color:#bbf7d0}
+    .mk-msg-wer{display:block;font-size:10.5px;font-weight:600;opacity:.65;margin-bottom:1px}
+    .mk-chat textarea{width:100%;min-height:56px;padding:9px 11px;
+      border:1px solid var(--c-rand);border-radius:10px;font-size:14px;
+      font-family:inherit;resize:vertical;background:var(--c-card);color:var(--c-text)}
+    .mk-chat .mk-send{width:100%;min-height:42px;margin-top:7px;border:0;
+      border-radius:10px;background:var(--c-green);color:#fff;font-weight:600;
+      font-size:14px;font-family:inherit;cursor:pointer}
+    .mk-chat .mk-send:disabled{opacity:.55;cursor:default}
+    .mk-chat-leer{font-size:12.5px;color:var(--c-muted);text-align:center;
+      padding:10px 4px;line-height:1.5}
+
+    /* Storno-Dialog */
+    .mk-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;
+      display:none;align-items:center;justify-content:center;padding:18px}
+    .mk-ov.auf{display:flex}
+    .mk-dlg{background:var(--c-card);border-radius:14px;padding:20px;
+      max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    .mk-dlg h3{font-size:16px;font-weight:600;margin-bottom:6px}
+    .mk-dlg p{font-size:13px;color:var(--c-muted);line-height:1.5;margin-bottom:12px}
+    .mk-dlg textarea{width:100%;min-height:78px;padding:10px 12px;
+      border:1px solid var(--c-rand);border-radius:10px;font-size:14px;
+      font-family:inherit;resize:vertical;background:var(--c-card);color:var(--c-text)}
+    .mk-dlg-akt{display:flex;gap:9px;margin-top:14px}
+    .mk-dlg-akt button{flex:1;min-height:44px;border-radius:10px;font-size:14px;
+      font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--c-rand);
+      background:var(--c-card);color:var(--c-text)}
+    .mk-dlg-akt .ja{background:var(--c-red);color:#fff;border-color:var(--c-red)}
+    .mk-dlg-akt .ja:disabled{opacity:.5;cursor:default}
+
     .mk-nutzer{display:flex;align-items:center;gap:10px;margin-bottom:14px;
       padding-bottom:12px;border-bottom:1px solid var(--c-rand)}
     .mk-avatar{width:38px;height:38px;border-radius:50%;background:var(--c-green);
@@ -93,8 +148,14 @@
     .mk-nutzer-txt{flex:1;min-width:0}
     .mk-nutzer-txt b{display:block;font-size:14px}
     .mk-nutzer-txt small{font-size:11.5px;color:var(--c-muted);overflow-wrap:anywhere}
-    .mk-abmelden{font-size:12px;color:var(--c-red);cursor:pointer;
-      background:none;border:0;font-family:inherit;padding:4px}
+    /* 40 px Höhe: Darunter wird das Treffen mit dem Finger zur
+       Glückssache. Gemessen waren es 24 px — zu wenig, gerade für den,
+       der sich auf einem geteilten Gerät wieder abmelden will.
+       (Spec bestellung-aendern) */
+    .mk-abmelden{font-size:12.5px;color:var(--c-red);cursor:pointer;
+      background:none;border:1px solid #fca5a5;border-radius:9px;
+      font-family:inherit;padding:0 12px;min-height:40px;flex-shrink:0}
+    .mk-abmelden:hover{background:#fef2f2}
   </style>
 </head>
 <body>
@@ -205,6 +266,25 @@
 
 </div>
 
+<!-- Storno-Rückfrage. Der Grund ist Pflicht — die Küche plant nach
+     Bestellungen ein, und eine Absage ohne Wort lässt sie rätseln.
+     Denselben Weg geht die Bestellstatus-Seite. (Spec bestellung-aendern) -->
+<div class="mk-ov" id="mk-storno-ov">
+  <div class="mk-dlg" role="dialog" aria-modal="true" aria-labelledby="mk-storno-titel">
+    <h3 id="mk-storno-titel">Bestellung stornieren?</h3>
+    <p id="mk-storno-was">—</p>
+    <label for="mk-storno-grund" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:5px">
+      Warum? (kurze Angabe genügt)
+    </label>
+    <textarea id="mk-storno-grund" placeholder="z. B. Termin verschoben"></textarea>
+    <div class="mk-meldung mk-fehler" id="mk-storno-fehler" style="margin-top:10px"></div>
+    <div class="mk-dlg-akt">
+      <button id="mk-storno-nein">Behalten</button>
+      <button class="ja" id="mk-storno-ja" disabled>Stornieren</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   'use strict';
@@ -251,7 +331,7 @@
   /* ── Die eigenen Bestellungen ──
      Die Adresse geht NICHT in der Adresszeile mit; der Server nimmt sie
      aus dem Anmeldezeichen. (Spec meine-bestellungen-geraete, F3) */
-  function bestellungenLaden(){
+  function bestellungenLaden(offenLassen){
     var z=zeichen();
     if(!z) return;
     fetch(API+'/lunch-order?mode=my',{headers:{'X-Shop-Token':z}})
@@ -270,9 +350,16 @@
           var gesamt=(parseFloat(o.preis)||0)*menge;
           var preis=gesamt>0?(gesamt.toFixed(2).replace('.',',')+' €'):'';
           var st=STATUS[o.status]||'Eingegangen';
-          return '<div class="mk-best">'
+          var nr=o.bestellnummer||'';
+          /* Stornieren nur bei „Eingegangen" (Status 0). Sobald die Küche
+             bestätigt hat, weist der Server ab — dann wäre ein Knopf ein
+             leeres Versprechen. Wer trotzdem absagen muss, ruft an; die
+             Nummer steht auf der Statusseite. */
+          var kannStorno=(o.status===0 && o.id);
+          var msgs=(o.verlauf&&o.verlauf.length)?o.verlauf.length:0;
+          return '<div class="mk-best" data-id="'+esc(o.id||'')+'">'
             +'<div class="mk-best-kopf">'
-              +'<b>'+esc(o.bestellnummer||'Bestellung')+'</b>'
+              +'<b>'+esc(nr||'Bestellung')+'</b>'
               +(preis?'<span class="mk-preis">'+preis+'</span>':'')
             +'</div>'
             +'<div class="mk-ger">'+esc(o.gericht||'Mittagessen')+'</div>'
@@ -280,8 +367,72 @@
               +menge+' Portion'+(menge>1?'en':'')
               +(o.mitnehmen?' · Mitnehmen':'')+'</div>'
             +'<span class="mk-st st-'+(o.status||0)+'">'+esc(st)+'</span>'
+            /* Der eigene Storno-Grund. Er wurde beim Stornieren verlangt —
+               ihn dann nicht mehr zu zeigen wäre schwer erklärbar.
+               (Spec storno-grund-sichtbar) */
+            +((o.status===2&&o.storno_grund)
+               ? '<div style="font-size:12.5px;line-height:1.4;color:var(--c-red);margin-top:7px;overflow-wrap:anywhere">'
+                 +esc(o.storno_grund)+'</div>' : '')
+            +'<div class="mk-akt">'
+              +'<button data-chat="'+esc(o.id||'')+'">Nachrichten'
+                +(msgs?(' ('+msgs+')'):'')+'</button>'
+              +(nr?'<a href="/bestellstatus?nr='+encodeURIComponent(nr)+'">Details</a>':'')
+              +(kannStorno?'<button class="mk-storno" data-storno="'+esc(o.id)
+                 +'" data-was="'+esc((o.gericht||'Mittagessen')+' am '+datumDe(o.datum))
+                 +'">Stornieren</button>':'')
+            +'</div>'
+            +'<div class="mk-chat" id="chat-'+esc(o.id||'')+'">'
+              +'<div class="mk-msgs">'+verlaufHtml(o.verlauf)+'</div>'
+              +'<textarea placeholder="Nachricht an den Dorfladen …" '
+                +'data-eingabe="'+esc(o.id||'')+'"></textarea>'
+              +'<button class="mk-send" data-senden="'+esc(o.id||'')+'" disabled>Senden</button>'
+            +'</div>'
             +'</div>';
         }).join('');
+
+        /* Die Knöpfe erst NACH dem Einsetzen verdrahten: `innerHTML`
+           ersetzt die Elemente, frühere Zuhörer wären weg. */
+        liste.querySelectorAll('[data-storno]').forEach(function(k){
+          k.addEventListener('click', function(){
+            stornoFragen(k.getAttribute('data-storno'), k.getAttribute('data-was'));
+          });
+        });
+        liste.querySelectorAll('[data-chat]').forEach(function(k){
+          k.addEventListener('click', function(){
+            var el=document.getElementById('chat-'+k.getAttribute('data-chat'));
+            if(!el) return;
+            el.classList.toggle('auf');
+            if(el.classList.contains('auf')){
+              var m=el.querySelector('.mk-msgs');
+              if(m) m.scrollTop=m.scrollHeight;
+              var t=el.querySelector('textarea');
+              if(t) t.focus();
+            }
+          });
+        });
+        liste.querySelectorAll('[data-eingabe]').forEach(function(t){
+          t.addEventListener('input', function(){
+            var s=liste.querySelector('[data-senden="'+t.getAttribute('data-eingabe')+'"]');
+            if(s) s.disabled = !t.value.trim();
+          });
+        });
+        liste.querySelectorAll('[data-senden]').forEach(function(s){
+          s.addEventListener('click', function(){
+            nachrichtSenden(s.getAttribute('data-senden'), s);
+          });
+        });
+
+        /* Nach dem Senden wird die Liste neu aufgebaut — der gerade
+           benutzte Verlauf muss offen bleiben, sonst klappt er der
+           Kundin vor der Nase zu. */
+        if(offenLassen){
+          var wieder=document.getElementById('chat-'+offenLassen);
+          if(wieder){
+            wieder.classList.add('auf');
+            var m=wieder.querySelector('.mk-msgs');
+            if(m) m.scrollTop=m.scrollHeight;
+          }
+        }
       })
       .catch(function(){
         var liste=$('mk-liste');
@@ -378,6 +529,55 @@
       });
   }
 
+  /* ── Nachrichten zur Bestellung ──
+     Derselbe Weg wie auf der Bestellstatus-Seite: PATCH mit
+     kunde_kommentar. Der Verlauf kommt als `verlauf` mit der Bestellung;
+     jeder Eintrag trägt `who` ('kunde' oder 'dorfladen') und `text`.
+     (Spec bestellung-aendern) */
+  function verlaufHtml(v){
+    if(!v || !v.length){
+      return '<div class="mk-chat-leer">Noch keine Nachrichten.<br>'
+        +'Schreiben Sie uns, wenn etwas zu klären ist.</div>';
+    }
+    return v.map(function(m){
+      var vonMir=(m.who==='kunde');
+      return '<div class="mk-msg '+(vonMir?'von-mir':'von-laden')+'">'
+        +'<span class="mk-msg-wer">'+(vonMir?'Sie':'Dorfladen')+'</span>'
+        +esc(m.text||'')+'</div>';
+    }).join('');
+  }
+
+  function nachrichtSenden(id, knopf){
+    var feld=document.querySelector('[data-eingabe="'+id+'"]');
+    if(!feld) return;
+    var text=feld.value.trim();
+    if(!text) return;
+    knopf.disabled=true; knopf.textContent='Wird gesendet …';
+    fetch(API+'/lunch-order/'+encodeURIComponent(id),{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kunde_kommentar:text})
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        knopf.textContent='Senden';
+        if(res && res.success){
+          feld.value='';
+          /* Neu laden statt die Nachricht selbst anzuhängen: So steht
+             genau das da, was der Server gespeichert hat — und eine
+             zwischenzeitliche Antwort aus dem Laden kommt gleich mit. */
+          bestellungenLaden(id);
+          return;
+        }
+        knopf.disabled=false;
+        alert((res && res.error) || 'Die Nachricht konnte nicht gesendet werden.');
+      })
+      .catch(function(){
+        knopf.disabled=false; knopf.textContent='Senden';
+        alert('Keine Verbindung. Bitte später noch einmal versuchen.');
+      });
+  }
+
   function abmelden(){
     try{
       localStorage.removeItem('dl_shop_token');
@@ -385,6 +585,74 @@
     }catch(e){}
     zeigen('mk-anmelden');
   }
+
+  /* ── Stornieren ──
+     Der Weg ist derselbe wie auf der Bestellstatus-Seite:
+     PATCH mit kunde_storno und einem Grund. Der Server laesst das nur
+     zu, solange die Bestellung noch nicht bestaetigt ist - deshalb steht
+     der Knopf auch nur dort. (Spec bestellung-aendern) */
+  var _stornoId='';
+
+  function stornoFragen(id, was){
+    _stornoId=id;
+    $('mk-storno-was').textContent=was||'';
+    $('mk-storno-grund').value='';
+    $('mk-storno-ja').disabled=true;
+    $('mk-storno-ja').textContent='Stornieren';
+    fehler('mk-storno-fehler','');
+    $('mk-storno-ov').classList.add('auf');
+    setTimeout(function(){ $('mk-storno-grund').focus(); },80);
+  }
+
+  function stornoSchliessen(){
+    $('mk-storno-ov').classList.remove('auf');
+    _stornoId='';
+  }
+
+  function stornoSenden(){
+    var grund=$('mk-storno-grund').value.trim();
+    if(!grund || !_stornoId) return;
+    var ja=$('mk-storno-ja');
+    ja.disabled=true; ja.textContent='Wird storniert …';
+    fehler('mk-storno-fehler','');
+    fetch(API+'/lunch-order/'+encodeURIComponent(_stornoId),{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({status:2,kunde_storno:true,
+                           storno_grund:'Kundengrund: '+grund})
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.success){
+          stornoSchliessen();
+          /* Neu laden statt die Karte von Hand umzufaerben: So steht
+             genau das da, was der Server jetzt weiss - auch wenn die
+             Kueche in derselben Minute bestaetigt hat. */
+          bestellungenLaden();
+          return;
+        }
+        ja.disabled=false; ja.textContent='Stornieren';
+        fehler('mk-storno-fehler',
+          esc((res && res.error)
+              || 'Die Stornierung war nicht möglich. Bitte im Laden anrufen.'));
+      })
+      .catch(function(){
+        ja.disabled=false; ja.textContent='Stornieren';
+        fehler('mk-storno-fehler','Keine Verbindung. Bitte später noch einmal versuchen.');
+      });
+  }
+
+  $('mk-storno-grund').addEventListener('input', function(){
+    $('mk-storno-ja').disabled = !this.value.trim();
+  });
+  $('mk-storno-nein').addEventListener('click', stornoSchliessen);
+  $('mk-storno-ja').addEventListener('click', stornoSenden);
+  $('mk-storno-ov').addEventListener('click', function(e){
+    if(e.target===this) stornoSchliessen();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && $('mk-storno-ov').classList.contains('auf')) stornoSchliessen();
+  });
 
   $('mk-login-knopf').addEventListener('click',anmelden);
   $('mk-neu-knopf').addEventListener('click',kontoAnlegen);

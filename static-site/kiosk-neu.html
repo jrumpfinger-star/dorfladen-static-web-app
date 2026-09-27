@@ -1661,6 +1661,18 @@ var K = (function(){
       html += '<div class="k-oc-wunsch">'+luc('message-square',13)
         + ' <strong>Sonderwunsch:</strong> '+esc(o.anmerkung)+'</div>';
     }
+    /* Der Grund einer Stornierung — in derselben Zeile sichtbar, ohne
+       die Karte zu öffnen. Er wird beim Stornieren VERLANGT und ging
+       bis dahin trotzdem verloren: gespeichert, aber nie zurückgegeben.
+       Aus dem Laden: „Wenn eine Bestellung storniert wird vom Kunden,
+       sieht man den Grund nicht."
+       Das Vorwort („Kundengrund:" bzw. „Storniert:") steht schon im
+       Text selbst und sagt zugleich, WER abgesagt hat — deshalb wird es
+       nicht abgeschnitten. (Spec storno-grund-sichtbar) */
+    if(o.status===2 && o.storno_grund){
+      html += '<div class="k-oc-storno">'+luc('x-circle',13)
+        + ' '+esc(o.storno_grund)+'</div>';
+    }
 
     // ── Expandable body (details) ──
     html += '<div class="k-order-body">';

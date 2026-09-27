@@ -254,6 +254,32 @@ def main():
     pruefe("Statusseite arbeitet weiterhin mit Bestellnummer + Adresse",
            antwort.status_code == 200, f"war {antwort.status_code}")
 
+    # ── Der Storno-Grund darf nicht verlorengehen ──
+    # Er wird beim Stornieren VERLANGT und ging trotzdem verloren:
+    # gespeichert, aber von _serialize nie zurueckgegeben. In Dataverse
+    # lagen 12 von 12 stornierten Bestellungen mit Grund, darunter
+    # Kundengruende wie "Freitag wos anders" - niemand hat sie gesehen.
+    print("\nStorno-Grund")
+    dv = Speicher([dict(bestand[0], dl_status=2,
+                        dl_storno_grund="Kundengrund: Freitag wos anders")])
+    requests.get, requests.post = dv.get, dv.post
+    requests.patch, requests.delete = dv.patch, dv.delete
+    antwort = lunch.main(Anfrage(params={"mode": "my", "device_id": "geraet-anna"}))
+    d = json.loads(antwort.get_body().decode("utf-8"))
+    aus = (d.get("orders") or [{}])[0]
+    pruefe("Storno-Grund  wird zurueckgegeben",
+           aus.get("storno_grund") == "Kundengrund: Freitag wos anders",
+           f"bekam: {aus.get('storno_grund')!r}")
+
+    # Und er muss auch ANGEFORDERT werden - Dataverse liefert nur, was
+    # im $select steht. Derselbe Fallstrick wie beim Loeschen (TC-TL-S8).
+    quelle = open(os.path.join(API, "lunch-order", "__init__.py"),
+                  encoding="utf-8-sig").read()
+    listen = [z for z in quelle.split("\n") if "dl_mittagsbestellungid,dl_name" in z]
+    pruefe("Storno-Grund  steht in jeder Feldauswahl",
+           bool(listen) and all("dl_storno_grund" in z for z in listen),
+           f"{sum(1 for z in listen if 'dl_storno_grund' not in z)} von {len(listen)} ohne")
+
     print()
     if _fehler:
         print(f"{len(_fehler)} Pruefung(en) fehlgeschlagen:")

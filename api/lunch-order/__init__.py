@@ -196,6 +196,15 @@ def _serialize(item):
         "datum": (item.get("dl_datum") or "").split("T")[0],
         "anmerkung": item.get("dl_anmerkung", ""),
         "status": status,
+        # Der Grund einer Stornierung. Er wird beim Stornieren VERLANGT -
+        # und ging bis zum 27.09.2026 beim Lesen verloren: gespeichert,
+        # aber nie zurueckgegeben. In Dataverse lagen 12 von 12
+        # stornierten Bestellungen mit Grund, darunter Kundengruende wie
+        # "Freitag wos anders". Niemand hat sie je gesehen.
+        # Wichtig: dl_storno_grund muss auch im $select stehen, sonst
+        # liefert Dataverse das Feld gar nicht erst.
+        # (Spec storno-grund-sichtbar)
+        "storno_grund": item.get("dl_storno_grund", ""),
         "bestaetigung_text": item.get("dl_bestaetigung_text", ""),
         "kunde_kommentar": item.get("dl_kunde_kommentar", ""),
         "personal_antwort": item.get("dl_personal_antwort", ""),
@@ -840,7 +849,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             # Full message orders across all dates (for Nachrichten tab)
             if req.params.get("mode") == "messages":
-                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,dl_device_id,dl_notify_email,createdon"
+                select_fields = "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,dl_device_id,dl_notify_email,dl_storno_grund,createdon"
                 msg_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter=dl_kunde_kommentar ne null"
@@ -1140,7 +1149,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             url = f"{base_url}/api/data/v9.2/{ENTITY_SET}"
             params = {
-                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,dl_device_id,dl_notify_email,createdon",
+                "$select": "dl_mittagsbestellungid,dl_name,dl_email,dl_telefon,dl_gericht,dl_gericht_id,dl_menge,dl_preis,dl_datum,dl_anmerkung,dl_status,dl_bestaetigung_text,dl_bestellnummer,dl_wochentag_label,dl_mitnehmen,dl_quelle,dl_stammkunde_id,dl_erfasst_von,dl_kunde_kommentar,dl_personal_antwort,dl_kommentar_gelesen,dl_chatverlauf,dl_device_id,dl_notify_email,dl_storno_grund,createdon",
                 "$orderby": "createdon desc",
                 "$top": "200",
             }
