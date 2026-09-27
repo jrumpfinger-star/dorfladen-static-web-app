@@ -341,19 +341,33 @@ def getraenke_tests():
 # nicht auf einen fehlenden Knopf im Kiosk verlaesst.
 
 class Mittagsspeicher:
-    """Ersatz-Dataverse fuer dl_mittagsbestellungs."""
+    """Ersatz-Dataverse fuer dl_mittagsbestellungs.
+
+    Der Speicher wertet ``$select`` **aus**: Dataverse liefert nur
+    angeforderte Felder, und genau daran haengt hier eine Entscheidung
+    (storniert oder nicht). Gaebe der Mock stets alles zurueck, liefe ein
+    vergessenes ``dl_status`` im ``$select`` gruen durch und fiele erst im
+    Laden auf. (Spec telefon-bestellung-loeschen, TC-TL-S8)
+    """
 
     def __init__(self, saetze=None):
         self.saetze = dict(saetze or {})   # record_id -> Felder
         self.geloescht = []
         self.delete_status = 204
+        self.gefragte_felder = []          # was der Server wissen wollte
 
     def get(self, url, **kw):
         rec = url.split("(")[-1].split(")")[0]
         daten = self.saetze.get(rec)
         if daten is None:
             return Antwort(404, {})
-        return Antwort(200, dict(daten))
+        felder = []
+        if "$select=" in url:
+            felder = [f for f in url.split("$select=")[1].split("&")[0].split(",") if f]
+            self.gefragte_felder.append(felder)
+        if not felder:
+            return Antwort(200, dict(daten))
+        return Antwort(200, {k: v for k, v in daten.items() if k in felder})
 
     def post(self, url, **kw):
         return Antwort(201, {})
@@ -395,16 +409,27 @@ def mittagstisch_tests():
            antwort.status_code == 200, f"war {antwort.status_code}")
     pruefe("TC-TL-S2  der Datensatz ist weg", dv.geloescht == ["rec-tresen"])
 
-    # TC-TL-S3: Online-Bestellung NICHT — der Kunde sieht sie
-    dv = Mittagsspeicher({"rec-online": {"dl_quelle": 0, "dl_name": "Online"}})
+    # TC-TL-S3: OFFENE Online-Bestellung NICHT — der Kunde sieht sie und
+    # erwartet sie. Status 1 (bestaetigt) ist der heikelste Fall: Das
+    # Essen ist zugesagt.
+    dv = Mittagsspeicher({"rec-online": {"dl_quelle": 0, "dl_status": 1,
+                                         "dl_name": "Online"}})
     antwort = lauf(dv, "rec-online")
-    pruefe("TC-TL-S3  Online-Bestellung wird abgewiesen",
+    pruefe("TC-TL-S3  offene Online-Bestellung wird abgewiesen",
            antwort.status_code == 403, f"war {antwort.status_code}")
     pruefe("TC-TL-S3  und bleibt bestehen", dv.geloescht == [],
            f"geloescht: {dv.geloescht}")
     pruefe("TC-TL-S3  mit einer Begruendung fuer den Menschen",
            "storniert" in rumpf(antwort).get("error", ""),
            f"Antwort: {rumpf(antwort)}")
+
+    # Auch ohne gesetzten Status (Feld fehlt oder steht auf null) bleibt
+    # es bei der Sperre - im Zweifel gilt die Bestellung als offen.
+    dv = Mittagsspeicher({"rec-online": {"dl_quelle": 0, "dl_status": None,
+                                         "dl_name": "Online"}})
+    antwort = lauf(dv, "rec-online")
+    pruefe("TC-TL-S3  ohne Status gilt die Bestellung als offen",
+           antwort.status_code == 403, f"war {antwort.status_code}")
 
     # TC-TL-S4: unbekannte Bestellung gilt als erledigt, nicht als Fehler.
     # Zwei Personen am selben Tablet duerfen sich nicht gegenseitig eine
@@ -431,6 +456,53 @@ def mittagstisch_tests():
            f"geloescht: {dv.geloescht}")
     pruefe("TC-TL-S6  und eine klare Absage", antwort.status_code == 405,
            f"war {antwort.status_code}")
+
+    # ── Nachtrag 27.09.2026: „stornierte sollen auch geloescht werden" ──
+    # Der gemeldete Fall: eine ONLINE aufgegebene, bereits stornierte
+    # Bestellung. Die Sperre aus TC-TL-S3 schuetzt den Kunden davor, dass
+    # eine erwartete Bestellung verschwindet. Bei einer Stornierung ist
+    # dieser Schutz gegenstandslos - die Absage kennt er bereits.
+
+    # TC-TL-S7: stornierte Online-Bestellung ist loeschbar
+    dv = Mittagsspeicher({"rec-storno": {"dl_quelle": 0, "dl_status": 2,
+                                         "dl_name": "Josef Rumpfinger"}})
+    antwort = lauf(dv, "rec-storno")
+    pruefe("TC-TL-S7  stornierte Online-Bestellung ist loeschbar",
+           antwort.status_code == 200,
+           f"war {antwort.status_code}: {rumpf(antwort)}")
+    pruefe("TC-TL-S7  der Datensatz ist weg", dv.geloescht == ["rec-storno"],
+           f"geloescht: {dv.geloescht}")
+
+    # TC-TL-S8: Der Server muss dl_status ausdruecklich anfordern.
+    # Dataverse liefert nur, was im $select steht - ohne das Feld faellt
+    # die Entscheidung oben blind auf "nicht storniert".
+    dv = Mittagsspeicher({"rec-storno": {"dl_quelle": 0, "dl_status": 2}})
+    lauf(dv, "rec-storno")
+    gefragt = dv.gefragte_felder[0] if dv.gefragte_felder else []
+    pruefe("TC-TL-S8  der Server fragt dl_status ab",
+           "dl_status" in gefragt, f"gefragt wurde: {gefragt}")
+    pruefe("TC-TL-S8  und dl_quelle weiterhin",
+           "dl_quelle" in gefragt, f"gefragt wurde: {gefragt}")
+
+    # TC-TL-S9: Die Lockerung gilt NUR fuer Storno. Eine abgeholte
+    # Online-Bestellung bleibt gesperrt - an ihr haengt der
+    # Nachrichtenverlauf, und der Kasten auf der Startseite ist der
+    # einzige Weg dorthin zurueck (Spec mittagstisch-abgeholt-sichtbar).
+    dv = Mittagsspeicher({"rec-ab": {"dl_quelle": 0, "dl_status": 3,
+                                     "dl_name": "Online"}})
+    antwort = lauf(dv, "rec-ab")
+    pruefe("TC-TL-S9  abgeholte Online-Bestellung bleibt gesperrt",
+           antwort.status_code == 403, f"war {antwort.status_code}")
+    pruefe("TC-TL-S9  und bleibt bestehen", dv.geloescht == [],
+           f"geloescht: {dv.geloescht}")
+
+    # Eine stornierte TELEFON-Bestellung war schon vorher loeschbar und
+    # muss es bleiben (R5) - die neue Bedingung darf sie nicht verlieren.
+    dv = Mittagsspeicher({"rec-ts": {"dl_quelle": 1, "dl_status": 2}})
+    antwort = lauf(dv, "rec-ts")
+    pruefe("TC-TL-S7  stornierte Telefonbestellung weiterhin loeschbar",
+           antwort.status_code == 200 and dv.geloescht == ["rec-ts"],
+           f"war {antwort.status_code}, geloescht: {dv.geloescht}")
 
 
 if __name__ == "__main__":

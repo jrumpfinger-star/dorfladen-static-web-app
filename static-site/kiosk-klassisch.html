@@ -3440,10 +3440,13 @@ var K = (function(){
        gelöscht werden können und nicht nur storniert." Eine Fehleingabe
        oder Testbestellung bleibt sonst für immer in Listen und Zählern
        stehen.
-       Nur für telefonisch/am Tresen aufgenommene Bestellungen: Eine
-       Online-Bestellung sieht der Kunde in seiner Übersicht, dort bleibt
-       es beim Stornieren. (Spec telefon-bestellung-loeschen) */
-    if(_istVorOrt(o)){
+       Zwei Wege führen hierher: vor Ort aufgenommen (Telefon/Tresen)
+       oder bereits storniert — dann auch online. Eine Stornierung kennt
+       der Kunde bereits (er hat sie ausgelöst oder per Push erfahren),
+       der Vorgang ist abgeschlossen. Eine OFFENE Online-Bestellung
+       erwartet er dagegen; die bleibt gesperrt.
+       (Spec telefon-bestellung-loeschen, R2/R7) */
+    if(_istVorOrt(o) || o.status===2){
       html += '<button class="k-btn k-btn-sm k-btn-outline k-oc-del" title="Bestellung endg\u00fcltig l\u00f6schen" aria-label="Bestellung endg\u00fcltig l\u00f6schen" onclick="event.stopPropagation();K.showDeleteDialog(\''+o.id+'\')">'+luc('trash-2',13)+'</button>';
     }
     html += '</span>';

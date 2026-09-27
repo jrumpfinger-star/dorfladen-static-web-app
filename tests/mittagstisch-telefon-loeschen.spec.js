@@ -33,7 +33,9 @@ function bestellungen() {
     { id: 'tel-abgeholt', name: 'Anruf Abgeholt', status: 3, quelle: 1 },
     { id: 'tresen', name: 'Am Tresen', status: 1, quelle: 2 },
     { id: 'online-neu', name: 'Online Neu', status: 0, quelle: 0 },
+    { id: 'online-ok', name: 'Online Bestätigt', status: 1, quelle: 0 },
     { id: 'online-storno', name: 'Online Storniert', status: 2, quelle: 0 },
+    { id: 'online-abgeholt', name: 'Online Abgeholt', status: 3, quelle: 0 },
   ];
   return basis.map((o) => Object.assign({
     datum: heute(), gericht: GERICHT, menge: 1, preis: 8.8,
@@ -96,15 +98,15 @@ test.describe('Mittagstisch: Telefonbestellung löschen', () => {
         'am Tresen aufgenommen — dasselbe Recht').toBeVisible();
     });
 
-  test('TC-TL-02: Online-Bestellungen tragen keinen', async ({ page }) => {
-    /* Die sieht der Kunde in seiner eigenen Übersicht. Sie verschwinden
-       zu lassen wäre für ihn nicht nachvollziehbar — dort bleibt es beim
-       Stornieren. */
+  test('TC-TL-02: Offene Online-Bestellungen tragen keinen', async ({ page }) => {
+    /* Die sieht der Kunde in seiner eigenen Übersicht und erwartet sie.
+       Sie verschwinden zu lassen wäre für ihn nicht nachvollziehbar —
+       dort bleibt es beim Stornieren. */
     await openMittag(page);
     await expect(papierkorb(page, 'online-neu'),
-      'Online-Bestellung ist löschbar').toHaveCount(0);
-    await filter(page, 'storniert');
-    await expect(papierkorb(page, 'online-storno')).toHaveCount(0);
+      'offene Online-Bestellung ist löschbar').toHaveCount(0);
+    await expect(papierkorb(page, 'online-ok'),
+      'bestätigte Online-Bestellung ist löschbar').toHaveCount(0);
   });
 
   test('TC-TL-03: Auch eine stornierte Telefonbestellung lässt sich löschen',
@@ -153,6 +155,44 @@ test.describe('Mittagstisch: Telefonbestellung löschen', () => {
       await expect(page.locator('#dl-confirm-overlay')).toBeVisible();
       await expect(page.locator('#oc-tel-neu .k-order-body'),
         'Karte ist nebenbei aufgeklappt').toBeHidden();
+    });
+
+  /* Nachtrag 27.09.2026: „stornierte sollen auch gelöscht werden können."
+     Gemeldet wurde genau die Karte mit den Kennzeichen ONLINE +
+     STORNIERT, die bis dahin keinen Papierkorb trug. */
+  test('TC-TL-07: Auch die stornierte Online-Bestellung lässt sich löschen',
+    async ({ page }) => {
+      const geloescht = await openMittag(page);
+      await filter(page, 'storniert');
+
+      const korb = papierkorb(page, 'online-storno');
+      await expect(korb,
+        'stornierte Online-Bestellung trägt keinen Papierkorb').toBeVisible();
+
+      await korb.click();
+      const dlg = page.locator('#dl-confirm-overlay');
+      await expect(dlg).toBeVisible();
+      await expect(dlg).toContainText('Online Storniert');
+      await dlg.locator('button', { hasText: 'Endgültig löschen' }).click();
+      await page.waitForTimeout(900);
+
+      expect(geloescht.length, 'nichts gelöscht').toBe(1);
+      expect(geloescht[0], 'falsche Bestellung getroffen')
+        .toContain('online-storno');
+    });
+
+  test('TC-TL-08: Die abgeholte Online-Bestellung bleibt unangetastet',
+    async ({ page }) => {
+      /* Die Lockerung gilt nur für Storno. An einer abgeholten
+         Bestellung hängt der Nachrichtenverlauf, und der Kasten auf der
+         Startseite ist für die Kundin der einzige Weg dorthin zurück
+         (Spec mittagstisch-abgeholt-sichtbar, F1). */
+      await openMittag(page);
+      await filter(page, 'erledigt');
+      await expect(papierkorb(page, 'online-abgeholt'),
+        'abgeholte Online-Bestellung ist löschbar').toHaveCount(0);
+      await expect(papierkorb(page, 'tel-abgeholt'),
+        'die Telefonbestellung verliert ihr Recht').toBeVisible();
     });
 });
 
