@@ -233,11 +233,36 @@
 
       <a href="javascript:void(0)" onclick="if(window.parent!==window){window.parent.postMessage('closeMittagPopup','*')}else if(history.length>1){history.back()}else{location.href='/'}" class="bs-link"><i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle"></i> Zurück</a>
     </div>
+    <!-- Der Weg zum Konto steht AUSSERHALB von #bs-detail. Innerhalb war
+         er unsichtbar, solange keine Bestellung geladen ist - und genau
+         dann schaut jemand hier nach. Nur für Nicht-Angemeldete und nicht
+         im eingebetteten Fenster. (Spec konto-ohne-bankdaten) -->
+    <div id="bs-konto" style="display:none;margin:18px auto 0;max-width:520px;padding:13px 16px;text-align:center">
+      <div style="font-size:12.5px;line-height:1.5;color:var(--c-muted)">
+        Ihre Bestellungen auch am Rechner oder Tablet sehen?
+      </div>
+      <a href="/mein-konto" style="display:inline-block;margin-top:5px;font-size:13px;font-weight:600;color:var(--c-green);text-decoration:underline">Kostenloses Konto anlegen</a>
+    </div>
   </div>
 
 <script>
 var _order = null;
 var _orderType = 'mt'; // 'mt' or 'fm'
+
+/* Den Kontohinweis nur zeigen, wenn er auch passt: nicht fuer
+   Angemeldete und nicht im eingebetteten Fenster.
+   (Spec konto-ohne-bankdaten) */
+(function(){
+  try{
+    var angemeldet=false;
+    try{ angemeldet=!!(localStorage.getItem('dl_shop_token')||'').trim(); }catch(e){}
+    if(angemeldet || window.parent!==window) return;
+    document.addEventListener('DOMContentLoaded', function(){
+      var el=document.getElementById('bs-konto');
+      if(el) el.style.display='';
+    });
+  }catch(e){}
+})();
 
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 

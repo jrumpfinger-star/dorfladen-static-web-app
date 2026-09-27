@@ -151,4 +151,28 @@ test.describe('Mein Konto: auffindbar', () => {
       await expect(page.locator('#mk-neu')).toBeVisible();
       await expect(page.locator('#mk-anmelden')).toBeHidden();
     });
+
+  test('TC-MK-19: Auch die Bestellstatus-Seite führt zum Konto',
+    async ({ page }) => {
+      /* Wer seinen Bestellstatus sucht, ist genau der, den die Frage
+         „und auf dem anderen Gerät?" betrifft. */
+      await mockApi(page);
+      await page.goto(`${BASE}/bestellstatus.html`);
+      await page.waitForTimeout(900);
+      const hinweis = page.locator('#bs-konto');
+      await expect(hinweis).toBeVisible();
+      await expect(hinweis.locator('a')).toHaveAttribute('href', '/mein-konto');
+    });
+
+  test('TC-MK-20: Angemeldete sehen ihn auch dort nicht',
+    async ({ page }) => {
+      await mockApi(page);
+      await page.goto(`${BASE}/bestellstatus.html`);
+      await page.evaluate(() => {
+        try { localStorage.setItem('dl_shop_token', 'zeichen-abc'); } catch (e) { }
+      });
+      await page.reload();
+      await page.waitForTimeout(900);
+      await expect(page.locator('#bs-konto')).toBeHidden();
+    });
 });
