@@ -135,7 +135,7 @@
        Bewusst OHNE Zwang: Wer nur ab und zu bestellt, braucht kein Konto,
        die Kachel findet seine Bestellung weiterhin ueber das Geraet.
        (Spec konto-ohne-bankdaten) -->
-  <a href="/mein-konto" id="mob-konto" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="user" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i><span id="mob-konto-txt">Mein Konto</span></a>
+  <a href="/mein-konto" id="mob-konto" onclick="return dlOeffneKontoModal(event,this)" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="user" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i><span id="mob-konto-txt">Mein Konto</span></a>
 
   <!-- Dauerhaft sichtbar: Die beiden Eintraege darueber blendet pwa.js nur
        ein, wenn der Browser die Installation anbietet - auf dem iPhone also
@@ -483,7 +483,7 @@
            Den Zustand setzt dlKontoStand() weiter unten - hier steht der
            abgemeldete Fall, damit die Leiste auch ohne JavaScript etwas
            Sinnvolles zeigt. (Spec konto-icon) -->
-      <a href="/mein-konto" id="tb-konto" class="tb-konto" title="Anmelden oder Konto anlegen">
+      <a href="/mein-konto" id="tb-konto" class="tb-konto" title="Anmelden oder Konto anlegen" onclick="return dlOeffneKontoModal(event,this)">
         <span class="tb-konto-ic" id="tb-konto-ic">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </span>
@@ -2749,6 +2749,12 @@ function closeMittagPopup(_fromPop){
   document.body.style.overflow='';document.body.style.position='';document.body.style.width='';document.body.style.top='';
   // History-Eintrag wieder abbauen, wenn per UI (nicht per Zurueck) geschlossen wurde.
   if(_mtPopupHist){ _mtPopupHist=false; if(!_fromPop){ try{ history.back(); }catch(e){} } }
+  /* Der Dialog kann "Mein Konto" gewesen sein - nach Anmelden/Abmelden
+     dort soll das Konto-Symbol hier sofort den neuen Stand zeigen,
+     ohne dass die Seite neu geladen werden muss. Der Aufruf ist billig
+     und schadlos, auch wenn der Dialog etwas ganz anderes war.
+     (Spec konto-modal) */
+  if(window.dlKontoStand) dlKontoStand();
 }
 window.addEventListener('popstate',function(){
   if(document.getElementById('mt-popup-overlay').classList.contains('open')) closeMittagPopup(true);
@@ -2758,6 +2764,20 @@ function openCmsPopup(){
 }
 function openBestellstatus(nr){
   openMittagPopup('/bestellstatus?nr='+encodeURIComponent(nr||''));
+}
+/* "Mein Konto" oeffnet ab jetzt im selben modalen Fenster wie Bestellstatus
+   und Mittagstisch - mit Schliessen-Kreuz, Klick-daneben und Android-
+   Zurueck-Taste, statt die ganze Seite zu verlassen. Der Rueckfrage aus
+   dem Laden folgend: "Warum muss ein eigenes Fenster aufgehen anstatt
+   eines modalen Dialoges mit einem Schliessen-X-Button?" - es musste gar
+   nicht, das Fenster gab es schon (Spec konto-modal).
+   Ctrl/Cmd/Shift-Klick oder Mittelklick oeffnen weiterhin einen echten
+   neuen Tab - das href-Ziel bleibt deshalb erhalten. */
+function dlOeffneKontoModal(e, el){
+  if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1) return true;
+  e.preventDefault();
+  openMittagPopup(el.getAttribute('href'));
+  return false;
 }
 
 /* --- CMS Password Gate Popup --- */
@@ -2804,6 +2824,10 @@ window.addEventListener('message',function(e){
   // Bestellung im eingebetteten Dialog abgeschlossen: Bestell-Dialog UND
   // den TagesInfo-Dialog schliessen, sodass man sauber auf der Startseite landet.
   else if(e.data==='mittagOrderDone'){ closeMittagPopup(); if(window.tpCloseModal) window.tpCloseModal(); }
+  // Angemeldet/abgemeldet in einem eingebetteten Dialog (z.B. beim
+  // Mittagessen bestellen) - das Konto-Symbol hier soll das sofort
+  // zeigen, auch wenn der Dialog selbst offen bleibt.
+  else if(e.data==='dlKontoGeaendert'){ if(window.dlKontoStand) dlKontoStand(); }
 });
 </script>
 

@@ -183,7 +183,7 @@
     <h1>Mein Konto</h1>
     <p>Eigene Bestellungen auf allen Geräten</p>
   </div>
-  <a href="/" class="mk-zurueck">Zur Startseite</a>
+  <a href="/" class="mk-zurueck" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">Zur Startseite</a>
 </div>
 
 <div class="mk-box">
@@ -377,6 +377,20 @@
   'use strict';
   var API='/api';
 
+  /* Diese Seite läuft heute meist eingebettet im modalen Fenster der
+     Startseite (Spec konto-modal). "Zur Startseite" hieße dort: die
+     ganze Homepage würde winzig INNERHALB des Bestell-Popups laden -
+     kein sinnvoller Zustand. Eingebettet wird stattdessen nur das
+     Fenster geschlossen, wie überall sonst im Kiosk/Popup-System.
+     Direkt aufgerufen (eigene Adresse, eigener Tab) bleibt es eine
+     normale Navigation. */
+  function zurueckZurStartseite(){
+    if(window!==window.parent){
+      try{ window.parent.postMessage('closeMittagPopup','*'); return; }catch(e){}
+    }
+    location.href='/';
+  }
+
   var STATUS={0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
 
   function $(id){ return document.getElementById(id); }
@@ -564,8 +578,10 @@
              und die Bestellungen stehen im Kasten „Meine Bestellungen".
              Auf dieser Seite zu bleiben liess den Eindruck entstehen,
              man sei in einem eigenen Bereich gelandet und muesse sich
-             erst wieder heraussuchen. (Spec anmelden-vor-registrieren) */
-          location.href='/';
+             erst wieder heraussuchen. (Spec anmelden-vor-registrieren)
+             Eingebettet: nur das Fenster schliessen, nicht die Homepage
+             INNERHALB des Fensters laden. (Spec konto-modal) */
+          zurueckZurStartseite();
           return;
         }
         fehler('mk-anmelde-fehler',
@@ -678,7 +694,7 @@
     /* Wie beim Anmelden zurueck zur Startseite. Die leere Anmeldemaske
        stehen zu lassen sah aus, als sei das Abmelden fehlgeschlagen.
        (Spec anmelden-vor-registrieren) */
-    location.href='/';
+    zurueckZurStartseite();
   }
 
   /* ── Profil bearbeiten ──

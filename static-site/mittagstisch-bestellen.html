@@ -532,6 +532,14 @@ if(window!==window.parent){
           // Die Bestellung bleibt unberuehrt - es findet kein Sprung
           // statt. Nur die Kundendaten werden nachgezogen.
           loadCustomer();
+          /* Diese Seite laeuft meist eingebettet im Popup der Startseite.
+             Deren Konto-Symbol oben rechts wusste bisher nichts von einer
+             Anmeldung hier drin - aus dem Laden gemeldet: "Wenn man sich
+             bei Mittagessen anmeldet, muss auch auf der Homepage dies
+             aktualisiert werden." (Spec konto-modal) */
+          if(window!==window.parent){
+            try{ window.parent.postMessage('dlKontoGeaendert','*'); }catch(e){}
+          }
           return;
         }
         fehlerEl.textContent = (res && (res.error||(res.errors||[]).join(' ')))
