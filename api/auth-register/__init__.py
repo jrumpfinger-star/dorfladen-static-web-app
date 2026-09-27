@@ -115,9 +115,18 @@ def _encrypt_iban(iban):
     """Encrypt IBAN for storage using Fernet (AES-128-CBC + HMAC-SHA256).
     Key comes from the IBAN_ENCRYPTION_KEY app setting (no paid service needed).
     Fernet values are prefixed 'ENC2:'. If no key is configured, falls back to
-    legacy base64 obfuscation ('ENC:') and logs a warning."""
+    legacy base64 obfuscation ('ENC:') and logs a warning.
+
+    Ohne IBAN bleibt das Feld LEER. Sonst entstuende fuer ein Konto ohne
+    Bankverbindung ein Kryptogramm des leeren Textes - ein Wert, der
+    "da ist" und beim Entschluesseln nichts ergibt. Jede spaetere Pruefung
+    "hat der Kunde eine IBAN?" muesste dann entschluesseln, statt hinsehen
+    zu koennen. (Spec konto-ohne-bankdaten)
+    """
     import base64
     clean = iban.replace(" ", "").upper()
+    if not clean:
+        return ""
     cipher = _get_iban_cipher()
     if cipher:
         token = cipher.encrypt(clean.encode()).decode()
@@ -154,6 +163,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     dsgvo_zustimmung = body.get("dsgvo_zustimmung", False)
     agb_zustimmung = body.get("agb_zustimmung", False)
 
+    # Konto OHNE Bankverbindung: fuer alle, die nur ihre eigenen
+    # Bestellungen sehen wollen - etwa den Mittagstisch auf einem zweiten
+    # Geraet. Aus dem Laden: "Es sollte die Moeglichkeit geben, ohne den
+    # Bestellshop das Konto anzulegen, aber IBAN ist dann kein
+    # Pflichtfeld."
+    #
+    # Warum ein ausdruecklicher Schalter und nicht einfach "IBAN leer =
+    # egal": So kann eine vergessene oder unterwegs verlorene IBAN im
+    # Shop-Formular nicht stillschweigend zu einem Konto ohne
+    # Lastschriftmandat werden. Die Absicht muss aus der Anfrage
+    # hervorgehen.
+    ohne_bank = bool(body.get("ohne_bankdaten", False))
+
     errors = []
     if not _validate_email(email):
         errors.append("Bitte geben Sie eine gültige E-Mail-Adresse ein.")
@@ -163,16 +185,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         errors.append("Vorname ist erforderlich.")
     if not nachname:
         errors.append("Nachname ist erforderlich.")
-    if not telefon:
-        errors.append("Telefonnummer ist erforderlich.")
-    if not strasse or not plz or not ort:
-        errors.append("Vollständige Adresse ist erforderlich.")
-    if not _validate_iban(iban):
+    if not ohne_bank:
+        # Der volle Satz - nur fuer das Konto MIT Lastschrift.
+        if not telefon:
+            errors.append("Telefonnummer ist erforderlich.")
+        if not strasse or not plz or not ort:
+            errors.append("Vollständige Adresse ist erforderlich.")
+        if not _validate_iban(iban):
+            errors.append("Bitte geben Sie eine gültige IBAN ein.")
+        if not kontoinhaber:
+            errors.append("Kontoinhaber ist erforderlich.")
+        if not sepa_zustimmung:
+            errors.append("Bitte stimmen Sie dem SEPA-Lastschriftmandat zu.")
+    elif iban and not _validate_iban(iban):
+        # Freiwillig angegeben, aber unbrauchbar: Das ist ein Tippfehler
+        # und keine Entscheidung gegen die Lastschrift. Stillschweigend
+        # verwerfen waere die schlechtere Antwort.
         errors.append("Bitte geben Sie eine gültige IBAN ein.")
-    if not kontoinhaber:
-        errors.append("Kontoinhaber ist erforderlich.")
-    if not sepa_zustimmung:
-        errors.append("Bitte stimmen Sie dem SEPA-Lastschriftmandat zu.")
     if not dsgvo_zustimmung:
         errors.append("Bitte stimmen Sie der Datenschutzerklärung zu.")
     if not agb_zustimmung:
@@ -229,25 +258,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     client_ip = req.headers.get("X-Forwarded-For", req.headers.get("X-Real-IP", "unknown"))
     user_agent = req.headers.get("User-Agent", "unknown")
 
-    # SEPA Mandate JSON with all legally required data
-    sepa_mandat_json = json.dumps({
-        "glaeubiger_id": GLAEUBIGER_ID,
-        "glaeubiger_name": GLAEUBIGER_NAME,
-        "glaeubiger_adresse": GLAEUBIGER_ADRESSE,
-        "mandatsreferenz": mandatsreferenz,
-        "mandatsdatum": mandatsdatum,
-        "mandatstyp": "RCUR",  # Wiederkehrende Lastschrift
-        "mandatsstatus": "aktiv",
-        "kontoinhaber": kontoinhaber,
-        "iban_masked": iban.replace(' ', '').upper()[:4] + '****' + iban.replace(' ', '').upper()[-4:],
-        "unterschrift_digital": True,
-        "unterschrift_ip": client_ip,
-        "unterschrift_useragent": user_agent,
-        "unterschrift_zeitpunkt": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "vorabankuendigung_tage": 5,
-        "letzte_lastschrift": None,
-        "verfall_monate": MANDAT_VERFALL_MONATE,
-    }, ensure_ascii=False)
+    # SEPA-Mandat NUR bei vorhandener Bankverbindung. Ein Mandat ohne
+    # IBAN waere ein Papier ueber nichts: Es truege eine Mandatsreferenz,
+    # den Status "aktiv" und die Angabe, es sei digital unterschrieben
+    # worden - und wuerde damit eine Einzugsermaechtigung behaupten, die
+    # niemand erteilt hat. Der maskierte IBAN-Eintrag saehe obendrein
+    # kurios aus ("****").
+    hat_bank = bool(iban)
+    sepa_mandat_json = ""
+    if hat_bank:
+        sepa_mandat_json = json.dumps({
+            "glaeubiger_id": GLAEUBIGER_ID,
+            "glaeubiger_name": GLAEUBIGER_NAME,
+            "glaeubiger_adresse": GLAEUBIGER_ADRESSE,
+            "mandatsreferenz": mandatsreferenz,
+            "mandatsdatum": mandatsdatum,
+            "mandatstyp": "RCUR",  # Wiederkehrende Lastschrift
+            "mandatsstatus": "aktiv",
+            "kontoinhaber": kontoinhaber,
+            "iban_masked": iban.replace(' ', '').upper()[:4] + '****' + iban.replace(' ', '').upper()[-4:],
+            "unterschrift_digital": True,
+            "unterschrift_ip": client_ip,
+            "unterschrift_useragent": user_agent,
+            "unterschrift_zeitpunkt": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "vorabankuendigung_tage": 5,
+            "letzte_lastschrift": None,
+            "verfall_monate": MANDAT_VERFALL_MONATE,
+        }, ensure_ascii=False)
 
     payload = {
         "dl_email": email,
@@ -260,10 +297,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "dl_ort": ort,
         "dl_iban_encrypted": iban_encrypted,
         "dl_kontoinhaber": kontoinhaber,
-        "dl_mandatsreferenz": mandatsreferenz,
-        "dl_mandatsdatum": mandatsdatum,
-        "dl_mandatstyp": "RCUR",
-        "dl_mandatsstatus": "aktiv",
+        # Ohne Bankverbindung bleiben die Mandatsfelder leer. Der Shop
+        # liest die IBAN ohnehin und schreibt dann "Bar bei Abholung"
+        # statt "Lastschrift" - ein solches Konto kann also einkaufen,
+        # nur eben nicht per Einzug.
+        "dl_mandatsreferenz": mandatsreferenz if hat_bank else "",
+        "dl_mandatsdatum": mandatsdatum if hat_bank else None,
+        "dl_mandatstyp": "RCUR" if hat_bank else "",
+        "dl_mandatsstatus": "aktiv" if hat_bank else "",
         "dl_sepa_mandat_json": sepa_mandat_json,
         "dl_email_verifiziert": False,
         "dl_aktiv": True,

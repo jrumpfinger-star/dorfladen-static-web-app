@@ -383,6 +383,13 @@
     .shop-auth-errors{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#dc2626}
     .shop-auth-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--shop-muted)}
     .shop-auth-sepa{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin:12px 0;font-size:12px;line-height:1.5;color:#166534}
+    /* Wahl der Kontoart (Spec konto-ohne-bankdaten) */
+    .shop-auth-zweck{border:1px solid var(--shop-border,#e2e8f0);border-radius:10px;padding:11px;margin-bottom:14px}
+    .shop-auth-zweck-titel{font-size:12px;font-weight:600;margin-bottom:8px}
+    .shop-auth-zweck-wahl{display:flex;gap:9px;align-items:flex-start;padding:7px 4px;cursor:pointer}
+    .shop-auth-zweck-wahl input{margin-top:3px;flex-shrink:0;width:17px;height:17px}
+    .shop-auth-zweck-wahl b{display:block;font-size:13px;font-weight:600;line-height:1.3}
+    .shop-auth-zweck-wahl small{display:block;font-size:11.5px;line-height:1.4;color:var(--shop-muted,#64748b);margin-top:2px}
     .shop-auth-sepa strong{display:block;margin-bottom:4px;font-size:13px}
 
     /* ── Vorbestellungen-Overlay (Fleisch, im Shop) ── */
@@ -884,22 +891,44 @@
     <!-- Register Form -->
     <div class="shop-auth-body" id="shop-auth-register" style="display:none">
       <div id="register-errors" class="shop-auth-errors" style="display:none"></div>
+      <!-- Wofuer das Konto? Aus dem Laden: „Es sollte die Möglichkeit geben,
+           ohne den Bestellshop das Konto anzulegen, aber IBAN ist dann kein
+           Pflichtfeld." Viele bestellen nur ab und zu Mittagessen — für die
+           wäre ein Lastschriftmandat zu viel verlangt.
+           (Spec konto-ohne-bankdaten) -->
+      <div class="shop-auth-zweck" id="reg-zweck">
+        <div class="shop-auth-zweck-titel">Wofür möchten Sie ein Konto?</div>
+        <label class="shop-auth-zweck-wahl">
+          <input type="radio" name="reg-zweck" value="einfach" checked>
+          <span>
+            <b>Nur meine Bestellungen sehen</b>
+            <small>Mittagessen und Abholungen auf allen Geräten — Name, E-Mail, Passwort genügen.</small>
+          </span>
+        </label>
+        <label class="shop-auth-zweck-wahl">
+          <input type="radio" name="reg-zweck" value="shop">
+          <span>
+            <b>Im Dorfladen-Shop einkaufen</b>
+            <small>Zusätzlich Adresse und Bankverbindung für den Lastschrifteinzug.</small>
+          </span>
+        </label>
+      </div>
       <div class="shop-auth-row">
         <div class="shop-auth-field"><label>Vorname *</label><input type="text" id="reg-vorname"></div>
         <div class="shop-auth-field"><label>Nachname *</label><input type="text" id="reg-nachname"></div>
       </div>
       <div class="shop-auth-field"><label>E-Mail *</label><input type="email" id="reg-email" placeholder="ihre@email.de"></div>
-      <div class="shop-auth-field"><label>Telefon *</label><input type="tel" id="reg-telefon" placeholder="+49 …"></div>
+      <div class="shop-auth-field" data-nur-shop><label>Telefon *</label><input type="tel" id="reg-telefon" placeholder="+49 …"></div>
       <div class="shop-auth-field"><label>Passwort * (min. 8 Zeichen)</label><div class="shop-pw-wrap"><input type="password" id="reg-passwort"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
       <div class="shop-auth-field"><label>Passwort bestätigen *</label><div class="shop-pw-wrap"><input type="password" id="reg-passwort2"><button type="button" class="shop-pw-toggle" title="Passwort anzeigen">&#128065;</button></div></div>
-      <div class="shop-auth-row">
+      <div class="shop-auth-row" data-nur-shop>
         <div class="shop-auth-field" style="grid-column:1/-1"><label>Straße + Nr. *</label><input type="text" id="reg-strasse"></div>
       </div>
-      <div class="shop-auth-row">
+      <div class="shop-auth-row" data-nur-shop>
         <div class="shop-auth-field"><label>PLZ *</label><input type="text" id="reg-plz" maxlength="5"></div>
         <div class="shop-auth-field"><label>Ort *</label><input type="text" id="reg-ort"></div>
       </div>
-      <div class="shop-auth-sepa">
+      <div class="shop-auth-sepa" data-nur-shop>
         <strong>🏦 SEPA-Lastschriftmandat (Wiederkehrende Zahlung)</strong>
         <div style="margin:6px 0 4px;font-size:11px;color:#374151;line-height:1.6">
           <strong>Zahlungsempfänger (Gläubiger):</strong><br>
@@ -917,9 +946,9 @@
         </div>
         <div style="margin-top:6px;font-size:10px;color:#6b7280">Die Mandatsreferenz wird Ihnen nach der Registrierung mitgeteilt.</div>
       </div>
-      <div class="shop-auth-field"><label>IBAN *</label><input type="text" id="reg-iban" placeholder="DE89 3704 0044 0532 0130 00"><div class="hint">Ihre IBAN wird verschlüsselt gespeichert</div></div>
-      <div class="shop-auth-field"><label>Kontoinhaber *</label><input type="text" id="reg-kontoinhaber"></div>
-      <div class="shop-auth-check"><input type="checkbox" id="reg-sepa"> Ich erteile das oben stehende SEPA-Lastschriftmandat *</div>
+      <div class="shop-auth-field" data-nur-shop><label>IBAN *</label><input type="text" id="reg-iban" placeholder="DE89 3704 0044 0532 0130 00"><div class="hint">Ihre IBAN wird verschlüsselt gespeichert</div></div>
+      <div class="shop-auth-field" data-nur-shop><label>Kontoinhaber *</label><input type="text" id="reg-kontoinhaber"></div>
+      <div class="shop-auth-check" data-nur-shop><input type="checkbox" id="reg-sepa"> Ich erteile das oben stehende SEPA-Lastschriftmandat *</div>
       <div class="shop-auth-check"><input type="checkbox" id="reg-dsgvo"> Ich habe die <a href="/datenschutzerklaerung" target="_blank">Datenschutzerklärung</a> gelesen und stimme zu *</div>
       <div class="shop-auth-check"><input type="checkbox" id="reg-agb"> Ich akzeptiere die <a href="/agb" target="_blank">AGB</a> und das <a href="/widerrufsrecht" target="_blank">Widerrufsrecht</a> *</div>
       <button class="shop-auth-submit" id="register-submit">Konto erstellen</button>
@@ -1705,6 +1734,12 @@
     document.getElementById('shop-auth-register').style.display=tab==='register'?'':'none';
     document.getElementById('shop-auth-reset-request').style.display=tab==='reset-request'?'':'none';
     document.getElementById('shop-auth-reset-confirm').style.display=tab==='reset-confirm'?'':'none';
+    /* Die Wahl „Wofür ein Konto?" muss beim OEFFNEN wirken, nicht erst
+       beim Umschalten. Sonst stuenden die Bankfelder sichtbar da,
+       obwohl „nur ansehen" vorgewaehlt ist — und der Kunde fuellte sie
+       aus, ohne dass sie gesendet wuerden.
+       (Spec konto-ohne-bankdaten) */
+    if(tab==='register' && typeof regZweckAnwenden==='function') regZweckAnwenden();
   }
 
   var _pendingCheckout=false;
@@ -1749,25 +1784,56 @@
       .catch(function(e){console.error('Bestätigungslink senden fehlgeschlagen:',e);errEl.textContent='Verbindung fehlgeschlagen. Bitte versuchen Sie es später erneut.';errEl.style.display='';});
   };
 
+  /* Welche Art Konto wird gerade angelegt?
+     „Nur ansehen" ist die Voreinstellung: Die meisten, die hier landen,
+     wollen ihre Mittagessen-Bestellung auf dem zweiten Gerät sehen und
+     nicht einkaufen. Wer einkaufen will, sagt es ausdrücklich — dann
+     kommen Adresse und Bankverbindung dazu.
+     (Spec konto-ohne-bankdaten) */
+  function regNurAnsehen(){
+    var gewaehlt=document.querySelector('input[name="reg-zweck"]:checked');
+    return !gewaehlt || gewaehlt.value==='einfach';
+  }
+
+  function regZweckAnwenden(){
+    var nurAnsehen=regNurAnsehen();
+    document.querySelectorAll('#shop-auth-register [data-nur-shop]')
+      .forEach(function(el){ el.style.display=nurAnsehen?'none':''; });
+    var knopf=document.getElementById('register-submit');
+    if(knopf) knopf.textContent=nurAnsehen?'Konto erstellen':'Konto mit Lastschrift erstellen';
+  }
+
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.name==='reg-zweck') regZweckAnwenden();
+  });
+
   function doRegister(){
     var errEl=document.getElementById('register-errors');
     var pw1=document.getElementById('reg-passwort').value;
     var pw2=document.getElementById('reg-passwort2').value;
     if(pw1!==pw2){errEl.textContent='Passwörter stimmen nicht überein.';errEl.style.display='';return;}
+    var nurAnsehen=regNurAnsehen();
+    function wert(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
     var body={
-      email:document.getElementById('reg-email').value.trim(),
+      email:wert('reg-email'),
       passwort:pw1,
-      vorname:document.getElementById('reg-vorname').value.trim(),
-      nachname:document.getElementById('reg-nachname').value.trim(),
-      telefon:document.getElementById('reg-telefon').value.trim(),
-      strasse:document.getElementById('reg-strasse').value.trim(),
-      plz:document.getElementById('reg-plz').value.trim(),
-      ort:document.getElementById('reg-ort').value.trim(),
-      iban:document.getElementById('reg-iban').value.trim(),
-      kontoinhaber:document.getElementById('reg-kontoinhaber').value.trim(),
-      sepa_zustimmung:document.getElementById('reg-sepa').checked,
+      vorname:wert('reg-vorname'),
+      nachname:wert('reg-nachname'),
+      telefon:wert('reg-telefon'),
+      strasse:wert('reg-strasse'),
+      plz:wert('reg-plz'),
+      ort:wert('reg-ort'),
+      /* Die Bankfelder gehen bei "nur ansehen" GAR NICHT mit. Sie sind
+         zwar ausgeblendet, könnten aber noch Text tragen, wenn jemand
+         erst das volle Formular ausgefüllt und dann umgeschaltet hat —
+         daraus würde sonst ein Lastschriftmandat, das niemand wollte.
+         (Spec konto-ohne-bankdaten) */
+      iban:nurAnsehen?'':wert('reg-iban'),
+      kontoinhaber:nurAnsehen?'':wert('reg-kontoinhaber'),
+      sepa_zustimmung:nurAnsehen?false:document.getElementById('reg-sepa').checked,
       dsgvo_zustimmung:document.getElementById('reg-dsgvo').checked,
-      agb_zustimmung:document.getElementById('reg-agb').checked
+      agb_zustimmung:document.getElementById('reg-agb').checked,
+      ohne_bankdaten:nurAnsehen
     };
     errEl.style.display='none';
     fetch(API+'/auth-register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})

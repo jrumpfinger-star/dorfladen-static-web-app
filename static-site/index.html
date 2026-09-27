@@ -1247,7 +1247,7 @@
 
     <span>&copy; <script>document.write(new Date().getFullYear())</script> Dorfladen Oberornau UG (haftungsbeschr&auml;nkt). Alle Rechte vorbehalten.</span>
 
-    <span><a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="/app" style="color:#2d5016;font-weight:600"><i data-lucide="smartphone" width="14" height="14" style="vertical-align:-2px;margin-right:3px"></i>Als App einrichten</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600"><i data-lucide="help-circle" width="14" height="14" style="vertical-align:-2px;margin-right:3px"></i>Hilfe</a> &middot; <a href="javascript:void(0)" onclick="openCmsGate()">CMS</a></span>
+    <span><a href="/mein-konto" style="color:#2d5016;font-weight:600"><i data-lucide="user" width="14" height="14" style="vertical-align:-2px;margin-right:3px"></i>Mein Konto</a> &middot; <a href="/impressum">Impressum</a> &middot; <a href="/datenschutzerklaerung">Datenschutz</a> &middot; <a href="/app" style="color:#2d5016;font-weight:600"><i data-lucide="smartphone" width="14" height="14" style="vertical-align:-2px;margin-right:3px"></i>Als App einrichten</a> &middot; <a href="javascript:void(0)" onclick="openHilfePopup()" style="color:#2d5016;font-weight:600"><i data-lucide="help-circle" width="14" height="14" style="vertical-align:-2px;margin-right:3px"></i>Hilfe</a> &middot; <a href="javascript:void(0)" onclick="openCmsGate()">CMS</a></span>
 
     <span id="site-version" style="font-size:10px;color:#9ca3af"></span>
 
@@ -1676,6 +1676,14 @@
 
           renderWidget('mob-my-orders');
           renderWidget('desk-my-orders');
+          /* Hier stand kurzzeitig ein Hinweis „Auch auf anderen Geräten
+             sehen?" unter der Kachel. Er ist wieder raus: TC-K02 begrenzt
+             die Kachel auf 140 px, und die zusätzliche Zeile sprengte das
+             auf allen vier Breiten. Aus dem Laden kam derselbe Wunsch —
+             „Die Kachel-Logik soll bestehen bleiben, da wir viele
+             Ad-hoc-User haben." Der Weg zum Konto steht deshalb in der
+             Fußzeile, wo er niemanden stört und trotzdem immer da ist.
+             (Spec konto-ohne-bankdaten) */
         }).catch(function(){});
     }catch(e){}
   })();

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mein Konto – Dorfladen Oberornau</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2d5016">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
+  <meta name="robots" content="noindex">
+  <meta property="og:title" content="Mein Konto – Dorfladen Oberornau">
+  <meta property="og:description" content="Eigene Bestellungen auf allen Geräten sehen.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Dorfladen Oberornau">
+  <meta property="og:locale" content="de_DE">
+  <script src="/js/theme.js"></script>
+  <script src="/js/geraete-id.js"></script>
+  <style>
+    b,strong{font-weight:600}
+    :root{--c-pri:var(--dl-green,#2d5016);--c-green:var(--dl-green-action,#2e7d4f);
+          --c-red:var(--dl-red,#dc2626);--c-bg:#f5f0eb;--c-card:#fff;--c-text:#2c2c2c;
+          --c-muted:#6b7280;--c-rand:#e2e8f0;--radius:16px}
+    html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;
+          --c-text:#e6eae8;--c-muted:#9aa6a0;--c-green:#5cb85f;--c-rand:#2c3a42}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+         background:var(--c-bg);color:var(--c-text);min-height:100vh}
+
+    .mk-header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;
+      padding:9px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+    .mk-header h1{font-size:15px;font-weight:600;line-height:1.15}
+    .mk-header p{font-size:11px;opacity:.82;line-height:1.1}
+    .mk-logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.15);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+    .mk-head-txt{flex:1;min-width:0}
+    .mk-zurueck{color:#fff;text-decoration:none;font-size:12px;opacity:.9;
+      border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 10px;white-space:nowrap}
+
+    .mk-box{max-width:520px;margin:14px auto 0;padding:0 16px 40px}
+    .mk-karte{background:var(--c-card);border-radius:var(--radius);
+      box-shadow:0 2px 12px rgba(0,0,0,.08);padding:20px;margin-bottom:14px}
+    .mk-karte h2{font-size:16px;font-weight:600;margin-bottom:6px}
+    .mk-karte p.mk-sub{font-size:13px;color:var(--c-muted);line-height:1.5;margin-bottom:14px}
+
+    .mk-feld{margin-bottom:11px}
+    .mk-feld label{display:block;font-size:12px;font-weight:600;margin-bottom:4px}
+    .mk-feld input{width:100%;padding:10px 12px;border:1px solid var(--c-rand);
+      border-radius:10px;font-size:15px;font-family:inherit;background:var(--c-card);color:var(--c-text)}
+    .mk-feld input:focus{outline:2px solid var(--c-green);outline-offset:-1px}
+    .mk-reihe{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:380px){.mk-reihe{grid-template-columns:1fr}}
+
+    .mk-knopf{width:100%;padding:12px;border:0;border-radius:10px;background:var(--c-green);
+      color:#fff;font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;min-height:46px}
+    .mk-knopf:hover{filter:brightness(1.07)}
+    .mk-knopf:disabled{opacity:.6;cursor:default}
+    .mk-knopf.zweit{background:transparent;color:var(--c-green);
+      border:1px solid var(--c-green);margin-top:8px}
+
+    .mk-check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;
+      line-height:1.45;margin-bottom:9px}
+    .mk-check input{margin-top:2px;flex-shrink:0;width:17px;height:17px}
+
+    .mk-meldung{border-radius:10px;padding:10px 12px;font-size:13px;
+      line-height:1.5;margin-bottom:12px;display:none}
+    .mk-fehler{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+    .mk-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+    .mk-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;display:block}
+
+    .mk-wechsel{text-align:center;font-size:13px;margin-top:14px;color:var(--c-muted)}
+    .mk-wechsel a{color:var(--c-green);font-weight:600;cursor:pointer;text-decoration:none}
+
+    /* Bestellungen */
+    .mk-best{border:1px solid var(--c-rand);border-radius:12px;padding:11px 13px;margin-bottom:9px}
+    .mk-best-kopf{display:flex;align-items:baseline;gap:8px}
+    .mk-best-kopf b{font-size:14px;flex:1;min-width:0}
+    .mk-preis{font-weight:600;font-size:14px;white-space:nowrap}
+    .mk-st{font-size:10px;padding:2px 8px;border-radius:7px;font-weight:600;display:inline-block;margin-top:5px}
+    .st-0{background:#fef3c7;color:#b45309}
+    .st-1{background:#d1fae5;color:#047857}
+    .st-2{background:#fee2e2;color:#b91c1c}
+    .st-3{background:#f3f4f6;color:#4b5563}
+    .mk-ger{font-weight:600;font-size:14px;line-height:1.3;margin-top:6px;overflow-wrap:anywhere}
+    .mk-datum{font-size:12px;color:var(--c-muted);margin-top:2px}
+    .mk-leer{text-align:center;color:var(--c-muted);font-size:13.5px;padding:18px 8px;line-height:1.55}
+
+    .mk-nutzer{display:flex;align-items:center;gap:10px;margin-bottom:14px;
+      padding-bottom:12px;border-bottom:1px solid var(--c-rand)}
+    .mk-avatar{width:38px;height:38px;border-radius:50%;background:var(--c-green);
+      color:#fff;display:flex;align-items:center;justify-content:center;
+      font-weight:600;font-size:15px;flex-shrink:0}
+    .mk-nutzer-txt{flex:1;min-width:0}
+    .mk-nutzer-txt b{display:block;font-size:14px}
+    .mk-nutzer-txt small{font-size:11.5px;color:var(--c-muted);overflow-wrap:anywhere}
+    .mk-abmelden{font-size:12px;color:var(--c-red);cursor:pointer;
+      background:none;border:0;font-family:inherit;padding:4px}
+  </style>
+</head>
+<body>
+
+<div class="mk-header">
+  <div class="mk-logo">🛒</div>
+  <div class="mk-head-txt">
+    <h1>Mein Konto</h1>
+    <p>Eigene Bestellungen auf allen Geräten</p>
+  </div>
+  <a href="/" class="mk-zurueck">Zur Startseite</a>
+</div>
+
+<div class="mk-box">
+
+  <!-- ── Angemeldet: die eigenen Bestellungen ── -->
+  <div class="mk-karte" id="mk-angemeldet" style="display:none">
+    <div class="mk-nutzer">
+      <div class="mk-avatar" id="mk-initialen">?</div>
+      <div class="mk-nutzer-txt">
+        <b id="mk-name">—</b>
+        <small id="mk-mail">—</small>
+      </div>
+      <button class="mk-abmelden" id="mk-abmelden">Abmelden</button>
+    </div>
+    <h2>Meine Bestellungen</h2>
+    <p class="mk-sub">Alles, was heute oder später ansteht — auf jedem Gerät,
+       an dem Sie angemeldet sind.</p>
+    <div id="mk-liste">
+      <div class="mk-leer">Wird geladen …</div>
+    </div>
+  </div>
+
+  <!-- ── Anmelden ── -->
+  <div class="mk-karte" id="mk-anmelden" style="display:none">
+    <h2>Anmelden</h2>
+    <p class="mk-sub">Mit Ihrem Dorfladen-Konto. Sie bleiben angemeldet,
+       bis Sie sich abmelden.</p>
+    <div class="mk-meldung mk-fehler" id="mk-anmelde-fehler"></div>
+    <div class="mk-feld">
+      <label for="mk-login-mail">E-Mail</label>
+      <input type="email" id="mk-login-mail" autocomplete="email" placeholder="ihre@email.de">
+    </div>
+    <div class="mk-feld">
+      <label for="mk-login-pw">Passwort</label>
+      <input type="password" id="mk-login-pw" autocomplete="current-password">
+    </div>
+    <button class="mk-knopf" id="mk-login-knopf">Anmelden</button>
+    <div class="mk-wechsel">
+      Noch kein Konto? <a id="mk-zu-konto">Konto anlegen</a>
+    </div>
+  </div>
+
+  <!-- ── Konto anlegen (schlank, ohne Bankverbindung) ── -->
+  <div class="mk-karte" id="mk-neu" style="display:none">
+    <h2>Konto anlegen</h2>
+    <p class="mk-sub">Nur zum Ansehen Ihrer Bestellungen. Keine Adresse,
+       keine Bankverbindung — die brauchen Sie erst, wenn Sie im
+       Dorfladen-Shop einkaufen möchten.</p>
+    <div class="mk-meldung mk-fehler" id="mk-neu-fehler"></div>
+    <div class="mk-reihe">
+      <div class="mk-feld">
+        <label for="mk-vorname">Vorname</label>
+        <input type="text" id="mk-vorname" autocomplete="given-name">
+      </div>
+      <div class="mk-feld">
+        <label for="mk-nachname">Nachname</label>
+        <input type="text" id="mk-nachname" autocomplete="family-name">
+      </div>
+    </div>
+    <div class="mk-feld">
+      <label for="mk-neu-mail">E-Mail</label>
+      <input type="email" id="mk-neu-mail" autocomplete="email" placeholder="ihre@email.de">
+    </div>
+    <div class="mk-feld">
+      <label for="mk-neu-pw">Passwort (mindestens 8 Zeichen)</label>
+      <input type="password" id="mk-neu-pw" autocomplete="new-password">
+    </div>
+    <div class="mk-feld">
+      <label for="mk-neu-pw2">Passwort wiederholen</label>
+      <input type="password" id="mk-neu-pw2" autocomplete="new-password">
+    </div>
+    <div class="mk-check">
+      <input type="checkbox" id="mk-dsgvo">
+      <label for="mk-dsgvo" style="font-weight:400;font-size:12.5px">
+        Ich habe die <a href="/datenschutzerklaerung" target="_blank">Datenschutzerklärung</a>
+        gelesen und stimme zu
+      </label>
+    </div>
+    <div class="mk-check">
+      <input type="checkbox" id="mk-agb">
+      <label for="mk-agb" style="font-weight:400;font-size:12.5px">
+        Ich akzeptiere die <a href="/agb" target="_blank">AGB</a>
+      </label>
+    </div>
+    <button class="mk-knopf" id="mk-neu-knopf">Konto erstellen</button>
+    <div class="mk-wechsel">
+      Schon ein Konto? <a id="mk-zu-anmelden">Anmelden</a>
+    </div>
+  </div>
+
+  <!-- ── Nach der Registrierung ── -->
+  <div class="mk-karte" id="mk-bestaetigen" style="display:none">
+    <h2>Fast geschafft</h2>
+    <div class="mk-meldung mk-ok" style="display:block" id="mk-best-text"></div>
+    <button class="mk-knopf zweit" id="mk-zurueck-anmelden">Zur Anmeldung</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var API='/api';
+
+  var STATUS={0:'Eingegangen',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function zeigen(welche){
+    ['mk-angemeldet','mk-anmelden','mk-neu','mk-bestaetigen'].forEach(function(id){
+      var el=$(id); if(el) el.style.display=(id===welche)?'':'none';
+    });
+  }
+  function fehler(id,text){
+    var el=$(id); if(!el) return;
+    if(!text){ el.style.display='none'; return; }
+    el.innerHTML=text; el.style.display='block';
+  }
+
+  function konto(){
+    try{ return JSON.parse(localStorage.getItem('dl_shop_user')||'null'); }
+    catch(e){ return null; }
+  }
+  function zeichen(){
+    try{ return (localStorage.getItem('dl_shop_token')||'').trim(); }
+    catch(e){ return ''; }
+  }
+
+  function datumDe(iso){
+    if(!iso) return '';
+    var t=String(iso).split('-');
+    if(t.length!==3) return iso;
+    var wd=['So','Mo','Di','Mi','Do','Fr','Sa'];
+    var mo=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    var d=new Date(parseInt(t[0],10),parseInt(t[1],10)-1,parseInt(t[2],10));
+    return wd[d.getDay()]+'., '+parseInt(t[2],10)+'. '+mo[parseInt(t[1],10)-1]+'.';
+  }
+
+  /* ── Die eigenen Bestellungen ──
+     Die Adresse geht NICHT in der Adresszeile mit; der Server nimmt sie
+     aus dem Anmeldezeichen. (Spec meine-bestellungen-geraete, F3) */
+  function bestellungenLaden(){
+    var z=zeichen();
+    if(!z) return;
+    fetch(API+'/lunch-order?mode=my',{headers:{'X-Shop-Token':z}})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        var liste=$('mk-liste');
+        if(!liste) return;
+        var b=(res && res.orders)||[];
+        if(!b.length){
+          liste.innerHTML='<div class="mk-leer">Zurzeit keine Bestellung.<br>'
+            +'Sobald Sie etwas bestellen, steht es hier — auf jedem Gerät.</div>';
+          return;
+        }
+        liste.innerHTML=b.map(function(o){
+          var menge=o.menge||1;
+          var gesamt=(parseFloat(o.preis)||0)*menge;
+          var preis=gesamt>0?(gesamt.toFixed(2).replace('.',',')+' €'):'';
+          var st=STATUS[o.status]||'Eingegangen';
+          return '<div class="mk-best">'
+            +'<div class="mk-best-kopf">'
+              +'<b>'+esc(o.bestellnummer||'Bestellung')+'</b>'
+              +(preis?'<span class="mk-preis">'+preis+'</span>':'')
+            +'</div>'
+            +'<div class="mk-ger">'+esc(o.gericht||'Mittagessen')+'</div>'
+            +'<div class="mk-datum">'+esc(datumDe(o.datum))+' · '
+              +menge+' Portion'+(menge>1?'en':'')
+              +(o.mitnehmen?' · Mitnehmen':'')+'</div>'
+            +'<span class="mk-st st-'+(o.status||0)+'">'+esc(st)+'</span>'
+            +'</div>';
+        }).join('');
+      })
+      .catch(function(){
+        var liste=$('mk-liste');
+        if(liste) liste.innerHTML='<div class="mk-leer">Die Bestellungen konnten '
+          +'gerade nicht geladen werden. Bitte später noch einmal versuchen.</div>';
+      });
+  }
+
+  function angemeldetZeigen(){
+    var k=konto();
+    if(!k || !zeichen()){ zeigen('mk-anmelden'); return; }
+    var name=((k.vorname||'')+' '+(k.nachname||'')).trim()||k.email||'';
+    $('mk-name').textContent=name;
+    $('mk-mail').textContent=k.email||'';
+    var initialen=((k.vorname||' ')[0]||'')+((k.nachname||' ')[0]||'');
+    $('mk-initialen').textContent=(initialen.trim()||'?').toUpperCase();
+    zeigen('mk-angemeldet');
+    bestellungenLaden();
+  }
+
+  // ── Anmelden ──
+  function anmelden(){
+    var mail=$('mk-login-mail').value.trim();
+    var pw=$('mk-login-pw').value;
+    if(!mail || !pw){ fehler('mk-anmelde-fehler','Bitte E-Mail und Passwort eingeben.'); return; }
+    var knopf=$('mk-login-knopf');
+    knopf.disabled=true; knopf.textContent='Einen Moment …';
+    fehler('mk-anmelde-fehler','');
+    fetch(API+'/auth-login',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:mail,passwort:pw})
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        knopf.disabled=false; knopf.textContent='Anmelden';
+        if(res && res.success && res.token){
+          try{
+            localStorage.setItem('dl_shop_token',res.token);
+            localStorage.setItem('dl_shop_user',JSON.stringify(res.kunde||{email:mail}));
+          }catch(e){}
+          angemeldetZeigen();
+          return;
+        }
+        fehler('mk-anmelde-fehler',
+          esc((res && (res.error||(res.errors||[]).join(' ')))
+              || 'Anmeldung nicht möglich. Bitte E-Mail und Passwort prüfen.'));
+      })
+      .catch(function(){
+        knopf.disabled=false; knopf.textContent='Anmelden';
+        fehler('mk-anmelde-fehler','Keine Verbindung. Bitte später noch einmal versuchen.');
+      });
+  }
+
+  // ── Konto anlegen ──
+  function kontoAnlegen(){
+    var pw=$('mk-neu-pw').value, pw2=$('mk-neu-pw2').value;
+    if(pw!==pw2){ fehler('mk-neu-fehler','Die beiden Passwörter stimmen nicht überein.'); return; }
+    var body={
+      vorname:$('mk-vorname').value.trim(),
+      nachname:$('mk-nachname').value.trim(),
+      email:$('mk-neu-mail').value.trim(),
+      passwort:pw,
+      dsgvo_zustimmung:$('mk-dsgvo').checked,
+      agb_zustimmung:$('mk-agb').checked,
+      /* Der ausdrückliche Schalter: kein Lastschriftmandat, keine
+         Adresse. (Spec konto-ohne-bankdaten) */
+      ohne_bankdaten:true
+    };
+    var knopf=$('mk-neu-knopf');
+    knopf.disabled=true; knopf.textContent='Einen Moment …';
+    fehler('mk-neu-fehler','');
+    fetch(API+'/auth-register',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        knopf.disabled=false; knopf.textContent='Konto erstellen';
+        if(res && res.success){
+          $('mk-best-text').innerHTML='Wir haben Ihnen eine E-Mail an <b>'
+            +esc(body.email)+'</b> geschickt. Bitte bestätigen Sie darin Ihre '
+            +'Adresse — danach können Sie sich anmelden.';
+          zeigen('mk-bestaetigen');
+          $('mk-login-mail').value=body.email;
+          return;
+        }
+        fehler('mk-neu-fehler',
+          esc((res && ((res.errors||[]).join(' ') || res.error))
+              || 'Das Konto konnte nicht angelegt werden.'));
+      })
+      .catch(function(){
+        knopf.disabled=false; knopf.textContent='Konto erstellen';
+        fehler('mk-neu-fehler','Keine Verbindung. Bitte später noch einmal versuchen.');
+      });
+  }
+
+  function abmelden(){
+    try{
+      localStorage.removeItem('dl_shop_token');
+      localStorage.removeItem('dl_shop_user');
+    }catch(e){}
+    zeigen('mk-anmelden');
+  }
+
+  $('mk-login-knopf').addEventListener('click',anmelden);
+  $('mk-neu-knopf').addEventListener('click',kontoAnlegen);
+  $('mk-abmelden').addEventListener('click',abmelden);
+  $('mk-zu-konto').addEventListener('click',function(){ fehler('mk-neu-fehler',''); zeigen('mk-neu'); });
+  $('mk-zu-anmelden').addEventListener('click',function(){ fehler('mk-anmelde-fehler',''); zeigen('mk-anmelden'); });
+  $('mk-zurueck-anmelden').addEventListener('click',function(){ zeigen('mk-anmelden'); });
+
+  // Eingabetaste sendet ab - auf dem Handy der schnellste Weg.
+  ['mk-login-mail','mk-login-pw'].forEach(function(id){
+    $(id).addEventListener('keydown',function(e){ if(e.key==='Enter') anmelden(); });
+  });
+  $('mk-neu-pw2').addEventListener('keydown',function(e){ if(e.key==='Enter') kontoAnlegen(); });
+
+  // Wer schon angemeldet ist, sieht sofort seine Bestellungen.
+  if(location.hash==='#neu') zeigen('mk-neu');
+  else angemeldetZeigen();
+})();
+</script>
+</body>
+</html>
