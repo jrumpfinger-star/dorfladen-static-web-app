@@ -133,15 +133,30 @@ def main():
     # nachts auf - deshalb wird die Quelle geprueft, nicht die Uhrzeit.
     quelle = open(os.path.join(API, "lunch-order", "__init__.py"),
                   encoding="utf-8-sig").read()
-    # Gesucht wird der Block, der die Kachel-Abfrage BAUT - erkennbar am
-    # Tagesfilter. Frueher stand hier schlicht "der Teil nach dem ersten
-    # mode==my". Das ging gut, solange es nur einen gab; seit die
-    # Nachweispruefung (Spec meine-bestellungen-geraete) einen zweiten
-    # Block davorsetzt, traf es den falschen und der Waechter fiel, ohne
-    # dass am Tagesfilter etwas faul war. Ein Merkmal haelt laenger als
-    # eine Position.
-    teile = quelle.split('req.params.get("mode") == "my"')
-    zweig = next((t[:900] for t in teile[1:] if "dl_datum ge" in t[:900]), "")
+    # Gesucht wird der Block, der die Kachel-Abfrage BAUT - abgegrenzt
+    # durch seinen Anfang (mode==my) und sein Ende (die fertige
+    # lookup_url).
+    #
+    # Zwei Anlaeufe waren noetig, beide mit derselben Lehre: Erst stand
+    # hier "der Teil nach dem ERSTEN mode==my" - das traf den falschen,
+    # sobald ein zweiter Block davorkam. Dann "die ersten 900 Zeichen
+    # mit dl_datum ge" - das fiel, sobald ein Kommentar den Filter
+    # weiter nach hinten schob. Beide Male war am Tagesfilter nichts
+    # faul, nur an der Messung.
+    #
+    # Jetzt wird der Block an seinen beiden Enden erkannt, nicht an
+    # einer Zeichenzahl. Das ueberdauert auch den naechsten Kommentar.
+    def kachel_zweig(text):
+        for t in text.split('req.params.get("mode") == "my"')[1:]:
+            if "dl_datum ge" not in t:
+                continue
+            ende = t.find("&$top=")
+            block = t[:ende] if ende > 0 else t[:1500]
+            if "dl_datum ge" in block:
+                return block
+        return ""
+
+    zweig = kachel_zweig(quelle)
     pruefe("TC-A05  der Abfragezweig wurde gefunden", bool(zweig),
            "kein Block mit dl_datum ge")
     pruefe("TC-A05  kein utcnow() im mode=my-Zweig",

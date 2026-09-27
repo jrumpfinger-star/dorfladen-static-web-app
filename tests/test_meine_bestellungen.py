@@ -280,6 +280,44 @@ def main():
            bool(listen) and all("dl_storno_grund" in z for z in listen),
            f"{sum(1 for z in listen if 'dl_storno_grund' not in z)} von {len(listen)} ohne")
 
+    # ── Der Rueckblick: tage_zurueck ──
+    # Ohne den Parameter zeigt mode=my nur ab HEUTE - das ist der Fall
+    # der Kachel und darf sich nicht aendern. Mit ihm oeffnet sich der
+    # Blick nach hinten, fuer den Reiter "Frueher" in der Uebersicht.
+    print("\nRueckblick")
+
+    def filter_von(params):
+        dv = Speicher(bestand)
+        requests.get, requests.post = dv.get, dv.post
+        requests.patch, requests.delete = dv.patch, dv.delete
+        p = {"mode": "my", "device_id": "geraet-anna"}
+        p.update(params)
+        lunch.main(Anfrage(params=p))
+        for f in dv.filter_verlauf:
+            if "dl_datum ge" in f:
+                return f.split("dl_datum ge '")[1].split("'")[0]
+        return ""
+
+    von_ohne = filter_von({})
+    pruefe("Rueckblick  ohne Parameter bleibt es bei heute",
+           von_ohne == heute, f"war {von_ohne}, erwartet {heute}")
+
+    von_7 = filter_von({"tage_zurueck": "7"})
+    erwartet7 = (lunch.heute_lokal() - __import__("datetime").timedelta(days=7)).isoformat()
+    pruefe("Rueckblick  tage_zurueck=7 geht sieben Tage zurueck",
+           von_7 == erwartet7, f"war {von_7}, erwartet {erwartet7}")
+
+    pruefe("Rueckblick  unsinniger Wert faellt auf heute zurueck",
+           filter_von({"tage_zurueck": "viele"}) == heute)
+    pruefe("Rueckblick  negative Werte gehen nicht in die Zukunft",
+           filter_von({"tage_zurueck": "-30"}) == heute)
+
+    # Obergrenze: Niemand soll versehentlich die ganze Historie ziehen.
+    von_gross = filter_von({"tage_zurueck": "99999"})
+    grenze = (lunch.heute_lokal() - __import__("datetime").timedelta(days=400)).isoformat()
+    pruefe("Rueckblick  die Obergrenze greift",
+           von_gross == grenze, f"war {von_gross}, erwartet {grenze}")
+
     print()
     if _fehler:
         print(f"{len(_fehler)} Pruefung(en) fehlgeschlagen:")

@@ -135,7 +135,7 @@
        Bewusst OHNE Zwang: Wer nur ab und zu bestellt, braucht kein Konto,
        die Kachel findet seine Bestellung weiterhin ueber das Geraet.
        (Spec konto-ohne-bankdaten) -->
-  <a href="/mein-konto" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="user" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i>Mein Konto</a>
+  <a href="/mein-konto" id="mob-konto" style="font-size:.88rem;color:#2d5016;font-weight:600"><i data-lucide="user" width="16" height="16" style="vertical-align:-3px;margin-right:6px"></i><span id="mob-konto-txt">Mein Konto</span></a>
 
   <!-- Dauerhaft sichtbar: Die beiden Eintraege darueber blendet pwa.js nur
        ein, wenn der Browser die Installation anbietet - auf dem iPhone also
@@ -476,10 +476,19 @@
 
     <div class="tb-legal">
 
-      <!-- Mein Konto: dieselbe Ueberlegung wie in der mobilen
-           Navigation - der Zugang muss sichtbar sein, nicht nur in der
-           Fusszeile ganz unten. (Spec konto-ohne-bankdaten) -->
-      <a href="/mein-konto" style="font-weight:600">Mein Konto</a>
+      <!-- Mein Konto: Icon plus Text, damit auf einen Blick erkennbar ist,
+           ob jemand angemeldet ist. Aus dem Laden: „Mein Konto könnte auch
+           über ein Icon dargestellt werden und man gleich sieht, ob man
+           eingeloggt ist oder nicht."
+           Den Zustand setzt dlKontoStand() weiter unten - hier steht der
+           abgemeldete Fall, damit die Leiste auch ohne JavaScript etwas
+           Sinnvolles zeigt. (Spec konto-icon) -->
+      <a href="/mein-konto" id="tb-konto" class="tb-konto" title="Anmelden oder Konto anlegen">
+        <span class="tb-konto-ic" id="tb-konto-ic">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span id="tb-konto-txt">Anmelden</span>
+      </a>
 
       <a href="/impressum">Impressum</a>
 
@@ -2059,6 +2068,74 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     <div class="orders-body" id="orders-body"></div>
   </div>
 </div>
+
+<script>
+  /* Zeigt in der Kopfleiste, ob jemand angemeldet ist.
+     Aus dem Laden: „Mein Konto könnte auch über ein Icon dargestellt
+     werden und man gleich sieht, ob man eingeloggt ist oder nicht.
+     Von hier aus sollte man sich auch neu registrieren können, wenn
+     nicht eingeloggt."
+
+     Angemeldet   -> gefüllter Kreis mit Initialen, daneben der Vorname
+     Abgemeldet   -> Umriss-Symbol, daneben „Anmelden", Ziel #neu
+
+     Das `#neu` ist der zweite Teil der Meldung: Wer nicht angemeldet ist,
+     landet direkt im Anlegen-Formular statt zuerst in der Anmeldemaske.
+     Wer schon ein Konto hat, wechselt dort mit einem Klick.
+     (Spec konto-icon) */
+  (function(){
+    function konto(){
+      try{ return JSON.parse(localStorage.getItem('dl_shop_user')||'null'); }
+      catch(e){ return null; }
+    }
+    function angemeldet(){
+      try{ return !!(localStorage.getItem('dl_shop_token')||'').trim(); }
+      catch(e){ return false; }
+    }
+    function initialen(k){
+      var v=((k&&k.vorname)||'').trim(), n=((k&&k.nachname)||'').trim();
+      var s=((v[0]||'')+(n[0]||'')).trim();
+      if(s) return s.toUpperCase();
+      var m=((k&&k.email)||'').trim();
+      return (m[0]||'?').toUpperCase();
+    }
+    window.dlKontoStand=function(){
+      var an=angemeldet(), k=konto();
+      var name=((k&&k.vorname)||'').trim();
+
+      var el=document.getElementById('tb-konto');
+      if(el){
+        var ic=document.getElementById('tb-konto-ic');
+        var tx=document.getElementById('tb-konto-txt');
+        el.classList.toggle('an', an);
+        if(an){
+          el.href='/mein-konto';
+          el.title='Angemeldet' + (k&&k.email ? (' als '+k.email) : '');
+          if(ic) ic.textContent=initialen(k);
+          if(tx) tx.textContent=name||'Mein Konto';
+        } else {
+          /* Direkt ins Anlegen-Formular: Wer hier klickt und kein Konto
+             hat, will eins - die Anmeldemaske wäre ein Umweg. */
+          el.href='/mein-konto#neu';
+          el.title='Anmelden oder Konto anlegen';
+          if(tx) tx.textContent='Anmelden';
+        }
+      }
+
+      var mob=document.getElementById('mob-konto');
+      if(mob){
+        var mtx=document.getElementById('mob-konto-txt');
+        mob.href = an ? '/mein-konto' : '/mein-konto#neu';
+        if(mtx) mtx.textContent = an ? (name ? ('Mein Konto · '+name) : 'Mein Konto')
+                                     : 'Anmelden / Konto anlegen';
+      }
+    };
+    /* Zweimal aufrufen: sofort für den Fall, dass der Speicher schon
+       gelesen werden kann, und nach dem Laden für die Symbole. */
+    dlKontoStand();
+    document.addEventListener('DOMContentLoaded', dlKontoStand);
+  })();
+</script>
 
 <!-- ====== TAGESPOST FAB + MODAL ====== -->
 <style>

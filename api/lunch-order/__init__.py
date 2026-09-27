@@ -829,6 +829,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 # Berliner Kalendertag, nicht UTC: "Den ganzen Tag" heisst
                 # genau diesen Tag. (F2)
                 today_str = _heute_lokal()
+
+                # Wie weit zurueck? Standard ist AB HEUTE - das ist der Fall
+                # der Kachel auf der Startseite und soll sich nicht aendern.
+                #
+                # `tage_zurueck` oeffnet den Blick nach hinten, fuer die
+                # Uebersicht "Meine Bestellungen" mit ihrem Reiter "Frueher".
+                # Ohne diesen Parameter gaebe es dort nur Shop-Bestellungen,
+                # und der Mittagstisch fehlte ausgerechnet im Rueckblick.
+                # (Spec bestelluebersicht)
+                try:
+                    zurueck = int(req.params.get("tage_zurueck", "0") or "0")
+                except ValueError:
+                    zurueck = 0
+                # Obergrenze, damit niemand versehentlich die ganze Historie
+                # zieht - 20 Eintraege liefert die Abfrage ohnehin nur.
+                zurueck = max(0, min(zurueck, 400))
+                von_str = (heute_lokal() - timedelta(days=zurueck)).isoformat()
+
                 if email_filter:
                     id_clause = f"dl_email eq '{_odata_str(email_filter)}'"
                 else:
@@ -838,15 +856,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     f" or dl_status eq {STATUS_STORNIERT}"
                     f" or dl_status eq {STATUS_ABGEHOLT})"
                 )
+                # Bei einem Rueckblick die neuesten zuerst - sonst stuenden
+                # bei 20 Treffern die aeltesten da und das Jetzt fehlte.
+                ordnung = "dl_datum asc" if zurueck == 0 else "dl_datum desc"
                 lookup_url = (
                     f"{base_url}/api/data/v9.2/{ENTITY_SET}"
                     f"?$filter={id_clause}"
                     f" and {status_clause}"
-                    f" and dl_datum ge '{today_str}'"
-                    f"&$orderby=dl_datum asc"
+                    f" and dl_datum ge '{von_str}'"
+                    f"&$orderby={ordnung}"
                     f"&$top=20"
                 )
-                logging.info(f"[lunch-order] mode=my email={email_filter} device={device_filter} today={today_str}")
+                logging.info(f"[lunch-order] mode=my email={email_filter} device={device_filter} "
+                             f"von={von_str} today={today_str}")
                 lr = requests.get(lookup_url, headers=headers, timeout=30)
                 logging.info(f"[lunch-order] mode=my response={lr.status_code} body={lr.text[:300]}")
                 if lr.status_code == 200:

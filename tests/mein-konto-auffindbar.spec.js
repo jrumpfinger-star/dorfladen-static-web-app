@@ -57,12 +57,18 @@ test.describe('Mein Konto: auffindbar', () => {
   test('TC-MK-14: Die Startseite führt sichtbar zum Konto',
     async ({ page }) => {
       /* Nicht nur in der Fußzeile: In der Kopfleiste (Rechner) und im
-         Menü (Handy) — dort sucht man zuerst. */
+         Menü (Handy) — dort sucht man zuerst.
+
+         Gesucht wird mit `^=`, nicht `=`: Seit Spec `konto-icon` zeigt
+         der abgemeldete Zustand auf `/mein-konto#neu` (direkt ins
+         Anlegen-Formular). Ein Selektor auf die genaue Adresse hätte
+         ihn übersehen — und dieser Fall hätte gemeldet, der Zugang sei
+         verschwunden, obwohl er nur ein anderes Ziel bekam. */
       await mockApi(page);
       await page.goto(`${BASE}/index.html`);
       await page.waitForTimeout(800);
 
-      const links = page.locator('a[href="/mein-konto"]');
+      const links = page.locator('a[href^="/mein-konto"]');
       const anzahl = await links.count();
       expect(anzahl, 'kein einziger Weg zum Konto auf der Startseite')
         .toBeGreaterThanOrEqual(2);
