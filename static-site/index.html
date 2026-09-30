@@ -747,17 +747,82 @@
 
     <div class="wa-info" id="wp-wa-info">
 
-      <div class="wa-info-text">
+      <!-- Der Text ist im CMS pflegbar (Homepage -> whatsapp_info,
+           HTML-Editor). Was hier steht, ist nur der Rueckfall, solange
+           im CMS nichts eingetragen ist oder die Konfiguration nicht
+           laedt. Der QR-Code rechts bleibt fest. (Spec whatsapp-info-cms) -->
+      <div class="wa-info-text" id="wa-info-text">
 
         Das aktuelle Mittagsmen&uuml; und unsere Sonderaktionen erfahrt ihr immer auch &uuml;ber die
 
-        <strong>Dorfladen Oberornau WhatsApp Gruppe</strong> <em>mit Onlineshop!!!</em><br>
+        <strong>Dorfladen Oberornau WhatsApp Gruppe</strong>.<br>
 
         <a href="https://wa.me/491714910935?text=Hallo%2C%20ich%20m%C3%B6chte%20der%20WhatsApp-Gruppe%20beitreten%20%F0%9F%91%8B" target="_blank" rel="noopener">Hier klicken f&uuml;r Anmeldung</a>
 
         <span class="wa-qr-hint">oder scanne den nachstehenden QR-Code mit deinem Smartphone und best&auml;tige mit deinem Namen im Chat.</span>
 
       </div>
+      <script>
+      /* CMS-Text einsetzen - aber nur bereinigt. Die Startseite ist
+         oeffentlich; was hier per innerHTML landet, darf kein Skript,
+         keinen Event-Handler und keinen javascript:-Link mitbringen,
+         egal wer es ins CMS geschrieben hat. Erlaubt ist genau das, was
+         der Editor erzeugt: fett, kursiv, unterstrichen, Umbruch,
+         Absatz, Liste und Links (http/https/mailto/tel). */
+      (function(){
+        var ERLAUBT={B:1,STRONG:1,I:1,EM:1,U:1,BR:1,P:1,DIV:1,SPAN:1,A:1,UL:1,OL:1,LI:1};
+        var WEG={SCRIPT:1,STYLE:1,IFRAME:1,OBJECT:1,EMBED:1,TEMPLATE:1,NOSCRIPT:1,SVG:1,MATH:1};
+        function bereinige(knoten){
+          Array.prototype.slice.call(knoten.childNodes).forEach(function(k){
+            if(k.nodeType===3) return;
+            if(k.nodeType!==1){ k.remove(); return; }
+            var tag=k.tagName.toUpperCase();
+            if(WEG[tag]){ k.remove(); return; }
+            bereinige(k);
+            if(!ERLAUBT[tag]){
+              // Unbekanntes Element: Text behalten, Huelle entfernen.
+              while(k.firstChild) k.parentNode.insertBefore(k.firstChild,k);
+              k.remove(); return;
+            }
+            var href=tag==='A'?(k.getAttribute('href')||'').trim():'';
+            var klasse=k.getAttribute('class')||'';
+            Array.prototype.slice.call(k.attributes).forEach(function(a){ k.removeAttribute(a.name); });
+            if(tag==='A'){
+              if(/^(https?:|mailto:|tel:)/i.test(href)){
+                k.setAttribute('href',href);
+                if(/^https?:/i.test(href)){ k.setAttribute('target','_blank'); k.setAttribute('rel','noopener'); }
+              }
+            }
+            // Die eine Klasse, die das Layout kennt: blendet den
+            // QR-Hinweis auf dem Handy aus (dort ist der Link der Weg).
+            if(tag==='SPAN' && /(^|\s)wa-qr-hint(\s|$)/.test(klasse)) k.setAttribute('class','wa-qr-hint');
+          });
+        }
+        window.dlBereinigeHtml=function(html){
+          var t=document.createElement('template');
+          t.innerHTML=String(html||'');
+          bereinige(t.content);
+          var d=document.createElement('div');
+          d.appendChild(t.content.cloneNode(true));
+          return d.innerHTML;
+        };
+        /* app.js (und damit _dlFlagsReady) laedt erst am Seitenende.
+           Direkt hier abzufragen hiesse: die Zusage gibt es noch nicht,
+           der CMS-Text wuerde nie eingesetzt. Deshalb erst nach dem
+           Aufbau der Seite nachsehen. */
+        function einsetzen(){
+          (window._dlFlagsReady||Promise.resolve()).then(function(){
+            var cfg=window._dlCmsConfig||{};
+            var roh=cfg.whatsapp_info;
+            if(typeof roh!=='string' || !roh.replace(/<[^>]*>/g,'').trim()) return;
+            var el=document.getElementById('wa-info-text');
+            if(el) el.innerHTML=window.dlBereinigeHtml(roh);
+          });
+        }
+        if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',einsetzen);
+        else einsetzen();
+      })();
+      </script>
 
       <div class="wa-qr-box">
 

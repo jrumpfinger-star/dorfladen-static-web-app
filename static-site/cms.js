@@ -3232,8 +3232,18 @@
     'sort_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true},
     'sortiment_intro':     {icon:'&#128722;', desc:'Einleitungstext Sortiment-Seite (HTML)', html:true},
     'sortiment_highlights':{icon:'&#11088;', desc:'Highlights Sortiment-Seite (HTML)', html:true},
-    'sortiment_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true}
+    'sortiment_eco':       {icon:'&#9851;', desc:'Hinweisbox Sortiment-Seite (HTML)', html:true},
+    'whatsapp_info':  {icon:'&#128172;', desc:'WhatsApp-Hinweis auf der Startseite unter dem Mittagstisch (HTML). Der QR-Code daneben bleibt fest. Leer lassen = Standardtext.', html:true}
   };
+  /* Standardtext fuer whatsapp_info - derselbe wie der Rueckfall in
+     index.html (#wa-info-text). Er dient als Vorbelegung, damit das Feld
+     im CMS sofort erscheint und man den heutigen Text bearbeitet statt
+     bei null anzufangen. Ein Waechter vergleicht beide Fassungen.
+     (Spec whatsapp-info-cms) */
+  var WA_INFO_STANDARD='Das aktuelle Mittagsmen\u00fc und unsere Sonderaktionen erfahrt ihr immer auch \u00fcber die '
+    +'<strong>Dorfladen Oberornau WhatsApp Gruppe</strong>.<br>'
+    +'<a href="https://wa.me/491714910935?text=Hallo%2C%20ich%20m%C3%B6chte%20der%20WhatsApp-Gruppe%20beitreten%20%F0%9F%91%8B">Hier klicken f\u00fcr Anmeldung</a> '
+    +'<span class="wa-qr-hint">oder scanne den nachstehenden QR-Code mit deinem Smartphone und best\u00e4tige mit deinem Namen im Chat.</span>';
   // Fields that use HTML rich-text editor
   function isHtmlField(name){
     var m=HP_FIELD_META[name]; if(m && m.html) return true;
@@ -3258,6 +3268,12 @@
         // Deduplicate by name (keep first occurrence)
         var seen={};
         textItems = textItems.filter(function(item){ if(seen[item.name]) return false; seen[item.name]=true; return true; });
+        /* Das Feld soll auch dann dastehen, wenn es noch nie gespeichert
+           wurde - sonst muesste man es erst ueber "Feld hinzufuegen" mit
+           dem richtigen Namen anlegen. Gespeichert wird es beim naechsten
+           "Speichern" ganz normal per Schluessel. */
+        var hatWa=textItems.some(function(it){ return (it.key||it.name)==='whatsapp_info' || it.name==='whatsapp_info'; });
+        if(!hatWa) textItems.push({id:'neu-whatsapp_info', name:'whatsapp_info', key:'whatsapp_info', wert:WA_INFO_STANDARD});
         if(textItems.length===0){container.innerHTML='';empty.style.display='';return;}
         empty.style.display='none';
         // Build RTE toolbar HTML helper
