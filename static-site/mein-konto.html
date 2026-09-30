@@ -618,7 +618,12 @@ if(window!==window.parent){
       agb_zustimmung:$('mk-agb').checked,
       /* Der ausdrückliche Schalter: kein Lastschriftmandat, keine
          Adresse. (Spec konto-ohne-bankdaten) */
-      ohne_bankdaten:true
+      ohne_bankdaten:true,
+      /* Wohin der Bestaetigungslink spaeter zurueckfuehrt. Kommt der
+         Aufruf aus dem Mittagstisch, dorthin; sonst zur Startseite.
+         Der Server nimmt nur bekannte Schluessel an.
+         (Spec registrierung-herkunft) */
+      herkunft: (/[?&]von=mittag(&|$)/.test(location.search) ? 'mittag' : 'start')
     };
     var knopf=$('mk-neu-knopf');
     knopf.disabled=true; knopf.textContent='Einen Moment …';

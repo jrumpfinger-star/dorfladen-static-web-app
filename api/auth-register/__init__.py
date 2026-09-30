@@ -176,6 +176,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # hervorgehen.
     ohne_bank = bool(body.get("ohne_bankdaten", False))
 
+    # Woher kam die Registrierung? Nur bekannte Schluessel; alles andere
+    # faellt still weg (dann gilt auf der Bestaetigungsseite der alte
+    # Standard "Shop"). (Spec registrierung-herkunft)
+    herkunft = (body.get("herkunft") or "").strip().lower()
+    if herkunft not in ("start", "shop", "mittag"):
+        herkunft = ""
+
     errors = []
     if not _validate_email(email):
         errors.append("Bitte geben Sie eine gültige E-Mail-Adresse ein.")
@@ -339,6 +346,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         swa_host = os.environ.get("WEBSITE_HOSTNAME_STATIC", "witty-island-064f9d903.7.azurestaticapps.net")
                 protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
                 verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={verify_token}&email={email}"
+                # Herkunft mitgeben, damit die Bestaetigungsseite dorthin
+                # zurueckfuehrt, wo die Registrierung begann. Nur ein
+                # Schluessel aus der festen Liste - nie eine Adresse, sonst
+                # waere der Link eine offene Weiterleitung.
+                # (Spec registrierung-herkunft)
+                if herkunft:
+                    verify_url += f"&ziel={herkunft}"
 
                 email_body = (
                     f"Hallo {vorname},\n\n"

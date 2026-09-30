@@ -142,7 +142,7 @@ def _sende_bestaetigungsmail(base_url, headers, kunde_id, email, vorname):
         swa_host = os.environ.get("SWA_HOSTNAME", "") or os.environ.get(
             "WEBSITE_HOSTNAME_STATIC", "witty-island-064f9d903.7.azurestaticapps.net")
         protocol = "https" if "azurestaticapps" in swa_host or "azure" in swa_host else "http"
-        verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={verify_token}&email={email}"
+        verify_url = f"{protocol}://{swa_host}/api/auth-verify?token={verify_token}&email={email}&ziel=start"
         body = (
             f"Hallo {vorname},\n\n"
             f"Sie haben Ihre E-Mail-Adresse geändert. Bitte bestätigen Sie die neue "

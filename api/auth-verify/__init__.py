@@ -50,6 +50,31 @@ def _headers(token):
     }
 
 
+def _ziel(req):
+    """Wohin die Bestaetigungsseite zurueckfuehrt.
+
+    Vorher stand hier fest "Zum Shop" - auch fuer Kunden, die sich auf der
+    Startseite registriert hatten. Aus dem Laden: "Der Kunde muss dort
+    landen, von wo er die Registrierung gestartet hat."
+
+    Nur Schluessel aus dieser Liste; eine freie Adresse im Link waere eine
+    offene Weiterleitung (Phishing ueber unsere Domain). Unbekannt oder
+    fehlend -> Shop, wie bisher: Alte Links in Postfaechern und die
+    Registrierung im Shop selbst schicken keinen Schluessel.
+    (Spec registrierung-herkunft)
+    """
+    ziele = {
+        "start": ("/", "Zur Startseite",
+                  "Sie können sich jetzt oben rechts über „Anmelden“ anmelden."),
+        "mittag": ("/mittagstisch-bestellen", "Zum Mittagstisch",
+                   "Sie können sich jetzt beim Bestellen über „Anmelden“ anmelden."),
+        "shop": ("/shop.html", "Zum Shop",
+                 "Sie können sich jetzt im Shop anmelden und bestellen."),
+    }
+    schluessel = (req.params.get("ziel") or "").strip().lower()
+    return ziele.get(schluessel, ziele["shop"])
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(
@@ -63,6 +88,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     verify_token = (req.params.get("token") or "").strip()
     email = (req.params.get("email") or "").strip().lower()
+    ziel_pfad, ziel_text, ziel_hinweis = _ziel(req)
 
     if not verify_token or not email:
         return _html_response(
@@ -117,8 +143,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return _html_response(
                 "Bereits bestätigt",
                 f"Hallo {vorname}! Ihre E-Mail-Adresse wurde bereits bestätigt. "
-                "Sie können sich jetzt im Shop anmelden.",
-                success=True,
+                + ziel_hinweis,
+                success=True, ziel=(ziel_pfad, ziel_text),
             )
 
         # Set email as verified and clear verify_token
@@ -135,8 +161,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return _html_response(
                 "E-Mail bestätigt! ✅",
                 f"Hallo {vorname}! Ihre E-Mail-Adresse wurde erfolgreich bestätigt. "
-                "Sie können sich jetzt im Shop anmelden und bestellen.",
-                success=True,
+                + ziel_hinweis,
+                success=True, ziel=(ziel_pfad, ziel_text),
             )
         else:
             logging.error(f"[auth-verify] Patch failed: {pr.status_code} {pr.text[:200]}")
@@ -155,16 +181,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 
-def _html_response(title, message, success=True):
+def _html_response(title, message, success=True, ziel=("/shop.html", "Zum Shop")):
     """Return a branded HTML page for the verification result."""
     color = "#2e7d4f" if success else "#dc2626"
     icon = "✅" if success else "❌"
     btn_html = ""
     if success:
+        # ziel stammt ausschliesslich aus _ziel() - feste Werte, kein
+        # Nutzereingang. Deshalb hier ohne weiteres Escapen.
         btn_html = (
-            '<a href="/shop.html" style="display:inline-block;margin-top:20px;'
+            f'<a href="{ziel[0]}" style="display:inline-block;margin-top:20px;'
             "padding:12px 32px;background:#2e7d4f;color:#fff;text-decoration:none;"
-            'border-radius:10px;font-weight:700;font-size:15px">Zum Shop →</a>'
+            f'border-radius:10px;font-weight:700;font-size:15px">{ziel[1]} →</a>'
         )
 
     html = f"""<!DOCTYPE html>

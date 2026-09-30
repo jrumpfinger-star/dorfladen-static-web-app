@@ -1833,7 +1833,8 @@
       sepa_zustimmung:nurAnsehen?false:document.getElementById('reg-sepa').checked,
       dsgvo_zustimmung:document.getElementById('reg-dsgvo').checked,
       agb_zustimmung:document.getElementById('reg-agb').checked,
-      ohne_bankdaten:nurAnsehen
+      ohne_bankdaten:nurAnsehen,
+      herkunft:'shop'
     };
     errEl.style.display='none';
     fetch(API+'/auth-register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
