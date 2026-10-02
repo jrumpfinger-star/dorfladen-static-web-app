@@ -188,6 +188,20 @@ def _letzte_tage(alle, anzahl=3):
     return aus
 
 
+def _nur_lesen(datum, status):
+    """Gesendet und nicht mehr bestellbar -> zum Nachsehen offen.
+
+    Vorher hiess es "datum < heute". Damit fiel der HEUTIGE Liefertag
+    durch beide Raster: nicht bestellbar (die Ware ist ja da) und nicht
+    lesbar (er ist nicht vergangen). Die Kachel war gesperrt - genau an
+    dem Tag, an dem man die Lieferung mit der Bestellung vergleichen
+    will. Aus dem Laden: "Warum kann die Bestellung von diesem Freitag
+    nicht angezeigt werden?" (Spec bestellung-heute-lesen)
+    """
+    return bool(status in (store.STATUS_GESENDET, store.STATUS_KORRIGIERT)
+                and not store.bestellbar(datum))
+
+
 def _uebersicht(url, hdrs, cfg):
     """Zustand der naechsten 14 Tage fuer die Tagesleiste (F1)."""
     from datetime import timedelta
@@ -229,7 +243,7 @@ def _uebersicht(url, hdrs, cfg):
             # Heute ist die Ware laengst geliefert - bestellt wird spaetestens
             # am Vortag. Deshalb ist heute nie waehlbar.
             "bestellbar": ist_tag and store.bestellbar(d),
-            "nur_lesen": False,
+            "nur_lesen": _nur_lesen(d, eintrag.get("status")),
             "status": eintrag.get("status"),
             "positionen": eintrag.get("positionen", 0),
         })
@@ -448,9 +462,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Ein vergangener, gesendeter Liefertag ist zum Nachsehen da.
             # Korrigieren laesst er sich nicht mehr - die Ware ist geliefert.
             # (Spec bestellung-loeschen, F12)
-            "nur_lesen": bool(datum < heute_lokal().isoformat()
-                              and order.get("status") in (store.STATUS_GESENDET,
-                                                          store.STATUS_KORRIGIERT)),
+            "nur_lesen": _nur_lesen(datum, order.get("status")),
             "config": {k: v for k, v in cfg.items() if not k.startswith("_")},
             "testbetrieb": store.testbetrieb(cfg),
             "summen": P.summen([P.normalisiere_position(p)
