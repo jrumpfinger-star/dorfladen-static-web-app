@@ -441,6 +441,16 @@ def entwurf_positionen(vorlage):
 
     Zusatzartikel gelten ausdruecklich nur fuer einen Tag (Spec F8) und duerfen
     die Vorbelegung des naechsten gleichen Wochentags nicht verfaelschen.
+
+    Der HINWEIS einer Position reist dagegen mit. Frueher wurde er hier
+    geleert ("Hinweise gelten fuer den einen Tag") - eine Annahme, die die
+    echten Daten widerlegen: Im Laden stehen dort Sortenangaben wie
+    "Kraeuter", "Kaese", "Knoblauch", "Klein". Ohne sie bestellt die
+    Vorbelegung "Salami mit Zwiebelrand/Kaeserand" ohne zu sagen, welche -
+    und der Metzger muss raten. Gemessen am 02.10.: 6 von 6 Hinweisen vom
+    Montag und 2 von 2 vom Freitag fehlten im Entwurf der Folgewoche.
+    Wer einen Hinweis nicht mehr braucht, tippt ihn weg wie eine Menge.
+    (Spec hinweis-uebernehmen)
     """
     if not vorlage:
         return []
@@ -449,9 +459,9 @@ def entwurf_positionen(vorlage):
         p = P.normalisiere_position(p)
         if p.get("zusatz") or not P.bestellt(p):
             continue
-        p["hinweis"] = ""            # Hinweise gelten fuer den einen Tag
-        if p["portionen"]:
-            out.append(p)
+        # Auch eine Position mit NUR einem Hinweis ("nur wenn da") gilt als
+        # bestellt (P.bestellt) - sie wurde hier frueher trotzdem verworfen.
+        out.append(p)
     return out
 
 
