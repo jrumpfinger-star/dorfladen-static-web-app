@@ -661,7 +661,7 @@ window.addEventListener('resize',pwaBannerPlatz);
     dialog.appendChild(btnRow);
 
     ov.appendChild(dialog);
-    ov.addEventListener('click',function(e){if(e.target===ov)closePushSettings();});
+
     document.body.appendChild(ov);
 
     // Animate in

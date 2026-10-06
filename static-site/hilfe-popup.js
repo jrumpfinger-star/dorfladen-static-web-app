@@ -85,9 +85,7 @@
     document.body.appendChild(overlay);
 
     /* Backdrop-Klick */
-    overlay.addEventListener('click', function (e) {
-      if (e.target === overlay) closeHilfe();
-    });
+
 
     /* Escape */
     document.addEventListener('keydown', function (e) {

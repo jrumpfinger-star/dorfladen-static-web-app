@@ -283,7 +283,7 @@
 
 <!-- POPUP: Preisliste -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-preisliste" onclick="if(event.target===this)mobClosePopup('preisliste')">
+<div class="mob-only mob-popup-bg" id="mob-popup-preisliste">
 
   <div class="mob-popup">
 
@@ -331,7 +331,7 @@
 
 <!-- POPUP: Öffnungszeiten -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-hours" onclick="if(event.target===this)mobClosePopup('hours')">
+<div class="mob-only mob-popup-bg" id="mob-popup-hours">
 
   <div class="mob-popup">
 
@@ -357,7 +357,7 @@
 
 <!-- POPUP: Post-Öffnungszeiten -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-post-hours" onclick="if(event.target===this)mobClosePopup('post-hours')">
+<div class="mob-only mob-popup-bg" id="mob-popup-post-hours">
 
   <div class="mob-popup">
 
@@ -377,7 +377,7 @@
 
 <!-- POPUP: Wochenplan Mittagessen -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-lunch" onclick="if(event.target===this)mobClosePopup('lunch')">
+<div class="mob-only mob-popup-bg" id="mob-popup-lunch">
 
   <div class="mob-popup">
 
@@ -397,7 +397,7 @@
 
 <!-- POPUP: Fleisch & Wurst -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-meat" onclick="if(event.target===this)mobClosePopup('meat')">
+<div class="mob-only mob-popup-bg" id="mob-popup-meat">
 
   <div class="mob-popup">
 
@@ -425,7 +425,7 @@
 
 <!-- POPUP: Sonderangebote -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-offers" onclick="if(event.target===this)mobClosePopup('offers')">
+<div class="mob-only mob-popup-bg" id="mob-popup-offers">
 
   <div class="mob-popup">
 
@@ -451,7 +451,7 @@
 
 <!-- POPUP: Roter Punkt (Rote Liste) -->
 
-<div class="mob-only mob-popup-bg" id="mob-popup-roterpunkt" onclick="if(event.target===this)mobClosePopup('roterpunkt')">
+<div class="mob-only mob-popup-bg" id="mob-popup-roterpunkt">
 
   <div class="mob-popup">
 
@@ -1437,7 +1437,7 @@
 
 <!-- MODAL: Konzept -->
 
-<div class="dt-modal-bg" id="dt-modal-concept" onclick="if(event.target===this)closeDtModal('concept')">
+<div class="dt-modal-bg" id="dt-modal-concept">
 
   <div class="dt-modal">
 
@@ -1459,7 +1459,7 @@
 
 <!-- MODAL: Postfiliale -->
 
-<div class="dt-modal-bg" id="dt-modal-post" onclick="if(event.target===this)closeDtModal('post')">
+<div class="dt-modal-bg" id="dt-modal-post">
 
   <div class="dt-modal">
 
@@ -1497,7 +1497,7 @@
 
 <!-- MODAL: Catering & Lieferung -->
 
-<div class="dt-modal-bg" id="dt-modal-catering" onclick="if(event.target===this)closeDtModal('catering')">
+<div class="dt-modal-bg" id="dt-modal-catering">
 
   <div class="dt-modal">
 
@@ -1533,7 +1533,7 @@
 
 <!-- MODAL: Nachhaltigkeit -->
 
-<div class="dt-modal-bg" id="dt-modal-sustainability" onclick="if(event.target===this)closeDtModal('sustainability')">
+<div class="dt-modal-bg" id="dt-modal-sustainability">
 
   <div class="dt-modal">
 
@@ -2287,7 +2287,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
 </style>
 
 <!-- ====== ORDER DETAIL OVERLAY ====== -->
-<div class="od-overlay" id="od-overlay" onclick="if(event.target===this){this.classList.remove('open');dlUnlockScroll()}">
+<div class="od-overlay" id="od-overlay">
   <div class="od-modal">
     <div class="od-head">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -2298,7 +2298,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
   </div>
 </div>
 
-<div class="orders-overlay" id="orders-overlay" onclick="if(event.target===this){this.classList.remove('open');dlUnlockScroll()}">
+<div class="orders-overlay" id="orders-overlay">
   <div class="orders-modal">
     <div class="orders-modal-head">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
@@ -2482,7 +2482,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
   window.tpOpenModal=openModal;
   fab.addEventListener('click',openModal);
   closeBtn.addEventListener('click',closeModal);
-  overlay.addEventListener('click',function(e){if(e.target===overlay)closeModal();});
+
   document.addEventListener('keydown',function(e){
     if(e.key!=='Escape') return;
     closeModal();
@@ -2808,7 +2808,7 @@ html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:
 @media(max-width:600px){.mt-popup-overlay{padding:0}.mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}.mt-popup-iframe{border-radius:0}}
 </style>
 
-<div class="mt-popup-overlay" id="mt-popup-overlay" onclick="if(event.target===this && !_mtKeinAussenKlick)closeMittagPopup()">
+<div class="mt-popup-overlay" id="mt-popup-overlay">
   <div class="mt-popup-modal">
     <button class="mt-popup-close" onclick="closeMittagPopup()" title="Schließen">✕</button>
     <iframe class="mt-popup-iframe" id="mt-popup-iframe" style="height:90vh"></iframe>
@@ -2932,7 +2932,7 @@ window.addEventListener('message',function(e){
 </script>
 
 <!-- CMS Password Gate Popup -->
-<div id="cms-gate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;justify-content:center;align-items:center;padding:16px" onclick="if(event.target===this)closeCmsGate()">
+<div id="cms-gate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;justify-content:center;align-items:center;padding:16px">
   <div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;position:relative;animation:bsSlideUp .2s ease">
     <button onclick="closeCmsGate()" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1;padding:4px" title="Schlie\u00dfen">&times;</button>
     <h2 style="font-size:20px;font-weight:700;color:#1f2937;margin:0 0 4px">Dorfladen CMS</h2>

@@ -1112,7 +1112,7 @@
       function close(val){ov.remove();resolve(val);}
       ov.querySelector('.cms-confirm-btn-cancel').onclick=function(){close(false);};
       ov.querySelector('.cms-confirm-btn-ok').onclick=function(){close(true);};
-      ov.addEventListener('click',function(e){if(e.target===ov)close(false);});
+
       document.body.appendChild(ov);
       ov.querySelector('.cms-confirm-btn-ok').focus();
     });
@@ -3706,7 +3706,7 @@
       +'<button class="cms-btn" style="background:var(--red);color:var(--karte)" data-action="confirmDeleteNews" data-id="'+id+'">L&ouml;schen</button>'
       +'</div></div>';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+
   }
 
   function confirmDeleteNews(id){
@@ -10692,7 +10692,7 @@
       optsDiv.appendChild(opt);
     });
     modal.querySelector('#cms-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-    overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+
     modal.querySelector('#cms-storno-confirm').addEventListener('click',function(){
       if(!selectedReason) return;
       var comment=(modal.querySelector('#cms-storno-comment').value||'').trim();
@@ -10743,7 +10743,7 @@
     modal.innerHTML=h;
     overlay.appendChild(modal);document.body.appendChild(overlay);
     modal.querySelector('#cms-shop-reply-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-    overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
+
     modal.querySelector('#cms-shop-reply-send').addEventListener('click',function(){
       var text=(modal.querySelector('#cms-shop-reply-text').value||'').trim();
       if(!text){cmsToast('Bitte Antwort eingeben','warn');return;}
@@ -11353,7 +11353,7 @@
           optsDiv.appendChild(opt);
         });
         modal.querySelector('#cms-fm-storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-        overlay.addEventListener('click',function(ev){if(ev.target===overlay) document.body.removeChild(overlay);});
+
         modal.querySelector('#cms-fm-storno-confirm').addEventListener('click',function(){
           if(!selectedReason) return;
           var comment=(modal.querySelector('#cms-fm-storno-comment').value||'').trim();
@@ -11410,7 +11410,7 @@
     ov.appendChild(box);
     document.body.appendChild(ov);
 
-    ov.addEventListener('click',function(e){if(e.target===ov) ov.remove();});
+
     document.getElementById('fm-cms-reply-cancel').addEventListener('click',function(){ov.remove();});
     document.getElementById('fm-cms-reply-send').addEventListener('click',function(){
       var text=(document.getElementById('fm-cms-reply-text').value||'').trim();

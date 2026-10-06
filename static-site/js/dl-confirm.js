@@ -54,7 +54,7 @@
       ov.remove();
       if(prevFocus&&prevFocus.focus) prevFocus.focus();
     }
-    ov.addEventListener('click',function(e){if(e.target===ov)close();});
+
     cancelBtn.addEventListener('click',close);
     okBtn.addEventListener('click',function(){close();if(onConfirm)onConfirm();});
     ov.addEventListener('keydown',function(e){

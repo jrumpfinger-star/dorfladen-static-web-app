@@ -1224,7 +1224,7 @@
     var ov=document.createElement('div');
     ov.id='soc-lightbox';
     ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(17,24,39,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;box-sizing:border-box';
-    ov.addEventListener('click',function(e){if(e.target===ov)window.socCloseLightbox();});
+
     var head=document.createElement('div');
     head.style.cssText='color:#fff;font-size:14px;font-weight:600;text-align:center;max-width:96vw';
     head.textContent=titel||'Vorschau';

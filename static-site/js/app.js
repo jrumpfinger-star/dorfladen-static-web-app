@@ -684,7 +684,10 @@ window.closeDtModal = function(id) {
         document.body.appendChild(ov);
         requestAnimationFrame(function(){ov.classList.add('open');});
         if(window.dlLockScroll)dlLockScroll();
-        ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('.news-overlay-close')){ov.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();setTimeout(function(){if(ov.parentNode)ov.remove();},300);}});
+        // Nur das Kreuz schliesst, nicht der Klick daneben: Die Regel gilt
+        // fuer alle Dialoge gleich, damit niemand erst ausprobieren muss,
+        // welcher sich wegtippen laesst. (Spec dialoge-modal, R1)
+        ov.addEventListener('click',function(e){if(e.target.closest('.news-overlay-close')){ov.classList.remove('open');if(window.dlUnlockScroll)dlUnlockScroll();setTimeout(function(){if(ov.parentNode)ov.remove();},300);}});
       }
     })
     .catch(function(e){

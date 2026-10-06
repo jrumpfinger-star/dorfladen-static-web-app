@@ -4029,7 +4029,7 @@ var K = (function(){
         + '</div>';
       document.body.appendChild(bg);
       // Klick auf den Rand schliesst - hier gehen keine Eingaben verloren.
-      bg.addEventListener('click', function(e){ if(e.target===bg) schliesseVerlauf(); });
+
     }
     bg.style.display = 'flex';
     _verlaufEsc(true);
@@ -4266,7 +4266,7 @@ var K = (function(){
       optsDiv.appendChild(opt);
     });
     modal.querySelector('#storno-mt-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-    overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+
     modal.querySelector('#storno-mt-confirm').addEventListener('click',function(){
       if(!selectedReason) return;
       var comment=(modal.querySelector('#storno-mt-comment').value||'').trim();
@@ -5661,7 +5661,7 @@ var K = (function(){
       optsDiv.appendChild(opt);
     });
     modal.querySelector('#storno-shop-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-    overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+
     modal.querySelector('#storno-shop-confirm').addEventListener('click',function(){
       if(!selectedReason) return;
       var comment=(modal.querySelector('#storno-shop-comment').value||'').trim();
@@ -6937,7 +6937,7 @@ var K = (function(){
       optsDiv.appendChild(opt);
     });
     modal.querySelector('#storno-fm-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-    overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+
     modal.querySelector('#storno-fm-confirm').addEventListener('click',function(){
       if(!selectedReason) return;
       var comment=(modal.querySelector('#storno-fm-comment').value||'').trim();
@@ -7022,7 +7022,7 @@ var K = (function(){
     var overlay = document.createElement('div');
     overlay.id = 'fm-reply-modal';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-    overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
 
     overlay.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">'
       +'<div style="padding:20px 24px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">'

@@ -80,7 +80,10 @@
       }
       okBtn.addEventListener('click', submit);
       cancelBtn.addEventListener('click', cancel);
-      ov.addEventListener('mousedown', function (e) { if (e.target === ov) cancel(); });
+      /* Kein Schliessen durch Klick daneben: Beim Anmeldedialog waere ein
+         Fehlgriff besonders aergerlich - das halb eingetippte Kennwort ist
+         weg, und der Vorgang, der danach fragte, bricht ab. "Abbrechen"
+         und Escape bleiben. (Spec dialoge-modal, R1/R2) */
       document.addEventListener('keydown', onKey, true);
       setTimeout(function () { input.focus(); }, 30);
     });
