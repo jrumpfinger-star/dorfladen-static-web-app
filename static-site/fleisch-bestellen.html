@@ -271,7 +271,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
   <button class="fm-history-btn" id="fm-history-btn" onclick="fmShowHistory()"><i data-lucide="clipboard-list" style="width:18px;height:18px"></i></button>
 </div>
 
-<div class="fm-history-overlay" id="fm-history-overlay">
+<div class="fm-history-overlay" id="fm-history-overlay" role="dialog" aria-modal="true">
   <div class="fm-history-card">
     <div class="fm-history-hdr">
       <h3>Offene Bestellungen</h3>
@@ -376,7 +376,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
 
 <!-- Cart Drawer -->
 <div class="fm-cart-overlay" id="fm-cart-overlay" onclick="fmCloseCart()"></div>
-<div class="fm-cart-panel" id="fm-cart-panel">
+<div class="fm-cart-panel" id="fm-cart-panel" role="dialog" aria-modal="true">
   <div class="fm-cart-hdr">
     <h3><i data-lucide="shopping-cart" style="width:18px;height:18px"></i> Warenkorb <span class="fm-cart-badge-count" id="fm-cart-count">0</span></h3>
     <button class="fm-cart-close" onclick="fmCloseCart()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
@@ -1024,6 +1024,19 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
     unlockScroll();
     if(!viaBack) history.back();
   };
+
+  /* Escape schliesst den Warenkorb (Spec dialoge-modal, R6). Die
+     Verdunklung traegt keinen Schliessknopf - der steckt in der
+     danebenliegenden Schublade -, deshalb meldet sie sich selbst an.
+     Geschlossen wird ueber fmCloseCart, damit Seitenrolle und Verlauf
+     richtig nachgefuehrt werden. */
+  if(window.dlEscapeRegistrieren){
+    window.dlEscapeRegistrieren({
+      rang:40,
+      offen:function(){return document.querySelectorAll('.fm-cart-overlay.open');},
+      schliessen:function(){window.fmCloseCart();}
+    });
+  }
 
   // ── Submit ──
   window.fmSubmit = function(){

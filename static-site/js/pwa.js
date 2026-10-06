@@ -437,6 +437,17 @@ window.addEventListener('resize',pwaBannerPlatz);
     setTimeout(function(){if(el.parentNode)el.remove();},300);
   }
 
+  /* Escape schliesst mit (Spec dialoge-modal, R6). Der Hinweis entsteht
+     erst zur Laufzeit und passt in keine der Sammelbauarten, deshalb
+     meldet er sich selbst beim gemeinsamen Waechter an. */
+  if(window.dlEscapeRegistrieren){
+    window.dlEscapeRegistrieren({
+      rang:40,
+      offen:function(){return document.getElementById('push-ios-hint-overlay');},
+      schliessen:function(){closeIosPushHint();}
+    });
+  }
+
   // Erklaert iPhone-Nutzern, warum Benachrichtigungen im Safari-Tab nicht
   // gehen und wie sie sie bekommen. Ohne diesen Hinweis waere fuer sie nur
   // unerklaerlich nichts passiert.
