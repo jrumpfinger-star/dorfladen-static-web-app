@@ -14,11 +14,16 @@
 
 ## Messen
 
-- [ ] **T001** `escape_inventar.py` von Grobzählung auf **genaue Zählung**
+- [x] **T001** `escape_inventar.py` von Grobzählung auf **genaue Zählung**
   umstellen: je erkanntem Dialog ausweisen, ob ein Wächter ihn erreicht
   (heute zählt es nur Wächter je Datei, deshalb galt `kiosk.html` mit 17
   Dialogen und 1 Wächter als versorgt). Ergebnis als Vorher-Stand ablegen.
   — dient `R6`
+
+  **Erledigt.** Werkzeug liegt als `tools/escape_inventar.py`.
+  Vorher-Stand: **86 Dialoge, davon 58 ohne Wächter in Reichweite.**
+  Ausgenommen die Cookie-Leiste (`cookieBar`, 14 Seiten) — Escape wäre dort
+  weder Zustimmung noch Ablehnung; entschieden mit dem Nutzer am 06.10.2026.
 
 ## Kern
 
