@@ -252,8 +252,8 @@ gegliedert; eine Sprungleiste und eine Suche führen schnell ans Ziel.
 #### F4 Behaviour / Acceptance
 
 - Gruppen erscheinen in fester Reihenfolge; innerhalb einer Gruppe sortiert die
-  Verkaufshäufigkeit der letzten zwölf Monate, bei Gleichstand die Zahl der
-  Lieferungen, dann der Name.
+  Artikelnummer aufsteigend. So steht die Liste in derselben Ordnung wie das
+  Papierblatt und die Rechnung der Mühle.
 - Die Sprungleiste nennt je Gruppe die Artikelzahl und scrollt zur Gruppe.
 - Die Suche greift auf Bezeichnung **und** Artikelnummer.
 - Ein Schalter „Nur bestellt" blendet alles ohne Menge aus.
@@ -264,7 +264,8 @@ gegliedert; eine Sprungleiste und eine Suche führen schnell ans Ziel.
 **TC-F4-01: Reihenfolge innerhalb der Gruppe**
 
 - **Action:** Gruppe „Weizenmehl & Grieß" ansehen.
-- **Expected:** `40401` (102×) steht vor `40412` (46×), dieses vor `40408` (0×).
+- **Expected:** `40401` steht vor `40408`, dieses vor `40412` — aufsteigend nach
+  Artikelnummer.
 
 **TC-F4-02: Suche nach Nummer**
 
@@ -451,6 +452,16 @@ Der Reiter *Verlauf* führt alle Lieferungen und Bestellungen auf.
 - Das Formular einer gesendeten Bestellung lässt sich erneut öffnen.
 - Die aus den Rechnungen gewonnenen Lieferungen erscheinen mit, solange es noch
   keine eigenen Bestellungen gibt — sonst wäre der Reiter leer.
+- Eine Zeile lässt sich **aufklappen**; dann erscheinen die einzelnen Positionen
+  mit Nummer, Bezeichnung und Menge. Die Positionen werden erst beim Aufklappen
+  geladen, nicht vorab.
+- Eine Zeile aus einer **eigenen Bestellung** trägt einen Löschen-Knopf; die
+  Rückfrage sagt ausdrücklich, dass eine bereits versendete E-Mail dadurch nicht
+  zurückgeholt wird.
+- Zeilen aus **Rechnungen** tragen keinen Löschen-Knopf — sie sind Belege der
+  Mühle, keine eigenen Daten.
+- Darstellung und Bedienung entsprechen dem Verlauf bei Metzger, Bäcker und
+  Getränken (gemeinsame `dl-v*`-Bausteine).
 
 #### F9 Test Cases
 
@@ -468,6 +479,23 @@ Der Reiter *Verlauf* führt alle Lieferungen und Bestellungen auf.
 - **Action:** Bei einer gesendeten Bestellung auf das Formular tippen.
 - **Expected:** Dasselbe PDF wie beim Versand.
 
+**TC-F9-04: Positionen aufklappen**
+
+- **Action:** Auf eine Verlaufszeile tippen.
+- **Expected:** `GET /api/drax-order/{datum}/positionen` wird einmal gerufen;
+  darunter stehen Nummer, Bezeichnung und Menge. Erneutes Tippen klappt zu,
+  ohne nachzuladen.
+
+**TC-F9-05: Bestellung löschen**
+
+- **Action:** Bei einer eigenen Bestellung auf „Löschen" tippen und bestätigen.
+- **Expected:** Rückfrage als Seitenleiste (kein `confirm`), danach ist die
+  Zeile fort und der Liefertag wieder frei bestellbar.
+
+**TC-F9-06: Rechnungszeile ist unantastbar**
+
+- **Expected:** Eine Zeile mit Rechnungsnummer hat keinen Löschen-Knopf.
+
 ### F10: Artikel verwalten
 
 #### F10 Description
@@ -480,10 +508,16 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
   Zahl der Lieferungen.
 - Bezeichnung, Einheit, Warengruppe und der Schalter aktiv/inaktiv sind
   bearbeitbar; die **Artikelnummer nicht** — sie ist der Schlüssel zur Mühle.
+- Anlegen und Bearbeiten geschehen in **derselben Seitenleiste** wie bei
+  Metzger, Bäcker und Getränken — keine Inline-Maske, kein `prompt`,
+  kein `confirm` (Konstitution 6).
 - Inaktive Artikel erscheinen nicht im Bestellbildschirm, bleiben aber im
   Verlauf lesbar.
 - Neue Artikel lassen sich anlegen; die Nummer muss fünfstellig und noch nicht
   vergeben sein.
+- Ein Artikel lässt sich **löschen**; das Verhalten regelt
+  [specs/artikel-loeschen/spec.md](../artikel-loeschen/spec.md): nie bestellt →
+  wirklich entfernt, sonst nur ausgeblendet mit Hinweis.
 - Artikel, die nur aus Rechnungen stammen, sind gekennzeichnet.
 - Eine Suche filtert über Bezeichnung und Nummer.
 
@@ -491,8 +525,8 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
 
 **TC-F10-01: Nummer ist nicht bearbeitbar**
 
-- **Action:** Artikelnummer anklicken.
-- **Expected:** Kein Eingabefeld.
+- **Action:** Artikel bearbeiten.
+- **Expected:** Das Feld „Artikelnummer" ist `readonly`.
 
 **TC-F10-02: Doppelte Nummer wird abgewiesen**
 
@@ -507,6 +541,26 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
 **TC-F10-04: Herkunft gekennzeichnet**
 
 - **Expected:** Die 15 nur aus Rechnungen stammenden Artikel tragen ein Merkmal.
+
+**TC-F10-05: Anlegen und Bearbeiten in der Seitenleiste**
+
+- **Action:** „Artikel anlegen" und danach „Bearbeiten" antippen.
+- **Expected:** Beide Male öffnet sich dieselbe Seitenleiste (`.dx-overlay`);
+  im Dokument gibt es keinen Aufruf von `window.prompt` oder `window.confirm`.
+
+**TC-F10-06: Nie bestellter Artikel wird wirklich gelöscht**
+
+- **Setup:** Artikel `49999` angelegt, nie bestellt.
+- **Action:** „Löschen" antippen und bestätigen.
+- **Expected:** `DELETE /api/drax-artikel?nr=49999`, der Artikel ist aus dem
+  Stamm verschwunden.
+
+**TC-F10-07: Bestellter Artikel wird nur ausgeblendet**
+
+- **Action:** Bei `40401` (bereits geliefert) „Löschen" antippen.
+- **Expected:** Die Rückfrage kündigt das Ausblenden an; danach steht der
+  Artikel im Reiter *Artikel* als ausgeblendet, aber nicht mehr im
+  Bestellbildschirm.
 
 ### F11: Einstellungen
 
@@ -597,14 +651,18 @@ Der Reiter *Einstellungen* führt alles, was sich ändern kann, ohne Code.
 | --- | --- | --- |
 | `GET` | `/api/drax-artikel` | Artikelstamm lesen |
 | `POST` | `/api/drax-artikel` | Artikel anlegen oder ändern (Anmeldung nötig) |
+| `PATCH` | `/api/drax-artikel` | Artikel ändern (Anmeldung nötig) |
+| `DELETE` | `/api/drax-artikel?nr=40401` | Artikel löschen oder ausblenden (Anmeldung nötig) |
 | `GET` | `/api/drax-order?datum=JJJJ-MM-TT` | Bestellung inkl. Vorbelegung |
 | `GET` | `/api/drax-order?mode=uebersicht` | Tagesleiste und Erinnerung |
 | `GET` | `/api/drax-order?mode=verlauf` | Verlauf |
+| `GET` | `/api/drax-order/{datum}/positionen` | Positionen einer Verlaufszeile |
 | `GET` | `/api/drax-order?mode=config` | Einstellungen |
 | `POST` | `/api/drax-order` | Entwurf speichern |
 | `POST` | `/api/drax-order` `{aktion:"config"}` | Einstellungen speichern |
 | `POST` | `/api/drax-order/{datum}/senden` | Formular erzeugen und senden |
 | `POST` | `/api/drax-order/{datum}/korrektur` | Korrektur versenden |
+| `POST` | `/api/drax-order/{datum}/loeschen` | Bestellung löschen (Anmeldung nötig) |
 
 ### Vorlagen
 

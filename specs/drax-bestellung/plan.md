@@ -86,7 +86,7 @@ tools/drax_rechnung_extract.py                 Rechnungen auswerten (vorhanden)
 
 | Route | Methode | Zweck | Spec |
 | --- | --- | --- | --- |
-| `/api/drax-artikel` | GET | Katalog nach Gruppe und Häufigkeit | F4, F10 |
+| `/api/drax-artikel` | GET | Katalog nach Gruppe und Artikelnummer | F4, F10 |
 | `/api/drax-artikel` | POST | Artikel anlegen | F10 |
 | `/api/drax-artikel` | PATCH | Ändern, aus-/einblenden | F10 |
 | `/api/drax-order` | GET | Übersicht: Tage, Konfiguration, Erinnerung | F1, F8 |
@@ -188,7 +188,7 @@ aber nicht abschalten — oder umgekehrt. Änderungen bleiben streng additiv.
 | F1 | `store.naechste_liefertage`, `store.liefertag_status`; Tagesleiste im JS |
 | F2 | `store.vorlage_bestellung` aus letzter Bestellung bzw. `startwerte-drax.json` |
 | F3 | Mengenfeld im JS, Serverprüfung in `store.normalisiere_positionen` |
-| F4 | Gruppen- und Häufigkeitssortierung in `api/drax-artikel`; Suche, Sprungleiste, „Nur bestellt" im JS |
+| F4 | Gruppen- und Nummernsortierung in `api/drax-artikel`; Suche, Sprungleiste, „Nur bestellt" im JS |
 | F5 | `drax_pdf.build_pdf` mit vier Spalten und Gruppen-Leerzeilen |
 | F6 | `_senden`, `shop-notify.send_email`, ASCII-Anhangname |
 | F7 | `status`/`korrektur_von` in `drax_store`, Korrekturkopf in `drax_pdf` |

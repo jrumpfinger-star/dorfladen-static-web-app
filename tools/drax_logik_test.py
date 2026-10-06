@@ -143,13 +143,13 @@ pruefe(store.normalisiere_positionen(None) == [],
 # ── F4: Sortierung ────────────────────────────────────────────────────
 print("\nF4 Sortierung")
 
-sortiert = store.nach_gruppe_und_haeufigkeit(KATALOG, GRUPPEN)
+sortiert = store.nach_gruppe_und_nummer(KATALOG, GRUPPEN)
 pruefe(len(sortiert) == len(KATALOG),
        f"Alle {len(KATALOG)} Artikel bleiben erhalten")
 
 reihe = [a["nr"] for a in sortiert]
-pruefe(reihe.index("40401") < reihe.index("40412") < reihe.index("40408"),
-       "TC-F4-01 innerhalb der Gruppe nach Verkaufshaeufigkeit")
+pruefe(reihe.index("40401") < reihe.index("40408") < reihe.index("40412"),
+       "TC-F4-01 innerhalb der Gruppe aufsteigend nach Artikelnummer")
 
 # Die Gruppen stehen am Stueck, in der Reihenfolge des Katalogs.
 folge = [a["gruppe"] for a in sortiert]
