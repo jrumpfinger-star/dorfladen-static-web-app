@@ -39,6 +39,8 @@ verlässt — etwa ein Screenreader —, bekam etwas anderes als die Maus.
 - **R1** Ein Klick oder Tipp neben einen Dialog schließt ihn nicht.
 - **R2** Die bewussten Wege hinaus bleiben: ein Knopf im Dialog
   („Abbrechen", „Schließen", „×") und `Escape`, wo es ihn schon gab.
+  *(Die Einschränkung „wo es ihn schon gab" ist durch **R6** abgelöst:
+  `Escape` gilt jetzt überall.)*
 - **R3** Jede Dialoghülle der Bestellmodule trägt `role="dialog"` und
   `aria-modal="true"` — Zusage und Verhalten stimmen überein.
 - **R4** Die Regel gilt für **Dialoge**, nicht für jeden Überlagerer.
@@ -83,8 +85,55 @@ Der Elementbaum aller dreizehn geänderten HTML-Dateien ist vor und nach
 der Änderung identisch; entfernt wurden ausschließlich Attribute, nie
 Elemente.
 
-## Offen
+## Nachtrag: `Escape` schließt überall (06.10.2026)
 
-`Escape` schließt noch nicht überall — auf einigen öffentlichen Seiten gibt
-es keinen Tastenwächter. Das ist kein Rückschritt, es gab ihn dort auch
-vorher nicht, aber ein lohnender nächster Schritt.
+Mit R1 ist der Klick daneben als Schließweg entfallen. Damit trägt der
+zweite Weg hinaus mehr Gewicht als vorher — und genau der fehlte auf den
+öffentlichen Seiten ganz.
+
+### Befund
+
+Erhoben über `static-site/` (`escape_inventar.py`): **20 Dateien** haben
+keinen einzigen Tastenwächter. Bereinigt um Kindelemente und die
+Navigationsklappe sind es rund **30 Dialoge** in vier Bauarten:
+
+| Bauart | Wo | Offen-Merkmal | Schließweg |
+|---|---|---|---|
+| Handy-Blätter `mob-popup-*` | 7 auf der Startseite | `.open` | `mobClosePopup(id)` |
+| Desktop-Masken `dt-modal-*` | Startseite (Konzept, Post, Catering, …) | `.open` | `closeDtModal(id)` |
+| Lightbox | Startseite, Bilder, Sortiment | `.active` | `closeLightbox()` |
+| Einzelmasken | `pwa.js`, CMS-`herooverlay`, Shop-Freigabe, Mittagstisch, Pack | uneinheitlich | eigener Knopf |
+
+Auch die Dateien in der Spalte „mit Wächter" sind nicht durchweg versorgt:
+`kiosk.html` etwa trägt siebzehn Dialoge und **einen** Wächter.
+
+### Anforderungen
+
+- **R6** `Escape` schließt in der gesamten Anwendung das **oberste offene**
+  Überlagerer-Element — unabhängig davon, auf welcher Seite man steht.
+- **R7** Umgesetzt wird das als **ein gemeinsamer Tastenwächter** in
+  `theme.js`, das auf 35 von 37 Seiten im `<head>` liegt. Die beiden
+  Ausnahmen (`flyer-wurstaktion.html`, `help-workflows.html`) führen keine
+  Dialoge.
+- **R8** Ein Dialog, der schon einen eigenen Wächter hat, behält ihn und
+  **geht vor**. Der gemeinsame Wächter greift nur, wenn der eigene das
+  Ereignis nicht bereits verbraucht hat — gestapelte Dialoge dürfen nie
+  gemeinsam schließen.
+- **R9** `Escape` schließt auch die Klappen aus R4 (Handy-Navigation,
+  Kiosk-Filterblatt, Navigationsblätter). Das ist kein Widerspruch zu R4:
+  Dort ging es um den Klick daneben, der dort erhalten bleibt.
+- **R10** Der Wächter fasst nichts an, während eine Eingabe läuft, die
+  `Escape` selbst braucht — offene Auswahlliste, `contenteditable`, ein
+  natives `<dialog>`. Ebenso unberührt bleibt ein Browserdialog.
+
+### Test Cases
+
+| ID | Prüft | Erwartung |
+|----|-------|-----------|
+| TC-DM-08 | R6 | Auf jeder Bauart ein Dialog geöffnet, `Escape` → Dialog zu, Seite bedienbar |
+| TC-DM-09 | R8 | Zwei Dialoge gestapelt, `Escape` → nur der obere schließt |
+| TC-DM-10 | R7 | Jede HTML-Seite mit Dialog lädt `theme.js` |
+| TC-DM-11 | R9 | Handy-Navigation offen, `Escape` → zu; Klick daneben schließt weiterhin |
+| TC-DM-12 | R10 | In einem Textfeld mit offener Vorschlagsliste schließt `Escape` nur die Liste |
+| TC-DM-13 | R6 | Nach `Escape` ist die Seitenrolle wieder frei (kein hängendes `overflow:hidden`) |
+
