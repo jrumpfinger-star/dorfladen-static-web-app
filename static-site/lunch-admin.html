@@ -314,7 +314,7 @@
       optsDiv.appendChild(opt);
     });
     modal.querySelector('#storno-la-cancel').addEventListener('click',function(){_closeOverlay();});
-    overlay.addEventListener('click',function(e){if(e.target===overlay) _closeOverlay();});
+
     modal.querySelector('#storno-la-confirm').addEventListener('click',function(){
       if(!selectedReason) return;
       var comment=(modal.querySelector('#storno-la-comment').value||'').trim();

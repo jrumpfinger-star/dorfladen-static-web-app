@@ -564,7 +564,7 @@ function cancelOrder(){
   // Close dialog
   function closeDialog(){ ov.remove(); document.body.style.overflow = ''; }
   document.getElementById('bs-storno-no').addEventListener('click', closeDialog);
-  ov.addEventListener('click', function(e){ if(e.target === ov) closeDialog(); });
+
 
   // Confirm storno
   yesBtn.addEventListener('click', function(){

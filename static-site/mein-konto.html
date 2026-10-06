@@ -873,9 +873,7 @@ if(window!==window.parent){
   });
   $('mk-storno-nein').addEventListener('click', stornoSchliessen);
   $('mk-storno-ja').addEventListener('click', stornoSenden);
-  $('mk-storno-ov').addEventListener('click', function(e){
-    if(e.target===this) stornoSchliessen();
-  });
+
   document.addEventListener('keydown', function(e){
     if(e.key==='Escape' && $('mk-storno-ov').classList.contains('auf')) stornoSchliessen();
   });

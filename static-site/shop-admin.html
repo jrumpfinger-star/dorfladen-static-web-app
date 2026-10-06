@@ -437,7 +437,7 @@
     if(window.lucide)lucide.createIcons({nameAttr:'data-lucide'});
     function close(){document.body.removeChild(ov);}
     m.querySelector('.cd-cancel').addEventListener('click',close);
-    ov.addEventListener('click',function(e){if(e.target===ov)close();});
+
     m.querySelector('.cd-ok').addEventListener('click',function(){close();onConfirm();});
   }
   function statusBadge(s){return '<span class="status s'+s+'">'+esc(statusLabels[s]||'Unbekannt')+'</span>';}
@@ -756,7 +756,7 @@
           optsDiv.appendChild(opt);
         });
         modal.querySelector('#storno-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-        overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+
         modal.querySelector('#storno-confirm').addEventListener('click',function(){
           if(!selectedReason) return;
           var comment=(modal.querySelector('#storno-comment').value||'').trim();
@@ -1455,7 +1455,7 @@ function mtShowStornoDialog(id){
     optsDiv.appendChild(opt);
   });
   modal.querySelector('#storno-mt2-cancel').addEventListener('click',function(){document.body.removeChild(overlay);});
-  overlay.addEventListener('click',function(e){if(e.target===overlay) document.body.removeChild(overlay);});
+
   modal.querySelector('#storno-mt2-confirm').addEventListener('click',function(){
     if(!selectedReason) return;
     var comment=(modal.querySelector('#storno-mt2-comment').value||'').trim();

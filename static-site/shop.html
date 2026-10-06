@@ -1589,9 +1589,7 @@
   document.getElementById('shop-confirm-ok').addEventListener('click',function(){
     var cb=_confirmCb;hideConfirm();if(cb) cb();
   });
-  document.getElementById('shop-confirm-overlay').addEventListener('click',function(e){
-    if(e.target===this) hideConfirm();
-  });
+
 
   // ── Info-Meldung (zentriert, ein Button) ──
   // Anwenderfreundliche, zentrierte Meldung fuer Bestaetigungen/Hinweise/Fehler.
@@ -2560,7 +2558,7 @@
       overlay.className='img-popup-overlay';
       overlay.innerHTML='<div class="img-popup"><button class="img-popup-close">&times;</button><img class="img-popup-img" id="img-popup-img" src="" alt=""><div class="img-popup-name" id="img-popup-name"></div><div class="img-popup-price" id="img-popup-price"></div><div class="img-popup-meta" id="img-popup-meta"></div></div>';
       document.body.appendChild(overlay);
-      overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.classList.remove('show');});
+
       overlay.querySelector('.img-popup-close').addEventListener('click',function(){overlay.classList.remove('show');});
     }
     document.getElementById('img-popup-img').src=src;
@@ -3036,7 +3034,7 @@
       loadPreorders();
     };
     document.getElementById('shop-preorder-close').addEventListener('click',close);
-    ov.addEventListener('click',function(e){if(e.target===ov)close();});
+
     document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))close();});
   })();
 
@@ -3052,7 +3050,7 @@
     function openM(){mOv.classList.add('open');}
     function closeM(){mOv.classList.remove('open');}
     mBtn.addEventListener('click',function(e){e.stopPropagation();openM();});
-    mOv.addEventListener('click',function(e){if(e.target===mOv) closeM();});
+
     document.getElementById('shop-menu-account').addEventListener('click',function(){closeM();document.getElementById('shop-user-btn').click();});
     document.getElementById('shop-menu-history').addEventListener('click',function(){closeM();document.getElementById('shop-history-btn').click();});
   })();

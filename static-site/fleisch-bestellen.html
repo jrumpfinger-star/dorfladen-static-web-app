@@ -1192,9 +1192,7 @@ body.overlay-open{overflow:hidden;position:fixed;width:100%;top:var(--scroll-y,0
       })
       .catch(function(){body.innerHTML='<div class="fm-history-empty">Fehler beim Laden.</div>';});
   };
-  document.getElementById('fm-history-overlay').addEventListener('click',function(e){
-    if(e.target===this) this.classList.remove('open');
-  });
+
 
   // ── Start ──
   document.addEventListener('DOMContentLoaded', function(){
