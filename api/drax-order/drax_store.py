@@ -421,17 +421,16 @@ def save_artikel(url, hdrs, rec_id, artikel):
                       "Drax Artikel")
 
 
-def nach_gruppe_und_haeufigkeit(artikel, gruppen=None):
-    """Artikel nach Warengruppe, darin nach Verkaufshaeufigkeit (Spec F4).
+def nach_gruppe_und_nummer(artikel, gruppen=None):
+    """Artikel nach Warengruppe, darin nach Artikelnummer (Spec F4).
 
     Dieselbe Ordnung wie im Kiosk. Beide muessen uebereinstimmen: Wer am
     Schirm erfasst, prueft danach das Formular - laufen die Listen
     auseinander, muss man bei jeder Zeile suchen.
 
-    Innerhalb einer Gruppe entscheidet die Verkaufsanzahl der letzten zwoelf
-    Monate, bei Gleichstand die Zahl der Lieferungen, dann der Name. Die 15
-    nur aus Rechnungen bekannten Artikel haben ``haeufigkeit`` 0 und landen
-    dadurch unten - richtig so, sie werden selten bestellt.
+    Innerhalb einer Gruppe steigt die Artikelnummer. Das ist die Ordnung des
+    Papierblatts und der Rechnung der Muehle; beim Abhaken laeuft das Auge
+    dadurch in beiden Listen gleich.
     """
     folge = {}
     for g in (gruppen if gruppen is not None else vorlage_gruppen()):
@@ -444,12 +443,14 @@ def nach_gruppe_und_haeufigkeit(artikel, gruppen=None):
         folge.setdefault(g, len(folge))
 
     def schluessel(a):
-        return (
-            folge.get(a.get("gruppe") or "", 999),
-            -int(a.get("haeufigkeit") or 0),
-            -int(a.get("lieferungen") or 0),
-            (a.get("name") or "").lower(),
-        )
+        nr = str(a.get("nr") or "").strip()
+        # Rein numerische Nummern zahlenmaessig, alles andere alphabetisch
+        # dahinter - sonst stuende "9" hinter "40401".
+        if nr.isdigit():
+            rang = (0, int(nr), "")
+        else:
+            rang = (1, 0, nr.lower())
+        return (folge.get(a.get("gruppe") or "", 999),) + rang
 
     return sorted(artikel, key=schluessel)
 

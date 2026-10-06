@@ -1,11 +1,13 @@
 """Artikelpflege der Drax-Bestellung (Spec F10).
 
-    GET   /api/drax-artikel     Katalog nach Warengruppe und Haeufigkeit
+    GET   /api/drax-artikel     Katalog nach Warengruppe und Artikelnummer
     POST  /api/drax-artikel     Artikel anlegen
     PATCH /api/drax-artikel     Aendern, aus-/einblenden
+    DELETE /api/drax-artikel?nr=40401   Artikel entfernen
 
-Geloescht wird nie, nur ausgeblendet: Ein geloeschter Artikel risse Luecken in
-Vorbelegung und Verlauf.
+Geloescht wird nur, was **nie bestellt** wurde. Alles andere wird
+ausgeblendet: Ein Artikel, der in einer frueheren Bestellung steht, risse
+dort eine Luecke - im Verlauf stuende nur noch seine Nummer.
 
 **Die Artikelnummer ist unveraenderlich.** Sie ist der Schluessel, unter dem
 die Muehle ihr Sortiment fuehrt - und sie traegt die Gebindegroesse: 40401,
@@ -61,6 +63,27 @@ def _gruppen_ids():
     return {g.get("id") for g in store.vorlage_gruppen() if g.get("id")}
 
 
+def _je_bestellt(url, hdrs, nr, a):
+    """War dieser Artikel jemals in einer Bestellung oder Lieferung?
+
+    Drei Quellen, weil jede fuer sich Luecken hat: Die Zaehler aus dem
+    Kassen- und Rechnungsabgleich, die aus den Rechnungen gewonnene
+    Lieferhistorie und die im Speicher liegenden eigenen Bestellungen. Nur
+    wenn alle drei schweigen, darf der Artikel wirklich verschwinden.
+    """
+    if int(a.get("haeufigkeit") or 0) > 0 or int(a.get("lieferungen") or 0) > 0:
+        return True
+    for lief in store.vorlage_historie():
+        for p in lief.get("positionen") or []:
+            if str(p.get("nr") or "").strip() == nr:
+                return True
+    for o in store.bestellungen(url, hdrs) or []:
+        for p in o.get("positionen") or []:
+            if str(p.get("nr") or "").strip() == nr and int(p.get("menge") or 0) > 0:
+                return True
+    return False
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse("", status_code=204, headers=store.cors_headers())
@@ -78,9 +101,41 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     if req.method == "GET":
         return _ok({
-            "artikel": store.nach_gruppe_und_haeufigkeit(artikel),
+            "artikel": store.nach_gruppe_und_nummer(artikel),
             "gruppen": store.vorlage_gruppen(),
         })
+
+    # ── Loeschen ─────────────────────────────────────────────────────
+    if req.method == "DELETE":
+        nr = (req.params.get("nr") or "").strip()
+        if not nr:
+            return _err("Ohne Artikelnummer l\u00e4sst sich der Artikel nicht "
+                        "zuordnen.")
+        i = _finde(artikel, nr)
+        if i < 0:
+            return _err("Dieser Artikel wurde nicht gefunden.", 404)
+        a = artikel[i]
+        if _je_bestellt(url, hdrs, nr, a):
+            if a.get("aktiv") is False:
+                return _ok({"artikel": store.nach_gruppe_und_nummer(artikel),
+                            "ausgeblendet": True,
+                            "meldung": f"\u201e{a.get('name')}\u201c war bereits "
+                                       "bestellt oder geliefert und bleibt "
+                                       "ausgeblendet."})
+            a["aktiv"] = False
+            if not store.save_artikel(url, hdrs, rec_id, artikel):
+                return _err("Der Artikel konnte nicht ausgeblendet werden.", 502)
+            return _ok({"artikel": store.nach_gruppe_und_nummer(artikel),
+                        "ausgeblendet": True,
+                        "meldung": f"\u201e{a.get('name')}\u201c wurde bereits "
+                                   "bestellt oder geliefert und deshalb nur "
+                                   "ausgeblendet."})
+        artikel.pop(i)
+        if not store.save_artikel(url, hdrs, rec_id, artikel):
+            return _err("Der Artikel konnte nicht gel\u00f6scht werden.", 502)
+        return _ok({"artikel": store.nach_gruppe_und_nummer(artikel),
+                    "ausgeblendet": False,
+                    "meldung": f"\u201e{a.get('name')}\u201c wurde gel\u00f6scht."})
 
     try:
         body = req.get_json()
@@ -89,7 +144,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     name = (body.get("name") or "").strip()
     nr = str(body.get("nr") or "").strip()
-
     # ── Anlegen ──────────────────────────────────────────────────────
     if req.method == "POST":
         if not name:
@@ -123,7 +177,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         })
         if not store.save_artikel(url, hdrs, rec_id, artikel):
             return _err("Der Artikel konnte nicht gespeichert werden.", 502)
-        return _ok({"artikel": store.nach_gruppe_und_haeufigkeit(artikel)}, 201)
+        return _ok({"artikel": store.nach_gruppe_und_nummer(artikel)}, 201)
 
     # ── Aendern ──────────────────────────────────────────────────────
     if not nr:
@@ -152,4 +206,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     if not store.save_artikel(url, hdrs, rec_id, artikel):
         return _err("Die \u00c4nderung konnte nicht gespeichert werden.", 502)
-    return _ok({"artikel": store.nach_gruppe_und_haeufigkeit(artikel)})
+    return _ok({"artikel": store.nach_gruppe_und_nummer(artikel)})

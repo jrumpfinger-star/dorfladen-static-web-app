@@ -6,6 +6,7 @@ Routen (``drax-order/{datum?}/{aktion?}``)::
     GET  /api/drax-order?mode=verlauf        Lieferungen und Bestellungen
     GET  /api/drax-order/2026-10-15          Entwurf inkl. Vorbelegung
     GET  /api/drax-order/2026-10-15/dokument gesendetes PDF
+    GET  /api/drax-order/2026-10-15/positionen  Positionen fuer den Verlauf
     POST /api/drax-order/2026-10-15/speichern
     POST /api/drax-order/2026-10-15/senden
     POST /api/drax-order/2026-10-15/korrektur
@@ -245,7 +246,7 @@ def _senden(url, hdrs, cfg, datum_iso, body, korrektur=False):
     # Verkaufshaeufigkeit. Wer im Laden erfasst, prueft danach das Blatt -
     # laufen die Listen auseinander, muss man bei jeder Zeile suchen.
     folge = {a.get("nr"): i for i, a
-             in enumerate(store.nach_gruppe_und_haeufigkeit(aktiv))}
+             in enumerate(store.nach_gruppe_und_nummer(aktiv))}
     positionen.sort(key=lambda p: folge.get(p.get("nr"), 9999))
     voll = store.positionen_mit_namen(positionen, artikel)
 
@@ -420,6 +421,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                          f'inline; filename="{_anhang_name(datum)}"'},
         )
 
+    # ── Positionen eines Verlaufstages (F9) ──────────────────────────
+    # Der Verlauf laedt sie erst beim Aufklappen nach: Die Liste traegt bis
+    # zu 60 Tage, jeder mit rund 15 Positionen - alles vorab mitzuschicken
+    # waere Ballast fuer einen Reiter, den man meist nur ueberfliegt.
+    if aktion == "positionen":
+        _, artikel = store.load_artikel(url, hdrs)
+        _, order = store.load_order(url, hdrs, datum)
+        pos = (order or {}).get("positionen")
+        quelle = "bestellung"
+        if not order:
+            lief = next((l for l in store.vorlage_historie()
+                         if l.get("datum") == datum), None)
+            if lief is None:
+                return _err("Zu diesem Liefertag ist nichts gespeichert.", 404)
+            pos = lief.get("positionen") or []
+            quelle = "lieferung"
+        voll = store.positionen_mit_namen(pos or [], artikel)
+        return _ok({"datum": datum, "quelle": quelle, "positionen": voll,
+                    **store.summen(pos or [])})
+
     # ── Entwurf lesen ────────────────────────────────────────────────
     if req.method == "GET":
         _, artikel = store.load_artikel(url, hdrs)
@@ -427,7 +448,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         schluss = store.bestellschluss_zeitpunkt(cfg, datum)
         return _ok({
             "bestellung": order,
-            "artikel": store.nach_gruppe_und_haeufigkeit(_aktive(artikel)),
+            "artikel": store.nach_gruppe_und_nummer(_aktive(artikel)),
             "gruppen": store.vorlage_gruppen(),
             "vorbelegt_aus": herkunft,
             "liefertag": store.ist_liefertag(cfg, datum),
