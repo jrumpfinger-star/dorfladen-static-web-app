@@ -508,9 +508,13 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
   Zahl der Lieferungen.
 - Bezeichnung, Einheit, Warengruppe und der Schalter aktiv/inaktiv sind
   bearbeitbar; die **Artikelnummer nicht** — sie ist der Schlüssel zur Mühle.
-- Anlegen und Bearbeiten geschehen in **derselben Seitenleiste** wie bei
-  Metzger, Bäcker und Getränken — keine Inline-Maske, kein `prompt`,
-  kein `confirm` (Konstitution 6).
+- Anlegen und Bearbeiten geschehen in **derselben mittigen Dialogkarte**
+  wie bei Metzger, Bäcker und Getränken — keine Inline-Maske, kein
+  `prompt`, kein `confirm` (Konstitution 6).
+- Die Liste steht auf dem gemeinsamen Baustein `.dl-liste` / `.dl-zeile`
+  mit drei Symbolknöpfen (Bearbeiten, Löschen, Ein-/Ausblenden) und dem
+  gemeinsamen Kopf aus Anzahl, Suche und „+ Neuer Artikel"
+  ([specs/listen-harmonie/spec.md](../listen-harmonie/spec.md)).
 - Inaktive Artikel erscheinen nicht im Bestellbildschirm, bleiben aber im
   Verlauf lesbar.
 - Neue Artikel lassen sich anlegen; die Nummer muss fünfstellig und noch nicht
@@ -542,11 +546,18 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
 
 - **Expected:** Die 15 nur aus Rechnungen stammenden Artikel tragen ein Merkmal.
 
-**TC-F10-05: Anlegen und Bearbeiten in der Seitenleiste**
+**TC-F10-05: Anlegen und Bearbeiten in derselben Dialogkarte**
 
-- **Action:** „Artikel anlegen" und danach „Bearbeiten" antippen.
-- **Expected:** Beide Male öffnet sich dieselbe Seitenleiste (`.dx-overlay`);
-  im Dokument gibt es keinen Aufruf von `window.prompt` oder `window.confirm`.
+- **Action:** „+ Neuer Artikel" und danach ein Stift-Symbol antippen.
+- **Expected:** Beide Male öffnet sich dieselbe mittige Karte
+  (`.dx-overlay` / `.dx-dlg`) über abgedunkeltem Grund; im Dokument gibt
+  es keinen Aufruf von `window.prompt` oder `window.confirm`.
+
+**TC-F10-08: Liste wie bei den anderen dreien**
+
+- **Expected:** Die Zeilen tragen `.dl-zeile`, je Zeile stehen drei
+  Symbolknöpfe von mindestens 44 px, und über der Liste stehen Anzahl,
+  Suche und ein grüner Knopf „+ Neuer Artikel".
 
 **TC-F10-06: Nie bestellter Artikel wird wirklich gelöscht**
 
@@ -562,27 +573,49 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
   Artikel im Reiter *Artikel* als ausgeblendet, aber nicht mehr im
   Bestellbildschirm.
 
-### F11: Einstellungen
+### F11: Einstellungen — im CMS, nicht im Kiosk
 
 #### F11 Description
 
-Der Reiter *Einstellungen* führt alles, was sich ändern kann, ohne Code.
+Alles, was sich ohne Code ändern kann, steht in der CMS-Karte
+*Drax-Bestellung* — genau wie bei Metzger, Bäcker und Getränken.
+
+> **Geändert am 06.10.2026.** Drax hatte als einziges der vier
+> Bestellmodule einen eigenen *Einstellungen*-Reiter im Kiosk. Metzger und
+> Bäcker hatten ihren längst abgegeben, mit der Begründung: „Der Kiosk ist
+> die Arbeitsfläche der Verkäuferinnen, nicht die Verwaltung." Ein zweiter
+> Pflegeweg an den CMS-Prüfungen vorbei wäre zudem eine Fehlerquelle
+> gewesen. Der Reiter ist entfallen.
 
 #### F11 Behaviour / Acceptance
 
-- Felder: Empfängeradresse, Anzeigename, Kunden-Nr. (Vorgabe `11225`),
-  Liefertag (Vorgabe Donnerstag), Bestellschluss (Vorgabe Mittwoch 12:00),
-  Anhangformat (Vorgabe PDF), Vorbelegungsart.
-- Solange die Empfängeradresse die Testadresse ist, gilt **Testbetrieb**: Ein
-  Warnkasten weist darauf hin, Mail und Formular tragen den Testvermerk.
+- Die CMS-Karte führt: Name der Mühle, Kunden-Nr. (Vorgabe `11225`),
+  Liefertag (Vorgabe Donnerstag), Bestellschluss-Tag (Vorgabe Mittwoch),
+  Bestellschluss-Uhrzeit (Vorgabe 12:00), Empfängeradresse, Anrede und die
+  **Adresse der Mühle**.
+- **Testbetrieb** gilt, solange Empfänger und Adresse der Mühle nicht
+  übereinstimmen. Beide Seiten urteilen nach derselben Regel: der Server in
+  `drax_store.testbetrieb()`, das CMS in `dxcfgHinweis()`. Ein Knopf „An die
+  Mühle umstellen" übernimmt die Adresse in einem Schritt.
+- Im Kiosk weisen Warnkasten, Mail und Formular weiter auf den Testbetrieb
+  hin — nur ändern lässt er sich dort nicht mehr.
+- Der Kiosk zeigt unter `_sub === 'einst'` (altes Lesezeichen) einen
+  Verweis aufs CMS statt einer leeren Fläche.
 - Die Einstellungen sind nur mit Anmeldung änderbar.
+- Die bestätigte Bestelladresse steht als Vorgabe in `DRAX_MAIL`. Ein leer
+  gespeicherter Wert stammt aus der Testzeit und wird als „nicht gesetzt"
+  behandelt — sonst hätte er die Vorgabe still überschrieben. **Folge:** Das
+  Leeren des Feldes „Adresse der Mühle" führt *nicht* in den Testbetrieb
+  zurück. Dafür trägt man — wie bei Metzger, Bäcker und Getränken — eine
+  andere Adresse als Empfänger ein.
 
 #### F11 Test Cases
 
 **TC-F11-01: Testbetrieb erkannt**
 
-- **Setup:** Empfänger ist die Testadresse.
-- **Expected:** Warnkasten sichtbar; Betreff und Formular tragen den Testvermerk.
+- **Setup:** Empfänger weicht von der Adresse der Mühle ab.
+- **Expected:** Warnkasten im Kiosk **und** im CMS sichtbar; Betreff und
+  Formular tragen den Testvermerk.
 
 **TC-F11-02: Vorgaben stimmen**
 
@@ -594,6 +627,19 @@ Der Reiter *Einstellungen* führt alles, was sich ändern kann, ohne Code.
 
 - **Action:** `POST` auf den Endpunkt ohne Anmeldung.
 - **Expected:** `401`, nichts gespeichert.
+
+**TC-F11-04: Kein Einstellungen-Reiter im Kiosk**
+
+- **Expected:** Die Reiterleiste zeigt genau *Bestellung*, *Verlauf* und
+  *Artikel* — dieselben drei wie bei Metzger, Bäcker und Getränken, und
+  ohne Zählerplättchen.
+
+**TC-F11-05: Scharfschalten im CMS**
+
+- **Action:** In der CMS-Karte „An die Mühle umstellen" antippen und
+  speichern.
+- **Expected:** Der Hinweis wechselt auf „Scharf geschaltet"; im Kiosk
+  verschwindet der Testvermerk.
 
 ### F12: Bedienbar am Kiosk und am Handy
 

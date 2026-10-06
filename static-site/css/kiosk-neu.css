@@ -665,8 +665,16 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 /* ── 10  Dialoge als Blatt ───────────────────────────────────────────── */
 
 /* Grundsatz F6: Ein Dialog liegt immer vollständig im Blickfeld.
-   Auf dem Telefon als Blatt am unteren Rand, ab 1180 px als Spalte
-   neben der Liste. Damit entfällt jedes Nachschieben per JavaScript. */
+   Auf dem Telefon als Blatt am unteren Rand, ab Tablet als mittige Karte
+   über abgedunkeltem Grund. Damit entfällt jedes Nachschieben per
+   JavaScript.
+
+   Die vier Bestellmodule hatten sich hier auseinandergelebt: Getränke
+   zeigten eine mittige Karte, Metzger und Bäcker ab 1180 px eine rechts
+   angedockte Spalte mit nur schwach abgedunkeltem Grund. Aus dem Laden:
+   „der Dialog ist auch nicht modal". Jetzt gilt für alle dieselbe mittige
+   Karte — eine Eingabemaske soll sichtbar vor dem Übrigen liegen, nicht
+   daneben. */
 
 .k-modal-bg,
 .mb-overlay,
@@ -676,7 +684,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   position:fixed;
   inset:0;
   z-index:9000;
-  background:rgba(15,23,42,.5);
+  background:rgba(15,23,42,.55);
   align-items:flex-end;
   justify-content:center;
   padding:0;
@@ -769,7 +777,8 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .mb-dlg{ padding:0 16px }
 .mb-dlg-kopf{ padding-top:6px }
 
-/* Ab Tablet mittig als Karte, ab 1180 px als angedockte Spalte. */
+/* Ab Tablet mittig als Karte — auf jeder Breite, auch am großen Schirm.
+   Die frühere Andockung rechts ab 1180 px ist entfallen (siehe oben). */
 @media (min-width:640px){
   .k-modal-bg, .mb-overlay, .bk-overlay, .dx-overlay, .kal-modal{ align-items:center; padding:24px }
   .k-modal, .mb-dlg, .bk-dlg, .dx-dlg, .kal-modal-card{
@@ -780,20 +789,6 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
   }
   .k-modal-lg, .k-modal-full{ max-width:900px }
   .k-modal::before, .mb-dlg::before, .bk-dlg::before, .dx-dlg::before, .kal-modal-card::before{ display:none }
-}
-@media (min-width:1180px){
-  .k-modal-bg, .mb-overlay, .bk-overlay, .dx-overlay, .kal-modal{
-    justify-content:flex-end;
-    padding:0;
-    background:rgba(15,23,42,.28);
-  }
-  .k-modal, .mb-dlg, .bk-dlg, .dx-dlg, .kal-modal-card{
-    height:100%;
-    max-height:none;
-    width:min(560px, 42vw);
-    border-radius:0;
-    box-shadow:-8px 0 32px rgba(16,24,40,.18);
-  }
 }
 
 /* Die Erfassung steht unter dem Artikel — im Fluss der Liste, nicht als
@@ -4545,11 +4540,22 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   gap:10px; margin:0 0 10px; flex-wrap:wrap }
 .mb-azahl{ font-size:.85rem; color:#5c6b66; font-weight:600; flex:0 0 auto }
 
+/* Drax hängt sich an dieselben Regeln: Ein Artikelstamm soll in allen vier
+   Bestellmodulen gleich aussehen und gleich bedienbar sein.
+   (Spec listen-harmonie, F1) */
+.dx-akopf{ display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin:0 0 10px; flex-wrap:wrap }
+.dx-azahl{ font-size:.85rem; color:#5c6b66; font-weight:600; flex:0 0 auto }
+.dx-akopf .dx-send{ flex:0 0 auto; white-space:nowrap; min-height:38px;
+  padding:0 14px; border-radius:9px; font-size:13px; font-weight:600;
+  border:1.5px solid var(--gr); cursor:pointer }
+
 /* Suche im Artikelstamm. Sie steht zwischen Zähler und „+ Neuer Artikel"
    und nimmt den Platz, der übrig bleibt. `min-width` verhindert, dass sie
    auf schmalen Schirmen zum Schlitz schrumpft — dann bricht die Zeile
    lieber um (flex-wrap oben). */
-.mb-asuche{
+.mb-asuche,
+.dx-asuche{
   flex:1 1 220px;
   min-width:170px;
   height:38px;
@@ -4561,7 +4567,8 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   font-size:.9rem;
   font-family:inherit;
 }
-.mb-asuche:focus{ outline:2px solid var(--gr, #2e7d4f); outline-offset:1px }
+.mb-asuche:focus,
+.dx-asuche:focus{ outline:2px solid var(--gr, #2e7d4f); outline-offset:1px }
 
 /* „Alle zuklappen" steht zwischen Suche und „+ Neuer Artikel". */
 .mb-aklapp{ flex:0 0 auto; white-space:nowrap }
@@ -4579,18 +4586,18 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 /* Die Artikelmaske hat sechs Felder - zweispaltig, damit sie ohne Rollen
    auf einen Blick passt.
 
-   Die Grenzen richten sich nach der BREITE DES BLATTES, nicht des Schirms:
-   Ab 1180 px dockt jedes Blatt als schmale Spalte rechts an (min(560px,
-   42vw), siehe oben). Darin waeren zwei Spalten zu eng - dort also wieder
-   einspaltig. Zweispaltig lohnt nur dazwischen, wo das Blatt mittig als
-   640-px-Karte steht. */
+   Die Grenzen richten sich nach der BREITE DES BLATTES, nicht des Schirms.
+   Frueher dockte das Blatt ab 1180 px als schmale Spalte rechts an; darin
+   waeren zwei Spalten zu eng gewesen, deshalb galt die Zweispaltigkeit nur
+   bis 1179 px. Seit das Blatt auf jeder Breite als mittige 640-px-Karte
+   steht, gilt sie durchgehend ab 600 px. */
 .mb-aform{ display:grid; grid-template-columns:minmax(0,1fr); gap:10px }
 /* Grid-Spalten haben von Haus aus min-width:auto. Die Erfassung in der
    Vorbelegung ist breiter als ihre Spalte und sprengte damit den ganzen
    Dialog ueber den Bildschirmrand hinaus - minmax(0,1fr) erlaubt das
    Schrumpfen. */
 .mb-aform > *{ min-width:0 }
-@media (min-width:600px) and (max-width:1179px){
+@media (min-width:600px){
   .mb-aform{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) }
   .mb-aform label.weit,
   .mb-aform .weit{ grid-column:1 / -1 }
@@ -4669,7 +4676,7 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 #panel-metzgerbest .mb-artikel .dl-zeile.aus .dl-nm{ color:#8a9491 }
 
 /* Drei Symbolaktionen im Artikelstamm, auch auf schmalen Bildschirmen. */
-.bk-art.dl-zeile, .mb-arow.dl-zeile, .gk-arow.dl-zeile{
+.bk-art.dl-zeile, .mb-arow.dl-zeile, .gk-arow.dl-zeile, .dx-arow.dl-zeile{
   grid-template-columns:52px minmax(0,1fr) auto repeat(3,44px);
 }
 .bk-weg.dl-ik, .mb-weg.dl-ik, .gk-weg.dl-ik{
@@ -4679,15 +4686,16 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   background:#fdf3f2; border-color:#d98b8b; color:#b42318;
 }
 @media (max-width:480px){
-  .bk-art.dl-zeile, .mb-arow.dl-zeile, .gk-arow.dl-zeile{
+  .bk-art.dl-zeile, .mb-arow.dl-zeile, .gk-arow.dl-zeile, .dx-arow.dl-zeile{
     grid-template-columns:52px minmax(0,1fr) repeat(3,44px);
   }
-  .bk-art .dl-nr, .mb-arow .dl-nr, .gk-arow .dl-nr{grid-row:1 / 3}
-  .bk-art .dl-nm, .mb-arow .dl-nm, .gk-arow .dl-nm{grid-column:2 / -1}
-  .bk-art .dl-meta, .mb-arow .dl-meta, .gk-arow .dl-meta{
+  .bk-art .dl-nr, .mb-arow .dl-nr, .gk-arow .dl-nr, .dx-arow .dl-nr{grid-row:1 / 3}
+  .bk-art .dl-nm, .mb-arow .dl-nm, .gk-arow .dl-nm, .dx-arow .dl-nm{grid-column:2 / -1}
+  .bk-art .dl-meta, .mb-arow .dl-meta, .gk-arow .dl-meta, .dx-arow .dl-meta{
     grid-row:2; grid-column:2; text-align:left;
   }
-  .bk-art .bk-edit, .mb-arow .mb-weg, .gk-arow .gk-weg{grid-row:2}
+  .bk-art .bk-edit, .mb-arow .mb-weg, .gk-arow .gk-weg,
+  .dx-arow .dl-ik.weg{grid-row:2}
 }
 
 /* Ein vorgeblendeter Hinweis ist keine Menge, sondern Text — er wird

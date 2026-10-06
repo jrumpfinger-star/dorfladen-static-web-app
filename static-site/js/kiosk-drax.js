@@ -101,14 +101,14 @@ window.KDrax = (function () {
   }
 
   // ══════════════════════════════════════════════════
-  //  Dialog (Seitenleiste)
+  //  Dialog (mittige Karte)
   // ══════════════════════════════════════════════════
 
-  /* Dieselbe Seitenleiste wie bei Metzger, Bäcker und Getränken: Auf dem
-     Telefon ein Blatt von unten, am Schirm eine angedockte Spalte rechts.
+  /* Dieselbe Dialogkarte wie bei Metzger, Bäcker und Getränken: Auf dem
+     Telefon ein Blatt von unten, darüber mittig über abgedunkeltem Grund.
      Die Gestalt steckt in den gemeinsamen Regeln der Kiosk-Stylesheets
      (.dx-overlay / .dx-dlg) - so sieht die Artikelpflege in allen vier
-     Bestellmodulen gleich aus. */
+     Bestellmodulen gleich aus. (Spec listen-harmonie, F9) */
   function dialog(inneres) {
     dlgZu();
     var ov = document.createElement('div');
@@ -389,8 +389,8 @@ window.KDrax = (function () {
     /* Fester Kopf, rollende Liste, feste Fussleiste - das Hausgeruest aus
        Abschnitt 15 des Kiosk-CSS (Spec kiosk-bestellreiter-mobil). Ohne die
        Klasse waechst das Panel mit dem Inhalt und die Sendeknoepfe liegen
-       auf dem Telefon unter dem Bildschirmrand. Artikelstamm, Verlauf und
-       Einstellungen sind Lesetexte und rollen wie gewohnt am Stueck. */
+       auf dem Telefon unter dem Bildschirmrand. Artikelstamm und Verlauf
+       sind Lesetexte und rollen wie gewohnt am Stueck. */
     var panel = document.getElementById('panel-drax');
     if (panel) panel.classList.toggle('k-geteilt', _sub === 'bestellung');
 
@@ -406,7 +406,7 @@ window.KDrax = (function () {
       h += '<div class="mb-kopffest">' + subTabs() + '</div>';
       if (_sub === 'verlauf') h += verlaufAnsicht();
       else if (_sub === 'artikel') h += artikelAnsicht();
-      else h += einstellungen();
+      else h += hinweisEinstellungen();
     }
     h += '</div>';
     el.innerHTML = h;
@@ -443,17 +443,20 @@ window.KDrax = (function () {
   }
 
   function subTabs() {
-    function b(id, label, zahl) {
+    function b(id, label) {
       return '<button class="mb-sub' + (_sub === id ? ' on' : '') + '"'
-        + ' onclick="KDrax.sub(\'' + id + '\')">' + label
-        + (zahl !== undefined && zahl !== null
-          ? ' <span class="dx-cnt">' + zahl + '</span>' : '')
-        + '</button>';
+        + ' onclick="KDrax.sub(\'' + id + '\')">' + label + '</button>';
     }
-    var s = summen();
-    return '<div class="mb-subs">' + b('bestellung', 'Bestellung', s.n)
-      + b('verlauf', 'Verlauf') + b('artikel', 'Artikel')
-      + b('einst', 'Einstellungen') + '</div>';
+    /* Kein Zaehler am Reiter: Die nackte Zahl war nicht zu deuten - die
+       Fussleiste nennt Positionen und Stueck ohnehin mit Worten. Beim
+       Baecker bedeutet dasselbe Plaettchen die Groesse des Katalogs; ein
+       Gestaltungsmittel mit zwei Bedeutungen ist schlechter als keines.
+
+       Auch kein "Einstellungen"-Reiter mehr: Stammdaten werden im CMS
+       gepflegt - so wie bei Metzger, Baecker und Getraenken. Der Kiosk ist
+       die Arbeitsflaeche der Verkaeuferinnen, nicht die Verwaltung. */
+    return '<div class="mb-subs">' + b('bestellung', 'Bestellung')
+      + b('verlauf', 'Verlauf') + b('artikel', 'Artikel') + '</div>';
   }
 
   function tagesleiste() {
@@ -971,55 +974,107 @@ window.KDrax = (function () {
   //  Artikelstamm
   // ══════════════════════════════════════════════════
 
+  /* Dieselben Bausteine wie bei Metzger, Bäcker und Getränken: Zähler,
+     Suche und der grüne Knopf im Kopf, darunter je Warengruppe ein
+     .dl-liste mit .dl-zeile. Die frühere Tabelle war der einzige
+     Artikelstamm im Kiosk, der anders aussah. (Spec listen-harmonie) */
   function artikelAnsicht() {
-    var q = _asuche.trim().toLowerCase();
-    var h = '<div class="dx-card"><h3>Artikelstamm</h3>'
+    var treffer = _alleArtikel.filter(passtZurArtikelsuche);
+    var h = '<div class="dx-card">'
+      + '<div class="dx-akopf">'
+      + '<span class="dx-azahl">' + (_asuche
+        ? treffer.length + ' von ' + _alleArtikel.length
+        : _alleArtikel.length + ' Artikel') + '</span>'
+      + '<input type="search" class="dx-asuche" id="dx-aq"'
+      + ' placeholder="Artikel oder Nummer suchen \u2026"'
+      + ' value="' + esc(_asuche) + '" oninput="KDrax.asuch(this.value)">'
+      + '<button class="dx-send" onclick="KDrax.neuMaske()">'
+      + '+ Neuer Artikel</button></div>'
       + '<p class="dx-hint">Bezeichnung und Einheit stammen aus den Rechnungen '
       + '\u2013 das ist die Schreibweise, unter der die M\u00fchle den Artikel '
       + 'f\u00fchrt, und genau so steht sie auf dem Bestellblatt. Die '
       + '<b>Artikelnummer l\u00e4sst sich nicht \u00e4ndern</b>: Sie ist der '
       + 'Schl\u00fcssel der M\u00fchle und tr\u00e4gt die Gebindegr\u00f6\u00dfe '
-      + '(40401 / 40402 / 40405 = 1 / 2,5 / 5 kg).</p>'
-      + '<div class="dx-bar"><input type="search" id="dx-aq"'
-      + ' placeholder="Artikel filtern \u2026" value="' + esc(_asuche) + '"'
-      + ' oninput="KDrax.asuch(this.value)">'
-      + '<button class="dx-btn" onclick="KDrax.neuMaske()">Artikel anlegen</button>'
-      + '</div>';
-    h += '<table class="dx-tab"><thead><tr><th>Nr</th><th>Bezeichnung</th>'
-      + '<th>Einheit</th><th>Gruppe</th><th class="r">Verkauft</th>'
-      + '<th class="r">Lieferungen</th><th></th></tr></thead><tbody>';
-    var n = 0;
-    _alleArtikel.forEach(function (a) {
-      if (q && (a.name + ' ' + a.nr + ' ' + (a.kassenname || '')).toLowerCase()
-        .indexOf(q) < 0) return;
-      n++;
-      var aus = a.aktiv === false;
-      h += '<tr' + (aus ? ' class="aus"' : '') + '>'
-        + '<td class="nr">' + esc(a.nr) + '</td>'
-        + '<td><b>' + esc(a.name) + '</b>'
-        + (a.nur_rechnung ? '<span class="dx-tag neu">nur Rechnung</span>' : '')
-        + (a.kassenname ? '<div class="dx-alt">Kasse: ' + esc(a.kassenname)
-          + '</div>' : '') + '</td>'
-        + '<td>' + esc(a.einheit || 'St\u00fcck') + '</td>'
-        + '<td><span class="dx-pill">' + esc(gruppeName(a.gruppe)) + '</span></td>'
-        + '<td class="r">' + (a.haeufigkeit || '\u2013') + '</td>'
-        + '<td class="r">' + (a.lieferungen || '\u2013') + '</td>'
-        + '<td class="r"><button class="dx-btn klein" onclick="KDrax.bearbeiten(\''
-        + esc(a.nr) + '\')">' + ikone('pencil') + ' Bearbeiten</button>'
-        + '<button class="dx-btn klein" onclick="KDrax.sichtbarkeit(\''
-        + esc(a.nr) + '\',' + (aus ? 'true' : 'false') + ')">'
-        + (aus ? ikone('eye') + ' Einblenden' : ikone('eye-off') + ' Ausblenden')
-        + '</button>'
-        + '<button class="dx-btn klein weg" onclick="KDrax.loeschen(\''
-        + esc(a.nr) + '\')">' + ikone('trash-2') + ' L\u00f6schen</button>'
-        + '</td></tr>';
-    });
-    h += '</tbody></table>';
-    if (!n) h += '<div class="k-empty">Kein Artikel passt zum Suchwort.</div>';
+      + '(40401 / 40402 / 40405 = 1 / 2,5 / 5 kg).</p>';
+    if (!treffer.length) {
+      h += '<div class="k-empty">Kein Artikel passt zum Suchwort.</div>';
+    } else {
+      var gruppe = null;
+      var offen = false;
+      treffer.forEach(function (a) {
+        if (a.gruppe !== gruppe) {
+          if (offen) h += '</div>';
+          gruppe = a.gruppe;
+          // Je Gruppe ein eigenes Raster, damit keine Zeile aus einer
+          // anderen Warengruppe danebenrutscht.
+          h += '<div class="dx-grp">' + esc(gruppeName(gruppe)) + '</div>'
+            + '<div class="dl-liste">';
+          offen = true;
+        }
+        h += artikelZeile(a);
+      });
+      if (offen) h += '</div>';
+    }
     h += '<p class="dx-hint">Nie bestellte Artikel werden gel\u00f6scht. '
       + 'Bereits bestellte oder gelieferte Artikel werden nur ausgeblendet, '
       + 'damit fr\u00fchere Bestellungen vollst\u00e4ndig bleiben.</p>';
     return h + '</div>';
+  }
+
+  function passtZurArtikelsuche(a) {
+    var q = _asuche.trim().toLowerCase();
+    if (!q) return true;
+    return (a.name + ' ' + a.nr + ' ' + (a.kassenname || '')).toLowerCase()
+      .indexOf(q) >= 0;
+  }
+
+  /* Dieselben Zeichnungen wie bei Metzger und Getränken - nicht über
+     `ikone()`, damit die Symbole auch dann stehen, wenn Lucide noch nicht
+     geantwortet hat. Die Beschriftung bleibt im `aria-label`: Sie wird
+     vorgelesen, und die Wächter finden sie weiterhin. (Spec listen-harmonie) */
+  var IK_STIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var IK_AUGE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>'
+    + '<circle cx="12" cy="12" r="3"/></svg>';
+  var IK_AUGE_ZU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="m3 3 18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7'
+    + 'a18 18 0 0 1-2.4 3.4M6.6 6.6A18 18 0 0 0 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4-.8"/></svg>';
+  var IK_WEG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>'
+    + '<path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+
+  function artikelZeile(a) {
+    var aus = a.aktiv === false;
+    var nr = esc(a.nr);
+    var unten = a.kassenname ? 'Kasse: ' + a.kassenname
+                             : (a.einheit || 'St\u00fcck');
+    return '<div class="dl-zeile dx-arow' + (aus ? ' aus' : '') + '">'
+      + '<span class="dl-nr">' + nr + '</span>'
+      + '<span class="dl-nm"><b>' + esc(a.name)
+      + (aus ? ' <span class="dl-tag">ausgeblendet</span>' : '')
+      + (a.nur_rechnung ? ' <span class="dl-tag">nur Rechnung</span>' : '')
+      + '</b><span class="dl-sub">' + esc(unten) + '</span></span>'
+      + '<span class="dl-meta"><b>' + (a.haeufigkeit || '\u2014') + '</b>'
+      + (a.lieferungen ? a.lieferungen + '\u00d7 geliefert' : 'nie geliefert')
+      + '</span>'
+      + '<button class="dl-ik" onclick="KDrax.bearbeiten(\'' + nr + '\')"'
+      + ' title="Bearbeiten" aria-label="Bearbeiten: ' + esc(a.name) + '">'
+      + IK_STIFT + '</button>'
+      + '<button class="dl-ik weg" onclick="KDrax.loeschen(\'' + nr + '\')"'
+      + ' title="L\u00f6schen" aria-label="L\u00f6schen: ' + esc(a.name) + '">'
+      + IK_WEG + '</button>'
+      + '<button class="dl-ik' + (aus ? '' : ' an') + '"'
+      + ' onclick="KDrax.sichtbarkeit(\'' + nr + '\',' + (aus ? 'true' : 'false') + ')"'
+      + ' title="' + (aus ? 'Ausgeblendet \u2014 klicken zum Einblenden'
+                          : 'Sichtbar \u2014 klicken zum Ausblenden') + '"'
+      + ' aria-label="' + (aus ? 'Einblenden: ' : 'Ausblenden: ') + esc(a.name) + '">'
+      + (aus ? IK_AUGE_ZU : IK_AUGE) + '</button>'
+      + '</div>';
   }
 
   /* Anlegen und Bearbeiten teilen sich eine Maske - die Felder sind
@@ -1192,96 +1247,35 @@ window.KDrax = (function () {
 
   function asuch(wert) {
     _asuche = wert || '';
-    var el = host();
-    var tab = el && el.querySelector('.dx-tab tbody');
-    if (!tab) { render(); return; }
-    // Nur den Tabellenrumpf tauschen, damit das Suchfeld den Fokus behaelt.
-    var huelle = document.createElement('div');
-    huelle.innerHTML = artikelAnsicht();
-    var neu = huelle.querySelector('.dx-tab tbody');
-    if (neu) tab.replaceWith(neu);
-  }
-
-  // ══════════════════════════════════════════════════
-  //  Einstellungen
-  // ══════════════════════════════════════════════════
-
-  function einstellungen() {
-    var wo = function (n) {
-      return TAGE.map(function (t, i) {
-        // Die Konfiguration zaehlt wie Python: Montag 0 bis Sonntag 6.
-        var wert = (i + 6) % 7;
-        return '<option value="' + wert + '"' + (wert === n ? ' selected' : '')
-          + '>' + t + '</option>';
-      }).join('');
-    };
-    var h = '';
-    if (_testbetrieb) {
-      h += '<div class="dx-warn"><b>Testbetrieb.</b> Solange hier nicht die '
-        + 'echte Bestelladresse der M\u00fchle steht, geht jede Bestellung an '
-        + esc(_cfg.empfaenger || 'die Testadresse') + ' \u2013 die M\u00fchle '
-        + 'bekommt nichts. So war es auch beim B\u00e4cker, bis die Adresse '
-        + 'best\u00e4tigt war.</div>';
+    render();
+    // Nach dem Neuzeichnen steht der Mauszeiger sonst im Nichts - das
+    // Suchfeld ist ein neues Element und muss den Fokus zurueckbekommen.
+    var el = document.getElementById('dx-aq');
+    if (el) {
+      el.focus();
+      var n = el.value.length;
+      try { el.setSelectionRange(n, n); } catch (e) { /* type=search */ }
     }
-    h += '<div class="dx-card"><h3>Empf\u00e4nger</h3>'
-      + feld('dx-c-mail', 'E-Mail der M\u00fchle', _cfg.empfaenger || '', 'email')
-      + feld('dx-c-name', 'Anzeigename', _cfg.empfaenger_name || '')
-      + feld('dx-c-kd', 'Kunden-Nr.', _cfg.kd_nr || '')
-      + '<p class="dx-hint">Aus den Rechnungen bekannt: DRAX-M\u00dcHLE GmbH, '
-      + 'Hochhaus 5, 83562 Rechtmehring, Telefon 0 80 72 / 82 76.</p></div>';
-    h += '<div class="dx-card"><h3>Rhythmus</h3>'
-      + '<div class="dx-feld"><label for="dx-c-lt">Liefertag</label>'
-      + '<select id="dx-c-lt">' + wo(_cfg.liefertag === undefined ? 3 : _cfg.liefertag)
-      + '</select></div>'
-      + '<div class="dx-feld"><label for="dx-c-bt">Bestellschluss am</label>'
-      + '<select id="dx-c-bt">'
-      + wo(_cfg.bestellschluss_tag === undefined ? 2 : _cfg.bestellschluss_tag)
-      + '</select></div>'
-      + feld('dx-c-uhr', 'Bestellschluss um', _cfg.bestellschluss || '12:00')
-      + '<p class="dx-hint">Die ausgewerteten Rechnungen best\u00e4tigen den '
-      + 'Rhythmus: sechs der sieben Lieferungen kamen an einem Donnerstag, '
-      + 'eine am Montag, 17.08.2026.</p></div>';
-    h += '<div class="dx-feld-wz">'
-      + '<button class="dx-send" onclick="KDrax.configSpeichern()">'
-      + 'Einstellungen speichern</button></div>';
-    return h;
   }
 
-  function feld(id, label, wert, typ) {
-    return '<div class="dx-feld"><label for="' + id + '">' + esc(label) + '</label>'
-      + '<input id="' + id + '" type="' + (typ || 'text') + '" value="'
-      + esc(wert) + '"></div>';
-  }
+  // ═════════════════════════════════════════════════
+  //  Einstellungen – sie stehen im CMS
+  // ═════════════════════════════════════════════════
 
-  function configSpeichern() {
-    var v = function (id) {
-      var el = document.getElementById(id);
-      return el ? el.value : '';
-    };
-    var neu = {
-      empfaenger: v('dx-c-mail').trim(),
-      empfaenger_name: v('dx-c-name').trim(),
-      kd_nr: v('dx-c-kd').trim(),
-      liefertag: parseInt(v('dx-c-lt'), 10),
-      bestellschluss_tag: parseInt(v('dx-c-bt'), 10),
-      bestellschluss: v('dx-c-uhr').trim()
-    };
-    fetch(API + '/drax-order/config', {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ config: neu })
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.success) throw new Error(fehlerText(d, ''));
-        _cfg = d.config || _cfg;
-        _testbetrieb = !!d.testbetrieb;
-        toast('Die Einstellungen sind gespeichert.');
-        // Liefertag oder Schluss koennen sich geaendert haben - die
-        // Tagesleiste muss darauf neu aufbauen.
-        return ladeUebersicht();
-      })
-      .catch(function (e) {
-        toast(e.message || 'Die Einstellungen konnten nicht gespeichert werden.');
-      });
+  /* Das fruehere Einstellungsformular samt `configSpeichern()` ist
+     entfallen. Es waere ein zweiter Weg gewesen, dieselben Stammdaten am
+     CMS vorbei zu aendern - und zwar einer ohne die dortigen Pruefungen.
+     Drax war das letzte der vier Bestellmodule mit eigenem Reiter; Metzger,
+     Baecker und Getraenke hatten ihn laengst abgegeben. Der Kiosk ist die
+     Arbeitsflaeche der Verkaeuferinnen, nicht die Verwaltung.
+
+     Der Hinweis bleibt: Wer den Reiter noch als Lesezeichen hat oder aus
+     Gewohnheit sucht, soll nicht vor einer leeren Flaeche stehen. */
+  function hinweisEinstellungen() {
+    return '<div class="k-empty">Die Einstellungen zur Drax-Bestellung '
+      + 'werden jetzt im CMS gepflegt: <b>CMS \u2192 Einstellungen \u2192 '
+      + 'Drax-Bestellung</b>.<br>Dort stehen Empf\u00e4nger, Liefertag, '
+      + 'Bestellschluss und Kunden-Nr.</div>';
   }
 
   return {
@@ -1292,7 +1286,7 @@ window.KDrax = (function () {
     verwerfen: verwerfen, formular: formular,
     neuMaske: neuMaske, neuSpeichern: neuSpeichern, bearbeiten: bearbeiten,
     aendernSpeichern: aendernSpeichern, loeschen: loeschen,
-    sichtbarkeit: sichtbarkeit, configSpeichern: configSpeichern,
+    sichtbarkeit: sichtbarkeit,
     verlaufAuf: verlaufAuf, bestellungWeg: bestellungWeg,
     dlgZu: dlgZu, dlgJa: dlgJa
   };
