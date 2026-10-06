@@ -82,6 +82,29 @@ pruefe(store.bestellschluss_zeitpunkt(gleich, "2026-10-15").date()
 pruefe(store.testbetrieb(CFG),
        "TC-F11-01 Testbetrieb, solange die Bestelladresse nicht bestaetigt ist")
 
+# Scharf geschaltet heisst: Empfaenger UND hinterlegte Adresse der Muehle
+# sind dieselbe. Ein Tippfehler im einen Feld faellt damit nicht der Muehle
+# zur Last, sondern landet in der Testablage. (TC-F11-05)
+SCHARF = dict(CFG)
+SCHARF["drax_mail"] = "info@drax-muehle.de"
+SCHARF["empfaenger"] = "info@drax-muehle.de"
+pruefe(not store.testbetrieb(SCHARF),
+       "TC-F11-05 scharf, wenn Empfaenger und Muehlenadresse uebereinstimmen")
+
+VERTIPPT = dict(SCHARF)
+VERTIPPT["empfaenger"] = "info@drax-muehle.d"
+pruefe(store.testbetrieb(VERTIPPT),
+       "TC-F11-05 ein Vertipper im Empfaenger faellt zurueck in den Testbetrieb")
+
+# Die Freigabe darf nicht an einem Ueberbleibsel aus der Testzeit scheitern:
+# Der gespeicherte Satz traegt ein leeres `drax_mail`, und "" ist nicht None.
+LEER = dict(CFG)
+LEER["drax_mail"] = ""
+pruefe(store.testbetrieb(LEER),
+       "Leere Muehlenadresse bedeutet Testbetrieb")
+pruefe(store.DRAX_MAIL == "info@drax-muehle.de",
+       f"Bestaetigte Bestelladresse hinterlegt: {store.DRAX_MAIL}")
+
 
 # ── F2: Vorbelegung ───────────────────────────────────────────────────
 print("\nF2 Vorbelegung")

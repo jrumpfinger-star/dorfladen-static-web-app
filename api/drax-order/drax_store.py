@@ -56,10 +56,11 @@ VORLAGEN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vorlage")
 # damit keine unfertige Bestellung bei der Muehle landet.
 TESTADRESSE = "jrumpfinger@t-online.de"
 
-# Die echte Bestelladresse ist **nicht bestaetigt**. Auf den Rechnungen steht
-# info@drax-muehle.de - ob dort auch Bestellungen angenommen werden, muss der
-# Betreiber klaeren. Leer bedeutet: Testbetrieb, egal was eingestellt ist.
-DRAX_MAIL = ""
+# Die echte Bestelladresse ist **bestaetigt** (06.10.2026): Der Betreiber hat
+# mit der Muehle geklaert, dass Bestellungen unter info@drax-muehle.de
+# angenommen werden. Das ist die Vorgabe; im CMS laesst sie sich aendern -
+# genau wie bei Metzger, Baecker und Getraenken.
+DRAX_MAIL = "info@drax-muehle.de"
 
 TAGE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag",
         "Samstag", "Sonntag"]
@@ -267,6 +268,16 @@ def load_config(url, hdrs):
     cfg = dict(DEFAULT_CONFIG)
     if isinstance(data, dict):
         cfg.update({k: v for k, v in data.items() if v is not None})
+    # Ein leer gespeichertes `drax_mail` stammt aus der Testzeit, in der die
+    # Adresse noch unbestaetigt war. Es ist keine Einstellung, sondern ein
+    # Ueberbleibsel - und "" ist nicht None, haette die Vorgabe oben also
+    # still ueberschrieben. Ein im CMS gepflegter Wert gewinnt weiterhin.
+    #
+    # Folge: Das Leeren des Feldes fuehrt NICHT in den Testbetrieb zurueck.
+    # Dafuer traegt man eine andere Adresse als Empfaenger ein - genau wie
+    # bei Metzger, Baecker und Getraenken.
+    if not (cfg.get("drax_mail") or "").strip():
+        cfg["drax_mail"] = DRAX_MAIL
     cfg["_rec_id"] = rec_id
     return cfg
 
@@ -280,9 +291,11 @@ def save_config(url, hdrs, cfg):
 def testbetrieb(cfg):
     """True, solange die Bestellung nicht an die Muehle selbst geht.
 
-    Eine Wahrheit fuer alle Aufrufer: Versand, Formular und Kiosk. Solange
-    ``drax_mail`` leer ist - und das bleibt es bis zur Freigabe durch den
-    Betreiber - gilt immer Testbetrieb.
+    Eine Wahrheit fuer alle Aufrufer: Versand, Formular und Kiosk. Zwei
+    Dinge muessen zusammenkommen: ``drax_mail`` traegt die im Quelltext
+    freigegebene Adresse (siehe ``DRAX_MAIL``), und in den Einstellungen
+    steht genau dieselbe. Ein Tippfehler im Kiosk faellt damit nicht der
+    Muehle zur Last, sondern landet in der Testablage.
     """
     ziel = (cfg.get("drax_mail") or "").strip().lower()
     return not ziel or (cfg.get("empfaenger") or "").strip().lower() != ziel
