@@ -1989,7 +1989,12 @@ window.KMetzgerBest = (function () {
       + (st ? 'Vorgabe: ' + esc(st) : 'keine Vorgabe') + '</span></span>'
       + '<span class="dl-meta mb-apreis"><b>' + (a.preis
         ? String(a.preis).replace('.', ',') + ' \u20AC' : '\u2014') + '</b>'
-      + (a.preis ? 'je kg' : esc(a.gruppe || 'ohne Preis')) + '</span>'
+      /* Ohne Preis stand hier die WARENGRUPPE - ein langer Text in einer
+         Spalte, die nicht umbricht. Er drueckte den Namen auf wenige Pixel
+         zusammen ("Obe rsch alen schn itzel"). Die Gruppe steht ohnehin im
+         Kopf darueber; genau deshalb hatte die Spec listen-harmonie sie aus
+         der Zeile genommen. */
+      + (a.preis ? 'je kg' : 'ohne Preis') + '</span>'
       + '<button class="dl-ik" onclick="' + ruf + '" title="Bearbeiten"'
       + ' aria-label="Bearbeiten: ' + esc(a.name) + '">' + IK_STIFT + '</button>'
       + '<button class="dl-ik mb-weg" onclick="KMetzgerBest.artikelLoeschen('

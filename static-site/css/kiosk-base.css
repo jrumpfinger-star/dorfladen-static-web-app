@@ -778,9 +778,18 @@ font-weight:600;
    waere die Spalte sonst breiter als das Fenster - gemessen 380 px
    Zeile in 375 px Fenster, die Seite rollte waagerecht und der letzte
    Symbolknopf stand ausserhalb. 340 statt 320, weil bei 320 elf Texte
-   gekuerzt wurden und die Zeile auf 87 px wuchs. */
+   gekuerzt wurden und die Zeile auf 87 px wuchs.
+
+   Seit dem Loeschen-Knopf sind es DREI Symbolaktionen statt zwei. Der
+   feste Anteil der Zeile (Nummer, Meta, Knoepfe, Abstaende) waechst
+   damit um genau eine Antippgroesse - 44 px. Die gemessenen 340 galten
+   fuer zwei Knoepfe; bei drei blieben dem Namen stellenweise nur 17 px,
+   und Woerter brachen Buchstabe fuer Buchstabe um ("Obe rsch alen schn
+   itzel"). Deshalb 340 + 44 = 384. Gemessen ueber 1920 bis 800 px:
+   einzeilige Namen bei hoechstmoeglicher Spaltenzahl.
+   (Spec listen-harmonie) */
 .dl-liste{display:grid;gap:6px 12px;align-items:start;
-  grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))}
+  grid-template-columns:repeat(auto-fill,minmax(min(384px,100%),1fr))}
 .dl-zeile{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto auto;
   align-items:center;gap:10px;background:#fff;border:1px solid var(--c-border,#e5e7eb);
   border-radius:9px;padding:7px 10px;min-height:44px}

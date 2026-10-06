@@ -1,4 +1,4 @@
-# Ein Listenbaustein für Bäcker, Metzger und Getränke
+# Ein Listenbaustein für Bäcker, Metzger, Getränke und Drax
 
 ## Die Meldung aus dem Laden
 
@@ -65,6 +65,9 @@ mit Tabellenziffern, damit Preise untereinander stehen.
    schon „20 × 0,50 l · Mehrweg" ging nicht mehr hinein, und die Zeile
    wuchs auf 87 px.
 
+   **Nachgemessen am 06.10.2026: jetzt 384 px** — siehe „Der dritte Knopf
+   kostet eine Antippgröße" weiter unten.
+
 ## Was entfällt
 
 Die **Warengruppe** stand beim Metzger in jeder Zeile — obwohl die Zeile
@@ -88,7 +91,8 @@ Kein Querrollen, nichts ragt aus der Zeile.
 
 ## Anforderungen
 
-- **F1** Alle drei Artikellisten benutzen `.dl-liste` / `.dl-zeile`.
+- **F1** Alle vier Artikellisten benutzen `.dl-liste` / `.dl-zeile` —
+  Bäcker, Metzger, Getränke und Drax.
 - **F2** Nirgends steht Monospace-Schrift in einer Listenzeile.
 - **F3** Zwei Symbolknöpfe je Zeile, mindestens 44 px.
 - **F4** Die Breite wird genutzt: ab 1200 px mehr als eine Spalte.
@@ -97,6 +101,8 @@ Kein Querrollen, nichts ragt aus der Zeile.
   zugeklapptes Auge).
 - **F7** Die Beschriftungen bleiben im `aria-label` erhalten — sie werden
   vorgelesen und die bestehenden Wächter finden sie weiterhin.
+- **F8** Über jeder Artikelliste steht derselbe Kopf: Anzahl links, Suche
+  in der Mitte, grüner Knopf „+ Neuer Artikel" rechts.
 
 ## Testfälle (`tests/kiosk-listen-harmonie.spec.js`)
 
@@ -190,7 +196,110 @@ lesbarer Text, Summen und Protokoll unverändert. **13 Prüfungen.**
 Status steht jetzt bei allen drei als eigenes Feld mit „Gesendet" bzw.
 „Korrigiert". Geprüft wird das Wort, nicht die Schreibweise.
 
+## Nachtrag — Drax und die Dialogart
+
+Aus dem Laden, nachdem Drax dazukam:
+
+> „Ich dachte du hast es konsistent gemacht. Der Button Artikel anlegen
+> entspricht nicht den anderen und der Dialog ist auch nicht modal."
+
+Zwei Befunde:
+
+1. **Drax hatte eine Tabelle** statt des gemeinsamen Bausteins, mit drei
+   Textknöpfen je Zeile und einem schlichten Knopf „Artikel anlegen". Es
+   war die vierte Artikelliste und die einzige, die wieder anders aussah.
+   Behoben: `.dl-liste` / `.dl-zeile` / `.dl-ik` und derselbe Kopf wie bei
+   den anderen (F1, F8).
+
+2. **Die Dialoge liefen auseinander**, und zwar schon vorher:
+
+   | Modul | ab 1180 px | Abdunklung |
+   |---|---|---|
+   | Getränke | mittige Karte | 0,55 |
+   | Bäcker | rechts angedockte Spalte | 0,28 |
+   | Metzger | rechts angedockte Spalte | 0,28 |
+
+   Die angedockte Spalte mit kaum abgedunkeltem Grund liest sich nicht als
+   Dialog, sondern als Seitenleiste — daher „nicht modal".
+
+### Entscheidung
+
+Alle Dialoge des Kiosks stehen als **mittige Karte über abgedunkeltem
+Grund** (0,55). Die Andockung rechts ab 1180 px entfällt.
+
+Das Blatt am unteren Rand auf dem Telefon **bleibt**: Unter 640 px ist
+eine mittige Karte kein Gewinn, und der Grundsatz F6 — ein Dialog liegt
+vollständig im Blickfeld — gilt dort gerade durch das Blatt.
+
+- **F9** Oberhalb von 640 px steht jeder Dialog mittig als Karte, nicht
+  angedockt.
+- **F10** Der Grund hinter einem offenen Dialog ist deutlich abgedunkelt
+  (mindestens 0,5).
+
+### Folgeänderung
+
+`.mb-aform` war zweispaltig **nur** zwischen 600 und 1179 px, weil das
+Blatt darüber schmal andockte. Da es jetzt auf jeder Breite eine
+640-px-Karte ist, gilt die Zweispaltigkeit durchgehend ab 600 px.
+
+## Der dritte Knopf kostet eine Antippgröße
+
+Aus dem Laden, kurz nach dem Löschen-Knopf:
+
+> „Was ist hier passiert? Die Texte sind ja nicht mehr lesbar so."
+
+Der Artikelstamm bei Metzger und Getränken brach Wörter Buchstabe für
+Buchstabe um: „Obe rsch alen schn itzel", „Aho Individu al Classic Glas".
+
+### Ursache
+
+Der feste Anteil einer `.dl-zeile` beträgt **297 px** — Nummernplättchen,
+Meta-Spalte, drei Symbolknöpfe und fünf Abstände. Der Name bekommt, was
+übrig bleibt. Die gemessenen **340 px** Spaltenschwelle stammten aus der
+Zeit mit **zwei** Knöpfen; der Löschen-Knopf hat den festen Anteil um eine
+volle Antippgröße (44 px) vergrößert, ohne dass die Schwelle mitwuchs.
+
+Gemessen bei 340 px Schwelle, schmalster Namensbereich je Fensterbreite:
+
+| Fenster | Spalten | Name | Zeilenhöhe |
+|---|---|---|---|
+| 1920 | 5 | **17 px** | 234 px |
+| 1600 | 4 | 33 px | 134 px |
+| 1180 | 3 | 23 px | 184 px |
+| 800 | 2 | 26 px | 169 px |
+
+### Entscheidung
+
+**340 + 44 = 384 px.** Die Schwelle wächst genau um den hinzugekommenen
+Knopf. Nachgemessen über 1920 bis 390 px: einzeilige Namen bei
+höchstmöglicher Spaltenzahl, kein Überlauf, kein Querrollen.
+
+| Fenster | Spalten | Name | Zeilenhöhe |
+|---|---|---|---|
+| 1920 | 4 | 146 px | 69 px |
+| 1600 | 3 | 198 px | 69 px |
+| 1280 | 3 | 92 px | 84 px |
+| 1180 | 2 | 249 px | 60 px |
+| 800 | 1 | 446 px | 60 px |
+
+Der Preis dafür ist je eine Spalte weniger bei 1920, 1600 und 1180 px.
+Das ist der ehrliche Gegenwert des dritten Knopfes — und lesbare Namen
+waren der Grund, aus dem diese Spec überhaupt entstand.
+
+### Zweiter Befund: die Warengruppe war zurück
+
+Beim Metzger stand in der Meta-Spalte bei fehlendem Preis die
+**Warengruppe** (`a.preis ? 'je kg' : esc(a.gruppe)`) — ein langer Text in
+einer Spalte, die nicht umbricht. Genau diese Doppelung hatte die Spec
+unter „Was entfällt" bereits gestrichen. Sie steht jetzt wieder nur im
+Gruppenkopf; die Zeile zeigt „ohne Preis".
+
+- **F11** Der feste Anteil einer Listenzeile und die Spaltenschwelle
+  gehören zusammen: Kommt eine Aktion hinzu, wächst die Schwelle um eine
+  Antippgröße.
+- **F12** In der Zeile steht keine Warengruppe — auch nicht ersatzweise.
+
 ## Offen
 
-Nichts mehr aus dieser Meldung. Artikel **und** Verlauf laufen auf dem
-gemeinsamen Baustein.
+Die Dialoge des **CMS** (`cms-neu.css`) docken weiterhin ab 1180 px an.
+Das ist eine andere Oberfläche und war nicht Teil der Meldung.
