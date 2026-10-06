@@ -340,7 +340,7 @@ def load_artikel(url, hdrs):
     """Katalog laden; ohne gespeicherten Bestand greift die Vorlage."""
     rec_id, data = read_json(url, hdrs, KEY_ARTIKEL)
     artikel = data.get("artikel") if isinstance(data, dict) else None
-    if not artikel:
+    if artikel is None:
         artikel = vorlage_katalog()
         rec_id = rec_id or ""
     return rec_id, artikel

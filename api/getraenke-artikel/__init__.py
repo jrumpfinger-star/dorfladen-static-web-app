@@ -3,9 +3,10 @@
     GET   /api/getraenke-artikel     Katalog in Warengruppenreihenfolge
     POST  /api/getraenke-artikel     Artikel dauerhaft anlegen
     PATCH /api/getraenke-artikel     Aendern, aus-/einblenden
+    DELETE /api/getraenke-artikel?alt_nummer=.. oder ?alt_name=..  Artikel entfernen
 
-Geloescht wird nie, nur ausgeblendet: Ein geloeschter Artikel risse Luecken in
-Vorbelegung und Verlauf (Spec F11.3).
+Nur nie bestellte Artikel werden geloescht; belegte bleiben ausgeblendet,
+damit Vorbelegung und Verlauf vollstaendig bleiben.
 
 Anders als beim Metzger sind die Artikelnummern **Zeichenketten** (``KA40015``)
 und duerfen fehlen - sechs Artikel wurden nie abgerechnet und haben deshalb
@@ -86,6 +87,28 @@ def _hausnummer(artikel):
     return f"DL-{hoechste + 1}"
 
 
+def _je_bestellt(url, hdrs, a):
+    nummer = _nummer(a.get("nummer"))
+    name = (a.get("name") or "").strip().lower()
+    basis = store.basis_statistik().get(store._stat_schluessel(nummer, name)) or {}
+    if int(a.get("bestellungen") or 0) > 0 or int(basis.get("bestellungen") or 0) > 0:
+        return True
+    # Nummerierte Artikel der Vorlage stammen aus den ausgewerteten Rechnungen.
+    if nummer and any(_nummer(e.get("nummer")) == nummer
+                      for e in store.vorlage_katalog()):
+        return True
+    letzte = store.vorlage_letzte()
+    for order in ([letzte] if letzte else []) + store.bestellungen(url, hdrs):
+        for p in order.get("positionen") or []:
+            pos_nr = _nummer(p.get("nummer"))
+            if nummer and pos_nr:
+                if pos_nr == nummer:
+                    return True
+            elif (p.get("name") or "").strip().lower() == name:
+                return True
+    return False
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse("", status_code=204, headers=store.cors_headers())
@@ -113,6 +136,32 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             logging.warning(f"[getraenke] Statistik nicht berechnet: {e}")
         return _ok({"artikel": artikel, "gruppen": store.gruppen(),
                     "pfand": store.pfandsaetze()})
+
+    if req.method == "DELETE":
+        nummer = _nummer(req.params.get("alt_nummer"))
+        name = (req.params.get("alt_name") or "").strip() or None
+        if nummer is None and name is None:
+            return _err("Bitte Artikelnummer oder Bezeichnung angeben.")
+        i = _finde(artikel, nummer=nummer) if nummer else _finde(artikel, name=name)
+        if i < 0:
+            return _err("Dieser Artikel wurde nicht gefunden.", 404)
+        a = artikel[i]
+        if _je_bestellt(url, hdrs, a):
+            if a.get("aktiv") is False:
+                return _ok({"artikel": artikel, "ausgeblendet": True,
+                            "meldung": f"\u201e{a.get('name')}\u201c war bereits bestellt "
+                                       "oder geliefert und bleibt ausgeblendet."})
+            a["aktiv"] = False
+            if not store.save_artikel(url, hdrs, rec_id, artikel):
+                return _err("Der Artikel konnte nicht ausgeblendet werden.", 502)
+            return _ok({"artikel": artikel, "ausgeblendet": True,
+                        "meldung": f"\u201e{a.get('name')}\u201c wurde bereits bestellt "
+                                   "oder geliefert und deshalb nur ausgeblendet."})
+        artikel.pop(i)
+        if not store.save_artikel(url, hdrs, rec_id, artikel):
+            return _err("Der Artikel konnte nicht gel\u00f6scht werden.", 502)
+        return _ok({"artikel": artikel, "ausgeblendet": False,
+                    "meldung": f"\u201e{a.get('name')}\u201c wurde gel\u00f6scht."})
 
     try:
         body = req.get_json()
