@@ -49,7 +49,10 @@ window.KDrax = (function () {
   var _speicherLauf = null;
   var _uhr = null;            // Zaehler fuer den Countdown im Kopf
   var _alleArtikel = [];      // Artikelstamm inkl. ausgeblendeter (Reiter)
-  var _aNeu = false;          // Maske „Artikel anlegen" offen
+  var _bearbeitet = null;     // Artikel, der gerade im Dialog liegt
+  var _dlgJa = null;          // Rueckruf der offenen Rueckfrage
+  var _vOffen = {};           // Liefertag -> Verlaufszeile aufgeklappt
+  var _vDetail = {};          // Liefertag -> Positionen | 'laedt' | 'fehler'
 
   var TAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag',
               'Freitag', 'Samstag'];
@@ -95,6 +98,53 @@ window.KDrax = (function () {
 
   function ikone(name) {
     return '<i data-lucide="' + name + '" style="width:16px;height:16px"></i>';
+  }
+
+  // ══════════════════════════════════════════════════
+  //  Dialog (Seitenleiste)
+  // ══════════════════════════════════════════════════
+
+  /* Dieselbe Seitenleiste wie bei Metzger, Bäcker und Getränken: Auf dem
+     Telefon ein Blatt von unten, am Schirm eine angedockte Spalte rechts.
+     Die Gestalt steckt in den gemeinsamen Regeln der Kiosk-Stylesheets
+     (.dx-overlay / .dx-dlg) - so sieht die Artikelpflege in allen vier
+     Bestellmodulen gleich aus. */
+  function dialog(inneres) {
+    dlgZu();
+    var ov = document.createElement('div');
+    ov.id = 'dx-overlay';
+    ov.className = 'dx-overlay';
+    ov.innerHTML = '<div class="dx-dlg">' + inneres + '</div>';
+    ov.addEventListener('click', function (e) { if (e.target === ov) dlgZu(); });
+    document.body.appendChild(ov);
+    if (window.dlRefreshIcons) window.dlRefreshIcons();
+    var erstes = ov.querySelector('input, select, textarea');
+    if (erstes) erstes.focus();
+  }
+
+  function dlgZu() {
+    var ov = document.getElementById('dx-overlay');
+    if (ov) ov.remove();
+    _dlgJa = null;
+  }
+
+  /* Rückfrage vor einem Schritt, der sich nicht zurücknehmen lässt. Kein
+     natives `confirm` (Konstitution 6) - es sieht auf jedem Gerät anders
+     aus und lässt sich nicht lesbar formulieren. */
+  function dlgFrage(titel, text, knopf, ja) {
+    dialog('<div class="dx-dlg-h">' + ikone('help-circle') + ' ' + esc(titel)
+      + '</div><div class="dx-dlg-b"><p class="dx-hint">' + esc(text) + '</p></div>'
+      + '<div class="dx-dlg-f">'
+      + '<button class="dx-btn" onclick="KDrax.dlgZu()">Abbrechen</button>'
+      + '<button class="dx-send" onclick="KDrax.dlgJa()">' + esc(knopf)
+      + '</button></div>');
+    _dlgJa = ja;
+  }
+
+  function dlgJa() {
+    var f = _dlgJa;
+    dlgZu();
+    if (typeof f === 'function') f();
   }
 
   function datumDe(iso) {
@@ -484,12 +534,14 @@ window.KDrax = (function () {
       if (!sichtbar(a)) return;
       n++;
       if (a.gruppe !== letzte) {
+        if (letzte !== null) h += '</div>';
         letzte = a.gruppe;
         h += '<div class="dx-grp" data-gruppe="' + esc(a.gruppe) + '">'
-          + esc(gruppeName(a.gruppe)) + '</div>';
+          + esc(gruppeName(a.gruppe)) + '</div><div class="dx-grpbox">';
       }
       h += zeile(a, sperre);
     });
+    if (letzte !== null) h += '</div>';
     h += '</div>';
     if (!n) {
       return '<div class="dx-liste k-liste"><div class="k-empty">'
@@ -649,14 +701,14 @@ window.KDrax = (function () {
   function tagWahl(datum) {
     if (datum === _datum) return;
     var weiter = function () { ladeBestellung(datum); };
-    if (_dirty && !_korrektur) speichern(true).then(weiter, weiter);
-    else if (_korrektur && !bestaetige('Die Korrektur ist noch nicht gesendet. '
-        + 'Beim Wechsel geht sie verloren. Trotzdem wechseln?')) return;
-    else weiter();
-  }
-
-  function bestaetige(frage) {
-    return window.confirm(frage);
+    if (_dirty && !_korrektur) { speichern(true).then(weiter, weiter); return; }
+    if (_korrektur) {
+      dlgFrage('Korrektur verwerfen?',
+        'Die Korrektur ist noch nicht gesendet. Beim Wechsel des Liefertags '
+        + 'geht sie verloren.', 'Trotzdem wechseln', weiter);
+      return;
+    }
+    weiter();
   }
 
   function sub(id) {
@@ -718,11 +770,11 @@ window.KDrax = (function () {
       ? 'An die Testadresse ' + (_cfg.empfaenger || '') + ' \u2013 die M\u00fchle '
         + 'bekommt nichts.'
       : 'An ' + (_cfg.empfaenger || 'die M\u00fchle') + '.';
-    if (!bestaetige('Bestellung f\u00fcr ' + wochentagVon(_datum) + ', '
-        + datumDe(_datum) + ' senden?\n\n' + s.n + ' Positionen, ' + s.st
-        + ' St\u00fcck.\n' + wohin + '\n\nDanach ist der Tag gesperrt; '
-        + '\u00c4nderungen gehen nur noch als Korrektur.')) return;
-    sendeLauf('senden', false);
+    dlgFrage('Bestellung senden?',
+      wochentagVon(_datum) + ', ' + datumDe(_datum) + ' \u2013 ' + s.n
+      + ' Positionen, ' + s.st + ' St\u00fcck. ' + wohin + ' Danach ist der '
+      + 'Tag gesperrt; \u00c4nderungen gehen nur noch als Korrektur.',
+      'Senden', function () { sendeLauf('senden', false); });
   }
 
   function korrektur() {
@@ -734,12 +786,14 @@ window.KDrax = (function () {
   }
 
   function verwerfen() {
-    if (!bestaetige('Die Korrektur verwerfen und zum gesendeten Stand '
-        + 'zur\u00fcck?')) return;
-    if (_korrekturBasis) _mengen = _korrekturBasis;
-    _korrektur = false;
-    _korrekturBasis = null;
-    render();
+    dlgFrage('Korrektur verwerfen?',
+      'Die begonnene Korrektur wird verworfen; es gilt wieder der gesendete '
+      + 'Stand.', 'Verwerfen', function () {
+        if (_korrekturBasis) _mengen = _korrekturBasis;
+        _korrektur = false;
+        _korrekturBasis = null;
+        render();
+      });
   }
 
   function korrekturSenden() {
@@ -749,11 +803,12 @@ window.KDrax = (function () {
         + 'Widerruf bitte bei der M\u00fchle anrufen.');
       return;
     }
-    if (!bestaetige('Korrektur f\u00fcr ' + datumDe(_datum) + ' senden?\n\n'
-        + s.n + ' Positionen, ' + s.st + ' St\u00fcck.\n\nDie M\u00fchle '
-        + 'erh\u00e4lt ein Blatt mit Korrekturvermerk; entfallene Positionen '
-        + 'stehen durchgestrichen darauf.')) return;
-    sendeLauf('korrektur', true);
+    dlgFrage('Korrektur senden?',
+      datumDe(_datum) + ' \u2013 ' + s.n + ' Positionen, ' + s.st
+      + ' St\u00fcck. Die M\u00fchle erh\u00e4lt ein Blatt mit '
+      + 'Korrekturvermerk; entfallene Positionen stehen durchgestrichen '
+      + 'darauf.', 'Korrektur senden',
+      function () { sendeLauf('korrektur', true); });
   }
 
   function sendeLauf(aktion, istKorrektur) {
@@ -804,26 +859,112 @@ window.KDrax = (function () {
     var h = '<div class="dx-card"><h3>Bisherige Lieferungen</h3>'
       + '<p class="dx-hint">Die \u00e4lteren Zeilen stammen aus den '
       + 'Rechnungen der M\u00fchle \u2013 sie zeigen, was tats\u00e4chlich '
-      + 'geliefert wurde, auch aus der Zeit vor diesem Bestellschirm.</p>'
-      + '<table class="dx-tab"><thead><tr><th>Liefertag</th><th>Wochentag</th>'
-      + '<th class="r">Positionen</th><th class="r">St\u00fcck</th>'
-      + '<th>Herkunft</th></tr></thead><tbody>';
-    _verlauf.forEach(function (l) {
-      h += '<tr><td><b>' + esc(datumDe(l.datum)) + '</b></td>'
-        + '<td><span class="dx-pill ' + (l.ausnahme ? 'ab' : 'do') + '">'
-        + esc(l.wochentag || '') + (l.ausnahme ? ' \u2013 Ausnahme' : '')
-        + '</span></td>'
-        + '<td class="r">' + (l.positionen || 0) + '</td>'
-        + '<td class="r">' + (l.stueck || 0) + '</td>'
-        + '<td>' + (l.quelle === 'bestellung'
-          ? 'eigene Bestellung'
-            + (l.hat_dokument
-              ? ' <a href="' + API + '/drax-order/' + encodeURIComponent(l.datum)
-                + '/dokument" target="_blank" rel="noopener">Formular</a>' : '')
-          : 'Rechnung ' + esc(l.rechnung || ''))
-        + '</td></tr>';
+      + 'geliefert wurde, auch aus der Zeit vor diesem Bestellschirm. '
+      + 'Antippen zeigt die einzelnen Positionen.</p>'
+      + '<div class="dl-vliste">';
+    _verlauf.forEach(function (l) { h += verlaufZeile(l); });
+    return h + '</div></div>';
+  }
+
+  function verlaufZeile(l) {
+    var offen = !!_vOffen[l.datum];
+    var eigen = l.quelle === 'bestellung';
+    var h = '<div class="dl-vzeile' + (offen ? ' auf' : '') + '">'
+      + '<div class="dl-vkopf" onclick="KDrax.verlaufAuf(\''
+      + esc(l.datum) + '\')">'
+      + ikone(offen ? 'chevron-down' : 'chevron-right')
+      + '<b>' + esc(datumDe(l.datum)) + '</b>'
+      + '<span class="dx-pill ' + (l.ausnahme ? 'ab' : 'do') + '">'
+      + esc(l.wochentag || '') + (l.ausnahme ? ' \u2013 Ausnahme' : '')
+      + '</span>'
+      + '<span class="dl-vstatus">' + (l.positionen || 0) + ' Positionen, '
+      + (l.stueck || 0) + ' St\u00fcck</span>'
+      + '<span class="dl-vstatus">' + (eigen ? 'eigene Bestellung'
+          : 'Rechnung ' + esc(l.rechnung || '')) + '</span>'
+      + '</div>';
+    if (offen) h += verlaufDetail(l);
+    h += '<div class="dl-vfuss">';
+    if (eigen && l.hat_dokument) {
+      h += '<a class="dx-btn klein" href="' + API + '/drax-order/'
+        + encodeURIComponent(l.datum) + '/dokument" target="_blank"'
+        + ' rel="noopener">' + ikone('file-text') + ' Formular</a>';
+    }
+    // Rechnungszeilen sind Belege der Muehle - sie lassen sich nicht loeschen.
+    if (eigen) {
+      h += '<button class="dx-btn klein weg" onclick="KDrax.bestellungWeg(\''
+        + esc(l.datum) + '\')">' + ikone('trash-2') + ' L\u00f6schen</button>';
+    }
+    return h + '</div></div>';
+  }
+
+  function verlaufDetail(l) {
+    var d = _vDetail[l.datum];
+    if (d === 'laedt') return '<div class="dl-vliste2">Wird geladen \u2026</div>';
+    if (d === 'fehler') {
+      return '<div class="dl-vliste2">Die Positionen konnten nicht geladen '
+        + 'werden.</div>';
+    }
+    if (!d || !d.length) {
+      return '<div class="dl-vliste2">Zu diesem Tag sind keine Positionen '
+        + 'hinterlegt.</div>';
+    }
+    var h = '<div class="dl-vliste2"><table class="dl-vtab"><thead><tr>'
+      + '<th>Nr</th><th>Artikel</th><th class="r">Menge</th>'
+      + '</tr></thead><tbody>';
+    d.forEach(function (p) {
+      h += '<tr><td>' + esc(p.nr || '') + '</td><td>' + esc(p.name || '')
+        + (p.einheit ? ' <span class="dx-eh">' + esc(p.einheit) + '</span>' : '')
+        + '</td><td class="r">' + (p.menge || 0) + '</td></tr>';
     });
     return h + '</tbody></table></div>';
+  }
+
+  function verlaufAuf(datum) {
+    if (_vOffen[datum]) {
+      delete _vOffen[datum];
+      render();
+      return;
+    }
+    _vOffen[datum] = true;
+    // Positionen erst beim Aufklappen holen - der Verlauf reicht Jahre
+    // zurueck, alles vorab zu laden waere Verschwendung.
+    if (_vDetail[datum] === undefined) {
+      _vDetail[datum] = 'laedt';
+      fetch(API + '/drax-order/' + encodeURIComponent(datum) + '/positionen', {
+        headers: authHeaders()
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (dd) {
+          if (!dd || !dd.success) throw new Error(fehlerText(dd, ''));
+          _vDetail[datum] = dd.positionen || [];
+          render();
+        })
+        .catch(function () { _vDetail[datum] = 'fehler'; render(); });
+    }
+    render();
+  }
+
+  function bestellungWeg(datum) {
+    dlgFrage('Bestellung l\u00f6schen?',
+      datumDe(datum) + ': Die gespeicherte Bestellung wird entfernt. Eine '
+      + 'bereits versendete E-Mail holt das nicht zur\u00fcck \u2013 dazu '
+      + 'bitte bei der M\u00fchle anrufen.', 'L\u00f6schen', function () {
+        fetch(API + '/drax-order/' + encodeURIComponent(datum) + '/loeschen', {
+          method: 'POST', headers: authHeaders(), body: '{}'
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d || !d.success) throw new Error(fehlerText(d, ''));
+            delete _vOffen[datum];
+            delete _vDetail[datum];
+            toast('Die Bestellung ist gel\u00f6scht.');
+            if (datum === _datum) ladeBestellung(datum);
+            return ladeVerlauf();
+          })
+          .catch(function (e) {
+            toast(e.message || 'Die Bestellung konnte nicht gel\u00f6scht werden.');
+          });
+      });
   }
 
   // ══════════════════════════════════════════════════
@@ -844,7 +985,6 @@ window.KDrax = (function () {
       + ' oninput="KDrax.asuch(this.value)">'
       + '<button class="dx-btn" onclick="KDrax.neuMaske()">Artikel anlegen</button>'
       + '</div>';
-    if (_aNeu) h += neuMaskeMarkup();
     h += '<table class="dx-tab"><thead><tr><th>Nr</th><th>Bezeichnung</th>'
       + '<th>Einheit</th><th>Gruppe</th><th class="r">Verkauft</th>'
       + '<th class="r">Lieferungen</th><th></th></tr></thead><tbody>';
@@ -864,65 +1004,115 @@ window.KDrax = (function () {
         + '<td><span class="dx-pill">' + esc(gruppeName(a.gruppe)) + '</span></td>'
         + '<td class="r">' + (a.haeufigkeit || '\u2013') + '</td>'
         + '<td class="r">' + (a.lieferungen || '\u2013') + '</td>'
-        + '<td class="r"><button class="dx-btn klein" onclick="KDrax.umbenennen(\''
-        + esc(a.nr) + '\')">Umbenennen</button>'
+        + '<td class="r"><button class="dx-btn klein" onclick="KDrax.bearbeiten(\''
+        + esc(a.nr) + '\')">' + ikone('pencil') + ' Bearbeiten</button>'
         + '<button class="dx-btn klein" onclick="KDrax.sichtbarkeit(\''
         + esc(a.nr) + '\',' + (aus ? 'true' : 'false') + ')">'
-        + (aus ? 'Einblenden' : 'Ausblenden') + '</button></td></tr>';
+        + (aus ? ikone('eye') + ' Einblenden' : ikone('eye-off') + ' Ausblenden')
+        + '</button>'
+        + '<button class="dx-btn klein weg" onclick="KDrax.loeschen(\''
+        + esc(a.nr) + '\')">' + ikone('trash-2') + ' L\u00f6schen</button>'
+        + '</td></tr>';
     });
     h += '</tbody></table>';
     if (!n) h += '<div class="k-empty">Kein Artikel passt zum Suchwort.</div>';
+    h += '<p class="dx-hint">Nie bestellte Artikel werden gel\u00f6scht. '
+      + 'Bereits bestellte oder gelieferte Artikel werden nur ausgeblendet, '
+      + 'damit fr\u00fchere Bestellungen vollst\u00e4ndig bleiben.</p>';
     return h + '</div>';
   }
 
-  function neuMaskeMarkup() {
+  /* Anlegen und Bearbeiten teilen sich eine Maske - die Felder sind
+     dieselben, nur die Artikelnummer liegt beim Bearbeiten fest. */
+  function artikelMaske(a) {
+    var neu = !a;
     var opt = _gruppen.map(function (g) {
-      return '<option value="' + esc(g.id) + '">' + esc(g.name) + '</option>';
+      var sel = !neu && a.gruppe === g.id ? ' selected' : '';
+      return '<option value="' + esc(g.id) + '"' + sel + '>' + esc(g.name)
+        + '</option>';
     }).join('');
-    return '<div class="dx-neu">'
+    var h = '<div class="dx-dlg-h">' + ikone(neu ? 'plus' : 'pencil') + ' '
+      + (neu ? 'Neuer Artikel' : 'Artikel bearbeiten') + '</div>'
+      + '<div class="dx-dlg-b">'
       + '<div class="dx-feld"><label for="dx-n-nr">Artikelnummer</label>'
-      + '<input id="dx-n-nr" inputmode="numeric" maxlength="5" placeholder="40401"></div>'
+      + '<input id="dx-n-nr" inputmode="numeric" maxlength="5" placeholder="40401"'
+      + ' value="' + (neu ? '' : esc(a.nr)) + '"' + (neu ? '' : ' readonly') + '>'
+      + '<div class="dx-hint">' + (neu
+        ? 'Genau so, wie sie bei der M\u00fchle lautet \u2013 sie steht auf '
+          + 'jeder Rechnung. Eine falsche Nummer bestellt einen anderen Artikel.'
+        : 'Die Nummer ist der Schl\u00fcssel der M\u00fchle und l\u00e4sst sich '
+          + 'nicht \u00e4ndern.') + '</div></div>'
       + '<div class="dx-feld"><label for="dx-n-name">Bezeichnung der M\u00fchle</label>'
-      + '<input id="dx-n-name" placeholder="Weizenmehl Type 405 1 kg"></div>'
+      + '<input id="dx-n-name" placeholder="Weizenmehl Type 405"'
+      + ' value="' + (neu ? '' : esc(a.name || '')) + '"></div>'
       + '<div class="dx-feld"><label for="dx-n-eh">Einheit</label>'
-      + '<input id="dx-n-eh" placeholder="1 kg"></div>'
+      + '<input id="dx-n-eh" placeholder="1 kg"'
+      + ' value="' + (neu ? '' : esc(a.einheit || '')) + '"></div>'
       + '<div class="dx-feld"><label for="dx-n-gr">Warengruppe</label>'
-      + '<select id="dx-n-gr">' + opt + '</select></div>'
-      + '<p class="dx-hint">Die Nummer muss genau so lauten wie bei der '
-      + 'M\u00fchle \u2013 sie steht auf jeder Rechnung. Eine falsche Nummer '
-      + 'bestellt einen anderen Artikel.</p>'
-      + '<div class="dx-feld-wz">'
-      + '<button class="dx-btn" onclick="KDrax.neuMaske(false)">Abbrechen</button>'
-      + '<button class="dx-send" onclick="KDrax.neuSpeichern()">Anlegen</button>'
-      + '</div></div>';
+      + '<select id="dx-n-gr">' + opt + '</select></div>';
+    if (!neu) {
+      h += '<p class="dx-hint">' + (a.haeufigkeit || a.lieferungen
+        ? 'Dieser Artikel wurde bereits bestellt \u2013 er l\u00e4sst sich '
+          + 'nur noch ausblenden, nicht l\u00f6schen.'
+        : 'Dieser Artikel wurde noch nie bestellt.') + '</p>';
+    }
+    h += '<div id="dx-warn"></div></div><div class="dx-dlg-f">'
+      + '<button class="dx-btn" onclick="KDrax.dlgZu()">Abbrechen</button>'
+      + '<button class="dx-send" onclick="KDrax.'
+      + (neu ? 'neuSpeichern()' : 'aendernSpeichern()') + '">'
+      + (neu ? 'Anlegen' : 'Speichern') + '</button></div>';
+    dialog(h);
   }
 
-  function neuMaske(auf) {
-    _aNeu = auf === undefined ? !_aNeu : !!auf;
-    render();
+  function neuMaske() {
+    _bearbeitet = null;
+    artikelMaske(null);
+  }
+
+  function bearbeiten(nr) {
+    var a = null;
+    _alleArtikel.forEach(function (x) { if (x.nr === nr) a = x; });
+    if (!a) { toast('Der Artikel wurde nicht gefunden.'); return; }
+    _bearbeitet = a;
+    artikelMaske(a);
+  }
+
+  function maskenWerte() {
+    var w = function (id) {
+      return ((document.getElementById(id) || {}).value || '').trim();
+    };
+    return { nr: w('dx-n-nr'), name: w('dx-n-name'), einheit: w('dx-n-eh'),
+             gruppe: w('dx-n-gr') };
   }
 
   function neuSpeichern(trotzdem) {
-    var nr = (document.getElementById('dx-n-nr') || {}).value || '';
-    var name = (document.getElementById('dx-n-name') || {}).value || '';
-    var eh = (document.getElementById('dx-n-eh') || {}).value || '';
-    var gr = (document.getElementById('dx-n-gr') || {}).value || '';
+    var v = maskenWerte();
+    if (!v.name) { toast('Bitte eine Bezeichnung eintragen.'); return; }
     fetch(API + '/drax-artikel', {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ nr: nr.trim(), name: name.trim(), einheit: eh.trim(),
-        gruppe: gr, trotzdem: !!trotzdem })
+      body: JSON.stringify({ nr: v.nr, name: v.name, einheit: v.einheit,
+        gruppe: v.gruppe, trotzdem: !!trotzdem })
     })
       .then(function (r) {
         return r.json().then(function (d) { return { s: r.status, d: d }; });
       })
       .then(function (x) {
         if (x.s === 409 && !trotzdem) {
-          if (bestaetige(x.d.error)) neuSpeichern(true);
+          // Dublettenverdacht: Die Rückfrage steht im selben Blatt, damit
+          // die eingetippten Felder nicht verloren gehen.
+          var warn = document.getElementById('dx-warn');
+          if (warn) {
+            warn.innerHTML = '<p class="dx-hint">' + esc(x.d.error) + '</p>'
+              + '<button class="dx-btn" onclick="KDrax.neuSpeichern(true)">'
+              + 'Trotzdem anlegen</button>';
+          } else {
+            toast(x.d.error);
+          }
           return;
         }
         if (!x.d || !x.d.success) throw new Error(fehlerText(x.d, ''));
         _alleArtikel = x.d.artikel || _alleArtikel;
-        _aNeu = false;
+        dlgZu();
         toast('Der Artikel ist angelegt.');
         // Die Bestellliste muss ihn sofort kennen - sonst faellt die Menge
         // beim naechsten Speichern durch die Katalogpruefung.
@@ -934,16 +1124,47 @@ window.KDrax = (function () {
       });
   }
 
-  function umbenennen(nr) {
+  function aendernSpeichern() {
+    if (!_bearbeitet) { dlgZu(); return; }
+    var v = maskenWerte();
+    if (!v.name) { toast('Bitte eine Bezeichnung eintragen.'); return; }
+    var a = _bearbeitet;
+    if (v.name === (a.name || '') && v.einheit === (a.einheit || '')
+        && v.gruppe === (a.gruppe || '')) { dlgZu(); return; }
+    dlgZu();
+    artikelPatch({ nr: a.nr, name: v.name, einheit: v.einheit, gruppe: v.gruppe },
+      'Der Artikel ist gespeichert.');
+  }
+
+  /* Löschen (Spec artikel-loeschen, F1/F2): Ob wirklich gelöscht oder nur
+     ausgeblendet wird, entscheidet der Server - nur er kennt alle
+     Bestellungen und die Lieferhistorie. */
+  function loeschen(nr) {
     var a = null;
     _alleArtikel.forEach(function (x) { if (x.nr === nr) a = x; });
-    if (!a) return;
-    var neu = window.prompt('Bezeichnung, wie die M\u00fchle sie f\u00fchrt:\n'
-      + '(Artikelnummer ' + nr + ' bleibt unver\u00e4ndert)', a.name || '');
-    if (neu === null) return;
-    neu = neu.trim();
-    if (!neu || neu === a.name) return;
-    artikelPatch({ nr: nr, name: neu }, 'Die Bezeichnung ist ge\u00e4ndert.');
+    if (!a) { toast('Der Artikel wurde nicht gefunden.'); return; }
+    var bestellt = (a.haeufigkeit || 0) > 0 || (a.lieferungen || 0) > 0;
+    dlgFrage('Artikel l\u00f6schen?',
+      'Artikel ' + nr + ' \u2013 \u201e' + (a.name || '') + '\u201c entfernen? '
+      + 'Fr\u00fchere Bestellungen bleiben unber\u00fchrt.' + (bestellt
+        ? ' Dieser Artikel wurde bereits bestellt \u2013 er wird deshalb nur '
+          + 'ausgeblendet.' : ''),
+      'L\u00f6schen', function () {
+        fetch(API + '/drax-artikel?nr=' + encodeURIComponent(nr), {
+          method: 'DELETE', headers: authHeaders()
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d || !d.success) throw new Error(fehlerText(d, ''));
+            _alleArtikel = d.artikel || _alleArtikel;
+            _artikel = _alleArtikel.filter(function (x) { return x.aktiv !== false; });
+            toast(d.meldung || 'Der Artikel wurde gel\u00f6scht.');
+            render();
+          })
+          .catch(function (e) {
+            toast(e.message || 'Der Artikel konnte nicht gel\u00f6scht werden.');
+          });
+      });
   }
 
   function sichtbarkeit(nr, wiederEin) {
@@ -1069,7 +1290,10 @@ window.KDrax = (function () {
     speichern: function () { return speichern(false); },
     senden: senden, korrektur: korrektur, korrekturSenden: korrekturSenden,
     verwerfen: verwerfen, formular: formular,
-    neuMaske: neuMaske, neuSpeichern: neuSpeichern, umbenennen: umbenennen,
-    sichtbarkeit: sichtbarkeit, configSpeichern: configSpeichern
+    neuMaske: neuMaske, neuSpeichern: neuSpeichern, bearbeiten: bearbeiten,
+    aendernSpeichern: aendernSpeichern, loeschen: loeschen,
+    sichtbarkeit: sichtbarkeit, configSpeichern: configSpeichern,
+    verlaufAuf: verlaufAuf, bestellungWeg: bestellungWeg,
+    dlgZu: dlgZu, dlgJa: dlgJa
   };
 })();

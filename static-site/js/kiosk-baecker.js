@@ -16,6 +16,7 @@
   var _b = null;          // aktuelle Bestellung
   var _uebersicht = null; // Tagesleiste + Erinnerung
   var _artikel = [];      // Katalog der aktuellen Bäckerei
+  var _artikelGeladen = false;
   var _datum = '';        // gewählter Liefertag
   var _bk = '';           // gewählte Bäckerei (ergibt sich aus dem Tag)
   var _ladeId = 0;        // laufende Nummer, damit überholte Antworten zählen
@@ -53,6 +54,14 @@
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function () { t.remove(); }, 3500);
+  }
+  function loeschHeaders() {
+    var h = {};
+    try {
+      var t = sessionStorage.getItem('cmsAuthToken') || localStorage.getItem('cmsAuthToken');
+      if (t) h['X-CMS-Auth'] = t;
+    } catch (e) { /* Speicher gesperrt - dann ohne Token */ }
+    return h;
   }
   function posKey(p) {
     return String(p.nummer || '').trim() || String(p.name || '').trim().toLowerCase();
@@ -183,6 +192,7 @@
       .then(function (res) {
         if (lauf != null && lauf !== _ladeId) return;
         _artikel = (res && res.artikel) || [];
+        _artikelGeladen = true;
         render();
       })
       .catch(function () {
@@ -1432,7 +1442,8 @@
   // ══════════════════════════════════════════════════
 
   function renderArtikel() {
-    if (!_artikel.length) return '<div class="bk-sticky">' + subTabs() + '</div><div class="k-empty">Laden…</div>';
+    if (!_artikel.length && !_artikelGeladen)
+      return '<div class="bk-sticky">' + subTabs() + '</div><div class="k-empty">Laden…</div>';
     var aktive = _artikel.filter(function (a) { return a.aktiv; });
     var h = '<div class="bk-sticky">' + subTabs() + '<div class="bk-tools">';
     h += '<button class="bk-btn' + (_umfang !== 'alle' ? ' on' : '') + '" onclick="KBaecker.umfang(false)">'
@@ -1473,6 +1484,10 @@
       h += '<button class="dl-ik bk-edit" type="button" title="Nummer und Bezeichnung ändern"'
         + ' aria-label="Bearbeiten: ' + esc(a.name) + '"'
         + ' onclick="KBaecker.bearbeiten(\'' + esc(key) + '\')">' + luc('pencil', 15) + '</button>';
+      h += '<button class="dl-ik bk-weg" type="button" title="Löschen"'
+        + ' aria-label="Löschen: ' + esc(a.name) + '"'
+        + ' onclick="KBaecker.artikelLoeschen(' + _artikel.indexOf(a) + ')">'
+        + luc('trash-2', 15) + '</button>';
       h += '<button class="dl-ik bk-sw' + (a.aktiv ? ' an' : ' off') + '" title="'
         + (a.aktiv ? 'Sichtbar — klicken zum Ausblenden' : 'Ausgeblendet — klicken zum Einblenden') + '"'
         + ' aria-label="' + (a.aktiv ? 'Ausblenden: ' : 'Einblenden: ') + esc(a.name) + '"'
@@ -1482,9 +1497,32 @@
       h += '</div>';
     });
     if (offen) { h += '</div>'; }
-    h += '<div class="bk-note">Artikel werden nie gelöscht, sondern nur ausgeblendet – '
-      + 'sonst wären alte Bestellungen im Verlauf unvollständig.</div>';
+    if (!liste.length) h += '<div class="k-empty">Keine Artikel vorhanden.</div>';
+    h += '<div class="bk-note">Nie bestellte Artikel werden gelöscht. Bereits bestellte '
+      + 'oder gelieferte Artikel werden nur ausgeblendet, damit frühere Bestellungen vollständig bleiben.</div>';
     return h;
+  }
+
+  function artikelLoeschen(i) {
+    var a = _artikel[i];
+    if (!a) { toast('Der Artikel wurde nicht gefunden.'); return; }
+    var nr = String(a.nummer || '').trim();
+    var text = 'Artikel ' + (nr || 'ohne Nummer') + ' – „' + a.name + '“ entfernen? '
+      + 'Frühere Bestellungen bleiben unberührt.';
+    dlgFrage('Artikel löschen?', text, 'Löschen', function () {
+      var query = '?baeckerei=' + encodeURIComponent(_bk)
+        + (nr ? '&key=' + encodeURIComponent(nr)
+              : '&name_key=' + encodeURIComponent(a.name));
+      fetch(API + '/baecker-artikel' + query,
+        { method: 'DELETE', headers: loeschHeaders() })
+        .then(function (r) { return r.json().then(function (d) {
+          if (!r.ok || !d.success || !Array.isArray(d.artikel))
+            throw new Error((d && d.error) || 'Der Artikel konnte nicht entfernt werden.');
+          return d;
+        }); })
+        .then(function (d) { _artikel = d.artikel; render(); toast(d.meldung); })
+        .catch(function (e) { toast(e.message || 'Der Artikel konnte nicht entfernt werden.'); });
+    });
   }
 
   function aktiv(key, wert) {
@@ -1880,6 +1918,7 @@
     zusatzDialog: zusatzDialog, zusatzAus: zusatzAus, zusatzFrei: zusatzFrei,
     zusatzWeg: zusatzWeg, suche: suche,
     neuDialog: neuDialog, neuSpeichern: neuSpeichern, aktiv: aktiv,
+    artikelLoeschen: artikelLoeschen,
     bearbeiten: bearbeiten, aendernSpeichern: aendernSpeichern,
     tagAusVerlauf: tagAusVerlauf, dlgZu: dlgZu,
     dlgJa: dlgJa, bestellungWeg: bestellungWeg,

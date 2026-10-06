@@ -671,6 +671,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .k-modal-bg,
 .mb-overlay,
 .bk-overlay,
+.dx-overlay,
 .kal-modal{
   position:fixed;
   inset:0;
@@ -686,6 +687,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .k-modal,
 .mb-dlg,
 .bk-dlg,
+.dx-dlg,
 .kal-modal-card{
   width:100%;
   max-width:none;
@@ -703,6 +705,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 .k-modal::before,
 .mb-dlg::before,
 .bk-dlg::before,
+.dx-dlg::before,
 .kal-modal-card::before{
   content:"";
   flex:0 0 auto;
@@ -715,9 +718,11 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 
 .k-modal-head,
 .bk-dlg-h,
+.dx-dlg-h,
 .kal-modal-head{ flex:0 0 auto }
 .k-modal-body,
-.bk-dlg-b{ flex:1 1 auto; overflow-y:auto; min-height:0; max-height:none }
+.bk-dlg-b,
+.dx-dlg-b{ flex:1 1 auto; overflow-y:auto; min-height:0; max-height:none }
 
 /* Die Versandvorschau soll die Bestellung zeigen, nicht Leerraum.
    Auf hohen Schirmen stand .bk-prev fest auf 230 px – unter der Liste blieb
@@ -743,6 +748,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 }
 .k-modal-footer,
 .bk-dlg-f,
+.dx-dlg-f,
 .kal-modal-foot,
 .mb-dlg-acts{
   flex:0 0 auto;
@@ -757,6 +763,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 /* Die wichtigste Schaltfläche liegt rechts und ist die breiteste. */
 .k-modal-footer .k-btn-confirm,
 .bk-dlg-f .bk-btn.primary,
+.dx-dlg-f .dx-send,
 .mb-dlg-acts .mb-send{ flex:1 1 auto }
 
 .mb-dlg{ padding:0 16px }
@@ -764,23 +771,23 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 
 /* Ab Tablet mittig als Karte, ab 1180 px als angedockte Spalte. */
 @media (min-width:640px){
-  .k-modal-bg, .mb-overlay, .bk-overlay, .kal-modal{ align-items:center; padding:24px }
-  .k-modal, .mb-dlg, .bk-dlg, .kal-modal-card{
+  .k-modal-bg, .mb-overlay, .bk-overlay, .dx-overlay, .kal-modal{ align-items:center; padding:24px }
+  .k-modal, .mb-dlg, .bk-dlg, .dx-dlg, .kal-modal-card{
     max-width:640px;
     max-height:86dvh;
     border-radius:var(--r-l);
     padding-bottom:0;
   }
   .k-modal-lg, .k-modal-full{ max-width:900px }
-  .k-modal::before, .mb-dlg::before, .bk-dlg::before, .kal-modal-card::before{ display:none }
+  .k-modal::before, .mb-dlg::before, .bk-dlg::before, .dx-dlg::before, .kal-modal-card::before{ display:none }
 }
 @media (min-width:1180px){
-  .k-modal-bg, .mb-overlay, .bk-overlay, .kal-modal{
+  .k-modal-bg, .mb-overlay, .bk-overlay, .dx-overlay, .kal-modal{
     justify-content:flex-end;
     padding:0;
     background:rgba(15,23,42,.28);
   }
-  .k-modal, .mb-dlg, .bk-dlg, .kal-modal-card{
+  .k-modal, .mb-dlg, .bk-dlg, .dx-dlg, .kal-modal-card{
     height:100%;
     max-height:none;
     width:min(560px, 42vw);
@@ -1546,6 +1553,7 @@ html[data-theme="dark"] .k-panel > .k-day-bar{ background:var(--c-bg) }
 html[data-theme="dark"] .k-modal,
 html[data-theme="dark"] .mb-dlg,
 html[data-theme="dark"] .bk-dlg,
+html[data-theme="dark"] .dx-dlg,
 html[data-theme="dark"] .mb-ed,
 html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c-text) }
 
@@ -4660,6 +4668,28 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
 }
 #panel-metzgerbest .mb-artikel .dl-zeile.aus .dl-nm{ color:#8a9491 }
 
+/* Drei Symbolaktionen im Artikelstamm, auch auf schmalen Bildschirmen. */
+.bk-art.dl-zeile, .mb-arow.dl-zeile, .gk-arow.dl-zeile{
+  grid-template-columns:52px minmax(0,1fr) auto repeat(3,44px);
+}
+.bk-weg.dl-ik, .mb-weg.dl-ik, .gk-weg.dl-ik{
+  border-color:#e7c9c9; color:#b42318;
+}
+.bk-weg.dl-ik:hover, .mb-weg.dl-ik:hover, .gk-weg.dl-ik:hover{
+  background:#fdf3f2; border-color:#d98b8b; color:#b42318;
+}
+@media (max-width:480px){
+  .bk-art.dl-zeile, .mb-arow.dl-zeile, .gk-arow.dl-zeile{
+    grid-template-columns:52px minmax(0,1fr) repeat(3,44px);
+  }
+  .bk-art .dl-nr, .mb-arow .dl-nr, .gk-arow .dl-nr{grid-row:1 / 3}
+  .bk-art .dl-nm, .mb-arow .dl-nm, .gk-arow .dl-nm{grid-column:2 / -1}
+  .bk-art .dl-meta, .mb-arow .dl-meta, .gk-arow .dl-meta{
+    grid-row:2; grid-column:2; text-align:left;
+  }
+  .bk-art .bk-edit, .mb-arow .mb-weg, .gk-arow .gk-weg{grid-row:2}
+}
+
 /* Ein vorgeblendeter Hinweis ist keine Menge, sondern Text — er wird
    kursiv gesetzt, damit er in der Reihe der Mengen-Kacheln nicht als
    Portion missverstanden wird. Umbrechen darf er wie die übrigen
@@ -4771,9 +4801,14 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   border-bottom:1px solid var(--line);
 }
 .dx-grp:first-child{ margin-top:2px }
+/* Spaltenweise Fuellung: Jede Warengruppe ist ein eigener Mehrspalter, damit
+   die Artikelnummer in der ersten Spalte durchlaeuft, bevor die zweite
+   beginnt (Spec F4). Schmale Schirme ergeben automatisch eine Spalte. */
+.dx-grpbox{ columns:420px auto; column-gap:12px }
 .dx-row{
   background:var(--karte); border-radius:8px; padding:4px 8px; margin-bottom:3px;
   border-left:4px solid transparent;
+  break-inside:avoid; -webkit-column-break-inside:avoid;
   display:grid; grid-template-columns:52px minmax(0,1fr) 136px; gap:8px;
   align-items:center;
 }
@@ -4844,6 +4879,11 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   cursor:pointer; color:var(--ink);
 }
 .dx-btn.klein{ min-height:34px; padding:0 9px; font-size:11.5px; margin-left:4px }
+
+/* „Löschen" ist ein Abriss — er darf nicht aussehen wie die Knöpfe daneben.
+   (Spec artikel-loeschen, F6) */
+.dx-btn.weg{ border-color:#e7c9c9; color:#b42318 }
+.dx-btn.weg:hover{ background:#fdf3f2; border-color:#d98b8b }
 .dx-send{ background:var(--gr); border-color:var(--gr); color:#fff }
 .dx-send:disabled{ background:#cbd5e1; border-color:#cbd5e1; cursor:not-allowed }
 
@@ -4883,22 +4923,22 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
   border-radius:9px; font-size:14px; min-width:220px; flex:1;
 }
 .dx-feld-wz{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
-.dx-neu{
-  background:var(--gr-t); border:1.5px dashed var(--line); border-radius:10px;
-  padding:11px 13px; margin:8px 0;
-}
 
-/* Ab einer gewissen Reiterbreite trägt die Liste zwei Spalten. Maßgeblich
-   ist die Breite des Reiters, nicht die des Fensters: Links nimmt die
-   Reiterleiste 84 bis 252 px weg. Eine Zeile braucht 52 + 136 px für
-   Nummer und Menge, dazu mindestens 190 px für den Namen. */
-@container liste (min-width:880px){
-  .dx-liste{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr));
-    gap:0 12px; align-content:start;
-  }
-  .dx-grp{ grid-column:1/-1 }
+/* In der Seitenleiste ist kein Platz für Beschriftung und Feld nebeneinander –
+   dort stehen sie untereinander, genau wie bei Metzger, Bäcker und Getränken. */
+.dx-dlg-b .dx-feld{ display:block; margin-bottom:12px }
+.dx-dlg-b .dx-feld label{ display:block; margin-bottom:4px }
+.dx-dlg-b .dx-feld input, .dx-dlg-b .dx-feld select{
+  display:block; width:100%; min-width:0; box-sizing:border-box;
 }
+.dx-dlg-b .dx-feld input[readonly]{ background:var(--gr-t); color:var(--mut) }
+.dx-dlg-b .dx-hint{ margin:4px 0 0 }
+
+/* Die Spaltenzahl ergibt sich aus der Breite des Mehrspalters (.dx-grpbox,
+   `columns:420px`). Maßgeblich ist die Breite des Reiters, nicht die des
+   Fensters: Links nimmt die Reiterleiste 84 bis 252 px weg. Eine Zeile
+   braucht 52 + 136 px für Nummer und Menge, dazu mindestens 190 px für den
+   Namen. */
 
 /* Auf dem Telefon zählt jeder Millimeter: Die Zähler stehen als
    Zwischenstand ohnehin in der Reiterleiste, in der Fußleiste bleiben die

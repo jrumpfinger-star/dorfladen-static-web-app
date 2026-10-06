@@ -1992,6 +1992,11 @@ window.KMetzgerBest = (function () {
       + (a.preis ? 'je kg' : esc(a.gruppe || 'ohne Preis')) + '</span>'
       + '<button class="dl-ik" onclick="' + ruf + '" title="Bearbeiten"'
       + ' aria-label="Bearbeiten: ' + esc(a.name) + '">' + IK_STIFT + '</button>'
+      + '<button class="dl-ik mb-weg" onclick="KMetzgerBest.artikelLoeschen('
+      + (a.nummer == null ? 'null' : Number(a.nummer)) + ',\'' + jsText(a.name)
+      + '\')" title="Löschen"'
+      + ' aria-label="Löschen: ' + esc(a.name) + '">'
+      + ikone('trash-2') + '</button>'
       + '<button class="dl-ik' + (aus ? '' : ' an') + '"'
       + ' onclick="KMetzgerBest.aktiv(\'' + jsText(a.name) + '\',' + aus + ')"'
       + ' title="' + (aus ? 'Ausgeblendet \u2014 klicken zum Einblenden'
@@ -2223,6 +2228,29 @@ window.KMetzgerBest = (function () {
     });
   }
 
+  function artikelLoeschen(nummer, name) {
+    var a = _artikel.find(function (eintrag) {
+      return nummer == null ? eintrag.nummer == null && eintrag.name === name
+                            : Number(eintrag.nummer) === nummer;
+    });
+    if (!a) { toast('Der Artikel wurde nicht gefunden.'); return; }
+    var text = 'Artikel ' + (a.nummer == null ? 'ohne Nummer' : a.nummer)
+      + ' – „' + a.name + '“ entfernen? Frühere Bestellungen bleiben unberührt.';
+    dialog('<div class="mb-dlg-text">' + esc(text) + '</div>', 'Löschen', function () {
+      var query = a.nummer == null
+        ? '?alt_name=' + encodeURIComponent(a.name)
+        : '?alt_nummer=' + encodeURIComponent(a.nummer);
+      fetch(API + '/metzger-artikel' + query, { method: 'DELETE', headers: authHeaders() })
+        .then(function (r) { return r.json().then(function (d) {
+          if (!r.ok || !d.success || !Array.isArray(d.artikel))
+            throw new Error(fehlerText(d, 'Der Artikel konnte nicht entfernt werden.'));
+          return d;
+        }); })
+        .then(function (d) { _artikel = d.artikel; render(); toast(d.meldung); })
+        .catch(function (e) { toast(e.message || 'Der Artikel konnte nicht entfernt werden.'); });
+    });
+  }
+
   function aktiv(name, an) {
     fetch(API + '/metzger-artikel', {
       method: 'PATCH', headers: authHeaders(),
@@ -2375,7 +2403,8 @@ window.KMetzgerBest = (function () {
     vorblenden: vorblenden,
     speichern: speichern, senden: senden, korrektur: korrektur,
     verwerfen: verwerfen, korrekturSenden: korrekturSenden,
-    aktiv: aktiv, neuerArtikel: neuerArtikel, bearbeiten: bearbeiten,
+    aktiv: aktiv, artikelLoeschen: artikelLoeschen,
+    neuerArtikel: neuerArtikel, bearbeiten: bearbeiten,
     istGeaendert: istGeaendert,
     badge: badge
   };

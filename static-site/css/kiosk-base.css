@@ -927,11 +927,14 @@ font-weight:600;
 .bk-hist.off .s{color:var(--c-muted)}
 .bk-hist .s span{display:block;font-size:11px;font-weight:400;color:var(--c-muted)}
 /* Dialog */
-.bk-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center;padding:16px;overflow:auto}
-.bk-dlg{background:#fff;border-radius:14px;max-width:640px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
-.bk-dlg-h{background:var(--bk);color:#fff;padding:13px 18px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:9px}
-.bk-dlg-b{padding:16px 18px;max-height:66vh;overflow:auto}
-.bk-dlg-f{padding:12px 18px;background:#f9fafb;border-top:1px solid var(--c-border);display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.bk-overlay,.dx-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:grid;place-items:center;padding:16px;overflow:auto}
+.bk-dlg,.dx-dlg{background:#fff;border-radius:14px;max-width:640px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.bk-dlg-h,.dx-dlg-h{background:var(--bk);color:#fff;padding:13px 18px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:9px}
+/* Drax führt sein eigenes Grün — sonst trüge der Dialog die Farbe der
+   Bäckerei, obwohl er zur Mühle gehört. */
+.dx-dlg-h{background:var(--gr)}
+.bk-dlg-b,.dx-dlg-b{padding:16px 18px;max-height:66vh;overflow:auto}
+.bk-dlg-f,.dx-dlg-f{padding:12px 18px;background:#f9fafb;border-top:1px solid var(--c-border);display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
 .bk-kv{display:flex;gap:10px;font-size:13px;margin-bottom:7px}
 .bk-kv .k{color:var(--c-muted);min-width:88px;flex-shrink:0}
 .bk-kv .v{font-weight:600;overflow-wrap:anywhere}

@@ -344,7 +344,12 @@ window.KGetraenke = (function () {
     // Nur die Bestellansicht ist in festen Kopf, Liste und Fußzeile geteilt.
     var panel = document.getElementById('panel-getraenke');
     if (panel) panel.classList.toggle('k-geteilt', _sub !== 'artikel' && _sub !== 'verlauf');
-    if (_sub === 'artikel') { h.innerHTML = subs() + artikelAnsicht(); bindeAllgemein(); return; }
+    if (_sub === 'artikel') {
+      h.innerHTML = subs() + artikelAnsicht();
+      bindeAllgemein();
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
     if (_sub === 'verlauf') { h.innerHTML = subs() + verlaufAnsicht(); bindeAllgemein(); return; }
 
     var kw = kalenderwoche(_datum);
@@ -1265,14 +1270,13 @@ window.KGetraenke = (function () {
     + 'a18 18 0 0 1-2.4 3.4M6.6 6.6A18 18 0 0 0 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4-.8"/></svg>';
 
   function artikelAnsicht() {
-    if (!_artikel.length) return '<div class="k-empty">Es sind noch keine Artikel hinterlegt.</div>';
     var html = '<div class="gk-panel">'
       + '<div class="gk-akopf"><h3>Artikel bei ' + esc(_cfg.name || 'Kratzer') + '</h3>'
       + '<button class="gk-neu" id="gk-art-neu">+ Neuer Artikel</button></div>'
       + '<p style="font-size:12px;color:#6b7280;line-height:1.5;margin:0 0 10px">'
       + 'Ausgeblendete Artikel verschwinden aus der Bestellliste, bleiben aber hier '
-      + 'stehen. Gel\u00f6scht wird nichts \u2014 sonst rissen L\u00fccken in Vorbelegung '
-      + 'und Verlauf.</p>';
+      + 'stehen. Nie bestellte Artikel werden gelöscht; bestellte oder gelieferte '
+      + 'bleiben für Vorbelegung und Verlauf ausgeblendet erhalten.</p>';
     var gruppe = null;
     var offen = false;
     _artikel.forEach(function (a, i) {
@@ -1299,6 +1303,9 @@ window.KGetraenke = (function () {
         + (a.preis ? 'je Kiste' : 'ohne Preis') + '</span>'
         + '<button class="dl-ik" data-bearb="' + i + '" title="Bearbeiten"'
         + ' aria-label="' + esc(a.name) + ' bearbeiten">' + IK_STIFT + '</button>'
+        + '<button class="dl-ik gk-weg" data-art-weg="' + i + '" title="Löschen"'
+        + ' aria-label="Löschen: ' + esc(a.name) + '">'
+        + '<i data-lucide="trash-2"></i></button>'
         + '<button class="dl-ik' + (aus ? '' : ' an') + '" data-aktiv="' + i + '"'
         + ' title="' + (aus ? 'Ausgeblendet \u2014 klicken zum Einblenden'
                             : 'Sichtbar \u2014 klicken zum Ausblenden') + '"'
@@ -1307,6 +1314,7 @@ window.KGetraenke = (function () {
         + '</div>';
     });
     if (offen) html += '</div>';
+    if (!_artikel.length) html += '<div class="k-empty">Es sind noch keine Artikel hinterlegt.</div>';
     return html + '</div>';
   }
 
@@ -1496,6 +1504,27 @@ window.KGetraenke = (function () {
     });
   }
 
+  function artikelLoeschen(i) {
+    var a = _artikel[i];
+    if (!a) { toast('Der Artikel wurde nicht gefunden.'); return; }
+    var text = 'Artikel ' + (a.nummer || 'ohne Nummer') + ' – „' + a.name
+      + '“ entfernen? Frühere Bestellungen bleiben unberührt.';
+    frageLoeschen('Artikel löschen?', text, function () {
+      var query = a.nummer
+        ? '?alt_nummer=' + encodeURIComponent(a.nummer)
+        : '?alt_name=' + encodeURIComponent(a.name);
+      fetch(API + '/getraenke-artikel' + query,
+        { method: 'DELETE', headers: authHeaders() })
+        .then(function (r) { return r.json().then(function (d) {
+          if (!r.ok || !d.success || !Array.isArray(d.artikel))
+            throw new Error(fehlerText(d, 'Der Artikel konnte nicht entfernt werden.'));
+          return d;
+        }); })
+        .then(function (d) { _artikel = d.artikel; zeichne(); toast(d.meldung); })
+        .catch(function (e) { toast(e.message || 'Der Artikel konnte nicht entfernt werden.'); });
+    });
+  }
+
   function artikelUmschalten(i) {
     var a = _artikel[i];
     if (!a) return;
@@ -1665,6 +1694,10 @@ window.KGetraenke = (function () {
   // Ein Zuhoerer fuer die Artikelpflege - die Liste wird komplett neu gebaut.
   document.addEventListener('click', function (e) {
     if (!e.target.closest || !host()) return;
+    var weg = e.target.closest('button[data-art-weg]');
+    if (weg && host().contains(weg)) {
+      artikelLoeschen(Number(weg.dataset.artWeg)); return;
+    }
     var b = e.target.closest('button[data-aktiv]');
     if (b && host().contains(b)) { artikelUmschalten(Number(b.dataset.aktiv)); return; }
     // Bearbeiten und Anlegen im Artikelreiter (Spec getraenke-artikelpflege).
@@ -1677,6 +1710,7 @@ window.KGetraenke = (function () {
   return {
     onShow: onShow,
     verlaufAuf: verlaufAuf, bestellungWeg: bestellungWeg,
+    artikelLoeschen: artikelLoeschen,
     // Fuer Tests und die Konsole
     mailtext: mailtext, summen: summen, katalog: katalog,
     setze: setze, anlegenOeffnen: anlegenOeffnen
