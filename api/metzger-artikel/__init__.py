@@ -3,9 +3,10 @@
     GET   /api/metzger-artikel     Katalog in Formularreihenfolge
     POST  /api/metzger-artikel     Artikel anlegen
     PATCH /api/metzger-artikel     Aendern, aus-/einblenden, Nummer umziehen
+    DELETE /api/metzger-artikel?alt_nummer=.. oder ?alt_name=..  Artikel entfernen
 
-Geloescht wird nie, nur ausgeblendet: Ein geloeschter Artikel risse Luecken in
-Vorbelegung und Verlauf.
+Nur nie bestellte Artikel werden geloescht; belegte bleiben ausgeblendet,
+damit Vorbelegung und Verlauf vollstaendig bleiben.
 """
 import json
 import logging
@@ -109,6 +110,20 @@ def _nummer_umziehen(url, hdrs, alt, neu):
         store.save_vorschlaege(url, hdrs, v_id, vorschlaege)
 
 
+def _je_bestellt(url, hdrs, a):
+    if int(a.get("lieferungen") or 0) > 0 or int(a.get("haeufigkeit") or 0) > 0:
+        return True
+    for order in store.bestellungen(url, hdrs):
+        for p in order.get("positionen") or []:
+            pos_nr = _nummer(p.get("nummer"))
+            if a.get("nummer") is not None and pos_nr is not None:
+                if pos_nr == a["nummer"]:
+                    return True
+            elif (p.get("name") or "") == a.get("name"):
+                return True
+    return False
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse("", status_code=204, headers=store.cors_headers())
@@ -126,6 +141,35 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     if req.method == "GET":
         return _ok({"artikel": artikel})
+
+    if req.method == "DELETE":
+        roh_nr = (req.params.get("alt_nummer") or "").strip()
+        nr = _nummer(roh_nr)
+        name = (req.params.get("alt_name") or "").strip() or None
+        if not roh_nr and name is None:
+            return _err("Bitte Artikelnummer oder Bezeichnung angeben.")
+        if roh_nr and nr is None:
+            return _err("Dieser Artikel wurde nicht gefunden.", 404)
+        i = _finde(artikel, nummer=nr) if nr is not None else _finde(artikel, name=name)
+        if i < 0:
+            return _err("Dieser Artikel wurde nicht gefunden.", 404)
+        a = artikel[i]
+        if _je_bestellt(url, hdrs, a):
+            if a.get("aktiv") is False:
+                return _ok({"artikel": artikel, "ausgeblendet": True,
+                            "meldung": f"\u201e{a.get('name')}\u201c war bereits bestellt "
+                                       "oder geliefert und bleibt ausgeblendet."})
+            a["aktiv"] = False
+            if not store.save_artikel(url, hdrs, rec_id, artikel):
+                return _err("Der Artikel konnte nicht ausgeblendet werden.", 502)
+            return _ok({"artikel": artikel, "ausgeblendet": True,
+                        "meldung": f"\u201e{a.get('name')}\u201c wurde bereits bestellt "
+                                   "oder geliefert und deshalb nur ausgeblendet."})
+        artikel.pop(i)
+        if not store.save_artikel(url, hdrs, rec_id, artikel):
+            return _err("Der Artikel konnte nicht gel\u00f6scht werden.", 502)
+        return _ok({"artikel": artikel, "ausgeblendet": False,
+                    "meldung": f"\u201e{a.get('name')}\u201c wurde gel\u00f6scht."})
 
     try:
         body = req.get_json()
