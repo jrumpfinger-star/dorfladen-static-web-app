@@ -707,7 +707,7 @@
 </head>
 <body>
 <div class="dd-backdrop" id="dd-backdrop"></div>
-<div class="shop-confirm-overlay" id="shop-confirm-overlay" role="dialog" aria-modal="true">
+<div class="shop-confirm-overlay" id="shop-confirm-overlay">
   <div class="shop-confirm-box">
     <div class="shop-confirm-icon" id="shop-confirm-icon"></div>
     <div class="shop-confirm-title" id="shop-confirm-title"></div>
@@ -793,7 +793,7 @@
 
 <!-- ── Cart Overlay ── -->
 <div class="shop-cart-overlay" id="shop-cart-overlay"></div>
-<div class="shop-cart-panel" id="shop-cart-panel" role="dialog" aria-modal="true">
+<div class="shop-cart-panel" id="shop-cart-panel">
   <div class="shop-cart-header">
     <h3><i data-lucide="shopping-cart" style="width:20px;height:20px"></i> Warenkorb</h3>
     <button class="shop-cart-close" id="shop-cart-close"><i data-lucide="x" style="width:20px;height:20px"></i></button>
@@ -835,7 +835,7 @@
 </button>
 
 <!-- ── Vorbestellungen-Overlay (Fleisch, im Shop) ── -->
-<div class="shop-preorder-overlay" id="shop-preorder-overlay" role="dialog" aria-modal="true">
+<div class="shop-preorder-overlay" id="shop-preorder-overlay">
   <div class="shop-preorder-modal">
     <div class="shop-preorder-hdr">
       <h3><i data-lucide="beef" style="width:18px;height:18px"></i> Meine Vorbestellungen</h3>
@@ -848,7 +848,7 @@
 </div>
 
 <!-- ── Auth Modal ── -->
-<div class="shop-auth-overlay" id="shop-auth-overlay" role="dialog" aria-modal="true">
+<div class="shop-auth-overlay" id="shop-auth-overlay">
   <div class="shop-auth-modal" style="position:relative">
     <button class="shop-auth-close" id="shop-auth-close">✕</button>
     <div class="shop-auth-header">
@@ -2908,17 +2908,6 @@
   document.getElementById('shop-cart-btn').addEventListener('click',function(){toggleCart(true);});
   document.getElementById('shop-cart-close').addEventListener('click',function(){toggleCart(false);});
   document.getElementById('shop-cart-overlay').addEventListener('click',function(){toggleCart(false);});
-
-  /* Escape schliesst den Warenkorb (Spec dialoge-modal, R6). Die
-     Verdunklung traegt keinen Schliessknopf - der steckt in der
-     danebenliegenden Schublade -, deshalb meldet sie sich selbst an. */
-  if(window.dlEscapeRegistrieren){
-    window.dlEscapeRegistrieren({
-      rang:40,
-      offen:function(){return document.querySelectorAll('.shop-cart-overlay.open');},
-      schliessen:function(){toggleCart(false);}
-    });
-  }
   document.getElementById('shop-checkout-btn').addEventListener('click',doCheckout);
 
   // ── Vorbestellungen im Shop anzeigen (Option A: kein Seitenwechsel) ──

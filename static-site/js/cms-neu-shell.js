@@ -53,20 +53,9 @@
       }
     });
 
-    /* Escape schliesst das Menueblatt (Spec dialoge-modal, R9). Als
-       Klappe mit niedrigem Rang bleibt es liegen, solange ein Dialog
-       darueber offen ist. */
-    if (window.dlEscapeRegistrieren) {
-      window.dlEscapeRegistrieren({
-        rang: 20,
-        offen: function () { return auf() ? [n] : []; },
-        schliessen: function () { setze(false); }
-      });
-    } else {
-      document.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Escape' && auf()) setze(false);
-      });
-    }
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && auf()) setze(false);
+    });
 
     // Beim Wechsel über die Adresszeile oder den Verlauf ändert cms.js die
     // Klassen der Reiter. Ein Beobachter hält die Beschriftung nach.

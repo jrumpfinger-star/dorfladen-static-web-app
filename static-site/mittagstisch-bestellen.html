@@ -291,7 +291,7 @@ if(window!==window.parent){
 </div>
 
 <!-- Success Overlay -->
-<div class="success-overlay" id="success-overlay" role="dialog" aria-modal="true">
+<div class="success-overlay" id="success-overlay">
   <div class="success-card">
     <div class="success-icon">🎉</div>
     <h2>Bestellung aufgenommen!</h2>
@@ -299,7 +299,7 @@ if(window!==window.parent){
     <p id="success-msg">Wir bestätigen Ihre Bestellung in Kürze per Push-Nachricht.</p>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <a class="success-btn" href="/bestellstatus" style="background:#2563eb">📋 Bestellstatus ansehen</a>
-      <button class="success-btn" onclick="newOrder()" data-dl-close>🍽 Weitere Bestellung</button>
+      <button class="success-btn" onclick="newOrder()">🍽 Weitere Bestellung</button>
       <a class="success-btn" href="/" style="background:#6b7280" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zur Startseite</a>
     </div>
     <!-- Der Weg zum Konto steht HIER, weil hier der Gedanke aufkommt:
@@ -333,7 +333,7 @@ if(window!==window.parent){
      ausgefüllte Bestellung stillschweigend verworfen. Dieses Fenster löst
      beides: sichtbar, erklärt, und die Bestellung bleibt erhalten, weil
      kein Sprung stattfindet. (Spec konto-waehrend-bestellung) -->
-<div class="push-prompt-bg" id="login-modal" role="dialog" aria-modal="true">
+<div class="push-prompt-bg" id="login-modal">
   <div class="push-prompt" style="text-align:left">
     <div class="push-prompt-icon" style="text-align:center">👤</div>
     <h3 style="text-align:center">Anmelden</h3>

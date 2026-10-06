@@ -66,15 +66,4 @@
     img.addEventListener("click",function(){if(lb){lbImg.src=this.src;lb.classList.add("so-lb-open");}});
   });
   if(lb)lb.addEventListener("click",function(){this.classList.remove("so-lb-open");lbImg.src="";});
-  /* Escape schliesst mit (Spec dialoge-modal, R6). Diese Lightbox hat
-     keinen Schliessknopf - sie schliesst beim Antippen des Bildes -, und
-     sie heisst anders als die auf Startseite und Bilderseite. Deshalb
-     meldet sie sich selbst beim gemeinsamen Waechter an. */
-  if(lb&&window.dlEscapeRegistrieren){
-    window.dlEscapeRegistrieren({
-      rang:50,
-      offen:function(){return lb.classList.contains("so-lb-open")?lb:null;},
-      schliessen:function(){lb.classList.remove("so-lb-open");lbImg.src="";}
-    });
-  }
 })();

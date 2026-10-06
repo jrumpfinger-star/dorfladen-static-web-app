@@ -2287,7 +2287,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
 </style>
 
 <!-- ====== ORDER DETAIL OVERLAY ====== -->
-<div class="od-overlay" id="od-overlay" role="dialog" aria-modal="true">
+<div class="od-overlay" id="od-overlay">
   <div class="od-modal">
     <div class="od-head">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -2298,7 +2298,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
   </div>
 </div>
 
-<div class="orders-overlay" id="orders-overlay" role="dialog" aria-modal="true">
+<div class="orders-overlay" id="orders-overlay">
   <div class="orders-modal">
     <div class="orders-modal-head">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
@@ -2442,7 +2442,7 @@ html[data-theme="dark"] .ord-tab.an{background:#2e7d4f;border-color:#2e7d4f;colo
 
 <span class="tp-fab" id="tp-fab"></span>
 
-<div class="tp-overlay" id="tp-overlay" role="dialog" aria-modal="true">
+<div class="tp-overlay" id="tp-overlay">
   <div class="tp-modal" id="tp-modal">
     <div class="tp-modal-head">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
@@ -2808,7 +2808,7 @@ html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:
 @media(max-width:600px){.mt-popup-overlay{padding:0}.mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}.mt-popup-iframe{border-radius:0}}
 </style>
 
-<div class="mt-popup-overlay" id="mt-popup-overlay" role="dialog" aria-modal="true">
+<div class="mt-popup-overlay" id="mt-popup-overlay">
   <div class="mt-popup-modal">
     <button class="mt-popup-close" onclick="closeMittagPopup()" title="Schließen">✕</button>
     <iframe class="mt-popup-iframe" id="mt-popup-iframe" style="height:90vh"></iframe>
@@ -2932,7 +2932,7 @@ window.addEventListener('message',function(e){
 </script>
 
 <!-- CMS Password Gate Popup -->
-<div id="cms-gate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;justify-content:center;align-items:center;padding:16px" role="dialog" aria-modal="true">
+<div id="cms-gate-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;justify-content:center;align-items:center;padding:16px">
   <div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;position:relative;animation:bsSlideUp .2s ease">
     <button onclick="closeCmsGate()" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1;padding:4px" title="Schlie\u00dfen">&times;</button>
     <h2 style="font-size:20px;font-weight:700;color:#1f2937;margin:0 0 4px">Dorfladen CMS</h2>
