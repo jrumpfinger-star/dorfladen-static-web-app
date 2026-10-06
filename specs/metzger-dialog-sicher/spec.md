@@ -32,6 +32,13 @@ im Metzger-Tab):
 - **R5** Dialoge ohne Eingaben (Hinweise, Rückfragen) dürfen weiterhin
   weggeklickt werden; die Änderung gilt gezielt, nicht pauschal.
 
+  > **Aufgehoben am 06.10.2026.** Aus dem Laden kam dieselbe Frage ein
+  > zweites Mal: „Modal bedeutet, dass auch Klicks außerhalb den Dialog
+  > nicht schließen." Die Unterscheidung ist entfallen — ein Dialog, der
+  > mal wegklickbar ist und mal nicht, erzieht dazu, es gar nicht erst zu
+  > versuchen. Es gilt jetzt
+  > [specs/dialoge-modal/spec.md](../dialoge-modal/spec.md).
+
 ## Test Cases
 
 | ID | Prüft | Erwartung |

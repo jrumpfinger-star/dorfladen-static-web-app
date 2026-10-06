@@ -1843,18 +1843,31 @@
   //  Dialog
   // ══════════════════════════════════════════════════
 
+  /* Ein Klick auf den abgedunkelten Rand schliesst NICHT. Modal heisst,
+     dass daneben nichts passiert - ein Fehlgriff neben das Blatt soll
+     nicht alles Getippte verwerfen, ohne Nachfrage und ohne Weg zurueck.
+     Die bewussten Wege hinaus bleiben: "Abbrechen" und Escape.
+     (Spec metzger-dialog-sicher, R1/R2) */
+  var _dlgEsc = null;
+
   function dialog(inner) {
     dlgZu();
     var ov = document.createElement('div');
     ov.id = 'bk-overlay';
     ov.className = 'bk-overlay';
-    ov.innerHTML = '<div class="bk-dlg">' + inner + '</div>';
-    ov.addEventListener('click', function (e) { if (e.target === ov) dlgZu(); });
+    ov.innerHTML = '<div class="bk-dlg" role="dialog" aria-modal="true">'
+      + inner + '</div>';
     document.body.appendChild(ov);
+    _dlgEsc = function (e) { if (e.key === 'Escape') dlgZu(); };
+    document.addEventListener('keydown', _dlgEsc);
     icons();
   }
 
   function dlgZu() {
+    if (_dlgEsc) {
+      document.removeEventListener('keydown', _dlgEsc);
+      _dlgEsc = null;
+    }
     var ov = document.getElementById('bk-overlay');
     if (ov) ov.remove();
   }

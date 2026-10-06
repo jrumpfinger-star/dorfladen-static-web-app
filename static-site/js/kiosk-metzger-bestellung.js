@@ -2095,7 +2095,7 @@ window.KMetzgerBest = (function () {
       + '<div class="mb-dlg-acts">'
       + '<button class="mb-btn" data-ab>Abbrechen</button>'
       + '<button class="mb-send" data-ok>' + (neu ? 'Anlegen' : 'Speichern')
-      + '</button></div>', true);   // sicher: kein Wegklicken (Datenverlust)
+      + '</button></div>');
 
     w.querySelector('[data-ab]').onclick = function () { w.remove(); stammEnde(); };
     w.querySelector('[data-ok]').onclick = function () {
@@ -2292,24 +2292,27 @@ window.KMetzgerBest = (function () {
   /**
    * Dialoghülle.
    *
-   * ``sicher`` schaltet das Schließen durch Klick daneben ab. Aus dem Laden:
-   * „Bei Bestellung Metzger schließt sich Dialog, wenn klick auf außerhalb."
-   * Bei einer Maske mit Eingaben ist das kein bequemer Ausweg, sondern
-   * Datenverlust — ein Fehlgriff neben das Blatt, und alles Getippte ist
-   * weg, ohne Nachfrage und ohne Weg zurück.
+   * Ein Klick neben das Blatt schließt **nicht** — bei keinem Dialog.
+   * Aus dem Laden, zuerst zur Artikelmaske: „Bei Bestellung Metzger
+   * schließt sich Dialog, wenn klick auf außerhalb." Damals wurde nur die
+   * Maske geschützt und die Rückfragen blieben wegklickbar (Spec
+   * metzger-dialog-sicher, R5).
    *
-   * Bei reinen Rückfragen („Wirklich löschen?") bleibt es, wie es war:
-   * Dort gibt es nichts zu verlieren, und Wegtippen ist die schnellste Art
-   * abzubrechen. (Spec metzger-dialog-sicher)
+   * Nachgeschärft am 06.10.2026: „Modal bedeutet, dass auch Klicks
+   * außerhalb den Dialog nicht schließen." Das gilt jetzt überall. Der
+   * Gewinn ist weniger die Datensicherheit als die Verlässlichkeit: Ein
+   * Dialog, der mal wegklickbar ist und mal nicht, erzieht dazu, es gar
+   * nicht erst zu versuchen — und dann wird auch die Rückfrage, auf die es
+   * ankommt, mit einem Griff daneben beantwortet.
+   *
+   * Die bewussten Wege hinaus bleiben: „Abbrechen" und `Escape`.
    */
-  function huelle(inhalt, sicher) {
+  function huelle(inhalt) {
     var w = document.createElement('div');
     w.className = 'mb-overlay';
-    w.innerHTML = '<div class="mb-dlg">' + inhalt + '</div>';
+    w.innerHTML = '<div class="mb-dlg" role="dialog" aria-modal="true">'
+      + inhalt + '</div>';
     document.body.appendChild(w);
-    if (!sicher) {
-      w.addEventListener('click', function (ev) { if (ev.target === w) w.remove(); });
-    }
     // Die Esc-Taste schliesst weiterhin - sie ist eine bewusste Handlung,
     // kein Fehlgriff.
     w.__zu = function () { w.remove(); document.removeEventListener('keydown', esc_); };
@@ -2318,10 +2321,10 @@ window.KMetzgerBest = (function () {
     return w;
   }
 
-  function dialog(inhalt, knopf, aktion, sicher) {
+  function dialog(inhalt, knopf, aktion) {
     var w = huelle(inhalt + '<div class="mb-dlg-acts">'
       + '<button class="mb-btn" data-ab>Abbrechen</button>'
-      + '<button class="mb-send" data-ok>' + esc(knopf) + '</button></div>', sicher);
+      + '<button class="mb-send" data-ok>' + esc(knopf) + '</button></div>');
     w.querySelector('[data-ab]').onclick = function () { w.remove(); };
     w.querySelector('[data-ok]').onclick = function () {
       w.remove();

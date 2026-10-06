@@ -51,6 +51,7 @@ window.KDrax = (function () {
   var _alleArtikel = [];      // Artikelstamm inkl. ausgeblendeter (Reiter)
   var _bearbeitet = null;     // Artikel, der gerade im Dialog liegt
   var _dlgJa = null;          // Rueckruf der offenen Rueckfrage
+  var _dlgEsc = null;         // Tastenwaechter des offenen Dialogs
   var _vOffen = {};           // Liefertag -> Verlaufszeile aufgeklappt
   var _vDetail = {};          // Liefertag -> Positionen | 'laedt' | 'fehler'
 
@@ -108,21 +109,34 @@ window.KDrax = (function () {
      Telefon ein Blatt von unten, darüber mittig über abgedunkeltem Grund.
      Die Gestalt steckt in den gemeinsamen Regeln der Kiosk-Stylesheets
      (.dx-overlay / .dx-dlg) - so sieht die Artikelpflege in allen vier
-     Bestellmodulen gleich aus. (Spec listen-harmonie, F9) */
+     Bestellmodulen gleich aus. (Spec listen-harmonie, F9)
+
+     Ein Klick auf den abgedunkelten Rand schliesst NICHT. Modal heisst,
+     dass daneben nichts passiert - ein Fehlgriff neben das Blatt soll
+     nicht alles Getippte verwerfen, ohne Nachfrage und ohne Weg zurueck.
+     Auf dem Tablett passiert dieser Fehlgriff besonders leicht. Die
+     bewussten Wege hinaus bleiben: "Abbrechen" und Escape.
+     (Spec metzger-dialog-sicher, R1/R2) */
   function dialog(inneres) {
     dlgZu();
     var ov = document.createElement('div');
     ov.id = 'dx-overlay';
     ov.className = 'dx-overlay';
-    ov.innerHTML = '<div class="dx-dlg">' + inneres + '</div>';
-    ov.addEventListener('click', function (e) { if (e.target === ov) dlgZu(); });
+    ov.innerHTML = '<div class="dx-dlg" role="dialog" aria-modal="true">'
+      + inneres + '</div>';
     document.body.appendChild(ov);
+    _dlgEsc = function (e) { if (e.key === 'Escape') dlgZu(); };
+    document.addEventListener('keydown', _dlgEsc);
     if (window.dlRefreshIcons) window.dlRefreshIcons();
     var erstes = ov.querySelector('input, select, textarea');
     if (erstes) erstes.focus();
   }
 
   function dlgZu() {
+    if (_dlgEsc) {
+      document.removeEventListener('keydown', _dlgEsc);
+      _dlgEsc = null;
+    }
     var ov = document.getElementById('dx-overlay');
     if (ov) ov.remove();
     _dlgJa = null;

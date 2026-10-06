@@ -911,7 +911,11 @@ window.KGetraenke = (function () {
     o.id = id;
     o.innerHTML = '<div class="gk-dlg" role="dialog" aria-modal="true">' + inhalt + '</div>';
     document.body.appendChild(o);
-    o.addEventListener('click', function (e) { if (e.target === o) o.remove(); });
+    /* Kein Schliessen durch Klick daneben: Das Markup sagt seit jeher
+       `aria-modal="true"` - das Verhalten tat es nicht. Ein Fehlgriff neben
+       das Blatt verwarf alles Getippte, ohne Nachfrage und ohne Weg
+       zurueck. Die bewussten Wege hinaus bleiben: "Abbrechen" und Escape.
+       (Spec metzger-dialog-sicher, R1/R2) */
     var esc_ = function (e) {
       if (e.key === 'Escape') { o.remove(); document.removeEventListener('keydown', esc_); }
     };
