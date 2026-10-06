@@ -950,6 +950,78 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
       </div>
     </div>
+
+    <!-- Drax-Bestellung (Drax-Mühle) – specs/drax-bestellung/spec.md -->
+    <div class="cms-card" style="margin-top:18px">
+      <div class="cms-card-header" style="background:var(--gr)!important">&#127806; Drax-Bestellung</div>
+      <div class="cms-card-body" style="display:flex;flex-direction:column;gap:12px">
+        <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0">Steuert den Tab &bdquo;Drax M&uuml;hle&ldquo; im Kiosk: an welchem Tag geliefert wird, bis wann bestellt sein muss und an wen die Bestellung geht.</p>
+
+        <div id="dxcfg-status" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem"></div>
+
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Name der M&uuml;hle</label>
+            <input type="text" id="dxcfg-name" class="cms-input" placeholder="Drax M&uuml;hle">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Erscheint im Kiosk und auf dem Bestellblatt.</div>
+          </div>
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Kunden-Nr.</label>
+            <input type="text" id="dxcfg-kdnr" class="cms-input" placeholder="11225">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Steht im Kopf des Bestellblatts.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Liefertag</label>
+            <select id="dxcfg-liefertag" class="cms-input"></select>
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Die M&uuml;hle liefert vormittags.</div>
+          </div>
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Bestellschluss am</label>
+            <select id="dxcfg-schlusstag" class="cms-input"></select>
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Darf nicht der Liefertag sein.</div>
+          </div>
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Bestellschluss um</label>
+            <input type="time" id="dxcfg-schluss" class="cms-input" step="300">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Ab dann mahnt der Kiosk.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Bestellung geht an</label>
+            <input type="text" id="dxcfg-empfaenger" class="cms-input" placeholder="info@drax-muehle.de">
+            <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Empf&auml;nger der Bestellmail &ndash; hier zum Testen die eigene Adresse eintragen.</div>
+          </div>
+          <div>
+            <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Anrede im Mailtext</label>
+            <input type="text" id="dxcfg-empfaenger-name" class="cms-input" placeholder="Drax-M&uuml;hle">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);display:block;margin-bottom:2px">Adresse der M&uuml;hle</label>
+          <input type="text" id="dxcfg-muehle" class="cms-input" placeholder="info@drax-muehle.de">
+          <div style="font-size:var(--schrift-klein);color:var(--mut);margin-top:2px">Nur zum Abgleich: Weicht der Empf&auml;nger davon ab, l&auml;uft der Testbetrieb.</div>
+        </div>
+
+        <div id="dxcfg-testhinweis" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem;background:var(--amb-l);color:var(--amb);border:1px solid var(--amb-b)">
+          <strong>Testbetrieb.</strong> Bestellungen gehen an die oben eingetragene Adresse, <em>nicht</em> an die M&uuml;hle. Im Kiosk und auf dem Blatt ist das gekennzeichnet.
+          <button class="cms-btn cms-btn-sm cms-btn-gray" data-action="dxcfgEchtAdresse" style="margin-left:8px">An die M&uuml;hle umstellen</button>
+        </div>
+        <div id="dxcfg-echthinweis" style="display:none;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem;background:var(--gr-l);color:var(--gr-d);border:1px solid var(--gr-l)">
+          <strong>Scharf geschaltet.</strong> Bestellungen gehen direkt an die Drax-M&uuml;hle.
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="cms-btn cms-btn-primary" id="dxcfg-save" data-action="dxcfgSave">&#128190; Drax-Einstellungen speichern</button>
+          <span id="dxcfg-saved-hint" style="display:none;font-size:.82rem;color:var(--gr);font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Statistik / Analytics -->
@@ -964,6 +1036,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </select>
         <button class="cms-btn cms-btn-gray" onclick="statsLoad()">&#x21bb; Aktualisieren</button>
       </div>
+  </div>
+
     </div>
 
     <label style="display:flex;align-items:center;gap:8px;font-size:var(--schrift-klein);color:var(--c-m-muted);margin:-4px 0 12px;cursor:pointer">

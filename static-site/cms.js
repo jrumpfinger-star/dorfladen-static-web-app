@@ -1143,6 +1143,7 @@
     if(name==='settings' && !_bkcfgLoaded) loadBaeckerConfig();
     if(name==='settings' && !_mbcfgLoaded) loadMetzgerBestConfig();
     if(name==='settings' && !_gkcfgLoaded) loadGetraenkeConfig();
+    if(name==='settings' && !_dxcfgLoaded) loadDraxConfig();
     if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
@@ -8304,6 +8305,8 @@
       case 'mbcfgEchtAdresse':mbcfgEchtAdresse();break;
       case 'gkcfgSave':saveGetraenkeConfig();break;
       case 'gkcfgEchtAdresse':gkcfgEchtAdresse();break;
+      case 'dxcfgSave':saveDraxConfig();break;
+      case 'dxcfgEchtAdresse':dxcfgEchtAdresse();break;
       case 'saveCfg':cmsSaveCfg();break;
       case 'resetCfg':cmsResetCfg();break;
       case 'cfgRevertUnsaved':cfgRevertUnsaved();break;
@@ -9959,6 +9962,163 @@
       toast(_cmsErr(e),'error');
     }).then(function(){
       if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Getr\u00e4nke-Einstellungen speichern';}
+    });
+  }
+
+  // === DRAX-BESTELLUNG (specs/drax-bestellung/spec.md) ===
+  /* Die Einstellungen lagen frueher als eigener Reiter im Kiosk - als
+     einziges der vier Bestellmodule. Sie stehen jetzt hier, wie bei
+     Metzger, Baecker und Getraenken: Der Kiosk ist die Arbeitsflaeche der
+     Verkaeuferinnen, nicht die Verwaltung. */
+  var _dxcfgLoaded=false, _dxcfg={};
+  var DX_TAGE=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+
+  function dxcfgStatus(text,art){
+    var el=document.getElementById('dxcfg-status');
+    if(!el) return;
+    if(!text){el.style.display='none';return;}
+    el.style.display='block';
+    el.textContent=text;
+    var fehler=art==='fehler';
+    el.style.background=fehler?'#fef2f2':'#eff6ff';
+    el.style.color=fehler?'#b91c1c':'#1d4ed8';
+    el.style.border='1px solid '+(fehler?'#fecaca':'#bfdbfe');
+  }
+
+  /* Testbetrieb: Solange der Empfaenger nicht die Muehle selbst ist, gehen
+     Bestellungen an die Testadresse. Dieselbe Regel wie im Backend
+     (drax_store.testbetrieb). */
+  function dxcfgHinweis(){
+    var el=document.getElementById('dxcfg-empfaenger');
+    var mu=document.getElementById('dxcfg-muehle');
+    if(!el||!mu) return;
+    var test=document.getElementById('dxcfg-testhinweis');
+    var scharf=document.getElementById('dxcfg-echthinweis');
+    var ziel=(mu.value||'').trim().toLowerCase();
+    var ist=(el.value||'').trim().toLowerCase();
+    var gleich=!!ziel&&ist===ziel;
+    if(test) test.style.display=gleich?'none':'block';
+    if(scharf) scharf.style.display=gleich?'block':'none';
+  }
+
+  function dxcfgEchtAdresse(){
+    var el=document.getElementById('dxcfg-empfaenger');
+    var mu=document.getElementById('dxcfg-muehle');
+    var name=document.getElementById('dxcfg-empfaenger-name');
+    if(!el||!mu) return;
+    var ziel=(mu.value||'').trim();
+    if(!ziel){ dxcfgStatus('Bitte zuerst die Adresse der M\u00fchle eintragen.','fehler'); return; }
+    el.value=ziel;
+    if(name&&!(name.value||'').trim()){
+      var n=document.getElementById('dxcfg-name');
+      name.value=(n&&n.value)||'Drax-M\u00fchle';
+    }
+    dxcfgHinweis();
+  }
+
+  function dxcfgWochentage(){
+    ['dxcfg-liefertag','dxcfg-schlusstag'].forEach(function(id){
+      var s=document.getElementById(id);
+      if(!s||s.options.length) return;
+      DX_TAGE.forEach(function(t,i){
+        var o=document.createElement('option');
+        o.value=String(i); o.textContent=t;
+        s.appendChild(o);
+      });
+    });
+  }
+
+  function dxcfgFelderFuellen(){
+    var c=_dxcfg||{};
+    function v(id,wert){var e=document.getElementById(id);if(e)e.value=wert==null?'':wert;}
+    dxcfgWochentage();
+    v('dxcfg-name',c.name);
+    v('dxcfg-kdnr',c.kd_nr);
+    v('dxcfg-liefertag',String(c.liefertag==null?3:c.liefertag));
+    v('dxcfg-schlusstag',String(c.bestellschluss_tag==null?2:c.bestellschluss_tag));
+    v('dxcfg-schluss',c.bestellschluss||'12:00');
+    v('dxcfg-empfaenger',c.empfaenger);
+    v('dxcfg-empfaenger-name',c.empfaenger_name);
+    v('dxcfg-muehle',c.drax_mail);
+    dxcfgHinweis();
+  }
+
+  function dxcfgFelderLesen(){
+    function v(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';}
+    return {
+      name:v('dxcfg-name'),
+      kd_nr:v('dxcfg-kdnr'),
+      liefertag:parseInt(v('dxcfg-liefertag'),10),
+      bestellschluss_tag:parseInt(v('dxcfg-schlusstag'),10),
+      bestellschluss:v('dxcfg-schluss'),
+      empfaenger:v('dxcfg-empfaenger'),
+      empfaenger_name:v('dxcfg-empfaenger-name'),
+      drax_mail:v('dxcfg-muehle')
+    };
+  }
+
+  function loadDraxConfig(){
+    if(_dxcfgLoaded) return;
+    _dxcfgLoaded=true;
+    dxcfgStatus('Einstellungen werden geladen\u2026');
+    fetch(API+'/drax-order/config',{headers:_cmsAuthHeaders()})
+      .then(function(r){return r.json();}).then(function(res){
+        if(!res||!res.success||!res.config) throw new Error('config');
+        _dxcfg=res.config;
+        dxcfgFelderFuellen();
+        dxcfgStatus('');
+        ['dxcfg-empfaenger','dxcfg-muehle'].forEach(function(id){
+          var e=document.getElementById(id);
+          if(e) e.addEventListener('input',dxcfgHinweis);
+        });
+      }).catch(function(){
+        _dxcfgLoaded=false;   // beim naechsten Oeffnen erneut versuchen
+        dxcfgStatus('Die Drax-Einstellungen konnten nicht geladen werden.','fehler');
+      });
+  }
+
+  function saveDraxConfig(){
+    var c=dxcfgFelderLesen();
+    var mail=c.empfaenger;
+    if(mail.indexOf('@')<0||mail.split('@').pop().indexOf('.')<0){
+      dxcfgStatus('Bitte eine g\u00fcltige E-Mail-Adresse angeben.','fehler');return;
+    }
+    if(c.drax_mail&&(c.drax_mail.indexOf('@')<0
+        ||c.drax_mail.split('@').pop().indexOf('.')<0)){
+      dxcfgStatus('Die Adresse der M\u00fchle ist keine g\u00fcltige E-Mail-Adresse.','fehler');return;
+    }
+    if(!c.kd_nr){
+      dxcfgStatus('Ohne Kunden-Nr. kann die M\u00fchle die Bestellung nicht zuordnen.','fehler');return;
+    }
+    if(c.liefertag===c.bestellschluss_tag){
+      dxcfgStatus('Der Bestellschluss darf nicht auf den Liefertag fallen \u2013 sonst w\u00e4re die Ware schon unterwegs.','fehler');return;
+    }
+    if(!/^\d{1,2}:\d{2}$/.test(c.bestellschluss)){
+      dxcfgStatus('Der Bestellschluss braucht eine Uhrzeit wie 12:00.','fehler');return;
+    }
+    var btn=document.getElementById('dxcfg-save');
+    var hint=document.getElementById('dxcfg-saved-hint');
+    if(btn){btn.disabled=true;btn.textContent='\u23F3 Speichern\u2026';}
+    fetch(API+'/drax-order/config',{
+      method:'POST',
+      headers:_cmsAuthHeaders(),
+      body:JSON.stringify({config:c})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res&&res.success){
+        if(res.config) _dxcfg=res.config;
+        dxcfgStatus('');
+        dxcfgHinweis();
+        toast('Drax-Einstellungen gespeichert!');
+        if(hint){hint.style.display='inline';setTimeout(function(){hint.style.display='none';},3000);}
+      }else{
+        dxcfgStatus((res&&res.error)||'Speichern fehlgeschlagen.','fehler');
+        toast('Fehler: '+((res&&res.error)||'Speichern fehlgeschlagen.'),'error');
+      }
+    }).catch(function(e){
+      dxcfgStatus('Netzwerkfehler \u2013 bitte erneut versuchen.','fehler');
+      toast(_cmsErr(e),'error');
+    }).then(function(){
+      if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCBE Drax-Einstellungen speichern';}
     });
   }
 
