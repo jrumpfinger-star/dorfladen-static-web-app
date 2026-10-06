@@ -93,6 +93,17 @@ window.KFilter = (function () {
     if (bl) bl.addEventListener('click', function (e) {
       if (e.target === bl) auf(false);
     });
+
+    /* Escape schliesst das Filterblatt (Spec dialoge-modal, R9). Als
+       Klappe mit niedrigem Rang kommt es erst dran, wenn kein Dialog
+       darueber liegt. */
+    if (bl && window.dlEscapeRegistrieren) {
+      window.dlEscapeRegistrieren({
+        rang: 20,
+        offen: function () { return bl.hidden ? [] : [bl]; },
+        schliessen: function () { auf(false); }
+      });
+    }
   }
 
   return { markup: markup, zeile: zeile, blatt: blatt, binde: binde, VORGABE: VORGABE };

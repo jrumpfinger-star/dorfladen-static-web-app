@@ -200,7 +200,7 @@
     <button class="btn scan-btn" id="scan-btn" title="Abholscan – Barcode scannen"><span class="btn-icon"><i data-lucide="scan-barcode" style="width:16px;height:16px"></i></span><span class="btn-label">Abholscan</span></button>
     <button class="btn primary" id="refresh-btn" title="Bestellungen neu laden"><span class="btn-icon"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i></span><span class="btn-label">Aktualisieren</span></button>
   </div>
-  <div class="scan-overlay" id="scan-overlay">
+  <div class="scan-overlay" id="scan-overlay" role="dialog" aria-modal="true">
     <div class="scan-header"><i data-lucide="scan-barcode" style="width:20px;height:20px;vertical-align:-4px"></i> Abholscan<small>Beipackzettel-Barcode scannen → Abgeholt</small></div>
     <div class="scan-video-wrap"><div id="scan-reader"></div><div class="scan-crosshair"></div></div>
     <button class="scan-close" id="scan-close"><i data-lucide="x" style="width:16px;height:16px;vertical-align:-3px"></i> Scanner schließen</button>

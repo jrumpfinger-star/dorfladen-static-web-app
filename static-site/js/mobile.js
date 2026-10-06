@@ -34,15 +34,27 @@
     }
     if(!mobAnyPopupOpen()){mobUnlockScroll();if(window.removePopupState)window.removePopupState();}
   };
-  document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){
-      document.querySelectorAll('.mob-popup-bg.open').forEach(function(el){el.classList.remove('open');});
-      var mn=document.getElementById('mob-nav');if(mn)mn.classList.remove('open');
-      var mo=document.getElementById('mob-nav-ov');if(mo)mo.classList.remove('open');
-      mobUnlockScroll();
-      if(window.removePopupState)window.removePopupState();
-    }
-  });
+  /* Escape (Spec dialoge-modal, R8/R9): Der gemeinsame Waechter in
+     theme.js schliesst bereits das oberste Handy-Blatt. Hier bleibt nur
+     die Navigation als Klappe uebrig - sie kommt mit niedrigerem Rang
+     erst dran, wenn kein Blatt mehr offen ist. Frueher schloss ein
+     Tastendruck an dieser Stelle alles gleichzeitig. */
+  function mobNavSchliessen(){
+    var mn=document.getElementById('mob-nav');if(mn)mn.classList.remove('open');
+    var mo=document.getElementById('mob-nav-ov');if(mo)mo.classList.remove('open');
+    if(!mobAnyPopupOpen()){mobUnlockScroll();if(window.removePopupState)window.removePopupState();}
+  }
+  if(window.dlEscapeRegistrieren){
+    window.dlEscapeRegistrieren({
+      rang:20,
+      offen:function(){return document.querySelectorAll('#mob-nav.open,#mob-nav-ov.open');},
+      schliessen:function(){mobNavSchliessen();}
+    });
+  }else{
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape')mobNavSchliessen();
+    });
+  }
 
   /* === SWIPE-DOWN TO CLOSE POPUPS === */
   (function(){

@@ -11487,6 +11487,25 @@
     toast('In der Zwischenablage ist kein Bild.','warn');
   });
 
+  /* Escape schliesst die CMS-Masken (Spec dialoge-modal, R6). Sie
+     entstehen aus Zeichenketten an acht Stellen und tragen kein
+     role="dialog"; statt jede einzeln zu kennzeichnen, meldet sich die
+     Bauart hier einmal beim gemeinsamen Waechter an. Geschlossen wird
+     ueber den Knopf, den der Dialog selbst mitbringt. */
+  if(window.dlEscapeRegistrieren){
+    window.dlEscapeRegistrieren({
+      rang:40,
+      offen:function(){
+        return document.querySelectorAll('.cms-modal-bg,#_printOverlay,#_pcePrintOverlay,#_flyPrintOverlay');
+      },
+      schliessen:function(el){
+        var k=window.dlSchliessknopf?window.dlSchliessknopf(el):null;
+        if(k){k.click();return;}
+        el.remove();
+      }
+    });
+  }
+
   // --- Init (only if already authenticated via session) ---
   if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}

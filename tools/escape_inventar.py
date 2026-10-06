@@ -43,8 +43,9 @@ ESCAPE = re.compile(r"key\s*===?\s*['\"]Esc(?:ape)?['\"]|keyCode\s*===?\s*27")
 KENNUNG = re.compile(r"['\"]([^'\"]{3,120})['\"]")
 AUFRUF = re.compile(r"\b([A-Za-z_$][\w$]*)\s*\(")
 # Aus einem Selektor wie `.mob-popup-bg.open` oder `[id^="dt-modal-"]` die
-# einzelnen Namen loesen.
-TEILNAME = re.compile(r"[A-Za-z][\w-]{2,}")
+# einzelnen Namen loesen. Der Unterstrich gehoert dazu: cms.js nennt seine
+# Druckschichten `_flyPrintOverlay`.
+TEILNAME = re.compile(r"[A-Za-z_][\w-]{2,}")
 
 # Klappen: dort ist das Danebentippen die erwartete Geste (Spec R4),
 # Escape soll laut R9 trotzdem greifen -- sie zaehlen also mit.
@@ -62,15 +63,23 @@ class Wurzeln(HTMLParser):
 
     LEER = ("br", "img", "input", "hr", "meta", "link", "source", "area")
     KEIN_DIALOG = ("style", "script", "template")
+    # Nur Behaelter koennen ein Dialog sein. Ohne diese Schranke gilt der
+    # Schieberegler `hcfg-heroOverlay` (Hero-Abdunklung im CMS) als Dialog,
+    # nur weil "overlay" in seinem Namen steht.
+    BEHAELTER = ("div", "section", "aside", "dialog", "form", "main", "figure")
+    # Deckungsgleich mit `schliessknopf()` in theme.js: dort zaehlt neben
+    # Klasse, aria-label und title auch die Beschriftung eines Knopfes.
     KNOPF = re.compile(
         r"mob-popup-x|k-modal-x|dlg-x|\bclose\b|data-dl-close|chlie\u00dfen|chliessen",
         re.I)
+    KNOPF_TEXT = {"\u00d7", "\u2715", "x", "schlie\u00dfen", "schliessen", "abbrechen"}
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.stapel = []
         self.treffer = []
         self.offen = []   # Wurzeln, in denen wir gerade stecken
+        self.im_knopf = 0
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -79,7 +88,7 @@ class Wurzeln(HTMLParser):
         namen = " ".join([kennung] + klassen)
         ist = bool(NAME.search(namen)) or a.get("role") == "dialog"
 
-        if tag in self.KEIN_DIALOG:
+        if tag in self.KEIN_DIALOG or tag not in self.BEHAELTER:
             ist = False
         if ist and TEIL.search(kennung or (klassen[0] if klassen else "")):
             ist = False
@@ -110,8 +119,25 @@ class Wurzeln(HTMLParser):
 
         if tag not in self.LEER:
             self.stapel.append(ist)
+        if tag in ("button", "a"):
+            self.im_knopf += 1
+
+    def handle_data(self, daten):
+        """Die Beschriftung eines Knopfes zaehlt wie seine Klasse.
+
+        theme.js schliesst einen Dialog ueber einen Knopf mit dem Text
+        "Abbrechen" oder "x"; ohne diese Pruefung galten Dialoge wie
+        `img-overlay` hier faelschlich als unerreicht.
+        """
+        if not self.im_knopf or not self.offen:
+            return
+        if daten.strip().lower() in self.KNOPF_TEXT:
+            for w in self.offen:
+                w["knopf"] = True
 
     def handle_endtag(self, tag):
+        if tag in ("button", "a") and self.im_knopf:
+            self.im_knopf -= 1
         if not self.stapel:
             return
         self.stapel.pop()
@@ -154,6 +180,15 @@ def kennungen(text):
     Die letzten beiden gingen der ersten Fassung durch die Lappen.
     """
     genau, vorsilben = set(), set()
+    # Selektoren direkt aus den Abfragen: Das Anfuehrungszeichen-Paar wird
+    # hier je Aufruf aufgeloest und nicht ueber den ganzen Text -- sonst
+    # verschiebt ein einzelnes Zeichen die ganze Paarung und ein Selektor
+    # wie `.cms-modal-bg` geht verloren.
+    for m in re.finditer(
+            r"(?:querySelectorAll|querySelector|getElementById)\s*\(\s*(['\"])([^'\"\n]{1,200})\1",
+            text):
+        for name in TEILNAME.findall(m.group(2)):
+            genau.add(name.lower())
     # Vorsilben direkt aus dem Text: `[id^="dt-modal-"]`. Ueber die Paarung
     # der Anfuehrungszeichen ist das nicht verlaesslich zu holen -- in einem
     # langen Text verschiebt ein einzelnes Zeichen die ganze Paarung.

@@ -930,6 +930,20 @@
     });
   }
 
+  /* Escape schliesst das oberste Blatt (Spec dialoge-modal, R6). Die
+     Blaetter sind Dialoge, tragen aber kein role="dialog" und faenden
+     sonst keine Bauart des gemeinsamen Waechters. */
+  if (window.dlEscapeRegistrieren) {
+    window.dlEscapeRegistrieren({
+      rang: 40,
+      offen: function () {
+        return Array.prototype.slice.call(document.querySelectorAll(BLATT_WAHL))
+          .filter(function (b) { return !b.hidden; });
+      },
+      schliessen: function (b) { blattSchliessen(b); }
+    });
+  }
+
   // Die Blätter werden beim Zeichnen des Reiters neu aufgebaut. Ein
   // Beobachter greift jede neue Fassung ab.
   function blaetterBeobachten() {

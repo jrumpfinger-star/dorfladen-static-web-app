@@ -336,6 +336,9 @@
     return null;
   }
 
+  /* Auch fuer Seiten, die ihre Dialoge selbst anmelden (cms.js). */
+  window.dlSchliessknopf = schliessknopf;
+
   window.dlEscapeRegistrieren({
     rang: 30,
     offen: function () {
