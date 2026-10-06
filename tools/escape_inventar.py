@@ -40,8 +40,11 @@ AUSGENOMMEN = {"cookiebar", "cookie-bar"}
 
 ESCAPE = re.compile(r"key\s*===?\s*['\"]Esc(?:ape)?['\"]|keyCode\s*===?\s*27")
 
-KENNUNG = re.compile(r"['\"#.]([A-Za-z][\w-]{2,})['\"\s)\],]|getElementById\(['\"]([\w-]+)")
+KENNUNG = re.compile(r"['\"]([^'\"]{3,120})['\"]")
 AUFRUF = re.compile(r"\b([A-Za-z_$][\w$]*)\s*\(")
+# Aus einem Selektor wie `.mob-popup-bg.open` oder `[id^="dt-modal-"]` die
+# einzelnen Namen loesen.
+TEILNAME = re.compile(r"[A-Za-z][\w-]{2,}")
 
 # Klappen: dort ist das Danebentippen die erwartete Geste (Spec R4),
 # Escape soll laut R9 trotzdem greifen -- sie zaehlen also mit.
@@ -49,15 +52,25 @@ SKRIPT = re.compile(r"<script[^>]+src=['\"]([^'\"]+)['\"]")
 
 
 class Wurzeln(HTMLParser):
-    """Sammelt Dialogwurzeln: Treffer ohne Treffer-Vorfahr."""
+    """Sammelt Dialogwurzeln: Treffer ohne Treffer-Vorfahr.
+
+    Merkt sich je Wurzel zusaetzlich, ob irgendwo in ihr ein
+    `role="dialog"` und ein Schliessknopf steckt. Beides zusammen genuegt
+    dem gemeinsamen Waechter in theme.js, um den Dialog zu schliessen --
+    auch wenn die Wurzel selbst keines von beidem traegt.
+    """
 
     LEER = ("br", "img", "input", "hr", "meta", "link", "source", "area")
     KEIN_DIALOG = ("style", "script", "template")
+    KNOPF = re.compile(
+        r"mob-popup-x|k-modal-x|dlg-x|\bclose\b|data-dl-close|chlie\u00dfen|chliessen",
+        re.I)
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.stapel = []
         self.treffer = []
+        self.offen = []   # Wurzeln, in denen wir gerade stecken
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -73,18 +86,38 @@ class Wurzeln(HTMLParser):
         if ist and ({kennung.lower()} | {k.lower() for k in klassen}) & AUSGENOMMEN:
             ist = False
 
+        # Was in der Wurzel steckt, zaehlt fuer die Wurzel.
+        beschriftung = " ".join([kennung] + klassen + [a.get("aria-label", ""),
+                                                       a.get("title", ""),
+                                                       a.get("onclick", "")])
+        for w in self.offen:
+            if a.get("role") == "dialog":
+                w["rolle"] = True
+            if "data-dl-close" in a or self.KNOPF.search(beschriftung):
+                w["knopf"] = True
+
         if ist and not any(self.stapel):
-            self.treffer.append({
+            neu = {
                 "id": kennung,
                 "klassen": klassen,
                 "zeile": self.getpos()[0],
-            })
+                "rolle": a.get("role") == "dialog",
+                "knopf": False,
+                "tiefe": len(self.stapel),
+            }
+            self.treffer.append(neu)
+            self.offen.append(neu)
+
         if tag not in self.LEER:
             self.stapel.append(ist)
 
     def handle_endtag(self, tag):
-        if self.stapel:
-            self.stapel.pop()
+        if not self.stapel:
+            return
+        self.stapel.pop()
+        # Die Wurzel ist zu Ende, sobald wir wieder auf ihrer Tiefe stehen.
+        while self.offen and len(self.stapel) <= self.offen[-1]["tiefe"]:
+            self.offen.pop()
 
 
 def lies(pfad):
@@ -93,12 +126,19 @@ def lies(pfad):
 
 
 def umfeld(text):
-    """Text aller Escape-Waechter samt der Rumpfe ihrer Aufrufe."""
+    """Text aller Escape-Waechter samt der Rumpfe ihrer Aufrufe.
+
+    Dazu die Anmeldungen am gemeinsamen Waechter: `dlEscapeRegistrieren`
+    nennt die Selektoren, die er abdeckt -- sie stehen aber weit entfernt
+    vom Tastenwaechter selbst.
+    """
     stuecke, aufrufe = [], set()
     for m in ESCAPE.finditer(text):
         fenster = text[max(0, m.start() - 400):m.end() + 600]
         stuecke.append(fenster)
         aufrufe.update(AUFRUF.findall(fenster))
+    for m in re.finditer(r"dlEscapeRegistrieren\s*\(", text):
+        stuecke.append(text[m.end():m.end() + 700])
     for name in aufrufe:
         for m in re.finditer(r"\b" + re.escape(name) + r"\s*[=:]?\s*function[^{]*\{", text):
             stuecke.append(text[m.end():m.end() + 800])
@@ -106,10 +146,25 @@ def umfeld(text):
 
 
 def kennungen(text):
-    gefunden = set()
-    for a, b in KENNUNG.findall(text):
-        gefunden.add((a or b).lower())
-    return gefunden
+    """Namen, die ein Waechter nennt -- genau und als Vorsilbe.
+
+    Ein Waechter spricht Dialoge auf drei Arten an: ueber die Kennung
+    (`getElementById('mk-dlg')`), ueber einen zusammengesetzten Selektor
+    (`.mob-popup-bg.open`) oder ueber eine Vorsilbe (`[id^="dt-modal-"]`).
+    Die letzten beiden gingen der ersten Fassung durch die Lappen.
+    """
+    genau, vorsilben = set(), set()
+    # Vorsilben direkt aus dem Text: `[id^="dt-modal-"]`. Ueber die Paarung
+    # der Anfuehrungszeichen ist das nicht verlaesslich zu holen -- in einem
+    # langen Text verschiebt ein einzelnes Zeichen die ganze Paarung.
+    for m in re.finditer(r"\^=\s*['\"]([\w-]+-)['\"]?", text):
+        vorsilben.add(m.group(1).lower())
+    for roh in KENNUNG.findall(text):
+        for name in TEILNAME.findall(roh):
+            genau.add(name.lower())
+        if roh.endswith("-") and " " not in roh:
+            vorsilben.add(roh.lower())
+    return genau, vorsilben
 
 
 def js_dialoge(text):
@@ -183,13 +238,17 @@ def main():
         if not dialoge:
             continue
 
-        gesehen = kennungen(umfeld(begleiter))
+        gesehen, vorsilben = kennungen(umfeld(begleiter))
         am_element = element_waechter(begleiter)
         offen = []
         for name, zeile, d in dialoge:
             marken = {d["id"].lower()} | {k.lower() for k in d["klassen"]}
             marken.discard("")
-            if marken & gesehen or d.get("var") in am_element:
+            per_vorsilbe = any(m.startswith(v) for m in marken for v in vorsilben)
+            # Der gemeinsame Waechter schliesst jeden Dialog, der sich als
+            # solcher ausweist und einen Schliessknopf hat.
+            per_rolle = bool(d.get("rolle")) and bool(d.get("knopf"))
+            if marken & gesehen or per_vorsilbe or per_rolle or d.get("var") in am_element:
                 erreicht += 1
             else:
                 nicht += 1
