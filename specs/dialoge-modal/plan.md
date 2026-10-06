@@ -38,15 +38,21 @@ das zuletzt geöffnete.
 
 ### Die Vorfahrt (R8)
 
-Die bestehenden Wächter in `dl-confirm.js`, den vier Bestellmodulen,
-`social-poster.js`, `hilfe-popup.js` und `app.js` sind **im Dokument**
-registriert. Der gemeinsame Wächter hängt sich ebenfalls an `document`,
-läuft aber in der **Blasenphase** und prüft zuerst, ob das Ereignis schon
-verbraucht ist. Dafür bekommen die bestehenden Wächter an der Stelle, an der
-sie schließen, ein `e.preventDefault()` mit; der gemeinsame Wächter steigt
-bei `e.defaultPrevented` aus. So schließt nie mehr als ein Dialog je Tastendruck.
+> **Berichtigt beim Bauen.** Der ursprüngliche Weg — `preventDefault` in den
+> bestehenden Wächtern, Ausstieg bei `defaultPrevented` — hätte genau
+> verkehrt herum gewirkt: `theme.js` steht im `<head>` und meldet seinen
+> Wächter damit **vor** allen anderen an. Bei gleicher Phase laufen Wächter
+> in Anmeldereihenfolge, der gemeinsame wäre also zuerst drangekommen und
+> hätte den eigenen Wächter des Dialogs überstimmt.
 
-Kein Umbau der bestehenden Wächter darüber hinaus — sie bleiben, wo sie sind.
+Der gemeinsame Wächter **wartet** stattdessen ab. Bei `Escape` merkt er
+sich, welcher Dialog obenauf liegt und wie viele offen sind, und sieht einen
+Augenblick später nach (`setTimeout(…, 0)`): Ist das Ziel verschwunden oder
+hat sich die Gesamtzahl verringert, war ein eigener Wächter zuständig — er
+hält still. Nur wenn alles unverändert dasteht, greift er ein.
+
+So schließt nie mehr als ein Dialog je Tastendruck, **ohne** dass eine der
+neun Dateien mit eigenem Wächter angefasst werden muss.
 
 ### Die Sperren (R10)
 
@@ -61,18 +67,17 @@ Der Wächter steigt aus, wenn
 
 | Datei | Änderung |
 |---|---|
-| `static-site/js/theme.js` | **Kern.** Registratur + Wächter, rund 60 Zeilen, als eigene gekapselte Einheit ans Dateiende. Exportiert `window.dlEscapeRegistrieren(beschreibung)` für Nachzügler. |
-| `static-site/js/app.js` | Lightbox-Wächter (Z. 930) behält Pfeiltasten, ergänzt `preventDefault` beim Schließen. Gleiches im News-Overlay. |
-| `static-site/js/dl-confirm.js` | `preventDefault` im bestehenden Wächter. |
-| `static-site/js/kiosk-{drax,baecker,getraenke}.js`, `kiosk-metzger-bestellung.js` | je ein `preventDefault` im vorhandenen Wächter. |
-| `static-site/js/social-poster.js`, `hilfe-popup.js`, `js/social.js` | dito. |
-| `static-site/js/pwa.js` | Die beiden Masken (`push-settings-overlay`, `push-ios-hint-overlay`) melden sich über `dlEscapeRegistrieren` an — sie werden zur Laufzeit erzeugt und passen in keine der Sammelbauarten. |
-| `static-site/sortiment.html` | `#solightbox` anmelden (eigener Schließname). |
-| `static-site/cms.html`, `cms-neu.html`, `cms-klassisch.html` | `herooverlay` anmelden. |
-| `static-site/js/mobile.js`, `js/kiosk-filter.js`, `js/kiosk-neu-shell.js`, `js/cms-neu-shell.js` | Klappen anmelden (R9). |
+| `static-site/js/theme.js` | **Kern.** Registratur + Wächter, rund 60 Zeilen, als eigene gekapselte Einheit ans Dateiende. Exportiert `window.dlEscapeRegistrieren(beschreibung)` für Nachzügler und `window.dlSchliessknopf(el)` für Seiten, die ihre Dialoge selbst anmelden. |
+| ~~`static-site/js/app.js`, `dl-confirm.js`, die vier Kiosk-Module, `social-poster.js`, `hilfe-popup.js`, `js/social.js`~~ | **Entfällt** — kein `preventDefault` nötig, siehe „Die Vorfahrt". |
+| `static-site/js/pwa.js` | `push-ios-hint-overlay` meldet sich über `dlEscapeRegistrieren` an — zur Laufzeit erzeugt, passt in keine Sammelbauart. |
+| `static-site/cms.js` | `.cms-modal-bg` und die Druckschichten anmelden — sie entstehen aus Zeichenketten an acht Stellen. |
+| `static-site/shop.html`, `fleisch-bestellen.html` | Warenkorb anmelden: seine Verdunklung trägt keinen Schließknopf, der steckt in der danebenliegenden Schublade. |
+| 12 HTML-Dateien | 17 Dialoge erhalten `role="dialog" aria-modal="true"` und werden damit von der Bauart „freier Dialog" erreicht. |
+| `static-site/js/mobile.js`, `js/kiosk-filter.js`, `js/kiosk-neu-shell.js`, `js/cms-neu-shell.js` | Klappen anmelden (R9). In `mobile.js` zugleich behoben, dass `Escape` alle Blätter gleichzeitig schloss. |
 | `specs/dialoge-modal/spec.md` | bereits nachgezogen (R6–R10, TC-DM-08…13). |
 
-Keine HTML-Datei ändert ihren Elementbaum. `flyer-wurstaktion.html` und
+Keine HTML-Datei ändert ihren Elementbaum; 17 Dialoge erhalten lediglich
+`role="dialog"` und `aria-modal="true"`. `flyer-wurstaktion.html` und
 `help-workflows.html` bleiben unberührt — sie führen keine Dialoge.
 
 ## Reihenfolge
@@ -82,10 +87,11 @@ Keine HTML-Datei ändert ihren Elementbaum. `flyer-wurstaktion.html` und
 2. **Kern bauen.** Wächter und Registratur in `theme.js`. Erst die drei
    Sammelbauarten (Handy-Blatt, Desktop-Maske, Lightbox) — damit sind die
    meisten der 30 Dialoge erledigt.
-3. **Vorfahrt setzen.** `preventDefault` in den neun Dateien mit eigenem
-   Wächter. Danach TC-DM-09 im Browser: Bestellmaske über Kiosk-Dialog,
-   einmal `Escape`, nur der obere geht.
-4. **Nachzügler anmelden.** `pwa.js`, `herooverlay`, `solightbox`.
+3. **Vorfahrt prüfen.** TC-DM-09 im Browser: Bestellmaske über
+   Kiosk-Dialog, einmal `Escape`, nur der obere geht. (Kein Eingriff in die
+   neun Dateien nötig — der Wächter wartet ab.)
+4. **Nachzügler anmelden.** `pwa.js`, `cms.js`, die Warenkörbe, dazu
+   `role="dialog"` an den übrigen Dialogen.
 5. **Klappen anmelden** (R9) — zuletzt, weil am wenigsten riskant.
 6. **Gegenprobe.** Browser an je einer Bauart plus maschinell: jeder Dialog
    wird von genau einem Wächter erreicht; Seitenrolle nach `Escape` frei.
