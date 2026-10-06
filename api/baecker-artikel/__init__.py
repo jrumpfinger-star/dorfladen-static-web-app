@@ -4,12 +4,13 @@ GET   /api/baecker-artikel?baeckerei=..            Katalog, aufsteigend nach Num
 POST  /api/baecker-artikel                         Artikel anlegen (mit Dublettenpruefung)
 POST  /api/baecker-artikel {aktion:"rechnung"}     Stamm aus einer Rechnung aktualisieren
 PATCH /api/baecker-artikel                         Artikel aendern oder aus-/einblenden
+DELETE /api/baecker-artikel?baeckerei=..&key=..    Artikel entfernen (ohne Nummer: name_key)
 
 Die Baeckerei ist Pflicht: Beide Haeuser vergeben eigene Artikelnummern, ein
 gemeinsamer Katalog waere unbrauchbar.
 
-Artikel werden nie geloescht, sondern nur ausgeblendet – sonst wuerden alte
-Bestellungen im Verlauf unvollstaendig (Spec F5).
+Nie bestellte Artikel werden geloescht, belegte nur ausgeblendet – so
+bleiben fruehere Bestellungen im Verlauf vollstaendig.
 """
 import base64
 import json
@@ -17,7 +18,7 @@ import logging
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 
 import azure.functions as func
@@ -161,7 +162,10 @@ def _rechnung(url, hdrs, bk, rec_id, artikel, body):
             f"{len(neu)} neu, {len(geaendert)} mit ge\u00e4nderter Bezeichnung.")
         return _ok(zusammenfassung)
 
-    if not neu and not geaendert:
+    nachweis = any(eintrag["liefer"] > 0
+                   and not (vorhanden.get(nummer) or {}).get("aus_rechnung")
+                   for nummer, eintrag in gelesen.items())
+    if not neu and not geaendert and not nachweis:
         zusammenfassung["meldung"] = "Alle Artikel sind bereits aktuell."
         return _ok(zusammenfassung)
 
@@ -172,6 +176,9 @@ def _rechnung(url, hdrs, bk, rec_id, artikel, body):
         ziel = vorhanden.get(eintrag["nummer"])
         if ziel is not None:
             ziel["name"] = eintrag["name"]
+    for nummer, eintrag in gelesen.items():
+        if eintrag["liefer"] > 0 and nummer in vorhanden:
+            vorhanden[nummer]["aus_rechnung"] = True
     for eintrag in neu:
         liste.append({
             "nummer": eintrag["nummer"],
@@ -182,6 +189,7 @@ def _rechnung(url, hdrs, bk, rec_id, artikel, body):
             "summe": 0,
             "angelegt_am": heute,
             "angelegt_von": wer,
+            "aus_rechnung": gelesen[eintrag["nummer"]]["liefer"] > 0,
         })
 
     liste = store.sort_artikel(liste)
@@ -190,10 +198,40 @@ def _rechnung(url, hdrs, bk, rec_id, artikel, body):
         return _err("Die \u00c4nderungen konnten nicht gespeichert werden.", 500)
 
     zusammenfassung["artikel"] = liste
-    zusammenfassung["meldung"] = (
-        f"{len(neu)} Artikel neu aufgenommen, "
-        f"{len(geaendert)} Bezeichnungen aktualisiert.")
+    if not neu and not geaendert:
+        zusammenfassung["meldung"] = "Liefernachweise aktualisiert."
+    else:
+        zusammenfassung["meldung"] = (
+            f"{len(neu)} Artikel neu aufgenommen, "
+            f"{len(geaendert)} Bezeichnungen aktualisiert.")
     return _ok(zusammenfassung)
+
+
+def _je_bestellt(url, hdrs, bk, a):
+    if int(a.get("bestellt_in") or 0) > 0 or int(a.get("summe") or 0) > 0:
+        return True
+    if a.get("aus_rechnung") or ("aus_rechnung" not in a and
+                                (a.get("angelegt_von") or "").lower() == "rechnung"):
+        return True
+    nummer = str(a.get("nummer") or "").strip()
+    name = (a.get("name") or "").strip().lower()
+    key = nummer or name
+    # Die alten Bestellzettel und Rechnungen stehen nicht im Order-Store.
+    montag = datetime.now().date()
+    montag -= timedelta(days=montag.weekday())
+    for tag in range(7):
+        mengen, wochen, _ = store.startwerte(bk, (montag + timedelta(days=tag)).isoformat())
+        if mengen.get(key, 0) > 0 or wochen.get(key, 0) > 0:
+            return True
+    for _, _, order in store.bestellungen(url, hdrs, bk):
+        for p in order.get("positionen") or []:
+            pos_nr = str(p.get("nummer") or "").strip()
+            if nummer and pos_nr:
+                if pos_nr == nummer:
+                    return True
+            elif (p.get("name") or "").strip().lower() == name:
+                return True
+    return False
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -245,6 +283,40 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             })
 
         rec_id, _ = store.read_json(url, hdrs, store.artikel_store_key(bk))
+
+        if req.method == "DELETE":
+            key = (req.params.get("key") or "").strip()
+            name_key = (req.params.get("name_key") or "").strip().lower()
+            if not key and not name_key:
+                return _err("Bitte Artikelnummer oder Bezeichnung angeben.")
+            ziel = None
+            if key:
+                ziel = next((a for a in artikel
+                             if str(a.get("nummer") or "").strip() == key), None)
+            if ziel is None and name_key:
+                ziel = next((a for a in artikel
+                             if (a.get("name") or "").strip().lower() == name_key), None)
+            if ziel is None:
+                return _err("Der Artikel wurde nicht gefunden.", 404)
+            if _je_bestellt(url, hdrs, bk, ziel):
+                if ziel.get("aktiv") is False:
+                    return _ok({"artikel": artikel, "ausgeblendet": True,
+                                "meldung": f"\u201e{ziel.get('name')}\u201c war bereits "
+                                           "bestellt oder geliefert und bleibt ausgeblendet."})
+                ziel["aktiv"] = False
+                meldung = (f"\u201e{ziel.get('name')}\u201c wurde bereits bestellt "
+                           "oder geliefert und deshalb nur ausgeblendet.")
+                ausgeblendet = True
+            else:
+                artikel.remove(ziel)
+                meldung = f"\u201e{ziel.get('name')}\u201c wurde gel\u00f6scht."
+                ausgeblendet = False
+            artikel = store.sort_artikel(artikel)
+            if not store.write_json(url, hdrs, store.artikel_store_key(bk), rec_id,
+                                    {"artikel": artikel}, "Baecker-Artikel"):
+                return _err("Der Artikel konnte nicht entfernt werden.", 502)
+            return _ok({"artikel": artikel, "ausgeblendet": ausgeblendet,
+                        "meldung": meldung})
 
         # ── Artikelstamm aus einer Rechnung aktualisieren (Spec F22) ──
         if req.method == "POST" and (body.get("aktion") or "") == "rechnung":

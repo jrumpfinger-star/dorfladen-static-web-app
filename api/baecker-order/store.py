@@ -424,10 +424,10 @@ def load_artikel(url, hdrs, bk):
     """
     _, data = read_json(url, hdrs, artikel_store_key(bk))
     artikel = (data or {}).get("artikel")
-    if not artikel and bk == ALT_BAECKEREI:
+    if artikel is None and bk == ALT_BAECKEREI:
         _, alt = read_json(url, hdrs, KEY_ARTIKEL)
         artikel = (alt or {}).get("artikel")
-    if not artikel:
+    if artikel is None:
         pfad = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "vorlage", f"katalog-{bk}.json")
         try:
