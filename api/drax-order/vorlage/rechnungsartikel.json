@@ -1,0 +1,564 @@
+{
+  "quelle": "Drax/Rechnung*.pdf",
+  "rechnungen": 7,
+  "artikel": [
+    {
+      "nr": "88949",
+      "name": "Bio Haferflocken Kleinblatt 1kg",
+      "einheit": "1kg",
+      "ek": 2.69,
+      "lieferungen": 4,
+      "menge_gesamt": 13,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "88034",
+      "name": "Schoko Knusper Müsli 1kg",
+      "einheit": "1kg",
+      "ek": 5.55,
+      "lieferungen": 3,
+      "menge_gesamt": 6,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "40401",
+      "name": "Weizenmehl Type 405 * 1 kg",
+      "einheit": "1kg",
+      "ek": 1.42,
+      "lieferungen": 2,
+      "menge_gesamt": 16,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "40402",
+      "name": "Weizenmehl Type 405 * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 3.21,
+      "lieferungen": 2,
+      "menge_gesamt": 8,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "40901",
+      "name": "Bio Pizzamehl Type 00 \"Farina Alpina\" *1 kg",
+      "einheit": "1 kg",
+      "ek": 2.76,
+      "lieferungen": 2,
+      "menge_gesamt": 7,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "88401",
+      "name": "Vollmilch Reiswaffeln * 150 g",
+      "einheit": "150 g",
+      "ek": 3.01,
+      "lieferungen": 2,
+      "menge_gesamt": 7,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "88004",
+      "name": "Bio Erdbeer Cluster Crunchy",
+      "einheit": "375g",
+      "ek": 3.41,
+      "lieferungen": 2,
+      "menge_gesamt": 6,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88232",
+      "name": "Bio Hafer Cluster Crunchy",
+      "einheit": "375g",
+      "ek": 2.22,
+      "lieferungen": 2,
+      "menge_gesamt": 6,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "40405",
+      "name": "Weizenmehl Type 405 * 5 kg",
+      "einheit": "5 kg",
+      "ek": 5.6,
+      "lieferungen": 2,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "55740",
+      "name": "Bio Hafer-Porridgeflocken fein * 500 g",
+      "einheit": "500 g",
+      "ek": 2.69,
+      "lieferungen": 2,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88070",
+      "name": "Cornflakes",
+      "einheit": "250g",
+      "ek": 1.42,
+      "lieferungen": 2,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88133",
+      "name": "Roggenvollkorn Sauerteig * 250 g",
+      "einheit": "250g",
+      "ek": 1.98,
+      "lieferungen": 2,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-08-27"
+    },
+    {
+      "nr": "88135",
+      "name": "Vanillezucker Bourbon konv.",
+      "einheit": "200g",
+      "ek": 3.17,
+      "lieferungen": 2,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "40412",
+      "name": "Weizenmehl Type 550 * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 3.21,
+      "lieferungen": 2,
+      "menge_gesamt": 4,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "80802",
+      "name": "Dinkelmehl Type 630 * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 5.95,
+      "lieferungen": 2,
+      "menge_gesamt": 4,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "40415",
+      "name": "Weizenmehl Type 550 * 5 kg",
+      "einheit": "5 kg",
+      "ek": 5.6,
+      "lieferungen": 2,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "40462",
+      "name": "Bio Weizenmehl Type 550 * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 4.7,
+      "lieferungen": 2,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "40465",
+      "name": "Bio Weizenmehl Type 550 * 5 kg",
+      "einheit": "5 kg",
+      "ek": 8.59,
+      "lieferungen": 2,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "80872",
+      "name": "Bio Dinkelmehl Dunst Wiener Griessler * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 9.49,
+      "lieferungen": 2,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "40411",
+      "name": "Weizenmehl Type 550 * 1 kg",
+      "einheit": "1kg",
+      "ek": 1.42,
+      "lieferungen": 1,
+      "menge_gesamt": 8,
+      "zuletzt": "2026-08-27"
+    },
+    {
+      "nr": "40421",
+      "name": "Weizenmehl Dunst Wiener Griessler * 1 kg",
+      "einheit": "1kg",
+      "ek": 1.71,
+      "lieferungen": 1,
+      "menge_gesamt": 8,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "55645",
+      "name": "Bio Weizen-Pizza Backmischung * 700 g",
+      "einheit": "700g",
+      "ek": 2.23,
+      "lieferungen": 1,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-08-17"
+    },
+    {
+      "nr": "88020",
+      "name": "Bio Haferflocken Kleinblatt 500g",
+      "einheit": "500g",
+      "ek": 1.5,
+      "lieferungen": 1,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88191",
+      "name": "Vanille-Schoko-Mandeln",
+      "einheit": "150g",
+      "ek": 4.36,
+      "lieferungen": 1,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88411",
+      "name": "Dinkel Vollmilch Knusperwaffeln * 150 g",
+      "einheit": "150 g",
+      "ek": 3.01,
+      "lieferungen": 1,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88413",
+      "name": "Dinkel Zartbitter Knusperwaffeln * 150 g",
+      "einheit": "150 g",
+      "ek": 3.01,
+      "lieferungen": 1,
+      "menge_gesamt": 5,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "65960",
+      "name": "Spaghetti 500 g",
+      "einheit": "500 g",
+      "ek": 2.22,
+      "lieferungen": 1,
+      "menge_gesamt": 4,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "80812",
+      "name": "Dinkelmehl Dunst Wiener Griessler Type 630 * 2,5kg",
+      "einheit": "2,5 kg",
+      "ek": 6.74,
+      "lieferungen": 1,
+      "menge_gesamt": 4,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "88196",
+      "name": "Schoko-Apfelscheiben gemischt",
+      "einheit": "125g",
+      "ek": 3.96,
+      "lieferungen": 1,
+      "menge_gesamt": 4,
+      "zuletzt": "2026-08-17"
+    },
+    {
+      "nr": "45020",
+      "name": "Bio Gerstenmalzmehl * 250 g (aktiv)",
+      "einheit": "250g",
+      "ek": 2.37,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "55623",
+      "name": "Bio 3-Saaten Mischung * 350 g",
+      "einheit": "350 g",
+      "ek": 2.37,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "60601",
+      "name": "Roggenmehl Type 610 * 1kg",
+      "einheit": "1kg",
+      "ek": 1.42,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "78590",
+      "name": "Bio Hirse gepufft natur",
+      "einheit": "200g",
+      "ek": 1.98,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "80811",
+      "name": "Dinkelmehl Dunst Wiener Griessler * 1 kg",
+      "einheit": "1kg",
+      "ek": 3.17,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "88032",
+      "name": "Amaranth-Schokomüsli",
+      "einheit": "500g",
+      "ek": 3.96,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-08-17"
+    },
+    {
+      "nr": "88055",
+      "name": "Bio Früchtemüsli 1kg",
+      "einheit": "1kg",
+      "ek": 6.98,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "88057",
+      "name": "Schoko-Dinkelmüsli",
+      "einheit": "500g",
+      "ek": 4.2,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "88060",
+      "name": "Schoko-Dinkel gepufft",
+      "einheit": "200g",
+      "ek": 3.17,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "88155",
+      "name": "Bio Dinkel Orangen Keks",
+      "einheit": "200g",
+      "ek": 3.41,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88192",
+      "name": "Zimt-Schoko-Kugeln",
+      "einheit": "200g",
+      "ek": 3.57,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88214",
+      "name": "Bio Dinkel Backerbsen",
+      "einheit": "125g",
+      "ek": 1.82,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-08-17"
+    },
+    {
+      "nr": "88240",
+      "name": "Dinkel-Waffelröllchen Bio natur",
+      "einheit": "100g",
+      "ek": 2.37,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88402",
+      "name": "Zartbitter Reiswaffeln * 150 g",
+      "einheit": "150 g",
+      "ek": 3.01,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88412",
+      "name": "Dinkel Vollmilch-Mandelsplitter Knusperwaffeln * 150 g",
+      "einheit": "150 g",
+      "ek": 3.81,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "88812",
+      "name": "Bio Haferflocken Großblatt 1kg",
+      "einheit": "1kg",
+      "ek": 2.69,
+      "lieferungen": 1,
+      "menge_gesamt": 3,
+      "zuletzt": "2026-08-27"
+    },
+    {
+      "nr": "40432",
+      "name": "Weizenmehl Type 1050 * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 3.21,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "60602",
+      "name": "Roggenmehl Type 610 * 2,5kg",
+      "einheit": "2,5 kg",
+      "ek": 3.21,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "78549",
+      "name": "Klare Delikatess-Suppe \"Frei von\"",
+      "einheit": "St",
+      "ek": 7.91,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-08-06"
+    },
+    {
+      "nr": "80805",
+      "name": "Dinkelmehl Type 630 * 5 kg",
+      "einheit": "5 kg",
+      "ek": 11.08,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "80891",
+      "name": "Bio Dinkelmehl Type 630 * 1 kg",
+      "einheit": "1kg",
+      "ek": 3.57,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "80892",
+      "name": "Bio Dinkelmehl Type 630 * 2,5 kg",
+      "einheit": "2,5 kg",
+      "ek": 8.57,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-08-27"
+    },
+    {
+      "nr": "80895",
+      "name": "Bio Dinkelmehl Type 630 * 5 kg",
+      "einheit": "5 kg",
+      "ek": 15.84,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-08-27"
+    },
+    {
+      "nr": "82901",
+      "name": "Bio Braunhirse gemahlen * 1 kg",
+      "einheit": "1kg",
+      "ek": 5.95,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-17"
+    },
+    {
+      "nr": "88006",
+      "name": "Bio Amaranth Beerenmüsli",
+      "einheit": "500g",
+      "ek": 3.96,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "88035",
+      "name": "Müsli Schoko Knusper 500g",
+      "einheit": "500g",
+      "ek": 3.01,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-08-27"
+    },
+    {
+      "nr": "88047",
+      "name": "Bio Grundmischung 1kg",
+      "einheit": "1kg",
+      "ek": 3.17,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "88063",
+      "name": "Dinkel-Frucht-Müsli mit gepufftem Dinkel",
+      "einheit": "500g",
+      "ek": 4.2,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "88064",
+      "name": "Dinkel-Knusper-Müsli",
+      "einheit": "500g",
+      "ek": 3.17,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-08-17"
+    },
+    {
+      "nr": "88082",
+      "name": "Sonnenblumenkerne 500g",
+      "einheit": "500g",
+      "ek": 2.22,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-10"
+    },
+    {
+      "nr": "88253",
+      "name": "Bio Amaranth Früchtemüsli",
+      "einheit": "500g",
+      "ek": 3.57,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-03"
+    },
+    {
+      "nr": "88512",
+      "name": "Bio Chia Samen",
+      "einheit": "200g",
+      "ek": 2.13,
+      "lieferungen": 1,
+      "menge_gesamt": 2,
+      "zuletzt": "2026-09-24"
+    },
+    {
+      "nr": "40531",
+      "name": "Bio Emmermehl Type 812 * 1 kg",
+      "einheit": "1kg",
+      "ek": 3.95,
+      "lieferungen": 1,
+      "menge_gesamt": 1,
+      "zuletzt": "2026-08-06"
+    }
+  ]
+}

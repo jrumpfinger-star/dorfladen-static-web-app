@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Drax Mühle — Bestellung (Mockup)</title>
+<script src="drax-katalog.js"></script>
+<script src="drax-historie.js"></script>
+<style>
+:root{
+  --pri:#2d5016;--green:#2e7d4f;--green-light:#dcfce7;--red:#dc2626;
+  --orange:#e65100;--yellow:#f59e0b;--blue:#1d4ed8;--blue-light:#eff6ff;
+  --bg:#f0f2f5;--card:#fff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;
+  --r:12px;--touch:44px;--spalte:420px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px}
+body b,body strong{font-weight:600}
+.wrap{max-width:1180px;margin:0 auto;padding:12px;padding-bottom:140px}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+
+/* ---- Unterreiter ---- */
+.subtabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto}
+.subtabs button{border:1.5px solid var(--border);background:#fff;border-radius:10px;
+  padding:0 14px;min-height:var(--touch);font-size:13px;font-weight:600;
+  cursor:pointer;color:var(--muted);white-space:nowrap;display:flex;
+  align-items:center;gap:7px}
+.subtabs button.on{border-color:var(--pri);background:var(--pri);color:#fff}
+.subtabs .cnt{background:rgba(0,0,0,.12);border-radius:9px;padding:1px 7px;font-size:11px}
+.subtabs button.on .cnt{background:rgba(255,255,255,.25)}
+
+/* ---- Kopfbereich ---- */
+.head{background:var(--card);border-radius:var(--r);padding:10px 12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px;position:sticky;top:0;z-index:20}
+.days{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.day{min-width:78px;min-height:var(--touch);padding:5px 10px;border:1.5px solid var(--border);
+  border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;
+  text-align:center;white-space:nowrap}
+.day .d2{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+.day.on{border-color:var(--green);background:var(--green);color:#fff}
+.day.on .d2{color:var(--green-light)}
+.day.sent{border-color:var(--green);background:var(--green-light);color:#166534}
+.day.sent .d2{color:#166534}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.bar input[type=search]{flex:1;min-width:160px;min-height:var(--touch);
+  padding:6px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px}
+.tgl{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+.tgl button{border:0;background:#fff;padding:0 12px;min-height:var(--touch);
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tgl button.on{background:var(--green);color:#fff}
+.jump{display:flex;gap:5px;overflow-x:auto;margin-top:8px;padding-bottom:2px}
+.jump button{border:1.5px solid var(--border);background:#fff;border-radius:16px;
+  padding:0 12px;min-height:38px;font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;color:var(--muted)}
+
+/* ---- Bestellschluss-Hinweis ---- */
+.schluss{display:flex;align-items:center;gap:9px;border-radius:10px;
+  padding:8px 12px;font-size:13px;font-weight:600;margin-bottom:10px}
+.schluss.offen{background:var(--blue-light);color:#1e40af;border:1.5px solid #bfdbfe}
+.schluss.eilt{background:#fff7ed;color:#9a3412;border:1.5px solid #fed7aa;
+  animation:blink 1.4s ease-in-out infinite}
+.schluss.gesendet{background:var(--green-light);color:#166534;border:1.5px solid #bbf7d0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ---- Liste ---- */
+#liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--spalte),1fr));
+  gap:4px 10px;align-items:start}
+.grp{grid-column:1/-1;font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);margin:14px 0 2px;padding-left:2px;
+  border-bottom:1px solid var(--border);padding-bottom:4px}
+/* Nummer links in eigener Spalte: Drax ordnet sein Sortiment über die Nummer,
+   und die Gebindegröße steckt mit drin (40401/40402/40405 = 1/2,5/5 kg).
+   Sie muss senkrecht lesbar sein. */
+.row{background:var(--card);border-radius:8px;padding:4px 8px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);border-left:4px solid transparent;
+  display:grid;grid-template-columns:52px minmax(0,1fr) 128px;gap:8px;align-items:center}
+.row.has{border-left-color:var(--green)}
+.row.vor{border-left-color:var(--blue)}
+.nrcol{font-size:13px;font-weight:600;color:var(--muted);text-align:right;
+  font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace;
+  border-right:1px solid var(--border);padding-right:8px;align-self:stretch;
+  display:flex;align-items:center;justify-content:flex-end;min-height:40px}
+.row.has .nrcol{color:var(--text)}
+.nm{font-size:14px;font-weight:600;line-height:1.22;min-width:0}
+.nm .eh{display:inline-block;font-size:11px;font-weight:600;color:#166534;
+  background:var(--green-light);border-radius:6px;padding:1px 6px;margin-left:6px;
+  vertical-align:1px}
+.nm .eh.stk{color:var(--muted);background:#f3f4f6}
+.nm .alt{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:1px}
+.tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;
+  border-radius:7px;margin-left:5px;vertical-align:middle}
+.tag.vor{background:var(--blue-light);color:var(--blue)}
+.tag.neu{background:#fef3c7;color:#92400e}
+/* Mengenfeld: Minus, Zahl, Plus. Alles mindestens 40px hoch für den
+   Touch-Bildschirm im Laden. */
+.cnt{display:flex;align-items:center;justify-content:flex-end;gap:4px}
+.cnt button{width:40px;height:40px;border:1.5px solid var(--border);background:#fff;
+  border-radius:9px;font-size:19px;font-weight:600;cursor:pointer;color:var(--muted);
+  line-height:1;flex:0 0 40px}
+.cnt button:hover{border-color:var(--green);color:var(--green)}
+.cnt input{width:46px;height:40px;text-align:center;font-size:16px;font-weight:600;
+  border:1.5px solid var(--border);border-radius:9px;font-variant-numeric:tabular-nums}
+.row.has .cnt input{border-color:var(--green);background:var(--green-light);color:#166534}
+.row.has .cnt button{border-color:#bbf7d0}
+
+/* ---- Fußleiste ---- */
+.foot{position:fixed;left:0;right:0;bottom:0;background:#fff;
+  border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,.08);z-index:30}
+.foot .in{max-width:1180px;margin:0 auto;padding:9px 12px;display:flex;
+  gap:10px;align-items:center;flex-wrap:wrap}
+.foot .zahl{font-size:13px;color:var(--muted);flex:1;min-width:150px}
+.foot .zahl b{color:var(--text);font-size:15px}
+.btn{border:1.5px solid var(--border);background:#fff;border-radius:10px;
+  padding:0 16px;min-height:var(--touch);font-size:13px;font-weight:600;
+  cursor:pointer;color:var(--text)}
+.btn.pri{background:var(--green);border-color:var(--green);color:#fff}
+.btn.pri:disabled{background:#cbd5e1;border-color:#cbd5e1;cursor:not-allowed}
+.btn.warn{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* ---- Karten für Verlauf / Artikel / Einstellungen ---- */
+.card{background:var(--card);border-radius:var(--r);padding:12px 14px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
+.card h2{font-size:14px;margin:0 0 8px}
+table.lst{width:100%;border-collapse:collapse;font-size:13px}
+table.lst th{text-align:left;font-size:10px;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);border-bottom:1.5px solid var(--border);
+  padding:5px 7px;font-weight:600}
+table.lst td{padding:6px 7px;border-bottom:1px solid #f1f3f5}
+table.lst td.r{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;
+  border-radius:9px;background:#f3f4f6;color:var(--muted)}
+.pill.do{background:var(--green-light);color:#166534}
+.pill.ab{background:#fef3c7;color:#92400e}
+.feld{display:flex;gap:10px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+.feld label{font-size:12px;font-weight:600;color:var(--muted);min-width:168px}
+.feld input,.feld select{min-height:40px;padding:5px 10px;border:1.5px solid var(--border);
+  border-radius:9px;font-size:14px;min-width:230px}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
+.warnbox{background:#fff7ed;border:1.5px solid #fed7aa;color:#9a3412;
+  border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.5;margin-bottom:10px}
+
+/* ---- Formular-Vorschau (so geht es an Drax) ---- */
+.vorschau{background:#fff;border:1px solid #cbd5e1;border-radius:8px;
+  padding:18px 20px;font-size:12px;color:#111;max-width:760px;margin:0 auto}
+.vorschau .vk{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:2px solid #111;padding-bottom:7px;margin-bottom:9px}
+.vorschau .vk .li{font-size:16px;font-weight:600}
+.vorschau .vk .re{text-align:right;font-size:11px;line-height:1.7}
+.vorschau table{width:100%;border-collapse:collapse;font-size:11.5px}
+.vorschau th,.vorschau td{border:1px solid #6b7280;padding:3px 6px}
+.vorschau th{background:#f3f4f6;font-size:9.5px;text-transform:uppercase;
+  letter-spacing:.3px;text-align:left;border-color:#111;border-bottom-width:2px}
+.vorschau td.s{text-align:right;width:52px;font-weight:600}
+.vorschau td.e{width:74px}
+.vorschau td.n{width:62px;font-family:ui-monospace,Consolas,monospace}
+.vorschau .vf{margin-top:10px;font-size:10.5px;color:#555}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:50;
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .box{background:#f8fafc;border-radius:var(--r);max-width:820px;width:100%;
+  max-height:92vh;overflow:auto;padding:14px}
+.modal .mk{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.modal .mk h2{margin:0;font-size:15px}
+.hidden{display:none!important}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;
+  padding:10px 13px;font-size:12.5px;line-height:1.6;color:#713f12;margin-top:16px}
+.note b{color:#78350f}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Drax Mühle — Bestellung</h1>
+  <div class="sub">Mockup mit echten Daten: 96 Artikel aus dem Kassen-Export und
+    den sieben Rechnungen, 7 ausgewertete Liefertage. Kunden-Nr. 11225.</div>
+
+  <div class="subtabs">
+    <button data-t="bestellung" class="on" onclick="M.tab('bestellung')">Bestellung
+      <span class="cnt" id="c-best">0</span></button>
+    <button data-t="verlauf" onclick="M.tab('verlauf')">Verlauf
+      <span class="cnt" id="c-verl">7</span></button>
+    <button data-t="artikel" onclick="M.tab('artikel')">Artikel
+      <span class="cnt" id="c-art">96</span></button>
+    <button data-t="einst" onclick="M.tab('einst')">Einstellungen</button>
+  </div>
+
+  <!-- ══ Bestellung ══ -->
+  <div id="p-bestellung">
+    <div id="schluss" class="schluss offen"></div>
+    <div class="head">
+      <div class="days" id="days"></div>
+      <div class="bar">
+        <input type="search" id="such" placeholder="Artikel oder Nummer suchen…"
+               oninput="M.zeichne()">
+        <div class="tgl">
+          <button id="f-alle" class="on" onclick="M.filter('alle')">Alle</button>
+          <button id="f-best" onclick="M.filter('best')">Nur bestellt</button>
+        </div>
+      </div>
+      <div class="jump" id="jump"></div>
+    </div>
+    <div id="liste"></div>
+  </div>
+
+  <!-- ══ Verlauf ══ -->
+  <div id="p-verlauf" class="hidden">
+    <div class="card">
+      <h2>Bisherige Lieferungen</h2>
+      <div class="hint">Ausgewertet aus den Rechnungs-PDFs der Mühle. Das
+        Lieferdatum stammt aus der Zeile „LS vom …“, sonst aus dem
+        Rechnungsdatum.</div>
+      <table class="lst" id="verl-tab"></table>
+    </div>
+  </div>
+
+  <!-- ══ Artikel ══ -->
+  <div id="p-artikel" class="hidden">
+    <div class="card">
+      <h2>Artikelstamm</h2>
+      <div class="hint">Bezeichnung und Einheit stammen aus den Rechnungen —
+        das ist die Schreibweise, unter der die Mühle den Artikel führt. Wo der
+        Kassen-Export anders heißt, steht der Kassenname darunter.</div>
+      <div class="bar" style="margin-top:9px">
+        <input type="search" id="asuch" placeholder="Artikel filtern…" oninput="M.artTab()">
+      </div>
+      <table class="lst" id="art-tab"></table>
+    </div>
+  </div>
+
+  <!-- ══ Einstellungen ══ -->
+  <div id="p-einst" class="hidden">
+    <div class="warnbox"><b>Noch keine echte Bestelladresse hinterlegt.</b>
+      Solange hier die Testadresse steht, geht keine Bestellung an die Mühle
+      hinaus — genauso abgesichert wie bei Martin’s Backstube.</div>
+    <div class="card">
+      <h2>Empfänger</h2>
+      <div class="feld"><label>E-Mail der Mühle</label>
+        <input type="email" value="test@dorfladen-oberornau.de"></div>
+      <div class="feld"><label>Anzeigename</label>
+        <input value="Test (Drax-Bestellung)"></div>
+      <div class="feld"><label>Kunden-Nr.</label><input value="11225"></div>
+      <div class="hint">Aus den Rechnungen bekannt: DRAX-MÜHLE GmbH, Hochhaus 5,
+        83562 Rechtmehring, info@drax-muehle.de, Telefon 0 80 72 / 8276.</div>
+    </div>
+    <div class="card">
+      <h2>Rhythmus</h2>
+      <div class="feld"><label>Liefertag</label>
+        <select><option selected>Donnerstag</option><option>Montag</option>
+        <option>Dienstag</option><option>Mittwoch</option><option>Freitag</option></select></div>
+      <div class="feld"><label>Bestellschluss</label>
+        <select><option selected>Mittwoch 12:00</option><option>Mittwoch 10:00</option>
+        <option>Mittwoch 16:00</option><option>Mittwoch 18:00</option></select></div>
+      <div class="feld"><label>Anhangformat</label>
+        <select><option selected>PDF</option><option>Word (.docx)</option></select></div>
+      <div class="hint">Die ausgewerteten Rechnungen bestätigen den Rhythmus:
+        sechs der sieben Lieferungen kamen an einem Donnerstag, eine am
+        Montag, 17.08.2026.</div>
+    </div>
+    <div class="card">
+      <h2>Vorbelegung</h2>
+      <div class="feld"><label>Mengen übernehmen von</label>
+        <select><option selected>letzter Lieferung</option>
+        <option>letzter Bestellung desselben Wochentags</option>
+        <option>nicht vorbelegen</option></select></div>
+      <div class="hint">Vorbelegte Mengen sind blau markiert und zählen erst
+        mit, wenn sie bestätigt oder geändert wurden.</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Was dieses Mockup zeigt und was nicht.</b><br>
+    Die Daten sind echt: Artikel, Nummern, Einheiten und Liefermengen stammen
+    aus <code>Drax/data (10).xlsx</code> und den sieben Rechnungs-PDFs.
+    Gespeichert wird hier nichts — Versand, Sperre nach dem Senden und die
+    Korrektur sind nur angedeutet.<br><br>
+    <b>Fünfzehn Artikel</b> tauchen nur in den Rechnungen auf, nicht im
+    Kassen-Export (z. B. Roggenmehl Type 610, Bio Emmermehl, Bio Haferflocken
+    Großblatt). Ohne sie wäre ein Teil des Sortiments gar nicht bestellbar;
+    sie sind mit <span class="tag neu">neu</span> markiert.<br><br>
+    <b>Artikel 78549</b> hieß in der Kasse noch „Tellofix“. Die Mühle hat das
+    Produkt unter derselben Nummer ausgetauscht — es heißt jetzt „Klare
+    Delikatess-Suppe &quot;Frei von&quot;“. Der alte Kassenname ist deshalb
+    entfernt und erscheint auch nicht mehr als Suchhilfe.
+  </div>
+</div>
+
+<div class="foot" id="foot">
+  <div class="in">
+    <div class="zahl" id="summe"></div>
+    <button class="btn" onclick="M.vorschau()">Formular ansehen</button>
+    <button class="btn pri" id="sendbtn" onclick="M.senden()">An Drax senden</button>
+  </div>
+</div>
+
+<div class="modal hidden" id="modal">
+  <div class="box">
+    <div class="mk"><h2>So geht das Formular an die Mühle</h2>
+      <button class="btn" onclick="M.zu()">Schließen</button></div>
+    <div id="vorschau-inhalt"></div>
+  </div>
+</div>
+
+<script>
+var M = (function () {
+  'use strict';
+  var KAT = window.DRAX_KATALOG, HIST = window.DRAX_HISTORIE;
+  var TAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag',
+              'Freitag', 'Samstag'];
+  var mengen = {};        // nr -> Stück
+  var vorbelegt = {};     // nr -> true, solange unverändert übernommen
+  var nurBestellt = false;
+  var tage = [], aktiv = 0, gesendet = {};
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function de(iso) {
+    var t = iso.split('-');
+    return t[2] + '.' + t[1] + '.' + t[0];
+  }
+  function wtag(iso) {
+    var t = iso.split('-');
+    return TAGE[new Date(+t[0], +t[1] - 1, +t[2]).getDay()];
+  }
+
+  // ── Liefertage: der nächste Donnerstag und die drei danach ──
+  function bauTage() {
+    var heute = new Date();
+    var d = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate());
+    // 4 = Donnerstag. Ist heute Donnerstag, zählt der heutige Tag noch mit.
+    while (d.getDay() !== 4) d.setDate(d.getDate() + 1);
+    tage = [];
+    for (var i = 0; i < 4; i++) {
+      var x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i * 7);
+      tage.push(x.getFullYear() + '-'
+        + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2));
+    }
+  }
+
+  /* Bestellschluss ist Mittwoch 12:00 — also der Vortag der Lieferung.
+     Daraus ergeben sich drei Zustände: noch Zeit, es eilt (Schluss ist
+     durch, aber noch nicht gesendet) und erledigt. */
+  function schlussZustand() {
+    var ziel = tage[aktiv];
+    if (gesendet[ziel]) return { art: 'gesendet', text: 'Bestellung für ' + de(ziel)
+      + ' ist versendet. Änderungen nur noch über „Korrektur“.' };
+    var t = ziel.split('-');
+    var schluss = new Date(+t[0], +t[1] - 1, +t[2] - 1, 12, 0, 0);
+    var jetzt = new Date();
+    if (jetzt > schluss) {
+      return { art: 'eilt', text: 'Bestellschluss war Mittwoch, ' + de(ziel)
+        + ' liegt nach dem Schluss — bitte sofort senden oder bei der Mühle anrufen.' };
+    }
+    var std = Math.round((schluss - jetzt) / 3600000);
+    var rest = std < 48 ? ('noch ' + std + ' Stunden') : ('noch ' + Math.round(std / 24) + ' Tage');
+    return { art: 'offen', text: 'Bestellschluss: Mittwoch, '
+      + de(minusEins(ziel)) + ' um 12:00 Uhr (' + rest + ').' };
+  }
+  function minusEins(iso) {
+    var t = iso.split('-');
+    var d = new Date(+t[0], +t[1] - 1, +t[2] - 1);
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)
+      + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  // ── Vorbelegung aus der letzten ausgewerteten Lieferung ──
+  function vorbelegen() {
+    mengen = {}; vorbelegt = {};
+    var letzte = HIST.lieferungen[HIST.lieferungen.length - 1];
+    if (!letzte) return;
+    letzte.positionen.forEach(function (p) {
+      mengen[p.nr] = p.menge;
+      vorbelegt[p.nr] = true;
+    });
+  }
+
+  function gruppeName(id) {
+    for (var i = 0; i < KAT.gruppen.length; i++) {
+      if (KAT.gruppen[i].id === id) return KAT.gruppen[i].name;
+    }
+    return id;
+  }
+
+  function sichtbar(a) {
+    var q = (document.getElementById('such').value || '').trim().toLowerCase();
+    if (nurBestellt && !(mengen[a.nr] > 0)) return false;
+    if (!q) return true;
+    return (a.name + ' ' + a.nr + ' ' + (a.kassenname || '')).toLowerCase().indexOf(q) >= 0;
+  }
+
+  function zeichne() {
+    var h = '', letzte = null, n = 0, stk = 0;
+    KAT.artikel.forEach(function (a) {
+      if (!sichtbar(a)) return;
+      if (a.gruppe !== letzte) {
+        letzte = a.gruppe;
+        h += '<div class="grp">' + esc(gruppeName(a.gruppe)) + '</div>';
+      }
+      var m = mengen[a.nr] || 0;
+      var kl = m > 0 ? (vorbelegt[a.nr] ? 'row vor' : 'row has') : 'row';
+      h += '<div class="' + kl + '">'
+        + '<div class="nrcol">' + esc(a.nr) + '</div>'
+        + '<div class="nm">' + esc(a.name)
+        + (a.einheit ? '<span class="eh">' + esc(a.einheit) + '</span>'
+                     : '<span class="eh stk">Stück</span>')
+        + (vorbelegt[a.nr] ? '<span class="tag vor">übernommen</span>' : '')
+        + (a.nur_rechnung ? '<span class="tag neu">neu</span>' : '')
+        + (a.kassenname ? '<span class="alt">Kasse: ' + esc(a.kassenname) + '</span>' : '')
+        + '</div>'
+        + '<div class="cnt">'
+        + '<button onclick="M.plus(\'' + a.nr + '\',-1)">−</button>'
+        + '<input value="' + (m || '') + '" inputmode="numeric"'
+        + ' onchange="M.setz(\'' + a.nr + '\',this.value)">'
+        + '<button onclick="M.plus(\'' + a.nr + '\',1)">+</button>'
+        + '</div></div>';
+    });
+    document.getElementById('liste').innerHTML = h
+      || '<div class="card" style="grid-column:1/-1">Kein Artikel passt zur Suche.</div>';
+
+    KAT.artikel.forEach(function (a) {
+      if (mengen[a.nr] > 0) { n++; stk += mengen[a.nr]; }
+    });
+    document.getElementById('c-best').textContent = n;
+    var vorb = Object.keys(vorbelegt).length;
+    document.getElementById('summe').innerHTML = '<b>' + n + '</b> Positionen · <b>'
+      + stk + '</b> Stück'
+      + (vorb ? ' · <span style="color:#1d4ed8">' + vorb + ' übernommen</span>' : '');
+    document.getElementById('sendbtn').disabled = n === 0;
+    var z = schlussZustand();
+    var el = document.getElementById('schluss');
+    el.className = 'schluss ' + z.art;
+    el.textContent = z.text;
+  }
+
+  function plus(nr, d) {
+    var m = (mengen[nr] || 0) + d;
+    if (m <= 0) delete mengen[nr]; else mengen[nr] = m;
+    delete vorbelegt[nr];
+    zeichne();
+  }
+  function setz(nr, wert) {
+    var m = parseInt(String(wert).replace(/\D/g, ''), 10);
+    if (!m || m <= 0) delete mengen[nr]; else mengen[nr] = m;
+    delete vorbelegt[nr];
+    zeichne();
+  }
+  function filter(was) {
+    nurBestellt = was === 'best';
+    document.getElementById('f-alle').className = nurBestellt ? '' : 'on';
+    document.getElementById('f-best').className = nurBestellt ? 'on' : '';
+    zeichne();
+  }
+
+  function tagLeiste() {
+    var h = '';
+    tage.forEach(function (iso, i) {
+      var kl = 'day' + (i === aktiv ? ' on' : '') + (gesendet[iso] ? ' sent' : '');
+      h += '<button class="' + kl + '" onclick="M.tagWahl(' + i + ')">'
+        + de(iso).slice(0, 5) + '<span class="d2">Do'
+        + (gesendet[iso] ? ' · gesendet' : '') + '</span></button>';
+    });
+    document.getElementById('days').innerHTML = h;
+  }
+  function tagWahl(i) { aktiv = i; tagLeiste(); zeichne(); }
+
+  function sprungleiste() {
+    var h = '';
+    KAT.gruppen.forEach(function (g) {
+      var n = KAT.artikel.filter(function (a) { return a.gruppe === g.id; }).length;
+      if (!n) return;
+      h += '<button onclick="M.springe(\'' + g.id + '\')">' + esc(g.name)
+        + ' <span style="opacity:.6">' + n + '</span></button>';
+    });
+    document.getElementById('jump').innerHTML = h;
+  }
+  function springe(gid) {
+    document.getElementById('such').value = '';
+    nurBestellt = false; filter('alle');
+    var titel = gruppeName(gid);
+    var alle = document.querySelectorAll('#liste .grp');
+    for (var i = 0; i < alle.length; i++) {
+      if (alle[i].textContent === titel) {
+        window.scrollTo({ top: alle[i].offsetTop - 180, behavior: 'smooth' });
+        return;
+      }
+    }
+  }
+
+  // ── Formular-Vorschau: Aufbau wie das Papierblatt der Mühle ──
+  function vorschau() {
+    var zeilen = KAT.artikel.filter(function (a) { return mengen[a.nr] > 0; });
+    var h = '<div class="vorschau">'
+      + '<div class="vk"><div><div class="li">Drax Mühle</div>'
+      + '<div style="font-size:11px;color:#555;margin-top:2px">'
+      + 'Bestellung Dorfladen Oberornau</div></div>'
+      + '<div class="re"><b>KDNr</b> 11225<br>'
+      + '<b>Datum</b> ' + de(heuteIso()) + '<br>'
+      + '<b>Lieferung</b> Do ' + de(tage[aktiv]) + ' vormittags</div></div>'
+      + '<table><thead><tr><th class="s">Stück</th><th class="e">Einheit</th>'
+      + '<th class="n">Art. Nr</th><th>Artikelbezeichnung</th></tr></thead><tbody>';
+    var letzte = null;
+    zeilen.forEach(function (a) {
+      // Leerzeile zwischen den Warengruppen — so ist das Papierblatt gegliedert.
+      if (letzte !== null && a.gruppe !== letzte) {
+        h += '<tr><td class="s">&nbsp;</td><td class="e"></td><td class="n"></td><td></td></tr>';
+      }
+      letzte = a.gruppe;
+      h += '<tr><td class="s">' + mengen[a.nr] + '</td>'
+        + '<td class="e">' + esc(a.einheit || 'Stück') + '</td>'
+        + '<td class="n">' + esc(a.nr) + '</td>'
+        + '<td>' + esc(a.name) + '</td></tr>';
+    });
+    h += '</tbody></table><div class="vf">' + zeilen.length + ' Positionen · '
+      + zeilen.reduce(function (s, a) { return s + mengen[a.nr]; }, 0) + ' Stück'
+      + ' · Dorfladen Oberornau UG, Dorfplatz 1, 84419 Obertaufkirchen</div></div>';
+    document.getElementById('vorschau-inhalt').innerHTML = h;
+    document.getElementById('modal').classList.remove('hidden');
+  }
+  function heuteIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)
+      + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function zu() { document.getElementById('modal').classList.add('hidden'); }
+
+  function senden() {
+    gesendet[tage[aktiv]] = true;
+    tagLeiste(); zeichne();
+    alert('Im Mockup wird nichts verschickt.\n\nEcht würde jetzt eine E-Mail an '
+      + 'die Mühle gehen, mit dem Formular als PDF im Anhang. Danach ist die '
+      + 'Bestellung gesperrt — Änderungen nur noch über „Korrektur“.');
+  }
+
+  // ── Verlauf ──
+  function verlTab() {
+    var h = '<tr><th>Liefertag</th><th>Wochentag</th><th class="r">Positionen</th>'
+      + '<th class="r">Stück</th><th>Rechnung</th></tr>';
+    HIST.lieferungen.slice().reverse().forEach(function (l) {
+      var stk = l.positionen.reduce(function (s, p) { return s + p.menge; }, 0);
+      var do_ = l.wochentag === 'Donnerstag';
+      h += '<tr><td><b>' + de(l.datum) + '</b></td>'
+        + '<td><span class="pill ' + (do_ ? 'do' : 'ab') + '">' + esc(l.wochentag)
+        + (do_ ? '' : ' — Ausnahme') + '</span></td>'
+        + '<td class="r">' + l.positionen.length + '</td>'
+        + '<td class="r">' + stk + '</td>'
+        + '<td style="color:#6b7280;font-family:ui-monospace,Consolas,monospace">'
+        + esc(l.rechnung) + '</td></tr>';
+    });
+    document.getElementById('verl-tab').innerHTML = h;
+  }
+
+  // ── Artikelstamm ──
+  function artTab() {
+    var q = (document.getElementById('asuch').value || '').trim().toLowerCase();
+    var h = '<tr><th>Nr</th><th>Bezeichnung</th><th>Einheit</th><th>Gruppe</th>'
+      + '<th class="r">Verkauft 12 Mon.</th><th class="r">Lieferungen</th></tr>';
+    var n = 0;
+    KAT.artikel.forEach(function (a) {
+      if (q && (a.name + ' ' + a.nr + ' ' + (a.kassenname || '')).toLowerCase()
+          .indexOf(q) < 0) return;
+      n++;
+      h += '<tr><td style="font-family:ui-monospace,Consolas,monospace">'
+        + esc(a.nr) + '</td><td><b>' + esc(a.name) + '</b>'
+        + (a.nur_rechnung ? '<span class="tag neu">neu</span>' : '')
+        + (a.kassenname ? '<div style="font-size:11px;color:#6b7280">Kasse: '
+            + esc(a.kassenname) + '</div>' : '')
+        + '</td><td>' + esc(a.einheit || 'Stück') + '</td>'
+        + '<td><span class="pill">' + esc(gruppeName(a.gruppe)) + '</span></td>'
+        + '<td class="r">' + (a.haeufigkeit || '—') + '</td>'
+        + '<td class="r">' + (a.lieferungen || '—') + '</td></tr>';
+    });
+    document.getElementById('art-tab').innerHTML = h;
+    document.getElementById('c-art').textContent = n;
+  }
+
+  function tab(id) {
+    ['bestellung', 'verlauf', 'artikel', 'einst'].forEach(function (t) {
+      document.getElementById('p-' + t).classList.toggle('hidden', t !== id);
+    });
+    var b = document.querySelectorAll('.subtabs button');
+    for (var i = 0; i < b.length; i++) {
+      b[i].className = b[i].getAttribute('data-t') === id ? 'on' : '';
+    }
+    document.getElementById('foot').classList.toggle('hidden', id !== 'bestellung');
+    if (id === 'verlauf') verlTab();
+    if (id === 'artikel') artTab();
+  }
+
+  function start() {
+    bauTage(); tagLeiste(); sprungleiste(); vorbelegen(); zeichne();
+    document.getElementById('c-verl').textContent = HIST.lieferungen.length;
+  }
+
+  return { start: start, tab: tab, zeichne: zeichne, plus: plus, setz: setz,
+           filter: filter, tagWahl: tagWahl, springe: springe,
+           vorschau: vorschau, zu: zu, senden: senden, artTab: artTab };
+})();
+M.start();
+</script>
+</body>
+</html>

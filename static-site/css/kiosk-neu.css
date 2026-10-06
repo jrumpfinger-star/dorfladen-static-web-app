@@ -3464,6 +3464,7 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
 }
 .k-panel.k-geteilt .bk-fest,
 .k-panel.k-geteilt .gk-fest,
+.k-panel.k-geteilt .dx-fest,
 .k-panel.k-geteilt .mb-fest{
   flex:0 0 auto;
   padding:6px calc(var(--pad) + var(--sar)) 0 calc(var(--pad) + var(--sal));
@@ -3480,6 +3481,7 @@ html[data-theme="dark"] .kn-knopf.hat{ background:#1d3a2b; color:#a7e0c0 }
 }
 .k-panel.k-geteilt .bk-foot,
 .k-panel.k-geteilt .gk-foot,
+.k-panel.k-geteilt .dx-foot,
 .k-panel.k-geteilt .mb-foot{
   flex:0 0 auto;
   position:static;                 /* im Fluss, nicht mehr klebend */
@@ -4663,3 +4665,264 @@ html[data-theme="dark"] .k-blatt-akt > .kn-knopf{
    Portion missverstanden wird. Umbrechen darf er wie die übrigen
    Vorblendungen auch. */
 .mb-frueher.hw{ font-style:italic; max-width:18em }
+
+/* ── 15  Drax Mühle (Spec specs/drax-bestellung/spec.md) ───────────────────
+ *
+ * Eigener Namensraum `dx-` statt der `mb-`-Klassen des Metzgers: Dessen
+ * Regeln hängen zu großen Teilen an `#panel-metzgerbest` und am
+ * Portionsmodell. Gemeinsam bleiben nur die Reiterleiste (`.mb-subs`) und
+ * der klebende Kopf — da ist die Aufgabe dieselbe.
+ *
+ * Die Zeile hat drei Spalten: Nummer, Name, Menge. Die Nummer steht links
+ * und nicht beim Namen, weil die Mühle ihr Sortiment über sie ordnet und
+ * weil in ihr die Gebindegröße steckt (40401 / 40402 / 40405 = 1 / 2,5 /
+ * 5 kg). Untereinander ausgerichtet ist sie senkrecht lesbar — beim
+ * Gegenlesen des Blattes sucht niemand mehr im Fließtext.
+ */
+#panel-drax{ padding-bottom:0 }
+#drax-body{ container-type:inline-size; container-name:liste }
+/* Zwischen #drax-body und den drei Teilen liegt noch diese Huelle. Sie muss
+   die Aufteilung durchreichen, sonst waechst sie mit der Liste und die
+   Fussleiste rutscht unter den Bildschirmrand. */
+.dx{ display:flex; flex-direction:column; height:100%; min-height:0 }
+.k-panel.k-geteilt .dx{ flex:1 1 auto; height:auto }
+
+/* Kopf und Fuß stehen fest, nur die Liste rollt. Ohne das lag auf dem
+   Telefon die erste Artikelzeile weit unter dem Bildschirmrand, und die
+   Sendeknöpfe waren erst nach 96 Zeilen erreichbar. */
+.dx-fest{ flex:0 0 auto; background:var(--flaeche); position:relative; z-index:5 }
+.dx-days-lbl{ font-size:11px; font-weight:600; color:var(--mut); margin:6px 0 3px }
+.dx-days{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px }
+.dx-day{
+  flex:0 0 auto; min-width:86px; min-height:var(--tap-min);
+  padding:5px 10px; border:1.5px solid var(--line); border-radius:10px;
+  background:var(--karte); font-size:13px; font-weight:600; cursor:pointer;
+  text-align:center; white-space:nowrap; color:var(--ink);
+}
+.dx-day .d2{ display:block; font-size:10px; font-weight:600; color:var(--mut) }
+.dx-day.on{ border-color:var(--gr); background:var(--gr); color:#fff }
+.dx-day.on .d2{ color:var(--gr-l) }
+.dx-day.sent, .dx-day.korr{ border-color:var(--gr); background:var(--gr-l); color:var(--gr-d) }
+.dx-day.sent .d2, .dx-day.korr .d2{ color:var(--gr-d) }
+.dx-day.on.sent, .dx-day.on.korr{ background:var(--gr); color:#fff }
+.dx-day.on.sent .d2, .dx-day.on.korr .d2{ color:var(--gr-l) }
+.dx-day.off{ opacity:.55 }
+
+/* Der Bestellschluss ist die einzige Angabe, die von selbst dringend wird.
+   Deshalb bekommt er eine eigene Zeile und ab Fristablauf eine ruhige
+   Blinkbewegung — kein Blinken, das man wegklicken möchte. */
+.dx-schluss{
+  display:flex; align-items:center; gap:8px; border-radius:10px;
+  padding:7px 11px; font-size:12.5px; font-weight:600; margin:6px 0;
+}
+.dx-schluss:empty{ display:none }
+.dx-schluss.offen{ background:var(--blu-l); color:var(--blu); border:1.5px solid var(--blu-b) }
+.dx-schluss.eilt{
+  background:var(--amb-l); color:var(--amb); border:1.5px solid var(--amb-b);
+  animation:dxBlink 1.6s ease-in-out infinite;
+}
+.dx-schluss.gesendet{ background:var(--gr-l); color:var(--gr-d); border:1.5px solid var(--line) }
+@keyframes dxBlink{ 0%,100%{ opacity:1 } 50%{ opacity:.6 } }
+@media (prefers-reduced-motion:reduce){ .dx-schluss.eilt{ animation:none } }
+
+.dx-kontext{
+  display:flex; align-items:center; gap:9px; background:var(--karte);
+  border:1px solid var(--line); border-radius:10px; padding:7px 11px; margin-bottom:6px;
+}
+.dx-kontext .ico{ display:flex; color:var(--gr) }
+.dx-kontext .z1{ font-size:13px; font-weight:600 }
+.dx-kontext .z2{ font-size:11.5px; color:var(--mut) }
+.dx-kontext.gesendet{ border-color:var(--line); background:var(--gr-t) }
+.dx-kontext.test{ border-style:dashed }
+/* Der Testbetrieb laeuft, bis die Bestelladresse der Muehle freigegeben ist.
+   Er steht deshalb als Schild neben der Anschrift, statt die Herkunft der
+   Mengen zu verdraengen (Spec drax-bestellung, F2/F11). */
+.dx-kontext .dx-test{
+  display:inline-block; margin-left:7px; padding:1px 7px; border-radius:999px;
+  background:var(--amb-l); color:var(--amb); border:1px solid var(--amb-b);
+  font-size:10.5px; font-weight:700; letter-spacing:.2px; vertical-align:1px;
+}
+
+.dx-bar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px }
+.dx-bar input[type=search], .dx-bar input{
+  flex:1; min-width:150px; min-height:var(--tap-min); padding:6px 10px;
+  border:1.5px solid var(--line); border-radius:10px; font-size:14px;
+}
+.dx-tgl{ display:flex; border:1.5px solid var(--line); border-radius:10px; overflow:hidden }
+.dx-tgl button{
+  border:0; background:var(--karte); padding:0 12px; min-height:var(--tap-min);
+  font-size:12px; font-weight:600; cursor:pointer; color:var(--mut);
+}
+.dx-tgl button.on{ background:var(--gr); color:#fff }
+.dx-jump{ display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px }
+.dx-jump button{
+  flex:0 0 auto; border:1.5px solid var(--line); background:var(--karte);
+  border-radius:16px; padding:0 12px; min-height:38px; font-size:11px;
+  font-weight:600; cursor:pointer; white-space:nowrap; color:var(--mut);
+}
+.dx-jump button span{ opacity:.6 }
+.dx-cnt{ background:rgba(0,0,0,.12); border-radius:9px; padding:1px 7px; font-size:11px }
+.mb-sub.on .dx-cnt{ background:rgba(255,255,255,.25) }
+
+.dx-liste{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:2px 0 8px }
+.dx-grp{
+  font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px;
+  color:var(--mut); margin:12px 0 2px; padding:0 2px 4px;
+  border-bottom:1px solid var(--line);
+}
+.dx-grp:first-child{ margin-top:2px }
+.dx-row{
+  background:var(--karte); border-radius:8px; padding:4px 8px; margin-bottom:3px;
+  border-left:4px solid transparent;
+  display:grid; grid-template-columns:52px minmax(0,1fr) 136px; gap:8px;
+  align-items:center;
+}
+.dx-row.has{ border-left-color:var(--gr) }
+/* Blau heißt: vorgeschlagen, aber noch von niemandem bestätigt. Grün heißt:
+   jemand hat die Menge angefasst (Spec F2). */
+.dx-row.vor{ border-left-color:var(--blu) }
+.dx-nr{
+  font-size:13px; font-weight:600; color:var(--mut); text-align:right;
+  font-variant-numeric:tabular-nums; font-family:ui-monospace,Consolas,monospace;
+  border-right:1px solid var(--line); padding-right:8px; align-self:stretch;
+  display:flex; align-items:center; justify-content:flex-end; min-height:40px;
+}
+.dx-row.has .dx-nr, .dx-row.vor .dx-nr{ color:var(--ink) }
+.dx-nm{ font-size:14px; font-weight:600; line-height:1.22; min-width:0 }
+.dx-eh{
+  display:inline-block; font-size:11px; font-weight:600; color:var(--gr-d);
+  background:var(--gr-l); border-radius:6px; padding:1px 6px; margin-left:6px;
+  vertical-align:1px;
+}
+.dx-eh.stk{ color:var(--mut); background:var(--gr-t) }
+.dx-alt{ display:block; font-size:11px; font-weight:400; color:var(--mut); margin-top:1px }
+.dx-tag{
+  display:inline-block; font-size:9px; font-weight:600; padding:1px 5px;
+  border-radius:7px; margin-left:5px; vertical-align:middle;
+}
+.dx-tag.vor{ background:var(--blu-l); color:var(--blu) }
+.dx-tag.neu{ background:var(--amb-l); color:var(--amb) }
+
+/* Minus, Zahl, Plus — jedes Element mindestens 40 px, damit es auf dem
+   Ladentablett sicher zu treffen ist. */
+.dx-cnt, .dx-row .dx-cnt{
+  display:flex; align-items:center; justify-content:flex-end; gap:4px;
+  background:none; padding:0; border-radius:0; font-size:inherit;
+}
+.dx-row .dx-cnt button{
+  width:40px; height:40px; border:1.5px solid var(--line); background:var(--karte);
+  border-radius:9px; font-size:19px; font-weight:600; cursor:pointer;
+  color:var(--mut); line-height:1; flex:0 0 40px;
+}
+.dx-row .dx-cnt button:hover{ border-color:var(--gr); color:var(--gr) }
+.dx-row .dx-cnt input{
+  width:48px; height:40px; text-align:center; font-size:16px; font-weight:600;
+  border:1.5px solid var(--line); border-radius:9px; font-variant-numeric:tabular-nums;
+}
+.dx-row.has .dx-cnt input{ border-color:var(--gr); background:var(--gr-l); color:var(--gr-d) }
+.dx-row.vor .dx-cnt input{ border-color:var(--blu); background:var(--blu-l); color:var(--blu) }
+.dx-cnt.fest{ font-size:16px; font-weight:600; padding-right:10px; color:var(--mut) }
+.dx-cnt.fest b{ color:var(--ink) }
+
+/* Die Fußleiste sitzt bündig am unteren Rand und reicht über die volle
+   Breite — so fluchtet sie mit der Menüleiste darunter, statt eingerückt
+   darüber zu schweben. */
+.dx-foot{
+  flex:0 0 auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  margin-left:calc(var(--pad) * -1); margin-right:calc(var(--pad) * -1);
+  padding:8px var(--pad); background:var(--karte);
+  border-top:1px solid var(--line); row-gap:4px;
+}
+.dx-st{ font-size:12.5px; color:var(--mut) }
+.dx-st b{ color:var(--ink); font-size:15px }
+.dx-st.uebern b{ color:var(--blu) }
+.dx-autosave{ font-size:11.5px; color:var(--mut); margin-left:auto }
+.dx-note{ font-size:12px; color:var(--mut); display:flex; align-items:center; gap:5px }
+.dx-btn, .dx-send{
+  border:1.5px solid var(--line); background:var(--karte); border-radius:10px;
+  padding:0 14px; min-height:var(--tap-min); font-size:13px; font-weight:600;
+  cursor:pointer; color:var(--ink);
+}
+.dx-btn.klein{ min-height:34px; padding:0 9px; font-size:11.5px; margin-left:4px }
+.dx-send{ background:var(--gr); border-color:var(--gr); color:#fff }
+.dx-send:disabled{ background:#cbd5e1; border-color:#cbd5e1; cursor:not-allowed }
+
+/* Verlauf, Artikel und Einstellungen sind Karten; sie rollen mit dem
+   Reiter, weil dort keine Fußleiste festgehalten werden muss. */
+.dx-card{
+  background:var(--karte); border:1px solid var(--line); border-radius:12px;
+  padding:11px 13px; margin-bottom:10px;
+}
+.dx-card h3{ font-size:14px; margin:0 0 7px }
+.dx-hint{ font-size:12px; color:var(--mut); line-height:1.5; margin:5px 0 }
+.dx-warn{
+  background:var(--amb-l); border:1.5px solid var(--amb-b); color:var(--amb);
+  border-radius:10px; padding:9px 12px; font-size:12.5px; line-height:1.5;
+  margin-bottom:10px;
+}
+.dx-tab{ width:100%; border-collapse:collapse; font-size:13px }
+.dx-tab th{
+  text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.4px;
+  color:var(--mut); border-bottom:1.5px solid var(--line); padding:5px 7px;
+  font-weight:600;
+}
+.dx-tab td{ padding:6px 7px; border-bottom:1px solid var(--line) }
+.dx-tab td.r, .dx-tab th.r{ text-align:right; font-variant-numeric:tabular-nums }
+.dx-tab td.nr{ font-family:ui-monospace,Consolas,monospace }
+.dx-tab tr.aus td{ opacity:.55 }
+.dx-pill{
+  display:inline-block; font-size:10px; font-weight:600; padding:2px 8px;
+  border-radius:9px; background:var(--gr-t); color:var(--mut);
+}
+.dx-pill.do{ background:var(--gr-l); color:var(--gr-d) }
+.dx-pill.ab{ background:var(--amb-l); color:var(--amb) }
+.dx-feld{ display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap }
+.dx-feld label{ font-size:12px; font-weight:600; color:var(--mut); min-width:160px }
+.dx-feld input, .dx-feld select{
+  min-height:var(--tap-min); padding:5px 10px; border:1.5px solid var(--line);
+  border-radius:9px; font-size:14px; min-width:220px; flex:1;
+}
+.dx-feld-wz{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
+.dx-neu{
+  background:var(--gr-t); border:1.5px dashed var(--line); border-radius:10px;
+  padding:11px 13px; margin:8px 0;
+}
+
+/* Ab einer gewissen Reiterbreite trägt die Liste zwei Spalten. Maßgeblich
+   ist die Breite des Reiters, nicht die des Fensters: Links nimmt die
+   Reiterleiste 84 bis 252 px weg. Eine Zeile braucht 52 + 136 px für
+   Nummer und Menge, dazu mindestens 190 px für den Namen. */
+@container liste (min-width:880px){
+  .dx-liste{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr));
+    gap:0 12px; align-content:start;
+  }
+  .dx-grp{ grid-column:1/-1 }
+}
+
+/* Auf dem Telefon zählt jeder Millimeter: Die Zähler stehen als
+   Zwischenstand ohnehin in der Reiterleiste, in der Fußleiste bleiben die
+   Knöpfe, um die es dort geht. */
+@media (max-width:699px) and (max-height:950px){
+  .dx-foot .dx-st{ display:none }
+  .dx-autosave{ margin-left:0 }
+}
+@media (max-width:560px){
+  .dx-row{ grid-template-columns:44px minmax(0,1fr) 124px; gap:6px }
+  .dx-nr{ font-size:12px; padding-right:6px }
+  .dx-nm{ font-size:13px }
+  .dx-row .dx-cnt input{ width:40px }
+  .dx-feld label{ min-width:100% }
+  .dx-feld input, .dx-feld select{ min-width:0 }
+}
+
+/* Die vier Bereichsknöpfe brachen auf dem Telefon in eine zweite Zeile um —
+   „Einstellungen" stand allein darunter und kostete 46 px Kopfhöhe, die der
+   Artikelliste fehlten. Sie stehen jetzt in einer Zeile und rollen seitlich,
+   wie die Liefertage darunter auch. */
+#panel-drax .mb-subs{ flex-wrap:nowrap }
+#panel-drax .mb-sub{ white-space:nowrap }
+/* Der Zähler ist ein Kind des Knopfes. Ist der ein Flex-Behälter, wird die
+   Pille auf die volle Knopfbreite gezogen und rutscht unter die Beschriftung.
+   Sie bleibt daher ausdrücklich bei ihrer Inhaltsbreite. */
+#panel-drax .mb-sub .dx-cnt{ flex:0 0 auto; display:inline-block; line-height:1.7 }
