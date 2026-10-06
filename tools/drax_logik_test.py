@@ -262,10 +262,24 @@ pruefe(not store.nummer_frei(KATALOG, "40401"),
        "TC-F10-02 vergebene Nummer wird erkannt")
 pruefe(store.nummer_frei(KATALOG, "99999"), "Freie Nummer wird erkannt")
 
+# Das Merkmal „nur Rechnung" stammte aus der Zeit, in der der Katalog aus
+# Kassen-Export und Rechnungen zusammengesetzt war: Es kennzeichnete
+# Artikel, die der Laden geliefert bekam, ohne dass sie in der Kasse
+# standen. Seit die Preisliste der Muehle die Quelle ist, sind alle
+# fuenfzehn dort gelistet und bestaetigt - das Merkmal ist erledigt.
+# (Spec drax-bestellung, TC-F10-04)
 nur_rechnung = [a for a in KATALOG if a.get("nur_rechnung")]
-pruefe(len(nur_rechnung) == 15,
-       f"TC-F10-04 15 Artikel stammen nur aus Rechnungen "
+pruefe(not nur_rechnung,
+       f"TC-F10-04 kein Artikel stammt mehr nur aus Rechnungen "
        f"({len(nur_rechnung)})")
+
+nicht_gelistet = [a for a in KATALOG if a.get("nicht_gelistet")]
+pruefe(all(a.get("aktiv") is False for a in nicht_gelistet),
+       f"Nicht mehr gelistete Artikel sind ausgeblendet "
+       f"({len(nicht_gelistet)})")
+pruefe(all(not (a.get("haeufigkeit") or a.get("lieferungen"))
+           for a in nicht_gelistet),
+       "Ausgeblendet wird nur, was nie bestellt wurde")
 
 # Eine Position ohne Katalogtreffer darf nicht stillschweigend verschwinden.
 waise = store.positionen_mit_namen([{"nr": "00000", "menge": 1}], KATALOG)

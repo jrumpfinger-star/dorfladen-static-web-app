@@ -522,7 +522,10 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
 - Ein Artikel lässt sich **löschen**; das Verhalten regelt
   [specs/artikel-loeschen/spec.md](../artikel-loeschen/spec.md): nie bestellt →
   wirklich entfernt, sonst nur ausgeblendet mit Hinweis.
-- Artikel, die nur aus Rechnungen stammen, sind gekennzeichnet.
+- Artikel, die in der aktuellen Preisliste der Mühle **fehlen**, werden
+  ausgeblendet — aber nur, wenn sie nie bestellt wurden. Ein Läufer, der
+  stillschweigend aus dem Bestellschirm verschwindet, fiele erst im leeren
+  Regal auf.
 - Eine Suche filtert über Bezeichnung und Nummer.
 
 #### F10 Test Cases
@@ -544,7 +547,18 @@ Der Reiter *Artikel* zeigt den Artikelstamm und lässt ihn pflegen.
 
 **TC-F10-04: Herkunft gekennzeichnet**
 
-- **Expected:** Die 15 nur aus Rechnungen stammenden Artikel tragen ein Merkmal.
+- **Hinfällig seit 06.10.2026.** Das Merkmal „nur Rechnung" stammte aus der
+  Zeit, in der der Katalog aus Kassen-Export und Rechnungen
+  zusammengesetzt war. Seit die **Preisliste der Mühle** die Quelle ist,
+  sind alle fünfzehn dort gelistet und damit bestätigt.
+- **Expected:** Kein Artikel trägt mehr `nur_rechnung`.
+
+**TC-F10-09: Fehlt in der Preisliste, wurde aber bestellt**
+
+- **Setup:** `11024` (Vanillezucker, 26 Verkäufe) steht nicht in der
+  Preisliste.
+- **Expected:** Der Artikel bleibt **sichtbar**; ausgeblendet wird nur, was
+  nie bestellt oder geliefert wurde.
 
 **TC-F10-05: Anlegen und Bearbeiten in derselben Dialogkarte**
 
@@ -714,7 +728,7 @@ Alles, was sich ohne Code ändern kann, steht in der CMS-Karte
 
 | Datei | Inhalt | Erzeugt von |
 | --- | --- | --- |
-| `api/drax-order/vorlage/katalog-drax.json` | 96 Artikel, Gruppe, Einheit, Häufigkeit | `tools/drax_katalog_aus_xlsx.py` |
+| `api/drax-order/vorlage/katalog-drax.json` | 121 Artikel, Gruppe, Einheit, Häufigkeit, Strichcode | `tools/drax_katalog_aus_preisliste.py` (zuvor `drax_katalog_aus_xlsx.py`) |
 | `api/drax-order/vorlage/rechnungsartikel.json` | Artikelstamm aus Sicht der Mühle | `tools/drax_rechnung_extract.py` |
 | `api/drax-order/vorlage/lieferhistorie.json` | 7 Liefertage mit Mengen | `tools/drax_rechnung_extract.py` |
 | `api/drax-order/vorlage/startwerte-drax.json` | Vorbelegung aus der letzten Lieferung | `tools/drax_rechnung_extract.py` |

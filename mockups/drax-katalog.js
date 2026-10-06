@@ -1,7 +1,7 @@
-// Erzeugt von tools/drax_katalog_aus_xlsx.py – nicht von Hand aendern.
+// Erzeugt von tools/drax_katalog_aus_preisliste.py - nicht von Hand aendern.
 window.DRAX_KATALOG = {
   "stand": "2026-10-06",
-  "quelle": "Drax/data (10).xlsx + Drax/Rechnung*.pdf",
+  "quelle": "Drax/Preisliste 06.10.2026 (zuvor data (10).xlsx + Rechnung*.pdf)",
   "kd_nr": "11225",
   "aus_rechnungen_neu": 15,
   "aus_rechnungen_umbenannt": 3,
@@ -56,17 +56,6 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Weizenm.Type 405 1 kg"
     },
     {
-      "nr": "40412",
-      "name": "Weizenmehl Type 550",
-      "einheit": "2,5 kg",
-      "ean": "4250296601603",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 46,
-      "lieferungen": 2,
-      "aktiv": true,
-      "quelle": "DRX Weizenm. 550 2,5 kg"
-    },
-    {
       "nr": "40402",
       "name": "Weizenmehl Type 405",
       "einheit": "2,5 kg",
@@ -89,37 +78,16 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Weizenm. 405 5 kg"
     },
     {
-      "nr": "40901",
-      "name": "Bio Pizzamehl Type 00 \"Farina Alpina\"",
-      "einheit": "1 kg",
-      "ean": "4250296600491",
+      "nr": "40408",
+      "name": "Weizenmehl 405",
+      "einheit": "12,5 kg",
+      "ean": "4250296601573",
       "gruppe": "weizenmehl",
-      "haeufigkeit": 33,
-      "lieferungen": 2,
-      "aktiv": true,
-      "quelle": "DRX Bio Pizzam. 00 \"\"Farina Alpina\"\" 1 kg"
-    },
-    {
-      "nr": "40421",
-      "name": "Weizenmehl Dunst Wiener Griessler",
-      "einheit": "1 kg",
-      "ean": "4250296601337",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 32,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Weizenm. Dun. W. Griess. 1 kg"
-    },
-    {
-      "nr": "40415",
-      "name": "Weizenmehl Type 550",
-      "einheit": "5 kg",
-      "ean": "4250296601610",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 31,
-      "lieferungen": 2,
-      "aktiv": true,
-      "quelle": "DRX Weizenm. 550  5 kg"
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": false,
+      "quelle": "DRX Weizenm. 405 12,5 kg",
+      "nicht_gelistet": true
     },
     {
       "nr": "40411",
@@ -133,37 +101,48 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Weizenm. 550 1 kg"
     },
     {
-      "nr": "40435",
-      "name": "Weizenmehl 1050",
-      "einheit": "5 kg",
-      "ean": "4250296601719",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 15,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Weizenm. 1050 5 kg"
-    },
-    {
-      "nr": "40550",
-      "name": "Bio Hartweizengrieß fein",
-      "einheit": "500 g",
-      "ean": "4250296600743",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 13,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Hartweizengrieß fein 500 g"
-    },
-    {
-      "nr": "40462",
-      "name": "Bio Weizenmehl Type 550",
+      "nr": "40412",
+      "name": "Weizenmehl Type 550",
       "einheit": "2,5 kg",
-      "ean": "4250296604628",
+      "ean": "4250296601603",
       "gruppe": "weizenmehl",
-      "haeufigkeit": 12,
+      "haeufigkeit": 46,
       "lieferungen": 2,
       "aktiv": true,
-      "quelle": "DRX Bio Weizenm. 550 2,5 kg"
+      "quelle": "DRX Weizenm. 550 2,5 kg"
+    },
+    {
+      "nr": "40415",
+      "name": "Weizenmehl Type 550",
+      "einheit": "5 kg",
+      "ean": "4250296601610",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 31,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "DRX Weizenm. 550  5 kg"
+    },
+    {
+      "nr": "40418",
+      "name": "Weizenmehl Type 550",
+      "einheit": "12,5 kg",
+      "ean": "4250296601627",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 3,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Weizenm. 550 12,5 kg"
+    },
+    {
+      "nr": "40421",
+      "name": "Weizenmehl Dunst Wiener Griessler",
+      "einheit": "1 kg",
+      "ean": "4250296601337",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 32,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Weizenm. Dun. W. Griess. 1 kg"
     },
     {
       "nr": "40432",
@@ -177,6 +156,28 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Weizenm. 1050 2,5 kg"
     },
     {
+      "nr": "40435",
+      "name": "Weizenmehl Type 1050",
+      "einheit": "5 kg",
+      "ean": "4250296601719",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 15,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Weizenm. 1050 5 kg"
+    },
+    {
+      "nr": "40462",
+      "name": "Bio Weizenmehl Type 550",
+      "einheit": "2,5 kg",
+      "ean": "4250296604628",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 12,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "DRX Bio Weizenm. 550 2,5 kg"
+    },
+    {
       "nr": "40465",
       "name": "Bio Weizenmehl Type 550",
       "einheit": "5 kg",
@@ -188,8 +189,52 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Bio Weizenm. 550 5 kg"
     },
     {
+      "nr": "40531",
+      "name": "Bio Emmermehl Type 812",
+      "einheit": "1 kg",
+      "ean": "4250296622004",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Bio Emmermehl Type 812 * 1 kg"
+    },
+    {
+      "nr": "40541",
+      "name": "Bio Emmermehl Vollkorn",
+      "einheit": "1 kg",
+      "ean": "4250296600651",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "40550",
+      "name": "Bio Hartweizengrieß",
+      "einheit": "500 g",
+      "ean": "4250296600743",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 13,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Hartweizengrieß fein 500 g"
+    },
+    {
+      "nr": "40901",
+      "name": "Bio Pizzamehl Type 00 \"Farina Alpina\"",
+      "einheit": "1 kg",
+      "ean": "4250296600491",
+      "gruppe": "weizenmehl",
+      "haeufigkeit": 33,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "DRX Bio Pizzam. 00 \"\"Farina Alpina\"\" 1 kg"
+    },
+    {
       "nr": "42705",
-      "name": "Bio Weizen ganzes Korn",
+      "name": "Bio Weizen (ganzes Korn)",
       "einheit": "5 kg",
       "ean": "4250296607049",
       "gruppe": "weizenmehl",
@@ -199,38 +244,26 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Bio Weizen ganz. Korn 5 kg"
     },
     {
-      "nr": "40418",
-      "name": "Weizenmehl 550",
-      "einheit": "12,5 kg",
-      "ean": "4250296601627",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 3,
+      "nr": "80515",
+      "name": "Bio Dinkel (Oberkulmer Rotkorn) ganzes Korn",
+      "einheit": "5 kg",
+      "ean": "4250296605168",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 1,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Weizenm. 550 12,5 kg"
+      "quelle": "DRX Bio Dinkel ganzes Korn 5 kg"
     },
     {
-      "nr": "40531",
-      "name": "Bio Emmermehl Type 812",
+      "nr": "80801",
+      "name": "Dinkelmehl Type 630",
       "einheit": "1 kg",
-      "ean": "",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 0,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "Bio Emmermehl Type 812 * 1 kg",
-      "nur_rechnung": true
-    },
-    {
-      "nr": "40408",
-      "name": "Weizenmehl 405",
-      "einheit": "12,5 kg",
-      "ean": "4250296601573",
-      "gruppe": "weizenmehl",
-      "haeufigkeit": 0,
+      "ean": "4250296600392",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 50,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Weizenm. 405 12,5 kg"
+      "quelle": "DRX Dinkelmehl  630 1 kg"
     },
     {
       "nr": "80802",
@@ -244,17 +277,6 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Dinkelm. 630 2,5 kg"
     },
     {
-      "nr": "80801",
-      "name": "Dinkelmehl 630",
-      "einheit": "1 kg",
-      "ean": "4250296600392",
-      "gruppe": "dinkelmehl",
-      "haeufigkeit": 50,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Dinkelmehl  630 1 kg"
-    },
-    {
       "nr": "80805",
       "name": "Dinkelmehl Type 630",
       "einheit": "5 kg",
@@ -264,6 +286,18 @@ window.DRAX_KATALOG = {
       "lieferungen": 1,
       "aktiv": true,
       "quelle": "DRX Dinkelmehl  630 5 kg"
+    },
+    {
+      "nr": "80808",
+      "name": "Dinkelmehl 630",
+      "einheit": "12,5 kg",
+      "ean": "4250296602129",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": false,
+      "quelle": "DRX Dinkelm. 630 12,5 kg",
+      "nicht_gelistet": true
     },
     {
       "nr": "80811",
@@ -277,17 +311,6 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Din. M. Dun. W. Griess. 1 kg"
     },
     {
-      "nr": "80892",
-      "name": "Bio Dinkelmehl Type 630",
-      "einheit": "2,5 kg",
-      "ean": "4250296608817",
-      "gruppe": "dinkelmehl",
-      "haeufigkeit": 10,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkelmehl 630 2,5 kg"
-    },
-    {
       "nr": "80812",
       "name": "Dinkelmehl Dunst Wiener Griessler Type 630",
       "einheit": "2,5 kg",
@@ -299,15 +322,38 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Din.M. Dun. W.Griess. 630 2,5kg"
     },
     {
-      "nr": "80891",
-      "name": "Bio Dinkelmehl Type 630",
-      "einheit": "1 kg",
-      "ean": "4250296608367",
+      "nr": "80825",
+      "name": "Dinkelmehl Type 1050",
+      "einheit": "5 kg",
+      "ean": "4250296602211",
       "gruppe": "dinkelmehl",
-      "haeufigkeit": 5,
-      "lieferungen": 1,
+      "haeufigkeit": 0,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Bio Dinkelmehl 630 1 kg"
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "80828",
+      "name": "Dinkelmehl 1050",
+      "einheit": "12,5 kg",
+      "ean": "4250296602228",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": false,
+      "quelle": "DRX Dinkelmehl 1050 12,5 kg",
+      "nicht_gelistet": true
+    },
+    {
+      "nr": "80850",
+      "name": "Dinkelgrieß fein",
+      "einheit": "500 g",
+      "ean": "4250296600095",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
     },
     {
       "nr": "80872",
@@ -322,6 +368,28 @@ window.DRAX_KATALOG = {
       "kassenname": "Bio Dinkel Dunst Wiener Griessler"
     },
     {
+      "nr": "80891",
+      "name": "Bio Dinkelmehl Type 630",
+      "einheit": "1 kg",
+      "ean": "4250296608367",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 5,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Bio Dinkelmehl 630 1 kg"
+    },
+    {
+      "nr": "80892",
+      "name": "Bio Dinkelmehl Type 630",
+      "einheit": "2,5 kg",
+      "ean": "4250296608817",
+      "gruppe": "dinkelmehl",
+      "haeufigkeit": 10,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Bio Dinkelmehl 630 2,5 kg"
+    },
+    {
       "nr": "80895",
       "name": "Bio Dinkelmehl Type 630",
       "einheit": "5 kg",
@@ -333,41 +401,52 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Bio Dinkelmehl 630 5 kg"
     },
     {
-      "nr": "80515",
-      "name": "Bio Dinkel ganzes Korn",
+      "nr": "60601",
+      "name": "Roggenmehl Type 610",
+      "einheit": "1 kg",
+      "ean": "4250296601030",
+      "gruppe": "roggenmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Roggenmehl Type 610 * 1kg"
+    },
+    {
+      "nr": "60602",
+      "name": "Roggenmehl Type 610",
+      "einheit": "2,5 kg",
+      "ean": "4250296601856",
+      "gruppe": "roggenmehl",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Roggenmehl Type 610 * 2,5kg"
+    },
+    {
+      "nr": "60605",
+      "name": "Roggenmehl Type 610",
       "einheit": "5 kg",
-      "ean": "4250296605168",
-      "gruppe": "dinkelmehl",
-      "haeufigkeit": 1,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkel ganzes Korn 5 kg"
-    },
-    {
-      "nr": "80828",
-      "name": "Dinkelmehl 1050",
-      "einheit": "12,5 kg",
-      "ean": "4250296602228",
-      "gruppe": "dinkelmehl",
+      "ean": "4250296601863",
+      "gruppe": "roggenmehl",
       "haeufigkeit": 0,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Dinkelmehl 1050 12,5 kg"
+      "quelle": "Preisliste"
     },
     {
-      "nr": "80808",
-      "name": "Dinkelmehl 630",
-      "einheit": "12,5 kg",
-      "ean": "4250296602129",
-      "gruppe": "dinkelmehl",
+      "nr": "60611",
+      "name": "Roggenmehl Type 997",
+      "einheit": "1 kg",
+      "ean": "4250296601047",
+      "gruppe": "roggenmehl",
       "haeufigkeit": 0,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Dinkelm. 630 12,5 kg"
+      "quelle": "Preisliste"
     },
     {
       "nr": "60612",
-      "name": "Roggenmehl 997",
+      "name": "Roggenmehl Type 997",
       "einheit": "2,5 kg",
       "ean": "4250296601900",
       "gruppe": "roggenmehl",
@@ -377,28 +456,60 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Roggenm.  997 2,5kg"
     },
     {
-      "nr": "60601",
-      "name": "Roggenmehl Type 610",
-      "einheit": "1 kg",
-      "ean": "",
+      "nr": "60615",
+      "name": "Roggenmehl Type 997",
+      "einheit": "5 kg",
+      "ean": "4250296601917",
       "gruppe": "roggenmehl",
       "haeufigkeit": 0,
-      "lieferungen": 1,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "Roggenmehl Type 610 * 1kg",
-      "nur_rechnung": true
+      "quelle": "Preisliste"
     },
     {
-      "nr": "60602",
-      "name": "Roggenmehl Type 610",
-      "einheit": "2,5 kg",
-      "ean": "",
+      "nr": "60641",
+      "name": "Bio Roggenmehl Type 1370",
+      "einheit": "1 kg",
+      "ean": "4250296606417",
       "gruppe": "roggenmehl",
       "haeufigkeit": 0,
-      "lieferungen": 1,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "Roggenmehl Type 610 * 2,5kg",
-      "nur_rechnung": true
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "55521",
+      "name": "Bio Dinkel Zitronen-Backmischung",
+      "einheit": "590 g",
+      "ean": "4250296605212",
+      "gruppe": "backmischung",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": false,
+      "quelle": "DRX Bio Dinkel Zitr. B.misch. 590 g",
+      "nicht_gelistet": true
+    },
+    {
+      "nr": "55600",
+      "name": "Bio Kartoffelbrot-Mischung",
+      "einheit": "1 kg",
+      "ean": "4250296656009",
+      "gruppe": "backmischung",
+      "haeufigkeit": 2,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Kartoffelbr. Misch. 1 kg"
+    },
+    {
+      "nr": "55610",
+      "name": "Bio Bauernbrot Brotbackmischung",
+      "einheit": "1 kg",
+      "ean": "4250296656108",
+      "gruppe": "backmischung",
+      "haeufigkeit": 3,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Bauernb. Backm. 1 kg"
     },
     {
       "nr": "55623",
@@ -410,6 +521,28 @@ window.DRAX_KATALOG = {
       "lieferungen": 1,
       "aktiv": true,
       "quelle": "DRX Bio 3-Saten Misch. 500 g"
+    },
+    {
+      "nr": "55630",
+      "name": "Bio Partybrot Brotbackmischung",
+      "einheit": "1 kg",
+      "ean": "4250296656306",
+      "gruppe": "backmischung",
+      "haeufigkeit": 2,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Partybrot Misch: 1 kg"
+    },
+    {
+      "nr": "55640",
+      "name": "Bio Hildegard Energie-Kekse Dinkelbackmischung",
+      "einheit": "350 g",
+      "ean": "4250296656405",
+      "gruppe": "backmischung",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
     },
     {
       "nr": "55645",
@@ -424,50 +557,6 @@ window.DRAX_KATALOG = {
       "kassenname": "Bio Weizen-Pizza-Mischung"
     },
     {
-      "nr": "55610",
-      "name": "Bio Bauernbrot-Backmischung",
-      "einheit": "1 kg",
-      "ean": "4250296656108",
-      "gruppe": "backmischung",
-      "haeufigkeit": 3,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Bauernb. Backm. 1 kg"
-    },
-    {
-      "nr": "55600",
-      "name": "Bio Kartoffelbrot-Mischung",
-      "einheit": "1 kg",
-      "ean": "4250296656009",
-      "gruppe": "backmischung",
-      "haeufigkeit": 2,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Kartoffelbr. Misch. 1 kg"
-    },
-    {
-      "nr": "55630",
-      "name": "Bio Partybrot-Mischung",
-      "einheit": "1 kg",
-      "ean": "4250296656306",
-      "gruppe": "backmischung",
-      "haeufigkeit": 2,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Partybrot Misch: 1 kg"
-    },
-    {
-      "nr": "55521",
-      "name": "Bio Dinkel Zitronen-Backmischung",
-      "einheit": "590 g",
-      "ean": "4250296605212",
-      "gruppe": "backmischung",
-      "haeufigkeit": 0,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkel Zitr. B.misch. 590 g"
-    },
-    {
       "nr": "55685",
       "name": "Bio Kerndlbrot-Mischung",
       "einheit": "1 kg",
@@ -475,19 +564,86 @@ window.DRAX_KATALOG = {
       "gruppe": "backmischung",
       "haeufigkeit": 0,
       "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Kerndlbr. Misch. 1 kg"
+      "aktiv": false,
+      "quelle": "DRX Bio Kerndlbr. Misch. 1 kg",
+      "nicht_gelistet": true
     },
     {
-      "nr": "88949",
-      "name": "Bio Haferflocken Kleinblatt",
-      "einheit": "1 kg",
-      "ean": "4250296689496",
+      "nr": "38050",
+      "name": "Frühstücksbrei \"Porridge\" Basis",
+      "einheit": "500 g",
+      "ean": "4006040014072",
       "gruppe": "muesli",
-      "haeufigkeit": 76,
-      "lieferungen": 4,
+      "haeufigkeit": 5,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Bio Haferfl. Kleinblatt 1kg"
+      "quelle": "DRX Frühstücksbrei Basis"
+    },
+    {
+      "nr": "55740",
+      "name": "Bio Hafer-Porridgeflocken fein",
+      "einheit": "500 g",
+      "ean": "4250296655545",
+      "gruppe": "muesli",
+      "haeufigkeit": 13,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "DRX Bio Hafer-Porridgefl. fein 500 g"
+    },
+    {
+      "nr": "78586",
+      "name": "Bio Dinkel gepufft natur",
+      "einheit": "200 g",
+      "ean": "4002543001281",
+      "gruppe": "muesli",
+      "haeufigkeit": 10,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Dinkel gepufft natur"
+    },
+    {
+      "nr": "78590",
+      "name": "Bio Hirse gepufft natur",
+      "einheit": "200 g",
+      "ean": "4002543225069",
+      "gruppe": "muesli",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Bio Hirse gepufft natur"
+    },
+    {
+      "nr": "88004",
+      "name": "Bio Erdbeer Cluster Crunchy",
+      "einheit": "375 g",
+      "ean": "4250296611046",
+      "gruppe": "muesli",
+      "haeufigkeit": 0,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "Bio Erdbeer Cluster Crunchy"
+    },
+    {
+      "nr": "88005",
+      "name": "Bio Honig-Dinkel gepufft",
+      "einheit": "200 g",
+      "ean": "4250296611022",
+      "gruppe": "muesli",
+      "haeufigkeit": 11,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Honig-Dinkel gepufft"
+    },
+    {
+      "nr": "88006",
+      "name": "Bio Amaranth Beerenmüsli",
+      "einheit": "500 g",
+      "ean": "4250296611060",
+      "gruppe": "muesli",
+      "haeufigkeit": 9,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Bio Amaranth Beerenmüsli"
     },
     {
       "nr": "88020",
@@ -501,6 +657,17 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Bio Haferfl. Kleinblatt 500g"
     },
     {
+      "nr": "88032",
+      "name": "Amaranth-Schokomüsli",
+      "einheit": "500 g",
+      "ean": "4250296680325",
+      "gruppe": "muesli",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Amaranth-Schokomüsli"
+    },
+    {
       "nr": "88034",
       "name": "Schoko Knusper Müsli",
       "einheit": "1 kg",
@@ -510,6 +677,94 @@ window.DRAX_KATALOG = {
       "lieferungen": 3,
       "aktiv": true,
       "quelle": "DRX Schoko Knusper Müsli 1kg"
+    },
+    {
+      "nr": "88035",
+      "name": "Müsli Schoko Knusper",
+      "einheit": "500 g",
+      "ean": "4250296680356",
+      "gruppe": "muesli",
+      "haeufigkeit": 32,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Schoko Knusper Müsli 500g"
+    },
+    {
+      "nr": "88047",
+      "name": "Bio Grundmischung",
+      "einheit": "1 kg",
+      "ean": "4250296680479",
+      "gruppe": "muesli",
+      "haeufigkeit": 15,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Bio Grundmischung 1kg"
+    },
+    {
+      "nr": "88055",
+      "name": "Bio Früchtemüsli",
+      "einheit": "1 kg",
+      "ean": "4250296680554",
+      "gruppe": "muesli",
+      "haeufigkeit": 11,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Bio Früchtemüsli 1kg"
+    },
+    {
+      "nr": "88057",
+      "name": "Schoko-Dinkelmüsli",
+      "einheit": "500 g",
+      "ean": "4250296680578",
+      "gruppe": "muesli",
+      "haeufigkeit": 17,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Schoko-Dinkelmüsli"
+    },
+    {
+      "nr": "88060",
+      "name": "Schoko-Dinkel gepufft",
+      "einheit": "200 g",
+      "ean": "4250296680608",
+      "gruppe": "muesli",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Schoko-Dinkel gepufft"
+    },
+    {
+      "nr": "88061",
+      "name": "Bio Amaranth gepufft",
+      "einheit": "200 g",
+      "ean": "4250296680615",
+      "gruppe": "muesli",
+      "haeufigkeit": 8,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Amaranth gepufft"
+    },
+    {
+      "nr": "88063",
+      "name": "Dinkel-Frucht-Müsli mit gepufftem Dinkel",
+      "einheit": "500 g",
+      "ean": "4250296680639",
+      "gruppe": "muesli",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Dinkel-Frucht-Müsli mit gepufftem Dinkel"
+    },
+    {
+      "nr": "88064",
+      "name": "Dinkel-Knusper-Müsli",
+      "einheit": "500 g",
+      "ean": "4250296680646",
+      "gruppe": "muesli",
+      "haeufigkeit": 16,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Dinkel-Knusper-Müsli"
     },
     {
       "nr": "88070",
@@ -534,220 +789,37 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Bio Hafer Cluster Crunchy"
     },
     {
-      "nr": "88035",
-      "name": "Müsli Schoko Knusper",
-      "einheit": "500 g",
-      "ean": "4250296680356",
-      "gruppe": "muesli",
-      "haeufigkeit": 32,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Schoko Knusper Müsli 500g"
-    },
-    {
-      "nr": "88057",
-      "name": "Schoko-Dinkelmüsli",
-      "einheit": "500 g",
-      "ean": "4250296680578",
-      "gruppe": "muesli",
-      "haeufigkeit": 17,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Schoko-Dinkelmüsli"
-    },
-    {
-      "nr": "88064",
-      "name": "Dinkel-Knusper-Müsli",
-      "einheit": "500 g",
-      "ean": "4250296680646",
-      "gruppe": "muesli",
-      "haeufigkeit": 16,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Dinkel-Knusper-Müsli"
-    },
-    {
-      "nr": "88047",
-      "name": "Bio Grundmischung",
-      "einheit": "1 kg",
-      "ean": "4250296680479",
-      "gruppe": "muesli",
-      "haeufigkeit": 15,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Bio Grundmischung 1kg"
-    },
-    {
-      "nr": "55740",
-      "name": "Bio Hafer-Porridgeflocken fein",
-      "einheit": "500 g",
-      "ean": "4250296655545",
-      "gruppe": "muesli",
-      "haeufigkeit": 13,
-      "lieferungen": 2,
-      "aktiv": true,
-      "quelle": "DRX Bio Hafer-Porridgefl. fein 500 g"
-    },
-    {
-      "nr": "88055",
-      "name": "Bio Früchtemüsli",
-      "einheit": "1 kg",
-      "ean": "4250296680554",
-      "gruppe": "muesli",
-      "haeufigkeit": 11,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Bio Früchtemüsli 1kg"
-    },
-    {
-      "nr": "88005",
-      "name": "Bio Honig-Dinkel gepufft",
-      "einheit": "",
-      "ean": "4250296611022",
-      "gruppe": "muesli",
-      "haeufigkeit": 11,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Honig-Dinkel gepufft"
-    },
-    {
-      "nr": "78586",
-      "name": "Bio Dinkel gepufft natur",
-      "einheit": "",
-      "ean": "4002543001281",
-      "gruppe": "muesli",
-      "haeufigkeit": 10,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkel gepufft natur"
-    },
-    {
-      "nr": "88006",
-      "name": "Bio Amaranth Beerenmüsli",
-      "einheit": "500 g",
-      "ean": "4250296611060",
-      "gruppe": "muesli",
-      "haeufigkeit": 9,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Bio Amaranth Beerenmüsli"
-    },
-    {
-      "nr": "88061",
-      "name": "Bio Amaranth gepufft",
-      "einheit": "",
-      "ean": "4250296680615",
-      "gruppe": "muesli",
-      "haeufigkeit": 8,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Amaranth gepufft"
-    },
-    {
-      "nr": "38050",
-      "name": "Frühstücksbrei Basis",
-      "einheit": "",
-      "ean": "4006040014072",
-      "gruppe": "muesli",
-      "haeufigkeit": 5,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Frühstücksbrei Basis"
-    },
-    {
-      "nr": "88004",
-      "name": "Bio Erdbeer Cluster Crunchy",
-      "einheit": "375 g",
-      "ean": "",
-      "gruppe": "muesli",
-      "haeufigkeit": 0,
-      "lieferungen": 2,
-      "aktiv": true,
-      "quelle": "Bio Erdbeer Cluster Crunchy",
-      "nur_rechnung": true
-    },
-    {
-      "nr": "88032",
-      "name": "Amaranth-Schokomüsli",
-      "einheit": "500 g",
-      "ean": "",
-      "gruppe": "muesli",
-      "haeufigkeit": 0,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "Amaranth-Schokomüsli",
-      "nur_rechnung": true
-    },
-    {
       "nr": "88253",
       "name": "Bio Amaranth Früchtemüsli",
       "einheit": "500 g",
-      "ean": "",
+      "ean": "4250966110534",
       "gruppe": "muesli",
       "haeufigkeit": 0,
       "lieferungen": 1,
       "aktiv": true,
-      "quelle": "Bio Amaranth Früchtemüsli",
-      "nur_rechnung": true
+      "quelle": "Bio Amaranth Früchtemüsli"
     },
     {
       "nr": "88812",
       "name": "Bio Haferflocken Großblatt",
       "einheit": "1 kg",
-      "ean": "",
+      "ean": "4250296611008",
       "gruppe": "muesli",
       "haeufigkeit": 0,
       "lieferungen": 1,
       "aktiv": true,
-      "quelle": "Bio Haferflocken Großblatt 1kg",
-      "nur_rechnung": true
+      "quelle": "Bio Haferflocken Großblatt 1kg"
     },
     {
-      "nr": "78590",
-      "name": "Bio Hirse gepufft natur",
-      "einheit": "200 g",
-      "ean": "",
+      "nr": "88949",
+      "name": "Bio Haferflocken Kleinblatt",
+      "einheit": "1 kg",
+      "ean": "4250296689496",
       "gruppe": "muesli",
-      "haeufigkeit": 0,
-      "lieferungen": 1,
+      "haeufigkeit": 76,
+      "lieferungen": 4,
       "aktiv": true,
-      "quelle": "Bio Hirse gepufft natur",
-      "nur_rechnung": true
-    },
-    {
-      "nr": "88063",
-      "name": "Dinkel-Frucht-Müsli mit gepufftem Dinkel",
-      "einheit": "500 g",
-      "ean": "",
-      "gruppe": "muesli",
-      "haeufigkeit": 0,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "Dinkel-Frucht-Müsli mit gepufftem Dinkel",
-      "nur_rechnung": true
-    },
-    {
-      "nr": "88060",
-      "name": "Schoko-Dinkel gepufft",
-      "einheit": "200 g",
-      "ean": "",
-      "gruppe": "muesli",
-      "haeufigkeit": 0,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "Schoko-Dinkel gepufft",
-      "nur_rechnung": true
-    },
-    {
-      "nr": "88214",
-      "name": "Bio Dinkel Backerbsen",
-      "einheit": "125 g",
-      "ean": "4250296682145",
-      "gruppe": "backzutaten",
-      "haeufigkeit": 34,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkel Backerbsen"
+      "quelle": "DRX Bio Haferfl. Kleinblatt 1kg"
     },
     {
       "nr": "11024",
@@ -759,6 +831,72 @@ window.DRAX_KATALOG = {
       "lieferungen": 0,
       "aktiv": true,
       "quelle": "DRX Vanillezucker Lecker`s"
+    },
+    {
+      "nr": "45020",
+      "name": "Bio Gerstenmalzmehl (aktiv)",
+      "einheit": "250 g",
+      "ean": "4250296600682",
+      "gruppe": "backzutaten",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Bio Gerstenmalzmehl * 250 g (aktiv)"
+    },
+    {
+      "nr": "88082",
+      "name": "Sonnenblumenkerne",
+      "einheit": "500 g",
+      "ean": "4250296680820",
+      "gruppe": "backzutaten",
+      "haeufigkeit": 11,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Sonnenblumenkerne 500g"
+    },
+    {
+      "nr": "88126",
+      "name": "Kürbiskerne",
+      "einheit": "250 g",
+      "ean": "4250296681261",
+      "gruppe": "backzutaten",
+      "haeufigkeit": 17,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Kürbiskerne 250g"
+    },
+    {
+      "nr": "88130",
+      "name": "Brotgewürz fein",
+      "einheit": "150 g",
+      "ean": "4250296681308",
+      "gruppe": "backzutaten",
+      "haeufigkeit": 13,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Brotgewürz fein * 150g"
+    },
+    {
+      "nr": "88133",
+      "name": "Roggenvollkorn Sauerteig",
+      "einheit": "250 g",
+      "ean": "4250296681339",
+      "gruppe": "backzutaten",
+      "haeufigkeit": 9,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "DRX Rogg.vollk. Sauert.250 g"
+    },
+    {
+      "nr": "88134",
+      "name": "Trockenhefe - Instant",
+      "einheit": "8x11g",
+      "ean": "4250296681346",
+      "gruppe": "backzutaten",
+      "haeufigkeit": 14,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Instant-Trockenhefe"
     },
     {
       "nr": "88135",
@@ -773,15 +911,15 @@ window.DRAX_KATALOG = {
       "kassenname": "Vanillezucker Bourbon konventionell"
     },
     {
-      "nr": "88126",
-      "name": "Kürbiskerne",
-      "einheit": "250 g",
-      "ean": "4250296681261",
+      "nr": "88214",
+      "name": "Bio Dinkel Backerbsen",
+      "einheit": "125 g",
+      "ean": "4250296682145",
       "gruppe": "backzutaten",
-      "haeufigkeit": 17,
-      "lieferungen": 0,
+      "haeufigkeit": 34,
+      "lieferungen": 1,
       "aktiv": true,
-      "quelle": "DRX Kürbiskerne 250g"
+      "quelle": "DRX Bio Dinkel Backerbsen"
     },
     {
       "nr": "88512",
@@ -795,115 +933,71 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Bio Chia Samen 200 g"
     },
     {
-      "nr": "88134",
-      "name": "Instant-Trockenhefe",
-      "einheit": "",
-      "ean": "4250296681346",
-      "gruppe": "backzutaten",
-      "haeufigkeit": 14,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Instant-Trockenhefe"
-    },
-    {
-      "nr": "88130",
-      "name": "Brotgewürz fein",
+      "nr": "88099",
+      "name": "Erdbeer-Knusperwaffeln in weißer Joghurtschokolade",
       "einheit": "150 g",
-      "ean": "4250296681308",
-      "gruppe": "backzutaten",
-      "haeufigkeit": 13,
+      "ean": "4250296680998",
+      "gruppe": "knabber",
+      "haeufigkeit": 7,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Brotgewürz fein * 150g"
+      "quelle": "DRX Erdb-Knus.waf. Jogh.schoko."
     },
     {
-      "nr": "88082",
-      "name": "Sonnenblumenkerne",
-      "einheit": "500 g",
-      "ean": "4250296680820",
-      "gruppe": "backzutaten",
-      "haeufigkeit": 11,
-      "lieferungen": 1,
+      "nr": "88139",
+      "name": "Bio Dinkel Cräcker Parmesan",
+      "einheit": "100 g",
+      "ean": "4250296681391",
+      "gruppe": "knabber",
+      "haeufigkeit": 2,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Sonnenblumenkerne 500g"
+      "quelle": "DRX Bio Dinkel Cräcker Parme."
     },
     {
-      "nr": "88133",
-      "name": "Roggenvollkorn Sauerteig",
-      "einheit": "250 g",
-      "ean": "4250296681339",
-      "gruppe": "backzutaten",
-      "haeufigkeit": 9,
-      "lieferungen": 2,
+      "nr": "88141",
+      "name": "Bio Dinkel Cräcker Tomate",
+      "einheit": "100 g",
+      "ean": "4250296681414",
+      "gruppe": "knabber",
+      "haeufigkeit": 5,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Rogg.vollk. Sauert.250 g"
+      "quelle": "DRX Bio Dinkel Cräcker Tomate"
     },
     {
-      "nr": "45020",
-      "name": "Bio Gerstenmalzmehl (aktiv)",
-      "einheit": "250 g",
-      "ean": "",
-      "gruppe": "backzutaten",
+      "nr": "88155",
+      "name": "Bio Dinkel Orangen Keks",
+      "einheit": "200 g",
+      "ean": "4250296681551",
+      "gruppe": "knabber",
       "haeufigkeit": 0,
       "lieferungen": 1,
       "aktiv": true,
-      "quelle": "Bio Gerstenmalzmehl * 250 g (aktiv)",
-      "nur_rechnung": true
+      "quelle": "Bio Dinkel Orangen Keks"
     },
     {
-      "nr": "88401",
-      "name": "Vollmilch Reiswaffeln",
-      "einheit": "150 g",
-      "ean": "4250296671422",
+      "nr": "88184",
+      "name": "Joghurt-Schoko-Kugeln",
+      "einheit": "",
+      "ean": "4250296681841",
       "gruppe": "knabber",
-      "haeufigkeit": 31,
-      "lieferungen": 2,
-      "aktiv": true,
-      "quelle": "DRX Vollmilch Reiswaffeln"
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": false,
+      "quelle": "DRX Joghurt-Schoko-Kugeln",
+      "nicht_gelistet": true
     },
     {
-      "nr": "88412",
-      "name": "Dinkel Vollmilch-Mandelsplitter Knusperwaffeln",
-      "einheit": "150 g",
-      "ean": "4250296672139",
-      "gruppe": "knabber",
-      "haeufigkeit": 19,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Din. VM Mand.splitter K.waf."
-    },
-    {
-      "nr": "88411",
-      "name": "Dinkel Vollmilch Knusperwaffeln",
-      "einheit": "150 g",
-      "ean": "4250296671965",
-      "gruppe": "knabber",
-      "haeufigkeit": 16,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Dinkel VM Knusperwaffeln"
-    },
-    {
-      "nr": "88413",
-      "name": "Dinkel Zartbitter Knusperwaffeln",
-      "einheit": "150 g",
-      "ean": "4250296672436",
-      "gruppe": "knabber",
-      "haeufigkeit": 13,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Din. Zartb.Knusperwaffeln"
-    },
-    {
-      "nr": "88196",
-      "name": "Schoko-Apfelscheiben gemischt",
+      "nr": "88187",
+      "name": "Schoko-Vollmilch Apfelscheiben",
       "einheit": "125 g",
-      "ean": "4250296681964",
+      "ean": "4250296681872",
       "gruppe": "knabber",
-      "haeufigkeit": 13,
-      "lieferungen": 1,
+      "haeufigkeit": 3,
+      "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Schoko-Apfelsch. misch."
+      "quelle": "DRX Schoko-VM Apfelscheiben"
     },
     {
       "nr": "88191",
@@ -917,9 +1011,31 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Vanille-Schoko-Mandeln"
     },
     {
+      "nr": "88192",
+      "name": "Zimt-Schoko-Kugeln",
+      "einheit": "200 g",
+      "ean": "4250296681926",
+      "gruppe": "knabber",
+      "haeufigkeit": 0,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "Zimt-Schoko-Kugeln"
+    },
+    {
+      "nr": "88196",
+      "name": "Schoko-Apfelscheiben gemischt",
+      "einheit": "125 g",
+      "ean": "4250296681964",
+      "gruppe": "knabber",
+      "haeufigkeit": 13,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Schoko-Apfelsch. misch."
+    },
+    {
       "nr": "88208",
       "name": "Zartbitter Cranberries",
-      "einheit": "",
+      "einheit": "125 g",
       "ean": "4250296682084",
       "gruppe": "knabber",
       "haeufigkeit": 11,
@@ -928,107 +1044,81 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Zartbitter Cranberries"
     },
     {
-      "nr": "88099",
-      "name": "Erdbeer-Knusperwaffeln Joghurt-Schoko",
-      "einheit": "",
-      "ean": "4250296680998",
-      "gruppe": "knabber",
-      "haeufigkeit": 7,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Erdb-Knus.waf. Jogh.schoko."
-    },
-    {
-      "nr": "88141",
-      "name": "Bio Dinkel Cräcker Tomate",
-      "einheit": "",
-      "ean": "4250296681414",
-      "gruppe": "knabber",
-      "haeufigkeit": 5,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkel Cräcker Tomate"
-    },
-    {
-      "nr": "88187",
-      "name": "Schoko-Vollmilch Apfelscheiben",
-      "einheit": "",
-      "ean": "4250296681872",
-      "gruppe": "knabber",
-      "haeufigkeit": 3,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Schoko-VM Apfelscheiben"
-    },
-    {
-      "nr": "88139",
-      "name": "Bio Dinkel-Cräcker Parmesan",
-      "einheit": "",
-      "ean": "4250296681391",
-      "gruppe": "knabber",
-      "haeufigkeit": 2,
-      "lieferungen": 0,
-      "aktiv": true,
-      "quelle": "DRX Bio Dinkel Cräcker Parme."
-    },
-    {
-      "nr": "88155",
-      "name": "Bio Dinkel Orangen Keks",
-      "einheit": "200 g",
-      "ean": "",
-      "gruppe": "knabber",
-      "haeufigkeit": 0,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "Bio Dinkel Orangen Keks",
-      "nur_rechnung": true
-    },
-    {
       "nr": "88240",
       "name": "Dinkel-Waffelröllchen Bio natur",
       "einheit": "100 g",
-      "ean": "",
+      "ean": "4250296682404",
       "gruppe": "knabber",
       "haeufigkeit": 0,
       "lieferungen": 1,
       "aktiv": true,
-      "quelle": "Dinkel-Waffelröllchen Bio natur",
-      "nur_rechnung": true
+      "quelle": "Dinkel-Waffelröllchen Bio natur"
+    },
+    {
+      "nr": "88401",
+      "name": "Vollmilch Reiswaffeln",
+      "einheit": "150 g",
+      "ean": "4250296671422",
+      "gruppe": "knabber",
+      "haeufigkeit": 31,
+      "lieferungen": 2,
+      "aktiv": true,
+      "quelle": "DRX Vollmilch Reiswaffeln"
     },
     {
       "nr": "88402",
       "name": "Zartbitter Reiswaffeln",
       "einheit": "150 g",
-      "ean": "",
+      "ean": "4250296671590",
       "gruppe": "knabber",
       "haeufigkeit": 0,
       "lieferungen": 1,
       "aktiv": true,
-      "quelle": "Zartbitter Reiswaffeln * 150 g",
-      "nur_rechnung": true
+      "quelle": "Zartbitter Reiswaffeln * 150 g"
     },
     {
-      "nr": "88192",
-      "name": "Zimt-Schoko-Kugeln",
-      "einheit": "200 g",
-      "ean": "",
+      "nr": "88411",
+      "name": "Dinkel Vollmilch Knusperwaffeln",
+      "einheit": "150 g",
+      "ean": "4250296671965",
       "gruppe": "knabber",
-      "haeufigkeit": 0,
+      "haeufigkeit": 16,
       "lieferungen": 1,
       "aktiv": true,
-      "quelle": "Zimt-Schoko-Kugeln",
-      "nur_rechnung": true
+      "quelle": "DRX Dinkel VM Knusperwaffeln"
     },
     {
-      "nr": "88184",
-      "name": "Joghurt-Schoko-Kugeln",
-      "einheit": "",
-      "ean": "4250296681841",
+      "nr": "88412",
+      "name": "Dinkel Vollmilch-Mandelsplitter Knusperwaffeln",
+      "einheit": "150 g",
+      "ean": "4250296672139",
       "gruppe": "knabber",
+      "haeufigkeit": 19,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Din. VM Mand.splitter K.waf."
+    },
+    {
+      "nr": "88413",
+      "name": "Dinkel Zartbitter Knusperwaffeln",
+      "einheit": "150 g",
+      "ean": "4250296672436",
+      "gruppe": "knabber",
+      "haeufigkeit": 13,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Din. Zartb.Knusperwaffeln"
+    },
+    {
+      "nr": "65948",
+      "name": "Bandnudeln 8mm",
+      "einheit": "500 g",
+      "ean": "4002861404122",
+      "gruppe": "nudeln",
       "haeufigkeit": 0,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Joghurt-Schoko-Kugeln"
+      "quelle": "Preisliste"
     },
     {
       "nr": "65954",
@@ -1042,17 +1132,6 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Hörnchen"
     },
     {
-      "nr": "65960",
-      "name": "Spaghetti",
-      "einheit": "500 g",
-      "ean": "4002861404290",
-      "gruppe": "nudeln",
-      "haeufigkeit": 5,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Spaghetti 500 g"
-    },
-    {
       "nr": "65955",
       "name": "Spiralen",
       "einheit": "",
@@ -1064,9 +1143,86 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Spiralen"
     },
     {
+      "nr": "65960",
+      "name": "Spaghetti",
+      "einheit": "500 g",
+      "ean": "4002861404290",
+      "gruppe": "nudeln",
+      "haeufigkeit": 5,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Spaghetti 500 g"
+    },
+    {
+      "nr": "10045",
+      "name": "Reinweinstein Backpulver",
+      "einheit": "4x21g",
+      "ean": "4013044100007",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "11263",
+      "name": "Ur-Salz fein",
+      "einheit": "12 kg",
+      "ean": "4000345020387",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Ur-Salz fein 12kg"
+    },
+    {
+      "nr": "11634",
+      "name": "Krunchy Himbeere",
+      "einheit": "500 g",
+      "ean": "4021234101581",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "29487",
+      "name": "Bio Sesam ungeschält",
+      "einheit": "250 g",
+      "ean": "4019339419069",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "36577",
+      "name": "Dinkel Backerbsen",
+      "einheit": "100 g",
+      "ean": "4033425307016",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "36851",
+      "name": "Brotgewürz ganz",
+      "einheit": "500 g",
+      "ean": "4250296620505",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
       "nr": "38255",
       "name": "Klare Suppe ohne Hefe",
-      "einheit": "",
+      "einheit": "500 g",
       "ean": "4006040271130",
       "gruppe": "sonstiges",
       "haeufigkeit": 18,
@@ -1075,26 +1231,48 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Klare Suppe ohne Hefe"
     },
     {
-      "nr": "82901",
-      "name": "Bio Braunhirse gemahlen",
+      "nr": "44801",
+      "name": "\"Bio Sonntagsmehl für Kuchen und Gebäck\"",
       "einheit": "1 kg",
-      "ean": "4250296608909",
+      "ean": "4250296684521",
       "gruppe": "sonstiges",
-      "haeufigkeit": 16,
-      "lieferungen": 1,
-      "aktiv": true,
-      "quelle": "DRX Bio Braunhirse gemal. 1 kg"
-    },
-    {
-      "nr": "82900",
-      "name": "Bio Braunhirse gemahlen",
-      "einheit": "500 g",
-      "ean": "4250296608916",
-      "gruppe": "sonstiges",
-      "haeufigkeit": 16,
+      "haeufigkeit": 0,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Bio Braunhirse gemal. 500 g"
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "45661",
+      "name": "Bio Rotkornweizen Vollkornmehl",
+      "einheit": "1 kg",
+      "ean": "4250296605267",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "55705",
+      "name": "Bio Focaccia Brotbackmischung",
+      "einheit": "500 g",
+      "ean": "4250296657051",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "55741",
+      "name": "Bio Hafer-Porridgeflocken fein",
+      "einheit": "1 kg",
+      "ean": "4250296656849",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
     },
     {
       "nr": "78549",
@@ -1108,15 +1286,103 @@ window.DRAX_KATALOG = {
       "quelle": "DRX Tellofix 540 g / 27 l"
     },
     {
-      "nr": "11263",
-      "name": "Ur-Salz fein",
-      "einheit": "12 kg",
-      "ean": "4016512062180",
+      "nr": "82900",
+      "name": "Bio Braunhirse gemahlen",
+      "einheit": "500 g",
+      "ean": "4250296608916",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 16,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "DRX Bio Braunhirse gemal. 500 g"
+    },
+    {
+      "nr": "82901",
+      "name": "Bio Braunhirse gemahlen",
+      "einheit": "1 kg",
+      "ean": "4250296608909",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 16,
+      "lieferungen": 1,
+      "aktiv": true,
+      "quelle": "DRX Bio Braunhirse gemal. 1 kg"
+    },
+    {
+      "nr": "84301",
+      "name": "Bio Einkornmehl Vollkorn",
+      "einheit": "1 kg",
+      "ean": "4250296604468",
       "gruppe": "sonstiges",
       "haeufigkeit": 0,
       "lieferungen": 0,
       "aktiv": true,
-      "quelle": "DRX Ur-Salz fein 12kg"
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "88041",
+      "name": "Familienmüsli",
+      "einheit": "2 kg",
+      "ean": "4250296680417",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "88078",
+      "name": "Schoko-Cornflakes",
+      "einheit": "250 g",
+      "ean": "4250296680783",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "88125",
+      "name": "Kürbiskerne",
+      "einheit": "1 kg",
+      "ean": "4250296681254",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "88410",
+      "name": "Dinkel Vollmilch-Cornflakes Knusperwaffeln",
+      "einheit": "150 g",
+      "ean": "4250296671842",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "88420",
+      "name": "Dinkel Zartbitter-Mandelsplitter Knusperwaffeln",
+      "einheit": "150 g",
+      "ean": "4250296674317",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
+    },
+    {
+      "nr": "88452",
+      "name": "Vollmilch Reistaler mit Schokofuss",
+      "einheit": "100 g",
+      "ean": "4250296680394",
+      "gruppe": "sonstiges",
+      "haeufigkeit": 0,
+      "lieferungen": 0,
+      "aktiv": true,
+      "quelle": "Preisliste"
     }
   ]
 };
