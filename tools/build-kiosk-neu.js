@@ -45,6 +45,10 @@ const REITER = [
   { id: 'baecker', icon: 'croissant', text: 'Bäcker', kurz: 'Bäcker', badges: true },
   { id: 'metzgerbest', icon: 'ham', text: 'Metzger Mair', kurz: 'Mair', badges: true },
   { id: 'getraenke', icon: 'cup-soda', text: 'Getränke', kurz: 'Getränke', badges: true },
+  // Drax stand lange nur in der erzeugten kiosk.html und fehlte hier - ein
+  // Lauf des Werkzeugs loeschte den Reiter deshalb spurlos. (R3 schuetzt nur
+  // Reiter, die in der Quelle stehen.)
+  { id: 'drax', icon: 'wheat', text: 'Drax Mühle', kurz: 'Drax', badges: true },
   { id: 'kontakt', icon: 'message-square', text: 'Kontakt', kurz: 'Kontakt', badges: true, aus: true },
   { id: 'social', icon: 'share-2', text: 'Social', kurz: 'Social', badges: false },
   { id: 'kalender', icon: 'calendar-days', text: 'Kalender', kurz: 'Termine', badges: true }

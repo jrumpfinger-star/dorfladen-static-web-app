@@ -260,6 +260,20 @@ test.describe('Bau-Werkzeug des Kiosks', () => {
       `Diese Reiter kennt das Werkzeug nicht: ${fehlend.join(', ')}. Ein Lauf `
       + 'würde sie aus kiosk.html löschen — so ist der Getränke-Reiter '
       + 'einmal verschwunden.').toEqual([]);
+
+    // Die Gegenrichtung. Oben wird nur gefragt, ob die QUELLE einen Reiter
+    // führt, den das Werkzeug nicht kennt. Steht ein Reiter aber einzig in
+    // der ERZEUGTEN Datei, sind Quelle und Werkzeug beide ahnungslos, und
+    // kein Wächter schlägt an — der nächste Lauf löscht ihn spurlos. Genau
+    // so verschwand der Drax-Reiter aus der laufenden Anlage.
+    const inAusgabe = [...lies('static-site/kiosk.html')
+      .matchAll(/<div class="k-tab[^"]*" data-tab="([a-z]+)"/g)].map((m) => m[1]);
+    const nurAusgabe = inAusgabe.filter((id) => !new RegExp(`id: '${id}'`).test(werkzeug));
+    expect(nurAusgabe,
+      `Diese Reiter stehen nur in der erzeugten kiosk.html: ${nurAusgabe.join(', ')}. `
+      + 'Der nächste Lauf des Werkzeugs würde sie löschen. Sie gehören in die '
+      + 'REITER-Liste von tools/build-kiosk-neu.js und in kiosk-klassisch.html.')
+      .toEqual([]);
   });
 
   test('TC-S8b: Der Mittagstisch ist der Startbereich', () => {
