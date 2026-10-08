@@ -82,6 +82,15 @@ Alle sichtbaren Reiter sind jederzeit erreichbar und zeigen ihre Zähler. Die
 Leiste wandert je nach Gerätebreite, verbirgt aber nie einen Reiter hinter
 einem Ausklappmenü.
 
+Auf dem Telefon steht dafür nicht genug Breite zur Verfügung, um jeden Reiter
+gleichzeitig zu zeigen: Acht Reiter brauchen bei der Mindestbreite von 44 px
+zusammen 374 px. Darunter brach die Leiste auf zwei Zeilen um und kostete
+50 px Arbeitsfläche — fast ein Zehntel der Höhe eines 360-px-Geräts. Die
+Leiste ist deshalb unter 640 px **eine einzige waagerecht wischbare Zeile**.
+Damit dabei nichts übersehen wird, gelten zwei Zusagen: Reiter mit Zähler
+stehen immer ohne Wischen im Blick, und an den Rändern ist erkennbar, dass es
+weitergeht.
+
 #### F1 Inputs
 
 | Input | Required | Description |
@@ -92,22 +101,39 @@ einem Ausklappmenü.
 
 #### F1 Behaviour / Acceptance
 
-- Bis 639 px liegt die Leiste **unten**, mit Symbol über Beschriftung.
+- Bis 639 px liegt die Leiste **unten** als eine Zeile, mit Symbol über
+  Beschriftung. Passen nicht alle Reiter nebeneinander, wird gewischt; die
+  Leiste bleibt dabei **einzeilig** und höchstens 60 px hoch.
+- Ein Reiter behält auch in der wischbaren Zeile mindestens 56 px Breite und
+  44 px Höhe; er wird nie zusammengedrückt.
 - Ab 640 px liegt sie **links** als schmale Spalte, Symbol über Beschriftung.
 - Ab 1180 px liegt sie links als breite Spalte, Symbol **neben** Beschriftung.
 - Der Zähler ist in jeder Anordnung sichtbar und lesbar.
 - Ein Reiter mit dringendem Zustand (z. B. Bestellschluss überschritten) hebt
   sich zusätzlich farblich ab.
-- Es gibt kein „Mehr"-Menü und keinen waagerechten Bildlauf in der Leiste.
+- **Ein Reiter mit Zähler ist ohne Wischen sichtbar.** In der wischbaren Zeile
+  rückt er dafür nach vorn; die Reihenfolge innerhalb der Gruppe bleibt
+  erhalten, es wird also nur vorgezogen und nicht durchmischt.
+- **Ist links oder rechts mehr vorhanden, zeigt ein Pfeil am jeweiligen Rand
+  darauf hin.** Der Pfeil erscheint nur dann, verdeckt keinen Reiter und nimmt
+  keine Berührung an — gewischt wird auf der Leiste selbst.
+- Hat die Verkäuferin selbst gewischt, holt ein eintreffender Zähler die
+  Leiste für mindestens 8 Sekunden nicht zurück. Sonst spränge die Leiste
+  unter dem Finger weg.
+- Ab 640 px entfallen Vorrang und Pfeile: Senkrecht ist Platz für alle Reiter,
+  und eine wechselnde Reihenfolge würde dort nur stören.
+- Es gibt kein „Mehr"-Menü. Kein Reiter ist hinter einem Bedienelement
+  versteckt, das erst geöffnet werden muss.
 
 #### F1 Test Cases
 
-**TC-F1-01: Alle Reiter bei 320 px sichtbar**
+**TC-F1-01: Leiste bleibt einzeilig und flach**
 
-- **Setup:** Kiosk bei 320 × 568 px, alle Reiter eingeblendet.
+- **Setup:** Kiosk bei 320, 360, 390 und 430 px Breite, alle Reiter
+  eingeblendet.
 - **Action:** Reiterleiste auslesen.
-- **Expected:** Jeder sichtbare Reiter hat eine eigene Schaltfläche mit
-  mindestens 44 px Höhe; kein Element liegt außerhalb des Bildschirms.
+- **Expected:** Alle Reiter liegen auf **einer** Zeile, die Leiste ist
+  höchstens 60 px hoch, und jeder Reiter ist mindestens 56 × 44 px groß.
 
 **TC-F1-02: Zähler bleibt in jeder Anordnung sichtbar**
 
@@ -120,6 +146,42 @@ einem Ausklappmenü.
 
 - **Setup:** beliebige Breite.
 - **Expected:** Es existiert kein Bedienelement, das Reiter verbirgt.
+
+**TC-F1-04: Reiter mit Zähler steht ohne Wischen im Blick**
+
+- **Setup:** 360 px, alle zehn Reiter eingeblendet, sodass nicht alle
+  nebeneinander passen. Zähler auf dem **letzten** Reiter („Termine").
+- **Action:** Zähler setzen, Lage der Reiter messen.
+- **Expected:** „Termine" liegt vollständig innerhalb der Leiste, ohne dass
+  gewischt wurde.
+
+**TC-F1-05: Pfeile zeigen nur, wo wirklich mehr steht**
+
+- **Setup:** 360 px, alle zehn Reiter eingeblendet.
+- **Action:** Ruhelage prüfen, dann ganz nach rechts wischen.
+- **Expected:** In der Ruhelage ist nur der rechte Pfeil sichtbar, am rechten
+  Ende nur der linke. Passen alle Reiter nebeneinander, ist kein Pfeil
+  sichtbar.
+
+**TC-F1-06: Ruhelage ist der erste Reiter**
+
+- **Setup:** 360 px; nach dem Laden werden weitere Reiter freigeschaltet.
+- **Expected:** Die Leiste steht bei `scrollLeft = 0`; sie verschiebt sich
+  nicht von selbst.
+
+**TC-F1-07: Eigenes Wischen hat Vorrang**
+
+- **Setup:** 360 px, alle Reiter eingeblendet. Die Verkäuferin wischt ans
+  rechte Ende.
+- **Action:** Unmittelbar danach trifft ein Zähler auf einem vorderen Reiter
+  ein.
+- **Expected:** Die Leiste bleibt stehen, wo gewischt wurde.
+
+**TC-F1-08: Ab 640 px keine wischbare Zeile**
+
+- **Setup:** 640 px und 1280 px, Zähler auf einem hinteren Reiter.
+- **Expected:** Die Leiste steht senkrecht, kein Pfeil ist sichtbar, und die
+  Reihenfolge der Reiter entspricht dem Quelltext.
 
 ### F2: Fluide Darstellung über alle Gerätebreiten
 
@@ -136,7 +198,8 @@ jeder Gerätebreite an — auch Größen, die es heute noch nicht gibt.
   Safari-Leiste das Layout nicht zerschneidet.
 - `env(safe-area-inset-*)` wird für Notch und Home-Balken berücksichtigt.
 - Kein waagerechter Überlauf bei 320 px. Bewusst waagerecht scrollende Leisten
-  (Tagespillen, Filter) sind ausgenommen und als solche erkennbar.
+  (Reiterleiste, Tagespillen, Filter) sind ausgenommen und als solche
+  erkennbar — die Reiterleiste über die Randpfeile aus F1.
 - Kein abgeschnittener Text: Ist der Platz zu klein, wird umbrochen oder die
   Schrift verkleinert, aber nichts unsichtbar gekappt.
 

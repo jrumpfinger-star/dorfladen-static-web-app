@@ -211,18 +211,39 @@ html, body{ height:100%; overflow:hidden }
 
 /* ── 5  Reiterleiste ─────────────────────────────────────────────────── */
 
+/* Auf dem Telefon eine einzige wischbare Zeile. Vorher teilte ein
+   `auto-fit`-Raster die Breite unter allen Reitern auf; ab acht Reitern
+   unterschritt das die Mindestbreite und die Leiste brach auf zwei Zeilen
+   um — auf 360 px kostete das 50 px Arbeitsfläche. Die Reiter behalten
+   jetzt ihre volle Fläche, und was nicht hinpasst, wird herangewischt.
+   Damit dabei nichts Dringendes übersehen wird, gelten zwei Zusagen:
+   Reiter mit Zähler rücken nach vorn (siehe `order` weiter unten), und
+   an beiden Rändern zeigen Pfeile an, dass es weitergeht. (F1) */
 .k-tabs{
-  display:grid;
-  grid-auto-rows:auto;
-  grid-template-columns:repeat(auto-fit, minmax(var(--tap-min), 1fr));
+  display:flex;
   gap:2px;
   background:var(--c-card);
   border-bottom:none;
   border-top:1px solid var(--c-border);
   padding:4px calc(4px + var(--sar)) calc(4px + var(--sab)) calc(4px + var(--sal));
   flex-shrink:0;
-  overflow:visible;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  /* Kein `scroll-snap`: Wird ein Reiter nachtraeglich freigeschaltet, rastet
+     die Leiste sonst neu ein und springt von selbst um bis zu 180 px zur
+     Seite. Ausserdem ist ein halb sichtbarer Reiter am Rand der deutlichste
+     Hinweis darauf, dass es dort weitergeht — das Einrasten wuerde ihn
+     gerade wegschneiden.
+     `overflow-anchor:none` haelt die Ruhelage zusaetzlich fest. */
+  overflow-anchor:none;
 }
+/* Die Rollleiste bliebe sonst als graue Spur unter den Reitern stehen und
+   fräße von der knappen Höhe. Der Hinweis kommt stattdessen über die
+   Pfeile, die deutlicher sind als eine 4 px hohe Spur. */
+.k-tabs::-webkit-scrollbar{ display:none }
 
 .k-tab{
   position:relative;
@@ -231,6 +252,9 @@ html, body{ height:100%; overflow:hidden }
   align-items:center;
   justify-content:center;
   gap:3px;
+  /* Wachsen ja, schrumpfen nein: Bei wenigen Reitern füllen sie die Breite,
+     bei vielen behalten sie 56 px und die Zeile wird wischbar. */
+  flex:1 0 56px;
   min-height:var(--tap);
   min-width:var(--tap-min);
   padding:6px 2px;
@@ -311,6 +335,55 @@ html, body{ height:100%; overflow:hidden }
 }
 .k-tab.active .k-tab-badge{ box-shadow:0 0 0 2px var(--c-tint) }
 
+/* Ein Reiter mit Zähler rückt in der wischbaren Zeile nach vorn und ist
+   damit ohne Wischen zu sehen. Ohne diese Regel könnte die Meldung eines
+   hinteren Reiters (etwa „Termine") unbemerkt außerhalb stehen. Die
+   Reihenfolge innerhalb der Gruppe bleibt die des Quelltextes, es wird
+   also nur vorgezogen und nicht durchmischt. (F1) */
+.k-tab:has(.k-tab-badge.show){ order:-1 }
+
+/* ── Randpfeile: „hier geht es weiter" ──────────────────────────────────
+   Die Pfeile liegen als haftende Elemente IN der Rollfläche und bleiben
+   deshalb am Rand stehen, während die Reiter darunter durchlaufen. Sie
+   belegen keine Breite (`flex-basis:0`), überdecken also keinen Reiter,
+   und nehmen keine Berührung an — gewischt wird auf der Leiste selbst. */
+.k-tab-pfeil{
+  position:sticky;
+  z-index:6;
+  flex:0 0 0;
+  width:0;
+  align-self:stretch;
+  display:none;
+  pointer-events:none;
+}
+.k-tab-pfeil-l{ left:0; order:-100 }
+.k-tab-pfeil-r{ right:0; order:100 }
+.k-tabs.hat-links  .k-tab-pfeil-l{ display:block }
+.k-tabs.hat-rechts .k-tab-pfeil-r{ display:block }
+
+/* Der weiche Verlauf macht sichtbar, dass der Reiter dahinter angeschnitten
+   ist. Er endet bei 55 % durchsichtig, damit ein Zähler darunter nicht
+   verschwindet. */
+.k-tab-pfeil::after{
+  content:"";
+  position:absolute;
+  top:-4px; bottom:-4px;
+  width:26px;
+}
+.k-tab-pfeil-l::after{ left:-4px;  background:linear-gradient(to right, var(--c-card) 45%, transparent) }
+.k-tab-pfeil-r::after{ right:-4px; background:linear-gradient(to left,  var(--c-card) 45%, transparent) }
+
+.k-tab-pfeil i, .k-tab-pfeil svg{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:17px; height:17px;
+  z-index:1;
+  color:var(--c-pri);
+}
+.k-tab-pfeil-l i, .k-tab-pfeil-l svg{ left:-3px }
+.k-tab-pfeil-r i, .k-tab-pfeil-r svg{ right:-3px }
+
 /* Ein Reiter mit dringendem Zustand hebt sich zusätzlich ab. */
 .k-tab:has(.k-tab-badge.show.badge-overdue),
 .k-tab:has(.k-tab-badge.blink){
@@ -323,6 +396,7 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
 /* Seitenleiste ab 640 px */
 @media (min-width:640px){
   .k-tabs{
+    display:grid;
     grid-template-columns:minmax(0,1fr);
     grid-auto-rows:max-content;
     align-content:start;
@@ -330,10 +404,17 @@ html[data-theme="dark"] .k-tab:has(.k-tab-badge.blink){ background:#2a1717 }
     padding:10px 8px calc(10px + var(--sab)) calc(8px + var(--sal));
     border-top:none;
     border-right:1px solid var(--c-border);
+    overflow-x:hidden;
     overflow-y:auto;
+    scroll-snap-type:none;
+    overflow-anchor:auto;
     scrollbar-width:thin;
   }
-  .k-tab{ min-height:56px; padding:8px 4px }
+  /* Senkrecht ist Platz für alle Reiter. Vorrang und Pfeile sind damit
+     gegenstandslos und würden die gewohnte Reihenfolge nur stören. */
+  .k-tab{ flex:none; min-height:56px; padding:8px 4px }
+  .k-tab:has(.k-tab-badge.show){ order:0 }
+  .k-tab-pfeil{ display:none !important }
   .k-tab.active::before{
     left:0; top:12px; bottom:12px; right:auto;
     width:3px; height:auto;

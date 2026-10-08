@@ -97,6 +97,11 @@
 
 <!-- ═══ Tab bar ═══ -->
 <nav class="k-tabs" aria-label="Bereiche">
+  <!-- Haftende Randzeiger. Sie belegen keine Breite und nehmen keine
+       Berührung an; sie zeigen nur, dass links oder rechts weitere Reiter
+       stehen. Sichtbar werden sie über die Klassen `hat-links`/`hat-rechts`,
+       die `K.tabRand()` setzt. (Spec kiosk-umbau, F1) -->
+  <span class="k-tab-pfeil k-tab-pfeil-l" aria-hidden="true"><i data-lucide="chevron-left"></i></span>
   <div class="k-tab active" data-tab="mittag" onclick="K.switchTab('mittag')">
     <span class="k-tab-icon"><i data-lucide="utensils"></i></span>
     <span class="k-tab-lbl"><span class="lang">Mittagstisch</span><span class="kurz">Mittag</span></span>
@@ -141,6 +146,7 @@
     <span class="k-tab-lbl"><span class="lang">Kalender</span><span class="kurz">Termine</span></span>
     <span class="k-tab-badges" id="badges-kalender"></span>
   </div>
+  <span class="k-tab-pfeil k-tab-pfeil-r" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
 </nav>
 
 <!-- ═══ Panels ═══ -->
@@ -1031,9 +1037,90 @@ var K = (function(){
   updateClock();
 
   // ── Tabs ──
+  // ══════════════════════════════════════════════════
+  //  REITERLEISTE: RANDZEIGER UND SICHTBARKEIT
+  // ══════════════════════════════════════════════════
+  // Unter 640 px ist die Leiste eine wischbare Zeile. Damit niemand etwas
+  // Dringendes übersieht, sorgen diese Helfer fuer zwei Dinge:
+  //   * Die Pfeile am Rand erscheinen nur, wenn dort wirklich mehr steht.
+  //   * Ein Reiter mit Zaehler wird herangerollt, falls er doch einmal
+  //     ausserhalb liegt. Das CSS zieht ihn bereits nach vorn; das hier ist
+  //     der Rueckhalt fuer den Fall, dass mehr Reiter Zaehler tragen als
+  //     nebeneinander passen. (Spec kiosk-umbau, F1)
+  var _tabNav = null;
+  function tabLeiste(){
+    if(!_tabNav) _tabNav = document.querySelector('.k-tabs');
+    return _tabNav;
+  }
+
+  function tabRand(){
+    var nav = tabLeiste();
+    if(!nav) return;
+    // Ab 640 px steht die Leiste senkrecht; dann gibt es keinen Rand zu zeigen.
+    var mehr = nav.scrollWidth - nav.clientWidth;
+    var waagrecht = mehr > 2;
+    nav.classList.toggle('hat-links',  waagrecht && nav.scrollLeft > 2);
+    nav.classList.toggle('hat-rechts', waagrecht && nav.scrollLeft < mehr - 2);
+  }
+
+  // Rollt ein Element der Leiste ins Sichtfeld, ohne die ganze Seite zu
+  // verschieben. `scrollIntoView` wuerde auch senkrecht springen, deshalb
+  // wird hier nur `scrollLeft` gesetzt.
+  var _tabRollSelbst = 0;              // Zeitpunkt des letzten eigenen Rollens
+  var _tabRollHand = 0;                // Zeitpunkt des letzten Wischens von Hand
+  function tabHeranrollen(el){
+    var nav = tabLeiste();
+    if(!nav || !el || nav.scrollWidth <= nav.clientWidth + 2) return;
+    var n = nav.getBoundingClientRect(), e = el.getBoundingClientRect();
+    var rand = 28;                       // Platz fuer den Verlauf am Rand
+    var ziel = null;
+    if(e.left  < n.left  + rand) ziel = nav.scrollLeft - (n.left + rand - e.left);
+    else if(e.right > n.right - rand) ziel = nav.scrollLeft + (e.right - (n.right - rand));
+    if(ziel === null) return;
+    _tabRollSelbst = Date.now();
+    try{ nav.scrollTo({left:ziel, behavior:'smooth'}); }
+    catch(e2){ nav.scrollLeft = ziel; }
+  }
+
+  function tabZaehlerZeigen(){
+    var nav = tabLeiste();
+    if(!nav) return;
+    // Wer gerade selbst gewischt hat, will dort bleiben. Ein eintreffender
+    // Zaehler wuerde die Leiste sonst unter dem Finger zurueckreissen —
+    // und im schlimmsten Fall einen Fehlgriff ausloesen.
+    if(Date.now() - _tabRollHand < 8000) return;
+    var tabs = Array.prototype.slice.call(nav.querySelectorAll('.k-tab'));
+    for(var i=0;i<tabs.length;i++){
+      if(tabs[i].style.display==='none') continue;
+      if(tabs[i].querySelector('.k-tab-badge.show')){ tabHeranrollen(tabs[i]); return; }
+    }
+  }
+
+  (function initTabLeiste(){
+    var nav = tabLeiste();
+    if(!nav) return;
+    nav.addEventListener('scroll', function(){
+      // Eigenes Rollen laeuft weich und loest mehrere Ereignisse aus. Nur was
+      // deutlich danach kommt, gilt als Wischen von Hand.
+      if(Date.now() - _tabRollSelbst > 900) _tabRollHand = Date.now();
+      tabRand();
+    }, {passive:true});
+    window.addEventListener('resize', function(){ tabRand(); });
+    // Zaehler und Freischaltungen aendern den Inhalt der Leiste. Statt jede
+    // Stelle einzeln nachzuruesten, wird hier auf jede Aenderung reagiert.
+    if(window.MutationObserver){
+      new MutationObserver(function(){ tabRand(); }).observe(nav, {childList:true, subtree:true, attributes:true, attributeFilter:['style','class']});
+    }
+    tabRand();
+  })();
+
   function switchTab(id){
     document.querySelectorAll('.k-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});
     document.querySelectorAll('.k-panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+id);});
+    // Der gewaehlte Reiter muss zu sehen sein - etwa wenn der Kiosk mit einem
+    // gemerkten Reiter startet, der in der wischbaren Zeile hinten liegt.
+    var akt = document.querySelector('.k-tab.active');
+    if(akt) tabHeranrollen(akt);
     // Aktiven Tab merken: Laedt sich der Kiosk nach einem Update selbst neu,
     // landet die Verkaeuferin sonst wieder auf dem Standard-Tab.
     try{ sessionStorage.setItem('k-active-tab', id); }catch(e){}
@@ -1091,6 +1178,12 @@ var K = (function(){
         // diesen Aufruf bliebe ihr Bereich leer.
         if(ziel) switchTab(ziel);
       }
+      // Durch das Ein- und Ausblenden hat sich die Breite der Leiste
+      // geaendert. Randzeiger neu bewerten und den aktiven Reiter sichern -
+      // sonst steht er nach einer spaeten Freischaltung ausserhalb.
+      var sicht=document.querySelector('.k-tab.active');
+      if(sicht) tabHeranrollen(sicht);
+      tabRand();
     }
     // Der Startreiter steht bereits (Inline-Skript im HTML). Erneutes
     // Ausblenden vor der Antwort wuerde die Reiterleiste nur flackern
@@ -4636,6 +4729,9 @@ var K = (function(){
       html += '<span class="k-tab-badge show '+b.cls+(b.blink?' blink':'')+'"'+da+' title="'+esc(b.title||'')+'">'+b.count+'</span>';
     }
     wrap.innerHTML = html;
+    // Ein neuer Zaehler darf nicht ausserhalb der wischbaren Zeile landen.
+    if(html) tabZaehlerZeigen();
+    tabRand();
   }
 
   var toastTimer = null;
@@ -5577,6 +5673,8 @@ var K = (function(){
   // Public API
   return {
     switchTab: switchTab,
+    tabRand: tabRand,
+    updateTabBadges: updateTabBadges,
     setMittagDatum: setMittagDatum,
     setStatus: setStatus,
     resetStatus: resetStatus,

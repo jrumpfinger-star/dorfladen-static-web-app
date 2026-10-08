@@ -104,7 +104,13 @@ function reiterleiste() {
   });
   return `<!-- ═══ Tab bar ═══ -->
 <nav class="k-tabs" aria-label="Bereiche">
+  <!-- Haftende Randzeiger. Sie belegen keine Breite und nehmen keine
+       Berührung an; sie zeigen nur, dass links oder rechts weitere Reiter
+       stehen. Sichtbar werden sie über die Klassen \`hat-links\`/\`hat-rechts\`,
+       die \`K.tabRand()\` setzt. (Spec kiosk-umbau, F1) -->
+  <span class="k-tab-pfeil k-tab-pfeil-l" aria-hidden="true"><i data-lucide="chevron-left"></i></span>
 ${zeilen.join('\n')}
+  <span class="k-tab-pfeil k-tab-pfeil-r" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
 </nav>
 
 `;

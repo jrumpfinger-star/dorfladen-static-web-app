@@ -2835,3 +2835,59 @@ Automatisiert in `tests/kiosk-baecker-zwei.spec.js` und
 > „–" wird „â€“". Und `Set-Content -Encoding UTF8` schreibt eine Byte-Marke,
 > die Python als Syntaxfehler meldet. Für Textersetzungen in Quelldateien
 > `[IO.File]::ReadAllText` / `WriteAllText` mit `UTF8Encoding($false)` nutzen.
+
+## T-F1 – Reiterleiste auf dem Telefon: eine wischbare Zeile
+
+*„Auf mobile wird Menü jetzt 2-zeilig angezeigt. Das verbraucht zu viel
+Platz."* — Acht Reiter brauchten bei 44 px Mindestbreite zusammen 374 px. Auf
+dem 360-px-Telefon brach die Leiste deshalb um und kostete **50 px**
+Arbeitsfläche: 108 px statt 58 px.
+
+Seither ist die Leiste unter 640 px eine **wischbare Zeile**. Zwei Zusagen
+machen sie im Laden brauchbar:
+
+1. **Reiter mit Zähler stehen vorn.** Die Regel
+   `.k-tab:has(.k-tab-badge.show){order:-1}` zieht sie heran — niemand muss
+   wischen, um eine offene Bestellung zu sehen.
+2. **Randpfeile zeigen, wo es weitergeht.** Sie erscheinen nur dort, wo
+   wirklich mehr steht, belegen keine Breite und nehmen keine Berührung an.
+
+Ab 640 px bleibt alles beim Alten: senkrechte Seitenleiste, Quellreihenfolge,
+keine Pfeile.
+
+Spec: `specs/kiosk-umbau/spec.md`, F1.
+Automatisiert in `tests/kiosk-reiterleiste.spec.js` (nur Profil `mobile` —
+jeder Test setzt seine Breite selbst).
+
+| Test-Case | Prüfung |
+|---|---|
+| TC-F1-01 | 320/360/390/430 px: eine Zeile, Leiste ≤ 60 px, jeder Reiter ≥ 56 × 44 px |
+| TC-F1-02 | Zähler ist von 320 bis 1920 px sichtbar und hat Breite |
+| TC-F1-03 | Kein Ausklappmenü in der Leiste (kein `details`/`select`/`aria-haspopup`) |
+| TC-F1-04 | Reiter mit Zähler wird vorgezogen; die übrigen behalten ihre Folge |
+| TC-F1-05 | Pfeil nur dort, wo mehr steht: rechts in der Ruhelage, links am Ende |
+| TC-F1-05b | Passen alle Reiter nebeneinander, erscheint kein Pfeil |
+| TC-F1-06 | Ruhelage ist `scrollLeft = 0` — auch nach später Freischaltung |
+| TC-F1-07 | Nach eigenem Wischen reißt ein eintreffender Zähler die Leiste nicht zurück |
+| TC-F1-08 | Ab 640 px: senkrechte Spalte, Quellreihenfolge, keine Pfeile |
+
+### Testlauf-Tabelle
+
+| Datum | Tests | Ergebnis | Anmerkung |
+|---|---|---|---|
+| 13.09.2026 | TC-F1-01…08 | 13/13 | Lokal gegen 127.0.0.1:8099, Profil `mobile` |
+| 13.09.2026 | kiosk-start + kiosk-bestellreiter-mobil | 121/121 | Vorher 5 rot; Bäcker, Getränke und TC-F2-02 hat der gewonnene Platz repariert |
+
+> **`scroll-snap` verträgt sich nicht mit später eingeblendeten Reitern.**
+> Mit `scroll-snap-align:start` rastete der Browser nach dem Nachladen der
+> CMS-Freischaltung auf das zuvor erste Element neu ein — die Leiste stand
+> plötzlich bei `scrollLeft` 180. Mit `center` war schon die Ruhelage falsch
+> (48 px). Deshalb gibt es **kein** `scroll-snap`, dafür `overflow-anchor:none`.
+
+> **`kiosk.html` ist eine erzeugte Datei.** Quelle ist
+> `static-site/kiosk-klassisch.html`, das Gerüst kommt aus
+> `tools/build-kiosk-neu.js`. Wer direkt in `kiosk.html` pflegt, verliert seine
+> Arbeit beim nächsten Lauf. TC-S8c wacht darüber — aber nur über
+> Klassen**namen**, nicht über Werte: Eine nur in `kiosk-base.css` gepflegte
+> Spaltenbreite (384 px aus `listen-harmonie`) wäre dabei still auf 340 px
+> zurückgefallen.
