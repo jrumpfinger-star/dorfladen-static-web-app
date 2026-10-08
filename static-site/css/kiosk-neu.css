@@ -3959,12 +3959,16 @@ html[data-theme="dark"] .gk-kontext{ background:var(--c-surf2, #1f2933) }
   #panel-metzgerbest .mb-subs.nur-breit{ display:none }
   #panel-metzgerbest .mb-fest .mb-bar{ margin:5px 0 0 }
   #panel-metzgerbest .mb-kontext{ margin-top:4px }
-  #panel-metzgerbest .mb-liste{ gap:2px 10px }
-  #panel-metzgerbest .mb-grp{ margin:4px 0 1px; padding-bottom:2px }
-  #panel-metzgerbest .mb-row{ padding:1px 8px; gap:0 8px }
+  /* Die Mair-Liste braucht vier vollständige Zeilen im ersten Bildschirm
+     (Spec F1). Die Liste beginnt ohne Zusatzabstand; Karten verlieren
+     Innenabstand, die 44-px-Antippflächen bleiben erhalten. */
+  #panel-metzgerbest .mb-liste{ gap:1px 10px }
+  #panel-metzgerbest .k-liste{ padding-top:0 }
+  #panel-metzgerbest .mb-grp{ margin:0; padding:0 4px 2px }
+  #panel-metzgerbest .mb-row{ padding:0 8px; gap:0 8px }
   #panel-metzgerbest .mb-nr{ min-height:32px; padding-top:7px }
   #panel-metzgerbest .mb-nm{ line-height:1.1 }
-  #panel-metzgerbest .mb-chip{ margin-top:1px; min-height:32px }
+  #panel-metzgerbest .mb-chip{ margin-top:0; min-height:32px }
   #panel-metzgerbest .mb-chip .lab{ min-height:32px }
   #panel-metzgerbest .mb-chip .x{ min-height:32px }
   /* Der Knopf steht in der eigenen Spalte; auf dem Telefon rückt er nur

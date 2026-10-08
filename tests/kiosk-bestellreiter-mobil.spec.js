@@ -223,6 +223,18 @@ async function miss(page, zeileSel) {
       const zr = z.getBoundingClientRect();
       return zr.top >= r.top - 0.5 && zr.bottom <= r.bottom + 0.5;
     }).length;
+    const zeilenlage = zeilen.slice(0, 6).map((z) => {
+      const zr = z.getBoundingClientRect();
+      return `${(z.innerText || '').trim().split('\n')[0]} `
+        + `${Math.round(zr.top)}–${Math.round(zr.bottom)} (${Math.round(zr.height)} px)`;
+    });
+    const bereiche = [...liste.children].slice(0, 8).map((e) => {
+      const er = e.getBoundingClientRect();
+      const cs = getComputedStyle(e);
+      return `${(e.className || e.tagName).toString().split(' ')[0]} `
+        + `${Math.round(er.top)}–${Math.round(er.bottom)} (${Math.round(er.height)} px; `
+        + `css ${cs.height}/${cs.minHeight}, pad ${cs.paddingTop}/${cs.paddingBottom})`;
+    });
 
     /* Reicht die Liste über den Bildschirm hinaus, ist sie kein begrenzter
        Rollbereich: Die Fußzeile legt sich dann über die letzten Zeilen,
@@ -249,6 +261,8 @@ async function miss(page, zeileSel) {
       untenPz: +((H - r.bottom) / H * 100).toFixed(1),
       zeilenGesamt: zeilen.length,
       zeilenGanz: ganz,
+      zeilenlage,
+      bereiche,
       bloecke: oben,
     };
   }, zeileSel);
@@ -284,7 +298,9 @@ function pruefe(m, name, mindestens) {
 
   expect(m.zeilenGanz, `${name}: nur ${m.zeilenGanz} von ${m.zeilenGesamt} `
     + `Artikelzeilen ganz sichtbar (gefordert: ${mindestens}). `
-    + `Liste ${m.listePx} px, Kopfbereich ${m.obenPx} px: ${wo}`)
+    + `Liste ${m.listePx} px, Kopfbereich ${m.obenPx} px: ${wo}. `
+    + `Erste Zeilen: ${m.zeilenlage.join(' · ')}. `
+    + `Listenblöcke: ${m.bereiche.join(' · ')}`)
     .toBeGreaterThanOrEqual(mindestens);
 }
 
@@ -493,4 +509,3 @@ test.describe('Bestellreiter auf dem Telefon', () => {
     expect(h, `Die Zeile ist ${h} px hoch — höchstens 72 sind erlaubt`).toBeLessThanOrEqual(72);
   });
 });
-
