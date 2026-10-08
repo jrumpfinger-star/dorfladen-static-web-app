@@ -237,6 +237,7 @@ test.describe('Kiosk-Start', () => {
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const WURZEL = path.join(__dirname, '..');
@@ -295,7 +296,9 @@ test.describe('Bau-Werkzeug des Kiosks', () => {
     }
   });
 
-  test('TC-S8c: Quelle und erzeugte Dateien sind deckungsgleich', () => {
+  test('TC-S8c: Quelle und erzeugte Dateien sind deckungsgleich', async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile',
+      'Generator prueft und veraendert Dateien; einmal im mobilen Profil ausfuehren');
     // Der eigentliche Wächter gegen erneutes Auseinanderlaufen: Ein Lauf
     // des Werkzeugs darf die ausgelieferten Dateien NICHT verändern. Tut
     // er es doch, wurde direkt in einer erzeugten Datei gepflegt — genau
@@ -332,5 +335,32 @@ test.describe('Bau-Werkzeug des Kiosks', () => {
       + `${geaendert.join(', ')}. Das heißt, es wurde direkt in einer erzeugten `
       + 'Datei gepflegt — bitte nach static-site/kiosk-klassisch.html übertragen.')
       .toEqual([]);
+
+    const cssDatei = path.join(WURZEL, 'static-site/css/kiosk-base.css');
+    const css = fs.readFileSync(cssDatei, 'utf8');
+    const cssLf = css.replace(/\r\n/g, '\n');
+    const marke = cssLf.match(/^\/\* ERZEUGT aus static-site\/kiosk-klassisch\.html durch tools\/build-kiosk-neu\.js\.\n   Nicht von Hand aendern\. Grundlage fuer kiosk-neu\.css\.\n   SHA256: ([a-f0-9]{64}) \*\/\n/);
+    expect(marke, 'R1: kiosk-base.css traegt keinen Integritaets-Hash.').not.toBeNull();
+    const inhalt = cssLf.slice(marke[0].length);
+    expect(crypto.createHash('sha256').update(inhalt).digest('hex'))
+      .toBe(marke[1]);
+
+    // Eine reine Wertänderung muss R1 auslösen, auch wenn alle Klassen
+    // unverändert bleiben. Die Datei wird in jedem Fall zurückgesetzt.
+    const manipuliert = css.replace('min(384px,100%)', 'min(383px,100%)');
+    expect(manipuliert).not.toBe(css);
+    fs.writeFileSync(cssDatei, manipuliert);
+    let r1Fehler = '';
+    try {
+      execFileSync('node', ['tools/build-kiosk-neu.js'],
+        { cwd: WURZEL, encoding: 'utf8', stdio: 'pipe' });
+    } catch (e) {
+      r1Fehler = String(e.stdout || '') + String(e.stderr || '');
+    } finally {
+      fs.writeFileSync(cssDatei, css);
+    }
+    expect(r1Fehler,
+      'R1 muss eine nachträgliche Änderung eines CSS-Wertes ablehnen.')
+      .toContain('SHA-256 stimmt nicht');
   });
 });

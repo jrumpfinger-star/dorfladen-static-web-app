@@ -15,6 +15,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const wurzel = path.resolve(__dirname, '..');
 // Quelle ist der gewohnte Kiosk. Er bleibt unter `kiosk-klassisch.html`
@@ -161,19 +162,32 @@ regel('R1', 'Gestaltungsblatt auslagern', function (t) {
   // Modulen (mb-, kal-, bk-, kk-, pk-, fm-, st-, soc-). Das neue
   // Gestaltungsblatt liegt darueber und ueberschreibt gezielt.
   const basis = path.join(wurzel, 'static-site', 'css', 'kiosk-base.css');
+  const cssInhalt = inhalt.replace(/^ {4}/gm, '');
+  const hash = crypto.createHash('sha256').update(cssInhalt).digest('hex');
   const kopfzeile =
     '/* ERZEUGT aus static-site/kiosk-klassisch.html durch tools/build-kiosk-neu.js.\n' +
-    '   Nicht von Hand aendern. Grundlage fuer kiosk-neu.css. */\n';
-  let css = kopfzeile + inhalt.replace(/^ {4}/gm, '');
+    '   Nicht von Hand aendern. Grundlage fuer kiosk-neu.css.\n' +
+    '   SHA256: ' + hash + ' */\n';
+  let css = kopfzeile + cssInhalt;
 
-  // Die Datei traegt den Hinweis "Nicht von Hand aendern" - trotzdem ist
-  // genau das passiert: Die Gestaltung des Getraenke-Bereichs (rund 200
-  // Zeilen) wurde nur hier gepflegt, nicht in der Quelle. Ein Lauf haette
-  // sie stillschweigend geloescht. Deshalb wird vorher verglichen: Was in
-  // der alten Datei steht, aber nicht in der neuen, muss zuerst in die
-  // Quelle wandern.
+  // Der Hash erkennt Aenderungen an beliebigen Deklarationen in der
+  // erzeugten Datei - auch reine Wert- oder Zahlen-Aenderungen, die ein
+  // Klassennamenvergleich nicht sieht. Die Klassenpruefung deckt weiterhin
+  // ab, wenn die Quelle eine vorhandene Regel entfernen wuerde.
   if (fs.existsSync(basis)) {
     const alt = fs.readFileSync(basis, 'utf8').replace(/\r\n/g, '\n');
+    const marke = alt.match(/^\/\* ERZEUGT aus static-site\/kiosk-klassisch\.html durch tools\/build-kiosk-neu\.js\.\n   Nicht von Hand aendern\. Grundlage fuer kiosk-neu\.css\.\n   SHA256: ([a-f0-9]{64}) \*\/\n/);
+    if (marke) {
+      const alterInhalt = alt.slice(marke[0].length);
+      const alterHash = crypto.createHash('sha256').update(alterInhalt).digest('hex');
+      if (alterHash !== marke[1]) {
+        throw new Error(
+          'R1: css/kiosk-base.css wurde nach der Erzeugung geaendert '
+          + '(SHA-256 stimmt nicht). Die Aenderung pruefen und zuerst in '
+          + 'static-site/kiosk-klassisch.html uebernehmen.');
+      }
+    }
+
     const klassen = function (s) {
       const m = s.match(/(^|[\s,{}])\.[a-zA-Z][\w-]*/gm) || [];
       return new Set(m.map(function (x) { return x.replace(/^[\s,{}]+/, ''); }));
@@ -181,7 +195,7 @@ regel('R1', 'Gestaltungsblatt auslagern', function (t) {
     const vorher = klassen(alt);
     const nachher = klassen(css);
     const weg = [...vorher].filter(function (k) { return !nachher.has(k); });
-    if (weg.length > 3) {
+    if (weg.length > 0) {
       throw new Error(
         'R1: Dieser Lauf wuerde ' + weg.length + ' Gestaltungsregeln aus '
         + 'css/kiosk-base.css loeschen, darunter ' + weg.slice(0, 6).join(', ')
