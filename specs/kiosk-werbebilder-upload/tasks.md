@@ -17,3 +17,4 @@
 | T13 | Kiosk-Modul auf API umbauen, Status, Auto-Aktualisierung; Playwright neu | TC-F19, TC-F25, F1…F7, F12 | erledigt |
 | T14 | README, exe neu, Defender-Scan | — | erledigt |
 | T15 | Preview-Live-Test (Brücke lokal, ohne Browser-Sonderfreigabe) | alle | erledigt (Kette Kiosk → Cloud → Brücke → Test-FTP in Edge; echte Waage nur lesend/trocken) |
+| T16 | Zwischenablage: Einfügen per Strg+V und Knopf, Umwandlung in JPEG, Tests | TC-F26-01…05 | erledigt |

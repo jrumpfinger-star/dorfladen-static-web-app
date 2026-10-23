@@ -40,13 +40,18 @@ async function mockApi(page, opts = {}) {
     return json({ success: true, data: [] });
   });
 
-  await page.route(/\/api\/waage-werbebilder/, (r) => {
+  await page.route(/\/api\/waage-werbebilder/, async (r) => {
     const req = r.request();
     const u = new URL(req.url());
     const art = u.searchParams.get('art');
     const name = u.searchParams.get('name');
     const json = (status, b) => r.fulfill({ status, contentType: 'application/json; charset=utf-8', body: JSON.stringify(b) });
-    log.push({ methode: req.method(), art, name, host: u.host, pfad: u.pathname });
+    const eintrag = { methode: req.method(), art, name, host: u.host, pfad: u.pathname };
+    if (req.method() === 'POST') {
+      eintrag.typ = req.headers()['content-type'];
+      eintrag.kopf = (req.postDataBuffer() || Buffer.alloc(0)).slice(0, 3).toString('hex');
+    }
+    log.push(eintrag);
     if (!zustand[art] || !['vollbild', 'dauer'].includes(art)) return json(404, { success: false, error: 'Unbekannte Art' });
 
     if (req.method() === 'GET' && !name) {
@@ -56,6 +61,7 @@ async function mockApi(page, opts = {}) {
     }
     if (req.method() === 'GET') return r.fulfill({ status: 200, contentType: 'image/gif', body: GIF });
     if (req.method() === 'POST') {
+      if (o.verzoegerung) await new Promise((res) => setTimeout(res, o.verzoegerung));
       if (o.ablehnen.includes(name)) return json(415, { success: false, error: 'Nur JPEG und GIF erlaubt' });
       if (!zustand[art].some((b) => b.name === name)) zustand[art].push({ name, groesse: GIF.length, etag: 'n' + name.length, status: 'wartet' });
       return json(200, { success: true, name, groesse: GIF.length, etag: 'x' });
@@ -81,6 +87,41 @@ async function oeffne(page) {
 }
 
 const jpg = (name) => ({ name, mimeType: 'image/jpeg', buffer: GIF });
+
+/* Fuegt per paste-Ereignis ein, was die Zwischenablage haette: ein Bild (png/jpeg/gif) und/oder Text.
+   `ziel` = CSS-Selektor des Ereignisziels (Standard: body). Liefert, ob das Ereignis abgefangen wurde. */
+async function einfuegenEreignis(page, { typ, text, ziel, gifB64 } = {}) {
+  return page.evaluate(async ({ typ, text, ziel, gifB64 }) => {
+    const dt = new DataTransfer();
+    if (typ === 'image/gif') {
+      const bin = Uint8Array.from(atob(gifB64), (c) => c.charCodeAt(0));
+      dt.items.add(new File([bin], 'bild.gif', { type: 'image/gif' }));
+    } else if (typ) {
+      const c = document.createElement('canvas'); c.width = 40; c.height = 20;
+      const x = c.getContext('2d'); x.fillStyle = '#c00'; x.fillRect(0, 0, 40, 20);
+      const blob = await new Promise((r) => c.toBlob(r, typ));
+      dt.items.add(new File([blob], 'bild', { type: typ }));
+    }
+    if (text) dt.setData('text/plain', text);
+    const ev = new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true });
+    (ziel ? document.querySelector(ziel) : document.body).dispatchEvent(ev);
+    return ev.defaultPrevented;
+  }, { typ, text, ziel, gifB64 });
+}
+
+/* Ersetzt die Zwischenablage-Schnittstelle: items = [{types:[...], blob}] oder 'fehler' / 'keine'. */
+async function zwischenablage(page, was) {
+  await page.evaluate(async (was) => {
+    if (was === 'keine') { Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true }); return; }
+    const c = document.createElement('canvas'); c.width = 30; c.height = 30;
+    const x = c.getContext('2d'); x.fillStyle = '#080'; x.fillRect(0, 0, 30, 30);
+    const png = await new Promise((r) => c.toBlob(r, 'image/png'));
+    const lesen = was === 'fehler' ? () => Promise.reject(new Error('NotAllowedError'))
+      : was === 'text' ? () => Promise.resolve([{ types: ['text/plain'], getType: async () => new Blob(['hallo']) }])
+      : () => Promise.resolve([{ types: ['text/plain', 'image/png'], getType: async (t) => (t === 'image/png' ? png : new Blob(['x'])) }]);
+    Object.defineProperty(navigator, 'clipboard', { value: { read: lesen }, configurable: true });
+  }, was);
+}
 
 test.describe('Werbebilder-Upload', () => {
 
@@ -243,6 +284,104 @@ test.describe('Werbebilder-Upload', () => {
     m.zustand.vollbild.find((x) => x.name === '20_sommer.gif').status = 'auf_waage';   // Bruecke hat uebertragen
     await expect(b).toContainText('auf der Waage', { timeout: 20000 });
     expect(m.anfragen('GET').filter((l) => !l.name).length).toBeGreaterThan(vorher);
+  });
+
+  test('TC-F26-01: Strg+V mit einem PNG legt ein JPEG in "Zum Hochladen"; Hochladen sendet echtes JPEG', async ({ page }) => {
+    const m = await mockApi(page);
+    await oeffne(page);
+    const abgefangen = await einfuegenEreignis(page, { typ: 'image/png' });
+    expect(abgefangen).toBe(true);
+    const name = page.locator('#panel-werbebilder .wb-stage .wb-info b');
+    await expect(name).toHaveCount(1, { timeout: 10000 });
+    await expect(name).toHaveText(/^Zwischenablage_\d{8}_\d{6}_\d+\.jpg$/);
+    await expect(page.locator('#panel-werbebilder .wb-stage .wb-thumb img')).toHaveCount(1);
+    expect(m.anfragen('POST')).toHaveLength(0);
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('#panel-werbebilder [data-wb-bild^="Zwischenablage_"]')).toHaveCount(1, { timeout: 15000 });
+    const post = m.anfragen('POST')[0];
+    expect(post.typ).toBe('image/jpeg');
+    expect(post.kopf).toBe('ffd8ff');
+    expect(post.name).toMatch(/\.jpg$/);
+  });
+
+  test('TC-F26-02: GIF bleibt GIF, JPEG bleibt JPEG', async ({ page }) => {
+    const m = await mockApi(page);
+    await oeffne(page);
+    await einfuegenEreignis(page, { typ: 'image/gif', gifB64: GIF.toString('base64') });
+    await einfuegenEreignis(page, { typ: 'image/jpeg' });
+    const namen = page.locator('#panel-werbebilder .wb-stage .wb-info b');
+    await expect(namen).toHaveCount(2, { timeout: 10000 });
+    await expect(namen.nth(0)).toHaveText(/\.gif$/);
+    await expect(namen.nth(1)).toHaveText(/\.jpg$/);
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('#panel-werbebilder [data-wb-bild^="Zwischenablage_"]')).toHaveCount(2, { timeout: 15000 });
+    const posts = m.anfragen('POST');
+    expect(posts.map((p) => [p.typ, p.kopf])).toEqual([['image/gif', '474946'], ['image/jpeg', 'ffd8ff']]);
+  });
+
+  test('TC-F26-03: Text in der Zwischenablage legt nichts ab und wird nicht abgefangen', async ({ page }) => {
+    await mockApi(page);
+    await oeffne(page);
+    const abgefangen = await einfuegenEreignis(page, { text: 'nur Text' });
+    expect(abgefangen).toBe(false);
+    await page.evaluate(() => { const i = document.createElement('input'); i.id = 'fremd'; document.body.appendChild(i); });
+    const imFeld = await einfuegenEreignis(page, { typ: 'image/png', ziel: '#fremd' });
+    expect(imFeld).toBe(false);
+    await page.waitForTimeout(500);
+    await expect(page.locator('#panel-werbebilder .wb-stage')).toHaveCount(0);
+  });
+
+  test('TC-F26-04: Knopf liest die Zwischenablage; ohne Bild/Berechtigung/Schnittstelle kommt ein Hinweis', async ({ page }) => {
+    await mockApi(page);
+    await oeffne(page);
+    await zwischenablage(page, 'bild');
+    await page.locator('[data-wb="einfuegen"]').click();
+    await expect(page.locator('#panel-werbebilder .wb-stage .wb-info b')).toHaveText(/^Zwischenablage_.*\.jpg$/, { timeout: 10000 });
+
+    await zwischenablage(page, 'text');
+    await page.locator('[data-wb="einfuegen"]').click();
+    await expect(page.locator('#panel-werbebilder .wb-warn').filter({ hasText: 'kein Bild' })).toBeVisible();
+
+    await zwischenablage(page, 'fehler');
+    await page.locator('[data-wb="einfuegen"]').click();
+    await expect(page.locator('#panel-werbebilder .wb-warn').filter({ hasText: 'Strg+V' })).toBeVisible();
+
+    await zwischenablage(page, 'keine');
+    await page.locator('[data-wb="einfuegen"]').click();
+    await expect(page.locator('#panel-werbebilder .wb-warn').filter({ hasText: 'Strg+V' })).toBeVisible();
+    await expect(page.locator('#wb-paste')).toBeVisible();
+  });
+
+  test('TC-F26-04: Einfuegen per Langdruck-Feld (#wb-paste) nimmt das Bild auf und bleibt leer', async ({ page }) => {
+    await mockApi(page);
+    await oeffne(page);
+    const abgefangen = await einfuegenEreignis(page, { typ: 'image/png', ziel: '#wb-paste' });
+    expect(abgefangen).toBe(true);
+    await expect(page.locator('#panel-werbebilder .wb-stage .wb-info b')).toHaveCount(1, { timeout: 10000 });
+    await expect(page.locator('#wb-paste')).toHaveText('');
+  });
+
+  test('TC-F26-05: Waehrend der Uebertragung und bei offenem Dialog wird nichts aufgenommen; Namen sind eindeutig', async ({ page }) => {
+    await mockApi(page, { verzoegerung: 1500 });
+    await oeffne(page);
+    await einfuegenEreignis(page, { typ: 'image/png' });
+    await einfuegenEreignis(page, { typ: 'image/png' });
+    const namen = page.locator('#panel-werbebilder .wb-stage .wb-info b');
+    await expect(namen).toHaveCount(2, { timeout: 10000 });
+    const alle = await namen.allInnerTexts();
+    expect(new Set(alle).size).toBe(2);
+
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('[data-wb="hoch"]')).toBeDisabled();
+    await einfuegenEreignis(page, { typ: 'image/png' });
+    await expect(page.locator('#panel-werbebilder [data-wb-bild^="Zwischenablage_"]')).toHaveCount(2, { timeout: 20000 });
+    await expect(page.locator('#panel-werbebilder .wb-stage')).toHaveCount(0);
+
+    await page.locator('[data-wb-bild="10_fruehling.jpg"] [data-wb="loeschen"]').click();
+    const imDialog = await einfuegenEreignis(page, { typ: 'image/png' });
+    expect(imDialog).toBe(false);
+    await page.locator('[data-wb="dlg-nein"]').click();
+    await expect(page.locator('#panel-werbebilder .wb-stage')).toHaveCount(0);
   });
 
   test('TC-F25-01: keine Adress- und Test-Bedienelemente, alles geht an die eigene API', async ({ page }) => {

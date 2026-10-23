@@ -152,6 +152,16 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
   mehr; der Tab arbeitet nur noch mit derselben Herkunft (`/api/…`). Fehler der API werden
   in einem Satz gemeldet. Der Service Worker beantwortet Anfragen an LAN-Adressen weiterhin
   nicht selbst (bleibt als Schutz bestehen).
+- **F26** Bilder aus der **Zwischenablage** einfügen: Solange der Tab offen ist, nimmt `Strg+V`
+  (bzw. Einfügen per Langdruck auf dem Tablet) ein kopiertes Bild oder einen Screenshot auf; dazu
+  ein Knopf **„Aus Zwischenablage einfügen“** (liest die Zwischenablage, sofern das Gerät es
+  erlaubt, sonst Hinweis auf `Strg+V`). Das Bild landet wie eine gewählte Datei in „Zum
+  Hochladen“ (Vorschau, Hochladen, Ersetzen). Die Zwischenablage liefert meist PNG; solche
+  Bilder (auch WebP/BMP) werden im Browser in **JPEG** umgewandelt (weißer Hintergrund,
+  längste Seite höchstens 1920 px). JPEG und GIF bleiben unverändert (GIF bleibt animiert).
+  Der Name lautet `Zwischenablage_<Datum>_<Uhrzeit>_<Nr>.jpg`. Reiner Text in der
+  Zwischenablage wird ignoriert und bleibt in Eingabefeldern normal einfügbar. Während einer
+  Übertragung und bei offenem Dialog wird nichts aufgenommen.
 
 ## Testfälle
 
@@ -201,6 +211,11 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **TC-F23-01** Brücke: 401 → Anmeldung mit Passwort, Wiederholung mit Token; ohne Passwort und ohne Pflicht kein Token.
 - **TC-F24-01** Assistent fragt Waagen-IP, FTP-Zugang, optional Passwort; keine Firewall-Frage.
 - **TC-F25-01** Kiosk-Tab hat keine Adress-/Test-Bedienelemente; alle Anfragen gehen an `/api/waage-werbebilder`.
+- **TC-F26-01** `Strg+V` mit einem PNG in der Zwischenablage legt ein JPEG `Zwischenablage_….jpg` in „Zum Hochladen“; Hochladen sendet `image/jpeg` mit JPEG-Kopf (FFD8FF).
+- **TC-F26-02** Ein GIF in der Zwischenablage bleibt ein GIF; ein JPEG bleibt unverändert.
+- **TC-F26-03** Reiner Text in der Zwischenablage legt nichts ab; Einfügen in ein Eingabefeld außerhalb des Tabs bleibt unberührt.
+- **TC-F26-04** Der Knopf „Aus Zwischenablage einfügen“ liest ein Bild per Zwischenablage-Schnittstelle; ohne Bild oder ohne Berechtigung/Schnittstelle erscheint ein Hinweis auf `Strg+V`.
+- **TC-F26-05** Während einer Übertragung und bei offenem Dialog wird ein Einfügen ignoriert; zwei Bilder kurz nacheinander erhalten verschiedene Namen.
 
 ## Offen / bewusst nicht Teil dieser Änderung
 

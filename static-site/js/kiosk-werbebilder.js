@@ -183,6 +183,108 @@ window.KWerbebilder = (function () {
     render();
   }
 
+  // ── Zwischenablage (F26) ──
+  var _clipN = 0;
+  var _clipHinweis = '';
+
+  function stempel() {
+    var d = new Date();
+    function z(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '_' + z(d.getHours()) + z(d.getMinutes()) + z(d.getSeconds());
+  }
+
+  // PNG/WebP/BMP aus der Zwischenablage -> JPEG (weisser Grund, laengste Seite hoechstens 1920 px).
+  function alsJpeg(blob) {
+    return new Promise(function (ok, fail) {
+      var url = URL.createObjectURL(blob);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { URL.revokeObjectURL(url); fail(); return; }
+        var f = Math.min(1, 1920 / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * f)); c.height = Math.max(1, Math.round(h * f));
+        var x = c.getContext('2d');
+        x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+        x.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) { if (b) ok(b); else fail(); }, 'image/jpeg', 0.9);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); fail(); };
+      img.src = url;
+    });
+  }
+
+  function clipDatei(blob) {
+    var typ = String(blob.type || '').toLowerCase();
+    var n = ++_clipN;
+    var basis = 'Zwischenablage_' + stempel() + '_' + n;
+    if (typ === 'image/gif') return Promise.resolve(new File([blob], basis + '.gif', { type: 'image/gif' }));
+    if (typ === 'image/jpeg') return Promise.resolve(new File([blob], basis + '.jpg', { type: 'image/jpeg' }));
+    return alsJpeg(blob).then(function (b) { return new File([b], basis + '.jpg', { type: 'image/jpeg' }); });
+  }
+
+  function clipAufnehmen(blobs) {
+    return Promise.all(blobs.map(function (b) {
+      return clipDatei(b).catch(function () { return null; });
+    })).then(function (dateien) {
+      var gut = dateien.filter(Boolean);
+      _clipHinweis = gut.length < dateien.length ? 'Ein Bild aus der Zwischenablage konnte nicht gelesen werden.' : '';
+      if (gut.length) {
+        dateienAufnehmen(gut);
+        toast(gut.length === 1 ? 'Bild aus der Zwischenablage hinzugefügt' : gut.length + ' Bilder aus der Zwischenablage hinzugefügt');
+      } else render();
+    });
+  }
+
+  function clipGesperrt() {
+    var p = document.getElementById('panel-werbebilder');
+    return !p || !p.classList.contains('active') || _lauf || _dlg || _lb;
+  }
+
+  // Strg+V (und Einfuegen per Langdruck): nur Bilder; Text bleibt unberuehrt.
+  function einfuegen(e) {
+    if (clipGesperrt()) return;
+    var t = e.target;
+    var eigenes = t && t.id === 'wb-paste';
+    if (!eigenes && t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    var blobs = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file' && /^image\//i.test(items[i].type)) {
+        var f = items[i].getAsFile();
+        if (f) blobs.push(f);
+      }
+    }
+    if (!blobs.length) { if (eigenes) e.preventDefault(); return; }
+    e.preventDefault();
+    clipAufnehmen(blobs);
+  }
+
+  function clipHinweisSetzen() {
+    _clipHinweis = 'Einfügen per Knopf ist auf diesem Gerät nicht möglich. Bitte Strg+V drücken oder in das Feld '
+      + '„Hier tippen zum Einfügen“ lange drücken und „Einfügen“ wählen.';
+    render();
+  }
+
+  function clipLesen() {
+    if (clipGesperrt()) return;
+    if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') { clipHinweisSetzen(); return; }
+    navigator.clipboard.read().then(function (items) {
+      var holen = [];
+      items.forEach(function (it) {
+        var typ = (it.types || []).filter(function (t) { return /^image\//i.test(t); })[0];
+        if (typ) holen.push(it.getType(typ));
+      });
+      if (!holen.length) {
+        _clipHinweis = 'In der Zwischenablage liegt kein Bild. Erst ein Bild oder einen Screenshot kopieren.';
+        render();
+        return null;
+      }
+      return Promise.all(holen).then(clipAufnehmen);
+    }).catch(clipHinweisSetzen);
+  }
+
   function verwerfen(i) {
     var weg = (i === undefined) ? _staged.splice(0) : _staged.splice(i, 1);
     weg.forEach(function (s) { URL.revokeObjectURL(s.url); });
@@ -452,6 +554,10 @@ window.KWerbebilder = (function () {
     h += '</div><p class="wb-klein">' + esc(art.hinweis) + ' Die Reihenfolge folgt dem Dateinamen.</p>';
     h += '<label class="wb-drop" id="wb-drop"><input type="file" id="wb-datei" multiple accept="image/jpeg,image/gif,.jpg,.jpeg,.gif">'
       + '<b>Bilder hier ablegen oder tippen</b><span>JPEG oder GIF, höchstens 8 MB je Bild</span></label>';
+    h += '<div class="wb-clip"><button class="wb-btn" data-wb="einfuegen"' + (_lauf ? ' disabled' : '') + '>Aus Zwischenablage einfügen</button>'
+      + '<div id="wb-paste" class="wb-paste" contenteditable="true" role="textbox" inputmode="none" spellcheck="false" '
+      + 'aria-label="Hier tippen zum Einfügen" data-placeholder="Hier tippen zum Einfügen – oder Strg+V"></div></div>';
+    if (_clipHinweis) h += '<p class="wb-warn" role="status">' + esc(_clipHinweis) + '</p>';
     h += renderStaged() + renderListe();
     el.innerHTML = h;
   }
@@ -468,6 +574,7 @@ window.KWerbebilder = (function () {
     if (a === 'art') { if (_lauf) return; _art = t.getAttribute('data-art'); _bilder = []; _sig = ''; laden(); }
     else if (a === 'neu') laden();
     else if (a === 'hoch') hochladen(false);
+    else if (a === 'einfuegen') clipLesen();
     else if (a === 'ersetzen') ersetzenFragen();
     else if (a === 'verwerfen') verwerfen();
     else if (a === 'weg') verwerfen(i);
@@ -480,6 +587,7 @@ window.KWerbebilder = (function () {
     var el = host();
     if (!el || el.getAttribute('data-wb-ok')) return;
     el.setAttribute('data-wb-ok', '1');
+    document.addEventListener('paste', einfuegen);
     el.addEventListener('click', klick);
     el.addEventListener('change', function (e) {
       if (e.target && e.target.id === 'wb-datei') { dateienAufnehmen(e.target.files); e.target.value = ''; }
@@ -525,6 +633,9 @@ window.KWerbebilder = (function () {
       '.wb-zaehl{font-weight:400;color:var(--wm);font-size:13px;margin-left:6px}',
       '.wb-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px 16px;border:2px dashed var(--wp);border-radius:14px;background:var(--c-pri-l,#f0f4f1);cursor:pointer;text-align:center;min-height:44px}',
       '.wb-drop.over{background:#dcfce7}.wb-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.wb-drop b{color:var(--wp);font-size:15px}.wb-drop span{font-size:12px;color:var(--wm)}',
+      '.wb-clip{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-top:8px}',
+      '.wb-paste{flex:1 1 220px;min-height:44px;padding:10px 12px;border:1.5px dashed var(--wb);border-radius:12px;background:var(--ws);color:var(--wt);font-size:13px;outline:none;overflow:hidden;display:flex;align-items:center}',
+      '.wb-paste:empty:before{content:attr(data-placeholder);color:var(--wm)}.wb-paste:focus{border-color:var(--wp)}',
       '.wb-raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}',
       '.wb-item{position:relative;display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--wb);border-radius:12px;background:var(--ws)}',
       '.wb-item.wb-fehler{border-color:#b91c1c}.wb-item.wb-ok{border-color:#15803d}',
