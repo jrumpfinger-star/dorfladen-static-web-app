@@ -155,7 +155,8 @@ window.KWerbebilder = (function () {
   // Hintergrundabfrage: nur, solange der Tab offen und die Seite sichtbar ist und nichts uebertragen wird.
   function tick() {
     var p = document.getElementById('panel-werbebilder');
-    if (!p || !p.classList.contains('active') || document.hidden || _lauf || _dlg || _laden) return;
+    if (_kam && (!p || !p.classList.contains('active'))) kameraZu();   // Tab gewechselt: Kamera freigeben
+    if (!p || !p.classList.contains('active') || document.hidden || _lauf || _dlg || _kam || _laden) return;
     laden(true);
   }
 
@@ -215,31 +216,32 @@ window.KWerbebilder = (function () {
     });
   }
 
-  function clipDatei(blob) {
+  function clipDatei(blob, praefix, immerJpeg) {
     var typ = String(blob.type || '').toLowerCase();
     var n = ++_clipN;
-    var basis = 'Zwischenablage_' + stempel() + '_' + n;
-    if (typ === 'image/gif') return Promise.resolve(new File([blob], basis + '.gif', { type: 'image/gif' }));
-    if (typ === 'image/jpeg') return Promise.resolve(new File([blob], basis + '.jpg', { type: 'image/jpeg' }));
+    var basis = (praefix || 'Zwischenablage') + '_' + stempel() + '_' + n;
+    if (!immerJpeg && typ === 'image/gif') return Promise.resolve(new File([blob], basis + '.gif', { type: 'image/gif' }));
+    if (!immerJpeg && typ === 'image/jpeg') return Promise.resolve(new File([blob], basis + '.jpg', { type: 'image/jpeg' }));
     return alsJpeg(blob).then(function (b) { return new File([b], basis + '.jpg', { type: 'image/jpeg' }); });
   }
 
-  function clipAufnehmen(blobs) {
+  function clipAufnehmen(blobs, praefix, immerJpeg) {
+    var wort = (praefix === 'Foto') ? 'Foto' : 'Bild aus der Zwischenablage';
     return Promise.all(blobs.map(function (b) {
-      return clipDatei(b).catch(function () { return null; });
+      return clipDatei(b, praefix, immerJpeg).catch(function () { return null; });
     })).then(function (dateien) {
       var gut = dateien.filter(Boolean);
-      _clipHinweis = gut.length < dateien.length ? 'Ein Bild aus der Zwischenablage konnte nicht gelesen werden.' : '';
+      _clipHinweis = gut.length < dateien.length ? 'Ein Bild konnte nicht gelesen werden.' : '';
       if (gut.length) {
         dateienAufnehmen(gut);
-        toast(gut.length === 1 ? 'Bild aus der Zwischenablage hinzugefügt' : gut.length + ' Bilder aus der Zwischenablage hinzugefügt');
+        toast(gut.length === 1 ? wort + ' hinzugefügt' : gut.length + ' ' + (praefix === 'Foto' ? 'Fotos' : 'Bilder aus der Zwischenablage') + ' hinzugefügt');
       } else render();
     });
   }
 
   function clipGesperrt() {
     var p = document.getElementById('panel-werbebilder');
-    return !p || !p.classList.contains('active') || _lauf || _dlg || _lb;
+    return !p || !p.classList.contains('active') || _lauf || _dlg || _lb || _kam;
   }
 
   // Strg+V (und Einfuegen per Langdruck): nur Bilder; Text bleibt unberuehrt.
@@ -283,6 +285,108 @@ window.KWerbebilder = (function () {
       }
       return Promise.all(holen).then(clipAufnehmen);
     }).catch(clipHinweisSetzen);
+  }
+
+  // ── Kamera (F27) ──
+  var _kam = null;             // offene Kamera {stream, el, video, facing, n}
+  var _kamOffnend = false;     // Abfrage der Berechtigung laeuft
+  var _kamFallback = false;    // Live-Kamera nicht verfuegbar -> Kamera-App anbieten
+
+  function kameraZu() {
+    if (!_kam) return;
+    try { _kam.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) { /* schon beendet */ }
+    if (_kam.el) _kam.el.remove();
+    document.removeEventListener('keydown', kameraTaste, true);
+    _kam = null;
+  }
+
+  function kameraTaste(e) {
+    if (e.key === 'Escape') { e.stopPropagation(); kameraZu(); }
+  }
+
+  function kameraStrom(facing) {
+    return navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+  }
+
+  function kameraFehlt() {
+    _kamFallback = true;
+    _clipHinweis = 'Die Live-Kamera ist hier nicht verfügbar oder nicht erlaubt. Mit „Kamera-App öffnen“ geht es über die Kamera des Geräts.';
+    render();
+  }
+
+  function kameraFoto() {
+    if (!_kam) return;
+    var v = _kam.video;
+    if (!v.videoWidth || !v.videoHeight) return;
+    var f = Math.min(1, 1920 / Math.max(v.videoWidth, v.videoHeight));
+    var c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(v.videoWidth * f)); c.height = Math.max(1, Math.round(v.videoHeight * f));
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    c.toBlob(function (b) {
+      if (!b || !_kam) return;
+      var datei = new File([b], 'Foto_' + stempel() + '_' + (++_clipN) + '.jpg', { type: 'image/jpeg' });
+      _kam.n++;
+      _clipHinweis = '';
+      dateienAufnehmen([datei]);
+      var z = document.getElementById('wb-kam-zahl');
+      if (z) z.textContent = _kam.n + (_kam.n === 1 ? ' Foto aufgenommen.' : ' Fotos aufgenommen.') + ' Weitere aufnehmen oder „Fertig“.';
+    }, 'image/jpeg', 0.9);
+  }
+
+  function kameraWechseln() {
+    if (!_kam) return;
+    var neu = _kam.facing === 'environment' ? 'user' : 'environment';
+    kameraStrom(neu).then(function (s) {
+      if (!_kam) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+      _kam.stream.getTracks().forEach(function (t) { t.stop(); });
+      _kam.stream = s; _kam.facing = neu; _kam.video.srcObject = s;
+      _kam.video.play().catch(function () { /* startet bei Antippen */ });
+    }).catch(function () {
+      var z = document.getElementById('wb-kam-zahl');
+      if (z) z.textContent = 'Die andere Kamera lässt sich nicht öffnen.';
+    });
+  }
+
+  function kameraAnzeigen(stream) {
+    var d = document.createElement('div');
+    d.className = 'wb-overlay';
+    d.id = 'wb-kam';
+    d.innerHTML = '<div class="wb-dlg wb-kam-dlg" role="dialog" aria-modal="true"><h3>Foto aufnehmen</h3>'
+      + '<video class="wb-video" autoplay playsinline muted></video>'
+      + '<p class="wb-klein" id="wb-kam-zahl" role="status">Noch kein Foto aufgenommen.</p>'
+      + '<div class="wb-dlg-foot"><button class="wb-btn" data-wb="kam-wechsel">Kamera wechseln</button>'
+      + '<button class="wb-btn" data-wb="kam-zu">Fertig</button>'
+      + '<button class="wb-btn wb-haupt" data-wb="kam-foto">Aufnehmen</button></div></div>';
+    d.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-wb]');
+      var a = t && t.getAttribute('data-wb');
+      if (e.target === d || a === 'kam-zu') kameraZu();
+      else if (a === 'kam-foto') kameraFoto();
+      else if (a === 'kam-wechsel') kameraWechseln();
+    });
+    document.body.appendChild(d);
+    var v = d.querySelector('video');
+    v.srcObject = stream;
+    v.play().catch(function () { /* startet bei Antippen */ });
+    _kam = { stream: stream, el: d, video: v, facing: 'environment', n: 0 };
+    document.addEventListener('keydown', kameraTaste, true);
+  }
+
+  function kameraOeffnen() {
+    if (_lauf || _kam || _kamOffnend || _dlg || _lb) return;
+    _kamFallback = false;
+    _clipHinweis = '';
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') { kameraFehlt(); return; }
+    _kamOffnend = true;
+    kameraStrom('environment').then(function (stream) {
+      _kamOffnend = false;
+      var p = document.getElementById('panel-werbebilder');
+      if (!p || !p.classList.contains('active')) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      kameraAnzeigen(stream);
+    }).catch(function () { _kamOffnend = false; kameraFehlt(); });
   }
 
   function verwerfen(i) {
@@ -555,6 +659,9 @@ window.KWerbebilder = (function () {
     h += '<label class="wb-drop" id="wb-drop"><input type="file" id="wb-datei" multiple accept="image/jpeg,image/gif,.jpg,.jpeg,.gif">'
       + '<b>Bilder hier ablegen oder tippen</b><span>JPEG oder GIF, höchstens 8 MB je Bild</span></label>';
     h += '<div class="wb-clip"><button class="wb-btn" data-wb="einfuegen"' + (_lauf ? ' disabled' : '') + '>Aus Zwischenablage einfügen</button>'
+      + '<button class="wb-btn" data-wb="kamera"' + (_lauf ? ' disabled' : '') + '>Foto aufnehmen</button>'
+      + (_kamFallback ? '<label class="wb-btn" for="wb-kamera" data-wb-kamera-app="1">Kamera-App öffnen</label>' : '')
+      + '<input type="file" id="wb-kamera" accept="image/*" capture="environment" hidden>'
       + '<div id="wb-paste" class="wb-paste" contenteditable="true" role="textbox" inputmode="none" spellcheck="false" '
       + 'aria-label="Hier tippen zum Einfügen" data-placeholder="Hier tippen zum Einfügen – oder Strg+V"></div></div>';
     if (_clipHinweis) h += '<p class="wb-warn" role="status">' + esc(_clipHinweis) + '</p>';
@@ -575,6 +682,7 @@ window.KWerbebilder = (function () {
     else if (a === 'neu') laden();
     else if (a === 'hoch') hochladen(false);
     else if (a === 'einfuegen') clipLesen();
+    else if (a === 'kamera') kameraOeffnen();
     else if (a === 'ersetzen') ersetzenFragen();
     else if (a === 'verwerfen') verwerfen();
     else if (a === 'weg') verwerfen(i);
@@ -588,9 +696,15 @@ window.KWerbebilder = (function () {
     if (!el || el.getAttribute('data-wb-ok')) return;
     el.setAttribute('data-wb-ok', '1');
     document.addEventListener('paste', einfuegen);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) kameraZu(); });
     el.addEventListener('click', klick);
     el.addEventListener('change', function (e) {
       if (e.target && e.target.id === 'wb-datei') { dateienAufnehmen(e.target.files); e.target.value = ''; }
+      else if (e.target && e.target.id === 'wb-kamera') {
+        var fotos = Array.prototype.slice.call(e.target.files || []);
+        e.target.value = '';
+        if (fotos.length) clipAufnehmen(fotos, 'Foto', true);   // immer JPEG, <= 1920 px, Ausrichtung eingerechnet
+      }
     });
     el.addEventListener('dragover', function (e) {
       e.preventDefault();
@@ -633,7 +747,8 @@ window.KWerbebilder = (function () {
       '.wb-zaehl{font-weight:400;color:var(--wm);font-size:13px;margin-left:6px}',
       '.wb-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px 16px;border:2px dashed var(--wp);border-radius:14px;background:var(--c-pri-l,#f0f4f1);cursor:pointer;text-align:center;min-height:44px}',
       '.wb-drop.over{background:#dcfce7}.wb-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.wb-drop b{color:var(--wp);font-size:15px}.wb-drop span{font-size:12px;color:var(--wm)}',
-      '.wb-clip{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-top:8px}',
+      '.wb-clip{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-top:8px}.wb-clip label.wb-btn{display:flex;align-items:center}',
+      '.wb-kam-dlg{max-width:720px}.wb-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block;margin:0 0 10px}',
       '.wb-paste{flex:1 1 220px;min-height:44px;padding:10px 12px;border:1.5px dashed var(--wb);border-radius:12px;background:var(--ws);color:var(--wt);font-size:13px;outline:none;overflow:hidden;display:flex;align-items:center}',
       '.wb-paste:empty:before{content:attr(data-placeholder);color:var(--wm)}.wb-paste:focus{border-color:var(--wp)}',
       '.wb-raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}',

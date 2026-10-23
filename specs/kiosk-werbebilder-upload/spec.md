@@ -162,6 +162,15 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
   Der Name lautet `Zwischenablage_<Datum>_<Uhrzeit>_<Nr>.jpg`. Reiner Text in der
   Zwischenablage wird ignoriert und bleibt in Eingabefeldern normal einfügbar. Während einer
   Übertragung und bei offenem Dialog wird nichts aufgenommen.
+- **F27** **Foto aufnehmen:** Knopf „Foto aufnehmen“ öffnet eine Live-Kamera im Tab (Vorschau,
+  „Aufnehmen“, „Kamera wechseln“, „Fertig“; mehrere Fotos hintereinander möglich). Jedes Foto
+  wird als JPEG (längste Seite höchstens 1920 px) wie eine gewählte Datei in „Zum Hochladen“
+  gelegt, Name `Foto_<Datum>_<Uhrzeit>_<Nr>.jpg`. Ist die Live-Kamera nicht verfügbar oder
+  nicht erlaubt, erscheint ein Hinweis und ein zweiter Knopf **„Kamera-App öffnen“**, der die
+  Kamera-App des Geräts startet (Datei­auswahl mit `capture`); dieses Foto wird ebenfalls in JPEG
+  (längste Seite ≤ 1920 px, Ausrichtung eingerechnet) umgewandelt. Beim Schließen, Abbrechen, Esc
+  und beim Wechsel des Tabs wird die Kamera freigegeben; während einer Übertragung ist der
+  Knopf gesperrt.
 
 ## Testfälle
 
@@ -216,6 +225,9 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **TC-F26-03** Reiner Text in der Zwischenablage legt nichts ab; Einfügen in ein Eingabefeld außerhalb des Tabs bleibt unberührt.
 - **TC-F26-04** Der Knopf „Aus Zwischenablage einfügen“ liest ein Bild per Zwischenablage-Schnittstelle; ohne Bild oder ohne Berechtigung/Schnittstelle erscheint ein Hinweis auf `Strg+V`.
 - **TC-F26-05** Während einer Übertragung und bei offenem Dialog wird ein Einfügen ignoriert; zwei Bilder kurz nacheinander erhalten verschiedene Namen.
+- **TC-F27-01** „Foto aufnehmen“ öffnet die Live-Kamera; „Aufnehmen“ legt ein JPEG `Foto_….jpg` in „Zum Hochladen“, zwei Aufnahmen haben verschiedene Namen; „Fertig“ schließt und gibt die Kamera frei.
+- **TC-F27-02** Esc, Antippen außerhalb und „Fertig“ geben die Kamera frei; der Tab-Wechsel ebenfalls; während einer Übertragung ist der Knopf gesperrt.
+- **TC-F27-03** Verweigert oder fehlt die Kamera, erscheint ein Hinweis und „Kamera-App öffnen“; ein darüber gewähltes (großes, gedrehtes) Foto wird als JPEG ≤ 1920 px aufgenommen.
 
 ## Offen / bewusst nicht Teil dieser Änderung
 

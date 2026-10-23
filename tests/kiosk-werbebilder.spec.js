@@ -123,7 +123,124 @@ async function zwischenablage(page, was) {
   }, was);
 }
 
+/* Kamera-Attrappe: getUserMedia liefert einen Strom aus einem Canvas.
+   modus: 'ok' | 'verweigert' | 'fehlt' (keine Schnittstelle). Zaehler in window.__stops / __facings. */
+async function kameraAttrappe(page, modus = 'ok') {
+  await page.addInitScript((modus) => {
+    window.__stops = 0; window.__facings = [];
+    const md = {
+      getUserMedia: async (c) => {
+        if (modus === 'verweigert') throw new DOMException('Permission denied', 'NotAllowedError');
+        window.__facings.push(c.video.facingMode.ideal);
+        const cv = document.createElement('canvas'); cv.width = 640; cv.height = 360;
+        const x = cv.getContext('2d'); let t = 0;
+        const zeichne = () => { x.fillStyle = 'hsl(' + ((t++ * 7) % 360) + ',70%,45%)'; x.fillRect(0, 0, 640, 360); };
+        zeichne(); setInterval(zeichne, 100);
+        const s = cv.captureStream(10);
+        s.getTracks().forEach((tr) => { const stop = tr.stop.bind(tr); tr.stop = () => { window.__stops++; stop(); }; });
+        return s;
+      },
+    };
+    Object.defineProperty(navigator, 'mediaDevices', { value: modus === 'fehlt' ? undefined : md, configurable: true });
+  }, modus);
+}
+
 test.describe('Werbebilder-Upload', () => {
+
+  test('TC-F27-01: Foto aufnehmen - Live-Kamera, mehrere Fotos, JPEG, Kamera wird freigegeben', async ({ page }) => {
+    await kameraAttrappe(page);
+    const m = await mockApi(page);
+    await oeffne(page);
+    await page.locator('[data-wb="kamera"]').click();
+    const video = page.locator('#wb-kam video');
+    await expect(video).toBeVisible({ timeout: 10000 });
+    await expect.poll(() => video.evaluate((v) => v.videoWidth), { timeout: 10000 }).toBeGreaterThan(0);
+
+    await page.locator('[data-wb="kam-foto"]').click();
+    await expect(page.locator('#wb-kam-zahl')).toContainText('1 Foto aufgenommen');
+    await page.locator('[data-wb="kam-foto"]').click();
+    await expect(page.locator('#wb-kam-zahl')).toContainText('2 Fotos aufgenommen');
+    expect(await page.evaluate(() => window.__facings)).toEqual(['environment']);
+
+    await page.locator('[data-wb="kam-wechsel"]').click();
+    await expect.poll(() => page.evaluate(() => window.__facings.length)).toBe(2);
+    expect(await page.evaluate(() => window.__facings[1])).toBe('user');
+
+    await page.locator('[data-wb="kam-zu"]').click();
+    await expect(page.locator('#wb-kam')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__stops)).toBeGreaterThanOrEqual(2);   // beide Stroeme beendet
+
+    const namen = page.locator('#panel-werbebilder .wb-stage .wb-info b');
+    await expect(namen).toHaveCount(2);
+    const alle = await namen.allInnerTexts();
+    expect(new Set(alle).size).toBe(2);
+    for (const n of alle) expect(n).toMatch(/^Foto_\d{8}_\d{6}_\d+\.jpg$/);
+
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('#panel-werbebilder [data-wb-bild^="Foto_"]')).toHaveCount(2, { timeout: 15000 });
+    expect(m.anfragen('POST').map((p) => [p.typ, p.kopf])).toEqual([['image/jpeg', 'ffd8ff'], ['image/jpeg', 'ffd8ff']]);
+  });
+
+  test('TC-F27-02: Esc, Antippen ausserhalb und Tab-Wechsel geben die Kamera frei; waehrend Uebertragung gesperrt', async ({ page }) => {
+    await kameraAttrappe(page);
+    await mockApi(page, { verzoegerung: 2000 });
+    await oeffne(page);
+
+    await page.locator('[data-wb="kamera"]').click();
+    await expect(page.locator('#wb-kam video')).toBeVisible({ timeout: 10000 });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#wb-kam')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__stops)).toBe(1);
+
+    await page.locator('[data-wb="kamera"]').click();
+    await expect(page.locator('#wb-kam video')).toBeVisible({ timeout: 10000 });
+    await page.locator('#wb-kam').click({ position: { x: 5, y: 5 } });
+    await expect(page.locator('#wb-kam')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__stops)).toBe(2);
+
+    await page.locator('[data-wb="kamera"]').click();
+    await expect(page.locator('#wb-kam video')).toBeVisible({ timeout: 10000 });
+    await page.evaluate(() => K.switchTab('mittagstisch'));
+    await expect(page.locator('#wb-kam')).toHaveCount(0, { timeout: 15000 });
+    expect(await page.evaluate(() => window.__stops)).toBe(3);
+
+    await page.locator('.k-tab[data-tab="werbebilder"]').click();
+    await page.locator('#wb-datei').setInputFiles([jpg('x.jpg')]);
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('[data-wb="kamera"]')).toBeDisabled();
+  });
+
+  test('TC-F27-03: Kamera verweigert oder fehlt -> Hinweis und Kamera-App; Foto wird JPEG <= 1920 px', async ({ page }) => {
+    for (const modus of ['verweigert', 'fehlt']) {
+      const seite = await page.context().newPage();
+      await kameraAttrappe(seite, modus);
+      await mockApi(seite);
+      await oeffne(seite);
+      await expect(seite.locator('#wb-kamera')).toHaveAttribute('capture', 'environment');
+      await expect(seite.locator('#wb-kamera')).toHaveAttribute('accept', 'image/*');
+      await expect(seite.locator('label[data-wb-kamera-app]')).toHaveCount(0);
+      await seite.locator('[data-wb="kamera"]').click();
+      await expect(seite.locator('#panel-werbebilder .wb-warn').filter({ hasText: 'nicht verfügbar oder nicht erlaubt' })).toBeVisible({ timeout: 10000 });
+      await expect(seite.locator('#wb-kam')).toHaveCount(0);
+
+      const gross = Buffer.from(await seite.evaluate(async () => {
+        const c = document.createElement('canvas'); c.width = 3000; c.height = 1500;
+        const x = c.getContext('2d'); x.fillStyle = '#0a0'; x.fillRect(0, 0, 3000, 1500);
+        return c.toDataURL('image/png').split(',')[1];
+      }), 'base64');
+      const [fc] = await Promise.all([
+        seite.waitForEvent('filechooser'),
+        seite.locator('label[data-wb-kamera-app]').click(),
+      ]);
+      await fc.setFiles({ name: 'IMG_0001.png', mimeType: 'image/png', buffer: gross });
+      const name = seite.locator('#panel-werbebilder .wb-stage .wb-info b');
+      await expect(name).toHaveText(/^Foto_\d{8}_\d{6}_\d+\.jpg$/, { timeout: 15000 });
+      await expect(seite.locator('#panel-werbebilder .wb-stage .wb-thumb img')).toBeVisible();
+      const breite = await seite.locator('#panel-werbebilder .wb-stage .wb-thumb img').evaluate((i) => i.naturalWidth);
+      expect(breite).toBe(1920);
+      await seite.close();
+    }
+  });
 
   test('TC-F1-01: Tab ist da, braucht keine Anmeldung, zeigt die Bruecke als online', async ({ page }) => {
     await mockApi(page);
