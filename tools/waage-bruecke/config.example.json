@@ -4,10 +4,8 @@
   "ftp_user": "",
   "ftp_pass": "",
   "ftp_basis": "bizerba/data/multimedia/advertising",
-  "port": 8765,
-  "bind": "0.0.0.0",
-  "max_bytes": 8388608,
-  "erlaubte_herkuenfte": [
-    "https://www.dorfladen-oberornau.de"
-  ]
+  "api_url": "https://www.dorfladen-oberornau.de",
+  "cms_passwort": "",
+  "poll_sekunden": 10,
+  "max_bytes": 8388608
 }

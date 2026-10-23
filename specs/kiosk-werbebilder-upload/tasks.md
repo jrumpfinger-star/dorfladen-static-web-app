@@ -12,3 +12,8 @@
 | T9 | exe-Paketierung (`build-exe.bat`), Autostart/Firewall-Angebot, README | TC-F14-01…03 | erledigt |
 | T10 | Praxisfunde: `default` anlegen, Vorrang-Hinweis, Vorschau-Herkunft, klare Meldung bei fremdem Server | TC-F15-01…05, TC-F16-01 | erledigt |
 | T7 | Bestehende Kiosk-Tests gegenprüfen, Auslieferung, Live-Prüfung | — | offen |
+| T11 | API `waage-werbebilder` + `shared/waage.py` (Kiosk- und Brücken-Aufrufe, SharePoint, Table) | TC-F17…F18 | erledigt |
+| T12 | Brücke als Agent (Abgleich, Erstlauf, etag-Stand, Anmeldung, `--trocken`/`--einmal`, Assistent) | TC-F20…F24 | erledigt |
+| T13 | Kiosk-Modul auf API umbauen, Status, Auto-Aktualisierung; Playwright neu | TC-F19, TC-F25, F1…F7, F12 | erledigt |
+| T14 | README, exe neu, Defender-Scan | — | offen |
+| T15 | Preview-Live-Test (Brücke lokal, ohne Browser-Sonderfreigabe) | alle | offen |

@@ -1,8 +1,9 @@
 /* Werbebilder der PC-Waage im Kiosk (Spec specs/kiosk-werbebilder-upload/spec.md).
  *
- * Selbststaendiges Modul (window.KWerbebilder). Spricht NICHT mit der Cloud,
- * sondern mit der Waage-Bruecke im Laden-LAN (tools/waage-bruecke), die die
- * Bilder per FTP auf der Waage ablegt. Ein Browser kann kein FTP.
+ * Selbststaendiges Modul (window.KWerbebilder). Spricht nur mit der eigenen
+ * HTTPS-API (/api/waage-werbebilder); die Bilder liegen in SharePoint. Die
+ * Waage-Bruecke im Laden holt sie dort ab und gleicht die Waage per FTP an.
+ * Dadurch gibt es hier keine Adresse, keinen offenen Port und kein Mixed Content.
  *
  * Nur die Default-Verzeichnisse: Vollbild und Dauerwerbung. Die Reihenfolge
  * auf der Waage ergibt sich aus dem Dateinamen; die Liste zeigt sie so.
@@ -11,8 +12,8 @@
 window.KWerbebilder = (function () {
   'use strict';
 
-  var KEY = 'kiosk_waage_url';
-  var STANDARD_PORT = ':8765';
+  var API = '/api/waage-werbebilder';
+  var AKTUALISIERUNG_MS = 8000;
   var MAX_BILDER = 99;
   var MAX_BYTES = 8 * 1024 * 1024;
   var ARTEN = [
@@ -22,15 +23,16 @@ window.KWerbebilder = (function () {
 
   var _art = 'vollbild';
   var _bilder = [];
-  var _direkt = 0;           // Bilder direkt im Ordner (Vorrang vor "default")
+  var _bruecke = null;       // Status der Bruecke laut API
   var _laden = false;
-  var _verbunden = false;
+  var _geladen = false;
   var _fehler = '';
+  var _sig = '';             // Fingerabdruck der letzten Antwort (Neuzeichnen nur bei Aenderung)
+  var _timer = null;
   var _staged = [];          // [{file,url,status,fehler}]
   var _abgelehnt = [];       // Texte zu Dateien, die nicht uebernommen wurden
   var _lauf = false;
-  var _einst = false;
-  var _blobs = {};           // art/name/groesse -> Objekt-URL der Miniatur
+  var _blobs = {};           // art/name/etag -> Objekt-URL der Miniatur
   var _lb = null;            // offene Grossansicht {items,i}
   var _dlg = null;
 
@@ -48,28 +50,19 @@ window.KWerbebilder = (function () {
   }
 
   // ══════════════════════════════════════════════════
-  //  Verbindung zur Bruecke
+  //  Verbindung zur Cloud-API
   // ══════════════════════════════════════════════════
 
-  function basis() {
-    var u = '';
-    try { u = localStorage.getItem(KEY) || ''; } catch (e) { /* gesperrt */ }
-    u = u.trim();
-    if (!u) return '';
-    if (!/^https?:\/\//i.test(u)) u = 'http://' + u;
-    var m = u.match(/^(https?:\/\/)([^\/:]+)(.*)$/i);
-    if (m && m[3].charAt(0) !== ':') u = m[1] + m[2] + STANDARD_PORT + m[3];
-    return u.replace(/\/+$/, '');
+  function qs(art, name) {
+    return '?art=' + encodeURIComponent(art) + (name ? '&name=' + encodeURIComponent(name) : '');
   }
 
-  function anfrage(methode, pfad, body, typ, ms) {
-    var b = basis();
-    if (!b) return Promise.reject({ art: 'adresse' });
+  function anfrage(methode, query, body, typ, ms) {
     var ctl = new AbortController();
-    var t = setTimeout(function () { ctl.abort(); }, ms || 15000);
+    var t = setTimeout(function () { ctl.abort(); }, ms || 20000);
     var o = { method: methode, signal: ctl.signal, cache: 'no-store' };
     if (body) { o.body = body; o.headers = { 'Content-Type': typ || 'application/octet-stream' }; }
-    return fetch(b + pfad, o).then(
+    return fetch(API + query, o).then(
       function (r) { clearTimeout(t); return r; },
       function (e) { clearTimeout(t); throw { art: 'netz', e: e }; }
     );
@@ -86,51 +79,55 @@ window.KWerbebilder = (function () {
   }
 
   function fehlerText(e) {
-    if (e && e.art === 'adresse') return 'Die Adresse der Brücke fehlt.';
-    if (e && e.art === 'fremd') {
-      return 'Unter ' + basis() + ' antwortet nicht die Waage-Brücke (HTTP ' + e.status + '). '
-        + 'Bitte IP und Port prüfen (Anzeige im Brücken-Fenster: „Im Kiosk eintragen“), ob die Brücke läuft '
-        + 'und ob das Gerät ohne Proxy/VPN im selben Laden-Netz ist.';
-    }
-    if (e && e.art === 'netz') {
-      var mixed = location.protocol === 'https:' && /^http:/i.test(basis());
-      return 'Die Waage-Brücke ist nicht erreichbar. Läuft sie, stimmt die Adresse und ist das Gerät im Laden-WLAN?'
-        + (mixed ? ' Bei einer http-Adresse muss im Fully Kiosk „Mixed Content zulassen“ eingeschaltet sein.' : '');
-    }
-    if (e && e.art === 'waage') return 'Die Brücke läuft, aber die Waage antwortet nicht' + (e.text ? ' (' + e.text + ')' : '') + '. Ist sie an und der FTP-Zugang eingetragen?';
-    if (e && e.art === 'verzeichnis') return 'Das Werbeverzeichnis wurde auf der Waage nicht gefunden. Bitte den Pfad „ftp_basis“ der Brücke prüfen.';
-    if (e && e.art === 'http' && e.status === 502) return 'Die Waage antwortet nicht: ' + e.text;
+    if (e && e.art === 'netz') return 'Keine Verbindung zur Dorfladen-Seite. Ist das Gerät online?';
+    if (e && e.art === 'fremd') return 'Die Dorfladen-Seite hat unerwartet geantwortet (HTTP ' + e.status + '). Bitte später erneut versuchen.';
+    if (e && e.art === 'http' && e.status === 401) return 'Anmeldung nötig – bitte erneut versuchen und das Passwort eingeben.';
+    if (e && e.art === 'http' && e.status === 503) return 'Der Bilderspeicher ist gerade nicht erreichbar (' + (e.text || '503') + ').';
     return (e && e.text) || 'Unbekannter Fehler';
+  }
+
+  // Brueckenstatus in Worten: online, offline seit ..., noch nie gemeldet.
+  function dauer(s) {
+    if (s < 90) return s + ' s';
+    if (s < 5400) return Math.round(s / 60) + ' Min.';
+    if (s < 172800) return Math.round(s / 3600) + ' Std.';
+    return Math.round(s / 86400) + ' Tagen';
+  }
+
+  function statusText() {
+    if (!_geladen || !_bruecke) return { klasse: 'fehl', text: _laden ? '… lade' : '○ Status unbekannt' };
+    if (!_bruecke.bekannt) return { klasse: 'fehl', text: '○ Brücke noch nie gemeldet' };
+    if (_bruecke.online) return { klasse: _bruecke.ok ? 'ok' : 'warn', text: _bruecke.ok ? '● Brücke online' : '● Brücke online (mit Fehler)' };
+    return { klasse: 'fehl', text: '○ Brücke offline seit ' + dauer(_bruecke.vor_s) };
   }
 
   // ══════════════════════════════════════════════════
   //  Laden
   // ══════════════════════════════════════════════════
 
-  function key(art, b) { return art + '/' + b.name + '/' + b.groesse; }
+  function key(art, b) { return art + '/' + b.name + '/' + (b.etag || b.groesse); }
 
-  function laden() {
+  /* leise = Hintergrundabfrage (kein "Laden ...", Neuzeichnen nur bei Aenderung). */
+  function laden(leise) {
     var art = _art;
-    _laden = true; _fehler = '';
-    render();
-    return anfrage('GET', '/health').then(json).then(function (h) {
-      if (!h.waage) throw { art: 'waage', text: h.fehler || '' };
-      if (h.arten && h.arten[art] === false) throw { art: 'verzeichnis' };
-      return anfrage('GET', '/bilder/' + art).then(json);
-    }).then(function (d) {
+    if (!leise) { _laden = true; _fehler = ''; render(); }
+    return anfrage('GET', qs(art)).then(json).then(function (d) {
       if (art !== _art) return;
-      _bilder = d.bilder || [];
-      _direkt = d.direkt || 0;
-      _verbunden = true; _laden = false; _fehler = '';
+      var sig = JSON.stringify([d.bruecke && [d.bruecke.online, d.bruecke.ok, d.bruecke.fehler, d.bruecke.initialisiert,
+        d.bruecke.direkt, d.bruecke.vor_s < 90 ? 0 : Math.floor(d.bruecke.vor_s / 60)], d.bilder]);
+      var aenderung = sig !== _sig || _fehler || _laden;
+      _sig = sig; _bilder = d.bilder || []; _bruecke = d.bruecke || null;
+      _geladen = true; _laden = false; _fehler = '';
       var jetzt = {};
       _bilder.forEach(function (b) { jetzt[key(art, b)] = 1; });
       Object.keys(_blobs).forEach(function (k) {
         if (k.indexOf(art + '/') === 0 && !jetzt[k]) { URL.revokeObjectURL(_blobs[k]); delete _blobs[k]; }
       });
-      render(); holeMiniaturen();
+      if (aenderung) { render(); holeMiniaturen(); }
     }).catch(function (e) {
       if (art !== _art) return;
-      _bilder = []; _verbunden = false; _laden = false; _fehler = fehlerText(e);
+      if (leise && _geladen) return;      // Hintergrundfehler: letzte Anzeige stehen lassen
+      _bilder = []; _geladen = false; _laden = false; _fehler = fehlerText(e); _sig = '';
       render();
     });
   }
@@ -142,7 +139,7 @@ window.KWerbebilder = (function () {
     function weiter() {
       if (i >= offen.length || art !== _art) return;
       var b = offen[i++];
-      anfrage('GET', '/bilder/' + art + '/' + encodeURIComponent(b.name), null, null, 30000)
+      anfrage('GET', qs(art, b.name), null, null, 30000)
         .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
         .then(function (bl) {
           _blobs[key(art, b)] = URL.createObjectURL(bl);
@@ -153,6 +150,17 @@ window.KWerbebilder = (function () {
         .then(weiter);
     }
     weiter(); weiter(); weiter();
+  }
+
+  // Hintergrundabfrage: nur, solange der Tab offen und die Seite sichtbar ist und nichts uebertragen wird.
+  function tick() {
+    var p = document.getElementById('panel-werbebilder');
+    if (!p || !p.classList.contains('active') || document.hidden || _lauf || _dlg || _laden) return;
+    laden(true);
+  }
+
+  function startTimer() {
+    if (!_timer) _timer = setInterval(tick, AKTUALISIERUNG_MS);
   }
 
   // ══════════════════════════════════════════════════
@@ -199,7 +207,7 @@ window.KWerbebilder = (function () {
       var s = _staged[i++];
       if (s.status === 'ok') return naechste();
       s.status = 'laeuft'; render();
-      anfrage('POST', '/bilder/' + art + '?name=' + encodeURIComponent(s.file.name), s.file,
+      anfrage('POST', qs(art, s.file.name), s.file,
         s.file.type || (/\.gif$/i.test(s.file.name) ? 'image/gif' : 'image/jpeg'), 60000)
         .then(json)
         .then(function (d) { s.status = 'ok'; gespeichert.push(d.name); })
@@ -213,7 +221,7 @@ window.KWerbebilder = (function () {
       var k = 0;
       (function loesche() {
         if (k >= weg.length) return fertig();
-        anfrage('DELETE', '/bilder/' + art + '/' + encodeURIComponent(weg[k++]))
+        anfrage('DELETE', qs(art, weg[k++]))
           .then(json).catch(function () { fehler++; }).then(loesche);
       })();
     }
@@ -241,9 +249,9 @@ window.KWerbebilder = (function () {
   }
 
   function loeschenFragen(name) {
-    bestaetigen('Bild löschen?', '„' + name + '“ wird von der Waage entfernt.', 'Löschen', function () {
+    bestaetigen('Bild löschen?', '„' + name + '“ wird entfernt und von der Waage gelöscht, sobald die Brücke das nächste Mal abgleicht.', 'Löschen', function () {
       var art = _art;
-      anfrage('DELETE', '/bilder/' + art + '/' + encodeURIComponent(name)).then(json).then(function () {
+      anfrage('DELETE', qs(art, name)).then(json).then(function () {
         toast('Bild gelöscht'); laden();
       }).catch(function (e) { toast(fehlerText(e)); laden(); });
     });
@@ -337,7 +345,7 @@ window.KWerbebilder = (function () {
       return {
         name: b.name, src: _blobs[key(art, b)] || '',
         lade: function () {
-          return anfrage('GET', '/bilder/' + art + '/' + encodeURIComponent(b.name), null, null, 30000)
+          return anfrage('GET', qs(art, b.name), null, null, 30000)
             .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
             .then(function (bl) { _blobs[key(art, b)] = URL.createObjectURL(bl); return _blobs[key(art, b)]; });
         }
@@ -354,83 +362,6 @@ window.KWerbebilder = (function () {
   // ══════════════════════════════════════════════════
   //  Darstellung
   // ══════════════════════════════════════════════════
-
-  function renderEinstellung() {
-    var hat = !!basis();
-    var z = adresseZerlegen(basis());
-    return '<div class="wb-card wb-einst"><b>Adresse der Waage-Brücke</b>'
-      + '<p class="wb-klein">Rechner im Laden, auf dem die Brücke läuft (die Brücke zeigt beim Start „Im Kiosk eintragen“). '
-      + 'Wird auf diesem Gerät gemerkt.</p>'
-      + '<div class="wb-zeile wb-adr">'
-      + '<label>Schema<select id="wb-schema"><option value="http"' + (z.schema === 'http' ? ' selected' : '') + '>http</option>'
-      + '<option value="https"' + (z.schema === 'https' ? ' selected' : '') + '>https</option></select></label>'
-      + '<label class="wb-l-host">IP-Adresse des Rechners<input id="wb-host" type="text" inputmode="decimal" autocomplete="off" '
-      + 'autocapitalize="off" spellcheck="false" placeholder="192.168.1.20" value="' + esc(z.host) + '"></label>'
-      + '<label class="wb-l-port">Port<input id="wb-port" type="text" inputmode="numeric" autocomplete="off" '
-      + 'placeholder="' + STANDARD_PORT.slice(1) + '" value="' + esc(z.port) + '"></label></div>'
-      + '<p class="wb-fehler" id="wb-adr-fehler" role="alert" hidden></p><p class="wb-klein" id="wb-test" role="status"></p>'
-      + '<div class="wb-aktionen"><button class="wb-btn" data-wb="url-test">Verbindung testen</button>'
-      + '<button class="wb-btn wb-haupt" data-wb="url-speichern">Speichern</button>'
-      + (hat ? '<button class="wb-btn" data-wb="einst">Abbrechen</button>' : '') + '</div></div>';
-  }
-
-  // Zerlegt die gemerkte Adresse in Schema, Rechner und Port (Standardwerte, wenn leer).
-  function adresseZerlegen(u) {
-    var m = String(u || '').match(/^(https?):\/\/([^\/:]+)(?::(\d+))?/i);
-    if (!m) return { schema: 'http', host: '', port: STANDARD_PORT.slice(1) };
-    return { schema: m[1].toLowerCase(), host: m[2], port: m[3] || STANDARD_PORT.slice(1) };
-  }
-
-  // Prueft die Eingabe; liefert { url } oder { fehler }.
-  function adresseBauen(schema, host, port) {
-    host = String(host || '').trim();
-    port = String(port || '').trim() || STANDARD_PORT.slice(1);
-    if (!host) return { fehler: 'Bitte die IP-Adresse des Rechners eintragen (z. B. 192.168.1.20).' };
-    var ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
-    if (ipv4 && host.split('.').some(function (t) { return parseInt(t, 10) > 255; })) {
-      return { fehler: 'Die IP-Adresse ist ungültig – jede Zahl darf höchstens 255 sein.' };
-    }
-    if (!ipv4 && !/^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/.test(host)) {
-      return { fehler: 'Die Adresse ist ungültig – erlaubt sind eine IP wie 192.168.1.20 oder ein Rechnername.' };
-    }
-    if (!/^\d{1,5}$/.test(port) || parseInt(port, 10) < 1 || parseInt(port, 10) > 65535) {
-      return { fehler: 'Der Port ist ungültig – erlaubt sind Zahlen von 1 bis 65535.' };
-    }
-    return { url: (schema === 'https' ? 'https' : 'http') + '://' + host + ':' + parseInt(port, 10) };
-  }
-
-  function adresseLesen() {
-    var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
-    var r = adresseBauen(g('wb-schema'), g('wb-host'), g('wb-port'));
-    var f = document.getElementById('wb-adr-fehler');
-    if (f) { f.hidden = !r.fehler; f.textContent = r.fehler || ''; }
-    return r;
-  }
-
-  function verbindungTesten() {
-    var r = adresseLesen();
-    var t = document.getElementById('wb-test');
-    if (!r.url || !t) return;
-    t.textContent = 'Teste ' + r.url + ' …';
-    var ctl = new AbortController();
-    var to = setTimeout(function () { ctl.abort(); }, 6000);
-    fetch(r.url + '/health', { cache: 'no-store', signal: ctl.signal }).then(function (x) {
-      clearTimeout(to);
-      return x.json().then(function (d) { return { h: d, status: x.status }; }, function () { return { h: null, status: x.status }; });
-    }).then(function (res) {
-      var h = res.h;
-      if (!h || typeof h.success === 'undefined') {
-        t.textContent = '✗ Unter ' + r.url + ' antwortet nicht die Waage-Brücke (HTTP ' + res.status + '). IP und Port prüfen, ohne Proxy/VPN im Laden-Netz sein.';
-        return;
-      }
-      t.textContent = h.waage ? '✓ Brücke erreichbar, Waage antwortet.'
-        : '⚠ Brücke erreichbar, aber die Waage antwortet nicht' + (h.fehler ? ' (' + h.fehler + ')' : '') + '. Waagen-IP in der Brücke prüfen.';
-    }, function () {
-      clearTimeout(to);
-      t.textContent = '✗ Keine Antwort von ' + r.url + '. Läuft die Brücke, stimmen IP und Port?'
-        + (location.protocol === 'https:' && r.url.indexOf('http:') === 0 ? ' (Mixed Content in Fully Kiosk zulassen.)' : '');
-    });
-  }
 
   function renderStaged() {
     if (!_staged.length && !_abgelehnt.length) return '';
@@ -460,24 +391,47 @@ window.KWerbebilder = (function () {
     return h + '</div>';
   }
 
+  // Hinweise zur Bruecke oberhalb der Liste: offline, Fehler, Erstlauf, Vorrang-Bilder.
+  function renderHinweise() {
+    var b = _bruecke;
+    var h = '';
+    if (!b) return h;
+    if (!b.bekannt) {
+      h += '<p class="wb-warn" role="status">Die Brücke im Laden hat sich noch nie gemeldet. Änderungen werden gespeichert und '
+        + 'übertragen, sobald sie läuft.</p>';
+    } else if (!b.online) {
+      h += '<p class="wb-warn" role="status">Die Brücke im Laden ist offline (seit ' + dauer(b.vor_s) + '). Änderungen werden '
+        + 'gespeichert und auf die Waage übertragen, sobald sie wieder läuft.</p>';
+    } else if (!b.ok && b.fehler) {
+      h += '<p class="wb-warn" role="alert">Beim letzten Abgleich mit der Waage gab es einen Fehler: ' + esc(b.fehler) + '</p>';
+    } else if (!b.initialisiert) {
+      h += '<p class="wb-klein" role="status">Die Brücke übernimmt gerade die vorhandenen Bilder der Waage.</p>';
+    }
+    if (b.direkt) {
+      h += '<p class="wb-warn" role="alert">Achtung: Direkt im Ordner „' + (_art === 'dauer' ? 'permanent' : 'fullscreen')
+        + '“ der Waage liegen ' + b.direkt + ' Bild(er). Die Waage spielt diese zuerst; die Bilder hier („default“) laufen nur, '
+        + 'wenn dort nichts liegt.</p>';
+    }
+    return h;
+  }
+
   function renderListe() {
     var h = '<div class="wb-card"><h3>Auf der Waage <span class="wb-zaehl" id="wb-zaehl">' + _bilder.length + ' / ' + MAX_BILDER + '</span></h3>';
     if (_laden) return h + '<p class="wb-klein">Laden …</p></div>';
     if (_fehler) return h + '<p class="wb-fehler" role="alert">' + esc(_fehler) + '</p></div>';
-    if (_direkt) {
-      h += '<p class="wb-warn" role="alert">Achtung: Direkt im Ordner „' + (_art === 'dauer' ? 'permanent' : 'fullscreen')
-        + '“ liegen ' + _direkt + ' Bild(er). Die Waage spielt diese zuerst; die Bilder hier („default“) laufen nur, '
-        + 'wenn dort nichts liegt.</p>';
-    }
+    h += renderHinweise();
     if (!_bilder.length) return h + '<p class="wb-klein">Noch keine Bilder in diesem Verzeichnis.</p></div>';
     h += '<div class="wb-raster">';
     _bilder.forEach(function (b, i) {
       var k = key(_art, b);
+      var auf = b.status === 'auf_waage';
       h += '<div class="wb-item" data-wb-bild="' + esc(b.name) + '">'
         + '<span class="wb-pos">' + (i + 1) + '</span>'
         + '<button class="wb-thumb" data-key="' + esc(k) + '" data-wb="vorschau" data-i="' + i + '" aria-label="Vorschau ' + esc(b.name) + '">'
         + (_blobs[k] ? '<img alt="" src="' + _blobs[k] + '">' : '') + '</button>'
-        + '<div class="wb-info"><b>' + esc(b.name) + '</b><span>' + groesse(b.groesse) + '</span></div>'
+        + '<div class="wb-info"><b>' + esc(b.name) + '</b><span>' + groesse(b.groesse) + '</span>'
+        + '<span class="wb-sync ' + (auf ? 'auf' : 'wartet') + '" data-wb-status="' + esc(b.status) + '">'
+        + (auf ? '✓ auf der Waage' : '⏳ wartet auf Übertragung') + '</span></div>'
         + '<button class="wb-btn wb-del" data-wb="loeschen" data-name="' + esc(b.name) + '" aria-label="' + esc(b.name) + ' löschen">Löschen</button></div>';
     });
     return h + '</div></div>';
@@ -487,14 +441,9 @@ window.KWerbebilder = (function () {
     var el = host();
     if (!el) return;
     var art = ARTEN.filter(function (a) { return a.id === _art; })[0];
-    var h = '<div class="wb-kopf"><h2>Werbebilder der Waage</h2><span class="wb-stat ' + (_verbunden ? 'ok' : 'fehl') + '" id="wb-stat">'
-      + (_verbunden ? '● Waage verbunden' : _laden ? '… verbinde' : '○ nicht verbunden') + '</span>'
-      + '<span class="wb-sp"></span><button class="wb-btn" data-wb="neu">Aktualisieren</button>'
-      + '<button class="wb-btn" data-wb="einst">Adresse</button></div>';
-    if (_einst || !basis()) {
-      el.innerHTML = h + renderEinstellung();
-      return;
-    }
+    var st = statusText();
+    var h = '<div class="wb-kopf"><h2>Werbebilder der Waage</h2><span class="wb-stat ' + st.klasse + '" id="wb-stat">' + esc(st.text) + '</span>'
+      + '<span class="wb-sp"></span><button class="wb-btn" data-wb="neu">Aktualisieren</button></div>';
     h += '<div class="wb-art" role="tablist">';
     ARTEN.forEach(function (a) {
       h += '<button class="wb-btn' + (a.id === _art ? ' on' : '') + '" role="tab" aria-selected="' + (a.id === _art) + '" data-wb="art" data-art="' + a.id + '"'
@@ -516,17 +465,8 @@ window.KWerbebilder = (function () {
     if (!t || !host().contains(t)) return;
     var a = t.getAttribute('data-wb');
     var i = parseInt(t.getAttribute('data-i'), 10);
-    if (a === 'art') { if (_lauf) return; _art = t.getAttribute('data-art'); _bilder = []; laden(); }
+    if (a === 'art') { if (_lauf) return; _art = t.getAttribute('data-art'); _bilder = []; _sig = ''; laden(); }
     else if (a === 'neu') laden();
-    else if (a === 'einst') { _einst = !_einst; render(); }
-    else if (a === 'url-test') verbindungTesten();
-    else if (a === 'url-speichern') {
-      var r = adresseLesen();
-      if (!r.url) return;
-      try { localStorage.setItem(KEY, r.url); } catch (x) { /* gesperrt */ }
-      _einst = false;
-      laden();
-    }
     else if (a === 'hoch') hochladen(false);
     else if (a === 'ersetzen') ersetzenFragen();
     else if (a === 'verwerfen') verwerfen();
@@ -555,7 +495,7 @@ window.KWerbebilder = (function () {
     });
     el.addEventListener('drop', function (e) {
       e.preventDefault();
-      if (!basis() || _einst || _lauf) return;
+      if (_lauf) return;
       dateienAufnehmen(e.dataTransfer && e.dataTransfer.files);
     });
   }
@@ -563,7 +503,7 @@ window.KWerbebilder = (function () {
   function onShow() {
     stil();
     verdrahten();
-    if (!basis()) { render(); return; }
+    startTimer();
     laden();
   }
 
@@ -576,7 +516,7 @@ window.KWerbebilder = (function () {
       '#wb-root{--wp:var(--c-pri,#1e463a);--wb:var(--c-border,#e6e4de);--ws:var(--c-surf,#fff);--wm:var(--c-sec,#6b7280);--wt:var(--c-text,#1f2521);color:var(--wt)}',
       '#wb-root button,#wb-root input{font-family:inherit}',
       '.wb-kopf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.wb-kopf h2{margin:0;font-size:18px;font-weight:600}.wb-sp{flex:1}',
-      '.wb-stat{font-size:13px;font-weight:600}.wb-stat.ok{color:#15803d}.wb-stat.fehl{color:var(--wm)}',
+      '.wb-stat{font-size:13px;font-weight:600}.wb-stat.ok{color:#15803d}.wb-stat.warn{color:#b45309}.wb-stat.fehl{color:var(--wm)}',
       '.wb-btn{min-height:44px;padding:8px 16px;border:1.5px solid var(--wb);background:var(--ws);color:var(--wt);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer}',
       '.wb-btn.on,.wb-btn.wb-haupt{background:var(--wp);border-color:var(--wp);color:#fff}.wb-btn.wb-gefahr{background:#b91c1c;border-color:#b91c1c;color:#fff}.wb-btn[disabled]{opacity:.5;cursor:default}',
       '.wb-art{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}',
@@ -595,8 +535,7 @@ window.KWerbebilder = (function () {
       '.wb-btn.wb-del{flex:none;padding:8px 12px;color:#b91c1c;border-color:#fecaca}',
       '.wb-aktionen{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}',
       '.wb-warn,.wb-fehler{font-size:13px;margin:8px 0;padding:8px 12px;border-radius:10px}.wb-warn{background:#fef3c7;color:#92400e}.wb-fehler{background:#fee2e2;color:#991b1b}',
-      '.wb-zeile{display:flex;gap:8px;flex-wrap:wrap}.wb-zeile input,.wb-zeile select{min-width:0;min-height:44px;padding:8px 12px;border:1.5px solid var(--wb);border-radius:12px;font-size:15px;background:var(--ws);color:var(--wt)}',
-      '.wb-adr label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--wm)}.wb-adr .wb-l-host{flex:1 1 200px}.wb-adr .wb-l-port{flex:0 0 110px}.wb-adr input,.wb-adr select{width:100%}',
+      '.wb-info span.wb-sync{font-weight:600}.wb-info span.wb-sync.auf{color:#15803d}.wb-info span.wb-sync.wartet{color:#b45309}',
       '.wb-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55)}',
       '.wb-dlg{background:#fff;color:#1f2521;border-radius:16px;padding:20px 22px;max-width:440px;width:100%;box-shadow:0 20px 48px rgba(0,0,0,.3)}.wb-dlg h3{margin:0 0 8px;font-size:18px}.wb-dlg p{margin:0 0 16px;line-height:1.5}.wb-dlg-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}',
       '.wb-lb{background:rgba(0,0,0,.88);flex-direction:column;gap:10px}.wb-lb-bild{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;color:#fff}.wb-lb-bild img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}',

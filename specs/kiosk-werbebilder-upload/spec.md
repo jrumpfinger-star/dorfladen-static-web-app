@@ -28,21 +28,38 @@ Abschnitt 2.15 „Werbebilder“ (S. 2-107 ff.) und 6.15 „Werbung“.
 
 ## Entwurfsentscheidungen
 
+> **Änderung 2026-10-23 – Cloud-Relais ersetzt die Direktverbindung.** Die erste
+> Fassung ließ den Kiosk direkt per `http://<IP>:8765` mit einer Brücke im LAN sprechen.
+> Das scheitert in der Praxis: Browser (Edge/Chrome/Fully Kiosk) blockieren `http` auf
+> einer `https`-Seite („Mixed Content“), die Abhilfe wäre eine Einstellung je Gerät. Der
+> Laden will **keine manuellen Eingriffe**. Deshalb gilt jetzt F17–F25; F8 (Adresse),
+> F11, F13 (Kiosk-Adresse, Firewall) und F15/F16 sind damit **abgelöst**. Unverändert
+> gelten F1–F7, F9 (Prüfungen jetzt in API **und** Brücke), F10, F12, F14 (Autostart).
+
 **Ein Browser kann kein FTP, und die Cloud erreicht das Laden-LAN nicht.** Deshalb
-vermittelt ein kleiner **Brückendienst** im Laden-LAN (`tools/waage-bruecke/`): Der Kiosk
-schickt das Bild per HTTP an die Brücke, die Brücke legt es per FTP auf der Waage ab.
-Der FTP-Port der Waage wird **nicht** ins Internet geöffnet.
+arbeitet die **Brücke** (`tools/waage-bruecke/`) als Agent im Laden-LAN und ruft die
+Cloud **ausgehend** ab: Der Kiosk legt Bilder über die vorhandene HTTPS-API ab
+(`/api/waage-werbebilder`, Speicher: SharePoint), die Brücke gleicht die Waage per FTP
+damit ab. Es gibt keinen offenen Port, keine IP-Eingabe, kein Zertifikat und kein Mixed
+Content. Der FTP-Port der Waage wird **nicht** ins Internet geöffnet.
+
+**Die Cloud ist die Sollvorgabe, die Waage wird angeglichen.** Beim allerersten Lauf
+übernimmt die Brücke die vorhandenen Bilder der Waage in die Cloud (nichts geht
+verloren, leere Dateien werden nicht übernommen) und meldet „initialisiert“. Danach
+wird die Waage der Cloud angeglichen: fehlende/geänderte Bilder hochladen, Bilder mit
+gültigem Namen, die in der Cloud nicht (mehr) vorkommen, löschen. Fremde Dateien
+(Namen außerhalb `[A-Za-z0-9._-]`, andere Endungen, Unterordner) fasst die Brücke
+nie an.
 
 **„Ohne Anmeldung“ heißt: keine zusätzliche Anmeldung im Tab.** Die Passwortabfrage des
-Kiosks (`specs/kiosk-passwortabfrage`) gilt weiter; im Tab selbst wird weder ein Name
-noch ein Passwort verlangt. Die Brücke hat keine eigene Anmeldung und ist deshalb nur
-im LAN zu betreiben. Schutz dort: nur JPEG/GIF (Prüfung am Dateikopf, nicht an der
-Endung), Größen- und Anzahlgrenze, bereinigter Dateiname, nur die beiden
-Default-Verzeichnisse.
+Kiosks (`specs/kiosk-passwortabfrage`) gilt weiter. Schreibende Aufrufe laufen wie bei
+allen Kiosk-APIs über `admin_auth_guard` (`X-CMS-Auth`, staged über `CMS_AUTH_ENFORCE`).
+Die Brücke meldet sich dafür wie das CMS mit dem Passwort an (`POST /api/cms-auth`) und
+sendet das Token mit.
 
-**Die FTP-Zugangsdaten stehen nur in der lokalen Konfiguration der Brücke**
-(`config.json`, per `.gitignore` ausgeschlossen) oder in Umgebungsvariablen — nie im
-Repo, in Specs, Tests oder Commit-Texten.
+**Die FTP-Zugangsdaten und das Anmeldepasswort stehen nur in der lokalen Konfiguration der
+Brücke** (`config.json`, per `.gitignore` ausgeschlossen) oder in Umgebungsvariablen —
+nie im Repo, in Specs, Tests oder Commit-Texten.
 
 **Der Upload ersetzt nie blind.** „Alle ersetzen“ lädt zuerst die neuen Bilder hoch und
 entfernt erst danach die übrigen alten. Bricht etwas ab, bleibt die Werbung nicht leer.
@@ -95,6 +112,45 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
   und werden im Kiosk gemeldet; Live-Seite und SWA-Vorschau sind als Herkunft fest erlaubt.
 - **F16** Antwortet unter der Brücken-Adresse ein fremder Server, nennt der Kiosk das klar.
 
+### Cloud-Relais (löst die Direktverbindung ab)
+
+- **F17** API `GET/POST/DELETE /api/waage-werbebilder` (Kiosk): Liste je Art (`vollbild`,
+  `dauer`), Bild abrufen, hochladen, löschen. Speicher: SharePoint-Ordner
+  `Waage-Werbebilder/<art>/`. Prüfungen serverseitig: nur JPEG/GIF am Dateikopf (415),
+  Grenze 8 MB (413), höchstens 99 Bilder je Art (409; Ersetzen eines vorhandenen bleibt
+  möglich), bereinigter Dateiname, unbekannte Art 404. Schreibende Aufrufe hinter
+  `admin_auth_guard`.
+- **F18** API für die Brücke: `GET ?bruecke=sync` liefert die Sollvorgabe (je Art Name,
+  Größe, `etag`, dazu `version` und `initialisiert`); `POST ?bruecke=bericht` nimmt den
+  Zustand der Brücke entgegen (Zeitpunkt, ok/Fehler, Namen auf der Waage, zuletzt
+  übertragene `etag`s, `initialisiert`). Der Bericht liegt in Azure Table Storage.
+- **F19** Der Kiosk zeigt je Bild **„auf der Waage“** oder **„wartet auf Übertragung“**
+  und oben den Brückenstatus: **online** (Bericht jünger als 90 s), sonst **offline seit
+  …** mit dem Hinweis, dass Änderungen übertragen werden, sobald die Brücke läuft. Hochladen
+  und Löschen sind auch bei ausgeschalteter Brücke möglich. Die Liste aktualisiert sich
+  automatisch (alle 8 s, nur solange der Tab offen ist).
+- **F20** Brücke als Agent: ruft alle `poll_sekunden` (Standard 10) die Sollvorgabe ab; nur
+  bei Änderung (oder spätestens alle 5 Minuten) wird per FTP abgeglichen; mindestens alle
+  30 s geht ein Bericht an die Cloud. Kein HTTP-Server, kein offener Port.
+- **F21** Erstlauf: Ist `initialisiert` nicht gesetzt, übernimmt die Brücke die Bilder der
+  Waage (gültige Namen, Größe > 0) in die Cloud, soweit dort nicht vorhanden, und meldet
+  `initialisiert`. Erst danach wird gelöscht.
+- **F22** Abgleich: Bild hochladen, wenn es auf der Waage fehlt oder seine `etag` von der
+  zuletzt übertragenen abweicht (die Waage darf Dateien umrechnen, ohne Dauerschleife);
+  löschen, wenn gültiger Name und nicht in der Cloud. Jede Datei wird vor dem Schreiben am
+  Dateikopf geprüft; Fehler bei einer Datei stoppen die übrigen nicht. `--trocken` zeigt
+  nur den Plan; `--einmal` gleicht einmal ab.
+- **F23** Anmeldung der Brücke: `POST /api/cms-auth` mit dem im Assistenten eingegebenen
+  Passwort; das Token geht als `X-CMS-Auth` mit; bei 401 neu anmelden. Fehlt das Passwort
+  und die API verlangt keins (`CMS_AUTH_ENFORCE` aus), läuft es ohne.
+- **F24** Einrichtung: Assistent fragt nur Waagen-IP, FTP-Zugang und (falls gewünscht)
+  Anmeldepasswort ab; die API-Adresse hat die Live-Seite als Vorgabe. **Keine Firewall-Regel
+  nötig**, nur Ausgangsverbindungen. Autostart wie F14.
+- **F25** Kiosk: kein Adressfeld, kein „Verbindung testen“, keine Mixed-Content-Hinweise
+  mehr; der Tab arbeitet nur noch mit derselben Herkunft (`/api/…`). Fehler der API werden
+  in einem Satz gemeldet. Der Service Worker beantwortet Anfragen an LAN-Adressen weiterhin
+  nicht selbst (bleibt als Schutz bestehen).
+
 ## Testfälle
 
 - **TC-F1-01** Tab „Werbebilder“ ist sichtbar und öffnet ohne Namens-/Passwortabfrage.
@@ -126,7 +182,22 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **TC-F14-02** Bei „Nein“ wird nichts am System verändert.
 - **TC-F14-03** Schlägt ein Schritt fehl (z. B. kein Administrator), erscheint eine verständliche Meldung statt Abbruch.
 - **TC-F15-01…05** Fehlt `default`, ist die Liste leer statt Fehler; Upload legt genau `default` an, nie darüberliegende Ordner; Bilder direkt in `fullscreen`/`permanent` werden im Kiosk mit Vorrang-Hinweis gemeldet; Live- und Vorschau-Herkunft sind immer erlaubt, fremde nicht.
-- **TC-F16-01** Antwortet unter der Adresse nicht die Brücke (z. B. HTTP 504 eines Proxys), meldet der Kiosk (Laden und „Verbindung testen“) klar „antwortet nicht die Waage-Brücke“ samt Statuscode.
+- **TC-F16-01** Antwortet unter der Adresse nicht die Brücke (z. B. HTTP 504 eines Proxys), meldet der Kiosk (Laden und „Verbindung testen“) klar „antwortet nicht die Waage-Brücke“ samt Statuscode. *(abgelöst durch F25)*
+- **TC-F17-01** API: Upload eines JPEG liefert `success`, Datei liegt im Ordner der Art; Liste zeigt es sortiert.
+- **TC-F17-02** API: PNG-Inhalt → 415; über 8 MB → 413; 100. Bild → 409, Ersetzen eines vorhandenen geht; Name mit Pfadanteilen wird bereinigt; unbekannte Art → 404.
+- **TC-F17-03** API: `DELETE` entfernt das Bild; unbekanntes Bild → 404.
+- **TC-F18-01** API: `bruecke=sync` liefert Soll mit `etag` und stabile `version` (ändert sich bei jeder Änderung); `bericht` wird gespeichert und von der Kiosk-Liste als Brückenstatus ausgegeben.
+- **TC-F18-02** API: Bild „auf der Waage“ nur, wenn Name in `ist` und `etag` in `stand` übereinstimmt, sonst „wartet“.
+- **TC-F19-01** Kiosk: Brücke online → „online“; Bericht älter als 90 s → „offline seit …“ mit Hinweis; Upload bleibt möglich.
+- **TC-F19-02** Kiosk: Bild zeigt „auf der Waage“ bzw. „wartet auf Übertragung“.
+- **TC-F20-01** Brücke: ohne Änderung kein FTP-Zugriff innerhalb von 5 Minuten, aber Bericht spätestens alle 30 s.
+- **TC-F21-01** Brücke: Erstlauf übernimmt Waagenbilder (nicht leere, gültige Namen) in die Cloud und löscht nichts; erst im Folgelauf wird abgeglichen.
+- **TC-F22-01** Brücke: fehlendes Bild wird hochgeladen, geänderte `etag` ersetzt, überzähliges gültiges Bild gelöscht; fremde Dateien bleiben unberührt.
+- **TC-F22-02** Brücke: Waage skaliert/ändert eine Datei nach dem Upload → kein erneuter Upload (Vergleich über `etag`, nicht über Größe).
+- **TC-F22-03** Brücke: defekte Datei (kein JPEG/GIF) wird nicht auf die Waage geschrieben, die übrigen laufen weiter; `--trocken` schreibt/löscht nichts.
+- **TC-F23-01** Brücke: 401 → Anmeldung mit Passwort, Wiederholung mit Token; ohne Passwort und ohne Pflicht kein Token.
+- **TC-F24-01** Assistent fragt Waagen-IP, FTP-Zugang, optional Passwort; keine Firewall-Frage.
+- **TC-F25-01** Kiosk-Tab hat keine Adress-/Test-Bedienelemente; alle Anfragen gehen an `/api/waage-werbebilder`.
 
 ## Offen / bewusst nicht Teil dieser Änderung
 

@@ -1,319 +1,375 @@
-"""Bruecke Kiosk -> Waage (Spec specs/kiosk-werbebilder-upload).
+"""Test der Waage-Bruecke als Agent (Spec kiosk-werbebilder-upload, F20-F24, F14, F15).
 
-Geprueft wird der ECHTE HTTP-Weg der Bruecke (Server auf freiem Port, echte
-Anfragen). Nur der FTP-Zugriff ist durch einen Speicher ersetzt, der
-festhaelt, WAS auf der Waage landen wuerde und in WELCHEM Verzeichnis.
-
-Ausfuehren:  python tests/test_waage_bruecke.py
+Ohne Netz und ohne echte Waage: Cloud-API und FTP sind Attrappen. Aufruf: python tests\\test_waage_bruecke.py
 """
-import http.client
+import io
 import json
 import os
 import sys
-import threading
+import tempfile
+import urllib.error
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(HIER, "..", "tools", "waage-bruecke")))
 
-import waage_bruecke as wb   # noqa: E402
+import waage_bruecke as wb  # noqa: E402
 
-JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 40
-GIF = b"GIF89a" + b"\x00" * 40
-PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 40
-ERLAUBT = "https://www.dorfladen-oberornau.de"
+JPEG = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 20
+JPEG2 = b"\xff\xd8\xff\xe1\x00\x10Exif" + b"\x00" * 40
+GIF = b"GIF89a" + b"\x00" * 20
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 20
+CFG = {"ftp_host": "x", "ftp_port": 21, "ftp_user": "u", "ftp_pass": "p", "ftp_basis": "b", "ftp_timeout": 1,
+       "verzeichnisse": wb.ARTEN, "max_bytes": 1024 * 1024, "api_url": "https://x.example", "cms_passwort": "",
+       "poll_sekunden": 10}
 
 
-def pruefe(name, bedingung, hinweis=""):
-    print(("OK   " if bedingung else "FEHL ") + name + ("" if bedingung else "  -> " + str(hinweis)))
+def pruefe(name, bedingung, info=""):
     if not bedingung:
+        print("FEHLER", name, info)
         sys.exit(1)
+    print("OK  ", name)
 
 
-class Speicher:
-    """Ersetzt FtpWaage; verzeichnis -> {name: bytes}."""
-    dateien = {}
-    aufrufe = []
+class Wolke:
+    """Attrappe der Cloud-API: Sollvorgabe, Download, Upload, Bericht."""
 
-    def __init__(self, cfg):
-        pass
+    def __init__(self):
+        self.d = {"vollbild": {}, "dauer": {}}
+        self.zaehler = 0
+        self.berichte = []
+        self.initialisiert = False
+        self.kaputt = set()
+        self.aus = False
+
+    def setze(self, art, name, daten):
+        self.zaehler += 1
+        self.d[art][name] = (daten, "e%d" % self.zaehler)
+        return "e%d" % self.zaehler
+
+    def sync(self):
+        if self.aus:
+            raise OSError("keine Verbindung")
+        arten = dict((a, [{"name": n, "groesse": len(v[0]), "etag": v[1]} for n, v in sorted(self.d[a].items())])
+                     for a in self.d)
+        v = "|".join("%s:%s:%s" % (a, n, e) for a in sorted(arten) for n, _, e in
+                     [(x["name"], x["groesse"], x["etag"]) for x in arten[a]])
+        return {"success": True, "version": v, "initialisiert": self.initialisiert, "arten": arten}
+
+    def lade(self, art, name):
+        if (art, name) in self.kaputt:
+            return PNG
+        return self.d[art][name][0]
+
+    def lade_hoch(self, art, name, daten):
+        return {"success": True, "name": name, "etag": self.setze(art, name, daten)}
+
+    def bericht(self, b):
+        self.berichte.append(json.loads(json.dumps(b)))
+        if b.get("initialisiert"):
+            self.initialisiert = True
+        return {"success": True}
+
+
+class WaageFtp:
+    """Attrappe der Waage; Fabrik und Kontextmanager in einem, zaehlt Zugriffe."""
+
+    def __init__(self, direkt=None):
+        self.d = {"vollbild": {}, "dauer": {}}     # gueltige und fremde Dateien: name -> bytes
+        self.fremd_direkt = direkt or {}
+        self.oeffnungen = 0
+        self.geschrieben, self.geloescht = [], []
+        self.aus = False
+
+    def __call__(self, cfg):
+        return self
 
     def __enter__(self):
+        if self.aus:
+            raise OSError("Verbindung abgelehnt")
+        self.oeffnungen += 1
         return self
 
     def __exit__(self, *e):
         return False
 
-    def pruefe(self, verz):
-        return True
+    def _art(self, verz):
+        return "vollbild" if "fullscreen" in verz else "dauer"
 
     def liste(self, verz):
-        Speicher.aufrufe.append(("liste", verz))
-        return [(n, len(d)) for n, d in Speicher.dateien.get(verz, {}).items()]
+        return [(n, len(v)) for n, v in self.d[self._art(verz)].items()]
+
+    def direkt(self, verz):
+        return [(n, 1) for n in self.fremd_direkt.get(self._art(verz), [])]
 
     def lies(self, verz, name):
-        return Speicher.dateien[verz][name]
+        return self.d[self._art(verz)][name]
 
     def schreibe(self, verz, name, daten):
-        Speicher.aufrufe.append(("schreibe", verz, name))
-        Speicher.dateien.setdefault(verz, {})[name] = daten
+        self.geschrieben.append((self._art(verz), name))
+        self.d[self._art(verz)][name] = daten
 
     def loesche(self, verz, name):
-        Speicher.aufrufe.append(("loesche", verz, name))
-        del Speicher.dateien[verz][name]
+        self.geloescht.append((self._art(verz), name))
+        self.d[self._art(verz)].pop(name, None)
 
 
-def starte(max_bytes=1024):
-    cfg = wb.lade_config(pfad="gibt-es-nicht.json", env={})
-    cfg.update({"port": 0, "bind": "127.0.0.1", "max_bytes": max_bytes,
-                "erlaubte_herkuenfte": [ERLAUBT]})
-    srv = wb.baue_server(cfg, ftp_factory=Speicher)
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv, srv.server_address[1]
-
-
-def anfrage(port, methode, pfad, body=None, herkunft=ERLAUBT, kopf=None):
-    c = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
-    h = dict(kopf or {})
-    if herkunft:
-        h["Origin"] = herkunft
-    c.request(methode, pfad, body=body, headers=h)
-    r = c.getresponse()
-    daten = r.read()
-    antwort = (r.status, dict(r.getheaders()), daten)
-    c.close()
-    return antwort
-
-
-def js(daten):
-    return json.loads(daten.decode("utf-8")) if daten else {}
+def agent(wolke, waage, trocken=False, stand_pfad=None, uhr=None):
+    meldungen = []
+    a = wb.Agent(CFG, wolke, waage, uhr=uhr or (lambda: 1000.0), log=meldungen.append, trocken=trocken, stand_pfad=stand_pfad)
+    a.meldungen = meldungen
+    return a
 
 
 def main():
-    srv, port = starte()
-    voll = "bizerba/data/multimedia/advertising/fullscreen/default"
-    dauer = "bizerba/data/multimedia/advertising/permanent/default"
+    # ── F21 Erstlauf: Waage -> Cloud, nichts wird geloescht ──
+    wolke, waage = Wolke(), WaageFtp()
+    waage.d["vollbild"] = {"a.jpg": JPEG, "leer.jpg": b"", "x y.jpg": JPEG, "notiz.txt": b"hallo"}
+    waage.d["dauer"] = {"d.gif": GIF, "kaputt.jpg": PNG}
+    with tempfile.TemporaryDirectory() as tmp:
+        stand = os.path.join(tmp, "sync_stand.json")
+        ag = agent(wolke, waage, stand_pfad=stand)
+        ag.schritt()
+        pruefe("TC-F21-01  Erstlauf uebernimmt gueltige Waagenbilder in die Cloud",
+               set(wolke.d["vollbild"]) == {"a.jpg"} and set(wolke.d["dauer"]) == {"d.gif"}, wolke.d)
+        pruefe("TC-F21-01  Erstlauf loescht nichts und schreibt nichts auf die Waage",
+               waage.geloescht == [] and waage.geschrieben == [], (waage.geloescht, waage.geschrieben))
+        pruefe("TC-F21-01  Bericht meldet 'initialisiert'", wolke.berichte[-1]["initialisiert"] is True, wolke.berichte[-1])
+        pruefe("TC-F21-01  nicht leer, aber kein Bild (PNG-Inhalt) wird nicht uebernommen", "kaputt.jpg" not in wolke.d["dauer"])
+        pruefe("TC-F21-01  Zustand wird neben der exe gespeichert", os.path.exists(stand))
 
-    # Reine Hilfen
-    pruefe("Dateikopf JPEG", wb.bildtyp(JPEG) == "jpg")
-    pruefe("Dateikopf GIF", wb.bildtyp(GIF) == "gif")
-    pruefe("PNG ist kein Werbebild", wb.bildtyp(PNG) is None)
+        # Folgelauf: Cloud ist Soll -> leer.jpg und kaputt.jpg (nicht in Cloud) fliegen raus, fremde bleiben
+        ag.schritt()
+        pruefe("TC-F22-01  Folgelauf loescht gueltig benannte Dateien, die in der Cloud fehlen",
+               sorted(waage.geloescht) == [("dauer", "kaputt.jpg"), ("vollbild", "leer.jpg")], waage.geloescht)
+        pruefe("TC-F22-01  fremde Dateien (Leerzeichen, .txt) bleiben unangetastet",
+               "x y.jpg" in waage.d["vollbild"] and "notiz.txt" in waage.d["vollbild"])
+        pruefe("TC-F21-01  uebernommene Bilder werden nicht erneut auf die Waage geschrieben", waage.geschrieben == [], waage.geschrieben)
 
-    # TC-F9-01 PNG-Inhalt mit .jpg-Endung
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=falsch.jpg", PNG)
-    pruefe("TC-F9-01  PNG als .jpg wird abgelehnt (415)", s == 415, s)
-    pruefe("TC-F9-01  und nichts wurde geschrieben", not Speicher.dateien)
+        # Neustart: Zustand bleibt (kein erneuter Erstlauf, keine erneute Uebertragung)
+        ag2 = agent(wolke, waage, stand_pfad=stand)
+        pruefe("TC-F21-01  Neustart liest 'initialisiert' und Stand", ag2.initialisiert is True and ag2.stand["vollbild"].get("a.jpg"))
 
-    # Erfolg und Zielverzeichnis (F2: nur die Default-Verzeichnisse)
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=Fruehling.jpg", JPEG)
-    pruefe("Upload Vollbild gelingt", s == 200 and js(d)["name"] == "Fruehling.jpg", (s, d))
-    s, _, d = anfrage(port, "POST", "/bilder/dauer?name=Banner.gif", GIF)
-    pruefe("Upload Dauerwerbung gelingt", s == 200, (s, d))
-    pruefe("TC-F2-01  Vollbild landet in fullscreen/default", "Fruehling.jpg" in Speicher.dateien[voll])
-    pruefe("TC-F2-01  Dauer landet in permanent/default", "Banner.gif" in Speicher.dateien[dauer])
+    # ── F22 Abgleich ──
+    wolke, waage = Wolke(), WaageFtp()
+    wolke.initialisiert = True
+    wolke.setze("vollbild", "neu.gif", GIF)
+    wolke.setze("vollbild", "a.jpg", JPEG)
+    waage.d["vollbild"] = {"alt.jpg": JPEG, "x y.jpg": JPEG}
+    ag = agent(wolke, waage)
+    ag.schritt()
+    pruefe("TC-F22-01  fehlende Bilder werden hochgeladen", sorted(waage.geschrieben) == [("vollbild", "a.jpg"), ("vollbild", "neu.gif")], waage.geschrieben)
+    pruefe("TC-F22-01  gueltiger Name, nicht in Cloud -> geloescht", waage.geloescht == [("vollbild", "alt.jpg")], waage.geloescht)
+    pruefe("TC-F22-01  fremde Datei bleibt", "x y.jpg" in waage.d["vollbild"])
+    b = wolke.berichte[-1]
+    pruefe("TC-F22-01  Bericht: ist/stand passen zur Cloud (fremde Datei zaehlt nicht)",
+           sorted(b["ist"]["vollbild"]) == ["a.jpg", "neu.gif"]
+           and set(b["stand"]["vollbild"]) == {"a.jpg", "neu.gif"} and b["ok"] is True, b)
+    waage.geschrieben.clear()
+    wolke.setze("vollbild", "a.jpg", JPEG2)    # Bild in der Cloud ersetzt (neue etag)
+    ag.schritt()
+    pruefe("TC-F22-01  neue etag ersetzt das Bild auf der Waage", waage.geschrieben == [("vollbild", "a.jpg")] and waage.d["vollbild"]["a.jpg"] == JPEG2, waage.geschrieben)
+    waage.geschrieben.clear()
+    del wolke.d["vollbild"]["neu.gif"]
+    waage.geloescht.clear()
+    ag.schritt()
+    pruefe("TC-F22-01  in der Cloud geloeschtes Bild verschwindet von der Waage", ("vollbild", "neu.gif") in waage.geloescht and waage.geschrieben == [], (waage.geloescht, waage.geschrieben))
 
-    # Endung folgt dem Typ
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=foto.png", JPEG)
-    pruefe("Endung folgt dem echten Typ", s == 200 and js(d)["name"] == "foto.jpg", (s, d))
+    # TC-F22-02: Waage rechnet Datei um -> kein erneuter Upload (Vergleich ueber etag, nicht Groesse)
+    waage.d["vollbild"]["a.jpg"] = JPEG2 + b"umgerechnet"
+    waage.geschrieben.clear()
+    ag.schritt(erzwingen=True)
+    pruefe("TC-F22-02  von der Waage veraenderte Datei loest keinen Dauer-Upload aus", waage.geschrieben == [], waage.geschrieben)
 
-    # TC-F9-04 Pfadanteile
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=..%5C..%5Cx.jpg", JPEG)
-    pruefe("TC-F9-04  Rueckwaertspfad wird zum Dateinamen", s == 200 and js(d)["name"] == "x.jpg", (s, d))
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=a%2Fb%2Fc.gif", GIF)
-    pruefe("TC-F9-04  Schraegstriche werden entfernt", s == 200 and js(d)["name"] == "c.gif", (s, d))
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=Gr%C3%BC%C3%9Fe%20und%20Co.jpg", JPEG)
-    pruefe("Umlaute und Leerzeichen werden bereinigt",
-           s == 200 and js(d)["name"] == "Gruesse_und_Co.jpg", (s, d))
-    pruefe("TC-F9-04  nichts ausserhalb der Verzeichnisse",
-           set(Speicher.dateien) == {voll, dauer}, set(Speicher.dateien))
+    # TC-F22-03: defekter Download wird nicht geschrieben, Rest laeuft weiter
+    wolke.setze("dauer", "gut.gif", GIF)
+    wolke.setze("dauer", "defekt.jpg", JPEG)
+    wolke.kaputt.add(("dauer", "defekt.jpg"))
+    ag.schritt()
+    pruefe("TC-F22-03  defekte Datei nicht geschrieben, gute schon",
+           ("dauer", "gut.gif") in waage.geschrieben and ("dauer", "defekt.jpg") not in waage.geschrieben, waage.geschrieben)
+    pruefe("TC-F22-03  Fehler wird gemeldet", wolke.berichte[-1]["ok"] is False and "defekt.jpg" in wolke.berichte[-1]["fehler"], wolke.berichte[-1])
 
-    # TC-F9-02 Groesse
-    s, _, d = anfrage(port, "POST", "/bilder/vollbild?name=gross.jpg", JPEG + b"\x00" * 2000)
-    pruefe("TC-F9-02  zu grosse Datei wird abgelehnt (413)", s == 413, s)
-    pruefe("TC-F9-02  und nicht geschrieben", "gross.jpg" not in Speicher.dateien[voll])
+    # Trocken: nichts schreiben, nichts melden, keinen Zustand speichern
+    wolke, waage = Wolke(), WaageFtp()
+    wolke.initialisiert = True
+    wolke.setze("vollbild", "a.jpg", JPEG)
+    waage.d["vollbild"] = {"weg.jpg": JPEG}
+    with tempfile.TemporaryDirectory() as tmp:
+        stand = os.path.join(tmp, "s.json")
+        ag = agent(wolke, waage, trocken=True, stand_pfad=stand)
+        ag.schritt()
+        pruefe("TC-F22-03  --trocken schreibt, loescht und meldet nichts, speichert keinen Stand",
+               waage.geschrieben == [] and waage.geloescht == [] and wolke.berichte == [] and not os.path.exists(stand))
+        pruefe("TC-F22-03  --trocken nennt den Plan",
+               any("hochladen" in m and "a.jpg" in m for m in ag.meldungen) and any("loeschen" in m and "weg.jpg" in m for m in ag.meldungen), ag.meldungen)
 
-    # TC-F9-05 unbekannte Art
-    for art in ("1", "default", "..", "fullscreen"):
-        s, _, _ = anfrage(port, "POST", "/bilder/%s?name=a.jpg" % art, JPEG)
-        pruefe("TC-F9-05  Art %r ist unbekannt (404)" % art, s == 404, s)
-        s, _, _ = anfrage(port, "GET", "/bilder/%s" % art)
-        pruefe("TC-F9-05  Liste fuer %r ist 404" % art, s == 404, s)
+    # ── F20 Rhythmus ──
+    wolke, waage = Wolke(), WaageFtp()
+    wolke.initialisiert = True
+    wolke.setze("vollbild", "a.jpg", JPEG)
+    zeit = [0.0]
+    ag = agent(wolke, waage, uhr=lambda: zeit[0])
+    ag.schritt()
+    pruefe("TC-F20-01  erster Durchlauf gleicht ab", waage.oeffnungen == 1 and len(wolke.berichte) == 1)
+    for t in (10, 20):
+        zeit[0] = t
+        ag.schritt()
+    pruefe("TC-F20-01  ohne Aenderung kein FTP und kein Bericht innerhalb von 30 s", waage.oeffnungen == 1 and len(wolke.berichte) == 1)
+    zeit[0] = 31
+    ag.schritt()
+    pruefe("TC-F20-01  nach 30 s Lebenszeichen ohne FTP", waage.oeffnungen == 1 and len(wolke.berichte) == 2)
+    zeit[0] = 301
+    ag.schritt()
+    pruefe("TC-F20-01  spaetestens nach 5 Minuten wird die Waage wieder angesehen", waage.oeffnungen == 2)
+    wolke.setze("vollbild", "b.jpg", JPEG)
+    zeit[0] = 311
+    ag.schritt()
+    pruefe("TC-F20-01  Aenderung in der Cloud loest sofort den Abgleich aus", waage.oeffnungen == 3 and ("vollbild", "b.jpg") in waage.geschrieben)
 
-    # Liste, sortiert
-    s, _, d = anfrage(port, "GET", "/bilder/vollbild")
-    namen = [b["name"] for b in js(d)["bilder"]]
-    pruefe("Liste in Namensreihenfolge", namen == sorted(namen, key=str.lower), namen)
-    pruefe("Liste nennt Verzeichnis und Grenze",
-           js(d)["verzeichnis"] == voll and js(d)["max"] == 99, js(d))
+    # Cloud nicht erreichbar -> kein Absturz, kein Abgleich; Waage nicht erreichbar -> Fehler im Bericht, spaeter Wiederholung
+    wolke.aus = True
+    pruefe("Cloud aus: schritt() meldet und laeuft weiter", ag.schritt() is False and any("Cloud nicht erreichbar" in m for m in ag.meldungen))
+    wolke.aus = False
+    waage.aus = True
+    wolke.setze("dauer", "n.gif", GIF)
+    zeit[0] = 320
+    ag.schritt()
+    pruefe("Waage aus: Fehler wird gemeldet", wolke.berichte[-1]["ok"] is False and "Waage nicht erreichbar" in wolke.berichte[-1]["fehler"], wolke.berichte[-1])
+    waage.aus = False
+    zeit[0] = 330
+    ag.schritt()
+    pruefe("Waage aus: kein Abgleich vor Ablauf der Wartezeit", ("dauer", "n.gif") not in waage.geschrieben)
+    zeit[0] = 320 + wb.FEHLER_WIEDERHOLUNG + 1
+    ag.schritt()
+    pruefe("Waage wieder da: Wiederholung gelingt und Fehler ist weg", ("dauer", "n.gif") in waage.geschrieben and wolke.berichte[-1]["ok"] is True, wolke.berichte[-1])
 
-    # Bild lesen
-    s, k, d = anfrage(port, "GET", "/bilder/dauer/Banner.gif")
-    pruefe("Bild lesen liefert GIF", s == 200 and d == GIF and k["Content-Type"] == "image/gif", (s, k))
-    s, _, _ = anfrage(port, "GET", "/bilder/dauer/..%2F..%2Fx.gif")
-    pruefe("Ungueltiger Name beim Lesen wird abgewiesen", s in (400, 404), s)
+    # Schutz: leere Cloud-Liste leert die Waage erst nach mehreren Bestaetigungen
+    wolke, waage = Wolke(), WaageFtp()
+    wolke.initialisiert = True
+    waage.d["vollbild"] = {"a.jpg": JPEG, "b.jpg": JPEG}
+    zeit = [0.0]
+    ag = agent(wolke, waage, uhr=lambda: zeit[0])
+    for i in range(wb.LEER_BESTAETIGUNG - 1):
+        zeit[0] = i * 10
+        ag.schritt()
+    pruefe("Leer-Schutz: bei leerer Cloud wird zunaechst nichts geloescht", waage.geloescht == [], waage.geloescht)
+    zeit[0] = 50
+    ag.schritt()
+    pruefe("Leer-Schutz: nach mehreren Bestaetigungen wird geleert", sorted(waage.geloescht) == [("vollbild", "a.jpg"), ("vollbild", "b.jpg")], waage.geloescht)
 
-    # TC-F9-03 hundertstes Bild
-    Speicher.dateien[dauer] = {"b%02d.jpg" % i: JPEG for i in range(99)}
-    s, _, d = anfrage(port, "POST", "/bilder/dauer?name=neu.jpg", JPEG)
-    pruefe("TC-F9-03  das 100. Bild wird abgelehnt (409)", s == 409, (s, d))
-    s, _, d = anfrage(port, "POST", "/bilder/dauer?name=b05.jpg", JPEG)
-    pruefe("TC-F9-03  Ersetzen eines vorhandenen Bildes bleibt moeglich", s == 200, (s, d))
+    # Vorrang-Hinweis: Bilder direkt im Ordner werden gemeldet
+    wolke, waage = Wolke(), WaageFtp(direkt={"vollbild": ["x.jpg", "y.jpg", "z.txt"]})
+    wolke.initialisiert = True
+    agent(wolke, waage).schritt()
+    pruefe("TC-F15-04  Bericht nennt Bilder direkt im Ordner", wolke.berichte[-1]["direkt"] == {"vollbild": 2, "dauer": 0}, wolke.berichte[-1])
 
-    # Loeschen
-    s, _, d = anfrage(port, "DELETE", "/bilder/dauer/b05.jpg")
-    pruefe("Loeschen gelingt", s == 200 and "b05.jpg" not in Speicher.dateien[dauer], (s, d))
-    s, _, _ = anfrage(port, "DELETE", "/bilder/dauer/..%2Fx.jpg")
-    pruefe("Loeschen mit Pfadanteil wird abgewiesen", s in (400, 404), s)
-    s, _, _ = anfrage(port, "DELETE", "/bilder/dauer/b05.txt")
-    pruefe("Loeschen fremder Endung wird abgewiesen", s == 400, s)
+    # ── plane() rein ──
+    p = wb.plane({"vollbild": [{"name": "a.jpg", "groesse": 1, "etag": "e1"}], "dauer": []},
+                 {"vollbild": {"a.jpg": 5, "b.jpg": 5}, "dauer": {}}, {"vollbild": {"a.jpg": "e1"}}, True)
+    pruefe("plane: gleiche etag und vorhanden -> nichts hochladen, Ueberzaehliges loeschen",
+           p == {"uebernehmen": [], "hoch": [], "loeschen": [("vollbild", "b.jpg")]}, p)
 
-    # TC-F11-01 CORS
-    s, k, _ = anfrage(port, "OPTIONS", "/bilder/vollbild", kopf={
-        "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Private-Network": "true"})
-    pruefe("TC-F11-01  Vorabfrage erlaubter Herkunft",
-           s == 204 and k.get("Access-Control-Allow-Origin") == ERLAUBT
-           and k.get("Access-Control-Allow-Private-Network") == "true", (s, k))
-    s, k, _ = anfrage(port, "OPTIONS", "/bilder/vollbild", herkunft="https://boese.example")
-    pruefe("TC-F11-01  fremde Herkunft bekommt keine Freigabe",
-           s == 403 and "Access-Control-Allow-Origin" not in k, (s, k))
-    vorher = len(Speicher.aufrufe)
-    s, _, _ = anfrage(port, "POST", "/bilder/vollbild?name=x.jpg", JPEG, herkunft="https://boese.example",
-                      kopf={"Content-Type": "text/plain"})
-    pruefe("TC-F11-01  fremde Herkunft kann nicht hochladen (einfache Anfrage)",
-           s == 403 and len(Speicher.aufrufe) == vorher, s)
-    s, _, _ = anfrage(port, "GET", "/health", herkunft=None)
-    pruefe("Anfragen ohne Herkunft (Tests, Browser-Adressleiste) gehen", s == 200, s)
+    # ── F23 Anmeldung ──
+    class Antwort:
+        def __init__(self, status, daten):
+            self.status, self._d = status, daten
 
-    # Gesundheit
-    s, _, d = anfrage(port, "GET", "/health")
-    h = js(d)
-    pruefe("Health meldet Waage und beide Arten", h["waage"] is True and set(h["arten"]) == {"vollbild", "dauer"}, h)
-    pruefe("Health verraet keine Zugangsdaten", "pass" not in json.dumps(h).lower(), h)
+        def read(self):
+            return self._d
 
-    # Waage nicht erreichbar -> 502 mit Text, Dienst bleibt oben
-    class Tot(Speicher):
         def __enter__(self):
-            raise ConnectionRefusedError("Verbindung abgelehnt")
-    srv.ftp_factory = Tot
-    s, _, d = anfrage(port, "GET", "/bilder/vollbild")
-    pruefe("Waage nicht erreichbar -> 502", s == 502 and "Waage" in js(d)["error"], (s, d))
-    s, _, d = anfrage(port, "GET", "/health")
-    pruefe("Health bei toter Waage: waage=false, Dienst antwortet", s == 200 and js(d)["waage"] is False, (s, d))
-    srv.shutdown()
+            return self
 
-    # F10 Konfiguration
-    cfg = wb.lade_config(pfad="gibt-es-nicht.json", env={
-        "WAAGE_FTP_HOST": "10.0.0.5", "WAAGE_FTP_USER": "u", "WAAGE_FTP_PASS": "p"})
-    pruefe("TC-F10-01  Zugang kommt aus der Umgebung",
-           (cfg["ftp_host"], cfg["ftp_user"], cfg["ftp_pass"]) == ("10.0.0.5", "u", "p"))
-    pruefe("TC-F10-01  Standard enthaelt keine Zugangsdaten",
-           wb.STANDARD["ftp_user"] == "" and wb.STANDARD["ftp_pass"] == "" and wb.STANDARD["ftp_host"] == "")
-    wurzel = os.path.abspath(os.path.join(HIER, ".."))
-    with open(os.path.join(wurzel, ".gitignore"), encoding="utf-8") as f:
-        pruefe("TC-F10-01  config.json ist ausgeschlossen", "tools/waage-bruecke/config.json" in f.read())
+        def __exit__(self, *e):
+            return False
 
-    # F13 Adressen: Waagen-IP, Rechner-Adresse, Ports
-    cfg = wb.lade_config(pfad="gibt-es-nicht.json", env={
-        "WAAGE_FTP_HOST": "192.168.1.50", "WAAGE_FTP_PORT": "2121", "WAAGE_BIND": "192.168.1.20", "WAAGE_PORT": "9000"})
-    pruefe("TC-F13-01  Adressen und Ports kommen aus der Umgebung",
-           (cfg["ftp_host"], cfg["ftp_port"], cfg["bind"], cfg["port"]) == ("192.168.1.50", 2121, "192.168.1.20", 9000), cfg)
-    pruefe("TC-F13-01  gueltige Adressen werden angenommen", wb.pruefe_config(dict(cfg))["port"] == 9000)
+    aufrufe = []
 
-    def abgelehnt(**kw):
-        c = dict(cfg)
-        c.update(kw)
-        try:
-            wb.pruefe_config(c)
-        except ValueError as e:
-            return str(e)
-        return None
-    pruefe("TC-F13-02  IP ueber 255 abgelehnt", abgelehnt(ftp_host="192.168.1.300") is not None)
-    pruefe("TC-F13-02  leere Waagen-IP abgelehnt", abgelehnt(ftp_host="") is not None)
-    pruefe("TC-F13-02  Leerzeichen/Sonderzeichen abgelehnt", abgelehnt(ftp_host="192.168 .1.2") is not None
-           and abgelehnt(bind="a/b") is not None)
-    pruefe("TC-F13-02  Port 0, 70000 und Text abgelehnt",
-           all(abgelehnt(port=p) is not None for p in (0, 70000, "abc")) and abgelehnt(ftp_port=0) is not None)
-    pruefe("TC-F13-02  Rechnername ist erlaubt", abgelehnt(ftp_host="waage-pc") is None)
+    def oeffne_mit(pfaltig):
+        def oeffne(req, timeout=0):
+            aufrufe.append((req.get_method(), req.full_url, req.headers.get("X-cms-auth")))
+            url = req.full_url
+            if url.endswith("/api/cms-auth"):
+                if json.loads(req.data.decode())["password"] == "richtig":
+                    return Antwort(200, b'{"token": "TOK"}')
+                raise urllib.error.HTTPError(url, 401, "x", {}, io.BytesIO(b'{"error": "invalid password"}'))
+            if req.headers.get("X-cms-auth") != "TOK" and pfaltig:
+                raise urllib.error.HTTPError(url, 401, "x", {}, io.BytesIO(b'{"error": "unauthorized"}'))
+            return Antwort(200, b'{"success": true, "version": "v", "initialisiert": false, "arten": {"vollbild": [], "dauer": []}}')
+        return oeffne
 
-    # F13 Einrichtungsassistent schreibt config.json, fragt bei Fehleingabe erneut
-    import tempfile
-    antworten = iter(["192.168.1.999", "192.168.1.50", "", "", "0", "9000", "bizuser-test", "pw-test"])
+    api = wb.Api(dict(CFG, cms_passwort="richtig"), oeffne=oeffne_mit(True))
+    api.sync()
+    pruefe("TC-F23-01  mit Passwort: Anmeldung, dann Aufruf mit Token", aufrufe[0][1].endswith("/api/cms-auth") and aufrufe[-1][2] == "TOK", aufrufe)
+    aufrufe.clear()
+    api.token = "ALT"
+    api.sync()
+    pruefe("TC-F23-01  bei 401 wird neu angemeldet und wiederholt",
+           [a[1].rsplit("/", 1)[-1] for a in aufrufe] == ["waage-werbebilder?bruecke=sync", "cms-auth", "waage-werbebilder?bruecke=sync"]
+           and aufrufe[-1][2] == "TOK", aufrufe)
+    aufrufe.clear()
+    api = wb.Api(dict(CFG, cms_passwort=""), oeffne=oeffne_mit(False))
+    api.sync()
+    pruefe("TC-F23-01  ohne Passwort und ohne Pflicht: kein Token, keine Anmeldung", len(aufrufe) == 1 and aufrufe[0][2] is None, aufrufe)
+    falsch = wb.Api(dict(CFG, cms_passwort="falsch"), oeffne=oeffne_mit(True))
+    try:
+        falsch.sync()
+        gut = False
+    except wb.ApiFehler as e:
+        gut = e.status == 401 and "Passwort" in e.text
+    pruefe("TC-F23-01  falsches Passwort -> verstaendliche Meldung", gut)
+
+    # ── F24 Einrichtung ──
+    antworten = iter(["192.168.1.999", "192.168.1.134", "", "bizuser-test", "pw-test", "", "pass-test"])
     meldungen = []
     with tempfile.TemporaryDirectory() as tmp:
         ziel = os.path.join(tmp, "config.json")
         wb.einrichten(pfad=ziel, eingabe=lambda _p: next(antworten), ausgabe=meldungen.append)
         with open(ziel, encoding="utf-8") as f:
             neu = json.load(f)
-    pruefe("TC-F13-03  Assistent uebernimmt gueltige Eingaben, Standard bei leerer Eingabe",
-           (neu["ftp_host"], neu["ftp_port"], neu["bind"], neu["port"]) == ("192.168.1.50", 21, "0.0.0.0", 9000), neu)
-    pruefe("TC-F13-03  ungueltige Eingaben wurden mit Hinweis abgelehnt",
-           sum(1 for m in meldungen if "ungueltig" in m) == 2, meldungen)
+    pruefe("TC-F24-01  Assistent uebernimmt Waage, FTP-Zugang, Vorgabe-API und Passwort",
+           (neu["ftp_host"], neu["ftp_port"], neu["ftp_user"], neu["api_url"], neu["cms_passwort"])
+           == ("192.168.1.134", 21, "bizuser-test", "https://www.dorfladen-oberornau.de", "pass-test"), neu)
+    pruefe("TC-F24-01  ungueltige IP wurde abgelehnt", sum(1 for m in meldungen if "ungueltig" in m) == 1, meldungen)
+    fragen = []
+    wb.installieren(eingabe=lambda p: (fragen.append(p), "n")[1], ausgabe=lambda m: None, ausfuehren=lambda b: (0, ""))
+    pruefe("TC-F24-01  keine Firewall-Frage, nur Autostart", len(fragen) == 1 and "automatisch" in fragen[0] and "Firewall" not in fragen[0], fragen)
 
-    # Der echte FTP-Weg: Pfade gelten ab dem Anmeldeverzeichnis. Fehlte das, gingen
-    # Liste und Schreiben in derselben Verbindung ins Leere (550).
-    class FalschesFtp:
-        def __init__(self):
-            self.aktuell = "/home"
-            self.cwds = []
-            self.gespeichert = []
+    def abgelehnt(**kw):
+        c = dict(CFG, **kw)
+        try:
+            wb.pruefe_config(c)
+        except ValueError as e:
+            return str(e)
+        return None
+    pruefe("TC-F24-01  Konfiguration: IP > 255, Port 0, API ohne https, Takt 1 abgelehnt",
+           all(abgelehnt(**kw) for kw in ({"ftp_host": "192.168.1.300"}, {"ftp_port": 0}, {"api_url": "ftp://x"},
+                                          {"api_url": "www.x.de"}, {"poll_sekunden": 1})))
+    pruefe("TC-F24-01  Rechnername und Standardwerte sind gueltig", abgelehnt(ftp_host="waage-pc") is None and abgelehnt() is None)
 
-        def connect(self, *a, **k):
-            pass
-
-        def login(self, *a, **k):
-            pass
-
-        def voidcmd(self, *a):
-            pass
-
-        def pwd(self):
-            return "/home"
-
-        def cwd(self, p):
-            self.cwds.append(p)
-            self.aktuell = p if p.startswith("/") else self.aktuell.rstrip("/") + "/" + p
-
-        def mlsd(self, facts=None):
-            return iter([])
-
-        def storbinary(self, kommando, quelle):
-            self.gespeichert.append((self.aktuell, kommando))
-
-        def quit(self):
-            pass
-    echte = wb.ftplib.FTP
-    wb.ftplib.FTP = FalschesFtp
-    try:
-        with wb.FtpWaage({"ftp_host": "x", "ftp_port": 21, "ftp_timeout": 1,
-                          "ftp_user": "u", "ftp_pass": "p"}) as ftp:
-            ftp.liste("a/b")
-            ftp.schreibe("a/b", "x.jpg", JPEG)
-            pruefe("Zwei Zugriffe in einer Verbindung landen im selben Verzeichnis",
-                   ftp.ftp.gespeichert == [("/home/a/b", "STOR x.jpg")], ftp.ftp.gespeichert)
-    finally:
-        wb.ftplib.FTP = echte
-
-    # F14 Installation: Autostart und Firewall werden angeboten; ohne "ja" passiert nichts
+    # Autostart (F14)
     befehle = []
-    def fake(b):
-        befehle.append(b)
-        return 0, ""
-    ausgaben = []
-    wb.installieren({"port": 8765}, eingabe=lambda _p: "", ausgabe=ausgaben.append, ausfuehren=fake)
-    flach = [" ".join(b) for b in befehle]
+    wb.installieren(eingabe=lambda _p: "", ausgabe=lambda m: None, ausfuehren=lambda b: (befehle.append(" ".join(b)), (0, ""))[1])
     pruefe("TC-F14-01  Autostart per Aufgabenplanung ohne Admin (ONLOGON, LIMITED)",
-           any("schtasks" in b and "ONLOGON" in b and "LIMITED" in b for b in flach), flach)
-    pruefe("TC-F14-01  Firewall nur lokales Subnetz auf dem Bruecken-Port",
-           any("netsh" in b and "localport=8765" in b and "remoteip=LocalSubnet" in b for b in flach), flach)
+           any("schtasks" in b and "ONLOGON" in b and "LIMITED" in b for b in befehle), befehle)
     befehle.clear()
-    wb.installieren({"port": 8765}, eingabe=lambda _p: "n", ausgabe=ausgaben.append, ausfuehren=fake)
-    pruefe("TC-F14-02  Bei Nein wird nichts am System veraendert", befehle == [], befehle)
-    ausgaben.clear()
-    wb.installieren({"port": 8765}, eingabe=lambda _p: "j", ausgabe=ausgaben.append, ausfuehren=lambda b: (1, "Zugriff verweigert"))
-    pruefe("TC-F14-03  Fehlschlag wird verstaendlich gemeldet statt abzubrechen",
-           any("Zugriff verweigert" in a for a in ausgaben), ausgaben)
+    wb.installieren(eingabe=lambda _p: "n", ausgabe=lambda m: None, ausfuehren=lambda b: (befehle.append(b), (0, ""))[1])
+    pruefe("TC-F14-02  Bei Nein wird nichts am System veraendert", befehle == [])
+    ausgaben = []
+    wb.installieren(eingabe=lambda _p: "j", ausgabe=ausgaben.append, ausfuehren=lambda b: (1, "Zugriff verweigert"))
+    pruefe("TC-F14-03  Fehlschlag wird verstaendlich gemeldet statt abzubrechen", any("Zugriff verweigert" in a for a in ausgaben), ausgaben)
 
-    # F15 Fehlendes "default" wird beim Hochladen angelegt, darueberliegende Ordner nie
+    # ── Diagnose ──
+    ausg = []
+    ok = wb.pruefen(CFG, wb.Api(CFG, oeffne=oeffne_mit(False)), ftp_fabrik=WaageFtp(), ausgabe=ausg.append)
+    pruefe("pruefen: Cloud und Waage in Ordnung -> True, mit Anzahl je Art", ok and any("Waage erreichbar" in a for a in ausg), ausg)
+    tot = WaageFtp()
+    tot.aus = True
+    ausg = []
+    ok = wb.pruefen(CFG, wb.Api(CFG, oeffne=oeffne_mit(False)), ftp_fabrik=tot, ausgabe=ausg.append)
+    pruefe("pruefen: Waage aus -> False mit klarer Meldung", (not ok) and any("Waage nicht erreichbar" in a for a in ausg), ausg)
+
+    # ── FTP-Klasse gegen einen Verzeichnisbaum (F15) ──
     class BaumFtp:
         def __init__(self, ordner):
             self.ordner = set(ordner)
@@ -362,14 +418,13 @@ def main():
     wb.ftplib.FTP = lambda: baum
     try:
         with wb.FtpWaage(cfg_f) as ftp:
-            pruefe("TC-F15-01  Liste ohne vorhandenes default ist leer statt Fehler",
-                   ftp.liste(wurzel + "/fullscreen/default") == [])
-            pruefe("TC-F15-01  Pruefung gelingt, wenn nur der Elternordner existiert",
-                   ftp.pruefe(wurzel + "/fullscreen/default") is True)
+            pruefe("TC-F15-01  Liste ohne vorhandenes default ist leer statt Fehler", ftp.liste(wurzel + "/fullscreen/default") == [])
+            pruefe("TC-F15-01  Pruefung gelingt, wenn nur der Elternordner existiert", ftp.pruefe(wurzel + "/fullscreen/default") is True)
         with wb.FtpWaage(cfg_f) as ftp:
             ftp.schreibe(wurzel + "/fullscreen/default", "a.jpg", JPEG)
-        pruefe("TC-F15-02  Upload legt genau 'default' an",
-               baum.angelegt == ["/bizerba/data/multimedia/advertising/fullscreen/default"], baum.angelegt)
+            pruefe("Zwei Zugriffe in einer Verbindung landen im selben Verzeichnis",
+                   [n for n, _ in ftp.liste(wurzel + "/fullscreen/default")] == ["a.jpg"])
+        pruefe("TC-F15-02  Upload legt genau 'default' an", baum.angelegt == ["/bizerba/data/multimedia/advertising/fullscreen/default"], baum.angelegt)
         baum.angelegt.clear()
         fehler_perm = False
         try:
@@ -377,27 +432,13 @@ def main():
                 ftp.schreibe("falsch/data/multimedia/advertising/fullscreen/default", "a.jpg", JPEG)
         except wb.ftplib.error_perm:
             fehler_perm = True
-        pruefe("TC-F15-03  Falsche Wurzel legt keine Ordner an und meldet Fehler",
-               fehler_perm and baum.angelegt == [], baum.angelegt)
+        pruefe("TC-F15-03  Falsche Wurzel legt keine Ordner an und meldet Fehler", fehler_perm and baum.angelegt == [], baum.angelegt)
         with wb.FtpWaage(cfg_f) as ftp:
             baum.dateien["/bizerba/data/multimedia/advertising/fullscreen/direkt.jpg"] = JPEG
-            pruefe("TC-F15-04  Bilder direkt im Elternordner werden gemeldet (haben Vorrang)",
+            pruefe("TC-F15-04  Bilder direkt im Elternordner werden erkannt (haben Vorrang)",
                    [n for n, _ in ftp.direkt(wurzel + "/fullscreen/default")] == ["direkt.jpg"])
     finally:
         wb.ftplib.FTP = echte
-
-    class H:
-        def __init__(self, o, erlaubt):
-            self.headers = {"Origin": o}
-            self.cfg = {"erlaubte_herkuenfte": erlaubt}
-    ok = lambda o: wb.Handler._herkunft_ok(H(o, ["https://alt.example"]))
-    pruefe("TC-F15-05  Live und SWA-Vorschau sind auch bei alter config.json erlaubt",
-           ok("https://www.dorfladen-oberornau.de")
-           and ok("https://kind-pebble-072605b03-14.westeurope.7.azurestaticapps.net")
-           and ok("https://alt.example"))
-    pruefe("TC-F15-05  Fremde Herkunft bleibt abgelehnt",
-           not ok("https://evil.example") and not ok("https://other-app-14.westeurope.7.azurestaticapps.net")
-           and not ok("http://www.dorfladen-oberornau.de"))
 
     print("\nAlle Pruefungen bestanden.")
 

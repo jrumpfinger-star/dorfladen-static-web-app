@@ -21,6 +21,7 @@ static-site/handbuch/element-*.png
 
 # Waagen-Bruecke: lokale Zugangsdaten (Spec kiosk-werbebilder-upload)
 tools/waage-bruecke/config.json
+tools/waage-bruecke/sync_stand.json
 tools/waage-bruecke/dist/
 tools/waage-bruecke/build/
 

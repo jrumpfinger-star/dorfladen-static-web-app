@@ -1,39 +1,47 @@
 #!/usr/bin/env python3
-"""Bruecke Kiosk -> PC-Waage (Spec specs/kiosk-werbebilder-upload/spec.md).
+"""Bruecke Cloud -> PC-Waage (Spec specs/kiosk-werbebilder-upload/spec.md, F17-F25).
 
-Der Kiosk laeuft im Browser und kann kein FTP. Dieser kleine Dienst laeuft im
-Laden-LAN, nimmt Werbebilder per HTTP an und legt sie per FTP auf der Waage
-ab. Nur Standardbibliothek.
+Der Kiosk legt Werbebilder ueber die HTTPS-API in der Cloud ab. Dieser kleine Dienst
+laeuft im Laden-LAN, ruft die Cloud AUSGEHEND ab und gleicht die Waage per FTP an:
 
-Er hat bewusst keine eigene Anmeldung und gehoert deshalb nur ins LAN, nie ins
-Internet. Schutz: nur JPEG/GIF (am Dateikopf geprueft), Groessen- und
-Anzahlgrenze, bereinigte Dateinamen, nur die beiden Default-Verzeichnisse und
-nur erlaubte Herkuenfte.
+    Kiosk -> /api/waage-werbebilder (SharePoint)  <-  Bruecke  -> FTP -> Waage
 
-Zugangsdaten und Adressen stehen nur in config.json (nicht im Repo; Einrichtung
-mit "python waage_bruecke.py --einrichten") oder in den Umgebungsvariablen
+Es gibt keinen offenen Port, keine IP-Eingabe im Kiosk und kein Zertifikat.
+Nur Standardbibliothek.
+
+Abgleich: Die Cloud ist die Sollvorgabe. Beim allerersten Lauf uebernimmt die
+Bruecke die vorhandenen Bilder der Waage in die Cloud (nichts geht verloren),
+danach wird die Waage angeglichen. Fremde Dateien (Namen ausserhalb
+[A-Za-z0-9._-], andere Endungen, Unterordner) fasst die Bruecke nie an.
+
+Zugangsdaten stehen nur in config.json (nicht im Repo; Einrichtung mit
+"python waage_bruecke.py --einrichten") oder in Umgebungsvariablen
 WAAGE_FTP_HOST / WAAGE_FTP_PORT / WAAGE_FTP_USER / WAAGE_FTP_PASS /
-WAAGE_BIND / WAAGE_PORT.
+WAAGE_API_URL / WAAGE_CMS_PASSWORT / WAAGE_POLL.
 """
 import ftplib
-import fnmatch
 import getpass
+import hashlib
 import io
 import json
 import os
 import re
 import socket
-import ssl
 import sys
-import unicodedata
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, unquote, urlparse
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 # Art -> Unterverzeichnis unterhalb der Wurzel. Nur "default": Die
 # Monatsverzeichnisse 1..12 werden im Laden nicht genutzt.
 ARTEN = {"vollbild": "fullscreen/default", "dauer": "permanent/default"}
 MAX_BILDER = 99
 NAME_OK = re.compile(r"^[A-Za-z0-9._-]{1,80}\.(jpg|gif)$")
+FTP_INTERVALL = 300      # Waage spaetestens alle 5 Minuten erneut ansehen
+BERICHT_INTERVALL = 30   # Lebenszeichen an die Cloud
+LEER_BESTAETIGUNG = 3    # so oft muss eine leere Cloud-Liste in Folge kommen, bevor die Waage geleert wird
+FEHLER_WIEDERHOLUNG = 60
 
 STANDARD = {
     "ftp_host": "",
@@ -44,28 +52,14 @@ STANDARD = {
     "ftp_timeout": 10,
     "verzeichnisse": ARTEN,
     "max_bytes": 8 * 1024 * 1024,
-    "bind": "0.0.0.0",
-    "port": 8765,
-    "erlaubte_herkuenfte": [
-        "https://www.dorfladen-oberornau.de",
-        "https://kind-pebble-072605b03.7.azurestaticapps.net",
-    ],
-    "tls_cert": "",
-    "tls_key": "",
+    "api_url": "https://www.dorfladen-oberornau.de",
+    "cms_passwort": "",
+    "poll_sekunden": 10,
 }
-
-# Immer erlaubt, auch wenn config.json eine aeltere Liste enthaelt: Live-Seite und die
-# SWA-Vorschau-Umgebungen dieser App (kind-pebble-072605b03-<PR-Nr>.<Region>...).
-FESTE_HERKUENFTE = [
-    "https://www.dorfladen-oberornau.de",
-    "https://dorfladen-oberornau.de",
-    "https://kind-pebble-072605b03.*.azurestaticapps.net",
-    "https://kind-pebble-072605b03-*.azurestaticapps.net",
-]
 
 
 def basis_verzeichnis():
-    """Ordner der exe (PyInstaller) bzw. des Skripts; dort liegt config.json."""
+    """Ordner der exe (PyInstaller) bzw. des Skripts; dort liegen config.json und sync_stand.json."""
     if getattr(sys, "frozen", False):
         return os.path.dirname(os.path.abspath(sys.executable))
     return os.path.dirname(os.path.abspath(__file__))
@@ -79,14 +73,13 @@ def lade_config(pfad=None, env=None):
             cfg.update(json.load(f))
     env = os.environ if env is None else env
     for schluessel, name in (("ftp_host", "WAAGE_FTP_HOST"), ("ftp_user", "WAAGE_FTP_USER"),
-                             ("ftp_pass", "WAAGE_FTP_PASS"), ("ftp_basis", "WAAGE_FTP_BASIS")):
+                             ("ftp_pass", "WAAGE_FTP_PASS"), ("ftp_basis", "WAAGE_FTP_BASIS"),
+                             ("api_url", "WAAGE_API_URL"), ("cms_passwort", "WAAGE_CMS_PASSWORT")):
         if env.get(name):
             cfg[schluessel] = env[name]
-    for schluessel, name in (("ftp_port", "WAAGE_FTP_PORT"), ("port", "WAAGE_PORT")):
+    for schluessel, name in (("ftp_port", "WAAGE_FTP_PORT"), ("poll_sekunden", "WAAGE_POLL")):
         if env.get(name):
             cfg[schluessel] = int(env[name])
-    if env.get("WAAGE_BIND"):
-        cfg["bind"] = env["WAAGE_BIND"]
     return cfg
 
 
@@ -113,35 +106,43 @@ def pruefe_port(wert, name="Port"):
     return p
 
 
+def pruefe_api_url(url, name="API-Adresse"):
+    url = (url or "").strip().rstrip("/")
+    m = re.match(r"^(https?)://([^/:]+)(:\d{1,5})?$", url)
+    if not m:
+        raise ValueError("%s ungueltig: '%s' (z. B. https://www.dorfladen-oberornau.de)" % (name, url))
+    pruefe_adresse(m.group(2), name)
+    return url
+
+
 def pruefe_config(cfg):
-    """Prueft die eingegebenen Adressen; wirft ValueError mit verstaendlichem Text."""
+    """Prueft die Eingaben; wirft ValueError mit verstaendlichem Text."""
     cfg["ftp_host"] = pruefe_adresse(cfg.get("ftp_host"), "Waagen-Adresse (ftp_host)")
     cfg["ftp_port"] = pruefe_port(cfg.get("ftp_port"), "FTP-Port (ftp_port)")
-    cfg["bind"] = pruefe_adresse(cfg.get("bind"), "Rechner-Adresse (bind)")
-    cfg["port"] = pruefe_port(cfg.get("port"), "Bruecken-Port (port)")
+    cfg["api_url"] = pruefe_api_url(cfg.get("api_url"), "API-Adresse (api_url)")
+    try:
+        p = int(cfg.get("poll_sekunden"))
+    except (TypeError, ValueError):
+        p = 0
+    if not 2 <= p <= 3600:
+        raise ValueError("poll_sekunden ungueltig: '%s' (2 bis 3600)" % cfg.get("poll_sekunden"))
+    cfg["poll_sekunden"] = p
     return cfg
 
 
 def lokale_adressen():
-    """IPv4-Adressen dieses Rechners (ohne Loopback), fuer den Hinweis an den Kiosk."""
+    """IPv4-Adressen dieses Rechners (ohne Loopback), nur zur Anzeige."""
     ips = set()
     try:
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             ips.add(info[4][0])
     except OSError:
         pass
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("10.255.255.255", 1))
-        ips.add(s.getsockname()[0])
-        s.close()
-    except OSError:
-        pass
     return sorted(i for i in ips if not i.startswith("127."))
 
 
 def einrichten(pfad=None, eingabe=input, ausgabe=print):
-    """Fragt die Adressen ab und schreibt config.json (bestehende Werte bleiben Vorschlag)."""
+    """Fragt Waage, FTP-Zugang und Anmeldung ab und schreibt config.json (Altwerte bleiben Vorschlag)."""
     pfad = pfad or os.path.join(basis_verzeichnis(), "config.json")
     alt = {}
     if os.path.exists(pfad):
@@ -163,12 +164,14 @@ def einrichten(pfad=None, eingabe=input, ausgabe=print):
         ausgabe("Adressen dieses Rechners: " + ", ".join(ips))
     cfg["ftp_host"] = frage("IP-Adresse der Waage / des Waagen-PCs", "ftp_host", lambda v: pruefe_adresse(v, "Waagen-Adresse"))
     cfg["ftp_port"] = frage("FTP-Port der Waage", "ftp_port", lambda v: pruefe_port(v, "FTP-Port"))
-    cfg["bind"] = frage("Auf welcher Adresse dieses Rechners lauschen (0.0.0.0 = alle)", "bind", lambda v: pruefe_adresse(v, "Rechner-Adresse"))
-    cfg["port"] = frage("Port der Bruecke", "port", lambda v: pruefe_port(v, "Bruecken-Port"))
     if not cfg.get("ftp_user"):
         cfg["ftp_user"] = eingabe("FTP-Benutzer: ").strip()
     if not cfg.get("ftp_pass"):
         cfg["ftp_pass"] = getpass.getpass("FTP-Passwort (wird nicht angezeigt): ") if eingabe is input else eingabe("FTP-Passwort: ")
+    cfg["api_url"] = frage("Adresse der Dorfladen-Seite", "api_url", lambda v: pruefe_api_url(v))
+    if not cfg.get("cms_passwort"):
+        cfg["cms_passwort"] = (getpass.getpass("Kiosk-/CMS-Passwort (Enter = ohne, wird nicht angezeigt): ")
+                               if eingabe is input else eingabe("Kiosk-/CMS-Passwort: "))
     with open(pfad, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
     ausgabe("Gespeichert: " + pfad)
@@ -201,26 +204,11 @@ def autostart_entfernen(ausfuehren=_ausfuehren):
     return ausfuehren(["schtasks", "/Delete", "/F", "/TN", AUFGABE])
 
 
-def firewall_regel(port, ausfuehren=_ausfuehren):
-    """Eingehenden TCP-Port nur fuer das lokale Netz oeffnen (braucht Administratorrechte)."""
-    return ausfuehren(["netsh", "advfirewall", "firewall", "add", "rule", "name=" + AUFGABE,
-                       "dir=in", "action=allow", "protocol=TCP", "localport=%s" % port,
-                       "remoteip=LocalSubnet", "profile=private,domain"])
-
-
-def installieren(cfg, eingabe=input, ausgabe=print, ausfuehren=_ausfuehren):
-    """Nach der Einrichtung: Autostart und Firewall anbieten."""
+def installieren(eingabe=input, ausgabe=print, ausfuehren=_ausfuehren):
+    """Nach der Einrichtung: Autostart anbieten. Eine Firewall-Regel ist nicht noetig (nur ausgehend)."""
     if eingabe("Bruecke bei jeder Windows-Anmeldung automatisch starten? [J/n]: ").strip().lower() in ("", "j", "ja", "y"):
         code, text = autostart_einrichten(ausfuehren)
         ausgabe("Autostart eingerichtet." if code == 0 else "Autostart fehlgeschlagen: " + text)
-    if eingabe("Firewall-Regel fuer Port %s anlegen (nur lokales Netz, braucht Administrator)? [J/n]: "
-               % cfg["port"]).strip().lower() in ("", "j", "ja", "y"):
-        code, text = firewall_regel(cfg["port"], ausfuehren)
-        if code == 0:
-            ausgabe("Firewall-Regel angelegt.")
-        else:
-            ausgabe("Firewall-Regel nicht angelegt (als Administrator starten oder beim Windows-Hinweis "
-                    "'Zugriff zulassen' klicken): " + text)
 
 
 def bildtyp(daten):
@@ -232,20 +220,10 @@ def bildtyp(daten):
     return None
 
 
-def sauberer_name(name, typ):
-    """Nur der Dateiname, nur [A-Za-z0-9._-], Endung gemaess tatsaechlichem Typ."""
-    name = re.split(r"[\\/]", name or "")[-1]
-    stamm = name.rsplit(".", 1)[0] if "." in name else name
-    for a, b in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("Ä", "Ae"), ("Ö", "Oe"),
-                 ("Ü", "Ue"), ("ß", "ss")):
-        stamm = stamm.replace(a, b)
-    stamm = unicodedata.normalize("NFKD", stamm).encode("ascii", "ignore").decode("ascii")
-    stamm = re.sub(r"[^A-Za-z0-9._-]+", "_", stamm).strip("._-")[:60] or "bild"
-    return "%s.%s" % (stamm, typ)
-
+# ── FTP zur Waage ───────────────────────────────────────────────────────────
 
 class FtpWaage:
-    """Kurzlebige FTP-Verbindung zur Waage (eine je Anfrage)."""
+    """Kurzlebige FTP-Verbindung zur Waage (eine je Abgleich)."""
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -345,212 +323,327 @@ class FtpWaage:
         self.ftp.delete(name)
 
 
-class Fehler(Exception):
+# ── Cloud-API ───────────────────────────────────────────────────────────────
+
+class ApiFehler(Exception):
     def __init__(self, status, text):
-        Exception.__init__(self, text)
+        Exception.__init__(self, "%s: %s" % (status, text))
         self.status = status
         self.text = text
 
 
-def bilder_sortiert(eintraege):
-    gueltig = [(n, g) for n, g in eintraege if NAME_OK.match(n)]
-    return sorted(gueltig, key=lambda e: e[0].lower())
+class Api:
+    """HTTPS-Client fuer /api/waage-werbebilder; meldet sich wie das CMS an (X-CMS-Auth)."""
 
+    def __init__(self, cfg, oeffne=None):
+        self.basis = cfg["api_url"].rstrip("/")
+        self.passwort = cfg.get("cms_passwort") or ""
+        self.token = None
+        self.oeffne = oeffne or urllib.request.urlopen
 
-class Handler(BaseHTTPRequestHandler):
-    server_version = "WaageBruecke/1.0"
-    protocol_version = "HTTP/1.1"
+    def _roh(self, methode, pfad, body=None, typ=None, mit_token=True, timeout=60):
+        kopf = {"User-Agent": "WaageBruecke/2"}
+        if typ:
+            kopf["Content-Type"] = typ
+        if mit_token and self.token:
+            kopf["X-CMS-Auth"] = self.token
+        req = urllib.request.Request(self.basis + pfad, data=body, method=methode, headers=kopf)
+        try:
+            with self.oeffne(req, timeout=timeout) as r:
+                return r.status, r.read()
+        except urllib.error.HTTPError as e:
+            return e.code, e.read()
 
-    # ── Hilfen ──
-    @property
-    def cfg(self):
-        return self.server.cfg
+    def anmelden(self):
+        if not self.passwort:
+            return False
+        status, daten = self._roh("POST", "/api/cms-auth", json.dumps({"password": self.passwort}).encode("utf-8"),
+                                  "application/json", mit_token=False, timeout=30)
+        if status == 200:
+            self.token = json.loads(daten.decode("utf-8")).get("token")
+            return bool(self.token)
+        if status == 401:
+            raise ApiFehler(401, "Anmeldung abgelehnt: Passwort in config.json stimmt nicht")
+        raise ApiFehler(status, "Anmeldung nicht moeglich")
 
-    def _verz(self, art):
-        rel = self.cfg["verzeichnisse"].get(art) if art in ARTEN else None
-        if not rel:
-            raise Fehler(404, "Unbekannte Art")
-        return self.cfg["ftp_basis"].rstrip("/") + "/" + rel.strip("/")
-
-    def _herkunft_ok(self):
-        o = self.headers.get("Origin")
-        if o is None:
-            return True
-        erlaubt = list(self.cfg["erlaubte_herkuenfte"]) + FESTE_HERKUENFTE
-        return "*" in erlaubt or any(fnmatch.fnmatchcase(o, muster) for muster in erlaubt)
-
-    def _kopf(self, status, typ, laenge):
-        self.send_response(status)
-        self.send_header("Content-Type", typ)
-        self.send_header("Content-Length", str(laenge))
-        self.send_header("Cache-Control", "no-store")
-        o = self.headers.get("Origin")
-        if o and self._herkunft_ok():
-            self.send_header("Access-Control-Allow-Origin", o)
-            self.send_header("Vary", "Origin")
-            self.send_header("Access-Control-Allow-Private-Network", "true")
-        self.end_headers()
+    def _anfrage(self, methode, pfad, body=None, typ=None, timeout=60):
+        if self.passwort and not self.token:
+            self.anmelden()
+        status, daten = self._roh(methode, pfad, body, typ, timeout=timeout)
+        if status == 401 and self.passwort:
+            self.token = None
+            self.anmelden()
+            status, daten = self._roh(methode, pfad, body, typ, timeout=timeout)
+        return status, daten
 
     def _json(self, status, daten):
-        body = json.dumps(daten, ensure_ascii=False).encode("utf-8")
-        self._kopf(status, "application/json; charset=utf-8", len(body))
-        self.wfile.write(body)
-
-    def _ftp(self):
-        return self.server.ftp_factory(self.cfg)
-
-    def _lauf(self, fn):
         try:
-            if not self._herkunft_ok():
-                raise Fehler(403, "Herkunft nicht erlaubt")
-            fn()
-        except Fehler as e:
-            self.close_connection = True
-            self._json(e.status, {"success": False, "error": e.text})
-        except (OSError, EOFError) as e:
-            self.close_connection = True
-            self._json(502, {"success": False, "error": "Waage nicht erreichbar: %s" % e})
-        except ftplib.Error as e:
-            self.close_connection = True
-            self._json(502, {"success": False, "error": "FTP-Fehler: %s" % e})
+            d = json.loads(daten.decode("utf-8"))
         except Exception:
-            self.close_connection = True
-            self._json(500, {"success": False, "error": "Interner Fehler"})
+            raise ApiFehler(status, "Unerwartete Antwort der Dorfladen-Seite")
+        if status != 200 or not d.get("success"):
+            raise ApiFehler(status, d.get("error") or "Fehler")
+        return d
 
-    def _pfad(self):
-        teile = [unquote(t) for t in urlparse(self.path).path.split("/") if t]
-        return teile, parse_qs(urlparse(self.path).query)
+    def sync(self):
+        return self._json(*self._anfrage("GET", "/api/waage-werbebilder?bruecke=sync", timeout=30))
 
-    # ── Methoden ──
-    def do_OPTIONS(self):
-        o = self.headers.get("Origin")
-        if o and not self._herkunft_ok():
-            self._json(403, {"success": False, "error": "Herkunft nicht erlaubt"})
+    def lade(self, art, name):
+        status, daten = self._anfrage("GET", "/api/waage-werbebilder?art=%s&name=%s" % (art, urllib.parse.quote(name)))
+        if status != 200:
+            raise ApiFehler(status, "Bild nicht abrufbar")
+        return daten
+
+    def lade_hoch(self, art, name, daten):
+        typ = "image/gif" if name.lower().endswith(".gif") else "image/jpeg"
+        return self._json(*self._anfrage("POST", "/api/waage-werbebilder?art=%s&name=%s" % (art, urllib.parse.quote(name)),
+                                         daten, typ))
+
+    def bericht(self, bericht):
+        return self._json(*self._anfrage("POST", "/api/waage-werbebilder?bruecke=bericht",
+                                         json.dumps(bericht).encode("utf-8"), "application/json", timeout=30))
+
+
+# ── Abgleich ────────────────────────────────────────────────────────────────
+
+def plane(soll, ist, stand, initialisiert, leer_bestaetigt=()):
+    """Reine Planung. Rueckgabe: {'uebernehmen': [(art,name)], 'hoch': [(art,name,etag)], 'loeschen': [(art,name)]}.
+
+    soll:  {art: [{name, groesse, etag}]}   Sollvorgabe der Cloud
+    ist:   {art: {name: groesse}}           gueltige Dateien auf der Waage
+    stand: {art: {name: etag}}              zuletzt uebertragene Fassung
+    """
+    plan = {"uebernehmen": [], "hoch": [], "loeschen": []}
+    for art in ARTEN:
+        cloud = dict((b["name"], b) for b in soll.get(art, []))
+        vorhanden = ist.get(art, {})
+        stand_art = stand.get(art, {})
+        if not initialisiert:
+            for name, groesse in sorted(vorhanden.items()):
+                if name not in cloud and groesse > 0:
+                    plan["uebernehmen"].append((art, name))
+        for name in sorted(cloud):
+            if name not in vorhanden or stand_art.get(name) != cloud[name]["etag"]:
+                plan["hoch"].append((art, name, cloud[name]["etag"]))
+        if initialisiert:
+            if cloud or art in leer_bestaetigt:
+                for name in sorted(vorhanden):
+                    if name not in cloud:
+                        plan["loeschen"].append((art, name))
+    return plan
+
+
+class Agent:
+    """Eine Runde je Aufruf von schritt(); Uhr, Log und Netz sind austauschbar (Test)."""
+
+    def __init__(self, cfg, api, ftp_fabrik=FtpWaage, uhr=time.time, log=print, trocken=False, stand_pfad=None):
+        self.cfg, self.api, self.ftp_fabrik, self.uhr, self.log = cfg, api, ftp_fabrik, uhr, log
+        self.trocken = trocken
+        self.stand_pfad = stand_pfad
+        self.stand = dict((a, {}) for a in ARTEN)
+        self.initialisiert = False
+        self.version = None
+        self.letzter_ftp = 0.0
+        self.letzter_bericht = 0.0
+        self.wiederholen_ab = 0.0
+        self.ist_namen = dict((a, []) for a in ARTEN)
+        self.direkt = dict((a, 0) for a in ARTEN)
+        self.fehler = ""
+        self.leer = dict((a, 0) for a in ARTEN)
+        self._lade_stand()
+
+    # Zustand neben der exe: welche Fassung ist uebertragen, ist der Erstlauf erledigt
+    def _lade_stand(self):
+        if not self.stand_pfad or not os.path.exists(self.stand_pfad):
             return
-        self.send_response(204)
-        if o:
-            self.send_header("Access-Control-Allow-Origin", o)
-            self.send_header("Vary", "Origin")
-            self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-            self.send_header("Access-Control-Allow-Headers", "Content-Type")
-            self.send_header("Access-Control-Allow-Private-Network", "true")
-            self.send_header("Access-Control-Max-Age", "600")
-        self.send_header("Content-Length", "0")
-        self.end_headers()
-
-    def do_GET(self):
-        self._lauf(self._get)
-
-    def do_POST(self):
-        self._lauf(self._post)
-
-    def do_DELETE(self):
-        self._lauf(self._delete)
-
-    def _get(self):
-        teile, _ = self._pfad()
-        if teile == ["health"]:
-            return self._health()
-        if len(teile) == 2 and teile[0] == "bilder":
-            verz = self._verz(teile[1])
-            with self._ftp() as f:
-                bilder = bilder_sortiert(f.liste(verz))
-                try:
-                    direkt = len(bilder_sortiert(f.direkt(verz)))
-                except (ftplib.Error, AttributeError):
-                    direkt = 0
-            return self._json(200, {
-                "success": True, "art": teile[1], "verzeichnis": verz, "max": MAX_BILDER,
-                "direkt": direkt,
-                "bilder": [{"name": n, "groesse": g} for n, g in bilder]})
-        if len(teile) == 3 and teile[0] == "bilder":
-            verz = self._verz(teile[1])
-            if not NAME_OK.match(teile[2]):
-                raise Fehler(400, "Ungueltiger Dateiname")
-            with self._ftp() as f:
-                daten = f.lies(verz, teile[2])
-            typ = "image/gif" if teile[2].lower().endswith(".gif") else "image/jpeg"
-            self._kopf(200, typ, len(daten))
-            self.wfile.write(daten)
-            return
-        raise Fehler(404, "Nicht gefunden")
-
-    def _health(self):
-        antwort = {"success": True, "ok": True, "waage": False,
-                   "basis": self.cfg["ftp_basis"], "arten": {}}
         try:
-            with self._ftp() as f:
-                antwort["waage"] = True
+            with open(self.stand_pfad, encoding="utf-8") as f:
+                d = json.load(f)
+            self.initialisiert = bool(d.get("initialisiert"))
+            for a in ARTEN:
+                self.stand[a] = dict((k, str(v)) for k, v in (d.get("stand", {}).get(a) or {}).items())
+        except (OSError, ValueError):
+            pass
+
+    def _speichere_stand(self):
+        if not self.stand_pfad or self.trocken:
+            return
+        try:
+            with open(self.stand_pfad, "w", encoding="utf-8") as f:
+                json.dump({"initialisiert": self.initialisiert, "stand": self.stand}, f, indent=1)
+        except OSError:
+            pass
+
+    def _verz(self, art):
+        return self.cfg["ftp_basis"].rstrip("/") + "/" + self.cfg["verzeichnisse"][art].strip("/")
+
+    def schritt(self, erzwingen=False):
+        jetzt = self.uhr()
+        try:
+            soll = self.api.sync()
+        except (ApiFehler, OSError) as e:
+            self.log("Cloud nicht erreichbar: %s" % e)
+            return False
+        for a in ARTEN:
+            self.leer[a] = self.leer[a] + 1 if not soll["arten"].get(a) else 0
+        if erzwingen:
+            faellig = True
+        elif self.fehler:   # nach einem Fehler nicht im Takt der Abfrage, sondern erst nach der Wartezeit erneut versuchen
+            faellig = jetzt >= self.wiederholen_ab
+        else:
+            faellig = (soll["version"] != self.version or jetzt - self.letzter_ftp >= FTP_INTERVALL
+                       or any(self.leer[a] == LEER_BESTAETIGUNG and self.ist_namen[a] for a in ARTEN))
+        if faellig:
+            self.abgleich(soll, jetzt)
+        elif jetzt - self.letzter_bericht >= BERICHT_INTERVALL:
+            self.melde(jetzt)
+        return faellig
+
+    def abgleich(self, soll, jetzt):
+        fehler = []
+        try:
+            with self.ftp_fabrik(self.cfg) as ftp:
+                ist = {}
                 for art in ARTEN:
+                    eintraege = ftp.liste(self._verz(art))
+                    ist[art] = dict((n, g) for n, g in eintraege if NAME_OK.match(n))
                     try:
-                        antwort["arten"][art] = bool(f.pruefe(self._verz(art)))
-                    except ftplib.Error:
-                        antwort["arten"][art] = False
+                        self.direkt[art] = len([1 for n, _ in ftp.direkt(self._verz(art)) if NAME_OK.match(n)])
+                    except (ftplib.Error, AttributeError):
+                        self.direkt[art] = 0
+                bestaetigt = [a for a in ARTEN if self.leer[a] >= LEER_BESTAETIGUNG]
+                plan = plane(soll["arten"], ist, self.stand, self.initialisiert or bool(soll.get("initialisiert")), bestaetigt)
+                self._protokolliere(plan)
+                if not self.trocken:
+                    self._fuehre_aus(plan, ftp, soll["arten"], fehler)
+                    if not self.initialisiert and not fehler:
+                        self.initialisiert = True
+                    ist_neu = {}
+                    for art in ARTEN:
+                        ist_neu[art] = [n for n, _ in ftp.liste(self._verz(art)) if NAME_OK.match(n)]
+                    self.ist_namen = ist_neu
+                else:
+                    self.ist_namen = dict((a, sorted(ist[a])) for a in ARTEN)
         except (OSError, EOFError, ftplib.Error) as e:
-            antwort["fehler"] = str(e)
-        self._json(200, antwort)
+            fehler.append("Waage nicht erreichbar: %s" % e)
+        self.fehler = "; ".join(fehler)[:300]
+        self.letzter_ftp = jetzt
+        self.wiederholen_ab = jetzt + FEHLER_WIEDERHOLUNG
+        if not self.fehler:
+            self.version = soll["version"]
+        else:
+            self.log("Abgleich mit Fehlern: %s" % self.fehler)
+        self._speichere_stand()
+        self.melde(jetzt)
 
-    def _post(self):
-        teile, abfrage = self._pfad()
-        if len(teile) != 2 or teile[0] != "bilder":
-            raise Fehler(404, "Nicht gefunden")
-        verz = self._verz(teile[1])
-        laenge = self.headers.get("Content-Length")
-        if laenge is None or not laenge.isdigit():
-            raise Fehler(411, "Content-Length fehlt")
-        laenge = int(laenge)
-        if laenge <= 0:
-            raise Fehler(400, "Leere Datei")
-        if laenge > int(self.cfg["max_bytes"]):
-            raise Fehler(413, "Datei zu gross (max. %d MB)" % (int(self.cfg["max_bytes"]) // (1024 * 1024)))
-        daten = self.rfile.read(laenge)
-        typ = bildtyp(daten)
-        if not typ:
-            raise Fehler(415, "Nur JPEG und GIF erlaubt")
-        name = sauberer_name((abfrage.get("name") or [""])[0], typ)
-        with self._ftp() as f:
-            vorhanden = [n for n, _ in bilder_sortiert(f.liste(verz))]
-            if name not in vorhanden and len(vorhanden) >= MAX_BILDER:
-                raise Fehler(409, "Es sind bereits %d Bilder gespeichert" % MAX_BILDER)
-            f.schreibe(verz, name, daten)
-        self._json(200, {"success": True, "name": name, "groesse": len(daten)})
+    def _protokolliere(self, plan):
+        if not (plan["uebernehmen"] or plan["hoch"] or plan["loeschen"]):
+            return
+        self.log("%sPlan: %d uebernehmen, %d auf die Waage, %d loeschen" % (
+            "[trocken] " if self.trocken else "", len(plan["uebernehmen"]), len(plan["hoch"]), len(plan["loeschen"])))
+        if self.trocken:
+            for a, n in plan["uebernehmen"]:
+                self.log("  uebernehmen  %s/%s" % (a, n))
+            for a, n, _ in plan["hoch"]:
+                self.log("  hochladen    %s/%s" % (a, n))
+            for a, n in plan["loeschen"]:
+                self.log("  loeschen     %s/%s" % (a, n))
 
-    def _delete(self):
-        teile, _ = self._pfad()
-        if len(teile) != 3 or teile[0] != "bilder":
-            raise Fehler(404, "Nicht gefunden")
-        verz = self._verz(teile[1])
-        if not NAME_OK.match(teile[2]):
-            raise Fehler(400, "Ungueltiger Dateiname")
+    def _fuehre_aus(self, plan, ftp, soll_arten, fehler):
+        max_bytes = int(self.cfg["max_bytes"])
+        for art, name in plan["uebernehmen"]:
+            try:
+                daten = ftp.lies(self._verz(art), name)
+                if not bildtyp(daten) or len(daten) > max_bytes:
+                    self.log("uebersprungen (kein gueltiges Bild): %s/%s" % (art, name))
+                    continue
+                antwort = self.api.lade_hoch(art, name, daten)
+                if antwort.get("name") != name:
+                    self.log("uebernommen als %s: %s/%s" % (antwort.get("name"), art, name))
+                self.stand[art][antwort.get("name", name)] = antwort.get("etag", "")
+                self.log("uebernommen: %s/%s" % (art, name))
+            except (ApiFehler, OSError, ftplib.Error) as e:
+                fehler.append("%s/%s: %s" % (art, name, e))
+        for art, name, etag in plan["hoch"]:
+            try:
+                daten = self.api.lade(art, name)
+                if not bildtyp(daten) or len(daten) > max_bytes:
+                    fehler.append("%s/%s: kein gueltiges JPEG/GIF, nicht auf die Waage geschrieben" % (art, name))
+                    continue
+                ftp.schreibe(self._verz(art), name, daten)
+                self.stand[art][name] = etag
+                self.log("auf der Waage: %s/%s" % (art, name))
+            except (ApiFehler, OSError, ftplib.Error) as e:
+                fehler.append("%s/%s: %s" % (art, name, e))
+        for art, name in plan["loeschen"]:
+            try:
+                ftp.loesche(self._verz(art), name)
+                self.stand[art].pop(name, None)
+                self.log("geloescht: %s/%s" % (art, name))
+            except ftplib.error_perm as e:
+                if not str(e).startswith("550"):
+                    fehler.append("%s/%s: %s" % (art, name, e))
+            except (OSError, ftplib.Error) as e:
+                fehler.append("%s/%s: %s" % (art, name, e))
+        for art in ARTEN:   # Stand nur fuer Bilder behalten, die in der Cloud stehen oder gerade uebernommen wurden
+            behalten = set(n for a, n, _ in plan["hoch"] if a == art)
+            behalten |= set(n for a, n in plan["uebernehmen"] if a == art)
+            behalten |= set(b["name"] for b in soll_arten.get(art, []))
+            for name in list(self.stand[art]):
+                if name not in behalten:
+                    self.stand[art].pop(name, None)
+
+    def melde(self, jetzt):
+        if self.trocken:
+            return
         try:
-            with self._ftp() as f:
-                f.loesche(verz, teile[2])
-        except ftplib.error_perm as e:
-            if str(e).startswith("550"):
-                raise Fehler(404, "Bild nicht gefunden")
-            raise
-        self._json(200, {"success": True})
-
-    def log_message(self, fmt, *args):
-        sys.stderr.write("%s %s\n" % (self.address_string(), fmt % args))
+            self.api.bericht({"ok": not self.fehler, "fehler": self.fehler, "initialisiert": self.initialisiert,
+                              "ist": self.ist_namen, "stand": self.stand, "direkt": self.direkt})
+            self.letzter_bericht = jetzt
+        except (ApiFehler, OSError) as e:
+            self.log("Bericht an die Cloud fehlgeschlagen: %s" % e)
 
 
-def baue_server(cfg, ftp_factory=None):
-    srv = ThreadingHTTPServer((cfg["bind"], int(cfg["port"])), Handler)
-    srv.cfg = cfg
-    srv.ftp_factory = ftp_factory or FtpWaage
-    srv.daemon_threads = True
-    if cfg.get("tls_cert") and cfg.get("tls_key"):
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(cfg["tls_cert"], cfg["tls_key"])
-        srv.socket = ctx.wrap_socket(srv.socket, server_side=True)
-    return srv
+# ── Pruefen und Start ───────────────────────────────────────────────────────
+
+def pruefen(cfg, api, ftp_fabrik=FtpWaage, ausgabe=print):
+    """Diagnose fuer die Einrichtung: Cloud, Anmeldung, Waage, Verzeichnisse. True, wenn alles passt."""
+    ok = True
+    try:
+        api.anmelden()
+        s = api.sync()
+        ausgabe("OK    Cloud erreichbar (%s), Sollvorgabe: %d Vollbild, %d Dauerwerbung" % (
+            cfg["api_url"], len(s["arten"].get("vollbild", [])), len(s["arten"].get("dauer", []))))
+    except (ApiFehler, OSError) as e:
+        ok = False
+        ausgabe("FEHLER Cloud/Anmeldung: %s" % e)
+    try:
+        with ftp_fabrik(cfg) as ftp:
+            ausgabe("OK    Waage erreichbar (%s)" % cfg["ftp_host"])
+            for art, rel in cfg["verzeichnisse"].items():
+                verz = cfg["ftp_basis"].rstrip("/") + "/" + rel.strip("/")
+                try:
+                    anzahl = len([1 for n, _ in ftp.liste(verz) if NAME_OK.match(n)])
+                    ausgabe("OK    %s: %s (%d Bilder)" % (art, verz, anzahl))
+                except ftplib.Error as e:
+                    ok = False
+                    ausgabe("FEHLER %s: %s nicht gefunden - ftp_basis in config.json pruefen (%s)" % (art, verz, e))
+    except (OSError, EOFError, ftplib.Error) as e:
+        ok = False
+        ausgabe("FEHLER Waage nicht erreichbar: %s" % e)
+    return ok
+
+
+def _zeit():
+    return time.strftime("%H:%M:%S")
 
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if "--einrichten" in argv:
-        installieren(einrichten())
+        cfg = einrichten()
+        installieren()
+        pruefen(cfg, Api(cfg))
         return 0
     if "--autostart-entfernen" in argv:
         code, text = autostart_entfernen()
@@ -559,7 +652,9 @@ def main(argv=None):
     cfg = lade_config()
     if not (cfg["ftp_host"] and cfg["ftp_user"]) and getattr(sys, "frozen", False) and sys.stdin and sys.stdin.isatty():
         print("Erstmalige Einrichtung der Waage-Bruecke.\n")
-        installieren(einrichten())
+        cfg = einrichten()
+        installieren()
+        pruefen(cfg, Api(cfg))
         cfg = lade_config()
     if not (cfg["ftp_host"] and cfg["ftp_user"]):
         print("FTP-Zugang fehlt: 'python waage_bruecke.py --einrichten' ausfuehren, config.json "
@@ -571,18 +666,21 @@ def main(argv=None):
     except ValueError as e:
         print("Konfiguration fehlerhaft: %s" % e, file=sys.stderr)
         return 2
-    srv = baue_server(cfg)
-    print("Waage-Bruecke laeuft auf %s:%s, Waage: %s:%s (Strg+C beendet)"
-          % (cfg["bind"], cfg["port"], cfg["ftp_host"], cfg["ftp_port"]))
-    schema = "https" if cfg.get("tls_cert") and cfg.get("tls_key") else "http"
-    if cfg["bind"] in ("0.0.0.0", ""):
-        ziele = lokale_adressen()
-    else:
-        ziele = [cfg["bind"]]
-    for ip in ziele:
-        print("Im Kiosk eintragen: %s://%s:%s" % (schema, ip, cfg["port"]))
+    api = Api(cfg)
+    if "--pruefen" in argv:
+        return 0 if pruefen(cfg, api) else 1
+    trocken = "--trocken" in argv
+    agent = Agent(cfg, api, log=lambda t: print("%s %s" % (_zeit(), t), flush=True), trocken=trocken,
+                  stand_pfad=os.path.join(basis_verzeichnis(), "sync_stand.json"))
+    print("Waage-Bruecke laeuft: Cloud %s, Waage %s:%s, Abfrage alle %s s%s (Strg+C beendet)" % (
+        cfg["api_url"], cfg["ftp_host"], cfg["ftp_port"], cfg["poll_sekunden"], ", TROCKEN" if trocken else ""))
+    if "--einmal" in argv:
+        agent.schritt(erzwingen=True)
+        return 0 if not agent.fehler else 1
     try:
-        srv.serve_forever()
+        while True:
+            agent.schritt()
+            time.sleep(cfg["poll_sekunden"])
     except KeyboardInterrupt:
         pass
     return 0

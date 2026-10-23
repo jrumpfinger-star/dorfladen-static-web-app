@@ -1,8 +1,8 @@
 @echo off
-rem Startet die Waage-Bruecke. Adressen und Zugangsdaten stehen in config.json (nicht im Repo).
+rem Startet die Waage-Bruecke. Zugangsdaten stehen in config.json (nicht im Repo).
 cd /d "%~dp0"
 if not exist config.json (
-  echo Erstmalige Einrichtung: IP der Waage und Rechner-Adresse eingeben.
+  echo Erstmalige Einrichtung: IP der Waage, FTP-Zugang und Kiosk-Passwort eingeben.
   python waage_bruecke.py --einrichten
 )
 :neu

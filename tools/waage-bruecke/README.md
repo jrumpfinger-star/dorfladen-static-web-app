@@ -1,93 +1,101 @@
 # Waage-Brücke
 
-Vermittelt zwischen dem Kiosk (Browser, kann kein FTP) und dem FTP-Server der PC-Waage.
-Spec: [specs/kiosk-werbebilder-upload](../../specs/kiosk-werbebilder-upload/spec.md).
+Überträgt die im Kiosk (Tab **Werbebilder**) hochgeladenen Bilder per FTP auf die PC-Waage.
+Spec: `specs/kiosk-werbebilder-upload/`.
 
 ```
-Kiosk (Tab „Werbebilder“) --HTTP--> diese Brücke --FTP--> Waage
+Kiosk --HTTPS--> /api/waage-werbebilder (SharePoint)  <--HTTPS (ausgehend)--  Brücke --FTP--> Waage
 ```
+
+Die Brücke läuft im Laden-LAN und **ruft die Cloud ab**. Es gibt keinen offenen Port, keine
+IP-Eingabe im Kiosk, kein Zertifikat und keine Browser-Einstellung („Mixed Content“). Der
+Kiosk funktioniert auch von außerhalb des Ladens; ist die Brücke aus, werden Änderungen
+gespeichert und übertragen, sobald sie wieder läuft (der Kiosk zeigt „Brücke offline seit …“).
 
 ## Einrichten mit der exe (empfohlen, ohne Python)
 
 1. `Waage-Bruecke.zip` auf den Laden-PC kopieren, entpacken (z. B. nach `C:\Waage-Bruecke\`) und
    `Waage-Bruecke.exe` im entpackten Ordner doppelklicken. Der Ordner muss zusammenbleiben.
-2. Beim ersten Start fragt sie nach IP der Waage, FTP-Port, Rechner-Adresse, Port, Benutzer und
-   Passwort und schreibt `config.json` **neben die exe**. Danach bietet sie an, den Autostart
-   (Aufgabenplanung, bei jeder Windows-Anmeldung) und eine Firewall-Regel (nur lokales Netz,
-   braucht „Als Administrator ausführen“) einzurichten.
-3. Das Fenster zeigt „Im Kiosk eintragen: http://…“. Diese Adresse im Kiosk-Tab **Werbebilder** unter
-   **Adresse** eintragen.
-4. Neu einrichten: `config.json` löschen oder `Waage-Bruecke.exe --einrichten`.
-   Autostart entfernen: `Waage-Bruecke.exe --autostart-entfernen`.
-5. Die exe ist nicht signiert; Windows SmartScreen zeigt ggf. „Weitere Informationen → Trotzdem ausführen“.
-   Als Ordner (nicht als Einzeldatei) gebaut, weil Windows Defender die Einzeldatei-Variante
-   fälschlich als `Trojan:Win32/Bearfoos.B!ml` meldete; die Ordner-Variante meldet er nicht.
+2. Beim ersten Start fragt sie nach: IP der Waage, FTP-Port, FTP-Benutzer und -Passwort, Adresse der
+   Dorfladen-Seite (Vorgabe: die Live-Seite) und – falls vorhanden – das Kiosk-/CMS-Passwort.
+   Alles landet in `config.json` **neben der exe**.
+3. Danach bietet sie den **Autostart** an (Aufgabenplanung, bei jeder Windows-Anmeldung) und führt eine
+   **Prüfung** aus: Cloud erreichbar, Anmeldung, Waage erreichbar, Verzeichnisse gefunden.
+4. Fertig. Im Kiosk den Tab **Werbebilder** öffnen: Dort steht „● Brücke online“.
+
+Weitere Aufrufe: `Waage-Bruecke.exe --einrichten` (neu einrichten), `--pruefen` (Diagnose),
+`--trocken --einmal` (zeigt nur, was passieren würde), `--autostart-entfernen`.
 
 Die exe wird mit `build-exe.bat` erzeugt (braucht Python und `pip install pyinstaller`, Ergebnis in
-`dist\`, nicht im Repo; ZIP mit dem Ordner).
+`dist\`, nicht im Repo; ZIP mit dem Ordner). Sie ist nicht signiert; Windows SmartScreen zeigt ggf.
+„Weitere Informationen → Trotzdem ausführen“. Als Ordner (nicht als Einzeldatei) gebaut, weil
+Windows Defender die Einzeldatei-Variante fälschlich als `Trojan:Win32/Bearfoos.B!ml` meldete.
 
-## Einrichten mit Python (einmalig, auf einem Rechner im Laden-LAN)
+## Einrichten mit Python
 
-1. Python 3.9 oder neuer installieren (nur Standardbibliothek nötig).
-2. Ordner `tools/waage-bruecke` auf den Rechner kopieren.
-3. Adressen und Zugang eintragen – am einfachsten geführt: `python waage_bruecke.py --einrichten`
-   (fragt IP der Waage, FTP-Port, Rechner-Adresse, Port, Benutzer, Passwort ab, prüft die
-   Eingaben und schreibt `config.json`; `start.bat` ruft das beim ersten Start selbst auf).
-   Von Hand: `config.example.json` nach `config.json` kopieren:
+1. Python 3.9 oder neuer, Ordner `tools/waage-bruecke` auf den Rechner kopieren.
+2. `python waage_bruecke.py --einrichten` (gleiche Fragen wie oben) oder `config.example.json` nach
+   `config.json` kopieren und ausfüllen.
+3. `start.bat` starten (für Dauerbetrieb in den Autostart legen).
 
-   | Schlüssel | Bedeutung | Vorgabe |
-   |-----------|-----------|---------|
-   | `ftp_host` | IP der Waage bzw. des Waagen-PCs | – |
-   | `ftp_port` | FTP-Port der Waage | 21 |
-   | `bind` | Adresse **dieses** Rechners, auf der die Brücke lauscht (`0.0.0.0` = alle) | `0.0.0.0` |
-   | `port` | Port der Brücke | 8765 |
-   | `ftp_user`, `ftp_pass` | FTP-Zugang | – |
+## Konfiguration (`config.json`, nie im Repo)
 
-   Diese Datei bleibt auf dem Rechner und gehört **nie** ins Repo (steht in `.gitignore`).
-   Alternativ Umgebungsvariablen `WAAGE_FTP_HOST`, `WAAGE_FTP_PORT`, `WAAGE_FTP_USER`,
-   `WAAGE_FTP_PASS`, `WAAGE_BIND`, `WAAGE_PORT`. Fehlerhafte Adressen meldet die Brücke beim
-   Start mit Klartext.
-4. `start.bat` starten (für Dauerbetrieb in den Autostart oder die Aufgabenplanung legen).
-   Die Brücke zeigt beim Start die Adresse(n) an, die im Kiosk einzutragen sind
-   („Im Kiosk eintragen: http://192.168.1.20:8765“).
-5. Im Kiosk den Tab **Werbebilder** öffnen und dort unter **Adresse** IP und Port des Rechners
-   der Brücke eintragen (Felder werden geprüft; „Verbindung testen“ zeigt, ob die Waage antwortet).
-   Die Adresse wird im Gerät gemerkt.
-6. Prüfen: `http://<Rechner>:8765/health` muss `"waage": true` und beide Arten `true` melden.
+| Schlüssel | Bedeutung | Vorgabe |
+|-----------|-----------|---------|
+| `ftp_host` | IP der Waage bzw. des Waagen-PCs | – |
+| `ftp_port` | FTP-Port | 21 |
+| `ftp_user`, `ftp_pass` | FTP-Zugang | – |
+| `ftp_basis` | Wurzel der Werbebilder auf dem FTP-Server | `bizerba/data/multimedia/advertising` |
+| `api_url` | Adresse der Dorfladen-Seite (Cloud) | `https://www.dorfladen-oberornau.de` |
+| `cms_passwort` | Kiosk-/CMS-Passwort; die Brücke meldet sich damit wie das CMS an (`/api/cms-auth`) | leer = ohne Anmeldung |
+| `poll_sekunden` | Abfragetakt (2–3600) | 10 |
+| `max_bytes` | größtes Bild | 8 MB |
 
-## Verzeichnisse
+Umgebungsvariablen überschreiben die Datei: `WAAGE_FTP_HOST`, `WAAGE_FTP_PORT`, `WAAGE_FTP_USER`,
+`WAAGE_FTP_PASS`, `WAAGE_FTP_BASIS`, `WAAGE_API_URL`, `WAAGE_CMS_PASSWORT`, `WAAGE_POLL`.
+Neben `config.json` legt die Brücke `sync_stand.json` an (welche Fassung der Bilder übertragen ist).
 
-Auf der Waage (Anleitung Powerscale, 2.15.1), jeweils nur `default`:
+## Was die Brücke tut
+
+- Alle `poll_sekunden` holt sie die Sollvorgabe (Bildliste der Cloud) und meldet sich spätestens alle
+  30 s mit einem Bericht (Brückenstatus im Kiosk). Die Waage selbst wird nur bei einer Änderung, nach
+  einem Fehler (nach 60 s) und sonst alle 5 Minuten per FTP angesehen.
+- **Erstlauf:** Sie übernimmt die vorhandenen Bilder der Waage (gültige Namen, nicht leer) in die
+  Cloud. Nichts wird gelöscht, leere oder defekte Dateien werden nicht übernommen.
+- **Danach ist die Cloud die Vorgabe:** fehlende oder geänderte Bilder auf die Waage laden, gültig
+  benannte Bilder, die in der Cloud fehlen, von der Waage löschen. Wird die Cloud-Liste einer Art
+  plötzlich leer, leert sie die Waage erst nach 3 aufeinanderfolgenden Abfragen (Schutz vor einem
+  Ausfall des Speichers).
+- **Fremde Dateien bleiben unberührt:** Namen außerhalb `[A-Za-z0-9._-]`, andere Endungen, Unterordner.
+- Jede Datei wird vor dem Schreiben am Dateikopf geprüft (nur JPEG/GIF); ein defektes Bild stoppt
+  die anderen nicht.
+
+## Verzeichnisse auf der Waage
+
+Laut Anleitung Powerscale (2.15.1), jeweils nur `default`:
 
 | Art im Kiosk | Verzeichnis (ab `ftp_basis`) |
 |--------------|------------------------------|
 | Vollbild | `fullscreen/default` |
 | Dauerwerbung | `permanent/default` |
 
-Meldet `/health` für eine Art `false`, stimmt `ftp_basis` nicht zum Stammverzeichnis des
-FTP-Servers. Anpassen in `config.json`; abweichende Unterverzeichnisse über `verzeichnisse`
-(`{"vollbild": "fullscreen", "dauer": "permanent"}`).
-
-Beim Hochladen legt die Brücke ein fehlendes `default` an, aber nie darüberliegende Ordner
-(ein falscher `ftp_basis` erzeugt also keine Ordner auf der Waage). Die Waage spielt zuerst die
-Bilder, die **direkt** in `fullscreen/` bzw. `permanent/` liegen, und nutzt `default` nur als
-Rückfall; liegen dort Bilder, zeigt der Kiosk einen Hinweis.
-
-Erlaubte Herkünfte: Die Live-Seite und die SWA-Vorschau-Umgebungen dieser App sind fest
-erlaubt; weitere Adressen in `erlaubte_herkuenfte` (`*` als Platzhalter möglich).
-
-## HTTPS-Kiosk und HTTP-Brücke
-
-Der Kiosk läuft über HTTPS, die Brücke standardmäßig über HTTP. Browser blockieren das
-(„Mixed Content“). Zwei Wege:
-
-- **Fully Kiosk:** Einstellungen → Web-Inhalte → *Mixed Content zulassen* einschalten.
-- **HTTPS an der Brücke:** `tls_cert` und `tls_key` in `config.json` setzen (Zertifikat, dem
-  das Gerät vertraut) und im Kiosk eine `https://`-Adresse eintragen.
+Ein fehlendes `default` legt die Brücke beim ersten Hochladen an, nie aber darüberliegende Ordner
+(ein falscher `ftp_basis` erzeugt also keine Ordner auf der Waage). Die Waage spielt zuerst die Bilder,
+die **direkt** in `fullscreen/` bzw. `permanent/` liegen, und nutzt `default` nur als Rückfall; liegen
+dort Bilder, zeigt der Kiosk einen Hinweis. Abweichende Unterverzeichnisse über `verzeichnisse` in
+`config.json` (`{"vollbild": "fullscreen", "dauer": "permanent"}`).
 
 ## Sicherheit
 
-Die Brücke hat keine eigene Anmeldung (so gewünscht) und gehört nur ins Laden-LAN. Den Port
-nicht ins Internet weiterleiten. Angenommen werden nur JPEG und GIF (geprüft am Dateikopf),
-höchstens `max_bytes` je Datei (Standard 8 MB), höchstens 99 Bilder je Verzeichnis, nur aus den
-erlaubten Herkünften.
+- Die Brücke öffnet **keinen** Port; sie baut nur Verbindungen nach außen auf (HTTPS zur Cloud, FTP zur Waage).
+- FTP-Zugang und Passwort stehen nur in `config.json` auf dem Brückenrechner (nicht im Repo).
+- Schreibende Aufrufe der API laufen wie bei allen Kiosk-Funktionen über das CMS-Token
+  (`CMS_AUTH_ENFORCE`); die Brücke meldet sich dafür mit dem Passwort an.
+- Der Kiosk-Tab selbst verlangt keine weitere Anmeldung (die Kiosk-Passwortabfrage gilt weiter).
+
+## Fehlersuche
+
+`Waage-Bruecke.exe --pruefen` prüft Cloud, Anmeldung, Waage und Verzeichnisse und nennt, was fehlt.
+Typisch: falscher `ftp_basis` (Verzeichnis nicht gefunden), falsches Passwort (Anmeldung abgelehnt),
+Waage aus (Verbindung abgelehnt). Läuft die Brücke ohne Fehler, aber im Kiosk steht „offline“, prüfen,
+ob der Rechner Internet hat.

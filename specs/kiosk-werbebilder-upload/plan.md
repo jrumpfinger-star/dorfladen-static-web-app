@@ -1,6 +1,66 @@
 # Plan: Kiosk-Werbebilder-Upload
 
-## Architektur
+## Architektur (ab 2026-10-23: Cloud-Relais)
+
+```
+Kiosk (HTTPS) --/api/waage-werbebilder--> Azure Functions --> SharePoint (Bilder) + Table (Brückenstatus)
+                                                  ^
+Brücke (Laden-PC, nur ausgehend, HTTPS) ----------+   ... gleicht per FTP die Waage ab
+```
+
+Kein offener Port im Laden, kein Mixed Content, keine IP-Eingabe. Die frühere
+Direktverbindung Kiosk → Brücke (HTTP) ist entfallen (siehe Spec, „Änderung 2026-10-23“).
+
+### API `api/waage-werbebilder/` + `api/shared/waage.py`
+
+Eine Funktion, Auswahl über Abfrageparameter:
+
+| Aufruf | Wirkung |
+|--------|---------|
+| `GET ?art=<a>` | Liste `{bilder:[{name,groesse,etag,status}], max, bruecke:{online,zuletzt,vor_s,ok,fehler,initialisiert}}` |
+| `GET ?art=<a>&name=<n>` | Bildbytes (`no-store`) |
+| `POST ?art=<a>&name=<n>` | Rumpf = Bild; prüft Typ, Größe, Anzahl; speichert |
+| `DELETE ?art=<a>&name=<n>` | löscht |
+| `GET ?bruecke=sync` | Sollvorgabe `{version, initialisiert, arten:{vollbild:[…],dauer:[…]}}` |
+| `POST ?bruecke=bericht` | JSON-Bericht der Brücke → Table `waage` (PK `bruecke`, RK `status`) |
+
+`shared/waage.py` enthält die reine Logik (Typprüfung, Namensbereinigung, `version`,
+Statusableitung) und dünne Adapter für Graph (SharePoint, Ordner `Waage-Werbebilder/<art>/`)
+und Table Storage (`STORAGE_CONN`); beide im Test austauschbar.
+
+### Brücke `tools/waage-bruecke/waage_bruecke.py`
+
+Nur Standardbibliothek (`urllib`, `ftplib`, `json`). Schleife alle `poll_sekunden`:
+`GET sync` → bei geänderter `version` (oder alle 5 min) FTP-Abgleich (`plane()` + Ausführung)
+→ `POST bericht` (spätestens alle 30 s). `plane()` ist reine Funktion (Erstlauf-Übernahme,
+Hochladen, Löschen). Stand der übertragenen `etag`s in `sync_stand.json` neben der exe.
+`--trocken` (nur Plan), `--einmal`, `--einrichten`, `--autostart-entfernen`.
+FTP bleibt hinter `FtpWaage` (nur Default-Verzeichnisse, `default` wird bei Bedarf angelegt).
+
+### Kiosk
+
+Wie zuvor (Panel, Flag-Maps, `onShow`, `isBusy`, `REITER`), das Modul spricht nur noch
+`/api/waage-werbebilder`; Statuszeile und Status je Bild; Auto-Aktualisierung alle 8 s,
+solange der Tab sichtbar ist.
+
+## Änderungsübersicht (Relais)
+
+| Datei | Änderung |
+|-------|----------|
+| `api/shared/waage.py`, `api/waage-werbebilder/*` | neu |
+| `tools/waage-bruecke/*` | Agent statt HTTP-Server; Assistent ohne Firewall |
+| `static-site/js/kiosk-werbebilder.js` | Verbindungsteil ersetzt, Statusanzeige |
+| `tests/test_waage_relais_api.py`, `tests/test_waage_bruecke.py`, `tests/kiosk-werbebilder.spec.js` | neu/umgebaut |
+
+## Tests
+
+Python: API-Logik gegen Fake-Speicher, Brücken-Abgleich gegen Fake-FTP und Fake-API
+(Gegenproben). Playwright gegen gemockte `/api/waage-werbebilder` (mobil, iPad, Desktop).
+Live: Brücke lokal gegen die Preview (`--trocken`, Fake-FTP), Edge ohne Sondereinstellung.
+
+---
+
+## Frühere Fassung (Direktverbindung, abgelöst)
 
 ```
 Kiosk (HTTPS, Browser)  --HTTP/CORS-->  Brücke (Laden-LAN, Python)  --FTP-->  Waage
