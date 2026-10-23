@@ -113,10 +113,12 @@ class WaageFtp:
         self.d[self._art(verz)].pop(name, None)
 
 
-def agent(wolke, waage, trocken=False, stand_pfad=None, uhr=None):
+def agent(wolke, waage, trocken=False, stand_pfad=None, uhr=None, init=False):
     meldungen = []
     a = wb.Agent(CFG, wolke, waage, uhr=uhr or (lambda: 1000.0), log=meldungen.append, trocken=trocken, stand_pfad=stand_pfad)
     a.meldungen = meldungen
+    if init:
+        a.initialisiert = True   # Erstlauf schon erledigt: es wird angeglichen
     return a
 
 
@@ -149,13 +151,22 @@ def main():
         ag2 = agent(wolke, waage, stand_pfad=stand)
         pruefe("TC-F21-01  Neustart liest 'initialisiert' und Stand", ag2.initialisiert is True and ag2.stand["vollbild"].get("a.jpg"))
 
+    # ── F21 Sicherheit: 'initialisiert' in der Cloud (z. B. von einer anderen Installation) ersetzt den Erstlauf NICHT ──
+    wolke, waage = Wolke(), WaageFtp()
+    wolke.initialisiert = True
+    waage.d["vollbild"] = {"wichtig.jpg": JPEG}
+    ag = agent(wolke, waage)
+    ag.schritt()
+    pruefe("TC-F21-02  frische Bruecke uebernimmt trotz 'initialisiert' in der Cloud, loescht nichts",
+           "wichtig.jpg" in wolke.d["vollbild"] and waage.geloescht == [] and "wichtig.jpg" in waage.d["vollbild"], (wolke.d, waage.geloescht))
+
     # ── F22 Abgleich ──
     wolke, waage = Wolke(), WaageFtp()
     wolke.initialisiert = True
     wolke.setze("vollbild", "neu.gif", GIF)
     wolke.setze("vollbild", "a.jpg", JPEG)
     waage.d["vollbild"] = {"alt.jpg": JPEG, "x y.jpg": JPEG}
-    ag = agent(wolke, waage)
+    ag = agent(wolke, waage, init=True)
     ag.schritt()
     pruefe("TC-F22-01  fehlende Bilder werden hochgeladen", sorted(waage.geschrieben) == [("vollbild", "a.jpg"), ("vollbild", "neu.gif")], waage.geschrieben)
     pruefe("TC-F22-01  gueltiger Name, nicht in Cloud -> geloescht", waage.geloescht == [("vollbild", "alt.jpg")], waage.geloescht)
@@ -196,7 +207,7 @@ def main():
     waage.d["vollbild"] = {"weg.jpg": JPEG}
     with tempfile.TemporaryDirectory() as tmp:
         stand = os.path.join(tmp, "s.json")
-        ag = agent(wolke, waage, trocken=True, stand_pfad=stand)
+        ag = agent(wolke, waage, trocken=True, stand_pfad=stand, init=True)
         ag.schritt()
         pruefe("TC-F22-03  --trocken schreibt, loescht und meldet nichts, speichert keinen Stand",
                waage.geschrieben == [] and waage.geloescht == [] and wolke.berichte == [] and not os.path.exists(stand))
@@ -208,7 +219,7 @@ def main():
     wolke.initialisiert = True
     wolke.setze("vollbild", "a.jpg", JPEG)
     zeit = [0.0]
-    ag = agent(wolke, waage, uhr=lambda: zeit[0])
+    ag = agent(wolke, waage, uhr=lambda: zeit[0], init=True)
     ag.schritt()
     pruefe("TC-F20-01  erster Durchlauf gleicht ab", waage.oeffnungen == 1 and len(wolke.berichte) == 1)
     for t in (10, 20):
@@ -248,7 +259,7 @@ def main():
     wolke.initialisiert = True
     waage.d["vollbild"] = {"a.jpg": JPEG, "b.jpg": JPEG}
     zeit = [0.0]
-    ag = agent(wolke, waage, uhr=lambda: zeit[0])
+    ag = agent(wolke, waage, uhr=lambda: zeit[0], init=True)
     for i in range(wb.LEER_BESTAETIGUNG - 1):
         zeit[0] = i * 10
         ag.schritt()

@@ -512,7 +512,7 @@ class Agent:
                     except (ftplib.Error, AttributeError):
                         self.direkt[art] = 0
                 bestaetigt = [a for a in ARTEN if self.leer[a] >= LEER_BESTAETIGUNG]
-                plan = plane(soll["arten"], ist, self.stand, self.initialisiert or bool(soll.get("initialisiert")), bestaetigt)
+                plan = plane(soll["arten"], ist, self.stand, self.initialisiert, bestaetigt)
                 self._protokolliere(plan)
                 if not self.trocken:
                     self._fuehre_aus(plan, ftp, soll["arten"], fehler)
@@ -689,5 +689,8 @@ def main(argv=None):
 if __name__ == "__main__":
     ergebnis = main()
     if ergebnis and getattr(sys, "frozen", False):
-        input("Enter zum Beenden ...")
+        try:
+            input("Enter zum Beenden ...")
+        except (EOFError, OSError):
+            pass
     sys.exit(ergebnis)

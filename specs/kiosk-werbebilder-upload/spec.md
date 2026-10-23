@@ -132,9 +132,11 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **F20** Brücke als Agent: ruft alle `poll_sekunden` (Standard 10) die Sollvorgabe ab; nur
   bei Änderung (oder spätestens alle 5 Minuten) wird per FTP abgeglichen; mindestens alle
   30 s geht ein Bericht an die Cloud. Kein HTTP-Server, kein offener Port.
-- **F21** Erstlauf: Ist `initialisiert` nicht gesetzt, übernimmt die Brücke die Bilder der
-  Waage (gültige Namen, Größe > 0) in die Cloud, soweit dort nicht vorhanden, und meldet
-  `initialisiert`. Erst danach wird gelöscht.
+- **F21** Erstlauf: Solange die Brücke **lokal** (`sync_stand.json`) noch nicht initialisiert ist,
+  übernimmt sie die Bilder der Waage (gültige Namen, Größe > 0) in die Cloud, soweit dort nicht
+  vorhanden, und löscht nichts. Ein „initialisiert“ in der Cloud (z. B. von einer früheren oder
+  zweiten Installation) ersetzt den Erstlauf **nicht** und dient nur der Anzeige; sonst würde eine
+  frische Brücke Waagenbilder löschen, die nie in der Cloud waren.
 - **F22** Abgleich: Bild hochladen, wenn es auf der Waage fehlt oder seine `etag` von der
   zuletzt übertragenen abweicht (die Waage darf Dateien umrechnen, ohne Dauerschleife);
   löschen, wenn gültiger Name und nicht in der Cloud. Jede Datei wird vor dem Schreiben am
@@ -192,6 +194,7 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **TC-F19-02** Kiosk: Bild zeigt „auf der Waage“ bzw. „wartet auf Übertragung“.
 - **TC-F20-01** Brücke: ohne Änderung kein FTP-Zugriff innerhalb von 5 Minuten, aber Bericht spätestens alle 30 s.
 - **TC-F21-01** Brücke: Erstlauf übernimmt Waagenbilder (nicht leere, gültige Namen) in die Cloud und löscht nichts; erst im Folgelauf wird abgeglichen.
+- **TC-F21-02** Brücke: Meldet die Cloud „initialisiert“, die Brücke ist lokal aber frisch, wird trotzdem zuerst übernommen und nichts gelöscht.
 - **TC-F22-01** Brücke: fehlendes Bild wird hochgeladen, geänderte `etag` ersetzt, überzähliges gültiges Bild gelöscht; fremde Dateien bleiben unberührt.
 - **TC-F22-02** Brücke: Waage skaliert/ändert eine Datei nach dem Upload → kein erneuter Upload (Vergleich über `etag`, nicht über Größe).
 - **TC-F22-03** Brücke: defekte Datei (kein JPEG/GIF) wird nicht auf die Waage geschrieben, die übrigen laufen weiter; `--trocken` schreibt/löscht nichts.
