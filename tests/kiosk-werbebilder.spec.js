@@ -333,3 +333,37 @@ test.describe('Werbebilder-Upload', () => {
     }
   });
 });
+
+test.describe('Service Worker und Brücke', () => {
+  // sw.js in einer Sandbox ausfuehren und Fetch-Ereignisse einspeisen.
+  function swFetch(url, mode) {
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
+    const handler = {};
+    const self = {
+      location: { origin: 'https://www.dorfladen-oberornau.de' },
+      addEventListener: (n, f) => { handler[n] = f; },
+      clients: { claim() {} }, skipWaiting() {},
+    };
+    const ctx = vm.createContext({ self, URL, Response: function () {}, caches: { match: () => Promise.resolve(undefined), open: () => Promise.resolve({}) }, fetch: () => Promise.resolve({}), console });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'static-site', 'sw.js'), 'utf8'), ctx);
+    let beantwortet = false;
+    handler.fetch({ request: { url, mode: mode || 'cors', destination: '', method: 'GET' }, respondWith() { beantwortet = true; } });
+    return beantwortet;
+  }
+
+  test('TC-F16-02: Anfragen an die Waage-Brücke im LAN beantwortet der Service Worker nicht', () => {
+    expect(swFetch('http://192.168.1.27:8765/health')).toBe(false);
+    expect(swFetch('http://192.168.1.27:8765/bilder/vollbild')).toBe(false);
+    expect(swFetch('http://waage-pc:8765/health')).toBe(false);
+    expect(swFetch('https://192.168.1.27:8765/health')).toBe(false);
+  });
+
+  test('TC-F16-02: eigene Seiten und Bilder laufen weiter über den Service Worker', () => {
+    expect(swFetch('https://www.dorfladen-oberornau.de/kiosk', 'navigate')).toBe(true);
+    expect(swFetch('https://www.dorfladen-oberornau.de/js/kiosk-werbebilder.js')).toBe(true);
+    expect(swFetch('https://www.dorfladen-oberornau.de/api/cms-config')).toBe(true);
+    expect(swFetch('https://fonts.gstatic.com/s/inter.woff2')).toBe(true);
+  });
+});
