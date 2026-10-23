@@ -146,6 +146,10 @@
     <span class="k-tab-lbl"><span class="lang">Kalender</span><span class="kurz">Termine</span></span>
     <span class="k-tab-badges" id="badges-kalender"></span>
   </div>
+  <div class="k-tab" data-tab="werbebilder" onclick="K.switchTab('werbebilder')">
+    <span class="k-tab-icon"><i data-lucide="images"></i></span>
+    <span class="k-tab-lbl"><span class="lang">Werbebilder</span><span class="kurz">Werbung</span></span>
+  </div>
   <span class="k-tab-pfeil k-tab-pfeil-r" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
 </nav>
 
@@ -269,6 +273,11 @@
        steckt in der Nummer selbst (40401 / 40402 / 40405 = 1 / 2,5 / 5 kg). -->
   <div class="k-panel" id="panel-drax">
     <div id="drax-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="wheat" style="width:24px;height:24px"></i></div>Laden…</div></div>
+  </div>
+
+  <!-- Werbebilder der PC-Waage (specs/kiosk-werbebilder-upload/spec.md). -->
+  <div class="k-panel" id="panel-werbebilder">
+    <div id="wb-root"><div class="k-empty">Laden…</div></div>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -637,14 +646,14 @@
     var MAP = {abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',
                social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',
                metzgerbest:'kiosk_metzgerbest',getraenke:'kiosk_getraenke',
-               drax:'kiosk_drax'};
+               drax:'kiosk_drax',werbebilder:'kiosk_werbebilder'};
     // Diese bleiben sichtbar, solange sie nicht ausdruecklich abgeschaltet
     // sind. Bei den ersten drei entspricht das applyKioskFeatures(); der
     // Mittagstisch steht hier zusaetzlich, weil er der Kernbereich des
     // Kiosks ist. Beim allerersten Aufruf - wenn noch keine Freigaben
     // gemerkt sind - ist er die weitaus wahrscheinlichere Wahl. Ist er
     // ausnahmsweise abgeschaltet, raeumt setTabs() das gleich auf.
-    var STANDARD_AN = {mittag:true,baecker:true,metzgerbest:true,getraenke:true,drax:true};
+    var STANDARD_AN = {mittag:true,baecker:true,metzgerbest:true,getraenke:true,drax:true,werbebilder:true};
 
     var flags = null;
     try{ flags = JSON.parse(localStorage.getItem('k-tab-flags') || 'null'); }catch(e){}
@@ -1147,6 +1156,7 @@ var K = (function(){
     if(id==='metzgerbest' && window.KMetzgerBest) window.KMetzgerBest.onShow();
     if(id==='getraenke' && window.KGetraenke) window.KGetraenke.onShow();
     if(id==='drax' && window.KDrax) window.KDrax.onShow();
+    if(id==='werbebilder' && window.KWerbebilder) window.KWerbebilder.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -1155,8 +1165,8 @@ var K = (function(){
   // wurde – sonst bliebe er nach dem Ausrollen unsichtbar, bis jemand das
   // Flag im CMS anlegt.
   function applyKioskFeatures(){
-    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',metzgerbest:'kiosk_metzgerbest',getraenke:'kiosk_getraenke',drax:'kiosk_drax'};
-    var defaultAn={baecker:true,metzgerbest:true,getraenke:true,drax:true};
+    var map={abhol:'kiosk_shop',mittag:'kiosk_mittag',metzger:'kiosk_metzger',social:'kiosk_social',kontakt:'kiosk_kontakt',baecker:'kiosk_baecker',metzgerbest:'kiosk_metzgerbest',    getraenke:'kiosk_getraenke',drax:'kiosk_drax',werbebilder:'kiosk_werbebilder'};
+        var defaultAn={baecker:true,metzgerbest:true,getraenke:true,drax:true,werbebilder:true};
     function setTabs(flags,pickDefault){
       Object.keys(map).forEach(function(tab){
         var flag=flags[map[tab]];
@@ -5793,6 +5803,7 @@ var K = (function(){
 <script src="/js/kiosk-metzger-bestellung.js"></script>
 <script src="/js/kiosk-getraenke.js"></script>
 <script src="/js/kiosk-drax.js"></script>
+<script src="/js/kiosk-werbebilder.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script src="/js/kiosk-neu-shell.js"></script>
@@ -5867,7 +5878,7 @@ var K = (function(){
     // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-drax')) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen

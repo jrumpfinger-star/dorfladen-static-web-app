@@ -19,6 +19,9 @@ static-site/js/mockup-shared.js
 static-site/handbuch/page-*.png
 static-site/handbuch/element-*.png
 
+# Waagen-Bruecke: lokale Zugangsdaten (Spec kiosk-werbebilder-upload)
+tools/waage-bruecke/config.json
+
 # lokale Wegwerf-/Debug-Skripte (nur Repo-Root, damit verschachtelte __init__.py nicht ignoriert werden)
 /_*.py
 tmp_*
