@@ -9,7 +9,8 @@ Kiosk (Tab „Werbebilder“) --HTTP--> diese Brücke --FTP--> Waage
 
 ## Einrichten mit der exe (empfohlen, ohne Python)
 
-1. `Waage-Bruecke.exe` auf den Laden-PC kopieren (z. B. nach `C:\Waage-Bruecke\`) und doppelklicken.
+1. `Waage-Bruecke.zip` auf den Laden-PC kopieren, entpacken (z. B. nach `C:\Waage-Bruecke\`) und
+   `Waage-Bruecke.exe` im entpackten Ordner doppelklicken. Der Ordner muss zusammenbleiben.
 2. Beim ersten Start fragt sie nach IP der Waage, FTP-Port, Rechner-Adresse, Port, Benutzer und
    Passwort und schreibt `config.json` **neben die exe**. Danach bietet sie an, den Autostart
    (Aufgabenplanung, bei jeder Windows-Anmeldung) und eine Firewall-Regel (nur lokales Netz,
@@ -19,9 +20,11 @@ Kiosk (Tab „Werbebilder“) --HTTP--> diese Brücke --FTP--> Waage
 4. Neu einrichten: `config.json` löschen oder `Waage-Bruecke.exe --einrichten`.
    Autostart entfernen: `Waage-Bruecke.exe --autostart-entfernen`.
 5. Die exe ist nicht signiert; Windows SmartScreen zeigt ggf. „Weitere Informationen → Trotzdem ausführen“.
+   Als Ordner (nicht als Einzeldatei) gebaut, weil Windows Defender die Einzeldatei-Variante
+   fälschlich als `Trojan:Win32/Bearfoos.B!ml` meldete; die Ordner-Variante meldet er nicht.
 
 Die exe wird mit `build-exe.bat` erzeugt (braucht Python und `pip install pyinstaller`, Ergebnis in
-`dist\`, nicht im Repo).
+`dist\`, nicht im Repo; ZIP mit dem Ordner).
 
 ## Einrichten mit Python (einmalig, auf einem Rechner im Laden-LAN)
 
