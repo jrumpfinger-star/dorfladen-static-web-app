@@ -15,5 +15,5 @@
 | T11 | API `waage-werbebilder` + `shared/waage.py` (Kiosk- und Brücken-Aufrufe, SharePoint, Table) | TC-F17…F18 | erledigt |
 | T12 | Brücke als Agent (Abgleich, Erstlauf, etag-Stand, Anmeldung, `--trocken`/`--einmal`, Assistent) | TC-F20…F24 | erledigt |
 | T13 | Kiosk-Modul auf API umbauen, Status, Auto-Aktualisierung; Playwright neu | TC-F19, TC-F25, F1…F7, F12 | erledigt |
-| T14 | README, exe neu, Defender-Scan | — | offen |
-| T15 | Preview-Live-Test (Brücke lokal, ohne Browser-Sonderfreigabe) | alle | offen |
+| T14 | README, exe neu, Defender-Scan | — | erledigt |
+| T15 | Preview-Live-Test (Brücke lokal, ohne Browser-Sonderfreigabe) | alle | erledigt (Kette Kiosk → Cloud → Brücke → Test-FTP in Edge; echte Waage nur lesend/trocken) |
