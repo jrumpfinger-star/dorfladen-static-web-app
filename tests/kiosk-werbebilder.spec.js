@@ -158,6 +158,14 @@ test.describe('Werbebilder-Upload', () => {
 
     await page.locator('[data-wb="kam-foto"]').click();
     await expect(page.locator('#wb-kam-zahl')).toContainText('1 Foto aufgenommen');
+    // Die Knoepfe im Dialog muessen sichtbar gestaltet sein (Farbvariablen gelten auch ausserhalb von #wb-root).
+    const stil = await page.locator('[data-wb="kam-foto"]').evaluate((e) => {
+      const s = getComputedStyle(e); return { bg: s.backgroundColor, rand: s.borderTopColor, farbe: s.color };
+    });
+    expect(stil.bg).not.toBe('rgba(0, 0, 0, 0)');
+    expect(stil.bg).not.toBe(stil.farbe);
+    const randWechsel = await page.locator('[data-wb="kam-wechsel"]').evaluate((e) => getComputedStyle(e).borderTopColor);
+    expect(randWechsel).not.toBe('rgba(0, 0, 0, 0)');
     await page.locator('[data-wb="kam-foto"]').click();
     await expect(page.locator('#wb-kam-zahl')).toContainText('2 Fotos aufgenommen');
     expect(await page.evaluate(() => window.__facings)).toEqual(['environment']);

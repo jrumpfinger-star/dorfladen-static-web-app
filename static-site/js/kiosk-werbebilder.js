@@ -735,8 +735,8 @@ window.KWerbebilder = (function () {
     var s = document.createElement('style');
     s.id = 'wb-style';
     s.textContent = [
-      '#wb-root{--wp:var(--c-pri,#1e463a);--wb:var(--c-border,#e6e4de);--ws:var(--c-surf,#fff);--wm:var(--c-sec,#6b7280);--wt:var(--c-text,#1f2521);color:var(--wt)}',
-      '#wb-root button,#wb-root input{font-family:inherit}',
+      '#wb-root,.wb-overlay{--wp:var(--c-pri,#1e463a);--wb:var(--c-border,#e6e4de);--ws:var(--c-surf,#fff);--wm:var(--c-sec,#6b7280);--wt:var(--c-text,#1f2521);color:var(--wt)}',
+      '#wb-root button,#wb-root input,.wb-overlay button{font-family:inherit}',
       '.wb-kopf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.wb-kopf h2{margin:0;font-size:18px;font-weight:600}.wb-sp{flex:1}',
       '.wb-stat{font-size:13px;font-weight:600}.wb-stat.ok{color:#15803d}.wb-stat.warn{color:#b45309}.wb-stat.fehl{color:var(--wm)}',
       '.wb-btn{min-height:44px;padding:8px 16px;border:1.5px solid var(--wb);background:var(--ws);color:var(--wt);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer}',
