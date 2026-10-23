@@ -293,6 +293,26 @@ def main():
     finally:
         wb.ftplib.FTP = echte
 
+    # F14 Installation: Autostart und Firewall werden angeboten; ohne "ja" passiert nichts
+    befehle = []
+    def fake(b):
+        befehle.append(b)
+        return 0, ""
+    ausgaben = []
+    wb.installieren({"port": 8765}, eingabe=lambda _p: "", ausgabe=ausgaben.append, ausfuehren=fake)
+    flach = [" ".join(b) for b in befehle]
+    pruefe("TC-F14-01  Autostart per Aufgabenplanung ohne Admin (ONLOGON, LIMITED)",
+           any("schtasks" in b and "ONLOGON" in b and "LIMITED" in b for b in flach), flach)
+    pruefe("TC-F14-01  Firewall nur lokales Subnetz auf dem Bruecken-Port",
+           any("netsh" in b and "localport=8765" in b and "remoteip=LocalSubnet" in b for b in flach), flach)
+    befehle.clear()
+    wb.installieren({"port": 8765}, eingabe=lambda _p: "n", ausgabe=ausgaben.append, ausfuehren=fake)
+    pruefe("TC-F14-02  Bei Nein wird nichts am System veraendert", befehle == [], befehle)
+    ausgaben.clear()
+    wb.installieren({"port": 8765}, eingabe=lambda _p: "j", ausgabe=ausgaben.append, ausfuehren=lambda b: (1, "Zugriff verweigert"))
+    pruefe("TC-F14-03  Fehlschlag wird verstaendlich gemeldet statt abzubrechen",
+           any("Zugriff verweigert" in a for a in ausgaben), ausgaben)
+
     print("\nAlle Pruefungen bestanden.")
 
 

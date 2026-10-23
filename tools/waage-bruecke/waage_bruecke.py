@@ -54,9 +54,16 @@ STANDARD = {
 }
 
 
+def basis_verzeichnis():
+    """Ordner der exe (PyInstaller) bzw. des Skripts; dort liegt config.json."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.abspath(__file__))
+
+
 def lade_config(pfad=None, env=None):
     cfg = json.loads(json.dumps(STANDARD))
-    pfad = pfad or os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    pfad = pfad or os.path.join(basis_verzeichnis(), "config.json")
     if os.path.exists(pfad):
         with open(pfad, encoding="utf-8-sig") as f:
             cfg.update(json.load(f))
@@ -125,7 +132,7 @@ def lokale_adressen():
 
 def einrichten(pfad=None, eingabe=input, ausgabe=print):
     """Fragt die Adressen ab und schreibt config.json (bestehende Werte bleiben Vorschlag)."""
-    pfad = pfad or os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    pfad = pfad or os.path.join(basis_verzeichnis(), "config.json")
     alt = {}
     if os.path.exists(pfad):
         with open(pfad, encoding="utf-8-sig") as f:
@@ -156,6 +163,54 @@ def einrichten(pfad=None, eingabe=input, ausgabe=print):
         json.dump(cfg, f, indent=2, ensure_ascii=False)
     ausgabe("Gespeichert: " + pfad)
     return cfg
+
+
+AUFGABE = "Waage-Bruecke"
+
+
+def _ausfuehren(befehl):
+    import subprocess
+    r = subprocess.run(befehl, capture_output=True, text=True)
+    return r.returncode, (r.stdout + r.stderr).strip()
+
+
+def start_befehl():
+    """Befehl, der die Bruecke startet (exe oder Skript)."""
+    if getattr(sys, "frozen", False):
+        return '"%s"' % os.path.abspath(sys.executable)
+    return '"%s" "%s"' % (sys.executable, os.path.abspath(__file__))
+
+
+def autostart_einrichten(ausfuehren=_ausfuehren):
+    """Startet die Bruecke bei jeder Windows-Anmeldung (Aufgabenplanung, ohne Admin)."""
+    return ausfuehren(["schtasks", "/Create", "/F", "/SC", "ONLOGON", "/RL", "LIMITED",
+                       "/TN", AUFGABE, "/TR", start_befehl()])
+
+
+def autostart_entfernen(ausfuehren=_ausfuehren):
+    return ausfuehren(["schtasks", "/Delete", "/F", "/TN", AUFGABE])
+
+
+def firewall_regel(port, ausfuehren=_ausfuehren):
+    """Eingehenden TCP-Port nur fuer das lokale Netz oeffnen (braucht Administratorrechte)."""
+    return ausfuehren(["netsh", "advfirewall", "firewall", "add", "rule", "name=" + AUFGABE,
+                       "dir=in", "action=allow", "protocol=TCP", "localport=%s" % port,
+                       "remoteip=LocalSubnet", "profile=private,domain"])
+
+
+def installieren(cfg, eingabe=input, ausgabe=print, ausfuehren=_ausfuehren):
+    """Nach der Einrichtung: Autostart und Firewall anbieten."""
+    if eingabe("Bruecke bei jeder Windows-Anmeldung automatisch starten? [J/n]: ").strip().lower() in ("", "j", "ja", "y"):
+        code, text = autostart_einrichten(ausfuehren)
+        ausgabe("Autostart eingerichtet." if code == 0 else "Autostart fehlgeschlagen: " + text)
+    if eingabe("Firewall-Regel fuer Port %s anlegen (nur lokales Netz, braucht Administrator)? [J/n]: "
+               % cfg["port"]).strip().lower() in ("", "j", "ja", "y"):
+        code, text = firewall_regel(cfg["port"], ausfuehren)
+        if code == 0:
+            ausgabe("Firewall-Regel angelegt.")
+        else:
+            ausgabe("Firewall-Regel nicht angelegt (als Administrator starten oder beim Windows-Hinweis "
+                    "'Zugriff zulassen' klicken): " + text)
 
 
 def bildtyp(daten):
@@ -448,9 +503,17 @@ def baue_server(cfg, ftp_factory=None):
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if "--einrichten" in argv:
-        einrichten()
+        installieren(einrichten())
         return 0
+    if "--autostart-entfernen" in argv:
+        code, text = autostart_entfernen()
+        print("Autostart entfernt." if code == 0 else "Fehlgeschlagen: " + text)
+        return code
     cfg = lade_config()
+    if not (cfg["ftp_host"] and cfg["ftp_user"]) and getattr(sys, "frozen", False) and sys.stdin and sys.stdin.isatty():
+        print("Erstmalige Einrichtung der Waage-Bruecke.\n")
+        installieren(einrichten())
+        cfg = lade_config()
     if not (cfg["ftp_host"] and cfg["ftp_user"]):
         print("FTP-Zugang fehlt: 'python waage_bruecke.py --einrichten' ausfuehren, config.json "
               "anlegen (siehe config.example.json) oder WAAGE_FTP_HOST/WAAGE_FTP_USER/WAAGE_FTP_PASS setzen.",
@@ -479,4 +542,7 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    ergebnis = main()
+    if ergebnis and getattr(sys, "frozen", False):
+        input("Enter zum Beenden ...")
+    sys.exit(ergebnis)

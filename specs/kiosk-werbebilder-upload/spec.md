@@ -86,6 +86,10 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
   beim Start nennt die Brücke die im Kiosk einzutragende Adresse. Kiosk: Adresse der Brücke
   als Schema/IP/Port-Felder mit Prüfung und „Verbindung testen“; gemerkt pro Gerät. Keine
   Zugangsdaten im Repo.
+- **F14** Installation ohne Python: `Waage-Bruecke.exe` (PyInstaller, `build-exe.bat`) legt
+  `config.json` neben die exe, startet beim ersten Aufruf den Assistenten und bietet Autostart
+  (Aufgabenplanung bei Anmeldung, ohne Administrator) und eine Firewall-Regel nur für das lokale
+  Subnetz an. Ohne Zustimmung wird am System nichts geändert; Fehlschläge werden gemeldet.
 
 ## Testfälle
 
@@ -114,6 +118,9 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **TC-F13-01** Adresse als Schema + IP + Port speichern; Felder sind mit der gemerkten Adresse vorbelegt; Brücke liest Waagen-IP/Ports/Bind aus der Umgebung.
 - **TC-F13-02** Ungültige IP (>255, leer, Sonderzeichen) oder Port (0, >65535, Text) → Hinweis, nichts gespeichert (Kiosk und Brücke).
 - **TC-F13-03** „Verbindung testen“ meldet Erfolg bzw. „Keine Antwort“; Assistent `--einrichten` schreibt `config.json` und fragt bei Fehleingabe nach.
+- **TC-F14-01** Installation legt Autostart (ONLOGON, LIMITED) und Firewall-Regel (LocalSubnet, Bruecken-Port) an.
+- **TC-F14-02** Bei „Nein“ wird nichts am System verändert.
+- **TC-F14-03** Schlägt ein Schritt fehl (z. B. kein Administrator), erscheint eine verständliche Meldung statt Abbruch.
 
 ## Offen / bewusst nicht Teil dieser Änderung
 

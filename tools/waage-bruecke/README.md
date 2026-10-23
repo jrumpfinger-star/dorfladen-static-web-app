@@ -7,7 +7,23 @@ Spec: [specs/kiosk-werbebilder-upload](../../specs/kiosk-werbebilder-upload/spec
 Kiosk (Tab „Werbebilder“) --HTTP--> diese Brücke --FTP--> Waage
 ```
 
-## Einrichten (einmalig, auf einem Rechner im Laden-LAN)
+## Einrichten mit der exe (empfohlen, ohne Python)
+
+1. `Waage-Bruecke.exe` auf den Laden-PC kopieren (z. B. nach `C:\Waage-Bruecke\`) und doppelklicken.
+2. Beim ersten Start fragt sie nach IP der Waage, FTP-Port, Rechner-Adresse, Port, Benutzer und
+   Passwort und schreibt `config.json` **neben die exe**. Danach bietet sie an, den Autostart
+   (Aufgabenplanung, bei jeder Windows-Anmeldung) und eine Firewall-Regel (nur lokales Netz,
+   braucht „Als Administrator ausführen“) einzurichten.
+3. Das Fenster zeigt „Im Kiosk eintragen: http://…“. Diese Adresse im Kiosk-Tab **Werbebilder** unter
+   **Adresse** eintragen.
+4. Neu einrichten: `config.json` löschen oder `Waage-Bruecke.exe --einrichten`.
+   Autostart entfernen: `Waage-Bruecke.exe --autostart-entfernen`.
+5. Die exe ist nicht signiert; Windows SmartScreen zeigt ggf. „Weitere Informationen → Trotzdem ausführen“.
+
+Die exe wird mit `build-exe.bat` erzeugt (braucht Python und `pip install pyinstaller`, Ergebnis in
+`dist\`, nicht im Repo).
+
+## Einrichten mit Python (einmalig, auf einem Rechner im Laden-LAN)
 
 1. Python 3.9 oder neuer installieren (nur Standardbibliothek nötig).
 2. Ordner `tools/waage-bruecke` auf den Rechner kopieren.
