@@ -2,7 +2,7 @@
    loescht nur Zwischenspeicher, die anders heissen. Bleibt der Name
    gleich, behaelt jeder Browser seinen alten Inhalt — und damit unter
    Umstaenden Dateien aus einem Stand, den es laengst nicht mehr gibt. */
-var CACHE_NAME='dorfladen-v33';
+var CACHE_NAME='dorfladen-v34';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',
@@ -90,6 +90,17 @@ self.addEventListener('activate',function(e){
 
 self.addEventListener('fetch',function(e){
   var url=e.request.url;
+  /* Geraete im Laden-LAN (Waage-Bruecke, z. B. http://192.168.1.27:8765) gehen den
+     Service Worker nichts an: Scheitert dort eine Anfrage (z. B. weil der Browser
+     http auf einer https-Seite blockiert), haette er sie mit einer leeren "504 Offline"
+     beantwortet und die Ursache verdeckt; erfolgreiche Antworten (Bilderliste,
+     Vorschau) wuerde er ausserdem veraltet aus dem Zwischenspeicher liefern. */
+  var ziel;
+  try{ziel=new URL(url);}catch(x){ziel=null;}
+  if(ziel&&ziel.origin!==self.location.origin
+     &&(ziel.protocol==='http:'||/^\d{1,3}(\.\d{1,3}){3}$/.test(ziel.hostname))){
+    return;
+  }
   // Network-first for API calls
   if(url.indexOf('/api/')!==-1){
     e.respondWith(

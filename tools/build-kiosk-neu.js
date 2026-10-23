@@ -52,7 +52,8 @@ const REITER = [
   { id: 'drax', icon: 'wheat', text: 'Drax Mühle', kurz: 'Drax', badges: true },
   { id: 'kontakt', icon: 'message-square', text: 'Kontakt', kurz: 'Kontakt', badges: true, aus: true },
   { id: 'social', icon: 'share-2', text: 'Social', kurz: 'Social', badges: false },
-  { id: 'kalender', icon: 'calendar-days', text: 'Kalender', kurz: 'Termine', badges: true }
+  { id: 'kalender', icon: 'calendar-days', text: 'Kalender', kurz: 'Termine', badges: true },
+  { id: 'werbebilder', icon: 'images', text: 'Werbebilder', kurz: 'Werbung', badges: false }
 ];
 
 /* ── Neue Kopfzeile (Rasterbereich "hd") ──────────────────────────────────
