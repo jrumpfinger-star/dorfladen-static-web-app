@@ -268,6 +268,19 @@ test.describe('Werbebilder-Upload', () => {
     await expect(page.locator('#wb-test')).toContainText('Keine Antwort', { timeout: 10000 });
   });
 
+  test('Fremder Server antwortet 504 statt der Bruecke -> klarer Hinweis auf falsche Adresse', async ({ page }) => {
+    await mockBruecke(page);
+    await page.route(/^http:\/\/waage\.test:8765\//, (r) => r.fulfill({
+      status: 504, headers: { 'Access-Control-Allow-Origin': '*' }, contentType: 'text/html', body: '<h1>Gateway Timeout</h1>' }));
+    await oeffne(page);
+    const f = page.locator('#panel-werbebilder .wb-fehler');
+    await expect(f).toContainText('antwortet nicht die Waage-Brücke', { timeout: 15000 });
+    await expect(f).toContainText('504');
+    await page.locator('[data-wb="einst"]').first().click();
+    await page.locator('[data-wb="url-test"]').click();
+    await expect(page.locator('#wb-test')).toContainText('antwortet nicht die Waage-Brücke', { timeout: 10000 });
+  });
+
   test('TC-F8-02: Waage antwortet nicht -> eigener Hinweis', async ({ page }) => {
     await mockBruecke(page, { waage: false });
     await oeffne(page);

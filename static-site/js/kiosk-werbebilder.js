@@ -75,7 +75,8 @@ window.KWerbebilder = (function () {
   }
 
   function json(r) {
-    return r.json().catch(function () { return {}; }).then(function (d) {
+    return r.json().then(function (d) { return d; }, function () { return null; }).then(function (d) {
+      if (!d || typeof d.success === 'undefined') throw { art: 'fremd', status: r.status };
       if (!r.ok || d.success === false) {
         throw { art: 'http', status: r.status, text: d.error || ('Fehler ' + r.status) };
       }
@@ -85,6 +86,11 @@ window.KWerbebilder = (function () {
 
   function fehlerText(e) {
     if (e && e.art === 'adresse') return 'Die Adresse der Brücke fehlt.';
+    if (e && e.art === 'fremd') {
+      return 'Unter ' + basis() + ' antwortet nicht die Waage-Brücke (HTTP ' + e.status + '). '
+        + 'Bitte IP und Port prüfen (Anzeige im Brücken-Fenster: „Im Kiosk eintragen“), ob die Brücke läuft '
+        + 'und ob das Gerät ohne Proxy/VPN im selben Laden-Netz ist.';
+    }
     if (e && e.art === 'netz') {
       var mixed = location.protocol === 'https:' && /^http:/i.test(basis());
       return 'Die Waage-Brücke ist nicht erreichbar. Läuft sie, stimmt die Adresse und ist das Gerät im Laden-WLAN?'
@@ -408,8 +414,13 @@ window.KWerbebilder = (function () {
     var to = setTimeout(function () { ctl.abort(); }, 6000);
     fetch(r.url + '/health', { cache: 'no-store', signal: ctl.signal }).then(function (x) {
       clearTimeout(to);
-      return x.json().catch(function () { return {}; });
-    }).then(function (h) {
+      return x.json().then(function (d) { return { h: d, status: x.status }; }, function () { return { h: null, status: x.status }; });
+    }).then(function (res) {
+      var h = res.h;
+      if (!h || typeof h.success === 'undefined') {
+        t.textContent = '✗ Unter ' + r.url + ' antwortet nicht die Waage-Brücke (HTTP ' + res.status + '). IP und Port prüfen, ohne Proxy/VPN im Laden-Netz sein.';
+        return;
+      }
       t.textContent = h.waage ? '✓ Brücke erreichbar, Waage antwortet.'
         : '⚠ Brücke erreichbar, aber die Waage antwortet nicht' + (h.fehler ? ' (' + h.fehler + ')' : '') + '. Waagen-IP in der Brücke prüfen.';
     }, function () {
