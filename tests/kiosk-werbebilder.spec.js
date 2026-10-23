@@ -65,7 +65,7 @@ async function mockBruecke(page, opts = {}) {
     const art = m[1];
     if (req.method() === 'GET' && !m[2]) {
       const namen = dateien[art].slice().sort();
-      return json(200, { success: true, art, max: 99, bilder: namen.map((n) => ({ name: n, groesse: 2048 })) });
+      return json(200, { success: true, art, max: 99, direkt: o.direkt || 0, bilder: namen.map((n) => ({ name: n, groesse: 2048 })) });
     }
     if (req.method() === 'GET') {
       return r.fulfill({ status: 200, headers: CORS, contentType: 'image/gif', body: GIF });
@@ -279,6 +279,13 @@ test.describe('Werbebilder-Upload', () => {
     await page.locator('[data-wb="einst"]').first().click();
     await page.locator('[data-wb="url-test"]').click();
     await expect(page.locator('#wb-test')).toContainText('antwortet nicht die Waage-Brücke', { timeout: 10000 });
+  });
+
+  test('TC-F15-04: Bilder direkt im Ordner werden mit Hinweis auf den Vorrang gemeldet', async ({ page }) => {
+    await mockBruecke(page, { direkt: 3 });
+    await oeffne(page);
+    await expect(page.locator('#panel-werbebilder .wb-warn')).toContainText('liegen 3 Bild', { timeout: 15000 });
+    await expect(page.locator('#panel-werbebilder .wb-warn')).toContainText('fullscreen');
   });
 
   test('TC-F8-02: Waage antwortet nicht -> eigener Hinweis', async ({ page }) => {

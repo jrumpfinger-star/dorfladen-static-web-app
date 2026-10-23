@@ -22,6 +22,7 @@ window.KWerbebilder = (function () {
 
   var _art = 'vollbild';
   var _bilder = [];
+  var _direkt = 0;           // Bilder direkt im Ordner (Vorrang vor "default")
   var _laden = false;
   var _verbunden = false;
   var _fehler = '';
@@ -119,6 +120,7 @@ window.KWerbebilder = (function () {
     }).then(function (d) {
       if (art !== _art) return;
       _bilder = d.bilder || [];
+      _direkt = d.direkt || 0;
       _verbunden = true; _laden = false; _fehler = '';
       var jetzt = {};
       _bilder.forEach(function (b) { jetzt[key(art, b)] = 1; });
@@ -462,6 +464,11 @@ window.KWerbebilder = (function () {
     var h = '<div class="wb-card"><h3>Auf der Waage <span class="wb-zaehl" id="wb-zaehl">' + _bilder.length + ' / ' + MAX_BILDER + '</span></h3>';
     if (_laden) return h + '<p class="wb-klein">Laden …</p></div>';
     if (_fehler) return h + '<p class="wb-fehler" role="alert">' + esc(_fehler) + '</p></div>';
+    if (_direkt) {
+      h += '<p class="wb-warn" role="alert">Achtung: Direkt im Ordner „' + (_art === 'dauer' ? 'permanent' : 'fullscreen')
+        + '“ liegen ' + _direkt + ' Bild(er). Die Waage spielt diese zuerst; die Bilder hier („default“) laufen nur, '
+        + 'wenn dort nichts liegt.</p>';
+    }
     if (!_bilder.length) return h + '<p class="wb-klein">Noch keine Bilder in diesem Verzeichnis.</p></div>';
     h += '<div class="wb-raster">';
     _bilder.forEach(function (b, i) {

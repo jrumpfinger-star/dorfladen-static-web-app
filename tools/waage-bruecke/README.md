@@ -68,6 +68,14 @@ Meldet `/health` für eine Art `false`, stimmt `ftp_basis` nicht zum Stammverzei
 FTP-Servers. Anpassen in `config.json`; abweichende Unterverzeichnisse über `verzeichnisse`
 (`{"vollbild": "fullscreen", "dauer": "permanent"}`).
 
+Beim Hochladen legt die Brücke ein fehlendes `default` an, aber nie darüberliegende Ordner
+(ein falscher `ftp_basis` erzeugt also keine Ordner auf der Waage). Die Waage spielt zuerst die
+Bilder, die **direkt** in `fullscreen/` bzw. `permanent/` liegen, und nutzt `default` nur als
+Rückfall; liegen dort Bilder, zeigt der Kiosk einen Hinweis.
+
+Erlaubte Herkünfte: Die Live-Seite und die SWA-Vorschau-Umgebungen dieser App sind fest
+erlaubt; weitere Adressen in `erlaubte_herkuenfte` (`*` als Platzhalter möglich).
+
 ## HTTPS-Kiosk und HTTP-Brücke
 
 Der Kiosk läuft über HTTPS, die Brücke standardmäßig über HTTP. Browser blockieren das

@@ -90,6 +90,10 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
   `config.json` neben die exe, startet beim ersten Aufruf den Assistenten und bietet Autostart
   (Aufgabenplanung bei Anmeldung, ohne Administrator) und eine Firewall-Regel nur für das lokale
   Subnetz an. Ohne Zustimmung wird am System nichts geändert; Fehlschläge werden gemeldet.
+- **F15** Verzeichnis-/Herkunftsregeln der Brücke: fehlt nur `default`, wird es beim Hochladen
+  angelegt (nur diese Ebene); Bilder direkt in `fullscreen`/`permanent` haben bei der Waage Vorrang
+  und werden im Kiosk gemeldet; Live-Seite und SWA-Vorschau sind als Herkunft fest erlaubt.
+- **F16** Antwortet unter der Brücken-Adresse ein fremder Server, nennt der Kiosk das klar.
 
 ## Testfälle
 
@@ -121,6 +125,8 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
 - **TC-F14-01** Installation legt Autostart (ONLOGON, LIMITED) und Firewall-Regel (LocalSubnet, Bruecken-Port) an.
 - **TC-F14-02** Bei „Nein“ wird nichts am System verändert.
 - **TC-F14-03** Schlägt ein Schritt fehl (z. B. kein Administrator), erscheint eine verständliche Meldung statt Abbruch.
+- **TC-F15-01…05** Fehlt `default`, ist die Liste leer statt Fehler; Upload legt genau `default` an, nie darüberliegende Ordner; Bilder direkt in `fullscreen`/`permanent` werden im Kiosk mit Vorrang-Hinweis gemeldet; Live- und Vorschau-Herkunft sind immer erlaubt, fremde nicht.
+- **TC-F16-01** Antwortet unter der Adresse nicht die Brücke (z. B. HTTP 504 eines Proxys), meldet der Kiosk (Laden und „Verbindung testen“) klar „antwortet nicht die Waage-Brücke“ samt Statuscode.
 
 ## Offen / bewusst nicht Teil dieser Änderung
 

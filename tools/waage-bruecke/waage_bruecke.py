@@ -16,6 +16,7 @@ WAAGE_FTP_HOST / WAAGE_FTP_PORT / WAAGE_FTP_USER / WAAGE_FTP_PASS /
 WAAGE_BIND / WAAGE_PORT.
 """
 import ftplib
+import fnmatch
 import getpass
 import io
 import json
@@ -52,6 +53,15 @@ STANDARD = {
     "tls_cert": "",
     "tls_key": "",
 }
+
+# Immer erlaubt, auch wenn config.json eine aeltere Liste enthaelt: Live-Seite und die
+# SWA-Vorschau-Umgebungen dieser App (kind-pebble-072605b03-<PR-Nr>.<Region>...).
+FESTE_HERKUENFTE = [
+    "https://www.dorfladen-oberornau.de",
+    "https://dorfladen-oberornau.de",
+    "https://kind-pebble-072605b03.*.azurestaticapps.net",
+    "https://kind-pebble-072605b03-*.azurestaticapps.net",
+]
 
 
 def basis_verzeichnis():
@@ -260,18 +270,48 @@ class FtpWaage:
                 pass
         return False
 
-    def _cd(self, verz):
+    def _cd(self, verz, anlegen=False):
         # Der Pfad gilt ab dem Anmeldeverzeichnis, nicht ab dem zuletzt
         # besuchten - mehrere Zugriffe je Verbindung sind sonst verschoben.
+        # Nur die letzte Ebene ("default") darf angelegt werden, nie darueberliegende
+        # Ordner: ein falscher ftp_basis soll keine Verzeichnisse auf der Waage anlegen.
+        eltern, _, letzte = verz.rstrip("/").rpartition("/")
         self.ftp.cwd(self._start)
-        self.ftp.cwd(verz)
+        if eltern:
+            self.ftp.cwd(eltern)
+        try:
+            self.ftp.cwd(letzte)
+        except ftplib.error_perm:
+            if not anlegen:
+                raise
+            self.ftp.mkd(letzte)
+            self.ftp.cwd(letzte)
 
     def pruefe(self, verz):
-        self._cd(verz)
+        """True, wenn das Verzeichnis oder (dann wird es beim Hochladen angelegt) sein Elternordner da ist."""
+        eltern = verz.rstrip("/").rpartition("/")[0]
+        self.ftp.cwd(self._start)
+        if eltern:
+            self.ftp.cwd(eltern)
         return True
 
     def liste(self, verz):
-        self._cd(verz)
+        try:
+            self._cd(verz)
+        except ftplib.error_perm:
+            self.pruefe(verz)   # Elternordner fehlt ebenfalls -> Fehler; sonst: noch leer
+            return []
+        return self._dateien()
+
+    def direkt(self, verz):
+        """Bilder direkt im Elternordner (fullscreen/permanent); die Waage spielt diese vor 'default'."""
+        eltern = verz.rstrip("/").rpartition("/")[0]
+        self.ftp.cwd(self._start)
+        if eltern:
+            self.ftp.cwd(eltern)
+        return self._dateien()
+
+    def _dateien(self):
         namen = []
         try:
             for name, fakten in self.ftp.mlsd(facts=["type", "size"]):
@@ -297,7 +337,7 @@ class FtpWaage:
         return b"".join(teile)
 
     def schreibe(self, verz, name, daten):
-        self._cd(verz)
+        self._cd(verz, anlegen=True)
         self.ftp.storbinary("STOR " + name, io.BytesIO(daten))
 
     def loesche(self, verz, name):
@@ -334,8 +374,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _herkunft_ok(self):
         o = self.headers.get("Origin")
-        erlaubt = self.cfg["erlaubte_herkuenfte"]
-        return o is None or "*" in erlaubt or o in erlaubt
+        if o is None:
+            return True
+        erlaubt = list(self.cfg["erlaubte_herkuenfte"]) + FESTE_HERKUENFTE
+        return "*" in erlaubt or any(fnmatch.fnmatchcase(o, muster) for muster in erlaubt)
 
     def _kopf(self, status, typ, laenge):
         self.send_response(status)
@@ -413,8 +455,13 @@ class Handler(BaseHTTPRequestHandler):
             verz = self._verz(teile[1])
             with self._ftp() as f:
                 bilder = bilder_sortiert(f.liste(verz))
+                try:
+                    direkt = len(bilder_sortiert(f.direkt(verz)))
+                except (ftplib.Error, AttributeError):
+                    direkt = 0
             return self._json(200, {
                 "success": True, "art": teile[1], "verzeichnis": verz, "max": MAX_BILDER,
+                "direkt": direkt,
                 "bilder": [{"name": n, "groesse": g} for n, g in bilder]})
         if len(teile) == 3 and teile[0] == "bilder":
             verz = self._verz(teile[1])

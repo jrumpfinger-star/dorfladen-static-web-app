@@ -313,6 +313,92 @@ def main():
     pruefe("TC-F14-03  Fehlschlag wird verstaendlich gemeldet statt abzubrechen",
            any("Zugriff verweigert" in a for a in ausgaben), ausgaben)
 
+    # F15 Fehlendes "default" wird beim Hochladen angelegt, darueberliegende Ordner nie
+    class BaumFtp:
+        def __init__(self, ordner):
+            self.ordner = set(ordner)
+            self.dateien = {}
+            self.pfad = "/"
+            self.angelegt = []
+
+        def connect(self, *a, **k):
+            pass
+
+        def login(self, *a, **k):
+            pass
+
+        def voidcmd(self, *a):
+            pass
+
+        def pwd(self):
+            return "/"
+
+        def cwd(self, p):
+            ziel = "/" + p.strip("/") if p.startswith("/") else (self.pfad.rstrip("/") + "/" + p)
+            ziel = "/" + "/".join(t for t in ziel.split("/") if t)
+            if ziel != "/" and ziel not in self.ordner:
+                raise wb.ftplib.error_perm("550 nicht gefunden")
+            self.pfad = ziel
+
+        def mkd(self, name):
+            neu = self.pfad.rstrip("/") + "/" + name
+            self.ordner.add(neu)
+            self.angelegt.append(neu)
+
+        def mlsd(self, facts=None):
+            return iter([(n.rsplit("/", 1)[1], {"type": "file", "size": "3"})
+                         for n in self.dateien if n.rsplit("/", 1)[0] == self.pfad])
+
+        def storbinary(self, kommando, quelle):
+            self.dateien[self.pfad.rstrip("/") + "/" + kommando.split(" ", 1)[1]] = quelle.read()
+
+        def quit(self):
+            pass
+    cfg_f = {"ftp_host": "x", "ftp_port": 21, "ftp_timeout": 1, "ftp_user": "u", "ftp_pass": "p"}
+    wurzel = "bizerba/data/multimedia/advertising"
+    echte = wb.ftplib.FTP
+    baum = BaumFtp(["/bizerba", "/bizerba/data", "/bizerba/data/multimedia", "/bizerba/data/multimedia/advertising",
+                    "/bizerba/data/multimedia/advertising/fullscreen"])
+    wb.ftplib.FTP = lambda: baum
+    try:
+        with wb.FtpWaage(cfg_f) as ftp:
+            pruefe("TC-F15-01  Liste ohne vorhandenes default ist leer statt Fehler",
+                   ftp.liste(wurzel + "/fullscreen/default") == [])
+            pruefe("TC-F15-01  Pruefung gelingt, wenn nur der Elternordner existiert",
+                   ftp.pruefe(wurzel + "/fullscreen/default") is True)
+        with wb.FtpWaage(cfg_f) as ftp:
+            ftp.schreibe(wurzel + "/fullscreen/default", "a.jpg", JPEG)
+        pruefe("TC-F15-02  Upload legt genau 'default' an",
+               baum.angelegt == ["/bizerba/data/multimedia/advertising/fullscreen/default"], baum.angelegt)
+        baum.angelegt.clear()
+        fehler_perm = False
+        try:
+            with wb.FtpWaage(cfg_f) as ftp:
+                ftp.schreibe("falsch/data/multimedia/advertising/fullscreen/default", "a.jpg", JPEG)
+        except wb.ftplib.error_perm:
+            fehler_perm = True
+        pruefe("TC-F15-03  Falsche Wurzel legt keine Ordner an und meldet Fehler",
+               fehler_perm and baum.angelegt == [], baum.angelegt)
+        with wb.FtpWaage(cfg_f) as ftp:
+            baum.dateien["/bizerba/data/multimedia/advertising/fullscreen/direkt.jpg"] = JPEG
+            pruefe("TC-F15-04  Bilder direkt im Elternordner werden gemeldet (haben Vorrang)",
+                   [n for n, _ in ftp.direkt(wurzel + "/fullscreen/default")] == ["direkt.jpg"])
+    finally:
+        wb.ftplib.FTP = echte
+
+    class H:
+        def __init__(self, o, erlaubt):
+            self.headers = {"Origin": o}
+            self.cfg = {"erlaubte_herkuenfte": erlaubt}
+    ok = lambda o: wb.Handler._herkunft_ok(H(o, ["https://alt.example"]))
+    pruefe("TC-F15-05  Live und SWA-Vorschau sind auch bei alter config.json erlaubt",
+           ok("https://www.dorfladen-oberornau.de")
+           and ok("https://kind-pebble-072605b03-14.westeurope.7.azurestaticapps.net")
+           and ok("https://alt.example"))
+    pruefe("TC-F15-05  Fremde Herkunft bleibt abgelehnt",
+           not ok("https://evil.example") and not ok("https://other-app-14.westeurope.7.azurestaticapps.net")
+           and not ok("http://www.dorfladen-oberornau.de"))
+
     print("\nAlle Pruefungen bestanden.")
 
 
