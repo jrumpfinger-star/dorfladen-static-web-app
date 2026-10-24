@@ -8193,7 +8193,7 @@
     var kwNr=kw;
     waageDialog({
       titel:'Wochenplan auf die Waage',
-      art:'vollbild',
+      art:'dauer',
       praefix:'10_Wochenplan_',
       erzeuge:function(art,fort,abbruch,m){
         fort(0,1);
@@ -8490,7 +8490,7 @@
     if(!ak.items||!ak.items.length){toast('Keine Artikel vorhanden','warn');return;}
     waageDialog({
       titel:'Aktion \u201e'+(ak.titel||'Angebote')+'\u201c auf die Waage',
-      art:'vollbild',
+      art:'dauer',
       praefix:'20_Angebot_',
       erzeuge:function(art,fort,abbruch,m){return waageAktionBilder(ak,art,fort,abbruch,m);}
     });

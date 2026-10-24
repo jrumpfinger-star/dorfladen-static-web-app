@@ -148,6 +148,11 @@ async function cmsMit(page, opts = {}) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('#cms-app').waitFor({ state: 'visible', timeout: 20000 });
   await expect(page.locator('#cms-wp-grid .cms-meal').first()).toBeVisible({ timeout: 15000 });
+  // Existing layout/transfer cases explicitly exercise full-screen output.
+  if (opts.standardArt !== true) await page.evaluate(() => {
+    const uebertragen = window.KWerbebilder.uebertragen;
+    window.KWerbebilder.uebertragen = (o) => uebertragen({ ...o, art: 'vollbild' });
+  });
 
   return {
     log, zustand,
@@ -165,6 +170,41 @@ async function aktionenTab(page) {
 const dlg = (page) => page.locator('#wb-ueb');
 const neueBilder = (page) => page.locator('#wb-ueb [data-ueb-neu]');
 const altBilder = (page) => page.locator('#wb-ueb [data-ueb-alt]');
+
+test('TC-F16-01/02: Dauerwerbung als Vorgabe, Auswahl ohne Scrollsprung', async ({ page }) => {
+  const altDauer = Array.from({ length: 12 }, (_, i) => `20_Angebot_alt_${i}.jpg`);
+  const m = await cmsMit(page, { artikel: 6, altDauer, standardArt: true });
+  await page.evaluate(() => window.cmsWaageWP());
+  await expect(dlg(page).getByRole('tab', { name: 'Dauerwerbung', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(neueBilder(page)).toHaveCount(1);
+  await dlg(page).getByRole('button', { name: 'Schließen', exact: true }).click();
+  await aktionenTab(page);
+  await page.locator('[data-action="waageAktion"]').first().click();
+  await expect(dlg(page).getByRole('tab', { name: 'Dauerwerbung', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(neueBilder(page)).toHaveCount(7, { timeout: 30000 });
+  await expect(altBilder(page)).toHaveCount(12);
+  for (const selector of ['[data-ueb="an"][data-i="6"]', '[data-ueb="loesch"][data-i="8"]', '[data-ueb="alle"]', '[data-ueb="keine"]']) {
+    const control = dlg(page).locator(selector);
+    await control.scrollIntoViewIfNeeded();
+    await control.focus();
+    await control.evaluate(el => {
+      const dialog = el.closest('.wb-ueb-dlg');
+      dialog.scrollTop += el.getBoundingClientRect().top - dialog.getBoundingClientRect().top - 100;
+    });
+    const before = await dlg(page).locator('.wb-ueb-dlg').evaluate(el => el.scrollTop);
+    expect(before).toBeGreaterThan(0);
+    const checked = await control.evaluate(el => el instanceof HTMLInputElement ? el.checked : null);
+    await control.click();
+    await expect(control).toBeFocused();
+    await expect.poll(() => dlg(page).locator('.wb-ueb-dlg').evaluate(el => el.scrollTop)).toBeGreaterThanOrEqual(before - 2);
+    expect(await dlg(page).locator('.wb-ueb-dlg').evaluate(el => el.scrollTop)).toBeLessThanOrEqual(before + 2);
+    if (checked !== null) expect(await control.isChecked()).toBe(!checked);
+    if (selector.includes('"alle"')) await expect(altBilder(page).locator('input:checked')).toHaveCount(12);
+    if (selector.includes('"keine"')) await expect(altBilder(page).locator('input:checked')).toHaveCount(0);
+  }
+  expect(m.anfragen('POST')).toHaveLength(0);
+  expect(m.anfragen('DELETE')).toHaveLength(0);
+});
 
 async function zeichnungenMitschreiben(page) {
   await page.evaluate(() => {
@@ -611,7 +651,7 @@ test.describe('HD und Auf die Waage', () => {
     expect(m.anfragen('POST').map((l) => l.name)).toEqual([name]);
   });
 
-  test('TC-F7-01 / F7-02: Dauerwerbung: Profilhinweis, Bild 1600 x 924; Vorgabe ist Vollbild', async ({ page }) => {
+  test('TC-F7-01 / F7-02: explizites Vollbild und Wechsel zu Dauerwerbung mit Profilhinweis, Bild 1600 x 924', async ({ page }) => {
     const m = await cmsMit(page);
     await page.locator('[data-action="waageWP"]').click();
     await expect(neueBilder(page)).toHaveCount(1, { timeout: 20000 });

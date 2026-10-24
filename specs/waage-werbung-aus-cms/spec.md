@@ -26,9 +26,19 @@ nimmt nur JPEG/GIF. Anzeigeprofile laut Programmieranleitung und Foto siehe F12.
   des Hochformats. Das Hochformat zum Drucken bleibt, nur höher aufgelöst.
 - **Dateinamen steuern die Reihenfolge** auf der Waage: `10_Wochenplan_KW44.jpg`, danach `20_Angebot_…`.
   Alte Bilder derselben Art (Präfix `10_Wochenplan_` bzw. `20_Angebot_`) sind im Dialog vorausgewählt.
-- **Dauerwerbung** nutzt die gewählte Profilhöhe (F12); Vorgabe der Werbeart bleibt Vollbild.
+- **Dauerwerbung** nutzt die gewählte Profilhöhe (F12) und ist die Vorgabe der Werbeart.
 
 ## Anforderungen
+
+- **F16** Der Übertragungsdialog öffnet für Wochenplan und Aktionen mit Dauerwerbung.
+  Vollbild bleibt ausdrücklich wählbar. Beim An-/Abwählen neuer oder alter Bilder und
+  bei „Alle“/„Keine“ bleiben Dialog-Scrollposition und Tastaturfokus erhalten, auch
+  bei nachfolgenden asynchronen Statusaktualisierungen.
+- **TC-F16-01** Wochenplan und Aktion öffnen ohne Eingriff mit ausgewählter Dauerwerbung;
+  ein ausdrücklich angefordertes Vollbild bleibt möglich.
+- **TC-F16-02** Im gescrollten Dialog neue/alte Haken sowie Alle/Keine betätigen:
+  Scrollposition bleibt (Toleranz 2 Pixel), Fokus bleibt am entsprechenden Bedienelement,
+  Auswahl und Zähler aktualisieren sich; keine POST/DELETE ohne Übertragen.
 
 - **F1** Wochenplan-Bild, Aktions-Plakat und Einzelflyer lassen sich in **HD (3×)** ansehen, herunterladen,
   drucken und teilen. Bildmaße: Wochenplan 794·3 = 2382 px Breite, Plakat/Einzelflyer 2382 × 3369.
@@ -120,7 +130,7 @@ nimmt nur JPEG/GIF. Anzeigeprofile laut Programmieranleitung und Foto siehe F12.
 - **TC-F6-02** Schlägt ein Upload fehl, folgt kein `DELETE`; Fehler wird je Datei gezeigt.
 - **TC-F6-03** Würde die Zahl 99 überschritten, ist „Übertragen“ gesperrt.
 - **TC-F7-01** Wochenplan-Waagenbild ist ein JPEG (`ffd8ff`) in den Maßen aus F12.
-- **TC-F7-02** Dauerwerbung zeigt die ausgewählte Fläche; Vorgabe ist Vollbild.
+- **TC-F7-02** Dauerwerbung zeigt die ausgewählte Fläche und ist die Vorgabe.
 - **TC-F8-01** Aktion mit 8 Artikeln im großen Vollbild: eine Übersicht und 8 Einzelbilder,
   JPEG nach F12, alle angehakt. Passt der Inhalt in anderen Profilen nicht, gilt F15.
 - **TC-F8-02** Aktion mit 3 Artikeln: 1 Übersicht und 3 Einzelbilder.

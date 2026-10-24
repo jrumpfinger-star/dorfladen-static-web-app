@@ -529,6 +529,14 @@ window.KWerbebilder = (function () {
   function uebRender() {
     var u = _ueb;
     if (!u || !u.el) return;
+    var dialog = u.el.querySelector('.wb-ueb-dlg');
+    var scrollTop = dialog ? dialog.scrollTop : 0;
+    var aktiv = document.activeElement;
+    var fokus = aktiv && u.el.contains(aktiv) && aktiv.hasAttribute('data-ueb') ? {
+      aktion: aktiv.getAttribute('data-ueb'),
+      index: aktiv.getAttribute('data-i'),
+      art: aktiv.getAttribute('data-art')
+    } : null;
     var z = uebZahlen(u);
     var h = '<div class="wb-dlg wb-ueb-dlg" role="dialog" aria-modal="true" aria-label="' + esc(u.o.titel || 'Auf die Waage') + '">'
       + '<div class="wb-ueb-kopf"><h3>' + esc(u.o.titel || 'Auf die Waage übertragen') + '</h3>'
@@ -618,6 +626,14 @@ window.KWerbebilder = (function () {
     }
     h += '</div></div>';
     u.el.innerHTML = h;
+    if (fokus) {
+      var ziel = Array.prototype.find.call(u.el.querySelectorAll('[data-ueb]'), function (el) {
+        return el.getAttribute('data-ueb') === fokus.aktion &&
+          el.getAttribute('data-i') === fokus.index && el.getAttribute('data-art') === fokus.art;
+      });
+      if (ziel && !ziel.disabled) ziel.focus({ preventScroll: true });
+    }
+    u.el.querySelector('.wb-ueb-dlg').scrollTop = scrollTop;
   }
 
   function uebNeuLaden() {
@@ -787,7 +803,7 @@ window.KWerbebilder = (function () {
     var el = document.createElement('div');
     el.className = 'wb-overlay';
     el.id = 'wb-ueb';
-    _ueb = { o: opts, art: opts.art === 'dauer' ? 'dauer' : 'vollbild', neu: [], alt: [], token: 0, el: el,
+    _ueb = { o: opts, art: opts.art === 'vollbild' ? 'vollbild' : 'dauer', neu: [], alt: [], token: 0, el: el,
              laufend: false, erzeugt: false, altGeladen: false, ergebnis: null, bruecke: null };
     el.addEventListener('click', uebKlick);
     el.addEventListener('change', uebAenderung);

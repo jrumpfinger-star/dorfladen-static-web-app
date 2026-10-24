@@ -1,5 +1,15 @@
 # Aufgaben: Waage-Werbung aus dem CMS
 
+## Dialogkorrektur F16
+
+- [x] U1 Scrollposition/Fokus beim Rendern erhalten (TC-F16-02).
+- [x] U2 Dauerwerbung als Vorgabe an beiden CMS-Einstiegen und im Dialog (TC-F16-01).
+- [x] U3 Handbuch und Vier-Viewport-Regression; Voraussetzung U1/U2.
+
+Validierung: 260/260 CMS-/Kiosk-Werbebildertests auf vier Viewports bestanden,
+einschließlich beider CMS-Einstiege und gescrollter An-/Abwahl sowie Alle/Keine.
+Syntaxprüfung und diff --check ohne Fehler. Noch nicht deployed.
+
 | # | Aufgabe | Testfälle | Stand |
 |---|---------|-----------|-------|
 | T1 | Spec, Plan, Tasks | – | erledigt |

@@ -1,5 +1,13 @@
 # Plan: Waage-Werbung aus dem CMS
 
+## Dialogkorrektur F16
+
+Vor dem Neuzeichnen Scrollposition und Identität des fokussierten Bedienelements
+im Übertragungsdialog erfassen; nach dem Rendern Fokus ohne Scrollen und Scrollposition
+wiederherstellen. CMS-Einstiege und Dialogstandard auf Dauerwerbung umstellen;
+explizites Vollbild respektieren. Playwright prüft beide Einstiege und gescrollte
+Auswahlaktionen auf vier Viewports. Bestehende Layouttests fordern ihr Vollbild explizit an.
+
 Siehe `plan.md` der Sitzung für Begründungen; hier die Änderungsübersicht.
 
 ## Änderungsübersicht
