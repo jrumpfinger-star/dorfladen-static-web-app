@@ -194,6 +194,7 @@
       h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editAktion" data-id="'+esc(g.aktion_id)+'">Bearbeiten</button>';
       h+='<button class="cms-btn-preview" data-action="previewAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button>';
       h+='<button class="cms-btn-wa" data-action="shareAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Teilen</button>';
+      h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="waageAktion" data-id="'+esc(g.aktion_id)+'" title="Als Querformat-Bilder auf die Waage">\u2696\ufe0f Waage</button>';
       h+='<button class="cms-btn-trash" data-action="deleteAktion" data-id="'+esc(g.aktion_id)+'" title="Löschen"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
       h+='</div></div>';
       h+='<div class="cms-ang-items collapsed">';
@@ -3748,10 +3749,43 @@
       .catch(function(e){toast(_cmsErr(e),'error');});
   }
 
+  // --- HD-Rendern (Spec waage-werbung-aus-cms, F1) ---
+  // Faktor fuer Vorschau, Download, Druck, Teilen: 3 = ca. 300 dpi bei A4. Die Einstellungs-Vorschau bleibt bei 1.
+  var HD_FAKTOR=3;
+
+  /* Liefert den 2D-Kontext einer um S vergroesserten Zeichenflaeche. Der Zeichencode arbeitet weiter in den
+     logischen Massen (z. B. 794 x 1123): setTransform skaliert alles. Schatten (shadowBlur/-Offset) werden
+     von der Transformation NICHT erfasst; deshalb werden sie hier beim Setzen mit S multipliziert, damit
+     das Aussehen gleich bleibt und der Zeichencode nicht an 20 Stellen angefasst werden muss. */
+  function hdKontext(c,S){
+    var ctx=c.getContext('2d');
+    ctx.setTransform(S,0,0,S,0,0);
+    if(S!==1){
+      ['shadowBlur','shadowOffsetX','shadowOffsetY'].forEach(function(p){
+        var d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,p);
+        if(!d||!d.set)return;
+        Object.defineProperty(ctx,p,{
+          get:function(){return d.get.call(ctx)/S;},
+          set:function(v){d.set.call(ctx,v*S);},
+          configurable:true
+        });
+      });
+    }
+    return ctx;
+  }
+
+  // Logo: bei HD die grosse Datei (die Kopfzeilen-Grafik ist nur klein), sonst wie bisher.
+  function hdLogoSrc(S){
+    if(S>1)return '/images/dorfladen-logo.png';
+    var hdr=document.querySelector('#cms-app img[src^="data:image"]');
+    return hdr?hdr.src:'/Logo-sm-64.png';
+  }
+
   // --- WhatsApp Share ---
   function fmtPriceWA(v){return v?Number(v).toFixed(2).replace('.',',')+' \u20AC':'';}
 
-  function generateMenuImage(mealRows, header, callback, tplOverride, kindOverride){
+  function generateMenuImage(mealRows, header, callback, tplOverride, kindOverride, opts){
+    var S=(opts&&opts.scale)||1;
     var SF='Segoe UI, sans-serif';
     var W=794,padL=30,padR=30;
     var headerH=130,rowH=40,gapBetweenDays=12,footerH=44;
@@ -3794,8 +3828,8 @@
       groups.forEach(function(g){totalGroupH+=Math.max(g.items.length*rowH,rowH)+gapBetweenDays;});
     }
     var H=headerH+20+totalGroupH+footerH+30;
-    var c=document.createElement('canvas');c.width=W;c.height=H;
-    var ctx=c.getContext('2d');ctx.textBaseline='top';
+    var c=document.createElement('canvas');c.width=Math.round(W*S);c.height=Math.round(H*S);
+    var ctx=hdKontext(c,S);ctx.textBaseline='top';
 
     function rrect(rx,ry,rw,rh,r){
       ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
@@ -3830,8 +3864,7 @@
           ctx.drawImage(logoImg,W-lw-padR,18,lw,lh);res();
         };
         logoImg.onerror=function(){res();};
-        var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
-        logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
+        logoImg.src=hdLogoSrc(S);
       });
     }
 
@@ -4086,7 +4119,11 @@
     }
 
     ctx.textAlign='left';
-    logoLoaded.then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
+    logoLoaded.then(function(){c.toBlob(function(blob){
+      // Bei Speichermangel (z. B. aelteres iPad) eine Stufe kleiner erneut versuchen.
+      if(!blob&&S>1){generateMenuImage(mealRows,header,callback,tplOverride,kindOverride,{scale:S-1});return;}
+      callback(blob);
+    },'image/png');});
   }
 
   window.cmsShareWP=function(){
@@ -4119,7 +4156,7 @@
     var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
     generateMenuImage(mealRows,header,function(blob){
       shareBlob(blob,'Wochenplan_KW'+kw+'.png',msg);
-    },tpl,wpKind);
+    },tpl,wpKind,{scale:HD_FAKTOR});
   };
 
   window.cmsPreviewWP=function(){
@@ -4142,8 +4179,8 @@
     var tpl=(flyerTpl!=='classic-red')?flyerTpl:(homeTpl!=='classic-red')?homeTpl:flyerTpl;
     var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
     generateMenuImage(mealRows,header,function(blob){
-      showSharePreview(blob,'Wochenplan_KW'+kw+'.png');
-    },tpl,wpKind);
+      showSharePreview(blob,'Wochenplan_KW'+kw+'.png',{waage:'wochenplan'});
+    },tpl,wpKind,{scale:HD_FAKTOR});
   };
 
   window.cmsPreviewWpTpl=function(target){
@@ -4198,7 +4235,7 @@
     var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
     generateMenuImage(mealRows,header,function(blob){
       printFromBlob(blob);
-    },tpl,wpKind);
+    },tpl,wpKind,{scale:HD_FAKTOR});
   };
 
   function shareBlob(blob,filename,msg){
@@ -4239,6 +4276,9 @@
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line)">';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">\u2b07\ufe0f Download</button>';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">\ud83d\udda8\ufe0f Drucken</button>';
+    if(opts.waage){
+      html+='<button class="cms-btn" id="cms-share-waage" style="background:var(--blu);color:var(--karte)">\u2696\ufe0f Auf die Waage</button>';
+    }
     if(opts.showEinzelflyer){
       html+='<button class="cms-btn" id="cms-share-flyer" style="background:var(--amb);color:var(--karte)">\ud83d\udccb Alle Einzelflyer</button>';
     }
@@ -4257,6 +4297,12 @@
     document.getElementById('cms-share-print').onclick=function(){
       printFromBlob(blob);
     };
+    if(opts.waage&&document.getElementById('cms-share-waage')){
+      document.getElementById('cms-share-waage').onclick=function(){
+        if(opts.waage==='wochenplan')window.cmsWaageWP();
+        else if(_currentPreviewAktion)window.cmsWaageAktion(_currentPreviewAktion.aktion_id);
+      };
+    }
     if(opts.showEinzelflyer && document.getElementById('cms-share-flyer')){
       document.getElementById('cms-share-flyer').onclick=function(){
         showEinzelflyer();
@@ -5808,14 +5854,15 @@
     });
   }
 
-  function generateEinzelflyer(item,data,cfgOverride){
+  function generateEinzelflyer(item,data,cfgOverride,opts){
     return new Promise(function(resolve){
+      var S=(opts&&opts.scale)||1;
       var W=794,H=1123;
       var _elMeta=[];
       var cfg=cfgForKind(cfgOverride||cfgGet(),'flyer');
       var theme=getOfferTheme('flyer',cfg);
-      var c=document.createElement('canvas');c.width=W;c.height=H;
-      var ctx=c.getContext('2d');
+      var c=document.createElement('canvas');c.width=Math.round(W*S);c.height=Math.round(H*S);
+      var ctx=hdKontext(c,S);
       // ── Papier-Hintergrund (gleicher Stil wie Plakat) ──
       ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
       if(theme.showTexture){ctx.globalAlpha=0.04;
@@ -5892,7 +5939,7 @@
             }
             ctx.fillText('Angebote',titleX,78);
             rl();
-          };li.onerror=function(){rl();};li.src=mgLogoEl.src;
+          };li.onerror=function(){rl();};li.src=(S>1)?hdLogoSrc(S):mgLogoEl.src;
         });
 
         // ── Main product card ──
@@ -6087,8 +6134,7 @@
           ctx.drawImage(logoImg,W-lw-30,14,lw,lh);resLogo();
         };
         logoImg.onerror=function(){resLogo();};
-        var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
-        logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
+        logoImg.src=hdLogoSrc(S);
       });
       // ── Weisse Karte (grosser Bereich für Produkt) ──
       var cardX=30,cardY=130,cardW=W-60,cardH=H-130-60;
@@ -6324,8 +6370,8 @@
         function _buildZoneHtml(elMeta,idx){
           var zh='';
           var canvas=canvases[idx];
-          var canvasW=canvas?canvas.width:794;
-          var canvasH=canvas?canvas.height:1123;
+          var canvasW=794;   // logische Masse: der Editor arbeitet immer mit der 1x-Fassung
+          var canvasH=1123;
           elMeta.forEach(function(el){
             var pctL=(el.x/canvasW*100).toFixed(2),pctT=(el.y/canvasH*100).toFixed(2);
             var pctW=(el.w/canvasW*100).toFixed(2),pctH=(el.h/canvasH*100).toFixed(2);
@@ -6566,10 +6612,24 @@
         var attach=function(){
           if(_attached)return;_attached=true;
           function sanitize(s){return (s||'flyer').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').substring(0,80);}
+          // HD-Fassung (3x) mit den aktuellen, auch ungespeicherten Einstellungen. Der Editor selbst bleibt bei 1x,
+          // damit die Zonen und Pfeiltasten unveraendert funktionieren (Spec waage-werbung-aus-cms, F2).
+          function hdFlyerUrl(idx){
+            var it=items[idx];
+            var k=_flyerArtKey(it);
+            var all=flyerArtOverridesGetAll();
+            var prev=all[k];
+            all[k]=artOvs[idx];_flyerArtOverrides=all;
+            return generateEinzelflyer(it,data,undefined,{scale:HD_FAKTOR}).then(function(cv){
+              if(prev!==undefined){all[k]=prev;}else{delete all[k];}
+              _flyerArtOverrides=all;
+              return cv.toDataURL('image/png');
+            });
+          }
           function printOne(idx){
             var imgs=doc.querySelectorAll('.flyer-page img');
             if(!imgs[idx])return;
-            var src=imgs[idx].src;
+            var hdP=hdFlyerUrl(idx);
             if(isMobile){
               // Mobile: fullscreen print overlay with explicit buttons
               var oldPo=document.getElementById('_flyPrintOverlay');
@@ -6585,7 +6645,8 @@
               po.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:#fff;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px';
               var pImg=document.createElement('img');
               pImg.style.cssText='max-width:100%;height:auto;margin-bottom:16px';
-              pImg.src=src;
+              pImg.src=imgs[idx].src;
+              hdP.then(function(s){pImg.src=s;});
               po.appendChild(pImg);
               var btnRow=document.createElement('div');
               btnRow.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px';
@@ -6621,7 +6682,8 @@
                 po2.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:#fff;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px';
                 var pImg2=doc.createElement('img');
                 pImg2.style.cssText='max-width:100%;height:auto;margin-bottom:16px';
-                pImg2.src=src;
+                pImg2.src=imgs[idx].src;
+                hdP.then(function(s){pImg2.src=s;});
                 po2.appendChild(pImg2);
                 var btnRow2=doc.createElement('div');
                 btnRow2.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px';
@@ -6647,19 +6709,22 @@
               d.write('<html><head><title>Flyer drucken</title><style>@page{margin:10mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start}img{max-width:100%;height:auto}</style></head><body><img id="pi"></body></html>');
               d.close();
               var pi2=d.getElementById('pi');
-              pi2.onload=function(){setTimeout(function(){try{w.focus();w.print();}catch(e){}},300);};
-              pi2.src=src;
+              // Das Fenster wird sofort geoeffnet (Klick-Geste); das HD-Bild folgt, sobald es fertig gezeichnet ist.
+              pi2.onload=function(){if(pi2.getAttribute('data-hd')!=='1')return;setTimeout(function(){try{w.focus();w.print();}catch(e){}},300);};
+              hdP.then(function(s){pi2.setAttribute('data-hd','1');pi2.src=s;});
             }
           }
           function dlOne(idx,name){
             var imgs=doc.querySelectorAll('.flyer-page img');
             if(!imgs[idx])return;
-            var a=doc.createElement('a');
-            a.href=imgs[idx].src;
-            a.download='Flyer_'+sanitize(name||('Artikel_'+(idx+1)))+'.png';
-            doc.body.appendChild(a);
-            a.click();
-            setTimeout(function(){doc.body.removeChild(a);},100);
+            hdFlyerUrl(idx).then(function(url){
+              var a=doc.createElement('a');
+              a.href=url;
+              a.download='Flyer_'+sanitize(name||('Artikel_'+(idx+1)))+'.png';
+              doc.body.appendChild(a);
+              a.click();
+              setTimeout(function(){doc.body.removeChild(a);},100);
+            });
           }
           // Rebuild control bar for one flyer (after toggle)
           function rebuildCtlBar(idx){
@@ -6781,7 +6846,13 @@
               return;
             }
             ev.preventDefault();
-            if(act==='print-all'){if(isMobile){printOne(0);}else{try{win.focus();win.print();}catch(e){}}}
+            if(act==='print-all'){if(isMobile){printOne(0);}else{
+              // Druck in HD: die versteckten Druckbilder zuerst durch die 3x-Fassung ersetzen.
+              Promise.all(items.map(function(_,i){return hdFlyerUrl(i);})).then(function(urls){
+                urls.forEach(function(u,i){var pi=doc.getElementById('fimg-print-'+i);if(pi)pi.src=u;});
+                return new Promise(function(r){setTimeout(r,300);});
+              }).then(function(){try{win.focus();win.print();}catch(e){}});
+            }}
             else if(act==='close'){closeEditor();}
             else if(act==='print'){printOne(parseInt(t.getAttribute('data-idx'),10)||0);}
             else if(act==='art-save'){
@@ -7519,7 +7590,7 @@
     ctx.restore();
   }
 
-  function generateAngebotPlakat(data,callback,cfgOverride){
+  function generateAngebotPlakat(data,callback,cfgOverride,opts){
     var items=data.items||[];
     // Fetch missing images via Server Logic before drawing
     var fetchPromises=items.map(function(it){
@@ -7537,11 +7608,12 @@
       var imgPromises=items.map(function(it){return loadItemImage(it.bild_data);});
       return Promise.all(imgPromises);
     }).then(function(images){
-      drawAngebotPlakat(data,items,images,callback,cfgOverride);
+      drawAngebotPlakat(data,items,images,callback,cfgOverride,opts);
     });
   }
 
-  function drawAngebotPlakat(data,items,images,callback,cfgOverride){
+  function drawAngebotPlakat(data,items,images,callback,cfgOverride,opts){
+    var S=(opts&&opts.scale)||1;
     var cols=2,maxRows=3,perPage=maxRows*cols;
     var W=794,H=1123;
     var cfg=cfgForKind(cfgOverride||cfgGet(),'plakat');
@@ -7551,9 +7623,14 @@
     var gridW=W-40,gridH=gridBot-gridTop;
     var cellW=Math.floor((gridW-cardGap)/cols);
     var cellH=Math.floor((gridH-(maxRows-1)*cardGap)/maxRows);
-    var c=document.createElement('canvas');c.width=W;c.height=H;
-    var ctx=c.getContext('2d');
-
+    var c=document.createElement('canvas');c.width=Math.round(W*S);c.height=Math.round(H*S);
+    var ctx=hdKontext(c,S);
+    // Bei Speichermangel (z. B. aelteres iPad) eine Stufe kleiner erneut versuchen.
+    var _cb=callback;
+    callback=function(blob){
+      if(!blob&&S>1){drawAngebotPlakat(data,items,images,_cb,cfgOverride,{scale:S-1});return;}
+      _cb(blob);
+    };
     var isMagPlakat=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
     if(isMagPlakat){
       // ── Modern Magazine: Clean grid card layout ──
@@ -7599,7 +7676,7 @@
           rl();
         };
         li.onerror=function(){rl();};
-        li.src=logoEl.src;
+        li.src=(S>1)?hdLogoSrc(S):logoEl.src;
       });
 
       // ── Prepare items (sort by savings, max 6) ──
@@ -7809,8 +7886,7 @@
         ctx.drawImage(logoImg,W-lw-30,14,lw,lh);res();
       };
       logoImg.onerror=function(){res();};
-      var hdrLogo=document.querySelector('#cms-app img[src^="data:image"]');
-      logoImg.src=hdrLogo?hdrLogo.src:'/Logo-sm-64.png';
+      logoImg.src=hdLogoSrc(S);
     });
     ctx.textAlign='left';
     // ── Hilfsfunktion: Runde-Ecken Rechteck ──
@@ -8010,7 +8086,7 @@
     // Generate plakat image + share directly
     generateAngebotPlakat(ak,function(blob){
       shareBlob(blob,'Angebot_'+(ak.von||'aktuell')+'.png',msg);
-    });
+    },undefined,{scale:HD_FAKTOR});
   };
 
   var _currentPreviewAktion=null;
@@ -8019,7 +8095,338 @@
     if(!ak)return;
     _currentPreviewAktion=ak;
     generateAngebotPlakat(ak,function(blob){
-      showSharePreview(blob,'Angebot_'+(ak.von||'aktuell')+'.png',{showEinzelflyer:true});
+      showSharePreview(blob,'Angebot_'+(ak.von||'aktuell')+'.png',{showEinzelflyer:true,waage:'aktion'});
+    },undefined,{scale:HD_FAKTOR});
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  //  Auf die Waage (Spec waage-werbung-aus-cms)
+  //  Wochenplan: das Plakat wird auf das Bildschirm-Seitenverhaeltnis der Waage eingepasst.
+  //  Aktion: eigenes Querformat (Uebersicht + ein Bild je Artikel), weil die Waage Querformat am besten zeigt.
+  // ══════════════════════════════════════════════════════════════
+  // 2x der Waagen-Anzeigen: Vollbild 800x480, Dauerwerbung 800x280 (Programmieranleitung Powerscale).
+  var WAAGE_MASSE={vollbild:{w:1600,h:960},dauer:{w:1600,h:560}};
+
+  function waageDialog(opts){
+    if(!window.KWerbebilder||typeof window.KWerbebilder.uebertragen!=='function'){
+      toast('Das Waagen-Modul ist nicht geladen. Bitte die Seite neu laden.','error');return;
+    }
+    window.KWerbebilder.uebertragen(opts);
+  }
+
+  function wpDaten(){
+    var r=weekRange(kw,jahr);
+    var header='KW '+kw+' \u00B7 '+fmtD(r.start)+' \u2013 '+fmtD(r.end);
+    var byDay={};
+    [101000,101001,101002,101003,101004].forEach(function(d){byDay[d]=[];});
+    meals.forEach(function(m){if(byDay[m.wochentag])byDay[m.wochentag].push(m);});
+    var mealRows=[];
+    [101000,101001,101002,101003,101004].forEach(function(dc){
+      var items=byDay[dc];
+      if(items.length===0){mealRows.push({day:DAYS[dc],dish:'\u2014',price:'',alt:''});return;}
+      items.forEach(function(m,idx){
+        mealRows.push({day:idx===0?DAYS[dc]:'',dish:m.gericht||m.beschreibung||'\u2014',price:m.preis?fmtPriceWA(m.preis):'',alt:''});
+      });
+    });
+    var hp=hpCfgGet();
+    var flyerTpl=hp.wpFlyerTemplate||'classic-red';
+    var homeTpl=hp.wpHomeTemplate||'classic-red';
+    var tpl=(flyerTpl!=='classic-red')?flyerTpl:(homeTpl!=='classic-red')?homeTpl:flyerTpl;
+    var wpKind=(flyerTpl!=='classic-red')?'flyer':'home';
+    return {mealRows:mealRows,header:header,tpl:tpl,wpKind:wpKind};
+  }
+
+  /* Passt ein Bild mittig auf das Seitenverhaeltnis der Waagen-Anzeige ein und liefert ein JPEG.
+     Der Rand erhaelt die Farbe des Bildes (Probe knapp innerhalb der linken Kante), damit er nahtlos wirkt. */
+  function waageEinpassen(blob,art){
+    return new Promise(function(resolve,reject){
+      var url=URL.createObjectURL(blob);
+      var img=new Image();
+      img.onload=function(){
+        var m=WAAGE_MASSE[art]||WAAGE_MASSE.vollbild;
+        var bg='#ffffff';
+        try{
+          var t=document.createElement('canvas');t.width=1;t.height=1;
+          var tx=t.getContext('2d',{willReadFrequently:true});
+          tx.drawImage(img,Math.min(img.width-1,Math.round(img.width*20/794)),Math.round(img.height/2),1,1,0,0,1,1);
+          var p=tx.getImageData(0,0,1,1).data;bg='rgb('+p[0]+','+p[1]+','+p[2]+')';
+        }catch(e){}
+        var c=document.createElement('canvas');c.width=m.w;c.height=m.h;
+        var x=c.getContext('2d');
+        x.fillStyle=bg;x.fillRect(0,0,m.w,m.h);
+        var f=Math.min(m.w/img.width,m.h/img.height);
+        var w=img.width*f,h=img.height*f;
+        x.imageSmoothingQuality='high';
+        x.drawImage(img,(m.w-w)/2,(m.h-h)/2,w,h);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(b){if(b)resolve(b);else reject(new Error('JPEG'));},'image/jpeg',0.9);
+      };
+      img.onerror=function(){URL.revokeObjectURL(url);reject(new Error('Bild'));};
+      img.src=url;
+    });
+  }
+
+  window.cmsWaageWP=function(){
+    var d=wpDaten();
+    var kwNr=kw;
+    waageDialog({
+      titel:'Wochenplan auf die Waage',
+      art:'vollbild',
+      praefix:'10_Wochenplan_',
+      erzeuge:function(art,fort,abbruch){
+        fort(0,1);
+        return new Promise(function(resolve,reject){
+          generateMenuImage(d.mealRows,d.header,function(blob){
+            if(!blob){reject(new Error('Bild'));return;}
+            waageEinpassen(blob,art).then(function(jpg){
+              resolve(abbruch()?[]:[{name:'10_Wochenplan_KW'+kwNr+'.jpg',blob:jpg,an:true}]);
+            }).catch(reject);
+          },d.tpl,d.wpKind,{scale:2});
+        });
+      }
+    });
+  };
+
+  // ── Aktion im Querformat ──
+  function waageTextUmbruch(ctx,text,maxW,maxZeilen){
+    var woerter=String(text||'').replace(/\s+/g,' ').trim().split(' ');
+    var zeilen=[],z='';
+    woerter.forEach(function(w){
+      var t=z?z+' '+w:w;
+      if(ctx.measureText(t).width<=maxW||!z){z=t;}else{zeilen.push(z);z=w;}
+    });
+    if(z)zeilen.push(z);
+    if(zeilen.length>maxZeilen){
+      zeilen=zeilen.slice(0,maxZeilen);
+      var l=zeilen[maxZeilen-1];
+      while(l.length>1&&ctx.measureText(l+'\u2026').width>maxW)l=l.slice(0,-1);
+      zeilen[maxZeilen-1]=l+'\u2026';
+    }
+    return zeilen;
+  }
+
+  function waageDatum(d){
+    return d?new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+  }
+
+  function waageRrect(ctx,rx,ry,rw,rh,r){
+    ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
+    ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
+    ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
+    ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
+  }
+
+  // Bild in einen Rahmen einpassen (freigestellt wie auf dem Plakat), nie ueber den Rand hinaus.
+  function waageBildZeichnen(ctx,img,cfg,x,y,w,h){
+    if(!img)return;
+    var ofc=_freistellCanvas(img,cfg);
+    var sc=Math.min(w/ofc.width,h/ofc.height,cfg.imgMaxScale||3);
+    var iw=ofc.width*sc,ih=ofc.height*sc;
+    ctx.drawImage(ofc,x+(w-iw)/2,y+(h-ih)/2,iw,ih);
+  }
+
+  // Kopfzeile mit Titel, Gueltigkeit und Logo; liefert die Hoehe der Kopfzeile.
+  function waageKopf(ctx,ak,theme,W,H,logo){
+    var kompakt=H<400;
+    var hh=kompakt?44:62;
+    var von=waageDatum(ak.von),bis=waageDatum(ak.bis);
+    var datum=(von||bis)?von+' \u2013 '+bis:'';
+    var lh=hh-14,lw=logo?lh*(logo.width/logo.height):0;
+    if(logo)ctx.drawImage(logo,W-16-lw,7,lw,lh);
+    ctx.textAlign='right';ctx.fillStyle=theme.dateColor;
+    var df=kompakt?15:19;
+    ctx.font='900 '+df+'px Arial, sans-serif';
+    var dw=datum?ctx.measureText(datum).width:0;
+    if(datum)ctx.fillText(datum,W-16-lw-(lw?16:0),hh*0.64);
+    ctx.textAlign='left';ctx.fillStyle=theme.titleColor;
+    var maxW=W-32-lw-dw-48,fs=kompakt?26:36;
+    var titel=(ak.titel||'Angebote');
+    do{ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';fs-=2;}while(fs>14&&ctx.measureText(titel).width>maxW);
+    ctx.fillText(titel,16,hh*0.7);
+    return hh;
+  }
+
+  // Preisschild wie auf dem Plakat (Form, Farbe und Schriftgroessen aus dem Design), mittig bei (cx,cy).
+  function waagePreisSchild(ctx,cx,cy,tagW,tagH,item,cfg,theme,statt){
+    if(!item.preis)return;
+    var preisStr=Number(item.preis).toFixed(2).split('.');
+    ctx.save();
+    ctx.translate(cx,cy);ctx.rotate(-0.05);
+    ctx.fillStyle=theme.tagColor;
+    fillTagShape(ctx,tagW,tagH,cfg);
+    ctx.fillStyle='#ffffff';ctx.textAlign='left';
+    var fs=Math.round(tagH*0.66),cs=Math.round(fs*0.55),es=Math.round(fs*0.35);
+    var mainStr=preisStr[0]+',',centStr=preisStr[1];
+    function breite(){
+      ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';var mw=ctx.measureText(mainStr).width;
+      ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';var cw=ctx.measureText(centStr).width;
+      ctx.font='bold '+es+'px Arial, sans-serif';var ew=ctx.measureText('\u20AC').width;
+      return {mw:mw,cw:cw,ew:ew,tw:mw+cw+ew+3};
+    }
+    var b=breite();
+    if(b.tw>tagW-20){var f=(tagW-20)/b.tw;fs=Math.round(fs*f);cs=Math.round(cs*f);es=Math.round(es*f);b=breite();}
+    var px=-b.tw/2,py=fs*0.35;
+    ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';ctx.fillText(mainStr,px,py);
+    ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';ctx.fillText(centStr,px+b.mw+2,py-fs*0.3);
+    ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+b.mw+b.cw+3,py-fs*0.28);
+    ctx.restore();
+    if(item.statt_preis){
+      var st=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+      var sf=Math.round(tagH*0.26);
+      ctx.fillStyle=cfg.stattColor;ctx.font='bold '+sf+'px Arial, sans-serif';ctx.textAlign='center';
+      var sy=cy+tagH/2+sf+8;
+      ctx.fillText('statt '+st,cx,sy);
+      var sw=ctx.measureText('statt '+st).width;
+      ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1.5;ctx.beginPath();
+      ctx.moveTo(cx-sw/2-2,sy-sf*0.32);ctx.lineTo(cx+sw/2+2,sy-sf*0.32);ctx.stroke();
+    }
+    var pct=getSavingsPercent(item);
+    if(pct)drawSavingsBurst(ctx,cx-tagW/2+6,cy-tagH/2-8,Math.round(tagH*0.36),Math.round(tagH*0.23),'-'+pct+'%','plakat');
+    ctx.textAlign='left';
+  }
+
+  // Ein Waagenbild als JPEG-Blob zeichnen. zeichne(ctx,W,H) arbeitet in logischen 800 x 480 bzw. 800 x 280.
+  function waageSlide(art,theme,zeichne){
+    var m=WAAGE_MASSE[art]||WAAGE_MASSE.vollbild;
+    var S=2,W=m.w/S,H=m.h/S;
+    var c=document.createElement('canvas');c.width=m.w;c.height=m.h;
+    var ctx=hdKontext(c,S);
+    ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
+    zeichne(ctx,W,H);
+    return new Promise(function(resolve,reject){
+      c.toBlob(function(b){if(b)resolve(b);else reject(new Error('JPEG'));},'image/jpeg',0.9);
+    });
+  }
+
+  function waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo){
+    var teil=[];
+    for(var i=seite*perSeite;i<Math.min(items.length,(seite+1)*perSeite);i++)teil.push(i);
+    var cols=art==='dauer'?4:3,rows=art==='dauer'?1:2;
+    return waageSlide(art,theme,function(ctx,W,H){
+      var hh=waageKopf(ctx,ak,theme,W,H,logo);
+      var gap=10,x0=16,y0=hh+6,w=W-32,h=H-y0-12;
+      var cw=Math.floor((w-gap*(cols-1))/cols),ch=Math.floor((h-gap*(rows-1))/rows);
+      teil.forEach(function(idx,n){
+        var it=items[idx],col=n%cols,row=Math.floor(n/cols);
+        var x=x0+col*(cw+gap),y=y0+row*(ch+gap);
+        ctx.fillStyle=theme.cardBg;waageRrect(ctx,x,y,cw,ch,14);ctx.fill();
+        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;waageRrect(ctx,x,y,cw,ch,14);ctx.stroke();
+        var imgH=Math.round(ch*0.5);
+        waageBildZeichnen(ctx,images[idx],cfg,x+8,y+8,cw-16,imgH-8);
+        ctx.fillStyle=theme.textColor;ctx.textAlign='left';
+        ctx.font='700 14px Arial, sans-serif';
+        waageTextUmbruch(ctx,it.produkt||'',cw-20,2).forEach(function(z,zi){ctx.fillText(z,x+10,y+imgH+18+zi*16);});
+        if(it.preis){
+          ctx.fillStyle=theme.tagColor;ctx.font='900 '+(art==='dauer'?24:26)+'px Arial Black, Arial, sans-serif';
+          ctx.fillText(Number(it.preis).toFixed(2).replace('.',',')+' \u20AC',x+10,y+ch-12);
+          var pct=getSavingsPercent(it);
+          if(pct)drawSavingsBurst(ctx,x+cw-26,y+24,18,11,'-'+pct+'%','plakat');
+          if(it.statt_preis){
+            ctx.textAlign='right';ctx.fillStyle=cfg.stattColor;ctx.font='bold 12px Arial, sans-serif';
+            var st='statt '+Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+            ctx.fillText(st,x+cw-10,y+ch-12);
+            var sw=ctx.measureText(st).width;
+            ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+cw-10-sw-1,y+ch-16);ctx.lineTo(x+cw-9,y+ch-16);ctx.stroke();
+            ctx.textAlign='left';
+          }
+        }
+      });
+    });
+  }
+
+  function waageArtikel(ak,it,img,art,cfg,theme,logo){
+    return waageSlide(art,theme,function(ctx,W,H){
+      var kompakt=H<400,k=kompakt?0.72:1;
+      var hh=waageKopf(ctx,ak,theme,W,H,logo);
+      var cx0=16,cy0=hh+8,cw=W-32,chh=H-cy0-12;
+      ctx.fillStyle=theme.cardBg;waageRrect(ctx,cx0,cy0,cw,chh,24);ctx.fill();
+      ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;waageRrect(ctx,cx0,cy0,cw,chh,24);ctx.stroke();
+      var px=cx0+14,py=cy0+14,pw=Math.round(cw*(kompakt?0.36:0.46)),ph=chh-28;
+      ctx.fillStyle=theme.imgBg||theme.cardBg;waageRrect(ctx,px,py,pw,ph,16);ctx.fill();
+      waageBildZeichnen(ctx,img,cfg,px+12,py+12,pw-24,ph-24);
+      var tx=px+pw+Math.round(26*k),tw=cx0+cw-14-tx;
+      // Name: groesste Schrift, die in hoechstens 3 Zeilen passt
+      var maxZ=kompakt?2:3,fs=Math.round(38*k),zeilen=[];
+      ctx.fillStyle=theme.textColor;ctx.textAlign='left';
+      for(;fs>=Math.round(20*k);fs-=2){
+        ctx.font='900 '+fs+'px Arial, sans-serif';
+        zeilen=waageTextUmbruch(ctx,it.produkt||'',tw,99);
+        if(zeilen.length<=maxZ)break;
+      }
+      ctx.font='900 '+fs+'px Arial, sans-serif';
+      zeilen=waageTextUmbruch(ctx,it.produkt||'',tw,maxZ);
+      var y=py+fs;
+      zeilen.forEach(function(z){ctx.fillText(z,tx,y);y+=Math.round(fs*1.15);});
+      // Details
+      if(it.details){
+        var df=Math.round(17*k);
+        ctx.fillStyle=theme.detailsColor;ctx.font='400 '+df+'px Arial, sans-serif';
+        waageTextUmbruch(ctx,it.details,tw,kompakt?1:3).forEach(function(z){y+=Math.round(df*1.3);ctx.fillText(z,tx,y);});
+      }
+      // Gueltigkeit unten links in der Textspalte
+      var bis=waageDatum(ak.bis);
+      if(bis){ctx.fillStyle=theme.detailsColor;ctx.font='400 '+Math.round(13*k)+'px Arial, sans-serif';ctx.fillText('G\u00fcltig bis '+bis,tx,py+ph-4);}
+      // Preisschild unten rechts
+      var tagW=Math.min(Math.round(tw*0.66),Math.round(240*k)),tagH=Math.round(86*k);
+      waagePreisSchild(ctx,tx+tw-tagW/2-6,py+ph-tagH/2-Math.round(36*k),tagW,tagH,it,cfg,theme);
+    });
+  }
+
+  function waageAktionBilder(ak,art,fort,abbruch){
+    var items=ak.items||[];
+    var tag=toIsoDateOnly(ak.von)||'aktuell';
+    var cfg=cfgForKind(cfgGet(),'plakat');
+    var theme=getOfferTheme('plakat',cfg);
+    var perSeite=art==='dauer'?4:6;
+    var seiten=Math.ceil(items.length/perSeite);
+    var gesamt=seiten+items.length;
+    var logoP=new Promise(function(res){
+      var l=new Image();l.onload=function(){res(l);};l.onerror=function(){res(null);};l.src=hdLogoSrc(2);
+    });
+    var ladeP=Promise.all(items.map(function(it){
+      if(it.bild_data)return Promise.resolve();
+      var key=(it.artikelnummer||'').trim();
+      if(!key)return Promise.resolve();
+      return loadImageFromSharePoint(key,key).then(function(b64){if(b64)it.bild_data=b64;}).catch(function(){});
+    })).then(function(){return Promise.all(items.map(function(it){return loadItemImage(it.bild_data);}));});
+    return Promise.all([logoP,ladeP]).then(function(erg){
+      var logo=erg[0],images=erg[1];
+      var jobs=[];
+      for(var s=0;s<seiten;s++){(function(seite){
+        var nr=seite===0?'00':'00'+String.fromCharCode(97+seite);
+        jobs.push(function(){
+          return waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo)
+            .then(function(b){return {name:'20_Angebot_'+tag+'_'+nr+'_Uebersicht.jpg',blob:b,an:true};});
+        });
+      })(s);}
+      items.forEach(function(it,i){
+        jobs.push(function(){
+          var pos=(i+1<10?'0':'')+(i+1);
+          var slug=window.KWerbebilder.dateiname(it.produkt||('Artikel_'+(i+1)),40);
+          return waageArtikel(ak,it,images[i],art,cfg,theme,logo)
+            .then(function(b){return {name:'20_Angebot_'+tag+'_'+pos+'_'+slug+'.jpg',blob:b,an:true};});
+        });
+      });
+      var aus=[],n=0;
+      function weiter(){
+        if(abbruch())return Promise.resolve([]);
+        if(n>=jobs.length)return Promise.resolve(aus);
+        fort(n,gesamt);
+        return jobs[n++]().then(function(r){aus.push(r);return new Promise(function(res){setTimeout(res,0);});}).then(weiter);
+      }
+      return weiter();
+    });
+  }
+
+  window.cmsWaageAktion=function(aktId){
+    var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
+    if(!ak)return;
+    if(!ak.items||!ak.items.length){toast('Keine Artikel vorhanden','warn');return;}
+    waageDialog({
+      titel:'Aktion \u201e'+(ak.titel||'Angebote')+'\u201c auf die Waage',
+      art:'vollbild',
+      praefix:'20_Angebot_',
+      erzeuge:function(art,fort,abbruch){return waageAktionBilder(ak,art,fort,abbruch);}
     });
   };
 
@@ -8131,7 +8538,7 @@
       case 'editAktion':cmsEditAktion(id);break;
       case 'deleteAktion':cmsDeleteAktion(id);break;
       case 'toggleAngItems':
-        if(e.target.closest('[data-action="editAktion"],[data-action="previewAktion"],[data-action="shareAktion"],[data-action="deleteAktion"]'))break;
+        if(e.target.closest('[data-action="editAktion"],[data-action="previewAktion"],[data-action="shareAktion"],[data-action="waageAktion"],[data-action="deleteAktion"]'))break;
         var card=t.closest('.cms-card');
         if(card){
           var items=card.querySelector('.cms-ang-items');
@@ -8159,7 +8566,9 @@
       case 'shareWP':cmsShareWP();break;
       case 'previewWP':cmsPreviewWP();break;
       case 'printWP':cmsPrintWP();break;
+      case 'waageWP':cmsWaageWP();break;
       case 'shareAktion':cmsShareAktion(id);break;
+      case 'waageAktion':cmsWaageAktion(id);break;
       case 'previewAktion':cmsPreviewAktion(id);break;
       case 'saveHP':saveHomepage();break;
       case 'saveHPCfg':saveHPCfg();break;

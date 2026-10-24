@@ -389,6 +389,321 @@ window.KWerbebilder = (function () {
     }).catch(function () { _kamOffnend = false; kameraFehlt(); });
   }
 
+  // ══════════════════════════════════════════════════
+  //  Uebertragen aus dem CMS (Spec waage-werbung-aus-cms, F3-F6, F10)
+  //  Dialog: neue Bilder (mit Haken), vorhandene Waagenbilder (Haken "loeschen"), erst hoch, dann loeschen.
+  // ══════════════════════════════════════════════════
+
+  var _ueb = null;   // offener Dialog
+
+  // Gleiche Regeln wie die API (shared/waage.py): Umlaute umschreiben, nur [A-Za-z0-9._-].
+  function dateiname(text, max) {
+    var s = String(text || '');
+    [['ä', 'ae'], ['ö', 'oe'], ['ü', 'ue'], ['Ä', 'Ae'], ['Ö', 'Oe'], ['Ü', 'Ue'], ['ß', 'ss']].forEach(function (p) { s = s.split(p[0]).join(p[1]); });
+    if (s.normalize) s = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    s = s.replace(/[^A-Za-z0-9._-]+/g, '_').replace(/_+/g, '_').replace(/^[._-]+|[._-]+$/g, '');
+    return (s || 'bild').slice(0, max || 60);
+  }
+
+  function uebZahlen(u) {
+    var an = u.neu.filter(function (n) { return n.an; });
+    var neuNamen = {};
+    an.forEach(function (n) { neuNamen[n.name] = 1; });
+    var loesch = u.alt.filter(function (b) { return b.an && !neuNamen[b.name]; });
+    var ersetzt = u.alt.filter(function (b) { return neuNamen[b.name]; }).length;
+    var danach = u.alt.length - loesch.length + an.length - ersetzt;
+    return { an: an, loesch: loesch, ersetzt: ersetzt, danach: danach, zuviel: danach > MAX_BILDER, neuNamen: neuNamen };
+  }
+
+  function uebZu() {
+    if (!_ueb) return;
+    _ueb.token++;
+    _ueb.neu.forEach(function (n) { if (n.url) URL.revokeObjectURL(n.url); });
+    _ueb.alt.forEach(function (b) { if (b.url) URL.revokeObjectURL(b.url); });
+    if (_ueb.el) _ueb.el.remove();
+    document.removeEventListener('keydown', uebTaste, true);
+    _ueb = null;
+  }
+
+  function uebTaste(e) {
+    if (e.key === 'Escape' && _ueb && !_ueb.laufend && !_lb) { e.stopPropagation(); uebZu(); }
+  }
+
+  function brueckeText(b) {
+    if (!b) return '';
+    if (!b.bekannt) return '○ Brücke im Laden noch nie gemeldet – Änderungen werden übertragen, sobald sie läuft';
+    if (b.online) return b.ok ? '● Brücke online' : '● Brücke online (mit Fehler: ' + (b.fehler || 'unbekannt') + ')';
+    return '○ Brücke offline seit ' + dauer(b.vor_s) + ' – Änderungen werden nachgeholt, sobald sie wieder läuft';
+  }
+
+  function uebRender() {
+    var u = _ueb;
+    if (!u || !u.el) return;
+    var z = uebZahlen(u);
+    var h = '<div class="wb-dlg wb-ueb-dlg" role="dialog" aria-modal="true" aria-label="' + esc(u.o.titel || 'Auf die Waage') + '">'
+      + '<div class="wb-ueb-kopf"><h3>' + esc(u.o.titel || 'Auf die Waage übertragen') + '</h3>'
+      + '<button class="wb-btn" data-ueb="zu"' + (u.laufend ? ' disabled' : '') + ' aria-label="Schließen">✕</button></div>';
+
+    if (u.o.artWaehlbar !== false) {
+      h += '<div class="wb-art" role="tablist">';
+      ARTEN.forEach(function (a) {
+        h += '<button class="wb-btn' + (a.id === u.art ? ' on' : '') + '" role="tab" aria-selected="' + (a.id === u.art) + '" data-ueb="art" data-art="' + a.id + '"'
+          + (u.laufend ? ' disabled' : '') + '>' + a.text + '</button>';
+      });
+      h += '</div>';
+    }
+    var artInfo = ARTEN.filter(function (a) { return a.id === u.art; })[0];
+    h += '<p class="wb-klein">' + esc(artInfo.hinweis) + '</p>';
+    if (u.art === 'dauer' && u.o.hinweisDauer !== '') {
+      h += '<p class="wb-warn" role="status">' + esc(u.o.hinweisDauer || 'Die Dauerwerbung ist nur 800 × 280 Pixel flach – Schrift und Details werden dort sehr klein.') + '</p>';
+    }
+
+    // Neu
+    h += '<div class="wb-card"><h3>Neu auf die Waage <span class="wb-zaehl">' + z.an.length + ' von ' + u.neu.length + '</span></h3>';
+    if (!u.erzeugt && !u.fehlerNeu) {
+      h += '<p class="wb-klein" role="status" id="wb-ueb-fort">' + esc(u.fort || 'Bilder werden erstellt …') + '</p>';
+    } else if (u.fehlerNeu) {
+      h += '<p class="wb-fehler" role="alert">' + esc(u.fehlerNeu) + '</p>';
+    } else {
+      h += '<div class="wb-raster">';
+      u.neu.forEach(function (n, i) {
+        var st = n.status === 'ok' ? '✓ hochgeladen' : n.status === 'laeuft' ? 'wird gesendet …' : n.status === 'fehler' ? esc(n.fehler) : '';
+        h += '<div class="wb-item wb-ueb-item' + (n.status === 'fehler' ? ' wb-fehler' : n.status === 'ok' ? ' wb-ok' : '') + '" data-ueb-neu="' + i + '">'
+          + '<label class="wb-haken"><input type="checkbox" data-ueb="an" data-i="' + i + '"' + (n.an ? ' checked' : '') + (u.laufend || u.ergebnis ? ' disabled' : '') + ' aria-label="' + esc(n.name) + ' übertragen"></label>'
+          + '<button class="wb-thumb" data-ueb="gross" data-i="' + i + '" aria-label="Vorschau ' + esc(n.name) + '"><img alt="" src="' + n.url + '"></button>'
+          + '<div class="wb-info"><b>' + esc(n.name) + '</b><span>' + groesse(n.blob.size) + '</span>'
+          + (z.neuNamen[n.name] && u.alt.some(function (b) { return b.name === n.name; }) ? '<span class="wb-sync wartet">ersetzt das gleichnamige Bild</span>' : '')
+          + (st ? '<span class="wb-st">' + st + '</span>' : '') + '</div></div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+
+    // Bereits auf der Waage
+    h += '<div class="wb-card"><h3>Bereits auf der Waage <span class="wb-zaehl">' + u.alt.length + ' / ' + MAX_BILDER + '</span></h3>';
+    if (u.fehlerAlt) {
+      h += '<p class="wb-fehler" role="alert">' + esc(u.fehlerAlt) + '</p>';
+    } else if (!u.altGeladen) {
+      h += '<p class="wb-klein">Laden …</p>';
+    } else if (!u.alt.length) {
+      h += '<p class="wb-klein">Noch keine Bilder in diesem Verzeichnis.</p>';
+    } else {
+      h += '<div class="wb-aktionen wb-ueb-umschalter"><button class="wb-btn" data-ueb="alle"' + (u.laufend || u.ergebnis ? ' disabled' : '') + '>Alle zum Löschen wählen</button>'
+        + '<button class="wb-btn" data-ueb="keine"' + (u.laufend || u.ergebnis ? ' disabled' : '') + '>Keine</button></div>';
+      h += '<div class="wb-raster">';
+      u.alt.forEach(function (b, i) {
+        var ersetzt = !!z.neuNamen[b.name];
+        h += '<div class="wb-item wb-ueb-item" data-ueb-alt="' + esc(b.name) + '">'
+          + '<label class="wb-haken" title="' + (ersetzt ? 'wird durch das neue Bild ersetzt' : 'löschen') + '"><input type="checkbox" data-ueb="loesch" data-i="' + i + '"'
+          + ((b.an && !ersetzt) ? ' checked' : '') + ((u.laufend || u.ergebnis || ersetzt) ? ' disabled' : '') + ' aria-label="' + esc(b.name) + ' löschen"></label>'
+          + '<button class="wb-thumb" data-ueb-thumb="' + esc(b.name) + '" data-ueb="gross-alt" data-i="' + i + '" aria-label="Vorschau ' + esc(b.name) + '">'
+          + (b.url ? '<img alt="" src="' + b.url + '">' : '') + '</button>'
+          + '<div class="wb-info"><b>' + esc(b.name) + '</b><span>' + groesse(b.groesse) + '</span>'
+          + '<span class="wb-sync ' + (ersetzt ? 'wartet' : (b.an ? 'wartet' : 'auf')) + '">' + (ersetzt ? 'wird ersetzt' : (b.an ? 'wird gelöscht' : 'bleibt')) + '</span></div></div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+
+    // Zusammenfassung, Ergebnis, Knoepfe
+    h += '<p class="wb-klein wb-ueb-status" role="status">' + esc(brueckeText(u.bruecke)) + '</p>';
+    if (u.ergebnis) {
+      h += '<p class="' + (u.ergebnis.ok ? 'wb-klein wb-ok-text' : 'wb-fehler') + '" role="' + (u.ergebnis.ok ? 'status' : 'alert') + '">' + esc(u.ergebnis.text) + '</p>';
+    } else {
+      h += '<p class="wb-klein" id="wb-ueb-summe">' + z.an.length + ' neu' + (z.ersetzt ? ' (davon ' + z.ersetzt + ' ersetzen ein Bild)' : '') + ' · ' + z.loesch.length + ' löschen · danach ' + z.danach + ' / ' + MAX_BILDER
+        + '</p>';
+      if (z.zuviel) h += '<p class="wb-fehler" role="alert">Mehr als ' + MAX_BILDER + ' Bilder passen nicht auf die Waage. Bitte weniger Bilder wählen oder mehr alte löschen.</p>';
+    }
+    h += '<div class="wb-dlg-foot">';
+    if (u.ergebnis && u.ergebnis.ok) {
+      h += '<button class="wb-btn wb-haupt" data-ueb="zu">Fertig</button>';
+    } else {
+      h += '<button class="wb-btn" data-ueb="zu"' + (u.laufend ? ' disabled' : '') + '>Abbrechen</button>'
+        + '<button class="wb-btn wb-haupt" data-ueb="start" id="wb-ueb-start"'
+        + ((u.laufend || !u.erzeugt || z.zuviel || (!z.an.length && !z.loesch.length) || !u.altGeladen) ? ' disabled' : '') + '>'
+        + (u.laufend ? 'Wird übertragen …' : (u.ergebnis ? 'Erneut versuchen' : 'Übertragen'
+          + (z.an.length || z.loesch.length ? ' (' + z.an.length + ' neu' + (z.loesch.length ? ', ' + z.loesch.length + ' löschen' : '') + ')' : '')))
+        + '</button>';
+    }
+    h += '</div></div>';
+    u.el.innerHTML = h;
+  }
+
+  function uebNeuLaden() {
+    var u = _ueb;
+    if (!u) return;
+    var tok = ++u.token;
+    u.erzeugt = false; u.fehlerNeu = ''; u.fort = 'Bilder werden erstellt …'; u.altGeladen = false; u.fehlerAlt = ''; u.ergebnis = null;
+    u.neu.forEach(function (n) { if (n.url) URL.revokeObjectURL(n.url); });
+    u.alt.forEach(function (b) { if (b.url) URL.revokeObjectURL(b.url); });
+    u.neu = []; u.alt = [];
+    uebRender();
+
+    var ende = function () { return !_ueb || _ueb.token !== tok; };
+    Promise.resolve().then(function () {
+      return u.o.erzeuge(u.art, function (i, n) {
+        if (ende()) return;
+        u.fort = 'Bilder werden erstellt … ' + i + ' / ' + n;
+        var el = document.getElementById('wb-ueb-fort');
+        if (el) el.textContent = u.fort;
+      }, ende);
+    }).then(function (liste) {
+      if (ende()) return;
+      u.neu = (liste || []).map(function (x) {
+        return { name: x.name, blob: x.blob, an: x.an !== false, url: URL.createObjectURL(x.blob), status: '' };
+      });
+      u.erzeugt = true;
+      uebRender();
+    }).catch(function (e) {
+      if (ende()) return;
+      u.fehlerNeu = 'Die Bilder konnten nicht erstellt werden' + (e && e.message ? ' (' + e.message + ')' : '') + '.';
+      uebRender();
+    });
+
+    anfrage('GET', qs(u.art)).then(json).then(function (d) {
+      if (ende()) return;
+      u.alt = (d.bilder || []).map(function (b) {
+        return { name: b.name, groesse: b.groesse, etag: b.etag, status: b.status, url: '',
+                 an: !!(u.o.praefix && b.name.indexOf(u.o.praefix) === 0) };
+      });
+      u.bruecke = d.bruecke || null;
+      u.altGeladen = true;
+      uebRender();
+      uebThumbs(tok);
+    }).catch(function (e) {
+      if (ende()) return;
+      u.fehlerAlt = fehlerText(e);
+      uebRender();
+    });
+  }
+
+  function uebThumbs(tok) {
+    var u = _ueb;
+    if (!u) return;
+    var art = u.art;
+    var offen = u.alt.filter(function (b) { return !b.url; });
+    var i = 0;
+    function weiter() {
+      if (!_ueb || _ueb.token !== tok || i >= offen.length) return;
+      var b = offen[i++];
+      anfrage('GET', qs(art, b.name), null, null, 30000)
+        .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
+        .then(function (bl) {
+          if (!_ueb || _ueb.token !== tok) return;
+          b.url = URL.createObjectURL(bl);
+          var el = u.el && u.el.querySelector('[data-ueb-thumb="' + b.name.replace(/"/g, '') + '"]');
+          if (el) el.innerHTML = '<img alt="" src="' + b.url + '">';
+        })
+        .catch(function () { /* Miniatur bleibt leer */ })
+        .then(weiter);
+    }
+    weiter(); weiter(); weiter();
+  }
+
+  function uebStart() {
+    var u = _ueb;
+    if (!u || u.laufend) return;
+    var z = uebZahlen(u);
+    if (z.zuviel || (!z.an.length && !z.loesch.length)) return;
+    var art = u.art;
+    u.laufend = true; u.ergebnis = null;
+    z.an.forEach(function (n) { n.status = ''; n.fehler = ''; });
+    uebRender();
+    var fehler = 0, i = 0;
+
+    function weiterHoch() {
+      if (!_ueb || _ueb !== u) return;
+      if (i >= z.an.length) return loeschen();
+      var n = z.an[i++];
+      n.status = 'laeuft'; uebRender();
+      anfrage('POST', qs(art, n.name), n.blob, 'image/jpeg', 60000).then(json)
+        .then(function () { n.status = 'ok'; })
+        .catch(function (e) { n.status = 'fehler'; n.fehler = fehlerText(e); fehler++; })
+        .then(weiterHoch);
+    }
+
+    // Erst wenn ALLES Neue angekommen ist, faellt das Alte weg (wie "Alle ersetzen" im Kiosk).
+    function loeschen() {
+      if (fehler) {
+        u.laufend = false;
+        u.ergebnis = { ok: false, text: 'Nicht alle Bilder wurden übertragen – es wurde nichts gelöscht. Bitte „Erneut versuchen“.' };
+        uebRender();
+        return;
+      }
+      var k = 0, loeschFehler = 0;
+      (function eins() {
+        if (!_ueb || _ueb !== u) return;
+        if (k >= z.loesch.length) return fertig(loeschFehler);
+        anfrage('DELETE', qs(art, z.loesch[k++].name)).then(json).catch(function () { loeschFehler++; }).then(eins);
+      })();
+    }
+
+    function fertig(loeschFehler) {
+      u.laufend = false;
+      var text = z.an.length + (z.an.length === 1 ? ' Bild' : ' Bilder') + ' übertragen'
+        + (z.loesch.length ? ', ' + (z.loesch.length - loeschFehler) + ' gelöscht' : '')
+        + '. Die Brücke im Laden gleicht die Waage in wenigen Sekunden ab.';
+      if (loeschFehler) text += ' ' + loeschFehler + ' Bild(er) ließen sich nicht löschen.';
+      u.ergebnis = { ok: !loeschFehler, text: text };
+      toast(loeschFehler ? 'Übertragen, aber nicht alles gelöscht' : 'Auf die Waage übertragen');
+      uebRender();
+      if (host()) laden(true);
+      anfrage('GET', qs(art)).then(json).then(function (d) {
+        if (_ueb === u) { u.bruecke = d.bruecke || u.bruecke; uebRender(); }
+      }).catch(function () { /* Anzeige bleibt */ });
+    }
+
+    weiterHoch();
+  }
+
+  function uebKlick(e) {
+    var u = _ueb;
+    if (!u) return;
+    if (e.target === u.el && !u.laufend) { uebZu(); return; }
+    var t = e.target.closest('[data-ueb]');
+    if (!t) return;
+    var a = t.getAttribute('data-ueb');
+    var i = parseInt(t.getAttribute('data-i'), 10);
+    if (a === 'zu') { if (!u.laufend) uebZu(); }
+    else if (a === 'art') { if (!u.laufend && t.getAttribute('data-art') !== u.art) { u.art = t.getAttribute('data-art'); uebNeuLaden(); } }
+    else if (a === 'start') uebStart();
+    else if (a === 'alle') { u.alt.forEach(function (b) { b.an = true; }); uebRender(); }
+    else if (a === 'keine') { u.alt.forEach(function (b) { b.an = false; }); uebRender(); }
+    else if (a === 'gross' || a === 'gross-alt') {
+      var quelle = (a === 'gross' ? u.neu : u.alt).filter(function (x) { return x.url; });
+      var idx = quelle.indexOf((a === 'gross' ? u.neu : u.alt)[i]);
+      if (idx >= 0) lbOeffnen(quelle.map(function (x) { return { name: x.name, src: x.url }; }), idx);
+    }
+  }
+
+  function uebAenderung(e) {
+    var u = _ueb;
+    var t = e.target;
+    if (!u || !t || !t.getAttribute) return;
+    var a = t.getAttribute('data-ueb');
+    var i = parseInt(t.getAttribute('data-i'), 10);
+    if (a === 'an' && u.neu[i]) { u.neu[i].an = t.checked; uebRender(); }
+    else if (a === 'loesch' && u.alt[i]) { u.alt[i].an = t.checked; uebRender(); }
+  }
+
+  /* opts: { titel, art ('vollbild'|'dauer'), artWaehlbar (Standard true), hinweisDauer ('' = keiner),
+             praefix (alte Bilder mit diesem Namensanfang sind zum Loeschen vorausgewaehlt),
+             erzeuge(art, fortschritt(i, n), abgebrochen()) -> Promise<[{name, blob, an}]> } */
+  function uebertragen(opts) {
+    stil();
+    uebZu();
+    var el = document.createElement('div');
+    el.className = 'wb-overlay';
+    el.id = 'wb-ueb';
+    _ueb = { o: opts, art: opts.art === 'dauer' ? 'dauer' : 'vollbild', neu: [], alt: [], token: 0, el: el,
+             laufend: false, erzeugt: false, altGeladen: false, ergebnis: null, bruecke: null };
+    el.addEventListener('click', uebKlick);
+    el.addEventListener('change', uebAenderung);
+    document.body.appendChild(el);
+    document.addEventListener('keydown', uebTaste, true);
+    uebNeuLaden();
+  }
+
   function verwerfen(i) {
     var weg = (i === undefined) ? _staged.splice(0) : _staged.splice(i, 1);
     weg.forEach(function (s) { URL.revokeObjectURL(s.url); });
@@ -748,7 +1063,7 @@ window.KWerbebilder = (function () {
       '.wb-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px 16px;border:2px dashed var(--wp);border-radius:14px;background:var(--c-pri-l,#f0f4f1);cursor:pointer;text-align:center;min-height:44px}',
       '.wb-drop.over{background:#dcfce7}.wb-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.wb-drop b{color:var(--wp);font-size:15px}.wb-drop span{font-size:12px;color:var(--wm)}',
       '.wb-clip{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-top:8px}.wb-clip label.wb-btn{display:flex;align-items:center}',
-      '.wb-kam-dlg{max-width:720px}.wb-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block;margin:0 0 10px}',
+      '.wb-dlg.wb-kam-dlg{max-width:720px}.wb-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block;margin:0 0 10px}',
       '.wb-paste{flex:1 1 220px;min-height:44px;padding:10px 12px;border:1.5px dashed var(--wb);border-radius:12px;background:var(--ws);color:var(--wt);font-size:13px;outline:none;overflow:hidden;display:flex;align-items:center}',
       '.wb-paste:empty:before{content:attr(data-placeholder);color:var(--wm)}.wb-paste:focus{border-color:var(--wp)}',
       '.wb-raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}',
@@ -762,7 +1077,12 @@ window.KWerbebilder = (function () {
       '.wb-aktionen{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}',
       '.wb-warn,.wb-fehler{font-size:13px;margin:8px 0;padding:8px 12px;border-radius:10px}.wb-warn{background:#fef3c7;color:#92400e}.wb-fehler{background:#fee2e2;color:#991b1b}',
       '.wb-info span.wb-sync{font-weight:600}.wb-info span.wb-sync.auf{color:#15803d}.wb-info span.wb-sync.wartet{color:#b45309}',
-      '.wb-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55)}',
+      '.wb-dlg.wb-ueb-dlg{max-width:860px;max-height:92vh;overflow-y:auto;overscroll-behavior:contain}.wb-ueb-kopf{display:flex;align-items:center;gap:8px;margin-bottom:6px}.wb-ueb-kopf h3{flex:1;margin:0}',
+      '.wb-ueb-dlg .wb-card{margin-top:10px;padding:12px 14px}.wb-ueb-dlg .wb-raster{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}',
+      '.wb-ueb-dlg .wb-info b{white-space:normal;overflow:visible;text-overflow:clip;word-break:break-all;font-size:12px}',
+      '.wb-haken{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;cursor:pointer}.wb-haken input{width:24px;height:24px;accent-color:var(--wp);cursor:pointer}',
+      '.wb-ok-text{color:#15803d;font-weight:600}.wb-ueb-status{margin:8px 0 2px}.wb-ueb-umschalter{margin:0 0 8px}.wb-ueb-umschalter .wb-btn{min-height:36px;padding:4px 12px;font-size:13px}',
+      '.wb-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}.wb-overlay h3,.wb-overlay p,.wb-overlay span,.wb-overlay b{font-family:inherit}',
       '.wb-dlg{background:#fff;color:#1f2521;border-radius:16px;padding:20px 22px;max-width:440px;width:100%;box-shadow:0 20px 48px rgba(0,0,0,.3)}.wb-dlg h3{margin:0 0 8px;font-size:18px}.wb-dlg p{margin:0 0 16px;line-height:1.5}.wb-dlg-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}',
       '.wb-lb{background:rgba(0,0,0,.88);flex-direction:column;gap:10px}.wb-lb-bild{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;color:#fff}.wb-lb-bild img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}',
       '.wb-lb-name{color:#fff;font-size:14px;text-align:center}',
@@ -773,5 +1093,5 @@ window.KWerbebilder = (function () {
     document.head.appendChild(s);
   }
 
-  return { onShow: onShow, reload: laden };
+  return { onShow: onShow, reload: laden, uebertragen: uebertragen, dateiname: dateiname };
 })();
