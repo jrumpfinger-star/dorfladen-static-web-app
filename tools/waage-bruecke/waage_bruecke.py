@@ -368,7 +368,26 @@ def einzige_instanz(name="Global\\Waage-Bruecke-Dorfladen"):
     k = ctypes.WinDLL("kernel32", use_last_error=True)
     k.CreateMutexW.restype = ctypes.c_void_p
     _mutex = k.CreateMutexW(None, False, name)
-    return ctypes.get_last_error() != 183   # ERROR_ALREADY_EXISTS
+    return ctypes.get_last_error() not in (183, 5)   # schon vorhanden; 5 = Mutex der SYSTEM-Aufgabe, fuer Benutzer nicht oeffnbar
+
+
+def meldung(text, blockieren=False):
+    """Kurzes Meldungsfenster, damit die fensterlose exe nicht lautlos wirkt. Nur in einer Benutzersitzung
+    (Sitzung 0 gehoert der Hintergrundaufgabe) und nur als exe."""
+    if os.name != "nt" or not getattr(sys, "frozen", False):
+        return
+    import ctypes
+    sitzung = ctypes.c_ulong(0)
+    if not ctypes.windll.kernel32.ProcessIdToSessionId(os.getpid(), ctypes.byref(sitzung)) or sitzung.value == 0:
+        return
+
+    def zeige():
+        ctypes.windll.user32.MessageBoxW(None, text, "Waage-Bruecke", 0x40)
+    if blockieren:
+        zeige()
+    else:
+        import threading
+        threading.Thread(target=zeige, daemon=True).start()
 
 
 def bildtyp(daten):
@@ -833,12 +852,14 @@ def main(argv=None):
         ausgeben("FTP-Zugang fehlt: 'python waage_bruecke.py --einrichten' ausfuehren, config.json "
                  "anlegen (siehe config.example.json) oder WAAGE_FTP_HOST/WAAGE_FTP_USER/WAAGE_FTP_PASS setzen.",
                  sys.stderr)
+        meldung("FTP-Zugang fehlt. Bitte Waage-Bruecke.exe --einrichten ausfuehren oder config.json neben der exe anlegen.")
         return 2
     try:
         pruefe_config(cfg)
     except ValueError as e:
         logdatei_einrichten()
         ausgeben("Konfiguration fehlerhaft: %s" % e, sys.stderr)
+        meldung("Konfiguration fehlerhaft: %s" % e)
         return 2
     api = Api(cfg)
     if "--pruefen" in argv:
@@ -850,12 +871,19 @@ def main(argv=None):
         if not einzige_instanz():
             ausgeben("Die Waage-Bruecke laeuft bereits (anderes Fenster oder Hintergrundaufgabe). Dieser Start wird beendet.",
                      sys.stderr)
+            meldung("Die Waage-Bruecke laeuft bereits (im Hintergrund oder in einem anderen Fenster). "
+                    "Dieser Start wird beendet.\n\nZum Aktualisieren die laufende Bruecke zuerst beenden "
+                    "(Task-Manager: Waage-Bruecke.exe).", blockieren=True)
             return 3
     agent = Agent(cfg, api, log=lambda t: ausgeben(t), trocken=trocken,
                   stand_pfad=os.path.join(basis_verzeichnis(), "sync_stand.json"))
     ausgeben("Waage-Bruecke laeuft: Cloud %s, Waage %s:%s, Abfrage alle %s s%s%s" % (
         cfg["api_url"], cfg["ftp_host"], cfg["ftp_port"], cfg["poll_sekunden"], ", TROCKEN" if trocken else "",
         " (Strg+C beendet)" if konsole else ""))
+    if not konsole and not trocken and not einmal:
+        meldung("Die Waage-Bruecke laeuft jetzt im Hintergrund (ohne Fenster).\n\nProtokoll: "
+                + os.path.join(basis_verzeichnis(), LOGDATEI)
+                + "\nBeenden: Task-Manager, Waage-Bruecke.exe.")
     if einmal:
         agent.schritt(erzwingen=True)
         return 0 if not agent.fehler else 1
