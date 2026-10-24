@@ -29,9 +29,3 @@
 Validierung: Beide Werbebilder-Suiten 232/232 auf vier Viewports. Upload-Vorschau und
 POST-Bytes verglichen, Pixelmarkierungen für Beschnitt geprüft, Fehlerfälle und GIF-Erhalt
 bestätigt. Keine echten Bilder auf der Waage geändert.
-
-
-# Erweiterung: Brücke im Hintergrund
-
-- [x] H1 Fensterlose exe, Konsole bei Bedarf, Log, Einzelinstanz, Aufgabe beim Systemstart als SYSTEM mit Neustart (TC-F30-01…04)
-- [ ] H2 README, Neubau der exe (erledigt); Praxistest: fensterloser Start, Log, Einzelinstanz geprüft; echte Installation (Admin-Rückfrage, Start nach Neustart ohne Anmeldung) steht im Laden aus

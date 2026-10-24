@@ -130,9 +130,3 @@ bereits durch dieselbe Staging-Aufnahme. GIF-Bytes unverändert transportieren, 
 animierten Bilder durch Canvas schicken. Bestehenden Upload-vor-Löschen-Ablauf bewahren.
 Playwright prüft echte Vorschau-/POST-Bytes und Pixelmarkierungen, Profilwechsel,
 Fehlerfälle, GIF-Erhalt und bestehende Kamera-/Clipboard-Fälle auf vier Viewports.
-
-# Erweiterung: Brücke im Hintergrund (F30)
-
-- `waage_bruecke.py`: Aufgabe beim Systemstart als SYSTEM (`aufgaben_xml`, `autostart_einrichten` mit erhöhtem Neustart über `erhoeht_befehl`), Konsole des Aufrufers nur bei Bedarf (`_konsole_verbinden`), rotierendes `bruecke.log`, Schleife mit Fangnetz, Einzelinstanz per Mutex.
-- `build-exe.bat`: `--noconsole` statt `--console`; `README.md`: Hintergrundbetrieb, Log, Neuinstallation.
-- `tests/test_waage_bruecke.py`: TC-F30-01…04, TC-F14 angepasst.

@@ -262,28 +262,3 @@ Bilder in genau dieser Reihenfolge mit Positionsnummer.
   Dekodier-/Canvasfehler werden angezeigt und sperren den Upload.
 - **TC-F29-03** GIF-Bytes bleiben unverändert, Beschnitt nicht wählbar; Kamera/Clipboard nutzen
   dieselbe JPEG-Anpassung. Alte Bilder behalten ihre bestehende Großansicht.
-
-# Ergänzung: Brücke im Hintergrund
-
-- **F30** Die Brücke läuft **ohne Fenster** und startet nach **einmaliger Einrichtung** bei jedem
-  Hochfahren von selbst – **auch ohne Windows-Anmeldung** (der Laden-PC meldet sich nicht automatisch an).
-  - Die exe ist fensterlos gebaut. Für Einrichtung, `--pruefen`, `--trocken`, `--einmal` und den
-    Erststart ohne Konfiguration nutzt sie die Konsole des Aufrufers oder öffnet eine eigene.
-  - Aufgabe der Aufgabenplanung (`Waage-Bruecke`): Auslöser **Systemstart** (1 min Verzögerung), Konto
-    **SYSTEM** (läuft unsichtbar in Sitzung 0), **kein Zeitlimit**, bei Fehler Neustart nach 1 Minute,
-    keine zweite Instanz, Start auch bei Akku.
-  - Das Anlegen braucht **einmalig Administratorrechte**: Ohne sie startet sich das Programm für
-    diesen Schritt erhöht neu (eine Windows-Rückfrage). Danach startet die Brücke sofort im Hintergrund;
-    das Einrichtungsfenster kann geschlossen werden. Abgelehnte Rückfrage oder Fehler werden gemeldet.
-  - Ausgaben gehen in `bruecke.log` neben der exe (je 512 KB, 3 Sicherungen), Zeitstempel mit Datum.
-    Unerwartete Fehler stehen mit Traceback im Log; die Schleife läuft weiter.
-  - Höchstens eine laufende Brücke (benannter Mutex); ein zweiter Start beendet sich mit Hinweis.
-  - Entfernen: `--autostart-entfernen` (ebenfalls einmalige Rückfrage).
-- **TC-F30-01** Aufgabe-XML enthält Systemstart-Auslöser, SYSTEM-Konto, `Hidden`,
-  `ExecutionTimeLimit` `PT0S`, `RestartOnFailure`, `IgnoreNew`; Pfade/Namen sind XML-sicher; kein Anmeldeauslöser.
-- **TC-F30-02** Mit Admin: `schtasks /Create /XML` und `/Run`; ohne Admin: genau ein erhöhter Aufruf
-  (`RunAs`, `--autostart-anlegen`); bei „n“ geschieht nichts am System; Fehlschläge und abgelehnte
-  Rückfrage werden gemeldet (TC-F14-02/03 gelten weiter).
-- **TC-F30-03** Das Protokoll rotiert, trägt Datum und Uhrzeit und bleibt ohne Konsole nutzbar;
-  ein Fehler in einer Runde beendet die Schleife nicht.
-- **TC-F30-04** Zweiter Start bei laufender Brücke beendet sich mit Hinweis und Exitcode ≠ 0.
