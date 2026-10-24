@@ -375,6 +375,19 @@ def main():
                  "<RestartOnFailure>", "IgnoreNew", "<StartWhenAvailable>true", "Waage &amp; Co"):
         pruefe("TC-F30-01  Aufgaben-XML enthaelt " + teil, teil in xml, xml)
     pruefe("TC-F30-01  keine Anmeldung noetig: kein LogonTrigger", "LogonTrigger" not in xml)
+    pruefe("TC-F30-01  kein LogonType (ServiceAccount lehnt die Aufgabenplanung ab)", "LogonType" not in xml)
+    if os.name == "nt":   # die Aufgabenplanung prueft das Schema vor den Rechten: "Zugriff verweigert" ist hier gut
+        import subprocess
+        with tempfile.TemporaryDirectory() as tmp:
+            xml_pfad = os.path.join(tmp, "aufgabe.xml")
+            with open(xml_pfad, "w", encoding="utf-16") as f:
+                f.write(wb.aufgaben_xml("C:\\Waage-Test\\a.exe", "", "C:\\Waage-Test"))
+            r = subprocess.run(["schtasks", "/Create", "/F", "/TN", "Waage-Bruecke-XMLTest", "/XML", xml_pfad],
+                               capture_output=True, text=True)
+            subprocess.run(["schtasks", "/Delete", "/F", "/TN", "Waage-Bruecke-XMLTest"], capture_output=True, text=True)
+        pruefe("TC-F30-01  Aufgabenplanung akzeptiert das XML (Schema)",
+               r.returncode == 0 or "Access is denied" in r.stdout + r.stderr or "Zugriff" in r.stdout + r.stderr,
+               r.stdout + r.stderr)
     import xml.etree.ElementTree as ET
     ET.fromstring(xml.split("?>", 1)[1])
     pruefe("TC-F30-01  XML ist wohlgeformt", True)
@@ -414,11 +427,12 @@ def main():
     finally:
         sys.stdout = stdout_alt
     if os.name == "nt":
-        pruefe("TC-F30-04  erste Instanz darf laufen", wb.einzige_instanz())
         import subprocess
+        mx = "Local\\Waage-Bruecke-Test-%d" % os.getpid()   # eigener Name: eine echt laufende Bruecke stoert nicht
+        pruefe("TC-F30-04  erste Instanz darf laufen", wb.einzige_instanz(mx))
         r = subprocess.run([sys.executable, "-c",
-                            "import sys; sys.path.insert(0, %r); import waage_bruecke as w; sys.exit(0 if w.einzige_instanz() else 3)"
-                            % os.path.dirname(os.path.abspath(wb.__file__))])
+                            "import sys; sys.path.insert(0, %r); import waage_bruecke as w; sys.exit(0 if w.einzige_instanz(%r) else 3)"
+                            % (os.path.dirname(os.path.abspath(wb.__file__)), mx)])
         pruefe("TC-F30-04  zweite Instanz wird abgelehnt", r.returncode == 3, r.returncode)
 
     # ── Diagnose ──

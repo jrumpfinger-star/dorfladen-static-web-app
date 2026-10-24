@@ -209,7 +209,7 @@ def aufgaben_xml(programm, argumente, arbeitsordner):
         '  <RegistrationInfo><Description>Waage-Bruecke: gleicht die Werbebilder der Cloud mit der PC-Waage ab.'
         '</Description></RegistrationInfo>\n'
         '  <Triggers><BootTrigger><Enabled>true</Enabled><Delay>PT1M</Delay></BootTrigger></Triggers>\n'
-        '  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><LogonType>ServiceAccount</LogonType>'
+        '  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId>'
         '<RunLevel>LeastPrivilege</RunLevel></Principal></Principals>\n'
         '  <Settings>\n'
         '    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>\n'
@@ -359,7 +359,7 @@ def _konsole_verbinden(neu):
     return True
 
 
-def einzige_instanz():
+def einzige_instanz(name="Global\\Waage-Bruecke-Dorfladen"):
     """False, wenn schon eine Bruecke laeuft (benannter Mutex)."""
     global _mutex
     if os.name != "nt":
@@ -367,7 +367,7 @@ def einzige_instanz():
     import ctypes
     k = ctypes.WinDLL("kernel32", use_last_error=True)
     k.CreateMutexW.restype = ctypes.c_void_p
-    _mutex = k.CreateMutexW(None, False, "Global\\Waage-Bruecke-Dorfladen")
+    _mutex = k.CreateMutexW(None, False, name)
     return ctypes.get_last_error() != 183   # ERROR_ALREADY_EXISTS
 
 
