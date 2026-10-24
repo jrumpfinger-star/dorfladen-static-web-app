@@ -11,4 +11,4 @@
 | T7 | Aktion: Querformat-Zeichner, Einzelbilder, Knöpfe | TC-F8, F9 | erledigt |
 | T8 | Playwright-Tests, Gegenproben, Regression CMS | alle | erledigt |
 | T9 | Handbuch | – | erledigt |
-| T10 | Preview-Live-Test, Auslieferung | alle | offen |
+| T10 | Preview-Live-Test, Auslieferung | alle | erledigt (Preview in Edge: HD 2382 px, Dialog, 7 Aktionsbilder mit echten Daten; ohne Upload) |
