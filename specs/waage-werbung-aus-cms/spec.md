@@ -13,7 +13,7 @@ als eigenständige Datei übertragen werden kann.“*
 
 Befund: Wochenplan-Bild, Aktions-Plakat und Einzelflyer sind heute nur 794 px breit (Bildschirmmaß), das
 Handbuch nennt sie „hochauflösend“. Plakat und Einzelflyer sind fest Hochformat (794 × 1123). Die Waage
-nimmt nur JPEG/GIF und zeigt Vollbildwerbung 800 × 480, Dauerwerbung 800 × 280 (Programmieranleitung).
+nimmt nur JPEG/GIF. Anzeigeprofile laut Programmieranleitung und Foto siehe F12.
 
 ## Entwurfsentscheidungen
 
@@ -26,7 +26,7 @@ nimmt nur JPEG/GIF und zeigt Vollbildwerbung 800 × 480, Dauerwerbung 800 × 280
   des Hochformats. Das Hochformat zum Drucken bleibt, nur höher aufgelöst.
 - **Dateinamen steuern die Reihenfolge** auf der Waage: `10_Wochenplan_KW44.jpg`, danach `20_Angebot_…`.
   Alte Bilder derselben Art (Präfix `10_Wochenplan_` bzw. `20_Angebot_`) sind im Dialog vorausgewählt.
-- **Dauerwerbung (800 × 280)** ist wählbar, aber flach: Hinweis „Schrift wird sehr klein“; Vorgabe Vollbild.
+- **Dauerwerbung** nutzt die gewählte Profilhöhe (F12); Vorgabe der Werbeart bleibt Vollbild.
 
 ## Anforderungen
 
@@ -44,10 +44,13 @@ nimmt nur JPEG/GIF und zeigt Vollbildwerbung 800 × 480, Dauerwerbung 800 × 280
 - **F6** Ablauf „Übertragen“: erst alle angehakten neuen Bilder hochladen; nur wenn **alle** gelungen sind, die
   angehakten alten löschen. Ergebnis je Datei; bei Fehlern wird nichts gelöscht. Mehr als 99 Bilder nach dem
   Löschen sind nicht möglich (Knopf gesperrt, Hinweis).
-- **F7** Wochenplan-Waagenbild: HD-Bild auf das Seitenverhältnis des Ziels (Vollbild 5:3 = 1600 × 960,
-  Dauerwerbung 20:7 = 1600 × 560) mittig einpassen, Rand in der Hintergrundfarbe des Designs, JPEG.
-- **F8** Aktion im Querformat (Vollbild 1600 × 960): **Übersicht** mit bis zu 6 Artikeln (3 × 2) je Bild, bei mehr
-  Artikeln weitere Übersichten; dazu **ein Bild je Artikel** (Artikelbild groß, Name, Details, Preis, Statt-Preis
+- **F7** Wochenplan-Waagenbild: eigene Wochenübersicht mit allen Tagen, Gerichten und Preisen auf genau
+  einem JPEG im gewählten Anzeigeprofil. Keine verkleinerte Druckvorlage. Gerichtstext mindestens
+  18 native Pixel beim großen, 16 beim kleinen Profil. Nicht darstellbarer Inhalt wird ausdrücklich
+  gemeldet und nicht übertragen; weder Tage noch Gerichte still kürzen.
+- **F8** Aktion im Querformat (Maße nach F12): **Übersicht** mit bis zu 6 Artikeln (3 × 2) je Bild, bei mehr
+  Artikeln weitere Übersichten; bei weniger Artikeln Zeilen/Spalten zur Flächennutzung reduzieren.
+  Dazu **ein Bild je Artikel** (Artikelbild groß, Name, Details, Preis, Statt-Preis
   durchgestrichen, −%-Badge, Gültigkeit, Logo). Alle Bilder sind im Dialog angehakt. Die Kachel-Overrides des
   Hochformat-Editors gelten hier nicht.
 - **F9** Dateinamen: `10_Wochenplan_KW<kw>.jpg`; `20_Angebot_<von>_00_Uebersicht.jpg`, weitere
@@ -55,9 +58,26 @@ nimmt nur JPEG/GIF und zeigt Vollbildwerbung 800 × 480, Dauerwerbung 800 × 280
 - **F10** Während des Erstellens zeigt der Dialog den Fortschritt („Bilder werden erstellt 3 / 12“); Abbrechen
   ist möglich; ohne Artikelbild wird der Artikel trotzdem ohne Bild dargestellt.
 - **F11** Das CMS lädt `kiosk-werbebilder.js`; die Anmeldung läuft über das vorhandene CMS-Token (Cloud-API
-  `admin_auth_guard`). Der Kiosk-Tab arbeitet unverändert.
+  `admin_auth_guard`). Die bestehende Kiosk-Verwaltung bleibt erhalten, ergänzt um F28/F29 der Kiosk-Spec.
+
+- **F12** Gemeinsame, im Browser gespeicherte Anzeigeprofile im Kiosk und CMS: „800 × 600“
+  (Dauerwerbung 800 × 462, empfohlen anhand des Fotos, an der Waage zu prüfen) und „800 × 480“
+  (Dauerwerbung 800 × 280). Ohne gespeicherte Auswahl großes Profil. Keine automatische Hardwareerkennung.
+  JPEG-Ausgabe in 2×, also 1600 × 1200/924 beziehungsweise 1600 × 960/560.
+  Speicherfehler werden angezeigt. Bestehende Dateien bleiben unverändert.
+- **F13** Aktionslayouts nutzen die Profilhöhe; Text, Preis, Stattpreis und Gültigkeit liegen in
+  getrennten Bereichen. Lange Texte umbrechen; bei nicht darstellbarem Inhalt warnen und Transfer
+  sperren statt Text abzuschneiden. Druck-HD und Editor unverändert.
 
 ## Testfälle
+
+- **TC-F12-01** Beide Profile und beide Arten liefern die exakten JPEG-Maße; Profilwechsel regeneriert
+  Bilder, bleibt nach Neuladen erhalten und sendet ohne Bestätigung keine POST/DELETE.
+- **TC-F12-02** Fehler beim Speichern der Profilwahl erscheint sichtbar.
+- **TC-F7-03** Wochenübersicht enthält alle Gerichte und Preise bei Mindestschriftgröße; lange
+  Testdaten führen zu expliziter Überlaufmeldung und gesperrtem Transfer, nicht zu gekürzten Dateien.
+- **TC-F13-01** Aktionsübersichten und Einzelartikel haben bei beiden Profilen keine überlappenden
+  Text-/Preisbereiche; lange Namen/Details und Stattpreise werden berücksichtigt.
 
 - **TC-F1-01** Wochenplan-Vorschau: das Bild ist 2382 px breit; Download und Druck erhalten dieselbe Auflösung.
 - **TC-F1-02** Plakat-Vorschau 2382 × 3369; ein 1×-Aufruf (Einstellungs-Vorschau) bleibt 794 px.
@@ -71,9 +91,9 @@ nimmt nur JPEG/GIF und zeigt Vollbildwerbung 800 × 480, Dauerwerbung 800 × 280
 - **TC-F6-01** Reihenfolge der Anfragen: erst alle `POST`, dann die gewählten `DELETE`.
 - **TC-F6-02** Schlägt ein Upload fehl, folgt kein `DELETE`; Fehler wird je Datei gezeigt.
 - **TC-F6-03** Würde die Zahl 99 überschritten, ist „Übertragen“ gesperrt.
-- **TC-F7-01** Wochenplan-Waagenbild ist ein JPEG (`ffd8ff`) 1600 × 960 (Vollbild) bzw. 1600 × 560 (Dauerwerbung).
-- **TC-F7-02** Dauerwerbung zeigt den Hinweis zur kleinen Schrift; Vorgabe ist Vollbild.
-- **TC-F8-01** Aktion mit 8 Artikeln: 2 Übersichten (6 + 2) und 8 Einzelbilder, alle 1600 × 960 JPEG, alle angehakt.
+- **TC-F7-01** Wochenplan-Waagenbild ist ein JPEG (`ffd8ff`) in den Maßen aus F12.
+- **TC-F7-02** Dauerwerbung zeigt die ausgewählte Fläche; Vorgabe ist Vollbild.
+- **TC-F8-01** Aktion mit 8 Artikeln: 2 Übersichten (6 + 2) und 8 Einzelbilder, JPEG nach F12, alle angehakt.
 - **TC-F8-02** Aktion mit 3 Artikeln: 1 Übersicht und 3 Einzelbilder.
 - **TC-F9-01** Dateinamen entsprechen F9 und sind bereinigt (Umlaute, Sonderzeichen, Länge).
 - **TC-F10-01** Fortschrittsanzeige erscheint; Abbrechen sendet nichts.

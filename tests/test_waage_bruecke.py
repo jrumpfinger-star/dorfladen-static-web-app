@@ -343,7 +343,7 @@ def main():
            == ("192.168.1.134", 21, "bizuser-test", "https://www.dorfladen-oberornau.de", "pass-test"), neu)
     pruefe("TC-F24-01  ungueltige IP wurde abgelehnt", sum(1 for m in meldungen if "ungueltig" in m) == 1, meldungen)
     fragen = []
-    wb.installieren(eingabe=lambda p: (fragen.append(p), "n")[1], ausgabe=lambda m: None, ausfuehren=lambda b: (0, ""))
+    wb.installieren(eingabe=lambda p: (fragen.append(p), "n")[1], ausgabe=lambda m: None, ausfuehren=lambda b: (0, ""), ist_admin=True)
     pruefe("TC-F24-01  keine Firewall-Frage, nur Autostart", len(fragen) == 1 and "automatisch" in fragen[0] and "Firewall" not in fragen[0], fragen)
 
     def abgelehnt(**kw):
@@ -358,17 +358,68 @@ def main():
                                           {"api_url": "www.x.de"}, {"poll_sekunden": 1})))
     pruefe("TC-F24-01  Rechnername und Standardwerte sind gueltig", abgelehnt(ftp_host="waage-pc") is None and abgelehnt() is None)
 
-    # Autostart (F14)
+    # Autostart (F14, F30): beim Hochfahren als SYSTEM, versteckt, Neustart bei Fehler
     befehle = []
-    wb.installieren(eingabe=lambda _p: "", ausgabe=lambda m: None, ausfuehren=lambda b: (befehle.append(" ".join(b)), (0, ""))[1])
-    pruefe("TC-F14-01  Autostart per Aufgabenplanung ohne Admin (ONLOGON, LIMITED)",
-           any("schtasks" in b and "ONLOGON" in b and "LIMITED" in b for b in befehle), befehle)
+    ok = wb.installieren(eingabe=lambda _p: "", ausgabe=lambda m: None, ist_admin=True,
+                         ausfuehren=lambda b: (befehle.append(" ".join(b)), (0, ""))[1])
+    pruefe("TC-F30-02  Admin: Aufgabe per schtasks /Create /XML angelegt und sofort gestartet",
+           ok and any("schtasks" in b and "/Create" in b and "/XML" in b for b in befehle)
+           and any("/Run" in b for b in befehle), befehle)
+    befehle.clear()
+    ok = wb.installieren(eingabe=lambda _p: "", ausgabe=lambda m: None, ist_admin=False,
+                         ausfuehren=lambda b: (befehle.append(" ".join(b)), (0, ""))[1])
+    pruefe("TC-F30-02  ohne Admin: einmalige erhoehte Rueckfrage (RunAs), kein direktes schtasks",
+           ok and len(befehle) == 1 and "RunAs" in befehle[0] and "--autostart-anlegen" in befehle[0], befehle)
+    xml = wb.aufgaben_xml("C:\\Waage & Co\\Waage-Bruecke.exe", "--x", "C:\\Waage & Co")
+    for teil in ("<BootTrigger>", "S-1-5-18", "<Hidden>true</Hidden>", "<ExecutionTimeLimit>PT0S</ExecutionTimeLimit>",
+                 "<RestartOnFailure>", "IgnoreNew", "<StartWhenAvailable>true", "Waage &amp; Co"):
+        pruefe("TC-F30-01  Aufgaben-XML enthaelt " + teil, teil in xml, xml)
+    pruefe("TC-F30-01  keine Anmeldung noetig: kein LogonTrigger", "LogonTrigger" not in xml)
+    import xml.etree.ElementTree as ET
+    ET.fromstring(xml.split("?>", 1)[1])
+    pruefe("TC-F30-01  XML ist wohlgeformt", True)
     befehle.clear()
     wb.installieren(eingabe=lambda _p: "n", ausgabe=lambda m: None, ausfuehren=lambda b: (befehle.append(b), (0, ""))[1])
     pruefe("TC-F14-02  Bei Nein wird nichts am System veraendert", befehle == [])
     ausgaben = []
-    wb.installieren(eingabe=lambda _p: "j", ausgabe=ausgaben.append, ausfuehren=lambda b: (1, "Zugriff verweigert"))
-    pruefe("TC-F14-03  Fehlschlag wird verstaendlich gemeldet statt abzubrechen", any("Zugriff verweigert" in a for a in ausgaben), ausgaben)
+    ok = wb.installieren(eingabe=lambda _p: "j", ausgabe=ausgaben.append, ist_admin=True,
+                         ausfuehren=lambda b: (1, "Zugriff verweigert"))
+    pruefe("TC-F14-03  Fehlschlag wird verstaendlich gemeldet statt abzubrechen",
+           (not ok) and any("Zugriff verweigert" in a for a in ausgaben), ausgaben)
+    ausgaben = []
+    wb.installieren(eingabe=lambda _p: "j", ausgabe=ausgaben.append, ist_admin=False, ausfuehren=lambda b: (1223, ""))
+    pruefe("TC-F30-02  abgelehnte Admin-Rueckfrage wird gemeldet", any("1223" in a for a in ausgaben), ausgaben)
+
+    # Protokoll und Einzelinstanz (F30)
+    with tempfile.TemporaryDirectory() as tmp:
+        lg = wb.logdatei_einrichten(tmp)
+        wb.ausgeben("Testzeile")
+        for h in lg.handlers:
+            h.flush()
+        with open(os.path.join(tmp, wb.LOGDATEI), encoding="utf-8") as f:
+            zeile = f.read()
+        pruefe("TC-F30-03  Protokollzeile traegt Datum und Uhrzeit",
+               bool(__import__("re").match(r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d Testzeile", zeile)), zeile)
+        pruefe("TC-F30-03  Protokoll rotiert (512 KB, 3 Sicherungen)",
+               lg.handlers[0].maxBytes == 512 * 1024 and lg.handlers[0].backupCount == 3)
+        for h in lg.handlers:
+            h.close()
+        lg.handlers = []
+        wb._logger = None
+    stdout_alt = sys.stdout
+    sys.stdout = None
+    try:
+        wb.ausgeben("ohne Konsole")
+        pruefe("TC-F30-03  Ausgabe ohne Konsole (stdout None) wirft nicht", True)
+    finally:
+        sys.stdout = stdout_alt
+    if os.name == "nt":
+        pruefe("TC-F30-04  erste Instanz darf laufen", wb.einzige_instanz())
+        import subprocess
+        r = subprocess.run([sys.executable, "-c",
+                            "import sys; sys.path.insert(0, %r); import waage_bruecke as w; sys.exit(0 if w.einzige_instanz() else 3)"
+                            % os.path.dirname(os.path.abspath(wb.__file__))])
+        pruefe("TC-F30-04  zweite Instanz wird abgelehnt", r.returncode == 3, r.returncode)
 
     # ── Diagnose ──
     ausg = []

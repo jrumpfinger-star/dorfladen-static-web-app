@@ -19,3 +19,19 @@
 | T15 | Preview-Live-Test (Brücke lokal, ohne Browser-Sonderfreigabe) | alle | erledigt (Kette Kiosk → Cloud → Brücke → Test-FTP in Edge; echte Waage nur lesend/trocken) |
 | T16 | Zwischenablage: Einfügen per Strg+V und Knopf, Umwandlung in JPEG, Tests | TC-F26-01…05 | erledigt |
 | T17 | Kamera: Live-Aufnahme im Tab, Kamera-App als Ersatz, Freigabe der Kamera, Tests | TC-F27-01…03 | erledigt |
+# Erweiterung: Upload-Anpassung
+
+- [x] D1 Profile und Persistenz (TC-F28-01, CMS TC-F12-02); Voraussetzung: Spec/Plan aktualisiert.
+- [x] D2 JPEG-Anpassung und tatsächliche Zielvorschau (TC-F29-01); Voraussetzung: D1.
+- [x] D3 Wechsel/Fehler/GIF sowie Kamera/Clipboard (TC-F29-02/03); Voraussetzung: D2.
+- [x] D4 Vier-Viewport-Regression und Handbuch; Voraussetzung: D3.
+
+Validierung: Beide Werbebilder-Suiten 232/232 auf vier Viewports. Upload-Vorschau und
+POST-Bytes verglichen, Pixelmarkierungen für Beschnitt geprüft, Fehlerfälle und GIF-Erhalt
+bestätigt. Keine echten Bilder auf der Waage geändert.
+
+
+# Erweiterung: Brücke im Hintergrund
+
+- [x] H1 Fensterlose exe, Konsole bei Bedarf, Log, Einzelinstanz, Aufgabe beim Systemstart als SYSTEM mit Neustart (TC-F30-01…04)
+- [ ] H2 README, Neubau der exe (erledigt); Praxistest: fensterloser Start, Log, Einzelinstanz geprüft; echte Installation (Admin-Rückfrage, Start nach Neustart ohne Anmeldung) steht im Laden aus

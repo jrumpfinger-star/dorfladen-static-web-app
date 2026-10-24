@@ -24,11 +24,14 @@ import getpass
 import hashlib
 import io
 import json
+import logging
+import logging.handlers
 import os
 import re
 import socket
 import sys
 import time
+import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -187,28 +190,185 @@ def _ausfuehren(befehl):
     return r.returncode, (r.stdout + r.stderr).strip()
 
 
-def start_befehl():
-    """Befehl, der die Bruecke startet (exe oder Skript)."""
+def start_programm():
+    """(Programm, Argumente) fuer den Start im Hintergrund: die fensterlose exe bzw. pythonw mit dem Skript."""
     if getattr(sys, "frozen", False):
-        return '"%s"' % os.path.abspath(sys.executable)
-    return '"%s" "%s"' % (sys.executable, os.path.abspath(__file__))
+        return os.path.abspath(sys.executable), ""
+    pythonw = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "pythonw.exe")
+    programm = pythonw if os.path.exists(pythonw) else sys.executable
+    return programm, '"%s"' % os.path.abspath(__file__)
 
 
-def autostart_einrichten(ausfuehren=_ausfuehren):
-    """Startet die Bruecke bei jeder Windows-Anmeldung (Aufgabenplanung, ohne Admin)."""
-    return ausfuehren(["schtasks", "/Create", "/F", "/SC", "ONLOGON", "/RL", "LIMITED",
-                       "/TN", AUFGABE, "/TR", start_befehl()])
+def aufgaben_xml(programm, argumente, arbeitsordner):
+    """Aufgabe der Aufgabenplanung: beim Hochfahren als SYSTEM (ohne Anmeldung, ohne Fenster),
+    ohne Zeitlimit, Neustart bei Fehler."""
+    from xml.sax.saxutils import escape as e
+    return (
+        '<?xml version="1.0" encoding="UTF-16"?>\n'
+        '<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">\n'
+        '  <RegistrationInfo><Description>Waage-Bruecke: gleicht die Werbebilder der Cloud mit der PC-Waage ab.'
+        '</Description></RegistrationInfo>\n'
+        '  <Triggers><BootTrigger><Enabled>true</Enabled><Delay>PT1M</Delay></BootTrigger></Triggers>\n'
+        '  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><LogonType>ServiceAccount</LogonType>'
+        '<RunLevel>LeastPrivilege</RunLevel></Principal></Principals>\n'
+        '  <Settings>\n'
+        '    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>\n'
+        '    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>\n'
+        '    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>\n'
+        '    <StartWhenAvailable>true</StartWhenAvailable>\n'
+        '    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>\n'
+        '    <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>\n'
+        '    <Hidden>true</Hidden>\n'
+        '    <Enabled>true</Enabled>\n'
+        '  </Settings>\n'
+        '  <Actions Context="Author"><Exec><Command>%(p)s</Command><Arguments>%(a)s</Arguments>'
+        '<WorkingDirectory>%(w)s</WorkingDirectory></Exec></Actions>\n'
+        '</Task>\n'
+    ) % {"p": e(programm), "a": e(argumente), "w": e(arbeitsordner)}
 
 
-def autostart_entfernen(ausfuehren=_ausfuehren):
+def _ist_admin():
+    if os.name != "nt":
+        return False
+    import ctypes
+    try:
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except (AttributeError, OSError):
+        return False
+
+
+def erhoeht_befehl(argument):
+    """Startet dieses Programm mit einem Argument erhoeht (einmalige Windows-Rueckfrage) und wartet darauf."""
+    programm, args = start_programm()
+    liste = ((args + " ") if args else "") + argument
+    ps = ("$p = Start-Process -FilePath '%s' -ArgumentList '%s' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
+          % (programm.replace("'", "''"), liste.replace("'", "''")))
+    return ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps]
+
+
+def aufgabe_anlegen(ausfuehren=_ausfuehren):
+    """Mit Administratorrechten: Aufgabe anlegen und sofort starten. (Code, Text)"""
+    import tempfile
+    programm, argumente = start_programm()
+    xml = aufgaben_xml(programm, argumente, basis_verzeichnis())
+    fd, pfad = tempfile.mkstemp(suffix=".xml")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-16") as f:
+            f.write(xml)
+        code, text = ausfuehren(["schtasks", "/Create", "/F", "/TN", AUFGABE, "/XML", pfad])
+    finally:
+        try:
+            os.remove(pfad)
+        except OSError:
+            pass
+    if code != 0:
+        return code, text
+    return ausfuehren(["schtasks", "/Run", "/TN", AUFGABE])
+
+
+def autostart_einrichten(ausfuehren=_ausfuehren, ist_admin=None):
+    """Startet die Bruecke bei jedem Hochfahren versteckt als SYSTEM, auch ohne Anmeldung.
+    Das braucht einmalig Administratorrechte: ohne sie startet sich das Programm erhoeht neu."""
+    if ist_admin is None:
+        ist_admin = _ist_admin()
+    if not ist_admin:
+        return ausfuehren(erhoeht_befehl("--autostart-anlegen"))
+    return aufgabe_anlegen(ausfuehren)
+
+
+def autostart_entfernen(ausfuehren=_ausfuehren, ist_admin=None):
+    if ist_admin is None:
+        ist_admin = _ist_admin()
+    if not ist_admin:
+        return ausfuehren(erhoeht_befehl("--autostart-entfernen"))
     return ausfuehren(["schtasks", "/Delete", "/F", "/TN", AUFGABE])
 
 
-def installieren(eingabe=input, ausgabe=print, ausfuehren=_ausfuehren):
-    """Nach der Einrichtung: Autostart anbieten. Eine Firewall-Regel ist nicht noetig (nur ausgehend)."""
-    if eingabe("Bruecke bei jeder Windows-Anmeldung automatisch starten? [J/n]: ").strip().lower() in ("", "j", "ja", "y"):
-        code, text = autostart_einrichten(ausfuehren)
-        ausgabe("Autostart eingerichtet." if code == 0 else "Autostart fehlgeschlagen: " + text)
+def installieren(eingabe=input, ausgabe=print, ausfuehren=_ausfuehren, ist_admin=None):
+    """Nach der Einrichtung: Autostart anbieten. True, wenn die Aufgabe angelegt und gestartet wurde.
+    Eine Firewall-Regel ist nicht noetig (nur ausgehend)."""
+    if eingabe("Bruecke bei jedem Hochfahren automatisch im Hintergrund starten (einmalige Admin-Rueckfrage)? [J/n]: ").strip().lower() in ("", "j", "ja", "y"):
+        code, text = autostart_einrichten(ausfuehren, ist_admin)
+        if code == 0:
+            ausgabe("Autostart eingerichtet: Die Bruecke laeuft jetzt im Hintergrund und startet bei jedem Hochfahren "
+                    "von selbst, auch ohne Anmeldung. Dieses Fenster kann geschlossen werden. Protokoll: "
+                    + os.path.join(basis_verzeichnis(), LOGDATEI))
+            return True
+        ausgabe("Autostart fehlgeschlagen: %s (Code %s). Abgelehnte Rueckfrage oder fehlende Rechte? "
+                "Protokoll: %s" % (text or "-", code, os.path.join(basis_verzeichnis(), LOGDATEI)))
+    return False
+
+
+def einrichtung_abschliessen(cfg, api, eingabe=input, ausgabe=print, ausfuehren=_ausfuehren, ist_admin=None):
+    """Pruefen, Autostart anbieten. True = laeuft nun im Hintergrund (Konsole kann enden)."""
+    pruefen(cfg, api, ausgabe=ausgabe)
+    return installieren(eingabe, ausgabe, ausfuehren, ist_admin)
+
+
+# ── Betrieb ohne Fenster: Konsole bei Bedarf, Protokolldatei, eine Instanz ───
+
+LOGDATEI = "bruecke.log"
+_logger = None
+_mutex = None
+
+
+def logdatei_einrichten(ordner=None):
+    """Rotierende Protokolldatei neben der exe (512 KB, 3 Sicherungen). Ohne Schreibrecht nur Konsole."""
+    global _logger
+    try:
+        h = logging.handlers.RotatingFileHandler(os.path.join(ordner or basis_verzeichnis(), LOGDATEI),
+                                                 maxBytes=512 * 1024, backupCount=3, encoding="utf-8")
+    except OSError:
+        return None
+    h.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%Y-%m-%d %H:%M:%S"))
+    lg = logging.getLogger("waage-bruecke")
+    lg.handlers = [h]
+    lg.setLevel(logging.INFO)
+    lg.propagate = False
+    _logger = lg
+    return lg
+
+
+def ausgeben(text, strom=None):
+    """In die Protokolldatei und, falls eine Konsole da ist, auch dorthin."""
+    if _logger:
+        _logger.info(text)
+    strom = strom or sys.stdout
+    if strom is not None:
+        try:
+            print(text, file=strom, flush=True)
+        except (OSError, ValueError):
+            pass
+
+
+def _konsole_verbinden(neu):
+    """Die exe ist fensterlos gebaut. Eingaben/Ausgaben laufen ueber die Konsole des Aufrufers
+    oder (neu=True) ueber eine eigene. True, wenn danach eine Konsole da ist."""
+    if os.name != "nt" or not getattr(sys, "frozen", False):
+        return True
+    import ctypes
+    k = ctypes.windll.kernel32
+    if not k.AttachConsole(-1) and not (neu and k.AllocConsole()):
+        return False
+    try:
+        sys.stdin = open("CONIN$", "r", encoding="utf-8", errors="replace")
+        sys.stdout = open("CONOUT$", "w", encoding="utf-8", errors="replace")
+        sys.stderr = sys.stdout
+    except OSError:
+        return False
+    return True
+
+
+def einzige_instanz():
+    """False, wenn schon eine Bruecke laeuft (benannter Mutex)."""
+    global _mutex
+    if os.name != "nt":
+        return True
+    import ctypes
+    k = ctypes.WinDLL("kernel32", use_last_error=True)
+    k.CreateMutexW.restype = ctypes.c_void_p
+    _mutex = k.CreateMutexW(None, False, "Global\\Waage-Bruecke-Dorfladen")
+    return ctypes.get_last_error() != 183   # ERROR_ALREADY_EXISTS
 
 
 def bildtyp(daten):
@@ -640,47 +800,73 @@ def _zeit():
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    if "--einrichten" in argv:
-        cfg = einrichten()
-        installieren()
-        pruefen(cfg, Api(cfg))
-        return 0
-    if "--autostart-entfernen" in argv:
-        code, text = autostart_entfernen()
-        print("Autostart entfernt." if code == 0 else "Fehlgeschlagen: " + text)
+    frozen = getattr(sys, "frozen", False)
+    if "--autostart-anlegen" in argv or "--autostart-entfernen" in argv:   # erhoehter Aufruf, siehe erhoeht_befehl
+        logdatei_einrichten()
+        _konsole_verbinden(neu=False)
+        if "--autostart-anlegen" in argv:
+            code, text = aufgabe_anlegen()
+            ausgeben("Autostart angelegt und gestartet." if code == 0 else "Autostart fehlgeschlagen: %s" % text)
+        else:
+            code, text = autostart_entfernen(ist_admin=True)
+            ausgeben("Autostart entfernt." if code == 0 else "Fehlgeschlagen: " + text)
         return code
     cfg = lade_config()
-    if not (cfg["ftp_host"] and cfg["ftp_user"]) and getattr(sys, "frozen", False) and sys.stdin and sys.stdin.isatty():
+    fehlt = not (cfg["ftp_host"] and cfg["ftp_user"])
+    interaktiv = fehlt or any(a in argv for a in ("--einrichten", "--pruefen", "--trocken", "--einmal"))
+    if frozen:
+        konsole = _konsole_verbinden(neu=interaktiv)
+    else:
+        konsole = bool(sys.stdin and sys.stdin.isatty())
+    if "--einrichten" in argv:
+        cfg = einrichten()
+        einrichtung_abschliessen(cfg, Api(cfg))
+        return 0
+    if fehlt and frozen and konsole:
         print("Erstmalige Einrichtung der Waage-Bruecke.\n")
         cfg = einrichten()
-        installieren()
-        pruefen(cfg, Api(cfg))
+        if einrichtung_abschliessen(cfg, Api(cfg)):
+            return 0
         cfg = lade_config()
     if not (cfg["ftp_host"] and cfg["ftp_user"]):
-        print("FTP-Zugang fehlt: 'python waage_bruecke.py --einrichten' ausfuehren, config.json "
-              "anlegen (siehe config.example.json) oder WAAGE_FTP_HOST/WAAGE_FTP_USER/WAAGE_FTP_PASS setzen.",
-              file=sys.stderr)
+        logdatei_einrichten()
+        ausgeben("FTP-Zugang fehlt: 'python waage_bruecke.py --einrichten' ausfuehren, config.json "
+                 "anlegen (siehe config.example.json) oder WAAGE_FTP_HOST/WAAGE_FTP_USER/WAAGE_FTP_PASS setzen.",
+                 sys.stderr)
         return 2
     try:
         pruefe_config(cfg)
     except ValueError as e:
-        print("Konfiguration fehlerhaft: %s" % e, file=sys.stderr)
+        logdatei_einrichten()
+        ausgeben("Konfiguration fehlerhaft: %s" % e, sys.stderr)
         return 2
     api = Api(cfg)
     if "--pruefen" in argv:
         return 0 if pruefen(cfg, api) else 1
     trocken = "--trocken" in argv
-    agent = Agent(cfg, api, log=lambda t: print("%s %s" % (_zeit(), t), flush=True), trocken=trocken,
+    einmal = "--einmal" in argv
+    if not trocken and not einmal:
+        logdatei_einrichten()
+        if not einzige_instanz():
+            ausgeben("Die Waage-Bruecke laeuft bereits (anderes Fenster oder Hintergrundaufgabe). Dieser Start wird beendet.",
+                     sys.stderr)
+            return 3
+    agent = Agent(cfg, api, log=lambda t: ausgeben(t), trocken=trocken,
                   stand_pfad=os.path.join(basis_verzeichnis(), "sync_stand.json"))
-    print("Waage-Bruecke laeuft: Cloud %s, Waage %s:%s, Abfrage alle %s s%s (Strg+C beendet)" % (
-        cfg["api_url"], cfg["ftp_host"], cfg["ftp_port"], cfg["poll_sekunden"], ", TROCKEN" if trocken else ""))
-    if "--einmal" in argv:
+    ausgeben("Waage-Bruecke laeuft: Cloud %s, Waage %s:%s, Abfrage alle %s s%s%s" % (
+        cfg["api_url"], cfg["ftp_host"], cfg["ftp_port"], cfg["poll_sekunden"], ", TROCKEN" if trocken else "",
+        " (Strg+C beendet)" if konsole else ""))
+    if einmal:
         agent.schritt(erzwingen=True)
         return 0 if not agent.fehler else 1
     try:
         while True:
-            agent.schritt()
-            time.sleep(cfg["poll_sekunden"])
+            try:
+                agent.schritt()
+                time.sleep(cfg["poll_sekunden"])
+            except Exception:   # Fangnetz: eine fehlerhafte Runde darf die Bruecke nie beenden
+                ausgeben("Unerwarteter Fehler, Bruecke laeuft weiter:\n" + traceback.format_exc())
+                time.sleep(max(cfg["poll_sekunden"], 30))
     except KeyboardInterrupt:
         pass
     return 0
@@ -688,9 +874,9 @@ def main(argv=None):
 
 if __name__ == "__main__":
     ergebnis = main()
-    if ergebnis and getattr(sys, "frozen", False):
+    if ergebnis and getattr(sys, "frozen", False) and sys.stdin is not None:
         try:
             input("Enter zum Beenden ...")
-        except (EOFError, OSError):
+        except (EOFError, OSError, RuntimeError):
             pass
     sys.exit(ergebnis)

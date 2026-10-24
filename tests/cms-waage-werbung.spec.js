@@ -90,13 +90,13 @@ async function cmsMit(page, opts = {}) {
   await page.route('**/api/wochenplan**', (r) => {
     if (r.request().method() !== 'GET') return r.fallback();
     const tage = [101000, 101001, 101001, 101002, 101003, 101004];
-    const gerichte = ['Geschnetzeltes mit Champignonrahmsoße und Kroketten', 'Cordon bleu mit Pommes', 'Gefüllte Zucchini mit Hackfleisch', 'Lasagne und Salat', 'Gyros mit Pommes und Tsatsiki', 'Schnitzel mit Kartoffelsalat'];
+    const gerichte = o.gerichte || ['Geschnetzeltes mit Champignonrahmsoße und Kroketten', 'Cordon bleu mit Pommes', 'Gefüllte Zucchini mit Hackfleisch', 'Lasagne und Salat', 'Gyros mit Pommes und Tsatsiki', 'Schnitzel mit Kartoffelsalat'];
     const data = tage.map((t, i) => ({ dl_wochenplanid: 'w' + i, dl_gericht: gerichte[i], dl_wochentag: t, dl_preis: 8.8 + (i % 2), dl_status: 101001, dl_kalenderwoche: 44, dl_jahr: 2026 }));
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data }) });
   });
   await page.route('**/api/angebote**', (r) => {
     if (r.request().method() !== 'GET') return r.fallback();
-    const data = ARTIKEL.slice(0, o.artikel).map((a, i) => ({
+    const data = (o.artikelDaten || ARTIKEL).slice(0, o.artikel).map((a, i) => ({
       dl_angeboteid: 'a' + i, dl_produkt: a[0], dl_details: a[1], dl_preis: a[2], dl_statt_preis: a[3], dl_artikelnummer: '40000' + i,
       dl_aktion_titel: 'Herbstwoche', dl_aktion_id: 'A1', dl_gueltig_von: '2026-10-26', dl_gueltig_bis: '2026-10-31', dl_sortierung: i, dl_status: 101001,
     }));
@@ -166,7 +166,151 @@ const dlg = (page) => page.locator('#wb-ueb');
 const neueBilder = (page) => page.locator('#wb-ueb [data-ueb-neu]');
 const altBilder = (page) => page.locator('#wb-ueb [data-ueb-alt]');
 
+async function zeichnungenMitschreiben(page) {
+  await page.evaluate(() => {
+    window.__waageTexte = [];
+    const ids = new WeakMap();
+    let nr = 0;
+    const orig = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, x, y, ...args) {
+      if (this.canvas.width === 1600) {
+        if (!ids.has(this.canvas)) ids.set(this.canvas, ++nr);
+        const m = this.measureText(text), t = this.getTransform();
+        const left = x - (this.textAlign === 'right' ? m.width : this.textAlign === 'center' ? m.width / 2 : 0);
+        window.__waageTexte.push({
+          id: ids.get(this.canvas), text: String(text), font: this.font,
+          left, right: left + m.width, top: y - m.actualBoundingBoxAscent,
+          bottom: y + m.actualBoundingBoxDescent, height: this.canvas.height / t.d,
+        });
+      }
+      return orig.call(this, text, x, y, ...args);
+    };
+  });
+}
+
+function pruefeTextflaechen(texte) {
+  for (const t of texte) {
+    expect(t.left, t.text).toBeGreaterThanOrEqual(0);
+    expect(t.right, t.text).toBeLessThanOrEqual(800);
+    expect(t.top, t.text).toBeGreaterThanOrEqual(0);
+    expect(t.bottom, t.text).toBeLessThanOrEqual(t.height);
+  }
+  for (let i = 0; i < texte.length; i++) {
+    for (const b of texte.slice(i + 1).filter((b) => b.id === texte[i].id)) {
+      const a = texte[i];
+      const overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1
+        && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      expect(overlap, `${a.text} / ${b.text}`).toBe(false);
+    }
+  }
+}
+
+async function bildAnhaengen(testInfo, name, bytes) {
+  const pfad = testInfo.outputPath(name + '.jpg');
+  require('fs').writeFileSync(pfad, Buffer.from(bytes));
+  await testInfo.attach(name, { path: pfad, contentType: 'image/jpeg' });
+}
+
 test.describe('HD und Auf die Waage', () => {
+
+  test('TC-F12-01 / F7-03: beide Profile und Arten, ganze Woche lesbar und ohne Textkollisionen', async ({ page }, testInfo) => {
+    const m = await cmsMit(page);
+    await zeichnungenMitschreiben(page);
+    await page.locator('[data-action="waageWP"]').click();
+    for (const profil of ['gross', 'klein']) {
+      await dlg(page).locator('[data-ueb="profil"]').selectOption(profil);
+      for (const art of ['vollbild', 'dauer']) {
+        await page.evaluate(() => { window.__waageTexte = []; });
+        await dlg(page).locator(`[data-ueb="art"][data-art="${art}"]`).click();
+        // Bereits aktive Art muss ebenfalls einen neuen Zeichenvorgang liefern.
+        await dlg(page).locator('[data-ueb="profil"]').selectOption(profil);
+        await expect(neueBilder(page)).toHaveCount(1);
+        const dims = await neueBilder(page).locator('img').evaluate(async (img) => {
+          await img.decode(); return [img.naturalWidth, img.naturalHeight];
+        });
+        expect(dims).toEqual([1600, art === 'vollbild' ? (profil === 'gross' ? 1200 : 960) : (profil === 'gross' ? 924 : 560)]);
+        if (profil === 'gross' && art === 'dauer') {
+          const jpg = await neueBilder(page).locator('img').evaluate(async (img) => Array.from(new Uint8Array(await (await fetch(img.src)).arrayBuffer())));
+          await bildAnhaengen(testInfo, 'wochenplan-dauer', jpg);
+          expect(await dlg(page).evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+        }
+        const texte = await page.evaluate(() => window.__waageTexte);
+        expect(texte.map((t) => t.text).join(' ')).toContain('Geschnetzeltes mit Champignonrahmsoße und Kroketten');
+        expect(texte.map((t) => t.text).join(' ')).toContain('Schnitzel mit Kartoffelsalat');
+        for (const tag of ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag']) expect(texte.some((t) => t.text === tag)).toBe(true);
+        const gerichte = texte.filter((t) => t.font.startsWith('600 '));
+        expect(gerichte.length).toBeGreaterThanOrEqual(6);
+        for (const t of gerichte) {
+          expect(parseFloat(t.font.split(' ')[1])).toBeGreaterThanOrEqual(profil === 'gross' ? 18 : 16);
+        }
+        pruefeTextflaechen(texte);
+      }
+    }
+    expect(m.anfragen('POST')).toHaveLength(0);
+    expect(m.anfragen('DELETE')).toHaveLength(0);
+    await page.reload();
+    await page.locator('[data-action="waageWP"]').click();
+    await expect(dlg(page).locator('[data-ueb="profil"]')).toHaveValue('klein');
+  });
+
+  test('TC-F7-03: zu lange Gerichte sperren Transfer statt Inhalte zu kuerzen', async ({ page }) => {
+    const m = await cmsMit(page, { gerichte: Array(6).fill('Ein sehr langes Gericht mit vielen Beilagen '.repeat(30)) });
+    await page.locator('[data-action="waageWP"]').click();
+    await dlg(page).locator('[data-ueb="art"][data-art="dauer"]').click();
+    await expect(dlg(page).locator('[role="alert"]')).toContainText('ganze Woche passt nicht lesbar');
+    await expect(dlg(page).locator('#wb-ueb-start')).toBeDisabled();
+    expect(m.anfragen('POST')).toHaveLength(0);
+  });
+
+  test('TC-F12-02: Speicherfehler wird angezeigt, Wahl bleibt fuer diese Sitzung wirksam', async ({ page }) => {
+    await cmsMit(page);
+    await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('QuotaExceededError'); }; });
+    await page.locator('[data-action="waageWP"]').click();
+    await dlg(page).locator('[data-ueb="profil"]').selectOption('klein');
+    await expect(dlg(page)).toContainText('konnte nicht gespeichert werden');
+    await expect(neueBilder(page)).toHaveCount(1);
+  });
+
+  test('TC-F13-01: Aktionsbilder beider Profile und Arten ohne Textkollisionen', async ({ page }, testInfo) => {
+    await cmsMit(page);
+    await aktionenTab(page);
+    await zeichnungenMitschreiben(page);
+    await page.locator('[data-action="waageAktion"]').first().click();
+    for (const profil of ['gross', 'klein']) {
+      for (const art of ['vollbild', 'dauer']) {
+        await dlg(page).locator(`[data-ueb="art"][data-art="${art}"]`).click();
+        await expect(neueBilder(page)).toHaveCount(10, { timeout: 30000 });
+        await page.evaluate(() => { window.__waageTexte = []; });
+        await dlg(page).locator('[data-ueb="profil"]').selectOption(profil);
+        await expect(neueBilder(page)).toHaveCount(10, { timeout: 30000 });
+        const hoehen = await neueBilder(page).locator('img').evaluateAll(async (bilder) => {
+          await Promise.all(bilder.map((img) => img.decode()));
+          return bilder.map((img) => [img.naturalWidth, img.naturalHeight]);
+        });
+        const h = art === 'vollbild' ? (profil === 'gross' ? 1200 : 960) : (profil === 'gross' ? 924 : 560);
+        expect(hoehen.every(([w, hoehe]) => w === 1600 && hoehe === h)).toBe(true);
+        const texte = await page.evaluate(() => window.__waageTexte);
+        expect(texte.length).toBeGreaterThan(40);
+        pruefeTextflaechen(texte);
+        if (profil === 'gross' && art === 'dauer') {
+          for (const idx of [0, 2]) {
+            const jpg = await neueBilder(page).nth(idx).locator('img').evaluate(async (img) => Array.from(new Uint8Array(await (await fetch(img.src)).arrayBuffer())));
+            await bildAnhaengen(testInfo, 'aktion-dauer-' + idx, jpg);
+          }
+        }
+      }
+    }
+  });
+
+  test('TC-F13-01: ueberlange Artikeldetails werden nicht still gekuerzt', async ({ page }) => {
+    const m = await cmsMit(page, { artikelDaten: [['Regionaler Bergkäse', 'Besondere Eigenschaften und ausführliche Zutaten '.repeat(40), 2.99, 3.99]] });
+    await aktionenTab(page);
+    await page.locator('[data-action="waageAktion"]').first().click();
+    await expect(dlg(page).locator('[role="alert"]')).toContainText('Artikeltext passt nicht lesbar');
+    await expect(neueBilder(page)).toHaveCount(0);
+    await expect(dlg(page).locator('#wb-ueb-start')).toBeDisabled();
+    expect(m.anfragen('POST')).toHaveLength(0);
+  });
 
   test('TC-F1-01: Wochenplan-Vorschau ist 3x aufgeloest (2382 px), Aussehen bleibt', async ({ page }) => {
     await cmsMit(page);
@@ -277,7 +421,7 @@ test.describe('HD und Auf die Waage', () => {
     await expect(dlg(page).locator('#wb-ueb-summe')).toContainText('0 löschen');
   });
 
-  test('TC-F6-01 / F7-01: erst hochladen, dann loeschen; Wochenplan-Bild ist JPEG 1600 x 960', async ({ page }) => {
+  test('TC-F6-01 / F7-01: erst hochladen, dann loeschen; Wochenplan-Bild ist JPEG 1600 x 1200', async ({ page }) => {
     const m = await cmsMit(page);
     await page.locator('[data-action="waageWP"]').click();
     await expect(neueBilder(page)).toHaveCount(1, { timeout: 20000 });
@@ -288,7 +432,7 @@ test.describe('HD und Auf die Waage', () => {
     const post = m.anfragen('POST')[0];
     expect(post.typ).toBe('image/jpeg');
     expect(post.kopf).toBe('ffd8ff');
-    expect(post.masse).toEqual({ w: 1600, h: 960 });
+    expect(post.masse).toEqual({ w: 1600, h: 1200 });
     expect(post.art).toBe('vollbild');
     expect(m.anfragen('DELETE').map((l) => l.name)).toEqual(['10_Wochenplan_KW43.jpg']);
     expect(m.zustand.vollbild.map((b) => b.name)).not.toContain('10_Wochenplan_KW43.jpg');
@@ -339,24 +483,24 @@ test.describe('HD und Auf die Waage', () => {
     expect(m.anfragen('POST').map((l) => l.name)).toEqual([name]);
   });
 
-  test('TC-F7-01 / F7-02: Dauerwerbung: Hinweis zur kleinen Schrift, Bild 1600 x 560; Vorgabe ist Vollbild', async ({ page }) => {
+  test('TC-F7-01 / F7-02: Dauerwerbung: Profilhinweis, Bild 1600 x 924; Vorgabe ist Vollbild', async ({ page }) => {
     const m = await cmsMit(page);
     await page.locator('[data-action="waageWP"]').click();
     await expect(neueBilder(page)).toHaveCount(1, { timeout: 20000 });
     await expect(dlg(page).locator('[data-ueb="art"].on')).toHaveText('Vollbild');
     await expect(dlg(page)).not.toContainText('Schrift und Details werden dort sehr klein');
     await dlg(page).locator('[data-ueb="art"][data-art="dauer"]').click();
-    await expect(dlg(page)).toContainText('Schrift und Details werden dort sehr klein');
+    await expect(dlg(page)).toContainText('Dauerwerbung: 800 × 462 Pixel');
     await expect(neueBilder(page)).toHaveCount(1, { timeout: 20000 });
     await expect(altBilder(page)).toHaveCount(0);
     await dlg(page).locator('#wb-ueb-start').click();
     await expect(dlg(page).locator('[data-ueb="zu"]').last()).toHaveText('Fertig', { timeout: 20000 });
     const post = m.anfragen('POST')[0];
     expect(post.art).toBe('dauer');
-    expect(post.masse).toEqual({ w: 1600, h: 560 });
+    expect(post.masse).toEqual({ w: 1600, h: 924 });
   });
 
-  test('TC-F8-01 / F9-01: Aktion mit 8 Artikeln: 2 Uebersichten + 8 Einzelbilder, alle JPEG 1600 x 960, alle angehakt, Namen bereinigt', async ({ page }) => {
+  test('TC-F8-01 / F9-01: Aktion mit 8 Artikeln: 2 Uebersichten + 8 Einzelbilder, alle JPEG 1600 x 1200, alle angehakt, Namen bereinigt', async ({ page }) => {
     const m = await cmsMit(page);
     await aktionenTab(page);
     await page.locator('[data-action="waageAktion"]').first().click();
@@ -379,12 +523,12 @@ test.describe('HD und Auf die Waage', () => {
     await expect(dlg(page).locator('[data-ueb="zu"]').last()).toHaveText('Fertig', { timeout: 60000 });
     const posts = m.anfragen('POST');
     expect(posts).toHaveLength(10);
-    for (const p of posts) { expect(p.typ).toBe('image/jpeg'); expect(p.kopf).toBe('ffd8ff'); expect(p.masse).toEqual({ w: 1600, h: 960 }); expect(p.bytes).toBeLessThan(8 * 1024 * 1024); }
+    for (const p of posts) { expect(p.typ).toBe('image/jpeg'); expect(p.kopf).toBe('ffd8ff'); expect(p.masse).toEqual({ w: 1600, h: 1200 }); expect(p.bytes).toBeLessThan(8 * 1024 * 1024); }
     expect(m.folge().slice(0, 10).every((x) => x === 'POST')).toBe(true);
     expect(m.folge().slice(10)).toEqual(['DELETE']);
   });
 
-  test('TC-F8-02: Aktion mit 3 Artikeln: 1 Uebersicht + 3 Einzelbilder; Dauerwerbung: 1600 x 560', async ({ page }) => {
+  test('TC-F8-02: Aktion mit 3 Artikeln: 1 Uebersicht + 3 Einzelbilder; Dauerwerbung: 1600 x 924', async ({ page }) => {
     const m = await cmsMit(page, { artikel: 3 });
     await aktionenTab(page);
     await page.locator('[data-action="waageAktion"]').first().click();
@@ -394,7 +538,7 @@ test.describe('HD und Auf die Waage', () => {
     await expect(neueBilder(page)).toHaveCount(4, { timeout: 60000 });   // 3 Artikel passen auf eine Uebersicht (4 je Bild)
     await dlg(page).locator('#wb-ueb-start').click();
     await expect(dlg(page).locator('[data-ueb="zu"]').last()).toHaveText('Fertig', { timeout: 60000 });
-    for (const p of m.anfragen('POST')) { expect(p.art).toBe('dauer'); expect(p.masse).toEqual({ w: 1600, h: 560 }); }
+    for (const p of m.anfragen('POST')) { expect(p.art).toBe('dauer'); expect(p.masse).toEqual({ w: 1600, h: 924 }); }
   });
 
   test('TC-F8-01: einzelne Bilder lassen sich abwaehlen; nur angehakte werden uebertragen', async ({ page }) => {

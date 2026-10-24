@@ -8101,11 +8101,9 @@
 
   // ══════════════════════════════════════════════════════════════
   //  Auf die Waage (Spec waage-werbung-aus-cms)
-  //  Wochenplan: das Plakat wird auf das Bildschirm-Seitenverhaeltnis der Waage eingepasst.
+  //  Wochenplan und Aktionen werden fuer die native Werbeflaeche neu angeordnet.
   //  Aktion: eigenes Querformat (Uebersicht + ein Bild je Artikel), weil die Waage Querformat am besten zeigt.
   // ══════════════════════════════════════════════════════════════
-  // 2x der Waagen-Anzeigen: Vollbild 800x480, Dauerwerbung 800x280 (Programmieranleitung Powerscale).
-  var WAAGE_MASSE={vollbild:{w:1600,h:960},dauer:{w:1600,h:560}};
 
   function waageDialog(opts){
     if(!window.KWerbebilder||typeof window.KWerbebilder.uebertragen!=='function'){
@@ -8136,34 +8134,58 @@
     return {mealRows:mealRows,header:header,tpl:tpl,wpKind:wpKind};
   }
 
-  /* Passt ein Bild mittig auf das Seitenverhaeltnis der Waagen-Anzeige ein und liefert ein JPEG.
-     Der Rand erhaelt die Farbe des Bildes (Probe knapp innerhalb der linken Kante), damit er nahtlos wirkt. */
-  function waageEinpassen(blob,art){
+  function waageTextVoll(ctx,text,w,maxZeilen){
+    var z=waageTextUmbruch(ctx,text,w,10000);
+    if(z.length>maxZeilen||z.some(function(s){return ctx.measureText(s).width>w;})){
+      throw new Error('Der Text ist für diese Werbefläche zu lang. Bitte kürzen oder das größere Anzeigeprofil wählen.');
+    }
+    return z;
+  }
+
+  function waageWochenplan(d,art,m){
+    var cc=getWpTplColors(d.tpl,hpCfgGet(),d.wpKind);
+    var theme={bgColor:cc.wpBgColor||'#fff'};
     return new Promise(function(resolve,reject){
-      var url=URL.createObjectURL(blob);
-      var img=new Image();
-      img.onload=function(){
-        var m=WAAGE_MASSE[art]||WAAGE_MASSE.vollbild;
-        var bg='#ffffff';
-        try{
-          var t=document.createElement('canvas');t.width=1;t.height=1;
-          var tx=t.getContext('2d',{willReadFrequently:true});
-          tx.drawImage(img,Math.min(img.width-1,Math.round(img.width*20/794)),Math.round(img.height/2),1,1,0,0,1,1);
-          var p=tx.getImageData(0,0,1,1).data;bg='rgb('+p[0]+','+p[1]+','+p[2]+')';
-        }catch(e){}
-        var c=document.createElement('canvas');c.width=m.w;c.height=m.h;
-        var x=c.getContext('2d');
-        x.fillStyle=bg;x.fillRect(0,0,m.w,m.h);
-        var f=Math.min(m.w/img.width,m.h/img.height);
-        var w=img.width*f,h=img.height*f;
-        x.imageSmoothingQuality='high';
-        x.drawImage(img,(m.w-w)/2,(m.h-h)/2,w,h);
-        URL.revokeObjectURL(url);
-        c.toBlob(function(b){if(b)resolve(b);else reject(new Error('JPEG'));},'image/jpeg',0.9);
-      };
-      img.onerror=function(){URL.revokeObjectURL(url);reject(new Error('Bild'));};
-      img.src=url;
-    });
+      var logo=new Image();
+      logo.onload=function(){resolve(logo);};
+      logo.onerror=function(){reject(new Error('Das Logo konnte nicht geladen werden. Bitte erneut versuchen.'));};
+      logo.src=hdLogoSrc(2);
+    }).then(function(logo){return waageSlide(art,theme,function(ctx,W,H){
+      var hh=H<400?44:64,min=H<400?16:18;
+      var lw=96,lh=lw*logo.height/logo.width;
+      ctx.drawImage(logo,W-16-lw,(hh-lh)/2,lw,lh);
+      ctx.fillStyle=cc.wpDishColor;ctx.textAlign='left';
+      ctx.font='bold '+(H<400?22:30)+'px Arial, sans-serif';
+      ctx.fillText('Mittagstisch',16,hh-14);
+      ctx.textAlign='right';ctx.font='bold 17px Arial, sans-serif';
+      ctx.fillText(d.header,W-128,hh-14);
+      ctx.textAlign='left';
+      var fs=H<400?22:28,layout,total;
+      for(;fs>=min;fs--){
+        ctx.font='600 '+fs+'px Arial, sans-serif';
+        layout=d.mealRows.map(function(r){
+          var lines=waageTextUmbruch(ctx,r.dish,496,10000);
+          return {r:r,lines:lines,h:Math.max(fs+10,lines.length*(fs+4)+8)};
+        });
+        total=layout.reduce(function(n,r){return n+r.h;},0);
+        if(total<=H-hh-12&&!layout.some(function(row){return row.lines.some(function(t){return ctx.measureText(t).width>496;});}))break;
+      }
+      if(fs<min)throw new Error('Die ganze Woche passt nicht lesbar auf diese Werbefläche. Bitte Gerichte kürzer formulieren oder das größere Anzeigeprofil wählen.');
+      var extra=(H-hh-12-total)/layout.length,y=hh;
+      layout.forEach(function(row,i){
+        var h=row.h+extra;
+        ctx.fillStyle=i%2===0?(cc.wpStripeColor||'#f3f4f6'):(cc.wpBgColor||'#fff');
+        ctx.fillRect(8,y,W-16,h);
+        var ty=y+(h-row.lines.length*(fs+4))/2+fs;
+        ctx.fillStyle=cc.wpDishColor;ctx.font='600 '+fs+'px Arial, sans-serif';
+        row.lines.forEach(function(t,n){ctx.fillText(t,180,ty+n*(fs+4));});
+        ctx.font='bold '+Math.min(fs,21)+'px Arial, sans-serif';
+        ctx.fillText(row.r.day,16,ty);
+        ctx.fillStyle=cc.wpPriceColor;ctx.textAlign='right';
+        ctx.fillText(row.r.price,W-16,ty);ctx.textAlign='left';
+        y+=h;
+      });
+    },m);});
   }
 
   window.cmsWaageWP=function(){
@@ -8173,15 +8195,10 @@
       titel:'Wochenplan auf die Waage',
       art:'vollbild',
       praefix:'10_Wochenplan_',
-      erzeuge:function(art,fort,abbruch){
+      erzeuge:function(art,fort,abbruch,m){
         fort(0,1);
-        return new Promise(function(resolve,reject){
-          generateMenuImage(d.mealRows,d.header,function(blob){
-            if(!blob){reject(new Error('Bild'));return;}
-            waageEinpassen(blob,art).then(function(jpg){
-              resolve(abbruch()?[]:[{name:'10_Wochenplan_KW'+kwNr+'.jpg',blob:jpg,an:true}]);
-            }).catch(reject);
-          },d.tpl,d.wpKind,{scale:2});
+        return waageWochenplan(d,art,m).then(function(jpg){
+          return abbruch()?[]:[{name:'10_Wochenplan_KW'+kwNr+'.jpg',blob:jpg,an:true}];
         });
       }
     });
@@ -8242,6 +8259,7 @@
     var maxW=W-32-lw-dw-48,fs=kompakt?26:36;
     var titel=(ak.titel||'Angebote');
     do{ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';fs-=2;}while(fs>14&&ctx.measureText(titel).width>maxW);
+    waageTextVoll(ctx,titel,maxW,1);
     ctx.fillText(titel,16,hh*0.7);
     return hh;
   }
@@ -8285,23 +8303,26 @@
     ctx.textAlign='left';
   }
 
-  // Ein Waagenbild als JPEG-Blob zeichnen. zeichne(ctx,W,H) arbeitet in logischen 800 x 480 bzw. 800 x 280.
-  function waageSlide(art,theme,zeichne){
-    var m=WAAGE_MASSE[art]||WAAGE_MASSE.vollbild;
+  // Zeichner arbeiten in nativen Pixeln; JPEGs werden mit doppelter Aufloesung exportiert.
+  function waageSlide(art,theme,zeichne,m){
+    m=m||window.KWerbebilder.masse(art);
     var S=2,W=m.w/S,H=m.h/S;
     var c=document.createElement('canvas');c.width=m.w;c.height=m.h;
+    if(!c.getContext('2d'))throw new Error('Die Bildfläche konnte nicht erstellt werden. Bitte andere Programme schließen und erneut versuchen.');
     var ctx=hdKontext(c,S);
     ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
     zeichne(ctx,W,H);
     return new Promise(function(resolve,reject){
-      c.toBlob(function(b){if(b)resolve(b);else reject(new Error('JPEG'));},'image/jpeg',0.9);
+      c.toBlob(function(b){if(b)resolve(b);else reject(new Error('Das Waagenbild konnte nicht erstellt werden. Bitte erneut versuchen.'));},'image/jpeg',0.9);
     });
   }
 
-  function waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo){
+  function waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo,m){
     var teil=[];
     for(var i=seite*perSeite;i<Math.min(items.length,(seite+1)*perSeite);i++)teil.push(i);
-    var cols=art==='dauer'?4:3,rows=art==='dauer'?1:2;
+    var kompakt=m.h/2<400;
+    var cols=kompakt?Math.min(4,teil.length):teil.length===4?2:Math.min(3,teil.length);
+    var rows=Math.ceil(teil.length/cols);
     return waageSlide(art,theme,function(ctx,W,H){
       var hh=waageKopf(ctx,ak,theme,W,H,logo);
       var gap=10,x0=16,y0=hh+6,w=W-32,h=H-y0-12;
@@ -8311,14 +8332,14 @@
         var x=x0+col*(cw+gap),y=y0+row*(ch+gap);
         ctx.fillStyle=theme.cardBg;waageRrect(ctx,x,y,cw,ch,14);ctx.fill();
         ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;waageRrect(ctx,x,y,cw,ch,14);ctx.stroke();
-        var imgH=Math.round(ch*0.5);
+        var imgH=ch-125;
         waageBildZeichnen(ctx,images[idx],cfg,x+8,y+8,cw-16,imgH-8);
         ctx.fillStyle=theme.textColor;ctx.textAlign='left';
-        ctx.font='700 14px Arial, sans-serif';
-        waageTextUmbruch(ctx,it.produkt||'',cw-20,2).forEach(function(z,zi){ctx.fillText(z,x+10,y+imgH+18+zi*16);});
+        ctx.font='700 16px Arial, sans-serif';
+        waageTextVoll(ctx,it.produkt||'',cw-20,3).forEach(function(z,zi){ctx.fillText(z,x+10,y+imgH+20+zi*19);});
         if(it.preis){
           ctx.fillStyle=theme.tagColor;ctx.font='900 '+(art==='dauer'?24:26)+'px Arial Black, Arial, sans-serif';
-          ctx.fillText(Number(it.preis).toFixed(2).replace('.',',')+' \u20AC',x+10,y+ch-12);
+          ctx.fillText(Number(it.preis).toFixed(2).replace('.',',')+' \u20AC',x+10,y+ch-30);
           var pct=getSavingsPercent(it);
           if(pct)drawSavingsBurst(ctx,x+cw-26,y+24,18,11,'-'+pct+'%','plakat');
           if(it.statt_preis){
@@ -8331,10 +8352,10 @@
           }
         }
       });
-    });
+    },m);
   }
 
-  function waageArtikel(ak,it,img,art,cfg,theme,logo){
+  function waageArtikel(ak,it,img,art,cfg,theme,logo,m){
     return waageSlide(art,theme,function(ctx,W,H){
       var kompakt=H<400,k=kompakt?0.72:1;
       var hh=waageKopf(ctx,ak,theme,W,H,logo);
@@ -8346,38 +8367,50 @@
       waageBildZeichnen(ctx,img,cfg,px+12,py+12,pw-24,ph-24);
       var tx=px+pw+Math.round(26*k),tw=cx0+cw-14-tx;
       // Name: groesste Schrift, die in hoechstens 3 Zeilen passt
-      var maxZ=kompakt?2:3,fs=Math.round(38*k),zeilen=[];
+      var fs=kompakt?28:38,zeilen=[],df=kompakt?16:19,details=[];
+      var preisH=kompakt?88:110,textH=ph-preisH-36;
       ctx.fillStyle=theme.textColor;ctx.textAlign='left';
-      for(;fs>=Math.round(20*k);fs-=2){
+      for(;fs>=18;fs-=2){
         ctx.font='900 '+fs+'px Arial, sans-serif';
-        zeilen=waageTextUmbruch(ctx,it.produkt||'',tw,99);
-        if(zeilen.length<=maxZ)break;
+        zeilen=waageTextUmbruch(ctx,it.produkt||'',tw,10000);
+        var zuBreit=zeilen.some(function(t){return ctx.measureText(t).width>tw;});
+        ctx.font=df+'px Arial, sans-serif';
+        details=waageTextVoll(ctx,it.details||'',tw,10000);
+        if(!zuBreit&&zeilen.length*Math.round(fs*1.15)+details.length*Math.round(df*1.3)<=textH)break;
       }
+      if(fs<18)throw new Error('Ein Artikeltext passt nicht lesbar auf die Werbefläche. Bitte Name oder Details kürzen.');
       ctx.font='900 '+fs+'px Arial, sans-serif';
-      zeilen=waageTextUmbruch(ctx,it.produkt||'',tw,maxZ);
       var y=py+fs;
       zeilen.forEach(function(z){ctx.fillText(z,tx,y);y+=Math.round(fs*1.15);});
       // Details
       if(it.details){
-        var df=Math.round(17*k);
         ctx.fillStyle=theme.detailsColor;ctx.font='400 '+df+'px Arial, sans-serif';
-        waageTextUmbruch(ctx,it.details,tw,kompakt?1:3).forEach(function(z){y+=Math.round(df*1.3);ctx.fillText(z,tx,y);});
+        details.forEach(function(z){ctx.fillText(z,tx,y);y+=Math.round(df*1.3);});
       }
       // Gueltigkeit unten links in der Textspalte
       var bis=waageDatum(ak.bis);
-      if(bis){ctx.fillStyle=theme.detailsColor;ctx.font='400 '+Math.round(13*k)+'px Arial, sans-serif';ctx.fillText('G\u00fcltig bis '+bis,tx,py+ph-4);}
+      if(bis){ctx.fillStyle=theme.detailsColor;ctx.font='400 15px Arial, sans-serif';ctx.fillText('G\u00fcltig bis '+bis,tx,py+ph-4);}
       // Preisschild unten rechts
-      var tagW=Math.min(Math.round(tw*0.66),Math.round(240*k)),tagH=Math.round(86*k);
-      waagePreisSchild(ctx,tx+tw-tagW/2-6,py+ph-tagH/2-Math.round(36*k),tagW,tagH,it,cfg,theme);
-    });
+      var preisY=py+ph-preisH-12;
+      ctx.fillStyle=theme.tagColor;ctx.font='900 '+(kompakt?38:54)+'px Arial, sans-serif';
+      if(it.preis)ctx.fillText(Number(it.preis).toFixed(2).replace('.',',')+' \u20AC',tx,preisY+48);
+      if(it.statt_preis){
+        var st='statt '+Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
+        ctx.font='18px Arial, sans-serif';ctx.fillStyle=cfg.stattColor;
+        ctx.fillText(st,tx,preisY+72);
+        ctx.strokeStyle=theme.tagColor;ctx.beginPath();ctx.moveTo(tx,preisY+66);ctx.lineTo(tx+ctx.measureText(st).width,preisY+66);ctx.stroke();
+      }
+      var pct=getSavingsPercent(it);
+      if(pct)drawSavingsBurst(ctx,tx+tw-40,preisY+32,30,18,'-'+pct+'%','plakat');
+    },m);
   }
 
-  function waageAktionBilder(ak,art,fort,abbruch){
+  function waageAktionBilder(ak,art,fort,abbruch,m){
     var items=ak.items||[];
     var tag=toIsoDateOnly(ak.von)||'aktuell';
     var cfg=cfgForKind(cfgGet(),'plakat');
     var theme=getOfferTheme('plakat',cfg);
-    var perSeite=art==='dauer'?4:6;
+    var perSeite=m.h/2<400?4:6;
     var seiten=Math.ceil(items.length/perSeite);
     var gesamt=seiten+items.length;
     var logoP=new Promise(function(res){
@@ -8395,7 +8428,7 @@
       for(var s=0;s<seiten;s++){(function(seite){
         var nr=seite===0?'00':'00'+String.fromCharCode(97+seite);
         jobs.push(function(){
-          return waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo)
+          return waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo,m)
             .then(function(b){return {name:'20_Angebot_'+tag+'_'+nr+'_Uebersicht.jpg',blob:b,an:true};});
         });
       })(s);}
@@ -8403,7 +8436,7 @@
         jobs.push(function(){
           var pos=(i+1<10?'0':'')+(i+1);
           var slug=window.KWerbebilder.dateiname(it.produkt||('Artikel_'+(i+1)),40);
-          return waageArtikel(ak,it,images[i],art,cfg,theme,logo)
+          return waageArtikel(ak,it,images[i],art,cfg,theme,logo,m)
             .then(function(b){return {name:'20_Angebot_'+tag+'_'+pos+'_'+slug+'.jpg',blob:b,an:true};});
         });
       });
@@ -8426,7 +8459,7 @@
       titel:'Aktion \u201e'+(ak.titel||'Angebote')+'\u201c auf die Waage',
       art:'vollbild',
       praefix:'20_Angebot_',
-      erzeuge:function(art,fort,abbruch){return waageAktionBilder(ak,art,fort,abbruch);}
+      erzeuge:function(art,fort,abbruch,m){return waageAktionBilder(ak,art,fort,abbruch,m);}
     });
   };
 

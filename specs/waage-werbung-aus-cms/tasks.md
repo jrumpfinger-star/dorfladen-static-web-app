@@ -12,3 +12,15 @@
 | T8 | Playwright-Tests, Gegenproben, Regression CMS | alle | erledigt |
 | T9 | Handbuch | – | erledigt |
 | T10 | Preview-Live-Test, Auslieferung | alle | erledigt (Preview in Edge: HD 2382 px, Dialog, 7 Aktionsbilder mit echten Daten; ohne Upload) |
+# Erweiterung: Anzeigeprofile
+
+- [x] D1 Gemeinsame Profile und Dialogwahl (TC-F12-01/02); Voraussetzung: aktualisierte Spec/Plan.
+- [x] D2 Native ganze Wochenübersicht (TC-F7-01/02/03); Voraussetzung: D1.
+- [x] D3 Aktionslayout mit getrennten Text-/Preisbereichen (TC-F13-01); Voraussetzung: D1.
+- [x] D4 Vier-Viewport-Tests und Handbuch; Voraussetzung: D2/D3.
+- [ ] D5 Tatsächliche Fläche an der Hardware nach autorisiertem Transfer bestätigen.
+
+Validierung: Werbebilder-/CMS-Suiten 232/232 auf vier Viewports; nach abschließenden
+Layoutverbesserungen 20/20 gezielte Fälle und zuletzt 12/12 Aktionsfälle grün.
+Neue Wochenplan-/Aktions-JPEGs visuell geprüft. Noch kein Hardwaretransfer und kein Deployment
+dieser Erweiterung. D5 bleibt ausdrücklich offen.

@@ -50,6 +50,7 @@ async function mockApi(page, opts = {}) {
     if (req.method() === 'POST') {
       eintrag.typ = req.headers()['content-type'];
       eintrag.kopf = (req.postDataBuffer() || Buffer.alloc(0)).slice(0, 3).toString('hex');
+      eintrag.body = req.postDataBuffer();
     }
     log.push(eintrag);
     if (!zustand[art] || !['vollbild', 'dauer'].includes(art)) return json(404, { success: false, error: 'Unbekannte Art' });
@@ -147,6 +148,76 @@ async function kameraAttrappe(page, modus = 'ok') {
 
 test.describe('Werbebilder-Upload', () => {
 
+  test('TC-F28-01 / F29-01: Zielvorschau, vollstaendig oder randlos, POST entspricht exakt der Vorschau', async ({ page }) => {
+    const m = await mockApi(page);
+    await oeffne(page);
+    const data = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 400; c.height = 100;
+      const x = c.getContext('2d');
+      x.fillStyle = '#00ff00'; x.fillRect(0, 0, 400, 100);
+      x.fillStyle = '#ff0000'; x.fillRect(0, 0, 40, 100); x.fillRect(360, 0, 40, 100);
+      return c.toDataURL('image/jpeg').split(',')[1];
+    });
+    await page.locator('#wb-datei').setInputFiles({ name: 'Test.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(data, 'base64') });
+    const thumb = page.locator('.wb-stage .wb-thumb img');
+    await expect(page.locator('.wb-stage .wb-st')).toHaveText('bereit');
+    const pixel = () => thumb.evaluate(async (img) => {
+      await img.decode();
+      const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      return { w: c.width, h: c.height, rand: Array.from(x.getImageData(10, c.height / 2, 1, 1).data), oben: Array.from(x.getImageData(800, 10, 1, 1).data) };
+    });
+    const ganz = await pixel();
+    expect([ganz.w, ganz.h]).toEqual([1600, 1200]);
+    expect(ganz.rand[0]).toBeGreaterThan(240); expect(ganz.rand[1]).toBeLessThan(15);
+    expect(ganz.oben.slice(0, 3).every((v) => v > 240)).toBe(true);
+    await page.locator('[data-wb-modus]').selectOption('cover');
+    await expect(page.locator('.wb-stage .wb-st')).toHaveText('bereit');
+    const randlos = await pixel();
+    expect(randlos.rand[0]).toBeLessThan(15); expect(randlos.rand[1]).toBeGreaterThan(240);
+    expect(randlos.oben[1]).toBeGreaterThan(240); expect(randlos.oben[0]).toBeLessThan(15);
+    await page.locator('[data-wb-profil]').selectOption('klein');
+    await page.locator('[data-wb="art"][data-art="dauer"]').click();
+    await expect(page.locator('.wb-stage .wb-st')).toHaveText('bereit');
+    expect((await pixel()).h).toBe(560);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const preview = await thumb.evaluate(async (img) => Array.from(new Uint8Array(await (await fetch(img.src)).arrayBuffer())));
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('.wb-stage')).toHaveCount(0);
+    expect(m.anfragen('POST')).toHaveLength(1);
+    expect(m.anfragen('POST')[0].body.equals(Buffer.from(preview))).toBe(true);
+    expect(m.anfragen('POST')[0].art).toBe('dauer');
+    await page.reload();
+    await page.locator('.k-tab[data-tab="werbebilder"]').click();
+    await expect(page.locator('[data-wb-profil]')).toHaveValue('klein');
+  });
+
+  test('TC-F29-02: defektes JPEG und Canvasfehler sperren Upload mit sichtbarer Meldung', async ({ page }) => {
+    const m = await mockApi(page);
+    await oeffne(page);
+    await page.locator('#wb-datei').setInputFiles({ name: 'Kaputt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('kein Bild') });
+    await expect(page.locator('.wb-stage')).toContainText('konnte nicht angepasst werden');
+    await expect(page.locator('[data-wb="hoch"]')).toBeDisabled();
+    await page.locator('[data-wb="verwerfen"]').click();
+    await page.evaluate(() => { HTMLCanvasElement.prototype.toBlob = (callback) => callback(null); });
+    await page.locator('#wb-datei').setInputFiles(jpg('Canvas.jpg'));
+    await expect(page.locator('.wb-stage')).toContainText('konnte nicht angepasst werden');
+    await expect(page.locator('[data-wb="hoch"]')).toBeDisabled();
+    expect(m.anfragen('POST')).toHaveLength(0);
+  });
+
+  test('TC-F29-03: GIF bleibt bytegenau unveraendert und bietet keinen Beschnitt an', async ({ page }) => {
+    const m = await mockApi(page);
+    await oeffne(page);
+    await page.locator('#wb-datei').setInputFiles({ name: 'Animation.gif', mimeType: 'image/gif', buffer: GIF });
+    await expect(page.locator('.wb-stage')).toContainText('Animationen erhalten');
+    await expect(page.locator('[data-wb-modus]')).toHaveCount(0);
+    await page.locator('[data-wb="hoch"]').click();
+    await expect(page.locator('.wb-stage')).toHaveCount(0);
+    expect(m.anfragen('POST')[0].body.equals(GIF)).toBe(true);
+    expect(m.anfragen('POST')[0].typ).toBe('image/gif');
+  });
+
   test('TC-F27-01: Foto aufnehmen - Live-Kamera, mehrere Fotos, JPEG, Kamera wird freigegeben', async ({ page }) => {
     await kameraAttrappe(page);
     const m = await mockApi(page);
@@ -243,9 +314,9 @@ test.describe('Werbebilder-Upload', () => {
       await fc.setFiles({ name: 'IMG_0001.png', mimeType: 'image/png', buffer: gross });
       const name = seite.locator('#panel-werbebilder .wb-stage .wb-info b');
       await expect(name).toHaveText(/^Foto_\d{8}_\d{6}_\d+\.jpg$/, { timeout: 15000 });
-      await expect(seite.locator('#panel-werbebilder .wb-stage .wb-thumb img')).toBeVisible();
+      await expect(seite.locator('#panel-werbebilder .wb-stage .wb-thumb img')).toBeVisible({ timeout: 15000 });
       const breite = await seite.locator('#panel-werbebilder .wb-stage .wb-thumb img').evaluate((i) => i.naturalWidth);
-      expect(breite).toBe(1920);
+      expect(breite).toBe(1600); // Zielprofil nach Kamera-Konvertierung
       await seite.close();
     }
   });
@@ -291,7 +362,7 @@ test.describe('Werbebilder-Upload', () => {
     await oeffne(page);
     await page.locator('#wb-datei').setInputFiles([jpg('neu1.jpg'), jpg('neu2.jpg')]);
     await expect(page.locator('#panel-werbebilder .wb-stage .wb-item')).toHaveCount(2);
-    await expect(page.locator('#panel-werbebilder .wb-stage .wb-thumb img')).toHaveCount(2);
+    await expect(page.locator('#panel-werbebilder .wb-stage .wb-thumb img')).toHaveCount(2, { timeout: 15000 });
     expect(m.anfragen('POST')).toHaveLength(0);
 
     await page.locator('[data-wb="hoch"]').click();

@@ -24,3 +24,15 @@ Einzelflyer: Editor ruft wie bisher mit S = 1; `_buildZoneHtml` rechnet mit logi
 Neuer Zeichner `drawAngebotQuer(data, items, images, opts)` mit den Farben aus `getOfferTheme('plakat', cfg)`:
 `bgColor`, `cardBg`, `cardBorder`, `textColor`, `detailsColor`, `tagColor`, `titleColor`, `headerBg`, `headerAccent`.
 Maße 800 × 480 logisch, Faktor 2 → 1600 × 960. Übersicht 3 × 2, Einzelbild Artikelbild links (45 %), Text rechts.
+# Erweiterung: native Anzeigeprofile (F7, F12, F13)
+
+1. Gemeinsame Profildefinition, Persistenz und Zielmaße aus `KWerbebilder` in
+   `static-site/js/kiosk-werbebilder.js`; CMS-Dialog regeneriert bei Profilwechsel.
+2. `static-site/cms.js`: Druck-Einpassen durch native Wochenplanzeilen ersetzen; alle Texte
+   vor dem Zeichnen auf Breite/Höhe prüfen. Nicht darstellbare Daten explizit melden.
+3. Aktionslayout aus Profilhöhe ableiten; Produkttext, Preis, Stattpreis und Gültigkeit
+   in getrennten Bereichen. Gemeinsame Umbruch-/Fitprüfung statt stiller Kürzung.
+4. Bestehende HD-Druckerzeugung, FTP und Relais bleiben unverändert.
+5. Playwright prüft Profile, native Schriftgrößen, Inhalte, Überlauf und Regressionen
+   auf vier Viewports. Hardwareprüfung bestätigt anschließend die vermuteten 800 × 462.
+   Kein produktiver Upload und kein Merge ohne Freigabe.

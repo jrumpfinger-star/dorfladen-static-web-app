@@ -19,12 +19,22 @@ gespeichert und übertragen, sobald sie wieder läuft (der Kiosk zeigt „Brück
 2. Beim ersten Start fragt sie nach: IP der Waage, FTP-Port, FTP-Benutzer und -Passwort, Adresse der
    Dorfladen-Seite (Vorgabe: die Live-Seite) und – falls vorhanden – das Kiosk-/CMS-Passwort.
    Alles landet in `config.json` **neben der exe**.
-3. Danach bietet sie den **Autostart** an (Aufgabenplanung, bei jeder Windows-Anmeldung) und führt eine
+3. Danach bietet sie den **Autostart** an: Aufgabe der Aufgabenplanung, die die Brücke **bei jedem Hochfahren
+   unsichtbar** startet, auch ohne Windows-Anmeldung (Konto SYSTEM, kein Zeitlimit, Neustart bei Fehler).
+   Das braucht **einmalig eine Windows-Rückfrage** (Administrator). Die Brücke läuft danach sofort im
+   Hintergrund; das Fenster kann geschlossen werden. Anschließend führt sie eine
    **Prüfung** aus: Cloud erreichbar, Anmeldung, Waage erreichbar, Verzeichnisse gefunden.
 4. Fertig. Im Kiosk den Tab **Werbebilder** öffnen: Dort steht „● Brücke online“.
 
 Weitere Aufrufe: `Waage-Bruecke.exe --einrichten` (neu einrichten), `--pruefen` (Diagnose),
-`--trocken --einmal` (zeigt nur, was passieren würde), `--autostart-entfernen`.
+`--trocken --einmal` (zeigt nur, was passieren würde), `--autostart-entfernen` (ebenfalls mit Rückfrage).
+Die exe ist **fensterlos**: Für diese Aufrufe öffnet sie ein Konsolenfenster bzw. nutzt das, aus dem sie
+gestartet wurde. Der Ordner sollte für SYSTEM lesbar sein (z. B. `C:\Waage-Bruecke\`).
+
+**Protokoll:** `bruecke.log` neben der exe (je 512 KB, 3 Sicherungen) mit Datum und Uhrzeit. Dort stehen
+auch unerwartete Fehler; die Brücke läuft danach weiter. Es läuft immer nur **eine** Brücke: Ein zweiter
+Start beendet sich mit Hinweis im Protokoll. Eine ältere, im Fenster laufende Brücke vor der
+Neuinstallation beenden.
 
 Die exe wird mit `build-exe.bat` erzeugt (braucht Python und `pip install pyinstaller`, Ergebnis in
 `dist\`, nicht im Repo; ZIP mit dem Ordner). Sie ist nicht signiert; Windows SmartScreen zeigt ggf.
