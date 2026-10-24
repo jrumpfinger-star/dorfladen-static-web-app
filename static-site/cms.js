@@ -8237,9 +8237,25 @@
   function waageBildZeichnen(ctx,img,cfg,x,y,w,h){
     if(!img)return;
     var ofc=_freistellCanvas(img,cfg);
-    var sc=Math.min(w/ofc.width,h/ofc.height,cfg.imgMaxScale||3);
-    var iw=ofc.width*sc,ih=ofc.height*sc;
-    ctx.drawImage(ofc,x+(w-iw)/2,y+(h-ih)/2,iw,ih);
+    var daten;
+    try{daten=ofc.getContext('2d').getImageData(0,0,ofc.width,ofc.height).data;}
+    catch(e){
+      console.error('Waagen-Produktbild lesen',e);
+      throw new Error('Ein Produktbild konnte nicht verarbeitet werden. Bitte das Artikelbild erneut auswählen.');
+    }
+    var links=ofc.width,oben=ofc.height,rechts=-1,unten=-1;
+    for(var yy=0;yy<ofc.height;yy++){
+      for(var xx=0;xx<ofc.width;xx++){
+        if(daten[(yy*ofc.width+xx)*4+3]>16){
+          links=Math.min(links,xx);rechts=Math.max(rechts,xx);
+          oben=Math.min(oben,yy);unten=Math.max(unten,yy);
+        }
+      }
+    }
+    if(rechts<links)return;
+    var sw=rechts-links+1,sh=unten-oben+1;
+    var sc=Math.min(w/sw,h/sh),iw=sw*sc,ih=sh*sc;
+    ctx.drawImage(ofc,links,oben,sw,sh,x+(w-iw)/2,y+(h-ih)/2,iw,ih);
   }
 
   // Kopfzeile mit Titel, Gueltigkeit und Logo; liefert die Hoehe der Kopfzeile.
@@ -8317,39 +8333,61 @@
     });
   }
 
-  function waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo,m){
-    var teil=[];
-    for(var i=seite*perSeite;i<Math.min(items.length,(seite+1)*perSeite);i++)teil.push(i);
-    var kompakt=m.h/2<400;
-    var cols=kompakt?Math.min(4,teil.length):teil.length===4?2:Math.min(3,teil.length);
-    var rows=Math.ceil(teil.length/cols);
+  function waageUebersicht(ak,items,images,art,cfg,theme,logo,m){
     return waageSlide(art,theme,function(ctx,W,H){
-      var hh=waageKopf(ctx,ak,theme,W,H,logo);
-      var gap=10,x0=16,y0=hh+6,w=W-32,h=H-y0-12;
-      var cw=Math.floor((w-gap*(cols-1))/cols),ch=Math.floor((h-gap*(rows-1))/rows);
-      teil.forEach(function(idx,n){
-        var it=items[idx],col=n%cols,row=Math.floor(n/cols);
-        var x=x0+col*(cw+gap),y=y0+row*(ch+gap);
-        ctx.fillStyle=theme.cardBg;waageRrect(ctx,x,y,cw,ch,14);ctx.fill();
-        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;waageRrect(ctx,x,y,cw,ch,14);ctx.stroke();
-        var imgH=ch-125;
-        waageBildZeichnen(ctx,images[idx],cfg,x+8,y+8,cw-16,imgH-8);
-        ctx.fillStyle=theme.textColor;ctx.textAlign='left';
-        ctx.font='700 16px Arial, sans-serif';
-        waageTextVoll(ctx,it.produkt||'',cw-20,3).forEach(function(z,zi){ctx.fillText(z,x+10,y+imgH+20+zi*19);});
-        if(it.preis){
-          ctx.fillStyle=theme.tagColor;ctx.font='900 '+(art==='dauer'?24:26)+'px Arial Black, Arial, sans-serif';
-          ctx.fillText(Number(it.preis).toFixed(2).replace('.',',')+' \u20AC',x+10,y+ch-30);
-          var pct=getSavingsPercent(it);
-          if(pct)drawSavingsBurst(ctx,x+cw-26,y+24,18,11,'-'+pct+'%','plakat');
-          if(it.statt_preis){
-            ctx.textAlign='right';ctx.fillStyle=cfg.stattColor;ctx.font='bold 12px Arial, sans-serif';
-            var st='statt '+Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-            ctx.fillText(st,x+cw-10,y+ch-12);
-            var sw=ctx.measureText(st).width;
-            ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+cw-10-sw-1,y+ch-16);ctx.lineTo(x+cw-9,y+ch-16);ctx.stroke();
-            ctx.textAlign='left';
+      var hh=waageKopf(ctx,ak,theme,W,H,logo),gap=10,x0=16,y0=hh+6;
+      var w=W-32,h=H-y0-12,layout=null;
+      var spalten=items.length===1?[1]:[2,3,4,1];
+      for(var ci=0;ci<spalten.length&&!layout;ci++){
+        for(var fs=20;fs>=14&&!layout;fs--){
+          var cols=spalten[ci];
+          if(cols>items.length)continue;
+          var rows=Math.ceil(items.length/cols);
+          var cw=Math.floor((w-gap*(cols-1))/cols),ch=Math.floor((h-gap*(rows-1))/rows);
+          var pw=Math.floor((cw-24)*0.36),tw=cw-24-pw-12;
+          if(pw<60||ch-24<60||tw<80)continue;
+          var pf=fs>=18?32:26,sf=12,lh=fs+3;
+          var texte=items.map(function(it){
+            ctx.font='700 '+fs+'px Arial, sans-serif';
+            var z=waageTextUmbruch(ctx,it.produkt||'',tw,10000);
+            var passt=z.every(function(t){return ctx.measureText(t).width<=tw;});
+            var preis=it.preis?Number(it.preis).toFixed(2).replace('.',',')+' \u20AC':'';
+            ctx.font='900 '+pf+'px Arial, sans-serif';
+            if(ctx.measureText(preis).width>tw)passt=false;
+            var st=it.statt_preis?'statt '+Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC':'';
+            var pct=getSavingsPercent(it),rabatt=pct?'\u2212'+pct+' %':'';
+            ctx.font=sf+'px Arial, sans-serif';
+            var stW=ctx.measureText(st).width,raW=ctx.measureText(rabatt).width;
+            if(stW+(st&&rabatt?8:0)+raW>tw)passt=false;
+            var th=z.length*lh+(preis?4+pf:0)+(st||rabatt?5+sf:0);
+            return {z:z,preis:preis,st:st,rabatt:rabatt,stW:stW,h:th,passt:passt&&th<=ch-24};
+          });
+          if(texte.every(function(t){return t.passt;})){
+            layout={cols:cols,cw:cw,ch:ch,pw:pw,tw:tw,fs:fs,pf:pf,sf:sf,lh:lh,texte:texte};
           }
+        }
+      }
+      if(!layout)throw new Error('Alle Artikel passen nicht lesbar auf ein einziges Werbebild. Bitte weniger Artikel, kürzere Namen oder das größere Anzeigeprofil wählen.');
+      var l=layout;
+      items.forEach(function(it,i){
+        var x=x0+(i%l.cols)*(l.cw+gap),y=y0+Math.floor(i/l.cols)*(l.ch+gap),t=l.texte[i];
+        ctx.fillStyle=theme.cardBg;waageRrect(ctx,x,y,l.cw,l.ch,14);ctx.fill();
+        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;waageRrect(ctx,x,y,l.cw,l.ch,14);ctx.stroke();
+        waageBildZeichnen(ctx,images[i],cfg,x+12,y+12,l.pw,l.ch-24);
+        var tx=x+12+l.pw+12,ty=y+(l.ch-t.h)/2;
+        ctx.textAlign='left';ctx.fillStyle=theme.textColor;ctx.font='700 '+l.fs+'px Arial, sans-serif';
+        t.z.forEach(function(z){ctx.fillText(z,tx,ty+l.fs);ty+=l.lh;});
+        if(t.preis){
+          ty+=4;ctx.fillStyle=theme.tagColor;ctx.font='900 '+l.pf+'px Arial, sans-serif';
+          ctx.fillText(t.preis,tx,ty+l.pf);ty+=l.pf;
+        }
+        if(t.st||t.rabatt){
+          ty+=5+l.sf;ctx.font=l.sf+'px Arial, sans-serif';ctx.fillStyle=cfg.stattColor;
+          if(t.st){
+            ctx.fillText(t.st,tx,ty);ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1;
+            ctx.beginPath();ctx.moveTo(tx,ty-4);ctx.lineTo(tx+t.stW,ty-4);ctx.stroke();
+          }
+          if(t.rabatt){ctx.fillStyle=theme.tagColor;ctx.fillText(t.rabatt,tx+t.stW+(t.st?8:0),ty);}
         }
       });
     },m);
@@ -8410,9 +8448,7 @@
     var tag=toIsoDateOnly(ak.von)||'aktuell';
     var cfg=cfgForKind(cfgGet(),'plakat');
     var theme=getOfferTheme('plakat',cfg);
-    var perSeite=m.h/2<400?4:6;
-    var seiten=Math.ceil(items.length/perSeite);
-    var gesamt=seiten+items.length;
+    var gesamt=1+items.length;
     var logoP=new Promise(function(res){
       var l=new Image();l.onload=function(){res(l);};l.onerror=function(){res(null);};l.src=hdLogoSrc(2);
     });
@@ -8425,13 +8461,10 @@
     return Promise.all([logoP,ladeP]).then(function(erg){
       var logo=erg[0],images=erg[1];
       var jobs=[];
-      for(var s=0;s<seiten;s++){(function(seite){
-        var nr=seite===0?'00':'00'+String.fromCharCode(97+seite);
-        jobs.push(function(){
-          return waageUebersicht(ak,items,images,seite,perSeite,art,cfg,theme,logo,m)
-            .then(function(b){return {name:'20_Angebot_'+tag+'_'+nr+'_Uebersicht.jpg',blob:b,an:true};});
-        });
-      })(s);}
+      jobs.push(function(){
+        return waageUebersicht(ak,items,images,art,cfg,theme,logo,m)
+          .then(function(b){return {name:'20_Angebot_'+tag+'_00_Uebersicht.jpg',blob:b,an:true};});
+      });
       items.forEach(function(it,i){
         jobs.push(function(){
           var pos=(i+1<10?'0':'')+(i+1);

@@ -106,7 +106,7 @@ async function cmsMit(page, opts = {}) {
     if (r.request().method() !== 'GET') return r.fallback();
     if (o.verzoegerung) await new Promise((res) => setTimeout(res, o.verzoegerung));
     const nr = new URL(r.request().url()).searchParams.get('artnrs') || '';
-    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ dl_artikelnummer: nr, dl_bild_base64: ARTIKELBILD, source: 'sharepoint', name: nr + '.png' }]) });
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ dl_artikelnummer: nr, dl_bild_base64: o.artikelBild || ARTIKELBILD, source: 'sharepoint', name: nr + '.png' }]) });
   });
   await page.route('**/api/waage-werbebilder**', (r) => {
     const req = r.request();
@@ -213,6 +213,126 @@ async function bildAnhaengen(testInfo, name, bytes) {
 
 test.describe('HD und Auf die Waage', () => {
 
+  for (const art of ['dauer', 'vollbild']) test(`TC-F15-01/03: sechs Artikel seitlich auf genau einer Uebersicht (${art})`, async ({ page }, testInfo) => {
+    const artikelDaten = [
+      ['G&G Cookie&Cream 154g', '', 1.09, 1.49],
+      ['TUC Crackers Original 100g', '', 1.19, 1.59],
+      ['B.L. Joghurt mild 1,5% 500g', '', 1.05, 1.29],
+      ['Alpro Hafer & Mandel 1l', '', 1.99, 2.49],
+      ['Berliner', '', 0.70, 0.95],
+      ['Parmesan', '', 2.99, 3.49],
+    ];
+    const m = await cmsMit(page, { artikel: 6, artikelDaten });
+    await aktionenTab(page);
+    await zeichnungenMitschreiben(page);
+    await page.evaluate(() => {
+      window.__waageBilder = [];
+      const original = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function (img, ...a) {
+        if (this.canvas.width === 1600 && a.length === 8) {
+          window.__waageBilder.push({ a, height: this.canvas.height / this.getTransform().d });
+        }
+        return original.call(this, img, ...a);
+      };
+    });
+    await page.locator('[data-action="waageAktion"]').first().click();
+    await expect(neueBilder(page)).toHaveCount(7, { timeout: 30000 });
+    if (art === 'dauer') await page.evaluate(() => { window.__waageTexte = []; window.__waageBilder = []; });
+    await dlg(page).locator(`[data-ueb="art"][data-art="${art}"]`).click();
+    await expect(neueBilder(page)).toHaveCount(7, { timeout: 30000 });
+    const { texte, bilder } = await page.evaluate(() => ({ texte: window.__waageTexte, bilder: window.__waageBilder }));
+    const id = texte[0].id, uebersicht = texte.filter(t => t.id === id);
+    pruefeTextflaechen(texte);
+    expect(uebersicht.filter(t => t.text.includes('€') && t.font.startsWith('900 '))).toHaveLength(6);
+    const fotos = bilder.slice(0, 6);
+    expect(fotos).toHaveLength(6);
+    expect(new Set(fotos.map(b => b.a[4])).size).toBe(2);
+    expect(new Set(fotos.map(b => b.a[5])).size).toBe(3);
+    for (const foto of fotos) {
+      const [sx,sy,sw,sh,x,y,w,h] = foto.a;
+      expect(w / h).toBeCloseTo(sw / sh);
+      const text = uebersicht.filter(t => t.left > x + w && t.top >= y - 20 && t.bottom <= y + h + 20 && t.left < x + w + 240);
+      const name = text.filter(t => /^(700|bold) /.test(t.font));
+      const preis = text.find(t => t.font.startsWith('900 ') && t.text.includes('€'));
+      expect(name.length).toBeGreaterThan(0);
+      expect(preis).toBeTruthy();
+      expect(preis.top - Math.max(...name.map(t => t.bottom))).toBeLessThanOrEqual(16);
+    }
+    const jpg = await neueBilder(page).first().locator('img').evaluate(async img => Array.from(new Uint8Array(await (await fetch(img.src)).arrayBuffer())));
+    await bildAnhaengen(testInfo, art + '-sechs-seitlich', jpg);
+    await dlg(page).locator('#wb-ueb-start').click();
+    await expect(dlg(page).locator('[data-ueb="zu"]').last()).toHaveText('Fertig', { timeout: 30000 });
+    expect(m.anfragen('POST').filter(p => p.name.includes('Uebersicht'))).toHaveLength(1);
+    expect(m.anfragen('POST')).toHaveLength(7);
+  });
+
+  test('TC-F15-02: zu viele Artikel sperren statt auf Folgeseiten zu verteilen', async ({ page }) => {
+    const artikelDaten = Array.from({ length: 30 }, (_, i) => ['Artikel ' + i, '', 1.99, 2.99]);
+    const m = await cmsMit(page, { artikel: 30, artikelDaten });
+    await aktionenTab(page);
+    await page.locator('[data-action="waageAktion"]').first().click();
+    for (const art of ['vollbild', 'dauer']) {
+      await dlg(page).locator(`[data-ueb="art"][data-art="${art}"]`).click();
+      await expect(dlg(page).locator('[role="alert"]')).toContainText('einziges Werbebild', { timeout: 30000 });
+      await expect(neueBilder(page)).toHaveCount(0);
+      await expect(dlg(page).locator('#wb-ueb-start')).toBeDisabled();
+    }
+    expect(m.anfragen('POST')).toHaveLength(0);
+    expect(m.anfragen('DELETE')).toHaveLength(0);
+  });
+
+  test('TC-F14-01 / F14-02: sichtbare Produkte nutzen die Bildflaeche ohne Drucklimit', async ({ page }) => {
+    // Kleines Produkt mit viel transparentem Rand: ohne Beschnitt waere es kaum sichtbar.
+    const artikelBild = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 40; c.height = 40;
+      const x = c.getContext('2d'); x.fillStyle = '#008000'; x.fillRect(16, 10, 8, 20);
+      return c.toDataURL();
+    });
+    await cmsMit(page, { artikel: 1, artikelDaten: [['Testprodukt', 'Details', 1.99, 2.99]], artikelBild });
+    await aktionenTab(page);
+    await page.evaluate(() => {
+      window.__produktBilder = [];
+      const original = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function (img, ...a) {
+        if (this.canvas.width === 1600 && img.width === 40 && a.length === 8) {
+          window.__produktBilder.push(a);
+        }
+        return original.call(this, img, ...a);
+      };
+    });
+    await page.locator('[data-action="waageAktion"]').first().click();
+    for (const profil of ['gross', 'klein']) {
+      for (const art of ['vollbild', 'dauer']) {
+        await dlg(page).locator(`[data-ueb="art"][data-art="${art}"]`).click();
+        await expect(neueBilder(page)).toHaveCount(2, { timeout: 30000 });
+        await page.evaluate(() => { window.__produktBilder = []; });
+        await dlg(page).locator('[data-ueb="profil"]').selectOption(profil);
+        await expect(neueBilder(page)).toHaveCount(2, { timeout: 30000 });
+        const bilder = await page.evaluate(() => window.__produktBilder);
+        expect(bilder).toHaveLength(2);
+        for (const a of bilder) {
+          expect(a.slice(0, 4)).toEqual([16, 10, 8, 20]);
+          expect(a[6] / a[7]).toBeCloseTo(8 / 20);
+          expect(a[7]).toBeGreaterThan(60); // altes Drucklimit 3x haette bei 60 gestoppt
+        }
+        const H = (art === 'vollbild' ? (profil === 'gross' ? 600 : 480) : (profil === 'gross' ? 462 : 280));
+        const kachelH = H - (H < 400 ? 44 : 62) - 18;
+        expect(bilder[0][7]).toBeGreaterThanOrEqual(kachelH * 0.4);
+      }
+    }
+  });
+
+  test('TC-F14-02: vollstaendig transparente Produktbilder bleiben ohne Fehler leer', async ({ page }) => {
+    const artikelBild = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 20; c.height = 20; return c.toDataURL();
+    });
+    await cmsMit(page, { artikel: 1, artikelBild });
+    await aktionenTab(page);
+    await page.locator('[data-action="waageAktion"]').first().click();
+    await expect(neueBilder(page)).toHaveCount(2, { timeout: 30000 });
+    await expect(dlg(page).locator('#wb-ueb-start')).toBeEnabled();
+  });
+
   test('TC-F12-01 / F7-03: beide Profile und Arten, ganze Woche lesbar und ohne Textkollisionen', async ({ page }, testInfo) => {
     const m = await cmsMit(page);
     await zeichnungenMitschreiben(page);
@@ -279,10 +399,18 @@ test.describe('HD und Auf die Waage', () => {
     for (const profil of ['gross', 'klein']) {
       for (const art of ['vollbild', 'dauer']) {
         await dlg(page).locator(`[data-ueb="art"][data-art="${art}"]`).click();
-        await expect(neueBilder(page)).toHaveCount(10, { timeout: 30000 });
+        const anzahl = 9;
+        if (art === 'dauer') {
+          await expect(dlg(page).locator('[role="alert"]')).toContainText('einziges Werbebild');
+        } else await expect(neueBilder(page)).toHaveCount(anzahl, { timeout: 30000 });
         await page.evaluate(() => { window.__waageTexte = []; });
         await dlg(page).locator('[data-ueb="profil"]').selectOption(profil);
-        await expect(neueBilder(page)).toHaveCount(10, { timeout: 30000 });
+        if (art === 'dauer') {
+          await expect(dlg(page).locator('[role="alert"]')).toContainText('einziges Werbebild');
+          await expect(dlg(page).locator('#wb-ueb-start')).toBeDisabled();
+          continue;
+        }
+        await expect(neueBilder(page)).toHaveCount(anzahl, { timeout: 30000 });
         const hoehen = await neueBilder(page).locator('img').evaluateAll(async (bilder) => {
           await Promise.all(bilder.map((img) => img.decode()));
           return bilder.map((img) => [img.naturalWidth, img.naturalHeight]);
@@ -500,20 +628,20 @@ test.describe('HD und Auf die Waage', () => {
     expect(post.masse).toEqual({ w: 1600, h: 924 });
   });
 
-  test('TC-F8-01 / F9-01: Aktion mit 8 Artikeln: 2 Uebersichten + 8 Einzelbilder, alle JPEG 1600 x 1200, alle angehakt, Namen bereinigt', async ({ page }) => {
+  test('TC-F8-01 / F9-01: Aktion mit 8 Artikeln: eine Uebersicht + 8 Einzelbilder, alle JPEG 1600 x 1200, alle angehakt, Namen bereinigt', async ({ page }) => {
     const m = await cmsMit(page);
     await aktionenTab(page);
     await page.locator('[data-action="waageAktion"]').first().click();
-    await expect(neueBilder(page)).toHaveCount(10, { timeout: 60000 });
+    await expect(neueBilder(page)).toHaveCount(9, { timeout: 60000 });
     const namen = await neueBilder(page).locator('.wb-info b').allInnerTexts();
     expect(namen[0]).toBe('20_Angebot_2026-10-26_00_Uebersicht.jpg');
-    expect(namen[1]).toBe('20_Angebot_2026-10-26_00b_Uebersicht.jpg');
-    expect(namen[2]).toBe('20_Angebot_2026-10-26_01_Bayerntaler_Kaese.jpg');
-    expect(namen[9]).toBe('20_Angebot_2026-10-26_08_Walnuesse_ganz.jpg');
+    expect(namen.filter(n => n.includes('Uebersicht'))).toHaveLength(1);
+    expect(namen[1]).toBe('20_Angebot_2026-10-26_01_Bayerntaler_Kaese.jpg');
+    expect(namen[8]).toBe('20_Angebot_2026-10-26_08_Walnuesse_ganz.jpg');
     expect(namen.join('|')).toContain('05_Hausmacher_Leberwurst_Spezial_ss.jpg');
     for (const n of namen) expect(n).toMatch(/^[A-Za-z0-9._-]{1,80}\.jpg$/);
-    expect(new Set(namen).size).toBe(10);
-    await expect(neueBilder(page).locator('input[type=checkbox]:checked')).toHaveCount(10);
+    expect(new Set(namen).size).toBe(9);
+    await expect(neueBilder(page).locator('input[type=checkbox]:checked')).toHaveCount(9);
     // 20_Angebot_* sind zum Loeschen vorausgewaehlt, das Wochenplanbild und Fremdes nicht
     const haken = (name) => altBilder(page).filter({ has: page.locator(`b:text-is("${name}")`) }).locator('input[type=checkbox]');
     await expect(haken('20_Angebot_2026-10-12_00_Uebersicht.jpg')).toBeChecked();
@@ -522,10 +650,10 @@ test.describe('HD und Auf die Waage', () => {
     await dlg(page).locator('#wb-ueb-start').click();
     await expect(dlg(page).locator('[data-ueb="zu"]').last()).toHaveText('Fertig', { timeout: 60000 });
     const posts = m.anfragen('POST');
-    expect(posts).toHaveLength(10);
+    expect(posts).toHaveLength(9);
     for (const p of posts) { expect(p.typ).toBe('image/jpeg'); expect(p.kopf).toBe('ffd8ff'); expect(p.masse).toEqual({ w: 1600, h: 1200 }); expect(p.bytes).toBeLessThan(8 * 1024 * 1024); }
-    expect(m.folge().slice(0, 10).every((x) => x === 'POST')).toBe(true);
-    expect(m.folge().slice(10)).toEqual(['DELETE']);
+    expect(m.folge().slice(0, 9).every((x) => x === 'POST')).toBe(true);
+    expect(m.folge().slice(9)).toEqual(['DELETE']);
   });
 
   test('TC-F8-02: Aktion mit 3 Artikeln: 1 Uebersicht + 3 Einzelbilder; Dauerwerbung: 1600 x 924', async ({ page }) => {

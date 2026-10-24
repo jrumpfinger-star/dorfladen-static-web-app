@@ -23,7 +23,7 @@ Einzelflyer: Editor ruft wie bisher mit S = 1; `_buildZoneHtml` rechnet mit logi
 
 Neuer Zeichner `drawAngebotQuer(data, items, images, opts)` mit den Farben aus `getOfferTheme('plakat', cfg)`:
 `bgColor`, `cardBg`, `cardBorder`, `textColor`, `detailsColor`, `tagColor`, `titleColor`, `headerBg`, `headerAccent`.
-Maße 800 × 480 logisch, Faktor 2 → 1600 × 960. Übersicht 3 × 2, Einzelbild Artikelbild links (45 %), Text rechts.
+Maße aus dem Anzeigeprofil, Faktor 2. Übersicht nach F15, Einzelbild Artikelbild links (45 %), Text rechts.
 # Erweiterung: native Anzeigeprofile (F7, F12, F13)
 
 1. Gemeinsame Profildefinition, Persistenz und Zielmaße aus `KWerbebilder` in
@@ -36,3 +36,20 @@ Maße 800 × 480 logisch, Faktor 2 → 1600 × 960. Übersicht 3 × 2, Einzelbil
 5. Playwright prüft Profile, native Schriftgrößen, Inhalte, Überlauf und Regressionen
    auf vier Viewports. Hardwareprüfung bestätigt anschließend die vermuteten 800 × 462.
    Kein produktiver Upload und kein Merge ohne Freigabe.
+# Korrektur F14: größere Produktfotos
+
+`waageBildZeichnen` bestimmt die sichtbaren Alpha-Grenzen des bereits freigestellten
+Canvas und passt diesen Ausschnitt ohne Druck-Vergrößerungslimit ein. Keine Änderung
+am gemeinsamen Freisteller oder an Drucklayouts. Leere Bilder überspringen; Lesefehler
+explizit melden. `waageUebersicht` nutzt nach F15 die volle seitliche Bildspalte.
+Playwright prüft tatsächliche drawImage-Quell-/Zielrechtecke mit gepolsterten und kleinen
+Testbildern sowie bestehende Textkollisionsfälle auf allen vier Viewports.
+# Dauerwerbung und Vollbild: alle Artikel auf einer seitlichen Übersicht (F15)
+
+Vor dem Zeichnen Rasterkandidaten anhand tatsächlicher Textmessung prüfen.
+Zwei Spalten bevorzugen, solange die Mindestschriftgrößen passen; bei Bedarf bis zu vier.
+Kompakte Textgruppe vertikal zentrieren, Bildspalte links (36 Prozent), Rest Text.
+Eine gemeinsame Übersicht statt Seitenlauf bei beiden Werbearten; Einzelartikel unverändert.
+Mindestgrößen prüfen und bei Überlauf vor Upload explizit abbrechen.
+Tests: sechs/acht Artikel, hohe Artikelzahl, kleine Werbefläche, tatsächliche Zeichenrechtecke,
+Textabstände und dieselbe Einzelübersicht im Vollbild auf vier Viewports.

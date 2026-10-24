@@ -48,13 +48,13 @@ nimmt nur JPEG/GIF. Anzeigeprofile laut Programmieranleitung und Foto siehe F12.
   einem JPEG im gewählten Anzeigeprofil. Keine verkleinerte Druckvorlage. Gerichtstext mindestens
   18 native Pixel beim großen, 16 beim kleinen Profil. Nicht darstellbarer Inhalt wird ausdrücklich
   gemeldet und nicht übertragen; weder Tage noch Gerichte still kürzen.
-- **F8** Aktion im Querformat (Maße nach F12): **Übersicht** mit bis zu 6 Artikeln (3 × 2) je Bild, bei mehr
-  Artikeln weitere Übersichten; bei weniger Artikeln Zeilen/Spalten zur Flächennutzung reduzieren.
+- **F8** Aktion im Querformat (Maße nach F12): genau eine **Übersicht** mit allen Artikeln nach F15.
+  Bei weniger Artikeln Zeilen/Spalten zur Flächennutzung reduzieren.
   Dazu **ein Bild je Artikel** (Artikelbild groß, Name, Details, Preis, Statt-Preis
   durchgestrichen, −%-Badge, Gültigkeit, Logo). Alle Bilder sind im Dialog angehakt. Die Kachel-Overrides des
   Hochformat-Editors gelten hier nicht.
-- **F9** Dateinamen: `10_Wochenplan_KW<kw>.jpg`; `20_Angebot_<von>_00_Uebersicht.jpg`, weitere
-  `…_00b_Uebersicht.jpg`, `20_Angebot_<von>_<nn>_<Artikel>.jpg` (nn = Position, Artikel bereinigt, ≤ 60 Zeichen).
+- **F9** Dateinamen: `10_Wochenplan_KW<kw>.jpg`; `20_Angebot_<von>_00_Uebersicht.jpg`,
+  `20_Angebot_<von>_<nn>_<Artikel>.jpg` (nn = Position, Artikel bereinigt, ≤ 60 Zeichen).
 - **F10** Während des Erstellens zeigt der Dialog den Fortschritt („Bilder werden erstellt 3 / 12“); Abbrechen
   ist möglich; ohne Artikelbild wird der Artikel trotzdem ohne Bild dargestellt.
 - **F11** Das CMS lädt `kiosk-werbebilder.js`; die Anmeldung läuft über das vorhandene CMS-Token (Cloud-API
@@ -69,7 +69,35 @@ nimmt nur JPEG/GIF. Anzeigeprofile laut Programmieranleitung und Foto siehe F12.
   getrennten Bereichen. Lange Texte umbrechen; bei nicht darstellbarem Inhalt warnen und Transfer
   sperren statt Text abzuschneiden. Druck-HD und Editor unverändert.
 
+- **F15** Dauerwerbung und Vollbild erhalten genau eine Übersicht mit allen Artikeln, ohne Folgeseiten.
+  Bild links, daneben eine vertikal zentrierte kompakte Gruppe aus Name, Preis,
+  Stattpreis und Rabatt. Keine unten verankerten Preise oder großen Zwischenräume.
+  Raster abhängig von Artikelzahl und tatsächlichem Textbedarf; sechs Artikel im großen Profil
+  bevorzugt als zwei Spalten und drei Zeilen. Mindestschriftgröße Name 14, Preis 26,
+  Stattpreis/Rabatt 12 native Pixel; Bildbereich mindestens 60 × 60 native Pixel.
+  Name vollständig ohne Auslassung. Passt kein Raster, klare Warnung und kein Transfer,
+  auch keine unvollständige Übersicht oder automatische Aufteilung. Einzeldateien bleiben erhalten.
+  Vollbild nutzt dasselbe seitliche Layout mit seiner größeren Fläche. Druck und Wochenplan unverändert.
+- **TC-F15-01** Sechs Artikel bei 800 × 462 und 800 × 600: genau eine Übersicht plus sechs Einzelbilder;
+  Produktbilder links, Name/Preis rechts mit 4 Pixel logischem Abstand der Textzeilenbereiche
+  (höchstens 16 Pixel sichtbarer Abstand inklusive Schriftmetriken).
+- **TC-F15-02** Acht Artikel: genau eine Übersicht, sofern lesbar; kleine Profile oder sehr viele
+  Artikel, die Mindestgrößen nicht einhalten können, melden Überlauf und sperren Transfer.
+- **TC-F15-03** Alle Bilder innerhalb der Kachel, vollständig und unverzerrt; Texte ohne
+  Kollisionen, Profil-/Artwechsel regeneriert; auch Vollbild enthält alle Artikel auf einer Übersicht.
+
 ## Testfälle
+
+- **F14** Produktfotos in Waagenbildern nutzen den verfügbaren Bildbereich vollständig und
+  seitenverhältnistreu. Transparente Außenränder nach dem Freistellen zählen nicht als Produktfläche;
+  das Produkt selbst wird nicht beschnitten. Die Druck-Einstellung für maximale Vergrößerung
+  begrenzt Waagenbilder nicht. Übersichten nutzen nach F15 eine seitliche Bildspalte über
+  die Kachelhöhe und eine kompakte Textgruppe statt vertikal getrennter Bild-/Preisbereiche.
+- **TC-F14-01** Übersicht mit kurzem Namen: Bildbereich mindestens 40 Prozent der Kachelhöhe,
+  Produkt mit transparenten Außenrändern füllt mindestens eine Dimension dieses Bereichs.
+  Kleine Quelldateien werden ebenfalls eingepasst; Produkt vollständig, unverzerrt.
+- **TC-F14-02** Beide Profile/Arten: Produktname und Preise kollidieren weder miteinander noch
+  mit dem Bildbereich. Vollständig transparente Bilder verursachen keinen Fehler.
 
 - **TC-F12-01** Beide Profile und beide Arten liefern die exakten JPEG-Maße; Profilwechsel regeneriert
   Bilder, bleibt nach Neuladen erhalten und sendet ohne Bestätigung keine POST/DELETE.
@@ -93,7 +121,8 @@ nimmt nur JPEG/GIF. Anzeigeprofile laut Programmieranleitung und Foto siehe F12.
 - **TC-F6-03** Würde die Zahl 99 überschritten, ist „Übertragen“ gesperrt.
 - **TC-F7-01** Wochenplan-Waagenbild ist ein JPEG (`ffd8ff`) in den Maßen aus F12.
 - **TC-F7-02** Dauerwerbung zeigt die ausgewählte Fläche; Vorgabe ist Vollbild.
-- **TC-F8-01** Aktion mit 8 Artikeln: 2 Übersichten (6 + 2) und 8 Einzelbilder, JPEG nach F12, alle angehakt.
+- **TC-F8-01** Aktion mit 8 Artikeln im großen Vollbild: eine Übersicht und 8 Einzelbilder,
+  JPEG nach F12, alle angehakt. Passt der Inhalt in anderen Profilen nicht, gilt F15.
 - **TC-F8-02** Aktion mit 3 Artikeln: 1 Übersicht und 3 Einzelbilder.
 - **TC-F9-01** Dateinamen entsprechen F9 und sind bereinigt (Umlaute, Sonderzeichen, Länge).
 - **TC-F10-01** Fortschrittsanzeige erscheint; Abbrechen sendet nichts.
