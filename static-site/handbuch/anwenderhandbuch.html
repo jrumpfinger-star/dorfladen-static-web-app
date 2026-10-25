@@ -195,8 +195,9 @@
   <tr><td><strong>🗑 Löschen</strong></td><td>Entfernt ein Gericht aus dem Wochenplan nach Bestätigungsdialog dauerhaft.</td></tr>
   <tr><td><strong>💾 Speichern</strong></td><td>Sichert das neue oder bearbeitete Gericht dauerhaft in der Datenbank und aktualisiert die Homepage sofort.</td></tr>
   <tr><td><strong>Abbrechen</strong></td><td>Schließt die Eingabemaske ohne zu speichern.</td></tr>
-  <tr><td><strong>🖨️ Drucken</strong></td><td>Generiert ein A4-Wochenplan-Plakat und öffnet den Druckdialog – ideal für den Aushang im Laden.</td></tr>
-  <tr><td><strong>📲 Teilen</strong></td><td>Erstellt ein hochauflösendes PNG-Bild des Wochenplans, lädt es herunter und öffnet WhatsApp mit einem vorbereiteten Werbetext für den Versand an Kunden.</td></tr>
+  <tr><td><strong>🖨️ Drucken</strong></td><td>Erstellt das Wochenplan-Plakat in HD-Auflösung (ca. 300 dpi, 2382 Pixel breit) und öffnet den Druckdialog – ideal für den Aushang im Laden.</td></tr>
+  <tr><td><strong>⚖️ Auf die Waage</strong></td><td>Öffnet einen Dialog mit einer eigenen, gut lesbaren Wochenübersicht: Die ganze Woche bleibt auf einem Bild. Wählen Sie Vollbild oder Dauerwerbung und das <strong>Anzeigeprofil</strong>: 800 × 600 (Dauerwerbung 800 × 462, für unsere Waage empfohlen – bitte prüfen) oder 800 × 480 (Dauerwerbung 800 × 280). Die Auswahl wird in diesem Browser gespeichert; andere Geräte müssen sie ebenfalls wählen. Bei zu langem Text erscheint ein Hinweis statt eines abgeschnittenen Bildes. Alte Wochenpläne sind zum Löschen vorausgewählt, andere Bilder können Sie anhaken. Erst werden neue Bilder gespeichert, danach die gewählten alten gelöscht. Die Brücke spielt sie auf die Waage, sobald sie online ist. Bereits vorhandene Bilder werden durch eine Profilwahl nicht verändert; erzeugen und übertragen Sie sie neu. Dasselbe Knopf-Symbol gibt es in der Vorschau und bei den Angeboten.</td></tr>
+  <tr><td><strong>📲 Teilen</strong></td><td>Erstellt ein hochauflösendes PNG-Bild (HD, 2382 Pixel breit) des Wochenplans, lädt es herunter und öffnet WhatsApp mit einem vorbereiteten Werbetext für den Versand an Kunden.</td></tr>
   <tr><td><strong>↩ Verwerfen</strong></td><td>Macht alle ungespeicherten Änderungen rückgängig und stellt den letzten gespeicherten Zustand aus der Datenbank wieder her.</td></tr>
 </table>
 
@@ -305,9 +306,15 @@
   <tr><td><strong>✕ (Artikelzeile)</strong></td><td>Entfernt eine einzelne Artikelzeile aus der Aktionsmaske.</td></tr>
   <tr><td><strong>🔍 (Artikelsuche)</strong></td><td>Sucht den Artikel in der Preisliste anhand der eingetippten Artikelnummer oder des Namens und befüllt Preis und Bild automatisch.</td></tr>
   <tr><td><strong>📷 Bild hochladen</strong></td><td>Öffnet den Datei-Auswahldialog für ein Artikelfoto. Das Bild wird automatisch auf 500×500 Pixel komprimiert (75% JPEG) und in der Datenbank gespeichert.</td></tr>
-  <tr><td><strong>🔗 Teilen</strong></td><td>Erstellt ein WhatsApp-taugliches Angebots-Bild und öffnet WhatsApp mit vorbereiteter Nachricht.</td></tr>
-  <tr><td><strong>👁 Vorschau</strong></td><td>Zeigt das Angebot als Plakat-Vorschau an, exakt so wie es auf dem gedruckten Flyer erscheinen würde.</td></tr>
+  <tr><td><strong>🔗 Teilen</strong></td><td>Erstellt ein WhatsApp-taugliches Angebots-Bild (HD) und öffnet WhatsApp mit vorbereiteter Nachricht.</td></tr>
+  <tr><td><strong>⚖️ Waage</strong></td><td>Überträgt die Aktion im <strong>Querformat</strong> auf die Waage: <strong>alle Artikel auf genau einer Übersicht</strong> und zusätzlich <strong>ein eigenes Bild je Artikel</strong>. Für Vollbild und Dauerwerbung stehen die Produktfotos links, Name und Preis kompakt daneben. Passt der Inhalt nicht lesbar auf ein Bild, erscheint eine Warnung und die Übertragung bleibt gesperrt. Wählen Sie dann das größere Anzeigeprofil oder reduzieren Sie Artikelzahl beziehungsweise Namenslänge. Produktfotos nutzen den verfügbaren Bildbereich; transparente Außenränder nach dem Freistellen werden ignoriert, das Produkt bleibt vollständig. Die Druck-Vergrößerungsgrenze gilt hier nicht. Im Dialog können Sie das Anzeigeprofil einstellen, einzelne Bilder abwählen, Vollbild oder Dauerwerbung wählen und alte Angebotsbilder (<code>20_Angebot_…</code>) gleich löschen. Die Reihenfolge folgt dem Dateinamen. Die Gewichts-/Preisleiste bleibt bei Dauerwerbung sichtbar.</td></tr>
+  <tr><td><strong>Kiosk: Werbebilder</strong></td><td>Auch bei normalen Uploads sowie Kamera- und Zwischenablagebildern gilt das gewählte Anzeigeprofil. Je JPEG wählen Sie <strong>Vollständig</strong> (nichts abschneiden, eventuell weiße Ränder) oder <strong>Randlos mit Beschnitt</strong> (mittiger Ausschnitt ohne Verzerrung). Prüfen Sie den Ausschnitt über die Bildvorschau: Genau dieses Bild wird übertragen. GIF-Dateien bleiben unverändert, damit ihre Animation erhalten bleibt; Beschnitt ist dafür nicht verfügbar. Alte Bilder werden nicht automatisch angepasst – dafür erneut auswählen und übertragen.</td></tr>
+  <tr><td><strong>👁 Vorschau</strong></td><td>Zeigt das Angebot als Plakat-Vorschau an, exakt so wie es auf dem gedruckten Flyer erscheinen würde. Download, Drucken und Einzelflyer arbeiten in HD (ca. 300 dpi); über „⚖️ Auf die Waage“ geht es direkt von der Vorschau zur Waage.</td></tr>
 </table>
+
+<p>Der Dialog „Auf die Waage“ öffnet standardmäßig mit <strong>Dauerwerbung</strong>.
+Vollbild können Sie weiterhin auswählen. Beim An- und Abwählen der Bilder sowie bei
+„Alle zum Löschen wählen“ und „Keine“ bleiben Scrollposition und Tastaturfokus erhalten.</p>
 
 <h3>Automatische Bildoptimierung</h3>
 <p>

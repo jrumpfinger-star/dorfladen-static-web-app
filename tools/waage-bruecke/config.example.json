@@ -1,0 +1,11 @@
+{
+  "ftp_host": "192.168.1.50",
+  "ftp_port": 21,
+  "ftp_user": "",
+  "ftp_pass": "",
+  "ftp_basis": "bizerba/data/multimedia/advertising",
+  "api_url": "https://www.dorfladen-oberornau.de",
+  "cms_passwort": "",
+  "poll_sekunden": 10,
+  "max_bytes": 8388608
+}
