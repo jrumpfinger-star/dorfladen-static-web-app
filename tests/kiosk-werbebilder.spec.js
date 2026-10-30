@@ -81,10 +81,11 @@ async function mockApi(page, opts = {}) {
   };
 }
 
-async function oeffne(page) {
+async function oeffne(page, art = 'vollbild') {
   await page.goto(KIOSK_URL, { waitUntil: 'domcontentloaded' });
   await page.locator('.k-tab[data-tab="werbebilder"]').click();
   await expect(page.locator('#panel-werbebilder')).toHaveClass(/active/);
+  if (art !== 'dauer') await page.locator('[data-wb="art"][data-art="' + art + '"]').click();
 }
 
 const jpg = (name) => ({ name, mimeType: 'image/jpeg', buffer: GIF });
@@ -337,14 +338,23 @@ test.describe('Werbebilder-Upload', () => {
 
   test('TC-F2-01: nur Vollbild und Dauerwerbung, nie ein Monatsverzeichnis', async ({ page }) => {
     const m = await mockApi(page);
-    await oeffne(page);
+    await oeffne(page, 'dauer');
     const arten = page.locator('#panel-werbebilder [data-wb="art"]');
-    await expect(arten).toHaveText(['Vollbild', 'Dauerwerbung']);
-    await expect(page.locator('#panel-werbebilder .wb-item')).toHaveCount(2);
+    await expect(arten).toHaveText(['Dauerwerbung', 'Vollbild']);
+    await expect(arten.nth(0)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#panel-werbebilder .wb-item')).toHaveCount(1);
+    expect(m.log.filter(l => l.art).every(l => l.art === 'dauer')).toBe(true);
     await arten.nth(1).click();
+    await expect(arten.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#panel-werbebilder .wb-item')).toHaveCount(2);
+    await arten.nth(0).click();
     await expect(page.locator('#panel-werbebilder .wb-item')).toHaveCount(1);
     for (const l of m.log) expect(['vollbild', 'dauer']).toContain(l.art);
     expect(m.log.some((l) => l.art === 'dauer')).toBe(true);
+    await page.reload();
+    await page.locator('.k-tab[data-tab="werbebilder"]').click();
+    await expect(arten.nth(0)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#panel-werbebilder .wb-item')).toHaveCount(1);
   });
 
   test('TC-F5-01: Liste in Namensreihenfolge mit Position und Zaehler', async ({ page }) => {

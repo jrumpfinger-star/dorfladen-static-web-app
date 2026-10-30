@@ -17,8 +17,8 @@ window.KWerbebilder = (function () {
   var MAX_BILDER = 99;
   var MAX_BYTES = 8 * 1024 * 1024;
   var ARTEN = [
-    { id: 'vollbild', text: 'Vollbild', hinweis: 'Ganzer Bildschirm, startet im Leerlauf der Waage.' },
-    { id: 'dauer', text: 'Dauerwerbung', hinweis: 'Werbefläche unter der Gewichts-/Preisleiste, läuft neben dem Verkauf.' }
+    { id: 'dauer', text: 'Dauerwerbung', hinweis: 'Werbefläche unter der Gewichts-/Preisleiste, läuft neben dem Verkauf.' },
+    { id: 'vollbild', text: 'Vollbild', hinweis: 'Ganzer Bildschirm, startet im Leerlauf der Waage.' }
   ];
   var PROFILE = [
     { id: 'gross', text: '800 × 600 – Dauerwerbung 800 × 462 (empfohlen)', vollbild: 600, dauer: 462 },
@@ -56,7 +56,7 @@ window.KWerbebilder = (function () {
       + (_profilFehler ? '<p class="wb-fehler" role="alert">' + esc(_profilFehler) + '</p>' : '');
   }
 
-  var _art = 'vollbild';
+  var _art = 'dauer';
   var _bilder = [];
   var _bruecke = null;       // Status der Bruecke laut API
   var _laden = false;

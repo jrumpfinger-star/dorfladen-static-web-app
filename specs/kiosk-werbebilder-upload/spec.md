@@ -28,6 +28,10 @@ Abschnitt 2.15 „Werbebilder“ (S. 2-107 ff.) und 6.15 „Werbung“.
 
 ## Entwurfsentscheidungen
 
+Im Kiosk steht **Dauerwerbung vor Vollbild** und ist nach dem Laden der Seite
+vorausgewählt. Das Umschalten bleibt möglich; ein Neuladen startet erneut mit
+Dauerwerbung. Uploads verwenden weiterhin die ausdrücklich ausgewählte Art.
+
 > **Änderung 2026-10-23 – Cloud-Relais ersetzt die Direktverbindung.** Die erste
 > Fassung ließ den Kiosk direkt per `http://<IP>:8765` mit einer Brücke im LAN sprechen.
 > Das scheitert in der Praxis: Browser (Edge/Chrome/Fully Kiosk) blockieren `http` auf
