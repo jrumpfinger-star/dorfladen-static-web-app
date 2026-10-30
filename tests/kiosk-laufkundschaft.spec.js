@@ -3,7 +3,7 @@ const { test, expect } = require('./_kiosk-angemeldet');
 const DAY = '2026-10-30';
 const DISH = { dl_wochenplanid: 'wp-1', dl_gericht: 'Schnitzel mit Pommes oder Kartoffelsalat',
   dl_datum: DAY, dl_preis: 8.8, dl_wochentag: 101004, dl_kalenderwoche: 44, dl_jahr: 2026 };
-const baseOrder = { name: 'Laufkundschaft', gericht: DISH.dl_gericht, datum: DAY,
+const baseOrder = { name: 'Ladenkunde', gericht: DISH.dl_gericht, datum: DAY,
   menge: 1, preis: 8.8, status: 1, quelle: 3, version: 'W/"1"' };
 const BASE = process.env.TEST_URL || 'http://127.0.0.1:8811';
 
@@ -50,20 +50,52 @@ test('TC-F1/F2: Eigene Heute-Erfassung, zwei Portionen, bestätigt und Mitnehmen
   await page.locator('#btn-lauf').click();
   await expect(page.locator('#lauf-save')).toBeEnabled();
   await expect(page.locator('#lauf-gericht input[value="0"]')).toBeChecked();
+  await expect(page.locator('#lauf-name')).toHaveValue('Ladenkunde');
+  await page.locator('#lauf-name').fill('Anna');
   await expect(page.locator('#modal-lauf')).not.toContainText('Kunde suchen');
   await page.locator('#modal-lauf').getByRole('button',{name:'Eine Portion mehr',exact:true}).click();
   await page.locator('#lauf-mit').check();
   await page.locator('#lauf-save').click();
   await expect(page.locator('#modal-lauf')).not.toHaveClass(/open/);
   expect(calls.posts).toHaveLength(1);
-  expect(calls.posts[0]).toMatchObject({quelle:3,menge:2,datum:DAY,mitnehmen:true});
-  await expect(page.locator('#mittag-orders')).toContainText('Laufkundschaft');
+  expect(calls.posts[0]).toMatchObject({quelle:3,name:'Anna',menge:2,datum:DAY,mitnehmen:true});
+  await expect(page.locator('#oc-new-1 .k-oc-name')).toContainText('Anna');
+  await expect(page.locator('#mittag-orders')).toContainText('Ladenkunde');
   await expect(page.locator('#mittag-orders')).toContainText('Bestätigt');
-  await expect(page.locator('#mittag-cook')).toContainText('2 Laufkundschaft');
+  await expect(page.locator('#mittag-cook')).toContainText('2 Ladenkunde');
   await page.locator('#btn-lauf').click();
   await expect(page.locator('#lauf-save')).toBeEnabled();
   await expect(page.locator('#lauf-menge')).toHaveText('1');
+  await expect(page.locator('#lauf-name')).toHaveValue('Ladenkunde');
   await expect(page.locator('#lauf-mit')).not.toBeChecked();
+});
+
+test('TC-F6-03..05: Name nutzt volle Breite, Zeit direkt dahinter in Berlin',async({page})=>{
+  for(const width of [page.viewportSize().width,1600]){
+    await page.setViewportSize({width,height:900});
+    await setup(page,{orders:[
+      {...baseOrder,id:'early',bestellt_am:'2026-10-30T09:45:00Z'},
+      {...baseOrder,id:'later',bestellt_am:'2026-10-30T10:15:00Z'},
+      {...baseOrder,id:'missing'},
+      {...baseOrder,id:'invalid',bestellt_am:'invalid'}
+    ]});
+    await expect(page.locator('#oc-early .k-oc-name')).toHaveText('Ladenkunde · 10:45 Uhr');
+    await expect(page.locator('#oc-later .k-oc-name')).toHaveText('Ladenkunde · 11:15 Uhr');
+    for(const id of ['missing','invalid']){
+      await expect(page.locator('#oc-'+id+' .k-oc-name')).toHaveText('Ladenkunde');
+    }
+    const layout=await page.locator('#oc-early').evaluate(card=>{
+      const name=card.querySelector('.k-oc-name').getBoundingClientRect();
+      const actions=card.querySelector('.k-oc-actions').getBoundingClientRect();
+      const header=card.querySelector('.k-order-hdr');
+      const style=getComputedStyle(header),box=header.getBoundingClientRect();
+      return {nameWidth:name.width,available:box.width-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),
+        nameBottom:name.bottom,actionsTop:actions.top,overflow:card.scrollWidth>card.clientWidth};
+    });
+    expect(Math.abs(layout.nameWidth-layout.available)).toBeLessThanOrEqual(1);
+    expect(layout.nameBottom).toBeLessThanOrEqual(layout.actionsTop);
+    expect(layout.overflow).toBe(false);
+  }
 });
 
 test('TC-F1-03: Andere Tage erlauben keine Laufkundschaft', async ({page}) => {

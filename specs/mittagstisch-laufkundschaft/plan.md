@@ -20,8 +20,8 @@ Quelle 3 kann ohne Schemaänderung verwendet werden; historische Werte bleiben
 unverändert.
 
 POST mit dieser Quelle ist eine authentifizierte Mitarbeiteraktion:
-Datum serverseitig auf heute (Berliner Ortszeit) begrenzen, Name intern
-„Laufkundschaft“, Status Bestätigt, ohne Kundenanlage und Benachrichtigung.
+Datum serverseitig auf heute (Berliner Ortszeit) begrenzen, Mitarbeiter-Namen
+übernehmen (getrimmt, leer: „Laufkundschaft“), Status Bestätigt, ohne Kundenanlage und Benachrichtigung.
 Gericht und Preis kommen aus der heutigen Tagesauswahl. Vorhandene
 Telefon-/Onlineverträge erhalten.
 
@@ -39,6 +39,13 @@ eindeutige Fehlerantworten. Keine Erfolgsmeldung bei gescheitertem PATCH.
 Bestehende Kunden-Kommentar-/Statuspfade nicht pauschal verändern.
 
 ## 2. Kiosk
+
+Nachbesserung F6: Im Laufkundschaft-Dialog ein vorbelegtes Namensfeld ergänzen,
+bei jedem Öffnen zurücksetzen und im bestehenden POST mitsenden. Die Karten
+verwenden `bestellt_am` für einen formatierten Zeitzusatz (Europe/Berlin).
+Die Mittagstisch-spezifische CSS-Rasterregel in `kiosk-neu.css` gibt dem Namen
+die gesamte erste Zeile; Aktionen beginnen erst darunter. Keine Änderung der
+anderen Kioskbereiche. Generierte Seiten mit dem bestehenden Build aktualisieren.
 
 Maßgebliche Quelle ist
 [`static-site/kiosk-klassisch.html`](../../static-site/kiosk-klassisch.html).

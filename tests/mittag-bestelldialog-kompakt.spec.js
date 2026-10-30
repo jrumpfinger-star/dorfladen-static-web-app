@@ -128,6 +128,16 @@ test('TC-F3-01/02: Eingebetteter Dialog schließt oben und unten ohne verdeckte 
     await expect(page.locator('.mt-popup-close')).toBeHidden();
     const frame=page.frameLocator('#mt-popup-iframe');
     await expect(frame.locator('#dish-section')).toBeVisible();
+    const edges=await frame.locator('body').evaluate(()=>{
+      return ['.header','.lunch-cd','.dish-card','.form-card','.order-actions'].map(selector=>{
+        const {left,right}=document.querySelector(selector).getBoundingClientRect();
+        return {selector,left,right};
+      });
+    });
+    for(const edge of edges){
+      expect(Math.abs(edge.left-edges[0].left),edge.selector+' left edge').toBeLessThanOrEqual(1);
+      expect(Math.abs(edge.right-edges[0].right),edge.selector+' right edge').toBeLessThanOrEqual(1);
+    }
     await frame.locator('#notify-details summary').click();
     await frame.locator('#customer-details summary').click();
     await frame.locator('#note-details summary').click();

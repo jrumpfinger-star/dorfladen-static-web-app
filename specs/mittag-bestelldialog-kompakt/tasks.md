@@ -23,3 +23,12 @@
   visuell geprüft.
 - T4: Dokumentation ergänzt; Produktionsfreigabe über den Main-Workflow,
   anschließend Workflow-Ergebnis und ausgelieferte Dateien kontrollieren.
+
+## Nachbesserung: bündige Breite
+
+- Kopfzeile, Bestellschluss und Formular verwenden dieselbe responsive Breite;
+  die bisherigen Kartenbreiten bleiben erhalten.
+- TC-F3-02 misst beide Außenkanten von Kopf, Bestellschluss, Karten und
+  Aktionsleiste im eingebetteten Dialog (Toleranz höchstens 1 CSS-Pixel).
+- Lokaler Prüflauf: 28/28 Tests der kompakten Kundenbestellung auf allen vier
+  Viewports erfolgreich; Desktop-Screenshot visuell geprüft.

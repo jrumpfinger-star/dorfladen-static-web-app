@@ -2179,7 +2179,7 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 /* Der Pfeil kostete Platz und Klarheit - die ganze Zeile ist antippbar. */
 #panel-mittag .k-order-hdr .k-oc-arrow{ display:none }
 #panel-mittag .k-order-hdr .k-oc-name{
-  grid-column:1 / 4;
+  grid-column:1 / -1;
   grid-row:1;
   min-width:0;
   font-size:15.5px;
@@ -2188,6 +2188,7 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   line-height:var(--zh);
   overflow-wrap:anywhere;
 }
+#panel-mittag .k-oc-time{white-space:nowrap;font-size:12px;font-weight:400;color:var(--mut)}
 #panel-mittag .k-order-hdr .k-oc-r2{ display:contents }
 #panel-mittag .k-order-hdr .k-oc-badges{
   grid-column:1;
@@ -2233,7 +2234,7 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
 #panel-mittag .k-order-hdr .k-oc-qty::before{ content:none }
 #panel-mittag .k-order-hdr .k-oc-actions{
   grid-column:4;
-  grid-row:1 / 3;
+  grid-row:2 / 4;
   display:flex;
   align-items:center;
   gap:8px;
@@ -2282,7 +2283,7 @@ html[data-theme="dark"] .kal-modal-card{ background:var(--c-card); color:var(--c
   /* Volle Breite in einer eigenen Zeile: Hier dürfen die Kennzeichen
      umbrechen, statt über den Preis zu laufen. */
   #panel-mittag .k-order-hdr .k-oc-badges{ grid-column:1 / 4; grid-row:3 }
-  #panel-mittag .k-order-hdr .k-oc-actions{ grid-row:1 / 4 }
+  #panel-mittag .k-order-hdr .k-oc-actions{ grid-row:2 / 4 }
 }
 
 /* Kennzeichen ruhig und einheitlich - vorher sechs Formen nebeneinander.

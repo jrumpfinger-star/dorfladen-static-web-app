@@ -98,7 +98,7 @@ QUELLE_ONLINE = 0
 QUELLE_TELEFON = 1
 QUELLE_PERSONAL = 2
 QUELLE_LAUFKUNDSCHAFT = 3
-QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal", 3: "Laufkundschaft"}
+QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal", 3: "Ladenkunde"}
 
 # Anmeldezeichen des Kundenkontos (dasselbe wie im Shop).
 JWT_SECRET = os.environ.get("SHOP_JWT_SECRET",
@@ -617,9 +617,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     return unauthorized_response()
                 if datum != heute_iso():
                     return func.HttpResponse(
-                        json.dumps({"success": False, "error": "Laufkundschaft bitte nur für heute erfassen."}),
+                        json.dumps({"success": False, "error": "Ladenkunde bitte nur für heute erfassen."}),
                         status_code=400, headers=get_cors_headers())
-                name = "Laufkundschaft"
+                name = name or "Ladenkunde"
                 email = telefon = stammkunde_id = device_id = ""
                 notify_email = False
 

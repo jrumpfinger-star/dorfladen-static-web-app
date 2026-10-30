@@ -43,10 +43,14 @@ verwendet Schließen das vorhandene `closeMittagPopup`-Protokoll, als eigene
 Seite die bisherige Zurück-/Startseiten-Navigation.
 Der äußere Popup-Schließen-Button darf den neuen inneren Button nicht verdecken;
 andere über denselben Popup-Container angezeigte Seiten behalten ihren Schließen-Button.
+Kopfzeile, Bestellschluss, Formular-Karten und Aktionsleiste haben dieselbe
+responsive Breite und schließen links und rechts bündig ab.
 
 - TC-F3-01: Beide beschrifteten Buttons schließen die eingebettete Bestellung.
 - TC-F3-02: Kopf, Aktionsleiste und aufgeklappte Inhalte passen auf die vier
   Projekt-Viewports, ohne Überdeckung oder horizontales Scrollen.
+  Die linken und rechten Außenkanten von Kopf, Bestellschluss, Karten und
+  Aktionsleiste stimmen bis auf maximal einen CSS-Pixel überein.
 - TC-F3-03: Bestellschluss, Konto-Anmeldung, Bestellbestätigung und bestehende
   Popup-/Kontoseiten verhalten sich unverändert.
 

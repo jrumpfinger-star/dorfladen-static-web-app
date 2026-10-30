@@ -2013,7 +2013,7 @@
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')" style="color:#dc2626"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <button class="k-filter-btn" id="mt-src-toggle" onclick="K.toggleQuelleFilter()" style="display:none;color:#92400e"><i data-lucide="phone" style="width:14px;height:14px"></i> <span class="k-filter-label">Nur Telefon</span> <span class="k-filter-count" id="mt-fc-telefon">0</span></button>
-      <button class="k-filter-btn" id="mt-src-lauf" onclick="K.toggleLaufFilter()" style="display:none;color:#0369a1"><span>Laufkundschaft</span> <span class="k-filter-count" id="mt-fc-lauf">0</span></button>
+      <button class="k-filter-btn" id="mt-src-lauf" onclick="K.toggleLaufFilter()" style="display:none;color:#0369a1"><span>Ladenkunde</span> <span class="k-filter-count" id="mt-fc-lauf">0</span></button>
       <!-- Kleiner Rückblick. Aus dem Laden: „Bei Mittagstisch wäre ein
            kleiner Chart schön, in dem die Bestellungen der letzten 7 Tage
            dargestellt werden." (Spec mittag-verlauf-chart) -->
@@ -2541,15 +2541,17 @@
 <!-- ═══ Bottom bar ═══ -->
 <div class="k-bottom" style="display:none">
   <button class="k-btn k-btn-lg k-btn-confirm" id="btn-new-order" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
-  <button class="k-btn k-btn-lg k-btn-confirm" id="btn-lauf" onclick="K.openLauf()">Laufkundschaft erfassen</button>
+  <button class="k-btn k-btn-lg k-btn-confirm" id="btn-lauf" onclick="K.openLauf()">Ladenkunde erfassen</button>
   <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()"><i data-lucide="printer" style="width:18px;height:18px"></i> Küchenliste drucken</button>
 </div>
 
 <div class="k-modal-bg" id="modal-lauf" role="dialog" aria-modal="true" aria-labelledby="lauf-titel">
   <div class="k-modal">
-    <div class="k-modal-head"><h2 id="lauf-titel">Laufkundschaft erfassen</h2><button class="k-modal-close" aria-label="Schließen" onclick="K.closeModal('modal-lauf')">&times;</button></div>
+    <div class="k-modal-head"><h2 id="lauf-titel">Ladenkunde erfassen</h2><button class="k-modal-close" aria-label="Schließen" onclick="K.closeModal('modal-lauf')">&times;</button></div>
     <div class="k-modal-body">
       <p id="lauf-tag"></p>
+      <label for="lauf-name">Name für die Ausgabe (optional)</label>
+      <input id="lauf-name" class="k-input" type="text" value="Ladenkunde">
       <div class="mt-gerichte" id="lauf-gericht" role="group" aria-label="Gericht"></div>
       <div class="mt-step"><button class="k-btn k-btn-outline" aria-label="Eine Portion weniger" onclick="K.laufQty(-1)">−</button><output id="lauf-menge">1</output><button class="k-btn k-btn-outline" aria-label="Eine Portion mehr" onclick="K.laufQty(1)">+</button></div>
       <label><input id="lauf-mit" type="checkbox" style="width:24px;height:24px;vertical-align:middle"> Zum Mitnehmen</label>
@@ -2862,7 +2864,7 @@ var K = (function(){
 
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
   var STATUS_CLASS = {0:'stx-neu',1:'stx-best',2:'stx-storno',3:'stx-abgeholt'};
-  var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal',3:'Laufkundschaft'};
+  var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal',3:'Ladenkunde'};
   var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal',3:'src-laufkundschaft'};
 
   // Status und Quelle immer als Zahl fuehren. Ein leeres Feld darf nicht dazu
@@ -3617,7 +3619,10 @@ var K = (function(){
     // ── Compact header (always visible) ──
     html += '<div class="k-order-hdr" onclick="K.toggleOrderCard(\''+o.id+'\')">';
     html += '<span class="k-oc-arrow">'+luc('chevron-down',14)+'</span>';
-    html += '<span class="k-oc-name">'+esc(o.name)+'</span>';
+    var erfasst = new Date(o.bestellt_am);
+    var zeit = o.bestellt_am && !isNaN(erfasst.getTime())
+      ? erfasst.toLocaleTimeString('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit'}) : '';
+    html += '<span class="k-oc-name">'+esc(o.name)+(zeit?' <span class="k-oc-time">· '+zeit+' Uhr</span>':'')+'</span>';
     if(o.preis) html += '<span class="k-oc-price">'+((o.preis*(o.menge||1)).toFixed(2).replace('.',','))+' \u20AC</span>';
     html += '<span class="k-oc-qty" style="min-width:28px;text-align:center">'+(o.menge||1)+'\u00D7</span>';
     html += '<span class="k-oc-r2">';
@@ -3802,7 +3807,7 @@ var K = (function(){
       html += '<div class="k-cook-chips">';
       if(g.online>0) html += '<span class="k-cook-chip b">'+luc('globe',11)+' '+g.online+' online</span>';
       if(g.telefonisch>0) html += '<span class="k-cook-chip o">'+luc('phone',11)+' '+g.telefonisch+' telefonisch</span>';
-      if(g.laufkundschaft>0) html += '<span class="k-cook-chip b">'+g.laufkundschaft+' Laufkundschaft</span>';
+      if(g.laufkundschaft>0) html += '<span class="k-cook-chip b">'+g.laufkundschaft+' Ladenkunde</span>';
       if(g.personal>0) html += '<span class="k-cook-chip">'+g.personal+' Personal</span>';
       if(g.abgeholt>0) html += '<span class="k-cook-chip g">'+luc('check',11)+' '+g.abgeholt+' abgeholt</span>';
       if(g.offen>0) html += '<span class="k-cook-chip">'+luc('utensils',11)+' '+g.offen+' offen</span>';
@@ -4328,7 +4333,7 @@ var K = (function(){
       if(t.online || t.vor_ort){
         html += '<div class="mt-vl-quellen">'+luc('globe',12)+' '+t.online+' online \u00b7 '
           + luc('phone',12)+' '+(t.vor_ort-(t.laufkundschaft||0))+' Telefon/Personal'
-          + ((t.laufkundschaft||0)?' \u00b7 '+t.laufkundschaft+' Laufkundschaft':'')+'</div>';
+          + ((t.laufkundschaft||0)?' \u00b7 '+t.laufkundschaft+' Ladenkunde':'')+'</div>';
       }
     }
     ziel.innerHTML = html;
@@ -4767,8 +4772,8 @@ var K = (function(){
     var lauf = document.getElementById('btn-lauf');
     if(lauf){
       lauf.disabled = _mittagDatum !== today();
-      lauf.title = lauf.disabled ? 'Für Laufkundschaft bitte Heute auswählen.' : '';
-      lauf.textContent = lauf.disabled ? 'Laufkundschaft: bitte Heute wählen' : 'Laufkundschaft erfassen';
+      lauf.title = lauf.disabled ? 'Für Ladenkunde bitte Heute auswählen.' : '';
+      lauf.textContent = lauf.disabled ? 'Ladenkunde: bitte Heute wählen' : 'Ladenkunde erfassen';
     }
     var btn = document.getElementById('btn-new-order');
     if(!btn) return;
@@ -4789,11 +4794,12 @@ var K = (function(){
   function _kannMenge(o){ return o && (o.quelle===1 || o.quelle===3) && (o.status===0 || o.status===1); }
   function openLauf(){
     if(_lauf.speichern || _lauf.laden) return;
-    if(_mittagDatum!==_heuteBerlin()){ toast('Für Laufkundschaft bitte Heute auswählen.'); return; }
+    if(_mittagDatum!==_heuteBerlin()){ toast('Für Ladenkunde bitte Heute auswählen.'); return; }
     _lauf.tag = _heuteBerlin();
     _lauf.menge = 1;
     _lauf.gerichte = [];
     _lauf.laden = true;
+    document.getElementById('lauf-name').value = 'Ladenkunde';
     document.getElementById('lauf-tag').textContent = 'Heute, '+new Date(_lauf.tag+'T12:00:00').toLocaleDateString('de-DE');
     document.getElementById('lauf-menge').textContent = '1';
     document.getElementById('lauf-mit').checked = false;
@@ -4852,12 +4858,12 @@ var K = (function(){
     error.textContent = '';
     fetch(API+'/lunch-order',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({quelle:3,name:'Laufkundschaft',datum:_lauf.tag,
+      body:JSON.stringify({quelle:3,name:document.getElementById('lauf-name').value.trim()||'Ladenkunde',datum:_lauf.tag,
         gericht:dish.dl_gericht,gericht_id:dish.dl_wochenplanid||'',preis:dish.dl_preis,
         menge:_lauf.menge,mitnehmen:document.getElementById('lauf-mit').checked})
     }).then(function(r){return r.json().then(function(res){if(!r.ok || !res.success) throw new Error('Speichern abgelehnt');return res;});})
       .then(function(){
-        closeModal('modal-lauf'); toast('Laufkundschaft erfasst – Status bestätigt.'); loadOrders(); _verlaufDaten = null;
+        closeModal('modal-lauf'); toast('Ladenkunde erfasst – Status bestätigt.'); loadOrders(); _verlaufDaten = null;
       }).catch(function(e){
         console.error('[Laufkundschaft] Speichern',e);
         error.textContent = 'Die Erfassung konnte nicht bestätigt werden. Bitte zuerst die Tagesliste prüfen, bevor Sie erneut erfassen.';

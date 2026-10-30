@@ -11,6 +11,11 @@ Mengen offener Telefon- und Laufkundschaft-Bestellungen korrigieren lassen.
 
 ## Bestätigte Entscheidungen
 
+Aktuelle sichtbare Bezeichnung ab der Namens-/Zeit-Nachbesserung: **Ladenkunde**
+statt Laufkundschaft (Button, Dialog, Standardname, Quellenlabel, Filter und
+Summen). Technische IDs, Quellwert 3 und bestehende Datensätze bleiben erhalten.
+Die folgenden ursprünglichen Bezeichnungen beschreiben weiterhin dieselbe Quelle.
+
 - Eigener Button und eigener Dialog, nicht in die Telefonbestellung integrieren.
 - Laufkundschaft nur für heute erfassen.
 - Pro Verkauf einen anonymen Eintrag; mehrere Portionen desselben Gerichts
@@ -32,7 +37,9 @@ Mengenauswahl und eine Checkbox „Zum Mitnehmen“. Bei einem einzigen Tagesger
 ist dieses vorausgewählt, die Menge beginnt bei 1. Es gibt keine Kundensuche
 und keine Pflicht zur Eingabe von Name, Telefon oder E-Mail.
 
-„Erfassen“ speichert einen anonymen Vorgang namens „Laufkundschaft“. Der Dialog
+„Erfassen“ speichert einen Vorgang mit dem vorbelegten, änderbaren Namen
+„Laufkundschaft“. Ein leerer Name verwendet weiterhin diesen Standard.
+Der Name dient nur zur Zuordnung bei der Ausgabe, ohne Kundenanlage. Der Dialog
 erklärt vorab: „Wird als bestätigt erfasst. Nach der Ausgabe bitte als abgeholt
 markieren.“ Die Karte steht anschließend unter „Offen“, mit getrennten Badges
 für Quelle und Status. Die Verkäuferin verwendet später den normalen
@@ -43,6 +50,24 @@ kleinen Dialog mit Gericht, aktueller Menge und großen Minus-/Plus-Tasten.
 Erst „Speichern“ übernimmt die Änderung. „Abbrechen“ verändert nichts.
 
 ## Anforderungen und Testfälle
+
+### F6: Name und Erfassungszeit bei der Ausgabe
+
+- Das Namensfeld startet bei jeder Erfassung mit „Laufkundschaft“, ist optional
+  überschreibbar und wird getrimmt gespeichert. Kein Konto oder Kontakt erforderlich.
+- Auf Mittagstisch-Karten steht hinter dem Namen die vorhandene Erfassungszeit
+  (`bestellt_am`), in Berliner Ortszeit als „HH:mm Uhr“. Keine erfundene Zeit bei
+  fehlendem/ungültigem Zeitstempel; der gespeicherte Name selbst bleibt unverändert.
+- Die Namenszeile nutzt die gesamte Kartenbreite. Aktionsbuttons stehen darunter,
+  sodass sie keinen künstlichen Umbruch im Namen erzwingen.
+
+| Testfall | Erwartung |
+|---|---|
+| TC-F6-01 | Standardname vorbelegt; eigener Name im POST und in der Karte; erneutes Öffnen setzt Standard zurück. |
+| TC-F6-02 | Leerer/Whitespace-Name wird serverseitig zu Laufkundschaft; eigener Name bleibt ohne Kundenverknüpfung erhalten. |
+| TC-F6-03 | Zwei Karten mit gleichem Namen zeigen unterschiedliche Erfassungszeiten in Berliner Ortszeit direkt hinter dem Namen. |
+| TC-F6-04 | Namenszeile nutzt volle Breite ohne Überschneidung mit Aktionen, auch in schmalen Karten auf breitem Bildschirm. |
+| TC-F6-05 | Fehlende/ungültige Zeit ergibt keinen irreführenden Zeitzusatz. |
 
 ### F1: Eigenständige Erfassung für heute
 

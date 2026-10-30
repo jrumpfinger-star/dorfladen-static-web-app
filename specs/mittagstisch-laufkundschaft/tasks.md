@@ -3,6 +3,17 @@
 Status: T1–T9 lokal umgesetzt und geprüft. Kein Commit oder Deployment.
 Grundlage: [spec.md](./spec.md), [plan.md](./plan.md).
 
+## Nachbesserung F6
+
+1. Namensfeld, Reset und API-Übernahme implementieren (TC-F6-01/02).
+2. Erfassungszeit am Namen sowie volle Namenszeile ergänzen (TC-F6-03..05).
+3. Kiosk generieren; API-Tests und Browserprüfungen auf vier Viewports sowie
+   schmale Karten bei breitem Bildschirm ausführen; Handbuch aktualisieren.
+
+Abgeschlossen und lokal geprüft: 52/52 Browserprüfungen, 13/13 API-Tests.
+Bezeichnung gemäß Nutzerwunsch „Ladenkunde“; bestehende Namen und technische
+Quellkennungen bleiben unverändert. Kein Deployment dieser Nachbesserung.
+
 | ID | Aufgabe | Voraussetzung | Nachweis |
 |---|---|---|---|
 | T1 | Funktionsbeschreibung in `specs/kiosk-funktionen.md` ergänzen und vor Code bestätigen lassen | Freigegebene Spezifikation | F1–F5 mit bestätigtem Bedienablauf |

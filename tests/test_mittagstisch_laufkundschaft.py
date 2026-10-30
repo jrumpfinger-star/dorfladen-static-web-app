@@ -75,7 +75,7 @@ class WalkinTests(unittest.TestCase):
         self.assertEqual(self.create(email="someone@example.test", notify_email=True,
                                      device_id="device", stammkunde_id="customer").status_code, 201)
         payload = self.post.call_args.kwargs["json"]
-        self.assertEqual(payload["dl_name"], "Laufkundschaft")
+        self.assertEqual(payload["dl_name"], "Ladenkunde")
         self.assertEqual(payload["dl_quelle"], 3)
         self.assertEqual(payload["dl_status"], 1)
         self.assertEqual(payload["dl_menge"], 2)
@@ -89,6 +89,16 @@ class WalkinTests(unittest.TestCase):
         self.assertEqual(lunch.main(Request("POST", {
             "quelle": 3, "menge": 1, "datum": "2026-10-30"}, False)).status_code, 401)
         self.post.assert_not_called()
+
+    def test_walkin_custom_name_and_blank_default(self):
+        for entered, expected in [("  Anna  ", "Anna"), ("   ", "Ladenkunde"),
+                                  ("", "Ladenkunde")]:
+            with self.subTest(name=entered):
+                self.assertEqual(self.create(name=entered).status_code, 201)
+                payload = self.post.call_args.kwargs["json"]
+                self.assertEqual(payload["dl_name"], expected)
+                self.assertEqual(payload["dl_stammkunde_id"], "")
+                self.assertEqual(payload["dl_email"], "")
 
     def test_edit_only_quantity_with_etag(self):
         self.assertEqual(self.edit().status_code, 200)

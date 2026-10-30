@@ -34,13 +34,17 @@ Der Kiosk hat 4 Hauptbereiche als Tab-Leiste oben:
 
 ### Laufkundschaft und Mengen korrigieren
 
-Der eigene Button **Laufkundschaft erfassen** öffnet einen kurzen, separaten
+Der eigene Button **Ladenkunde erfassen** öffnet einen kurzen, separaten
 Dialog, nicht die Telefonbestellung. Nur am heutigen Tagesreiter verfügbar:
 heutiges Gericht, Menge 1–99 und optional „Zum Mitnehmen“ (Standard vor Ort).
 Ein einzelnes Tagesgericht ist vorausgewählt. Keine Kundensuche und keine
 Kontaktangaben. Fehlt der Plan, bleibt die Erfassung gesperrt.
 
-Jeder Verkauf erzeugt einen anonymen Eintrag „Laufkundschaft“ mit Status
+Der vorgeschlagene Name **Ladenkunde** ist für die Ausgabe überschreibbar;
+ein leeres Feld verwendet den Standard. Hinter dem Namen steht die gespeicherte
+Erfassungszeit in Berliner Ortszeit. Name und Zeit nutzen eine volle Kartenzeile,
+Aktionen stehen darunter.
+Jeder Verkauf erzeugt einen Eintrag ohne Kundenverknüpfung mit Status
 **Bestätigt**. Nach der Ausgabe markiert die Verkäuferin ihn manuell als
 **Abgeholt**. Die Erfassung ist unabhängig vom Online-Bestellschluss.
 Ein eigenes Quellen-Badge und ein Quellenfilter mit Bestellzähler trennen diese
@@ -133,7 +137,7 @@ Drei Buttons am unteren Bildschirmrand:
 | Button | Funktion |
 |--------|----------|
 | Neue Telefonbestellung | Öffnet Bestell-Modal für telefonische Bestellungen |
-| Laufkundschaft erfassen | Eigener kurzer Dialog ohne Kundendaten, nur für heute |
+| Ladenkunde erfassen | Eigener kurzer Dialog mit optionalem Ausgabenamen, nur für heute |
 | Küchenliste drucken | Öffnet Druckansicht mit Bestellungen nach Gericht gruppiert |
 
 **Responsive**: Auf Mobilgeräten (≤600px) werden die Buttons kleiner dargestellt (40px statt 64px, Font 13px).
