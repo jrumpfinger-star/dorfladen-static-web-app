@@ -96,6 +96,9 @@ async function bestelleOhneEmail(page) {
   // Das Gericht für morgen wählen
   await page.locator('.menu-item').first().click();
   await page.waitForTimeout(400);
+  if (!(await page.locator('#cust-name').isVisible())) {
+    await page.locator('#customer-details summary').click();
+  }
   await page.fill('#cust-name', 'Testkunde ohne Mail');
   // E-Mail bleibt leer – genau der gemeldete Fall.
   await page.waitForTimeout(200);

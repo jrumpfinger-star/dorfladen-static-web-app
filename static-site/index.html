@@ -2804,6 +2804,7 @@ html[data-theme="dark"] [style*="border-bottom:1px solid #f0f0f0"],
 html[data-theme="dark"] [style*="border-bottom:1px solid #e5e7eb"]{border-color:#2a333a !important}
 .mt-popup-close{position:absolute;top:10px;right:10px;z-index:10;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .mt-popup-close:hover{background:rgba(0,0,0,.7)}
+.mt-popup-close[hidden]{display:none}
 .mt-popup-iframe{border:none;width:100%;flex:1;min-height:0;border-radius:16px}
 @media(max-width:600px){.mt-popup-overlay{padding:0}.mt-popup-modal{max-width:100%;max-height:100%;border-radius:0;height:100%}.mt-popup-iframe{border-radius:0}}
 </style>
@@ -2828,6 +2829,9 @@ var _mtKeinAussenKlick=false;
 function openMittagPopup(url, keinAussenKlick){
   _mtKeinAussenKlick=!!keinAussenKlick;
   var iframe=document.getElementById('mt-popup-iframe');
+  var ziel = new URL(url, location.href);
+  document.querySelector('#mt-popup-overlay .mt-popup-close').hidden =
+    ziel.origin===location.origin && /^\/mittagstisch-bestellen(?:\.html)?\/?$/.test(ziel.pathname);
   var sep=url.indexOf('?')>=0?'&':'?';
   iframe.src=url+sep+'_cb='+Date.now();
   document.getElementById('mt-popup-overlay').classList.add('open');
@@ -2980,4 +2984,3 @@ window.addEventListener('message',function(e){
 </body>
 
 </html>
-

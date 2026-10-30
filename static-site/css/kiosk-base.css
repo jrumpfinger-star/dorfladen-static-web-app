@@ -1,6 +1,6 @@
 /* ERZEUGT aus static-site/kiosk-klassisch.html durch tools/build-kiosk-neu.js.
    Nicht von Hand aendern. Grundlage fuer kiosk-neu.css.
-   SHA256: d47a353d8875eaa61eac72d98031f478f39ff7d2e04606e83c687fca2883d7e8 */
+   SHA256: 77995022384fd716c802dc283dc8f7608b1b7b18355a49963cc42bc9fd5686b7 */
 :root{--c-pri:var(--dl-green,#2d5016);--c-green:var(--dl-green-action,#2e7d4f);--c-green-light:#dcfce7;--c-red:var(--dl-red,#dc2626);--c-orange:var(--dl-orange,#e65100);--c-yellow:#f59e0b;--c-bg:#f0f2f5;--c-card:#fff;--c-text:#1f2937;--c-muted:#6b7280;--c-border:#e5e7eb;--radius:14px;--touch-min:56px;--c-surf2:#f9fafb;--c-tint:#f0fdf4}
 html[data-theme="dark"]{color-scheme:dark;--c-bg:#12171a;--c-card:#1b2228;--c-text:#e6eae8;--c-muted:#9aa6a0;--c-border:#2a333a;--c-green:#5cb85f;--c-green-light:#1e2a20;--c-surf2:#161c20;--c-tint:#1e2a20}
 #dl-theme-toggle{position:fixed;left:12px;bottom:12px;z-index:9998;width:42px;height:42px;border-radius:50%;border:1px solid rgba(128,128,128,.3);background:var(--c-card);color:var(--c-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:0}
@@ -1269,6 +1269,22 @@ html[data-theme="dark"] .k-sw-hbtn.on{background:#b45309;color:#fff;border-color
 .src-online{color:#2563eb}
 .src-telefon{color:#92400e}
 .src-personal{color:#7c3aed}
+.src-laufkundschaft{color:#0369a1;background:#e0f2fe}
+#modal-lauf .k-modal,#modal-menge .k-modal{max-width:480px}
+.mt-gerichte label{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--c-border);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.mt-gerichte input{flex-shrink:0;width:22px;height:22px;margin-top:2px;accent-color:var(--c-green)}
+.mt-gerichte span{min-width:0;overflow-wrap:anywhere;line-height:1.4}
+.mt-gerichte b{display:block;color:var(--c-green);margin-top:3px}
+.mt-step{display:flex;align-items:center;justify-content:center;gap:18px;margin:18px 0}
+.mt-step button{min-width:48px;min-height:48px}
+.mt-step output{font-size:26px;font-weight:700;min-width:42px;text-align:center}
+.mt-hinweis{font-size:13px;color:var(--c-muted);margin:12px 0}
+.mt-fehler{color:#b91c1c;min-height:20px;margin-top:12px}
+@media(max-width:700px){
+  .k-bottom{flex-wrap:wrap}
+  .k-bottom .k-btn{flex:1 1 40%;min-width:0;white-space:normal}
+  .k-bottom .k-btn:last-child{flex-basis:100%}
+}
 /* Statusabzeichen: gefuellt, damit es sich klar vom Quellenabzeichen abhebt */
 .k-order-st{font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid transparent}
 .stx-neu{background:#fef3c7;color:#92400e;border-color:#fde68a}

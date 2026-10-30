@@ -32,6 +32,30 @@ Der Kiosk hat 4 Hauptbereiche als Tab-Leiste oben:
 
 ## 2. Mittagstisch
 
+### Laufkundschaft und Mengen korrigieren
+
+Der eigene Button **Laufkundschaft erfassen** öffnet einen kurzen, separaten
+Dialog, nicht die Telefonbestellung. Nur am heutigen Tagesreiter verfügbar:
+heutiges Gericht, Menge 1–99 und optional „Zum Mitnehmen“ (Standard vor Ort).
+Ein einzelnes Tagesgericht ist vorausgewählt. Keine Kundensuche und keine
+Kontaktangaben. Fehlt der Plan, bleibt die Erfassung gesperrt.
+
+Jeder Verkauf erzeugt einen anonymen Eintrag „Laufkundschaft“ mit Status
+**Bestätigt**. Nach der Ausgabe markiert die Verkäuferin ihn manuell als
+**Abgeholt**. Die Erfassung ist unabhängig vom Online-Bestellschluss.
+Ein eigenes Quellen-Badge und ein Quellenfilter mit Bestellzähler trennen diese
+Einträge von Telefon, Online und bisherigen Personalbestellungen.
+
+Bei offenen **Telefon- und Laufkundschaft**-Karten öffnet **Menge ändern**
+einen kleinen Dialog mit Minus/Plus, Speichern und Abbrechen. Keine Änderung
+bei Online, Personal, Abgeholt oder Storniert. Menge, Gesamtpreis und
+Portionssummen werden erst nach erfolgreicher Speicherung aktualisiert;
+Status und Stückpreis bleiben unverändert. Zwischenzeitliche Änderungen
+werden gemeldet statt überschrieben.
+
+Verbindlicher Vertrag und Testfälle:
+[Laufkundschaft-Spec](./mittagstisch-laufkundschaft/spec.md).
+
 ### Tagesauswahl
 - Leiste mit 7 Tage-Pills: Gestern → Heute → +5 Tage
 - **Heute** ist standardmäßig ausgewählt (grüne Pill)
@@ -104,11 +128,12 @@ Klick auf den Storno-Button (✕) öffnet einen **Storno-Dialog** (Overlay):
 
 ## 3. Bottom-Bar (nur im Mittagstisch-Tab)
 
-Zwei Buttons am unteren Bildschirmrand:
+Drei Buttons am unteren Bildschirmrand:
 
 | Button | Funktion |
 |--------|----------|
 | Neue Telefonbestellung | Öffnet Bestell-Modal für telefonische Bestellungen |
+| Laufkundschaft erfassen | Eigener kurzer Dialog ohne Kundendaten, nur für heute |
 | Küchenliste drucken | Öffnet Druckansicht mit Bestellungen nach Gericht gruppiert |
 
 **Responsive**: Auf Mobilgeräten (≤600px) werden die Buttons kleiner dargestellt (40px statt 64px, Font 13px).

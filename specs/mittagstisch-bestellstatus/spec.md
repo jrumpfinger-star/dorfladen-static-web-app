@@ -52,8 +52,9 @@ Knöpfe erscheinen. Bei „abgeholt" bleibt nur ein grüner Haken.
 
 - Der Lebensweg selbst wird **nicht** umgebaut. Eine Telefonbestellung wird
   weiterhin sofort als `bestätigt` gespeichert – der Kunde kommt später und holt
-  ab. Ein Fall „direkt mitgenommen" existiert im Betrieb nicht
-  (**vom Nutzer bestätigt**).
+  ab. Spontane Ladenverkäufe werden inzwischen separat spezifiziert:
+  [Laufkundschaft](../mittagstisch-laufkundschaft/spec.md). Sie erhalten einen
+  eigenen Erfassungsweg und starten ebenfalls als bestätigt.
 - Keine Änderung an Storno-, Chat- oder Sonderwunsch-Logik.
 
 ## Requirements
@@ -110,7 +111,7 @@ Knöpfe erscheinen. Bei „abgeholt" bleibt nur ein grüner Haken.
 #### F4 Behaviour / Acceptance
 
 - In der Filterleiste sitzt ein Schalter „Nur Telefon", der die Ansicht auf
-  Bestellungen mit Quelle ≠ Online einschränkt. Er wirkt zusätzlich zum
+  Bestellungen mit Quelle Telefon einschränkt. Er wirkt zusätzlich zum
   Status-Reiter und zeigt seine Trefferzahl.
 - Der Schalter erscheint nur, wenn es überhaupt solche Bestellungen gibt.
 - Der Kochbedarf beschriftet diese Bestellungen als **„telefonisch"** statt
@@ -141,7 +142,7 @@ Knöpfe erscheinen. Bei „abgeholt" bleibt nur ein grüner Haken.
 - API `/api/lunch-order` unverändert im Vertrag; `_serialize` liefert `status`
   und `quelle` künftig **immer** als ganze Zahl, nie `null`.
 - Statuswerte: `0 neu`, `1 bestätigt`, `2 storniert`, `3 abgeholt`.
-- Quellen: `0 Online`, `1 Telefon`, `2 Personal`.
+- Quellen: `0 Online`, `1 Telefon`, `2 Personal`, `3 Laufkundschaft`.
 
 ## Open Questions
 

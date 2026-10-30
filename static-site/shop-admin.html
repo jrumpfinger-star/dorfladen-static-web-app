@@ -1364,7 +1364,7 @@ function renderMittagCards(orders){
   }
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
   var SRC = {0:'',1:'',2:''};
-  var SRC_LABEL = {0:'Online',1:'Telefon',2:'Personal'};
+  var SRC_LABEL = {0:'Online',1:'Telefon',2:'Personal',3:'Laufkundschaft'};
   var stColors = {0:'#f59e0b',1:'#22c55e',2:'#dc2626',3:'#9ca3af'};
   var stBg = {0:'#fef3c7',1:'#dcfce7',2:'#fef2f2',3:'#f3f4f6'};
   var html = '';
@@ -1386,8 +1386,8 @@ function renderMittagCards(orders){
     html += '<div class="mt-card-badges">';
     html += '<span class="mt-card-badge" style="background:'+(stBg[o.status]||'#f3f4f6')+';color:'+(stColors[o.status]||'#666')+'">'+(STATUS[o.status]||'?')+'</span>';
     if(o.mitnehmen) html += '<span class="mt-card-badge mt-badge-mitnehmen">Mitn.</span>';
-    var srcBg = {0:'#dbeafe',1:'#fef3c7',2:'#f3e8ff'};
-    var srcFg = {0:'#1d4ed8',1:'#92400e',2:'#7c3aed'};
+    var srcBg = {0:'#dbeafe',1:'#fef3c7',2:'#f3e8ff',3:'#e0f2fe'};
+    var srcFg = {0:'#1d4ed8',1:'#92400e',2:'#7c3aed',3:'#0369a1'};
     html += '<span class="mt-card-badge" style="background:'+(srcBg[o.quelle]||'#dbeafe')+';color:'+(srcFg[o.quelle]||'#1d4ed8')+'">'+(SRC_LABEL[o.quelle]||'Online')+'</span>';
     html += '</div>';
     // Actions

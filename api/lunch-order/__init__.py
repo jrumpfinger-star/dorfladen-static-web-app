@@ -97,7 +97,8 @@ def _heute_lokal():
 QUELLE_ONLINE = 0
 QUELLE_TELEFON = 1
 QUELLE_PERSONAL = 2
-QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal"}
+QUELLE_LAUFKUNDSCHAFT = 3
+QUELLE_LABELS = {0: "Online", 1: "Telefon", 2: "Personal", 3: "Laufkundschaft"}
 
 # Anmeldezeichen des Kundenkontos (dasselbe wie im Shop).
 JWT_SECRET = os.environ.get("SHOP_JWT_SECRET",
@@ -214,6 +215,7 @@ def _serialize(item):
         "wochentag_label": item.get("dl_wochentag_label", ""),
         "quelle": quelle,
         "quelle_label": QUELLE_LABELS.get(quelle, "Online"),
+        "version": item.get("@odata.etag", ""),
         "stammkunde_id": item.get("dl_stammkunde_id", ""),
         "erfasst_von": item.get("dl_erfasst_von", ""),
         "device_id": item.get("dl_device_id", ""),
@@ -583,6 +585,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # ── POST: Create order ──
         if req.method == "POST":
             body = req.get_json()
+            quelle = int(body.get("quelle", QUELLE_ONLINE))
+            if quelle == QUELLE_LAUFKUNDSCHAFT:
+                if type(body.get("menge")) is not int or not 1 <= body["menge"] <= 99:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Bitte eine ganze Menge von 1 bis 99 eingeben."}),
+                        status_code=400, headers=get_cors_headers())
 
             name = (body.get("name") or "").strip()
             email = (body.get("email") or "").strip().lower()
@@ -600,9 +608,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mitnehmen = body.get("mitnehmen", False)
             notify_email = bool(body.get("notify_email", False))
             device_id = (body.get("device_id") or "").strip()
-            quelle = int(body.get("quelle", QUELLE_ONLINE))
             stammkunde_id = (body.get("stammkunde_id") or "").strip()
             erfasst_von = (body.get("erfasst_von") or "").strip()
+
+            if quelle == QUELLE_LAUFKUNDSCHAFT:
+                from shared.auth import token_valid, unauthorized_response
+                if not token_valid(req):
+                    return unauthorized_response()
+                if datum != heute_iso():
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Laufkundschaft bitte nur für heute erfassen."}),
+                        status_code=400, headers=get_cors_headers())
+                name = "Laufkundschaft"
+                email = telefon = stammkunde_id = device_id = ""
+                notify_email = False
 
             errors = []
             if not name:
@@ -645,14 +664,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             bestellnr = f"MT-{jetzt_lokal().strftime('%y%m%d')}-{uuid.uuid4().hex[:5].upper()}"
 
             # Telefonbestellungen werden sofort als bestätigt gespeichert
-            initial_status = STATUS_BESTAETIGT if quelle in (QUELLE_TELEFON, QUELLE_PERSONAL) else STATUS_NEU
+            initial_status = STATUS_BESTAETIGT if quelle in (QUELLE_TELEFON, QUELLE_PERSONAL, QUELLE_LAUFKUNDSCHAFT) else STATUS_NEU
 
             # Aus dem Laden: „Bei telefonischer Bestellung kann es eigentlich
             # keine Nachricht vom Kunden geben." Richtig - den Sonderwunsch
             # tippt hier das Personal selbst mit. Er gilt daher von vornherein
             # als gelesen, sonst blinkt die eigene Eingabe als neue Nachricht
             # zurueck und blockiert die Sammelbestaetigung.
-            selbst_erfasst = quelle in (QUELLE_TELEFON, QUELLE_PERSONAL)
+            selbst_erfasst = quelle in (QUELLE_TELEFON, QUELLE_PERSONAL, QUELLE_LAUFKUNDSCHAFT)
 
             payload = {
                 "dl_name": name,
@@ -1095,13 +1114,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             menge = 1
                         fach = je_tag.setdefault(
                             tag, {"portionen": 0, "bestellungen": 0,
-                                  "online": 0, "vor_ort": 0, "gerichte": {}})
+                                  "online": 0, "vor_ort": 0, "laufkundschaft": 0, "gerichte": {}})
                         fach["portionen"] += menge
                         fach["bestellungen"] += 1
                         if satz.get("dl_quelle", QUELLE_ONLINE) == QUELLE_ONLINE:
                             fach["online"] += menge
                         else:
                             fach["vor_ort"] += menge
+                        if satz.get("dl_quelle") == QUELLE_LAUFKUNDSCHAFT:
+                            fach["laufkundschaft"] += menge
                         name = (satz.get("dl_gericht") or "ohne Gericht").strip()
                         fach["gerichte"][name] = fach["gerichte"].get(name, 0) + menge
                     naechste = leib.get("@odata.nextLink")
@@ -1124,6 +1145,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "bestellungen": fach["bestellungen"],
                         "online": fach["online"],
                         "vor_ort": fach["vor_ort"],
+                        "laufkundschaft": fach.get("laufkundschaft", 0),
                         "gerichte": gerichte,
                     })
 
@@ -1246,9 +1268,51 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # ── PATCH: Confirm / cancel / update status ──
         if req.method == "PATCH" and record_id:
             body = req.get_json()
+            if "menge" in body:
+                from shared.auth import token_valid, unauthorized_response
+                if not token_valid(req):
+                    return unauthorized_response()
+                menge = body["menge"]
+                version = body.get("version")
+                if (type(menge) is not int or not 1 <= menge <= 99
+                        or not isinstance(version, str) or not version
+                        or set(body) - {"menge", "version", "aktion"}):
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Bitte eine ganze Menge von 1 bis 99 eingeben und die Bestellung neu laden."}),
+                        status_code=400, headers=get_cors_headers())
+                url = f"{base_url}/api/data/v9.2/{ENTITY_SET}({record_id})"
+                gelesen = requests.get(url, headers=headers, timeout=15)
+                if gelesen.status_code != 200:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Bestellung konnte nicht geladen werden."}),
+                        status_code=404 if gelesen.status_code == 404 else 502,
+                        headers=get_cors_headers())
+                aktuell = gelesen.json()
+                if (aktuell.get("dl_quelle") not in (QUELLE_TELEFON, QUELLE_LAUFKUNDSCHAFT)
+                        or aktuell.get("dl_status") not in (STATUS_NEU, STATUS_BESTAETIGT)):
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Diese Bestellung kann nicht mehr geändert werden."}),
+                        status_code=409, headers=get_cors_headers())
+                if version != aktuell.get("@odata.etag"):
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Die Bestellung wurde inzwischen geändert. Bitte den aktuellen Stand prüfen."}),
+                        status_code=409, headers=get_cors_headers())
+                geaendert = requests.patch(
+                    url, headers={**headers, "If-Match": version},
+                    json={"dl_menge": menge}, timeout=30)
+                if geaendert.status_code == 412:
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Die Bestellung wurde inzwischen geändert. Bitte den aktuellen Stand prüfen."}),
+                        status_code=409, headers=get_cors_headers())
+                if geaendert.status_code not in (200, 204):
+                    logging.error("[lunch-order] Mengenänderung fehlgeschlagen: %s", geaendert.status_code)
+                    return func.HttpResponse(
+                        json.dumps({"success": False, "error": "Die Menge konnte nicht gespeichert werden."}),
+                        status_code=502, headers=get_cors_headers())
+                return func.HttpResponse(
+                    json.dumps({"success": True}), status_code=200, headers=get_cors_headers())
             new_status = body.get("status")
             bestaetigung_text = (body.get("bestaetigung_text") or "").strip()
-            new_menge = body.get("menge")
             new_anmerkung = body.get("anmerkung")
 
             # Customer self-cancellation: only allowed when order is still Eingegangen (0)
@@ -1278,10 +1342,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 patch_data["dl_status"] = int(new_status)
             if bestaetigung_text:
                 patch_data["dl_bestaetigung_text"] = bestaetigung_text
-            if new_menge is not None:
-                m = int(new_menge)
-                if 1 <= m <= 99:
-                    patch_data["dl_menge"] = m
             if new_anmerkung is not None:
                 patch_data["dl_anmerkung"] = new_anmerkung.strip()
 

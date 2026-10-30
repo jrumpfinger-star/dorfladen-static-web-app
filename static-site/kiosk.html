@@ -175,6 +175,7 @@
       <button class="k-filter-btn" data-mt-filter="storniert" onclick="K.setMittagFilter('storniert')" style="color:#dc2626"><i data-lucide="x-circle" style="width:14px;height:14px"></i> <span class="k-filter-label">Storniert</span> <span class="k-filter-count" id="mt-fc-storniert">0</span></button>
       <button class="k-filter-btn" data-mt-filter="alle" onclick="K.setMittagFilter('alle')"><span class="k-filter-label">Alle</span> <span class="k-filter-count" id="mt-fc-alle">0</span></button>
       <button class="k-filter-btn" id="mt-src-toggle" onclick="K.toggleQuelleFilter()" style="display:none;color:#92400e"><i data-lucide="phone" style="width:14px;height:14px"></i> <span class="k-filter-label">Nur Telefon</span> <span class="k-filter-count" id="mt-fc-telefon">0</span></button>
+      <button class="k-filter-btn" id="mt-src-lauf" onclick="K.toggleLaufFilter()" style="display:none;color:#0369a1"><span>Laufkundschaft</span> <span class="k-filter-count" id="mt-fc-lauf">0</span></button>
       <!-- Kleiner Rückblick. Aus dem Laden: „Bei Mittagstisch wäre ein
            kleiner Chart schön, in dem die Bestellungen der letzten 7 Tage
            dargestellt werden." (Spec mittag-verlauf-chart) -->
@@ -702,7 +703,34 @@
 <!-- ═══ Bottom bar ═══ -->
 <div class="k-bottom" style="display:none">
   <button class="k-btn k-btn-lg k-btn-confirm" id="btn-new-order" onclick="K.openNewOrder()"><i data-lucide="phone" style="width:18px;height:18px"></i> Neue Telefonbestellung</button>
+  <button class="k-btn k-btn-lg k-btn-confirm" id="btn-lauf" onclick="K.openLauf()">Laufkundschaft erfassen</button>
   <button class="k-btn k-btn-lg k-btn-outline" onclick="K.printKitchen()"><i data-lucide="printer" style="width:18px;height:18px"></i> Küchenliste drucken</button>
+</div>
+
+<div class="k-modal-bg" id="modal-lauf" role="dialog" aria-modal="true" aria-labelledby="lauf-titel">
+  <div class="k-modal">
+    <div class="k-modal-head"><h2 id="lauf-titel">Laufkundschaft erfassen</h2><button class="k-modal-close" aria-label="Schließen" onclick="K.closeModal('modal-lauf')">&times;</button></div>
+    <div class="k-modal-body">
+      <p id="lauf-tag"></p>
+      <div class="mt-gerichte" id="lauf-gericht" role="group" aria-label="Gericht"></div>
+      <div class="mt-step"><button class="k-btn k-btn-outline" aria-label="Eine Portion weniger" onclick="K.laufQty(-1)">−</button><output id="lauf-menge">1</output><button class="k-btn k-btn-outline" aria-label="Eine Portion mehr" onclick="K.laufQty(1)">+</button></div>
+      <label><input id="lauf-mit" type="checkbox" style="width:24px;height:24px;vertical-align:middle"> Zum Mitnehmen</label>
+      <p class="mt-hinweis">Wird als bestätigt erfasst. Nach der Ausgabe bitte als abgeholt markieren.</p>
+      <p class="mt-fehler" id="lauf-fehler" role="status"></p>
+    </div>
+    <div class="k-modal-footer"><button class="k-btn k-btn-outline" onclick="K.closeModal('modal-lauf')">Abbrechen</button><button id="lauf-save" class="k-btn k-btn-confirm" onclick="K.saveLauf()">Erfassen</button></div>
+  </div>
+</div>
+<div class="k-modal-bg" id="modal-menge" role="dialog" aria-modal="true" aria-labelledby="menge-titel">
+  <div class="k-modal">
+    <div class="k-modal-head"><h2 id="menge-titel">Menge ändern</h2><button class="k-modal-close" aria-label="Schließen" onclick="K.closeModal('modal-menge')">&times;</button></div>
+    <div class="k-modal-body">
+      <p id="menge-gericht"></p><p class="mt-hinweis" id="menge-bisher"></p>
+      <div class="mt-step"><button class="k-btn k-btn-outline" aria-label="Eine Portion weniger" onclick="K.editQty(-1)">−</button><output id="menge-wert">1</output><button class="k-btn k-btn-outline" aria-label="Eine Portion mehr" onclick="K.editQty(1)">+</button></div>
+      <p class="mt-fehler" id="menge-fehler" role="status"></p>
+    </div>
+    <div class="k-modal-footer"><button class="k-btn k-btn-outline" onclick="K.closeModal('modal-menge')">Abbrechen</button><button id="menge-save" class="k-btn k-btn-confirm" onclick="K.saveMenge()">Speichern</button></div>
+  </div>
 </div>
 
 </div><!-- /k-app -->
@@ -998,8 +1026,8 @@ var K = (function(){
 
   var STATUS = {0:'Neu',1:'Bestätigt',2:'Storniert',3:'Abgeholt'};
   var STATUS_CLASS = {0:'stx-neu',1:'stx-best',2:'stx-storno',3:'stx-abgeholt'};
-  var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal'};
-  var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal'};
+  var SRC_LABELS = {0:'Online',1:'Telefon',2:'Personal',3:'Laufkundschaft'};
+  var SRC_CLASS = {0:'src-online',1:'src-telefon',2:'src-personal',3:'src-laufkundschaft'};
 
   // Status und Quelle immer als Zahl fuehren. Ein leeres Feld darf nicht dazu
   // fuehren, dass eine Bestellung durch jeden Statusfilter faellt und dadurch
@@ -1281,8 +1309,16 @@ var K = (function(){
   // Beantwortet die Frage "wo ist meine Telefonbestellung hin?" ohne die
   // Statusreiter zu verlassen.
   var _mittagNurTelefon = false;
+  var _mittagNurLauf = false;
+  function toggleLaufFilter(){
+    _mittagNurLauf = !_mittagNurLauf;
+    _mittagNurTelefon = false;
+    renderOrders();
+    updateMittagFilterCounts();
+  }
   function toggleQuelleFilter(){
     _mittagNurTelefon = !_mittagNurTelefon;
+    _mittagNurLauf = false;
     var btn = document.getElementById('mt-src-toggle');
     if(btn) btn.classList.toggle('active', _mittagNurTelefon);
     renderOrders();
@@ -1466,7 +1502,13 @@ var K = (function(){
     var elNachr = document.getElementById('mt-fc-nachrichten');
     var elSonder = document.getElementById('mt-fc-sonderwunsch');
     // Quellenschalter nur zeigen, wenn es ueberhaupt etwas zu filtern gibt.
-    var cTelefon = orders.filter(function(o){return _istVorOrt(o) && o.status!==2;}).length;
+    var cTelefon = orders.filter(function(o){return o.quelle===1;}).length;
+    var cLauf = orders.filter(function(o){return o.quelle===3;}).length;
+    var laufBtn = document.getElementById('mt-src-lauf');
+    document.getElementById('mt-fc-lauf').textContent = cLauf;
+    laufBtn.style.display = cLauf ? '' : 'none';
+    if(!cLauf) _mittagNurLauf = false;
+    laufBtn.classList.toggle('active', _mittagNurLauf);
     var srcBtn = document.getElementById('mt-src-toggle');
     var elTel = document.getElementById('mt-fc-telefon');
     if(elTel) elTel.textContent = cTelefon;
@@ -1615,11 +1657,22 @@ var K = (function(){
         var newCount = newOrders.filter(function(o){return o.status===0;}).length;
         if(_prevCounts.mittag >= 0 && newCount > _prevCounts.mittag) _playNewOrderAlert('mittag');
         _prevCounts.mittag = newCount;
+        var main = document.querySelector('.k-main');
+        var scroll = main ? main.scrollTop : 0;
+        var focused = document.activeElement;
+        var focusCard = focused && focused.closest('.k-order');
+        var focusLabel = focused && focused.getAttribute('aria-label');
+        var focusId = focusCard && focusCard.id;
         orders = newOrders;
         updateMittagFilterCounts();
         renderOrders();
         renderStats();
         _updateNewOrderBtn();
+        if(focusId && focusLabel==='Menge ändern'){
+          var target = document.querySelector('#'+CSS.escape(focusId)+' [aria-label="Menge ändern"]');
+          if(target) target.focus({preventScroll:true});
+        }
+        if(main) main.scrollTop = scroll;
       })
       .catch(function(e){
         if(e.name==='AbortError') return;   // ein neuer Lauf hat uebernommen
@@ -1744,6 +1797,9 @@ var K = (function(){
     html += '</span>';
     // Inline actions (stop propagation)
     html += '<span class="k-oc-actions" onclick="event.stopPropagation()">';
+    if((o.quelle===1 || o.quelle===3) && (o.status===0 || o.status===1)){
+      html += '<button class="k-btn k-btn-sm k-btn-outline" aria-label="Menge ändern" onclick="K.openMenge(\''+o.id+'\')">'+luc('pencil',14)+'</button>';
+    }
     if(o.status===0){
       if(_hasUnseenComment(o)){
         html += '<button class="k-btn k-btn-sm k-btn-outline" style="opacity:.55;cursor:not-allowed" title="Bitte zuerst die Kundennachricht lesen" onclick="event.stopPropagation();K.promptReadFirst(\''+o.id+'\')">'+luc('lock',13)+' <span class="oc-btn-label">OK</span></button>';
@@ -1877,13 +1933,16 @@ var K = (function(){
     var map = {}, order = [];
     relevant.forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
-      if(!map[dish]){ map[dish] = {total:0,online:0,telefonisch:0,offen:0,abgeholt:0}; order.push(dish); }
+      if(!map[dish]){ map[dish] = {total:0,online:0,telefonisch:0,laufkundschaft:0,personal:0,offen:0,abgeholt:0}; order.push(dish); }
       var q = o.menge||1, g = map[dish];
       g.total += q;
       // Wichtig: hier geht es um die HERKUNFT (online vs. telefonisch erfasst).
       // "vor Ort" waere missverstaendlich - so heisst in der Kuechenliste der
       // Verzehr im Laden. Deshalb "telefonisch".
-      if(o.quelle===0) g.online += q; else g.telefonisch += q;
+      if(o.quelle===0) g.online += q;
+      else if(o.quelle===1) g.telefonisch += q;
+      else if(o.quelle===3) g.laufkundschaft += q;
+      else g.personal += q;
       if(o.status===3) g.abgeholt += q; else g.offen += q;
     });
     order.sort(function(a,b){return map[b].total - map[a].total;});
@@ -1907,6 +1966,8 @@ var K = (function(){
       html += '<div class="k-cook-chips">';
       if(g.online>0) html += '<span class="k-cook-chip b">'+luc('globe',11)+' '+g.online+' online</span>';
       if(g.telefonisch>0) html += '<span class="k-cook-chip o">'+luc('phone',11)+' '+g.telefonisch+' telefonisch</span>';
+      if(g.laufkundschaft>0) html += '<span class="k-cook-chip b">'+g.laufkundschaft+' Laufkundschaft</span>';
+      if(g.personal>0) html += '<span class="k-cook-chip">'+g.personal+' Personal</span>';
       if(g.abgeholt>0) html += '<span class="k-cook-chip g">'+luc('check',11)+' '+g.abgeholt+' abgeholt</span>';
       if(g.offen>0) html += '<span class="k-cook-chip">'+luc('utensils',11)+' '+g.offen+' offen</span>';
       html += '</div></div></div>';
@@ -2180,9 +2241,9 @@ var K = (function(){
     else if(_mittagFilter==='erledigt') filterFn = function(o){return o.status===3;};          // abgeholt
     else if(_mittagFilter==='storniert') filterFn = function(o){return o.status===2;};          // storniert
     else filterFn = function(o){return o.status!==2;};                                          // alle (ohne Storno)
-    if(_mittagNurTelefon){
+    if(_mittagNurTelefon || _mittagNurLauf){
       var _statusFn = filterFn;
-      filterFn = function(o){ return _statusFn(o) && _istVorOrt(o); };
+      filterFn = function(o){ return _statusFn(o) && o.quelle===(_mittagNurLauf?3:1); };
     }
     orders.filter(filterFn).forEach(function(o){
       var dish = o.gericht || 'Sonstiges';
@@ -2430,7 +2491,8 @@ var K = (function(){
       html += '</ul>';
       if(t.online || t.vor_ort){
         html += '<div class="mt-vl-quellen">'+luc('globe',12)+' '+t.online+' online \u00b7 '
-          + luc('phone',12)+' '+t.vor_ort+' telefonisch/vor Ort</div>';
+          + luc('phone',12)+' '+(t.vor_ort-(t.laufkundschaft||0))+' Telefon/Personal'
+          + ((t.laufkundschaft||0)?' \u00b7 '+t.laufkundschaft+' Laufkundschaft':'')+'</div>';
       }
     }
     ziel.innerHTML = html;
@@ -2866,6 +2928,12 @@ var K = (function(){
      nur einen Hinweis — die Entscheidung trifft der Mensch am Telefon,
      nicht die Uhr. (Spec mittag-telefon-bestellschluss, F3) */
   function _updateNewOrderBtn(){
+    var lauf = document.getElementById('btn-lauf');
+    if(lauf){
+      lauf.disabled = _mittagDatum !== today();
+      lauf.title = lauf.disabled ? 'Für Laufkundschaft bitte Heute auswählen.' : '';
+      lauf.textContent = lauf.disabled ? 'Laufkundschaft: bitte Heute wählen' : 'Laufkundschaft erfassen';
+    }
     var btn = document.getElementById('btn-new-order');
     if(!btn) return;
     btn.disabled = false;
@@ -2874,6 +2942,129 @@ var K = (function(){
       ? 'Der Bestellschluss für heute (' + _mittagSchlussText()
         + ' Uhr) ist vorbei — telefonisch ist die Aufnahme weiterhin möglich.'
       : '';
+  }
+
+  function _heuteBerlin(){
+    return new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  }
+  var _lauf = {tag:'',gerichte:[],menge:1,laden:false,speichern:false};
+  var _mengeEdit = null;
+  var _mengeSpeichert = false;
+  function _kannMenge(o){ return o && (o.quelle===1 || o.quelle===3) && (o.status===0 || o.status===1); }
+  function openLauf(){
+    if(_lauf.speichern || _lauf.laden) return;
+    if(_mittagDatum!==_heuteBerlin()){ toast('Für Laufkundschaft bitte Heute auswählen.'); return; }
+    _lauf.tag = _heuteBerlin();
+    _lauf.menge = 1;
+    _lauf.gerichte = [];
+    _lauf.laden = true;
+    document.getElementById('lauf-tag').textContent = 'Heute, '+new Date(_lauf.tag+'T12:00:00').toLocaleDateString('de-DE');
+    document.getElementById('lauf-menge').textContent = '1';
+    document.getElementById('lauf-mit').checked = false;
+    document.getElementById('lauf-fehler').textContent = 'Gerichte werden geladen …';
+    document.getElementById('lauf-gericht').innerHTML = '';
+    document.getElementById('lauf-save').disabled = true;
+    openModal('modal-lauf');
+    fetch(API+'/wochenplan')
+      .then(function(r){ if(!r.ok) throw new Error('Wochenplan HTTP '+r.status); return r.json(); })
+      .then(function(res){
+        if(!Array.isArray(res.data)) throw new Error('Wochenplan fehlt');
+        _lauf.gerichte = _gerichteFuer(_lauf.tag,res.data).filter(function(d){return d.dl_gericht && typeof d.dl_preis==='number';});
+        var select = document.getElementById('lauf-gericht');
+        select.innerHTML = '';
+        _lauf.gerichte.forEach(function(d,i){
+          var label = document.createElement('label');
+          var input = document.createElement('input');
+          input.type = 'radio';
+          input.name = 'lauf-gericht';
+          input.value = i;
+          input.checked = _lauf.gerichte.length===1;
+          var text = document.createElement('span');
+          text.textContent = d.dl_gericht;
+          var preis = document.createElement('b');
+          preis.textContent = d.dl_preis.toFixed(2).replace('.',',')+' € pro Portion';
+          text.appendChild(preis);
+          label.appendChild(input);
+          label.appendChild(text);
+          select.appendChild(label);
+        });
+        document.getElementById('lauf-fehler').textContent = _lauf.gerichte.length?'':'Für heute ist noch kein Gericht im Wochenplan.';
+        document.getElementById('lauf-save').disabled = !_lauf.gerichte.length;
+      })
+      .catch(function(e){
+        console.error('[Laufkundschaft] Wochenplan',e);
+        document.getElementById('lauf-fehler').textContent = 'Die Gerichte konnten nicht geladen werden. Bitte erneut öffnen.';
+      })
+      .then(function(){ _lauf.laden = false; });
+  }
+  function laufQty(delta){
+    if(_lauf.speichern) return;
+    _lauf.menge = Math.max(1,Math.min(99,_lauf.menge+delta));
+    document.getElementById('lauf-menge').textContent = _lauf.menge;
+  }
+  function saveLauf(){
+    if(_lauf.speichern || _lauf.laden) return;
+    var error = document.getElementById('lauf-fehler');
+    if(_lauf.tag!==_heuteBerlin() || _mittagDatum!==_lauf.tag){
+      error.textContent = 'Der Tag hat sich geändert. Bitte Heute auswählen und die Erfassung neu öffnen.'; return;
+    }
+    var selected = document.querySelector('#lauf-gericht input:checked');
+    var dish = selected ? _lauf.gerichte[Number(selected.value)] : null;
+    if(!dish){ error.textContent = 'Bitte ein Gericht auswählen.'; return; }
+    _lauf.speichern = true;
+    document.getElementById('lauf-save').disabled = true;
+    error.textContent = '';
+    fetch(API+'/lunch-order',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({quelle:3,name:'Laufkundschaft',datum:_lauf.tag,
+        gericht:dish.dl_gericht,gericht_id:dish.dl_wochenplanid||'',preis:dish.dl_preis,
+        menge:_lauf.menge,mitnehmen:document.getElementById('lauf-mit').checked})
+    }).then(function(r){return r.json().then(function(res){if(!r.ok || !res.success) throw new Error('Speichern abgelehnt');return res;});})
+      .then(function(){
+        closeModal('modal-lauf'); toast('Laufkundschaft erfasst – Status bestätigt.'); loadOrders(); _verlaufDaten = null;
+      }).catch(function(e){
+        console.error('[Laufkundschaft] Speichern',e);
+        error.textContent = 'Die Erfassung konnte nicht bestätigt werden. Bitte zuerst die Tagesliste prüfen, bevor Sie erneut erfassen.';
+        loadOrders();
+      }).then(function(){ _lauf.speichern = false; });
+  }
+  function openMenge(id){
+    if(_mengeSpeichert) return;
+    var o = orders.find(function(x){return x.id===id;});
+    if(!_kannMenge(o)){ toast('Diese Bestellung kann nicht mehr geändert werden.'); return; }
+    if(!o.version){ toast('Bitte die Bestellungen neu laden, bevor Sie die Menge ändern.'); return; }
+    _mengeEdit = {id:o.id,version:o.version,menge:o.menge||1};
+    document.getElementById('menge-gericht').textContent = o.name+' · '+o.gericht;
+    document.getElementById('menge-bisher').textContent = 'Bisher: '+_mengeEdit.menge+' Portionen · Status bleibt unverändert';
+    document.getElementById('menge-wert').textContent = _mengeEdit.menge;
+    document.getElementById('menge-fehler').textContent = '';
+    document.getElementById('menge-save').disabled = false;
+    openModal('modal-menge');
+  }
+  function editQty(delta){
+    if(!_mengeEdit || _mengeSpeichert) return;
+    _mengeEdit.menge = Math.max(1,Math.min(99,_mengeEdit.menge+delta));
+    document.getElementById('menge-wert').textContent = _mengeEdit.menge;
+  }
+  function saveMenge(){
+    if(!_mengeEdit || _mengeSpeichert) return;
+    _mengeSpeichert = true;
+    document.getElementById('menge-save').disabled = true;
+    fetch(API+'/lunch-order/'+encodeURIComponent(_mengeEdit.id),{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({aktion:'menge-aendern',menge:_mengeEdit.menge,version:_mengeEdit.version})
+    }).then(function(r){return r.json().then(function(res){
+      if(r.status===409){
+        document.getElementById('menge-fehler').textContent = 'Die Bestellung wurde inzwischen geändert. Bitte schließen und den aktuellen Stand prüfen.';
+        loadOrders(); return;
+      }
+      if(!r.ok || !res.success) throw new Error('Mengenänderung abgelehnt');
+      closeModal('modal-menge'); toast('Menge gespeichert.'); loadOrders(); _verlaufDaten = null;
+    });}).catch(function(e){
+      console.error('[Mittagstisch] Mengenänderung',e);
+      document.getElementById('menge-fehler').textContent = 'Die Änderung konnte nicht bestätigt werden. Bitte schließen und den aktuellen Stand prüfen.';
+      loadOrders();
+    }).then(function(){ _mengeSpeichert = false; });
   }
 
   function openNewOrder(){
@@ -2983,7 +3174,7 @@ var K = (function(){
       .then(function(){ fertig(); });
   }
 
-  function renderDishPicker(){
+  function _gerichteFuer(ziel, alle){
     /* Gerichte des GEWAEHLTEN Tages, nicht die von heute.
        Gemeldet: „Es sollte auch möglich sein eine telefonische Bestellung
        für die folgenden Tage erfassen zu können. Es wird momentan immer
@@ -2992,9 +3183,7 @@ var K = (function(){
        Schwerer wog die Folge: Das Datum der Bestellung stammt aus dem
        Gericht, also wurde sie auch noch auf heute gebucht und tauchte
        unter dem gewaehlten Tag nie auf. (Spec mittag-telefon-tagwahl) */
-    var ziel = _mittagDatum || today();
     var zielDatum = new Date(ziel + 'T12:00:00');
-    var alle = _alleGerichte();
 
     /* Das Datum kommt aus Dataverse mit Zeitanteil ("2026-09-25T00:00:00Z").
        Ein Vergleich gegen "2026-09-25" schlaegt damit IMMER fehl - genau
@@ -3020,6 +3209,11 @@ var K = (function(){
       }) : [];
     }
 
+    return tagDishes;
+  }
+
+  function renderDishPicker(){
+    var tagDishes = _gerichteFuer(_mittagDatum || today(),_alleGerichte());
     var html = '';
     if(tagDishes.length===0){
       /* Lieber ehrlich leer als das falsche Menue: Frueher fiel die Liste
@@ -4666,6 +4860,10 @@ var K = (function(){
     if(id==='modal-help'){var f=document.getElementById('help-iframe');if(f&&f.src.indexOf('help-workflows')===-1)f.src='/help-workflows.html';}
     _modalStack.push(id);
     history.pushState({modal:id},'');
+    if(id==='modal-lauf' || id==='modal-menge'){
+      var first = document.querySelector('#'+id+' button');
+      if(first) first.focus({preventScroll:true});
+    }
   }
   function closeModal(id, viaBack){
     document.getElementById(id).classList.remove('open');
@@ -4673,6 +4871,11 @@ var K = (function(){
     var idx = _modalStack.indexOf(id);
     if(idx!==-1) _modalStack.splice(idx,1);
     if(!viaBack) history.back();
+    if(id==='modal-lauf' || id==='modal-menge'){
+      var opener = id==='modal-lauf' ? document.getElementById('btn-lauf')
+        : _mengeEdit && document.querySelector('#oc-'+CSS.escape(_mengeEdit.id)+' [aria-label="Menge ändern"]');
+      if(opener) opener.focus({preventScroll:true});
+    }
   }
 
   function _getOpenOverlay(){
@@ -5756,6 +5959,13 @@ var K = (function(){
     closeModal: closeModal,
     setMittagFilter: setMittagFilter,
     toggleQuelleFilter: toggleQuelleFilter,
+    toggleLaufFilter: toggleLaufFilter,
+    openLauf: openLauf,
+    laufQty: laufQty,
+    saveLauf: saveLauf,
+    openMenge: openMenge,
+    editQty: editQty,
+    saveMenge: saveMenge,
     toggleSwThread: toggleSwThread,
     toggleAllSwThreads: toggleAllSwThreads,
     setSwCompact: setSwCompact,

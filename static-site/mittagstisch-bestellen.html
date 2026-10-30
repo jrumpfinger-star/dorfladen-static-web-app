@@ -56,12 +56,12 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);min-height:100vh}
 
-    .header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:8px 44px;text-align:center;position:sticky;top:0;z-index:100}
+    .header{background:linear-gradient(135deg,#2d5016 0%,#3a6b1e 100%);color:#fff;padding:8px 110px 8px 12px;min-height:60px;text-align:left;position:sticky;top:0;z-index:100}
     .header h1{font-size:15px;font-weight:800;margin-bottom:1px}
     .header small{font-size:11px;opacity:.85}
-    .header-back{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:none;background:rgba(255,255,255,.15);color:#fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .header-back{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-height:44px;padding:8px 12px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;border-radius:10px;cursor:pointer;font:inherit;font-size:14px;font-weight:600;transition:background .15s}
     .header-back:hover{background:rgba(255,255,255,.3)}
-    .lunch-cd{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:5px 12px;text-align:center;position:sticky;top:47px;z-index:99}
+    .lunch-cd{background:linear-gradient(135deg,#fef3c7,#fef9c3);border-bottom:1px solid #f59e0b33;padding:5px 12px;text-align:center}
     .lunch-cd-title{font-size:11px;font-weight:700;color:#92400e}
     .lunch-cd-timer{font-size:12px;font-weight:800;color:#b45309;margin-top:0;font-variant-numeric:tabular-nums}
     .lunch-cd.closed{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#dc262633}
@@ -173,23 +173,33 @@
 
     .footer{text-align:center;padding:20px;font-size:12px;color:var(--c-muted)}
     .footer a{color:var(--c-green);text-decoration:none}
+    .compact-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;list-style:none;font-weight:600;font-size:14px}
+    .compact-details>summary::-webkit-details-marker{display:none}
+    .compact-details>summary::after{content:'Ändern ›';margin-left:auto;font-size:12px;color:var(--c-green);white-space:nowrap}
+    .compact-details[open]>summary::after{content:'Zuklappen'}
+    .compact-summary{font-size:12px;color:var(--c-muted);font-weight:400;overflow-wrap:anywhere}
+    .compact-details[open]>summary{margin-bottom:10px}
+    .note-wrap{padding-top:2px}
+    .form-card{padding:10px 16px}
+    .notify-details{border-top:1px solid rgba(128,128,128,.2);margin-top:8px;padding-top:6px}
+    .notify-box{margin-bottom:8px}
+    .customer-heading{display:flex;gap:6px;flex-wrap:wrap;min-width:0;align-items:center;overflow-wrap:anywhere}
+    .order-actions{position:sticky;bottom:0;z-index:90;display:flex;gap:8px;background:var(--c-bg);padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));align-items:stretch}
+    .order-actions .submit-btn{flex:1;min-width:0;width:auto;margin:0}
+    .order-close{min-height:44px;padding:10px 14px;border:1px solid #b8c5bb;background:var(--c-card);color:var(--c-text);font:inherit;font-size:14px;font-weight:600;border-radius:var(--radius);cursor:pointer}
+    .qty-btn{width:44px;height:44px}
+    .option-row{min-height:44px}
+    .field input{min-height:44px}
+    @media(max-width:430px){.compact-details>summary{flex-wrap:wrap}.customer-heading{flex:1}.notify-details>summary .compact-summary{flex-basis:100%}}
   </style>
 </head>
 <body>
 
 <div class="header" id="mt-header">
-  <button class="header-back" id="mt-back-btn" onclick="if(window!==window.parent){window.parent.postMessage('closeMittagPopup','*')}else{history.length>1?history.back():location.href='/'}" title="Zurück">
-    <svg id="mt-back-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-  </button>
+  <button class="header-back" id="mt-back-btn" onclick="closeOrder()">Schließen</button>
   <h1>🍽 Mittagessen bestellen</h1>
   <small>Dorfladen Oberornau · Dorfplatz 1</small>
 </div>
-<script>
-if(window!==window.parent){
-  var b=document.getElementById('mt-back-btn');
-  if(b) b.style.display='none'; // modal has its own close button
-}
-</script>
 
 <div class="lunch-cd" id="lunch-cd" style="display:none">
   <div class="lunch-cd-title" id="lcd-title"></div>
@@ -228,10 +238,11 @@ if(window!==window.parent){
         <input type="checkbox" id="opt-mitnehmen">
         <label for="opt-mitnehmen">📦 Zum Mitnehmen</label>
       </div>
-      <div class="note-wrap">
+      <details class="note-wrap compact-details" id="note-details">
+        <summary>Sonderwunsch <span class="compact-summary" id="note-summary">optional</span></summary>
         <label for="note-input">Anmerkung (optional)</label>
         <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-      </div>
+      </details>
 
       <div class="share-row" id="share-row-internal" style="padding:0 20px 16px;display:none">
         <a class="share-btn wa" id="share-wa" href="#" target="_blank" onclick="return shareWhatsApp()">📱 WhatsApp teilen</a>
@@ -241,13 +252,8 @@ if(window!==window.parent){
 
     <!-- Kundendaten -->
     <div class="form-card">
-      <h3>👤 Ihre Daten <span class="saved-badge" id="saved-badge" style="display:none">✓ gespeichert</span></h3>
-      <div class="konto-status">
-        <span id="konto-status-aus">Schon ein Konto? <a href="javascript:void(0)" onclick="oeffneLoginModal()">Anmelden</a>
-          — dann werden Name und E-Mail ausgefüllt, und die Bestellung
-          erscheint auch auf Ihren anderen Geräten.</span>
-        <span id="konto-status-an" style="display:none">✓ Angemeldet als <b id="konto-status-name"></b></span>
-      </div>
+      <details class="compact-details" id="customer-details" open>
+      <summary><span class="customer-heading"><span id="customer-summary">Ihre Daten · Name fehlt</span> <span class="saved-badge" id="saved-badge" style="display:none">gespeichert</span></span></summary>
       <div class="field">
         <label for="cust-name">Name *</label>
         <input type="text" id="cust-name" placeholder="Vor- und Nachname" autocomplete="name">
@@ -263,8 +269,16 @@ if(window!==window.parent){
           <input type="tel" id="cust-phone" placeholder="08082 …" autocomplete="tel">
         </div>
       </div>
-
+      </details>
+      <div class="konto-status">
+        <span id="konto-status-aus">Schon ein Konto? <a href="javascript:void(0)" onclick="oeffneLoginModal()">Anmelden</a>
+          — dann werden Name und E-Mail ausgefüllt, und die Bestellung
+          erscheint auch auf Ihren anderen Geräten.</span>
+        <span id="konto-status-an" style="display:none">✓ Angemeldet als <b id="konto-status-name"></b></span>
+      </div>
       <!-- Kommunikationsmethode -->
+      <details class="compact-details notify-details" id="notify-details">
+      <summary>Benachrichtigungen <span class="compact-summary" id="notify-summary"></span></summary>
       <div class="notify-box">
         <div class="notify-title">🔔 Benachrichtigungen zu Ihrer Bestellung</div>
         <label class="notify-opt">
@@ -277,11 +291,15 @@ if(window!==window.parent){
         </label>
         <div class="notify-hint">Ohne Auswahl erhalten Sie keine automatischen Nachrichten – Ihren Bestellstatus können Sie jederzeit online aufrufen.</div>
       </div>
+      </details>
     </div>
 
     <div class="error-box" id="error-box"></div>
 
-    <button class="submit-btn" id="submit-btn" onclick="submitOrder()">🍽 Jetzt bestellen</button>
+    <div class="order-actions">
+      <button class="order-close" id="order-close-bottom" onclick="closeOrder()">Schließen</button>
+      <button class="submit-btn" id="submit-btn" onclick="submitOrder()">Jetzt bestellen</button>
+    </div>
 
     <div class="footer">
       <a href="/" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}">← Zurück zum Dorfladen</a> · <a href="/mein-konto" target="_blank" rel="noopener">Mein Konto</a> · <a href="tel:+4980826229991">☎ 08082 622 99 91</a>
@@ -432,6 +450,37 @@ if(window!==window.parent){
   updateLunchCountdown();
   setInterval(updateLunchCountdown,30000);
 
+  window.closeOrder = function(){
+    if(window!==window.parent) window.parent.postMessage('closeMittagPopup',location.origin);
+    else if(history.length>1) history.back();
+    else location.href='/';
+  };
+  function customerSummary(){
+    var name = document.getElementById('cust-name').value.trim();
+    document.getElementById('customer-summary').textContent = name || 'Ihre Daten · Name fehlt';
+  }
+  function notificationSummary(){
+    var push = document.getElementById('opt-push');
+    var mail = document.getElementById('opt-email');
+    var blocked = typeof Notification!=='undefined' && Notification.permission==='denied';
+    document.getElementById('notify-summary').textContent =
+      (blocked?'App im Browser blockiert':push.checked?'App ausgewählt':'App aus')
+      +' · '+(mail.checked?'E-Mail an':'E-Mail aus');
+  }
+  document.getElementById('cust-name').addEventListener('input',customerSummary);
+  document.getElementById('note-input').addEventListener('input',function(){
+    document.getElementById('note-summary').textContent = this.value.trim() ? 'vorhanden' : 'optional';
+  });
+  document.getElementById('notify-details').addEventListener('toggle',notificationSummary);
+  document.getElementById('opt-push').addEventListener('change',notificationSummary);
+  document.getElementById('opt-email').addEventListener('change',function(){
+    notificationSummary();
+    if(this.checked && !document.getElementById('cust-email').value.trim()){
+      document.getElementById('customer-details').open = true;
+      document.getElementById('cust-email').focus({preventScroll:true});
+    }
+  });
+
   // ── Persist customer data ──
   function loadCustomer(){
     try{
@@ -471,6 +520,8 @@ if(window!==window.parent){
       }
     }catch(e){}
     kontoStandAnzeigen();
+    customerSummary();
+    document.getElementById('customer-details').open = !document.getElementById('cust-name').value.trim();
   }
 
   /* Zeigt an, ob gerade ein Konto angemeldet ist - und bietet sonst
@@ -749,6 +800,8 @@ if(window!==window.parent){
     document.getElementById('qty-minus').disabled = qty <= 1;
     var total = selectedDish ? (selectedDish.preis * qty) : 0;
     document.getElementById('total-price').textContent = total.toFixed(2).replace('.',',') + ' €';
+    var btn = document.getElementById('submit-btn');
+    if(!btn.disabled) btn.textContent = 'Für '+total.toFixed(2).replace('.',',')+' € bestellen';
   }
 
   // ── Submit ──
@@ -780,6 +833,10 @@ if(window!==window.parent){
     if(errors.length){
       errEl.innerHTML = errors.join('<br>');
       errEl.style.display='block';
+      if(!name || (notifyEmail && !email)){
+        document.getElementById('customer-details').open = true;
+        document.getElementById(!name?'cust-name':'cust-email').focus();
+      }
       return;
     }
     errEl.style.display='none';
@@ -820,7 +877,7 @@ if(window!==window.parent){
     .then(function(r){return r.json();})
     .then(function(res){
       btn.disabled = false;
-      btn.textContent = '🍽 Jetzt bestellen';
+      updateQtyUI();
       if(res.success){
         document.getElementById('success-nr').textContent = res.bestellnummer || '';
         document.getElementById('success-msg').textContent = 
@@ -858,7 +915,7 @@ if(window!==window.parent){
     })
     .catch(function(e){
       btn.disabled = false;
-      btn.textContent = '🍽 Jetzt bestellen';
+      updateQtyUI();
       console.error('Bestellung fehlgeschlagen:',e);
       errEl.textContent = 'Verbindung fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
       errEl.style.display='block';
@@ -870,6 +927,7 @@ if(window!==window.parent){
     qty = 1;
     updateQtyUI();
     document.getElementById('note-input').value = '';
+    document.getElementById('note-summary').textContent = 'optional';
     document.getElementById('opt-mitnehmen').checked = false;
     // Show menu again to pick another dish
     document.getElementById('dish-section').style.display='none';
@@ -1001,6 +1059,7 @@ if(window!==window.parent){
     // Browser-Berechtigung blockiert: Haken abwaehlen + sperren + erklaeren, warum.
     if(typeof Notification!=='undefined' && Notification.permission==='denied'){
       op.checked=false; op.disabled=true;
+      notificationSummary();
       var lbl=op.closest('.notify-opt'); if(lbl) lbl.style.opacity='.7';
       pushHint('⚠️ Im Browser blockiert – bitte in den Browser-/App-Einstellungen für diese Seite „Benachrichtigungen erlauben".','#b45309');
       return;
@@ -1018,6 +1077,7 @@ if(window!==window.parent){
             // faelschlich abzubestellen versucht (Abbestellen nur im Menue).
             op.checked = true;
             op.disabled = true;
+            notificationSummary();
             var lbl = op.closest('.notify-opt');
             if(lbl){
               lbl.style.opacity = '.85';
@@ -1027,6 +1087,7 @@ if(window!==window.parent){
         }).catch(function(){});
     }).catch(function(){});
   })();
+  notificationSummary();
   // E-Mail-Pflichtkennzeichen dynamisch: bei gewaehlter E-Mail-Benachrichtigung wird sie Pflicht.
   (function(){
     var oe=document.getElementById('opt-email'), req=document.getElementById('email-req');

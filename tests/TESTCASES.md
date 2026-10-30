@@ -12,6 +12,48 @@
 
 ---
 
+## Mittagstisch: Laufkundschaft, Mengen und kompakter Kunden-Mockup
+
+Vertrag: [Spec](../specs/mittagstisch-laufkundschaft/spec.md).
+
+| Aktion | Prüfung | Erwartung |
+|---|---|---|
+| Eigener Button am heutigen Tag | Gericht, Menge, Mitnehmen, Quelle/Status | Anonymer Eintrag, Quelle Laufkundschaft, bestätigt; keine Kundenanlage |
+| Anderer Tag/fehlender Plan/Tageswechsel | Speichern und Datenquelle | Keine falsche Tagesbuchung, sichtbarer Hinweis |
+| Quellen-/Statusfilter kombinieren | Karten und Bestellzähler | Telefon und Laufkundschaft getrennt, Storniert separat erreichbar |
+| Offene Telefon-/Laufkundschaft-Menge ändern | Preis, Kochbedarf, Küchenliste, Neuladen | Gespeicherte Menge und alle Summen stimmen, Stückpreis/Status unverändert |
+| Abbruch, Doppelklick, ungültige Menge, API-Fehler, Konflikt | Echte Request-Anzahl, Handler-Antwort und gespeicherter Stand | Kein stiller Erfolg, keine ungewollte Änderung oder Überschreibung |
+| Kunden-Mockup bedienen | Aufklappen, Erstbestellung, Preis, beide Schließen-Buttons | Gespeicherte Daten kompakt; fehlender Name offen; keine echte Bestellung |
+
+Prüflauf 30.10.2026, lokal gegen `127.0.0.1:8811`:
+`kiosk-laufkundschaft.spec.js` 48/48 auf Mobile, iPad mini, Desktop und
+Laden-Tablet; zusätzliche Küchenlisten-/Fokusprüfung 4/4.
+`test_mittagstisch_laufkundschaft.py` 12/12.
+Bestehende Telefon-/Tagwahl-/Status-/Abholregressionen 169 erfolgreich,
+3 bedingt übersprungen; bestehende Python-Verlauf-/Abholtests erfolgreich.
+Alle API-Schreibzugriffe in diesen Tests sind simuliert, keine Produktivbuchungen.
+
+---
+
+## Kompakter produktiver Kunden-Bestelldialog
+
+Vertrag: [Spec](../specs/mittag-bestelldialog-kompakt/spec.md).
+`mittag-bestelldialog-kompakt.spec.js` prüft auf allen vier Projekt-Viewports
+gespeicherte/fehlende Kundendaten, Anmeldung, unveränderte POST-Felder,
+Gerätekennung, Mengenpreis, Sonderwunsch, Pflichtfeldfokus, Pushblockierung,
+beide beschrifteten Schließen-Buttons im echten Startseiten-iframe,
+andere Popup-Ziele und Bestellschluss.
+Zusätzlich werden Preistext nach Server-/Netzwerkfehlern und zurückgesetzte
+Sonderwunsch-Zusammenfassungen bei einer weiteren Bestellung geprüft.
+Alle Schreibzugriffe sind simuliert.
+
+Lokaler Abschlusslauf: 103 erfolgreich, 9 bedingt übersprungen einschließlich
+Konto-, Gerätekennungs- und Bestellschlussregressionen.
+Zusätzlicher Kiosk-/Konto-Popup-Lauf: 80 erfolgreich, 1 übersprungen,
+3 Bestandsfehler bei `konto-modal` TC-KM-03d (Außenklick schließt nicht).
+Der Außenklickfehler wurde auf unverändertem HEAD reproduziert und wird durch
+die kompakte Bestellung nicht verändert.
+
 ## T1 – Startseite: Navigation & Links
 
 ### T1.1 – Seite lädt fehlerfrei

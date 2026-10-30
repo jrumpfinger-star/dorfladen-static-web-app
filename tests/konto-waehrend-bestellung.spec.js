@@ -80,6 +80,7 @@ test('TC-KB-02: Anmelden öffnet ein Fenster, ohne die Seite zu verlassen', asyn
 
   // Etwas von der Bestellung eintragen, die erhalten bleiben muss.
   await page.click('#qty-plus');
+  await page.locator('#note-details summary').click();
   await page.fill('#note-input', 'ohne Zwiebeln');
 
   await page.click('#konto-status-aus a');
