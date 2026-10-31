@@ -45,6 +45,9 @@ Der äußere Popup-Schließen-Button darf den neuen inneren Button nicht verdeck
 andere über denselben Popup-Container angezeigte Seiten behalten ihren Schließen-Button.
 Kopfzeile, Bestellschluss, Formular-Karten und Aktionsleiste haben dieselbe
 responsive Breite und schließen links und rechts bündig ab.
+Die Aktion „Ändern“/„Zuklappen“ in den Klappbereich-Zusammenfassungen bleibt
+rechtsbündig neben der Beschriftung, auch auf schmalen Mobilbildschirmen;
+lange Namen oder Status werden dort gekürzt statt in eine zweite Zeile zu brechen.
 
 - TC-F3-01: Beide beschrifteten Buttons schließen die eingebettete Bestellung.
 - TC-F3-02: Kopf, Aktionsleiste und aufgeklappte Inhalte passen auf die vier

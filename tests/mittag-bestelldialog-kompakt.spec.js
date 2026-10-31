@@ -76,6 +76,30 @@ test('TC-F1-03: Preis bleibt nach Server- und Verbindungsfehler erhalten',async(
   await expect(page.locator('#submit-btn')).toBeEnabled();
 });
 
+test('TC-F1: Ändern bleibt bei kompakten Zusammenfassungen rechts bündig',async({page})=>{
+  await setup(page);
+  await page.locator('#customer-details summary').click();
+  await page.locator('#cust-name').fill('Ein sehr langer Beispielname für schmale Mobilbildschirme');
+  await page.locator('#customer-details summary').click();
+
+  for(const id of ['note-details','customer-details','notify-details']){
+    const position=await page.locator('#'+id+' summary').evaluate(summary=>{
+      const summaryBox=summary.getBoundingClientRect();
+      const actionBox=summary.querySelector('.compact-edit').getBoundingClientRect();
+      const label=summary.querySelector('.customer-heading') ||
+        summary.querySelector('.summary-label');
+      const labelBox=label.getBoundingClientRect();
+      return {actionRight:actionBox.right,actionTop:actionBox.top,actionBottom:actionBox.bottom,summaryRight:summaryBox.right,
+        summaryHeight:summaryBox.height,labelTop:labelBox.top,labelBottom:labelBox.bottom,
+        summaryTop:summaryBox.top,summaryBottom:summaryBox.bottom};
+    });
+    expect(Math.abs(position.actionRight-position.summaryRight)).toBeLessThanOrEqual(1);
+    expect(position.summaryHeight).toBeLessThanOrEqual(46);
+    expect(Math.abs((position.labelTop+position.labelBottom)/2-
+      (position.actionTop+position.actionBottom)/2)).toBeLessThanOrEqual(1);
+  }
+});
+
 test('TC-F1-02: Erstbestellung offen, Anmeldung füllt Daten und klappt ein',async({page})=>{
   await setup(page,{saved:false});
   await expect(page.locator('#customer-details')).toHaveAttribute('open','');

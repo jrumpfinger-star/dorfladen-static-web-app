@@ -174,24 +174,30 @@
 
     .footer{text-align:center;padding:20px;font-size:12px;color:var(--c-muted)}
     .footer a{color:var(--c-green);text-decoration:none}
-    .compact-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;list-style:none;font-weight:600;font-size:14px}
+    .compact-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;flex-wrap:nowrap;cursor:pointer;list-style:none;font-weight:600;font-size:14px}
     .compact-details>summary::-webkit-details-marker{display:none}
-    .compact-details>summary::after{content:'Ändern ›';margin-left:auto;font-size:12px;color:var(--c-green);white-space:nowrap}
-    .compact-details[open]>summary::after{content:'Zuklappen'}
-    .compact-summary{font-size:12px;color:var(--c-muted);font-weight:400;overflow-wrap:anywhere}
+    .compact-edit{flex:0 0 auto;margin-left:auto;font-size:12px;color:var(--c-green);white-space:nowrap}
+    .compact-edit::after{content:'Ändern ›'}
+    .compact-details[open]>summary .compact-edit::after{content:'Zuklappen'}
+    .compact-summary{min-width:0;font-size:12px;color:var(--c-muted);font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .compact-details[open]>summary{margin-bottom:10px}
     .note-wrap{padding-top:2px}
     .form-card{padding:10px 16px}
     .notify-details{border-top:1px solid rgba(128,128,128,.2);margin-top:8px;padding-top:6px}
     .notify-box{margin-bottom:8px}
-    .customer-heading{display:flex;gap:6px;flex-wrap:wrap;min-width:0;align-items:center;overflow-wrap:anywhere}
+    .customer-heading{display:flex;flex:1 1 0;gap:6px;flex-wrap:nowrap;min-width:0;align-items:center;overflow:hidden;white-space:nowrap}
+    #customer-summary{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #saved-badge{flex-shrink:0}
+    .notify-details>summary .summary-label{flex-shrink:0}
+    .notify-details>summary .compact-summary{flex:1 1 0}
+    .note-wrap>summary .summary-label{flex-shrink:0}
+    .note-wrap>summary .compact-summary{flex:0 1 auto}
     .order-actions{position:sticky;bottom:0;z-index:90;display:flex;gap:8px;background:var(--c-bg);padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));align-items:stretch}
     .order-actions .submit-btn{flex:1;min-width:0;width:auto;margin:0}
     .order-close{min-height:44px;padding:10px 14px;border:1px solid #b8c5bb;background:var(--c-card);color:var(--c-text);font:inherit;font-size:14px;font-weight:600;border-radius:var(--radius);cursor:pointer}
     .qty-btn{width:44px;height:44px}
     .option-row{min-height:44px}
     .field input{min-height:44px}
-    @media(max-width:430px){.compact-details>summary{flex-wrap:wrap}.customer-heading{flex:1}.notify-details>summary .compact-summary{flex-basis:100%}}
   </style>
 </head>
 <body>
@@ -240,7 +246,7 @@
         <label for="opt-mitnehmen">📦 Zum Mitnehmen</label>
       </div>
       <details class="note-wrap compact-details" id="note-details">
-        <summary>Sonderwunsch <span class="compact-summary" id="note-summary">optional</span></summary>
+        <summary><span class="summary-label">Sonderwunsch</span><span class="compact-summary" id="note-summary">optional</span><span class="compact-edit"></span></summary>
         <label for="note-input">Anmerkung (optional)</label>
         <textarea id="note-input" placeholder="z.B. ohne Zwiebeln, extra Soße…" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       </details>
@@ -254,7 +260,7 @@
     <!-- Kundendaten -->
     <div class="form-card">
       <details class="compact-details" id="customer-details" open>
-      <summary><span class="customer-heading"><span id="customer-summary">Ihre Daten · Name fehlt</span> <span class="saved-badge" id="saved-badge" style="display:none">gespeichert</span></span></summary>
+      <summary><span class="customer-heading"><span id="customer-summary">Ihre Daten · Name fehlt</span> <span class="saved-badge" id="saved-badge" style="display:none">gespeichert</span></span><span class="compact-edit"></span></summary>
       <div class="field">
         <label for="cust-name">Name *</label>
         <input type="text" id="cust-name" placeholder="Vor- und Nachname" autocomplete="name">
@@ -279,7 +285,7 @@
       </div>
       <!-- Kommunikationsmethode -->
       <details class="compact-details notify-details" id="notify-details">
-      <summary>Benachrichtigungen <span class="compact-summary" id="notify-summary"></span></summary>
+      <summary><span class="summary-label">Benachrichtigungen</span><span class="compact-summary" id="notify-summary"></span><span class="compact-edit"></span></summary>
       <div class="notify-box">
         <div class="notify-title">🔔 Benachrichtigungen zu Ihrer Bestellung</div>
         <label class="notify-opt">
