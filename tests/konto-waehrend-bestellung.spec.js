@@ -70,8 +70,7 @@ test('TC-KB-01: In den Kundendaten steht ein Weg zum Anmelden', async ({ page })
   const hinweis = page.locator('#konto-status-aus');
   await expect(hinweis, 'Kein Hinweis auf die Anmeldung während der Bestellung.')
     .toBeVisible();
-  await expect(hinweis).toContainText('Anmelden');
-  await expect(hinweis).toContainText('anderen Geräten');
+  await expect(hinweis).toHaveText('Schon ein Konto? Anmelden');
 });
 
 test('TC-KB-02: Anmelden öffnet ein Fenster, ohne die Seite zu verlassen', async ({ page }) => {
