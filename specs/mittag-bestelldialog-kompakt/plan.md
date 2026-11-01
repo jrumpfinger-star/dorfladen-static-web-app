@@ -19,3 +19,11 @@ Grundlage: [spec.md](./spec.md); Mockup vom Nutzer freigegeben.
 
 Kein neues Paket. Keine Umdeutung gespeicherter Kontodaten. Keine
 produktiven API-Schreibzugriffe während Tests.
+
+## Nachbesserung: Push ohne Vorab-Dialog
+
+App-Push standardmäßig abwählen und den automatischen Aufruf aus dem Laden
+eines Gerichts entfernen. Den zusätzlichen App-eigenen Vorab-Dialog entfernen;
+bei ausdrücklicher Auswahl die erforderliche Browserberechtigung direkt
+anfragen. Bestehende Abos weiter erkennen. E-Mail-Benachrichtigungen bleiben
+unabhängig. Gemockte Browserregressionen sichern dieses Verhalten ab.

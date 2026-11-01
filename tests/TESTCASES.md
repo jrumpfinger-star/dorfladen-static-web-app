@@ -41,11 +41,16 @@ Vertrag: [Spec](../specs/mittag-bestelldialog-kompakt/spec.md).
 `mittag-bestelldialog-kompakt.spec.js` prüft auf allen vier Projekt-Viewports
 gespeicherte/fehlende Kundendaten, Anmeldung, unveränderte POST-Felder,
 Gerätekennung, Mengenpreis, Sonderwunsch, Pflichtfeldfokus, Pushblockierung,
+keine Push-Abfrage beim Öffnen/Bestellen, direkte Browserberechtigung erst
+nach aktivem Einschalten und unabhängige E-Mail-Auswahl,
 beide beschrifteten Schließen-Buttons im echten Startseiten-iframe,
 andere Popup-Ziele und Bestellschluss.
 Zusätzlich werden Preistext nach Server-/Netzwerkfehlern und zurückgesetzte
 Sonderwunsch-Zusammenfassungen bei einer weiteren Bestellung geprüft.
 Alle Schreibzugriffe sind simuliert.
+
+Push ist standardmäßig deaktiviert. Der zusätzliche App-eigene
+„Benachrichtigungen aktivieren?“-Dialog wurde entfernt.
 
 Lokaler Abschlusslauf: 103 erfolgreich, 9 bedingt übersprungen einschließlich
 Konto-, Gerätekennungs- und Bestellschlussregressionen.
@@ -53,6 +58,11 @@ Zusätzlicher Kiosk-/Konto-Popup-Lauf: 80 erfolgreich, 1 übersprungen,
 3 Bestandsfehler bei `konto-modal` TC-KM-03d (Außenklick schließt nicht).
 Der Außenklickfehler wurde auf unverändertem HEAD reproduziert und wird durch
 die kompakte Bestellung nicht verändert.
+
+Push-Nachbesserung: 76/76 Browserprüfungen in `mittag-bestelldialog-kompakt`
+und `konto-waehrend-bestellung` auf vier Viewports erfolgreich; neue Fälle
+belegen, dass Laden/Bestellen keine Browserabfrage auslösen und nur das
+ausdrückliche Einschalten von App-Push die Berechtigungsabfrage startet.
 
 ## T1 – Startseite: Navigation & Links
 

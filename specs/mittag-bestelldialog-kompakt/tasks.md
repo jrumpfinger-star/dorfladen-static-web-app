@@ -32,3 +32,15 @@
   Aktionsleiste im eingebetteten Dialog (Toleranz höchstens 1 CSS-Pixel).
 - Lokaler Prüflauf: 28/28 Tests der kompakten Kundenbestellung auf allen vier
   Viewports erfolgreich; Desktop-Screenshot visuell geprüft.
+
+## Nachbesserung: Push ohne Vorab-Dialog
+
+1. App-Push standardmäßig deaktivieren, automatischen Aufruf beim Laden eines
+   Gerichts und den zusätzlichen App-eigenen Vorab-Dialog entfernen;
+   bestehende aktive Abos erhalten.
+2. Tests für geräuschloses Laden/Bestellen ergänzen und E-Mail-Mitteilungen
+   unabhängig halten.
+
+Abgeschlossen: 76/76 Browserprüfungen einschließlich Konto-Regressionsfällen
+auf vier Viewports erfolgreich; `git diff --check` sauber. Keine echte
+Bestellung oder produktive Push-Registrierung ausgeführt.

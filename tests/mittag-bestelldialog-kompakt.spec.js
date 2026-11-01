@@ -5,12 +5,23 @@ const DISH = {dl_wochenplanid:'wp-compact',dl_gericht:'Schnitzel mit Pommes oder
   dl_preis:8.8,dl_datum:DAY,dl_wochentag:101004};
 const PATH = '/mittagstisch-bestellen.html?gericht_id=wp-compact';
 
-async function setup(page,{saved=true,blocked=false}={}){
+async function setup(page,{saved=true,blocked=false,pushReady=false}={}){
   await page.clock.setFixedTime(new Date('2026-10-30T09:30:00+01:00'));
-  await page.addInitScript(({saved,blocked})=>{
+  await page.addInitScript(({saved,blocked,pushReady})=>{
     if(saved) localStorage.setItem('dl_lunch_customer',JSON.stringify({name:'Anna Beispiel',email:'anna@example.com',phone:'08082123'}));
     if(blocked) Object.defineProperty(window,'Notification',{value:{permission:'denied'},configurable:true});
-  },{saved,blocked});
+    if(pushReady){
+      window.__pushPermissionRequests=0;
+      Object.defineProperty(window,'Notification',{value:{
+        permission:'default',
+        requestPermission:()=>{window.__pushPermissionRequests++;return Promise.resolve('default');}
+      },configurable:true});
+      Object.defineProperty(window,'PushManager',{value:function(){},configurable:true});
+      Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({
+        pushManager:{getSubscription:()=>Promise.resolve(null)}
+      })},configurable:true});
+    }
+  },{saved,blocked,pushReady});
   const posts=[];
   await page.route('**/api/**',route=>{
     const u=route.request().url();
@@ -74,6 +85,29 @@ test('TC-F1-03: Preis bleibt nach Server- und Verbindungsfehler erhalten',async(
   await expect(page.locator('#error-box')).toContainText('Verbindung fehlgeschlagen');
   await expect(page.locator('#submit-btn')).toContainText('17,60');
   await expect(page.locator('#submit-btn')).toBeEnabled();
+});
+
+test('TC-F2-03: Push bleibt beim Öffnen und Bestellen aus, ohne Browserabfrage',async({page})=>{
+  const posts=await setup(page);
+  await expect(page.locator('#opt-push')).not.toBeChecked();
+  await expect(page.locator('#notify-summary')).not.toContainText('App ausgewählt');
+  await expect(page.locator('#push-prompt')).toHaveCount(0);
+
+  await page.locator('#submit-btn').click();
+  await expect(page.locator('#success-overlay')).toHaveClass(/show/);
+  expect(posts).toHaveLength(1);
+});
+
+test('TC-F2-04: Nur Push-Einschalten fragt Browserberechtigung an, E-Mail nicht',async({page})=>{
+  await setup(page,{pushReady:true});
+  expect(await page.evaluate(()=>window.__pushPermissionRequests)).toBe(0);
+  await page.locator('#notify-details summary').click();
+  await page.locator('#opt-email').check();
+  expect(await page.evaluate(()=>window.__pushPermissionRequests)).toBe(0);
+  await page.locator('#opt-email').uncheck();
+  await page.locator('#opt-push').check();
+  await expect.poll(()=>page.evaluate(()=>window.__pushPermissionRequests)).toBe(1);
+  await expect(page.locator('#push-prompt')).toHaveCount(0);
 });
 
 test('TC-F1: Ändern bleibt bei kompakten Zusammenfassungen rechts bündig',async({page})=>{

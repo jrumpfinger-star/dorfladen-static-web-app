@@ -26,7 +26,12 @@ Der Anmeldelink bleibt auch bei eingeklappten Daten erreichbar.
 Optionen einklappbar; Zusammenfassung benennt gewählte App-Mitteilungen,
 Browser-Blockierung und E-Mail. Die bestehende Push-Anmeldung, Gerätekennung,
 Kontozuordnung, E-Mail-Auswahl und Kunden-Speicherung bleiben unverändert.
-App ausgewählt bedeutet nicht automatisch erteilte Browserberechtigung.
+App-Mitteilungen sind standardmäßig aus. Es gibt keinen zusätzlichen
+App-eigenen Aktivierungsdialog. Die Browserberechtigung wird nur dann direkt
+angefragt, wenn der Kunde App-Mitteilungen ausdrücklich einschaltet und der
+Browser noch keine Berechtigung erteilt hat. Weder das Laden eines Gerichts
+noch das Absenden einer Bestellung löst eine Abfrage aus. E-Mail-Auswahl bleibt
+davon unabhängig.
 Fehlender Name oder fehlende Pflicht-E-Mail öffnet den Datenbereich und
 fokussiert das betreffende Feld, statt einen versteckten Fehler zu erzeugen.
 
@@ -34,6 +39,10 @@ fokussiert das betreffende Feld, statt einen versteckten Fehler zu erzeugen.
   kein POST. Ohne E-Mail-Auswahl weiterhin ohne E-Mail bestellbar.
 - TC-F2-02: Blockiertes Push im eingeklappten Zustand erkennbar; gespeicherte
   Konto-/Gerätezuordnung und Request-Felder bleiben erhalten.
+- TC-F2-03: Beim Laden/Bestellen ohne aktivierte App-Option erscheint keine
+  Browserabfrage; die App-Option ist aus.
+- TC-F2-04: Nur ausdrückliches Einschalten bei fehlender Browserberechtigung
+  fragt die Browserberechtigung an; E-Mail-Auswahl tut dies nicht.
 
 ## F3: Unübersehbar schließen
 

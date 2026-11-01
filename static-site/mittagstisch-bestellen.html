@@ -287,7 +287,7 @@
       <div class="notify-box">
         <div class="notify-title">🔔 Benachrichtigungen zu Ihrer Bestellung</div>
         <label class="notify-opt">
-          <input type="checkbox" id="opt-push" checked>
+          <input type="checkbox" id="opt-push">
           <span><b>📲 App-Benachrichtigung</b><small>Sofort aufs Handy – auch bei Nachrichten vom Dorfladen</small></span>
         </label>
         <label class="notify-opt">
@@ -377,24 +377,6 @@
     <p style="text-align:center;margin:14px 0 0;font-size:12.5px;color:var(--c-muted)">
       Noch kein Konto? <a href="/mein-konto?von=mittag#neu" target="_blank" rel="noopener" style="color:var(--c-green);font-weight:700">Konto anlegen</a>
     </p>
-  </div>
-</div>
-
-<!-- Push notification pre-prompt -->
-<div class="push-prompt-bg" id="push-prompt">
-  <div class="push-prompt">
-    <div class="push-prompt-icon">🔔</div>
-    <h3>Benachrichtigungen aktivieren?</h3>
-    <p>Wir informieren Sie, wenn Ihr Mittagessen bestätigt oder bereit zur Abholung ist:</p>
-    <ul class="push-prompt-features">
-      <li>✅ Bestellbestätigung erhalten</li>
-      <li>📦 Info wenn Ihr Essen abholbereit ist</li>
-      <li>🍽 Neue Gerichte auf dem Speiseplan</li>
-    </ul>
-    <div class="push-prompt-btns">
-      <button class="push-prompt-no" onclick="closePushPrompt(false)">Nein danke</button>
-      <button class="push-prompt-yes" onclick="closePushPrompt(true)">Ja, gerne!</button>
-    </div>
   </div>
 </div>
 
@@ -791,8 +773,6 @@
       }
     }
 
-    // Register push if possible
-    registerPush();
   }
 
   window.changeQty = function(d){
@@ -890,7 +870,7 @@
           (mitnehmen ? ' (Zum Mitnehmen)' : ' (Verzehr im Laden)');
         // Save for bestellstatus page auto-login (E-Mail nur wenn vorhanden)
         try{ localStorage.setItem('bs_nr', res.bestellnummer||''); if(email){ localStorage.setItem('bs_email', email); } }catch(e){}
-        if(notifyPush){ try{ registerPush(); }catch(e){} }
+        if(notifyPush){ try{ registerPush(false); }catch(e){} }
         /* Den Kontohinweis nur zeigen, wenn er auch gelesen werden kann:
            nicht für Angemeldete (die haben schon eins) und nicht im
            eingebetteten Dialog, der sich nach 4 Sekunden von selbst
@@ -969,41 +949,27 @@
     return base + '?' + p.toString();
   }
 
-  // ── Push registration (with friendly pre-prompt) ──
-  function registerPush(){
+  // ── Push registration; request browser permission only after explicit opt-in ──
+  function registerPush(activate){
     if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if(typeof Notification==='undefined') return;
     // E-Mail optional: Push wird ueber die Geraete-ID (device_id) zugestellt.
     var email = document.getElementById('cust-email').value.trim();
     if(Notification.permission === 'denied') return;
-    
-    navigator.serviceWorker.ready.then(function(reg){
-      reg.pushManager.getSubscription().then(function(existing){
-        if(existing){
-          fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:dlPushDeviceId()})});
-          return;
-        }
-        if(Notification.permission==='granted'){
-          doPushSubscribe(reg,email);
-          return;
-        }
-        if(sessionStorage.getItem('dl_push_dismissed')) return;
-        // Show custom pre-prompt instead of browser dialog
-        document.getElementById('push-prompt').classList.add('open');
-      });
-    });
-  }
-  window.closePushPrompt=function(accepted){
-    document.getElementById('push-prompt').classList.remove('open');
-    if(!accepted){
-      sessionStorage.setItem('dl_push_dismissed','1');
-      return;
-    }
-    Notification.requestPermission().then(function(perm){
+    var permission = Notification.permission==='granted'
+      ? Promise.resolve('granted')
+      : activate ? Notification.requestPermission() : Promise.resolve(Notification.permission);
+    permission.then(function(perm){
       if(perm!=='granted') return;
-      var email = document.getElementById('cust-email').value.trim();
       navigator.serviceWorker.ready.then(function(reg){
-        doPushSubscribe(reg,email);
+        reg.pushManager.getSubscription().then(function(existing){
+          if(existing){
+            fetch(API+'/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({subscription:existing.toJSON(),email:email,categories:['bestellung'],merge:true,device_id:dlPushDeviceId()})});
+            return;
+          }
+          doPushSubscribe(reg,email);
+        });
       });
     });
   };
@@ -1041,14 +1007,13 @@
   document.getElementById('cust-email').addEventListener('blur', function(){
     saveCustomer();
     var op=document.getElementById('opt-push');
-    if(op&&op.checked) registerPush();
+    if(op&&op.checked) registerPush(false);
   });
-  // App-Benachrichtigung aktivieren -> direkt Push einrichten (Permission-Prompt)
-  (function(){var op=document.getElementById('opt-push');if(op){op.addEventListener('change',function(){if(op.checked)registerPush();});}})();
+  // Nur ausdrueckliche Aktivierung fragt die Browserberechtigung an.
+  (function(){var op=document.getElementById('opt-push');if(op){op.addEventListener('change',function(){if(op.checked)registerPush(true);});}})();
 
-  // Der Push-Haken ist per Default aktiv (siehe HTML `checked`). Bei bereits
-  // verweigerter Browser-Berechtigung wird er ehrlich abgewaehlt, da Push dann
-  // nicht moeglich ist. Ein aktives 'bestellung'-Abo haelt ihn ohnehin aktiv.
+  // Push ist standardmaessig aus. Bei verweigerter Berechtigung wird die
+  // Option deaktiviert; ein bestehendes 'bestellung'-Abo bleibt sichtbar.
   // Entfernen des Hakens bestellt NICHT ab (das geht nur im Benachrichtigungs-Menue).
   (function initPushCheckbox(){
     var op=document.getElementById('opt-push');

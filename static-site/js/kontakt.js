@@ -7,6 +7,7 @@
   var _open=false, _thread=null, _pollTimer=null, _histPushed=false;
   var _sending=false;
   var _pendingImg=null;
+  var _floatCleanup=null;
 
   function devId(){ try{ return (window.dlPushDeviceId?dlPushDeviceId():localStorage.getItem('dl_push_device_id'))||''; }catch(e){ return ''; } }
   function custEmail(){
@@ -151,7 +152,8 @@
     if(!_an) return;
     _an=false;
     if(_pollTimer){ clearInterval(_pollTimer); _pollTimer=null; }
-    ['hp-chat-float','hp-chat-ov','hp-chat-wa-aus'].forEach(function(id){
+    if(_floatCleanup){ _floatCleanup(); _floatCleanup=null; }
+    ['hp-chat-float','hp-chat-float-hinweis','hp-chat-ov','hp-chat-wa-aus'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.remove();
     });
   }
@@ -188,18 +190,166 @@
     if(!document.getElementById('hp-chat-float-style')){
       var st=document.createElement('style'); st.id='hp-chat-float-style';
       st.textContent='@keyframes hpChatPulse{0%{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 0 rgba(46,125,79,.45)}70%{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 14px rgba(46,125,79,0)}100%{box-shadow:0 6px 20px rgba(0,0,0,.28),0 0 0 0 rgba(46,125,79,0)}}'
-        +'#hp-chat-float{animation:hpChatPulse 2.4s ease-out 3}#hp-chat-float:hover{background:#256b43}';
+        +'#hp-chat-float{animation:hpChatPulse 2.4s ease-out 3}#hp-chat-float:hover{background:#256b43}'
+        +'@media(max-width:768px){#hp-chat-float{transition:background .2s;touch-action:none}}';
       document.head.appendChild(st);
     }
     var b=document.createElement('button');
     b.id='hp-chat-float';
     b.setAttribute('aria-label','Schreib uns – Chat mit dem Dorfladen');
+    b.setAttribute('aria-describedby','hp-chat-float-hinweis');
     b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:9px;padding:13px 20px 13px 16px;border:none;border-radius:30px;background:#2e7d4f;color:#fff;font-size:15px;font-weight:700;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.28);cursor:pointer';
     b.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
       +'<span>Schreib uns</span>'
       +'<span id="hp-chat-dot" style="display:none;position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:11px;background:#dc2626;border:2px solid #fff;color:#fff;font-size:12px;font-weight:700;line-height:1;align-items:center;justify-content:center"></span>';
-    b.onclick=openChat;
     document.body.appendChild(b);
+    var hinweis=document.createElement('span');
+    hinweis.id='hp-chat-float-hinweis';
+    hinweis.textContent='Chat öffnen mit Tippen. Auf Mobilgeräten verschieben durch Ziehen oder mit Alt, Umschalt und Pfeiltasten.';
+    hinweis.style.cssText='position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0';
+    document.body.appendChild(hinweis);
+
+    var key='dl_kontakt_float_position_v1';
+    var mobile=function(){ return window.matchMedia ? window.matchMedia('(max-width: 768px)').matches : window.innerWidth<=768; };
+    var setSurface=function(active){
+      if(mobile()) b.style.backgroundColor=active?'#2e7d4f':'rgba(26,75,47,.82)';
+      else b.style.backgroundColor='#2e7d4f';
+    };
+    var setShortcuts=function(){
+      if(mobile()) b.setAttribute('aria-keyshortcuts','Alt+Shift+ArrowUp Alt+Shift+ArrowDown Alt+Shift+ArrowLeft Alt+Shift+ArrowRight');
+      else b.removeAttribute('aria-keyshortcuts');
+    };
+    setSurface(false);
+    setShortcuts();
+    var clamp=function(left,top){
+      var maxLeft=Math.max(8,window.innerWidth-b.offsetWidth-8);
+      var maxTop=Math.max(8,window.innerHeight-b.offsetHeight-8);
+      return {
+        left:Math.max(8,Math.min(left,maxLeft)),
+        top:Math.max(8,Math.min(top,maxTop))
+      };
+    };
+    var persist=function(pos){
+      try{ localStorage.setItem(key,JSON.stringify(pos)); }
+      catch(e){ console.warn('Position des Chat-Buttons konnte nicht gespeichert werden.',e); }
+    };
+    var place=function(left,top,save){
+      var pos=clamp(left,top);
+      b.style.left=pos.left+'px';
+      b.style.top=pos.top+'px';
+      b.style.right='auto';
+      b.style.bottom='auto';
+      if(save) persist(pos);
+      return pos;
+    };
+    var restore=function(){
+      var raw;
+      try{ raw=localStorage.getItem(key); }
+      catch(e){ console.warn('Position des Chat-Buttons konnte nicht gelesen werden.',e); return false; }
+      if(!raw) return false;
+      var pos;
+      try{ pos=JSON.parse(raw); }
+      catch(e){ console.warn('Gespeicherte Position des Chat-Buttons ist ungültig.',e); return false; }
+      if(!pos || typeof pos.left!=='number' || !isFinite(pos.left) || typeof pos.top!=='number' || !isFinite(pos.top)){
+        console.warn('Gespeicherte Position des Chat-Buttons ist ungültig.');
+        return false;
+      }
+      var bounded=place(pos.left,pos.top,false);
+      if(bounded.left!==pos.left || bounded.top!==pos.top) persist(bounded);
+      return true;
+    };
+    if(mobile()) restore();
+
+    var drag=null, suppressClick=false, clickTimer=null;
+    var onPointerDown=function(e){
+      if(!mobile() || (e.pointerType==='mouse' && e.button!==0) || e.isPrimary===false) return;
+      var rect=b.getBoundingClientRect();
+      drag={id:e.pointerId,x:e.clientX,y:e.clientY,left:rect.left,top:rect.top,moved:false};
+      setSurface(true);
+    };
+    var onPointerMove=function(e){
+      if(!drag || drag.id!==e.pointerId) return;
+      var dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+      if(!drag.moved && Math.sqrt(dx*dx+dy*dy)<6) return;
+      drag.moved=true;
+      e.preventDefault();
+      b.classList.add('hp-chat-dragging');
+      place(drag.left+dx,drag.top+dy,false);
+    };
+    var onPointerEnd=function(e){
+      if(!drag || drag.id!==e.pointerId) return;
+      if(drag.moved){
+        persist(clamp(parseFloat(b.style.left),parseFloat(b.style.top)));
+        suppressClick=true;
+        if(clickTimer) clearTimeout(clickTimer);
+        clickTimer=setTimeout(function(){ suppressClick=false; clickTimer=null; },0);
+      }
+      drag=null;
+      b.classList.remove('hp-chat-dragging');
+      setSurface(b.matches(':hover') || b.matches(':focus-visible'));
+    };
+    var onClick=function(e){
+      if(suppressClick){ e.preventDefault(); e.stopPropagation(); suppressClick=false; }
+      else openChat();
+    };
+    var onKeyDown=function(e){
+      if(!mobile() || !e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return;
+      var dx=0, dy=0, step=48;
+      if(e.key==='ArrowLeft') dx=-step;
+      else if(e.key==='ArrowRight') dx=step;
+      else if(e.key==='ArrowUp') dy=-step;
+      else if(e.key==='ArrowDown') dy=step;
+      else return;
+      e.preventDefault();
+      var rect=b.getBoundingClientRect();
+      place(rect.left+dx,rect.top+dy,true);
+    };
+    var onPointerEnter=function(){ if(mobile()) setSurface(true); };
+    var onPointerLeave=function(){
+      if(mobile() && !drag && !b.matches(':focus-visible')) setSurface(false);
+    };
+    var onFocus=function(){ if(mobile()) setSurface(true); };
+    var onBlur=function(){ if(mobile() && !drag) setSurface(b.matches(':hover')); };
+    var onResize=function(){
+      setShortcuts();
+      if(!mobile()){
+        b.style.left='';
+        b.style.top='';
+        b.style.right='16px';
+        b.style.bottom='16px';
+        if(drag){ drag=null; b.classList.remove('hp-chat-dragging'); }
+        setSurface(false);
+      }else{
+        setSurface(!!drag || b.matches(':hover') || b.matches(':focus-visible'));
+        if(b.style.left && b.style.top) place(parseFloat(b.style.left),parseFloat(b.style.top),true);
+        else restore();
+      }
+    };
+    b.addEventListener('pointerdown',onPointerDown);
+    document.addEventListener('pointermove',onPointerMove,{passive:false});
+    document.addEventListener('pointerup',onPointerEnd);
+    document.addEventListener('pointercancel',onPointerEnd);
+    b.addEventListener('click',onClick);
+    b.addEventListener('keydown',onKeyDown);
+    b.addEventListener('pointerenter',onPointerEnter);
+    b.addEventListener('pointerleave',onPointerLeave);
+    b.addEventListener('focus',onFocus);
+    b.addEventListener('blur',onBlur);
+    window.addEventListener('resize',onResize);
+    _floatCleanup=function(){
+      b.removeEventListener('pointerdown',onPointerDown);
+      document.removeEventListener('pointermove',onPointerMove);
+      document.removeEventListener('pointerup',onPointerEnd);
+      document.removeEventListener('pointercancel',onPointerEnd);
+      b.removeEventListener('click',onClick);
+      b.removeEventListener('keydown',onKeyDown);
+      b.removeEventListener('pointerenter',onPointerEnter);
+      b.removeEventListener('pointerleave',onPointerLeave);
+      b.removeEventListener('focus',onFocus);
+      b.removeEventListener('blur',onBlur);
+      window.removeEventListener('resize',onResize);
+      if(clickTimer) clearTimeout(clickTimer);
+    };
   }
 
   function buildOverlay(){
