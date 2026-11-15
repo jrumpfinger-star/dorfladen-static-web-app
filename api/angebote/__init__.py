@@ -962,8 +962,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     angebote_list = filtered
 
                 result = {"success": True, "data": angebote_list}
-                if is_admin:
-                    result["config"] = _offer_runtime_config(req)
+                result["config"] = (
+                    _offer_runtime_config(req) if is_admin else {
+                        "feature_archive_enabled": bool(
+                            os.environ.get("ANGEBOTE_NAMESPACE")
+                        )
+                    }
+                )
                 return func.HttpResponse(
                     json.dumps(result, ensure_ascii=False),
                     status_code=200,

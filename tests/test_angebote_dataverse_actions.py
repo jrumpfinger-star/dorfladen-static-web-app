@@ -454,7 +454,29 @@ class DataverseActionsTests(unittest.TestCase):
         self.assertEqual(result["data"][0]["action_layout"], {"density": 4})
         self.assertNotIn("retail_price_cents", result["data"][0])
         self.assertEqual(len(result["data"]), 3)
-        self.assertNotIn("config", result)
+        self.assertEqual(result["config"], {"feature_archive_enabled": True})
+
+    def test_public_empty_get_still_includes_runtime_config(self):
+        from azure.functions import HttpRequest
+        request = HttpRequest(
+            method="GET", url="https://preview.invalid/api/angebote",
+            params={}, headers={"Host": "preview.invalid"}, body=b"",
+        )
+        with patch.dict(os.environ, {
+                "ANGEBOTE_NAMESPACE": "",
+                "CMS_AUTH_TOKEN": "secret",
+                "CMS_AUTH_ENFORCE": "false",
+        }), patch.object(angebote, "get_headers", return_value=self.headers), \
+                patch.object(angebote.requests, "get",
+                             return_value=Response(200, {"value": []})):
+            response = angebote.main(request)
+        result = json.loads(response.get_body())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result, {
+            "success": True,
+            "data": [],
+            "config": {"feature_archive_enabled": False},
+        })
 
     def test_authenticated_admin_get_keeps_all_rows_and_includes_config(self):
         from azure.functions import HttpRequest
