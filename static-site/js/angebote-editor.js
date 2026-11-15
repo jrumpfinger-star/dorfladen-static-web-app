@@ -31,6 +31,7 @@
     dirty = true;
     var status = $('an-state');
     if (status) status.textContent = 'Entwurf geändert · noch nicht gespeichert oder veröffentlicht';
+    root.querySelectorAll('[data-history="undo"]').forEach(function (button) { button.disabled = !undo.length; });
   }
   function checkpoint() { undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
   function edit(fn, free) {
@@ -87,6 +88,7 @@
     undo = []; redo = []; step = 'articles'; page = 0; selected = ''; designTarget = 'card';
     designItemId = data.items[0] ? data.items[0].id : ''; pendingImages.clear(); pendingImageUrls.clear();
     previewMode = 'paper'; renderEditor();
+    await loadMissingImages();
   }
   function field(label, prop, value, type, extra) {
     return '<label class="an-field"><span>' + label + '</span><input data-prop="' + prop + '" type="' + (type || 'text')
@@ -103,12 +105,67 @@
         + ' · ' + (it.price_cents == null ? 'Preis offen' : M.money(it.price_cents) + ' €')
         + (data.kind === 'drinks' && it.price_cents != null && it.units && it.volume_ml
           ? ' · <span data-unit-price>' + M.money(M.base(it)) + ' €/l</span>' : '') + '</small></div>'
-        + '<button type="button" data-edit-item="' + it.id + '" aria-label="Artikel und Bild bearbeiten: ' + M.esc(it.name || 'Neuer Artikel') + '">✎</button>'
+        + '<button type="button" data-edit-item="' + it.id + '" aria-label="Bild und weitere Details bearbeiten: ' + M.esc(it.name || 'Neuer Artikel') + '">Bild</button>'
         + '<details class="an-item-menu"><summary aria-label="Weitere Artikelaktionen">⋯</summary><div>'
         + '<button type="button" data-highlight="' + it.id + '" aria-pressed="' + it.highlight + '">' + (it.highlight ? '★ Hervorgehoben' : '☆ Hervorheben') + '</button>'
         + '<button type="button" data-up="' + it.id + '"' + (i === 0 ? ' disabled' : '') + '>↑ Nach oben</button>'
-        + '<button type="button" data-remove="' + it.id + '">Entfernen</button></div></details></article>';
+        + '<button type="button" data-remove="' + it.id + '">Entfernen</button></div></details>'
+        + '<div class="an-item-fields">'
+        + field('Artikelname', 'name', it.name, 'text', 'maxlength="160"')
+        + field('Angebotspreis €', 'price_cents', it.price_cents == null ? '' : M.money(it.price_cents), 'text', 'inputmode="decimal"')
+        + field('Stattpreis / UVP €', 'old_price_cents', it.old_price_cents == null ? '' : M.money(it.old_price_cents), 'text', 'inputmode="decimal"')
+        + field('Beschreibung / Inhalt', 'description', it.description, 'text', 'maxlength="500"')
+        + '</div><p class="an-item-values" data-item-values></p>'
+        + '<details class="an-item-extra"><summary>' + (data.kind === 'drinks' ? 'Gebinde, Pfand und Kennungen' : 'Artikelnummer und EAN') + '</summary><div class="an-fields">'
+        + field('Artikelnummer', 'article_number', it.article_number, 'text', 'maxlength="80"')
+        + field('EAN / Strichcode', 'barcode', it.barcode, 'text', 'maxlength="80"')
+        + (data.kind === 'drinks'
+          ? field('Anzahl Flaschen / Einheiten', 'units', it.units, 'number', 'min="1" step="1"')
+            + field('Liter je Einheit', 'volume_ml', it.volume_ml == null ? '' : it.volume_ml / 1000, 'number', 'min=".001" step=".001"')
+            + '<label class="an-field"><span>Gebindeart</span><select data-prop="packaging"><option value="">Bitte wählen</option>'
+            + ['Mehrweg', 'Einweg', 'Dose', 'Flasche', 'Karton', 'Fass'].map(function (value) {
+              return '<option' + (it.packaging === value ? ' selected' : '') + '>' + value + '</option>';
+            }).join('') + '</select></label>'
+            + '<label class="an-field"><span>Pfandentscheidung</span><select data-prop="deposit_mode"><option value="">Bitte wählen</option>'
+            + '<option value="yes"' + (!it.deposit_free && it.deposit_cents > 0 ? ' selected' : '') + '>Mit Pfand</option>'
+            + '<option value="no"' + (it.deposit_free ? ' selected' : '') + '>Pfandfrei</option></select></label>'
+            + field('Gesamtpfand €', 'deposit_cents', it.deposit_cents == null ? '' : M.money(it.deposit_cents), 'text', 'inputmode="decimal"' + (it.deposit_free ? ' disabled' : ''))
+          : '') + '</div></details></article>';
     }).join('') || '<p>Noch keine Artikel ausgewählt.</p>';
+    data.items.forEach(function (it) { updateItemValues(host.querySelector('[data-item-id="' + it.id + '"]'), it); });
+  }
+  function updateItemValues(row, it) {
+    row.querySelector('.an-item-main strong').textContent = it.name || 'Neuer Artikel';
+    row.querySelector('.an-item-main small').textContent = (it.article_number || 'ohne Artikelnummer')
+      + (it.barcode ? ' · EAN ' + it.barcode : '');
+    var discount = M.savings(it), values = row.querySelector('[data-item-values]');
+    values.textContent = (it.retail_price_cents == null ? '' : 'Stamm-VK: ' + M.money(it.retail_price_cents) + ' € · ')
+      + (discount ? 'Rabatt: −' + discount + ' %' : 'Rabatt: —');
+    if (data.kind === 'drinks') {
+      var base = M.base(it), hint = document.createElement('span');
+      hint.dataset.unitPrice = ''; hint.textContent = ' · Literpreis: ' + (base == null ? '—' : M.money(base) + ' €/l') + ' · ohne Pfand';
+      values.appendChild(hint);
+    }
+    var option = $('an-design-item') && Array.from($('an-design-item').options).find(function (entry) { return entry.value === it.id; });
+    if (option) option.textContent = it.name || 'Neuer Artikel';
+  }
+  async function loadMissingImages() {
+    var missing = data.items.filter(function (it) { return !it.image_id && (it.article_number || it.barcode); });
+    if (!missing.length) return;
+    var status = $('an-image-status'); status.textContent = 'Fehlende Artikelbilder werden automatisch gesucht …';
+    try {
+      var results = await lookupMasterImages(missing), found = 0;
+      for (var it of missing) {
+        var blob = imageForMaster(results, it);
+        if (blob) { it.image_id = await upload(blob); changed(); found++; }
+      }
+      status.textContent = found + ' Artikelbilder übernommen.'
+        + (found < missing.length ? ' Für ' + (missing.length - found) + ' Artikel wurde kein Bild gefunden. Du kannst es über „Bild“ ergänzen.' : '');
+      renderItems(); await preview();
+    } catch (error) {
+      status.textContent = 'Die automatische Bildsuche ist fehlgeschlagen. Bitte den Entwurf erneut öffnen oder über „Bild“ erneut suchen.';
+      throw error;
+    }
   }
   function parseMasterPack(value) {
     var match = /(\d+)\s*[x×]\s*(\d+(?:[,.]\d+)?)\s*(ml|cl|l)?/i.exec(String(value || ''));
@@ -134,7 +191,7 @@
     var found = [];
     for (var start = 0; start < articles.length; start += 20) {
       var batch = articles.slice(start, start + 20).map(function (it) {
-        return { artikelnummer: it.article_number || '', edeka_nr: it.article_number || '', strichcode: it.barcode || '' };
+        return { artikelnummer: it.article_number || it.barcode || '', edeka_nr: it.article_number || '', strichcode: it.barcode || '' };
       });
       var response = await M.request('/api/werbebilder?sharepoint=1', M.json('POST', { articles: batch }));
       if (!Array.isArray(response)) throw M.problem('Die Bildsuche hat keine gültige Artikelliste zurückgegeben.');
@@ -277,7 +334,7 @@
       + '<label class="an-field"><span>Gültig von</span><input type="date" data-action-prop="valid_from" value="' + data.valid_from + '"></label>'
       + '<label class="an-field"><span>Gültig bis</span><input type="date" data-action-prop="valid_to" value="' + data.valid_to + '"></label></div></details>'
       + '<h2>Artikel mit Bild auswählen</h2><div class="an-actions"><button id="an-add-catalog" class="an-primary">+ Aus Artikelstamm wählen</button><button id="an-add-manual">+ Manueller Artikel</button></div>'
-      + '<div id="an-items"></div><p class="an-note">Angebotspreis, Pfand und Veröffentlichung bleiben vom Stamm getrennt. Eigene Bildänderungen überschreiben keine Stammdaten.</p>'
+      + '<p class="an-muted">Artikeldaten direkt ändern · „Bild“ öffnet die optionalen Bildwerkzeuge.</p><div id="an-items"></div><p id="an-image-status" class="an-muted" role="status"></p><p class="an-note">Angebotspreis, Pfand und Veröffentlichung bleiben vom Stamm getrennt. Eigene Bildänderungen überschreiben keine Stammdaten.</p>'
       + '<button data-step="design" class="an-primary">Weiter · Kachel / Flyer gestalten</button></section>'
       + '<section id="an-step-design" hidden><h2>Die vertraute freie Gestaltung</h2><p class="an-muted">Bild, Preis und Texte antippen und ziehen – oder mit Zahlen und Pfeilen bearbeiten. Jedes Ausgabeziel bleibt separat gespeichert.</p>'
       + '<section id="an-design-options"><h3>Vorlagen, Farben und Schrift</h3><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
@@ -368,14 +425,19 @@
         var imageResults = await lookupMasterImages(selectedSources.map(function (source) {
           return { article_number: String(source.artikelnummer || ''), barcode: String(source.strichcode || '') };
         }));
+        var missingImageCount = 0;
         for (var source of selectedSources) {
           var it = masterItem(source, dlg.querySelector('#an-copy-vk').checked);
           var blob = imageForMaster(imageResults, it);
           if (blob) it.image_id = await upload(blob);
+          else missingImageCount++;
           addItem(it);
         }
         close();
         renderItems();
+        $('an-image-status').textContent = missingImageCount
+          ? 'Für ' + missingImageCount + ' Artikel wurde kein Bild gefunden. Du kannst es über „Bild“ ergänzen.'
+          : 'Artikelbilder automatisch übernommen.';
       });
     };
     document.body.appendChild(dlg); results(); dlg.showModal();
@@ -722,8 +784,7 @@
           }
           else it[prop] = target.value;
         });
-        var hint = target.closest('[data-item-id]').querySelector('[data-unit-price]');
-        if (hint) hint.textContent = 'Literpreis: ' + M.money(M.base(it)) + ' €/l · Angebotspreis ohne Pfand';
+        updateItemValues(target.closest('[data-item-id]'), it);
       }
       if (target.dataset.actionProp) {
         edit(function () { data[target.dataset.actionProp] = target.value; });

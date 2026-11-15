@@ -212,12 +212,20 @@ Speicher-/Freigabeverträge oder der Bestätigungen beim Ersetzen freier Layouts
 Der neue Wochen-/Getränkeeditor wird im Aufbau und in der Bedienung 1:1 am
 freigegebenen Mockup V2 ausgerichtet: kompakter Kopf mit Entwurfsaktionen,
 dreistufige Navigation, links kompakte Artikelliste/Formulare und rechts die
-Vorschau. Artikelbearbeitung erfolgt in einem fokussierten Dialog mit Bild,
-Name und Kernpreisen sichtbar; Zusatzangaben und erweiterte Bildfunktionen
-bleiben einklappbar. Stil und Layoutwechsel dürfen diese Flächenordnung nicht
-verändern. Auf 1280×800 und 686×1095 müssen vier kompakte Artikel ohne
-Seitenscrollen sichtbar sein. Auf Mobilgeräten darf die Seite scrollen, aber
-Bildauswahl, Angebotspreis und Dialogaktion bleiben direkt erreichbar.
+Vorschau. Name, Beschreibung, Angebotspreis und Stattpreis/UVP werden direkt
+in jeder Artikelzeile bearbeitet, ohne einen Dialog öffnen zu müssen.
+Getränke-Gebinde, Pfand und Identifikationsdaten sind direkt in derselben
+Zeile aufklappbar. Tab wechselt zwischen den Eingaben, ohne Fokusverlust oder
+Neuaufbau der Artikelliste. Rabatt und Literpreis aktualisieren sich aus den
+Eingaben; der reguläre Stamm-VK bleibt unverändert. Der bisherige Dialog
+bleibt als optionale Bild-/Detailbearbeitung erhalten. Alle Änderungen
+bleiben bis zum ausdrücklichen Speichern lokal im Entwurf.
+
+Stil und Layoutwechsel dürfen diese Flächenordnung nicht verändern. Auch auf
+Mobilgeräten sind die Felder ohne horizontalen Überlauf und mit mindestens
+44 px Bedienhöhe erreichbar. Lesbare Direkteingaben haben Vorrang vor der
+bisherigen Vier-Artikel-ohne-Scrollen-Regel; zusätzliche Felder bleiben kompakt
+einklappbar. Ein Neuaufbau nach Speichern übernimmt die bearbeiteten Werte.
 
 Neue Artikel werden über `/api/preisliste?all=1` aus demselben Artikelstamm wie
 die bisherigen Angebote gesucht, per Name/Artikelnummer/EAN gefiltert und
@@ -232,6 +240,12 @@ gespeichert. In manuellen und übernommenen Artikeln sind Bildvorschau,
 Datei-/Zwischenablage-Übernahme, Suche nach Nummer/EAN, Ersetzen und Entfernen
 sichtbar. Suche und Bearbeitung sind lesend gegenüber dem Stamm und schreiben
 nicht in vorhandene Werbebild-Datensätze zurück.
+Die automatische Übernahme funktioniert auch für Stammartikel ohne
+Artikelnummer, aber mit EAN/Strichcode (einschließlich kurzer eigener Codes).
+Beim Öffnen eines Entwurfs werden fehlende Bilder anhand dieser Kennungen
+erneut gesucht; vorhandene eigene Bilder werden niemals ersetzt. Gefundene
+Bilder bleiben private Entwurfsänderungen bis zum Speichern. Kein Treffer
+wird sichtbar gemeldet, technische Fehler nicht als „kein Bild“ verschluckt.
 
 Homepage-/Kioskkachel, Einzelflyer, Sammelflyer und Waage sind eigenständige,
 speicherbare Gestaltungsflächen. Kachel-, Einzel- und Waagenelemente werden je
@@ -253,7 +267,17 @@ Datensätze fallen auf die bisherige automatische Ausgabe zurück.
   Altveröffentlichungen ohne Ziellayouts funktionieren.
 - TC-F11-04: Artikelübersicht und Dialog entsprechen dem Mockup-Aufbau auf
   vier Viewports, ohne horizontalen Überlauf und mit mindestens 44 px
-  Bedienflächen; Desktop und Ladentablet zeigen vier Artikel ohne Seitenscrollen.
+  Bedienflächen; Kernfelder sind direkt in der Liste bedienbar.
+- TC-F11-05: Zwei Artikel ohne Dialog nacheinander bearbeiten, Tab-Navigation,
+  Beschreibung, Preis/Stattpreis und Rabatt prüfen; bei Getränken Gebinde,
+  Literpreis, Pfand und Pfandfreiheit direkt ändern. Speichern/erneut öffnen
+  erhält die Werte, Veröffentlichung, Stamm-VK und andere Artikel bleiben
+  unverändert. Optionale Bildbearbeitung übernimmt aktuelle Inlinewerte.
+- TC-F11-06: Bildübernahme für EAN ohne Artikelnummer, kurzen Strichcode und
+  Artikelnummer mit EAN prüfen, einschließlich leerem Dataverse-Treffer mit
+  anschließendem SharePoint-Bild. Beim Öffnen fehlende Bilder nachladen,
+  vorhandene eigene Bilder und veröffentlichte Fassungen erhalten; fehlende
+  Treffer und technische Fehler erkennbar melden. Keine Stammschreibzugriffe.
 
 ## F13: Originalvorlagen und Dorfladen-Logo
 
@@ -300,6 +324,21 @@ es wird nicht stillschweigend ohne Logo exportiert.
 - TC-F13-04: Vorlagenauswahl und Logo auf den vier Zielgrößen ohne horizontalen
   Überlauf oder abgeschnittene Bedienelemente bedienen; bestehender
   Bestätigungsdialog schützt frei gestaltete Ziele.
+
+### F13: Lesbare Großvorschau der Vorlagen
+
+Ein Doppelklick auf eine Vorlagenkachel öffnet in CMS und Aktionseditor eine
+große, scharf gerenderte Vorschau. Zusätzlich hat jede Vorlage eine per
+Tastatur und Touch erreichbare Schaltfläche „Vergrößern“. Die Vorschau bietet
+Vergrößern/Verkleinern, 100 % und Einpassen; bei Übergröße wird nur innerhalb
+der Vorschau gescrollt. Schließen und Escape stellen den Fokus wieder her.
+Die Vorschau selbst speichert, veröffentlicht oder ersetzt keine Gestaltung;
+die normale Vorlagenauswahl per Klick bleibt erhalten.
+
+- TC-F13-05: In beiden Editoren Doppelklick, Touch-/Tastaturzugang, scharfes
+  Neurendern statt Thumbnail-Streckung, Zoom/Einpassen, Escape/Schließen und
+  Fokuswiederherstellung auf allen vier Viewports prüfen. Vergrößern einer
+  anderen Vorlage verändert weder Auswahl noch Entwurf/Designstandards.
 
 ## Verifikation und offene Fragen
 

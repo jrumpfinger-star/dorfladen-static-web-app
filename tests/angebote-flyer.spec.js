@@ -31,6 +31,9 @@ async function setup(page, options = {}) {
     details_size: 17, image_rotation: 0, image_scale: 100, pages: [] };
   const state = {
     config: { namespace: 'preview-test', scale_scope: hash('preview-test', 6), scale_enabled: !!options.send },
+    catalog: [{ artikelnummer: 'ART2001', strichcode: '4001234567890', bezeichnung: 'Unser Testgetränk',
+      menge: '20x0,50 l', vk: 14.99, angebot_statt: 14.99, uvp: null }],
+    missingImageKeys: new Set(), failImageLookup: false,
     actions: new Map(), published: new Map(), images: new Map(), log: [], errors: [], failSave: false, failRead: false,
     design: { version: 0, weekly: copy(layout), drinks: copy(layout) }, scale: { dauer: [], vollbild: [] },
     bridge: { bekannt: true, online: false, ok: true, vor_s: 200, initialisiert: true, ist: [] },
@@ -67,14 +70,14 @@ async function setup(page, options = {}) {
       dl_angeboteid: 'legacy-one', dl_produkt: 'Bisheriges Wochenangebot', dl_preis: 2.49, dl_statt_preis: 2.99,
       dl_aktion_id: 'legacy-action', dl_gueltig_von: '2026-11-15', dl_gueltig_bis: '2026-11-21',
     }] });
-    if (path === '/api/preisliste') return json({ groups: { Getränke: [{ artikelnummer: 'ART2001',
-      strichcode: '4001234567890', bezeichnung: 'Unser Testgetränk', menge: '20x0,50 l', vk: 14.99,
-      angebot_statt: 14.99, uvp: null }] } });
+    if (path === '/api/preisliste') return json({ groups: { Getränke: state.catalog } });
     if (path === '/api/werbebilder' && method === 'POST') {
       entry.read_only_lookup = true;
       const { articles } = req.postDataJSON();
-      return json(articles.map((article) => ({ dl_artikelnummer: article.artikelnummer,
-        dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') })));
+      entry.articles = articles;
+      if (state.failImageLookup) return fail(503, 'Die Bildsuche ist gerade nicht erreichbar.');
+      return json(articles.filter((a) => a.artikelnummer && !state.missingImageKeys.has(a.artikelnummer)).flatMap((article) => [{ dl_artikelnummer: article.artikelnummer, dl_bild_base64: '' }, { dl_artikelnummer: article.artikelnummer,
+        dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') }]));
     }
     if (path === '/api/getraenke-artikel') return fail(410, 'Der Bestellkatalog ist für Angebotsflyer nicht vorgesehen.');
     if (path === '/api/angebote-flyer') return state.failRead ? fail(503, 'Die Angebote sind gerade nicht erreichbar.')
@@ -433,6 +436,71 @@ test('TC-F13-03: Logo-Ladefehler verhindert unvollständiges Rendern und ist wie
 });
 
 for (const cmsMode of [true, false]) {
+  test(`TC-F13-05: große Vorlagenvorschau ohne Übernahme im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, async ({ page }) => {
+    const state = await setup(page), head = await seed(page, state, { count: 2 });
+    if (cmsMode) await cms(page);
+    else {
+      await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+      await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+    }
+    const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
+    await host.locator('.an-template-picker > summary').click();
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(11);
+    const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
+    const writes = state.log.filter((r) => !['GET', 'HEAD', 'OPTIONS'].includes(r.method)).length;
+    await host.locator('.an-choice-option').first().locator('.an-choice-body').dblclick();
+    let dialog = page.getByRole('dialog', { name: 'Vorlagenvorschau · Landladen', exact: true });
+    await expect(dialog.locator('canvas')).toHaveAttribute('width', '1588');
+    await expect(dialog.locator('canvas')).toHaveAttribute('height', '2246');
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    const enlarge = host.getByRole('button', { name: 'Klassisch vergrößern', exact: true });
+    if (test.info().project.use.hasTouch) await enlarge.tap();
+    else { await enlarge.focus(); await page.keyboard.press('Enter'); }
+    dialog = page.getByRole('dialog', { name: 'Vorlagenvorschau · Klassisch', exact: true });
+    await expect(dialog.locator('canvas')).toBeVisible();
+    await dialog.getByRole('button', { name: '100 %', exact: true }).click();
+    await expect(dialog.locator('output')).toHaveText('100 %');
+    expect(await dialog.locator('canvas').evaluate((c) => c.getBoundingClientRect().width)).toBeCloseTo(794, 0);
+    await dialog.getByRole('button', { name: 'Vorschau vergrößern', exact: true }).click();
+    await expect(dialog.locator('output')).toHaveText('125 %');
+    await dialog.getByRole('button', { name: 'Vorschau verkleinern', exact: true }).click();
+    await expect(dialog.locator('output')).toHaveText('100 %');
+    await dialog.getByRole('button', { name: 'Einpassen', exact: true }).click();
+    const fits = await dialog.locator('.an-viewer-scroll').evaluate((s) => s.querySelector('.an-viewer-page').getBoundingClientRect().width <= s.clientWidth);
+    expect(fits).toBe(true);
+    await noOverflow(page);
+    await page.screenshot({ path: test.info().outputPath('grosse-vorlagenvorschau.png') });
+    await dialog.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(dialog).toHaveCount(0); await expect(enlarge).toBeFocused();
+    await expect(host.locator('input[data-style=template][value=land]')).toBeChecked();
+    expect(cmsMode ? state.design : state.actions.get(head.id)).toEqual(stored);
+    expect(state.log.filter((r) => !['GET', 'HEAD', 'OPTIONS'].includes(r.method)).length).toBe(writes);
+    expect(state.errors).toEqual([]);
+    await page.evaluate(() => {
+      const model = window.AngeboteModel, render = model.render;
+      model.render = async (...args) => {
+        if (args[2] === 2) {
+          model.render = render;
+          throw model.problem('Die große Vorlagenvorschau konnte nicht geladen werden.');
+        }
+        return render(...args);
+      };
+    });
+    await enlarge.click();
+    const error = page.locator('dialog.an-dialog');
+    await expect(error).toContainText('Die große Vorlagenvorschau konnte nicht geladen werden.');
+    await expect(page.locator('dialog.an-viewer')).toHaveCount(0);
+    await error.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(enlarge).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.style.overflow)).not.toBe('hidden');
+    await enlarge.click();
+    await expect(page.locator('dialog.an-viewer canvas')).toBeVisible();
+    await page.keyboard.press('Escape');
+  });
+}
+
+for (const cmsMode of [true, false]) {
   test(`TC-F10-01..04: Layoutkacheln, Tastatur und Ausgabevorschauen im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, async ({ page }) => {
     const state = await setup(page), head = await seed(page, state, { count: 7 });
     if (cmsMode) await cms(page);
@@ -583,7 +651,7 @@ test('TC-F1-02..03/F2-01..03/F4-01: Artikelstamm, eigene Angebotspreise, Pfand u
   expect(state.published.size).toBe(0);
   await page.getByRole('button', { name: '1 · Artikel und Bilder' }).click();
   await page.locator('#an-items button[data-edit-item]').click();
-  await page.getByLabel('Angebotspreis €', { exact: true }).fill('12.49');
+  await page.locator('dialog[open]').getByLabel('Angebotspreis €', { exact: true }).fill('12.49');
   await page.locator('dialog[open] [data-item-field="packaging"]').selectOption('Mehrweg');
   await page.locator('dialog[open] [data-item-field="deposit_mode"]').selectOption('no');
   await expect(page.locator('dialog[open] [data-item-field="deposit_cents"]')).toHaveValue('0.00');
@@ -593,7 +661,7 @@ test('TC-F1-02..03/F2-01..03/F4-01: Artikelstamm, eigene Angebotspreise, Pfand u
   await page.locator('dialog[open] [data-item-field="deposit_cents"]').blur();
   await page.getByRole('button', { name: 'Übernehmen' }).click();
   await expect(page.locator('[data-unit-price]')).toContainText('1,25 €/l');
-  await page.locator('#an-items details summary').click();
+  await page.locator('#an-items .an-item-menu summary').click();
   await page.locator('#an-items button[data-highlight]').click();
   await saveDraft(page);
   expect([...state.actions.values()][0].draft.items[0]).toMatchObject({ price_cents: 1249, deposit_cents: 310, highlight: true });
@@ -654,17 +722,127 @@ test('TC-F11-legacy: veröffentlichte Aktionen ohne Ziellayout behalten ihre bis
   await expect(card.locator('canvas')).toHaveCount(0);
 });
 
-test('TC-F11-04: kompakte Artikelliste passt auf Desktop und Ladentablet ohne Seitenscrollen', async ({ page }) => {
+for (const kind of ['weekly', 'drinks']) {
+  test(`TC-F11-05: ${kind} direkt ohne Pflichtdialog bearbeiten und speichern`, async ({ page }) => {
+    const state = await setup(page), head = await seed(page, state, { kind, count: 2, publish: true });
+    head.draft.items[0].retail_price_cents = 1499;
+    const published = copy(state.published.get(head.id));
+    await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+    await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+    let rows = page.locator('#an-items .an-item'), first = rows.first(), second = rows.nth(1);
+    await first.getByLabel('Artikelname', { exact: true }).fill('Erster Artikel');
+    await page.keyboard.press('Tab');
+    await expect(first.getByLabel('Angebotspreis €', { exact: true })).toBeFocused();
+    await first.getByLabel('Angebotspreis €', { exact: true }).fill('8,00');
+    await page.keyboard.press('Tab');
+    await expect(first.getByLabel('Stattpreis / UVP €', { exact: true })).toBeFocused();
+    await first.getByLabel('Stattpreis / UVP €', { exact: true }).fill('10,00');
+    await page.keyboard.press('Tab');
+    await expect(first.getByLabel('Beschreibung / Inhalt', { exact: true })).toBeFocused();
+    await first.getByLabel('Beschreibung / Inhalt', { exact: true }).fill('Direkt erfasst');
+    await second.getByLabel('Angebotspreis €', { exact: true }).fill('9.49');
+    await second.getByLabel('Angebotspreis €', { exact: true }).blur();
+    await expect(first.locator('[data-item-values]')).toContainText('Rabatt: −20 %');
+    await expect(first.locator('[data-item-values]')).toContainText('Stamm-VK: 14,99 €');
+    if (kind === 'drinks') {
+      await first.locator('.an-item-extra>summary').click();
+      await first.getByLabel('Anzahl Flaschen / Einheiten', { exact: true }).fill('8');
+      await first.getByLabel('Liter je Einheit', { exact: true }).fill('1');
+      await first.getByLabel('Liter je Einheit', { exact: true }).blur();
+      await first.getByRole('combobox', { name: 'Gebindeart', exact: true }).selectOption('Einweg');
+      await first.getByRole('combobox', { name: 'Pfandentscheidung', exact: true }).selectOption('no');
+      await expect(first.getByLabel('Gesamtpfand €', { exact: true })).toBeDisabled();
+      await expect(first.locator('[data-unit-price]')).toContainText('1,00 €/l');
+      await first.getByRole('combobox', { name: 'Pfandentscheidung', exact: true }).selectOption('yes');
+      await expect(first.getByLabel('Gesamtpfand €', { exact: true })).toHaveValue('');
+      await first.getByLabel('Gesamtpfand €', { exact: true }).fill('2,00');
+      await first.getByLabel('Gesamtpfand €', { exact: true }).blur();
+    }
+    await expect(page.locator('dialog[open]')).toHaveCount(0);
+    await noOverflow(page);
+    await first.screenshot({ path: test.info().outputPath('artikel-direktbearbeitung.png') });
+    await first.locator('[data-edit-item]').click();
+    await expect(page.locator('dialog[open] [data-item-field=name]')).toHaveValue('Erster Artikel');
+    await expect(page.locator('dialog[open] [data-item-field=price_cents]')).toHaveValue('8,00');
+    await page.getByRole('button', { name: 'Artikelbearbeitung schließen' }).click();
+    await saveDraft(page);
+    const saved = state.actions.get(head.id).draft;
+    expect(saved.items[0]).toMatchObject({ name: 'Erster Artikel', description: 'Direkt erfasst', price_cents: 800, old_price_cents: 1000, retail_price_cents: 1499 });
+    expect(saved.items[1].price_cents).toBe(949);
+    if (kind === 'drinks') expect(saved.items[0]).toMatchObject({ units: 8, volume_ml: 1000, packaging: 'Einweg', deposit_free: false, deposit_cents: 200 });
+    expect(state.published.get(head.id)).toEqual(published);
+    await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+    first = page.locator('#an-items .an-item').first();
+    await expect(first.getByLabel('Angebotspreis €', { exact: true })).toHaveValue('8,00');
+    await expect(first.getByLabel('Beschreibung / Inhalt', { exact: true })).toHaveValue('Direkt erfasst');
+    expect(state.log.filter((r) => r.method !== 'GET' && !r.path.startsWith('/api/angebote-') && !r.read_only_lookup)).toEqual([]);
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F11-06: automatische Bilder auch nur mit EAN oder kurzem Strichcode', async ({ page }) => {
+  const state = await setup(page);
+  state.catalog.push(
+    { artikelnummer: '', strichcode: '4000286200145', bezeichnung: 'Artikel nur mit EAN', vk: 2.49 },
+    { artikelnummer: '', strichcode: '508', bezeichnung: 'Breze', vk: 0.79 });
+  await page.getByRole('button', { name: '+ Wochenaktion anlegen' }).click();
+  await page.getByRole('button', { name: '+ Aus Artikelstamm wählen' }).click();
+  for (const item of state.catalog) await page.getByRole('button', { name: new RegExp(item.bezeichnung) }).click();
+  await page.getByRole('button', { name: /Auswahl übernehmen/ }).click();
+  await expect(page.locator('#an-items .an-item-thumb[src]')).toHaveCount(3);
+  expect(await page.locator('#an-items img').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
+  const lookup = state.log.find((r) => r.read_only_lookup);
+  expect(lookup.articles.map((a) => a.artikelnummer)).toEqual(['ART2001', '4000286200145', '508']);
+  await saveDraft(page);
+  expect([...state.actions.values()][0].draft.items.every((it) => state.images.has(it.image_id))).toBe(true);
+  expect(state.log.filter((r) => r.method !== 'GET' && !r.path.startsWith('/api/angebote-') && !r.read_only_lookup)).toEqual([]);
+});
+
+test('TC-F11-06: fehlende Entwurfsbilder automatisch nachladen, eigene Bilder erhalten', async ({ page }) => {
+  const state = await setup(page), head = await seed(page, state, { count: 2, publish: true });
+  const ownImage = 'f'.repeat(32);
+  state.images.set(ownImage, PHOTO); head.draft.items[0].image_id = ownImage;
+  Object.assign(head.draft.items[1], { article_number: '', barcode: '508' });
+  const published = copy(state.published.get(head.id));
+  await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+  await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('#an-items img')).toHaveCount(2);
+  await expect(page.locator('#an-image-status')).toContainText('1 Artikelbilder übernommen');
+  expect(state.log.find((r) => r.read_only_lookup).articles).toEqual([{ artikelnummer: '508', edeka_nr: '', strichcode: '508' }]);
+  expect(state.actions.get(head.id).draft.items[1].image_id).toBeFalsy();
+  await saveDraft(page);
+  expect(state.actions.get(head.id).draft.items[0].image_id).toBe(ownImage);
+  expect(state.images.has(state.actions.get(head.id).draft.items[1].image_id)).toBe(true);
+  expect(state.published.get(head.id)).toEqual(published);
+});
+
+for (const technical of [false, true]) {
+  test(`TC-F11-06: ${technical ? 'Bildsuchfehler mit Wiederholung' : 'fehlendes Bild'} wird sichtbar gemeldet`, async ({ page }) => {
+    const state = await setup(page), head = await seed(page, state);
+    if (technical) state.failImageLookup = true;
+    else state.missingImageKeys.add(head.draft.items[0].article_number);
+    await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+    await expect(page.locator('#an-image-status')).toContainText(technical ? 'Bildsuche ist fehlgeschlagen' : 'kein Bild gefunden');
+    if (technical) {
+      await expect(page.locator('dialog[open]')).toContainText('Die Angebote konnten nicht geladen oder gespeichert werden.');
+      await page.locator('dialog[open]').getByRole('button', { name: 'Schließen', exact: true }).click();
+      await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+      state.failImageLookup = false;
+      await page.locator('#an-reload-saved').click();
+      await expect(page.locator('#an-items img')).toHaveCount(1);
+    }
+    expect(state.actions.get(head.id).draft.items[0].image_id).toBeFalsy();
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontalen Überlauf', async ({ page }) => {
   const state = await setup(page), head = await seed(page, state, { count: 4 });
   await page.reload();
   await page.locator('[data-open="' + head.id + '"]').click();
   await expect(page.locator('#an-items .an-item')).toHaveCount(4);
   await noOverflow(page);
-  if (page.viewportSize().width > 480) {
-    const height = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
-    expect(height).toBeLessThanOrEqual(1);
-  }
-  for (const rect of await page.locator('#an-items button[data-edit-item]').evaluateAll((buttons) =>
+  for (const rect of await page.locator('#an-items button[data-edit-item],#an-items .an-item-fields input').evaluateAll((buttons) =>
     buttons.map((button) => ({ width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })))) {
     expect(rect.width).toBeGreaterThanOrEqual(44);
     expect(rect.height).toBeGreaterThanOrEqual(44);
@@ -717,6 +895,7 @@ test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Dr
 
 test('TC-F3-01..02/F3-05: sieben Artikel, freies Layout und echte A4-PDF-Seiten', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { count: 7 });
+  await saveDraft(page);
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
   await page.locator('#an-print-action').click();
   await expect.poll(() => page.evaluate(() => window.__printCalled || 0)).toBe(1);
@@ -724,7 +903,7 @@ test('TC-F3-01..02/F3-05: sieben Artikel, freies Layout und echte A4-PDF-Seiten'
   expect(await page.locator('[id=an-print]').count()).toBe(1);
   const printed = await page.locator('#an-print img').evaluateAll((images) => images.map((img) => ({ w: img.naturalWidth, h: img.naturalHeight, url: img.src })));
   expect(printed.map(({ w, h }) => ({ w, h }))).toEqual([{ w: 1588, h: 2246 }, { w: 1588, h: 2246 }]);
-  const source = await page.evaluate(async (data) => (await window.AngeboteModel.render(data, 0, 2)).canvas.toDataURL('image/png'), head.draft);
+  const source = await page.evaluate(async (data) => (await window.AngeboteModel.render(data, 0, 2)).canvas.toDataURL('image/png'), state.actions.get(head.id).draft);
   expect(printed[0].url).toBe(source);
   const metrics = await page.evaluate(() => ({ className: document.body.className,
     print: getComputedStyle(document.getElementById('an-print')).display }));
@@ -821,7 +1000,7 @@ test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und le
 test('TC-F4-02/F4-04: Entwurfsänderung bleibt privat, Freigabe explizit und Konflikt sichtbar', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { publish: true });
   await page.locator('#an-items button[data-edit-item]').click();
-  await page.getByLabel('Angebotspreis €', { exact: true }).fill('10.99');
+  await page.locator('dialog[open]').getByLabel('Angebotspreis €', { exact: true }).fill('10.99');
   await page.getByRole('button', { name: 'Übernehmen' }).click();
   await saveDraft(page);
   expect(state.published.get(head.id).data.items[0].price_cents).toBe(1249);
@@ -833,7 +1012,7 @@ test('TC-F4-02/F4-04: Entwurfsänderung bleibt privat, Freigabe explizit und Kon
   expect(state.published.get(head.id).data.items[0].price_cents).toBe(1099);
   await page.getByRole('button', { name: '1 · Artikel und Bilder' }).click();
   await page.locator('#an-items button[data-edit-item]').click();
-  await page.getByLabel('Angebotspreis €', { exact: true }).fill('9.99');
+  await page.locator('dialog[open]').getByLabel('Angebotspreis €', { exact: true }).fill('9.99');
   await page.getByRole('button', { name: 'Übernehmen' }).click();
   state.failSave = true;
   await page.getByRole('button', { name: 'Entwurf speichern', exact: true }).click();
@@ -928,9 +1107,9 @@ test('TC-F1-02/F3-06: Wochenaktion duplizieren, Reihenfolge und fehlende Pflicht
   await expect(page.locator('#an-save')).toBeEnabled();
   const duplicate = [...state.actions.values()].find((a) => a.id !== head.id);
   expect(duplicate.published_revision).toBeNull();
-  await page.locator('#an-items .an-item').nth(1).locator('details summary').click();
+  await page.locator('#an-items .an-item').nth(1).locator('.an-item-menu summary').click();
   await page.locator('#an-items .an-item').nth(1).locator('[data-up]').click();
-  await page.locator('#an-items .an-item').nth(1).locator('details summary').click();
+  await page.locator('#an-items .an-item').nth(1).locator('.an-item-menu summary').click();
   await page.locator('#an-items .an-item').nth(1).locator('[data-remove]').click();
   await saveDraft(page);
   expect(state.actions.get(duplicate.id).draft.items).toHaveLength(1);

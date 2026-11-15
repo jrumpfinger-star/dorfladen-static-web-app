@@ -3,6 +3,7 @@ window.AngeboteDesign = (function () {
   var M = window.AngeboteModel;
   var controlId = 0;
   var choicePaint = new WeakMap();
+  var choiceState = new WeakMap(), previewDialog = null;
   var modes = [['paper', 'A4 / PDF'], ['cards', 'Handy / Kiosk'], ['scale-large', 'Waage · 800 × 462'], ['scale-small', 'Waage · 800 × 280']];
   var definitions = [
     ['template', 'Vorlage als Startpunkt', M.templateOptions],
@@ -27,10 +28,12 @@ window.AngeboteDesign = (function () {
           + M.esc(M.templateStyle(layout.template).label) + '</strong><small>' + options.length + ' Designvorlagen · Auswahl öffnen</small></span></summary>' : '')
         + '<div class="an-choices' + (isTemplate ? ' an-template-gallery' : '') + '">'
         + options.map(function (option) {
-          return '<label class="an-choice"><input type="radio" name="an-' + key + '-' + id + '" data-style="' + key
+          return (isTemplate ? '<div class="an-choice-option">' : '') + '<label class="an-choice"><input type="radio" name="an-' + key + '-' + id + '" data-style="' + key
             + '" value="' + option[0] + '"' + (String(layout[key]) === option[0] ? ' checked' : '') + '>'
             + '<span class="an-choice-body">' + (key === 'template' ? '<span class="an-choice-picture" data-template-preview="' + option[0] + '"></span>' : '')
-            + '<strong>' + option[1] + '</strong><span class="an-choice-active">✓ Aktiv</span></span></label>';
+            + '<strong>' + option[1] + '</strong><span class="an-choice-active">✓ Aktiv</span></span></label>'
+            + (isTemplate ? '<button type="button" class="an-template-enlarge" data-template-enlarge="' + option[0]
+              + '" aria-label="' + M.esc(option[1]) + ' vergrößern">Vergrößern</button></div>' : '');
         }).join('') + '</div>' + (isTemplate ? '</details>' : '') + '</fieldset>';
     }
     function fields(advanced) {
@@ -57,6 +60,21 @@ window.AngeboteDesign = (function () {
       + '<details class="an-fine"><summary>Feinabstimmung · Größen und Drehung</summary>' + fields(true) + '</details>';
   }
   async function previewChoices(host, layout, kind) {
+    if (!choiceState.has(host)) {
+      function open(event) {
+        var button = event.target.closest('[data-template-enlarge]');
+        if (event.type === 'dblclick' && !button) {
+          var choice = event.target.closest('.an-choice-option');
+          button = choice && choice.querySelector('[data-template-enlarge]');
+        }
+        if (!button) return;
+        event.preventDefault(); event.stopPropagation();
+        var state = choiceState.get(host);
+        enlarge(state.layout, state.kind, button.dataset.templateEnlarge, button).catch(M.error);
+      }
+      host.addEventListener('click', open); host.addEventListener('dblclick', open);
+    }
+    choiceState.set(host, { layout: M.clone(layout), kind: kind });
     var ticket = (choicePaint.get(host) || 0) + 1; choicePaint.set(host, ticket);
     host.querySelectorAll('[data-style]').forEach(function (control) {
       var value = layout[control.dataset.style];
@@ -75,6 +93,54 @@ window.AngeboteDesign = (function () {
       result.canvas.setAttribute('aria-label', 'Stilvorschau ' + M.templateStyle(style.template).label);
       if (target.isConnected && choicePaint.get(host) === ticket) target.replaceChildren(result.canvas);
     }));
+  }
+  async function enlarge(layout, kind, id, opener) {
+    if (previewDialog) previewDialog();
+    var style = M.clone(layout);
+    if (id !== style.template) M.useTemplate(style, id);
+    var dlg = document.createElement('dialog'); dlg.className = 'an-viewer';
+    dlg.setAttribute('aria-label', 'Vorlagenvorschau · ' + M.templateStyle(id).label);
+    dlg.innerHTML = '<div class="an-viewer-shell"><div class="an-viewer-tools"><strong></strong><button type="button" data-template-close>Schließen</button></div>'
+      + '<div class="an-viewer-tools"><button type="button" data-template-minus aria-label="Vorschau verkleinern">−</button><button type="button" data-template-fit>Einpassen</button>'
+      + '<button type="button" data-template-actual>100 %</button><button type="button" data-template-plus aria-label="Vorschau vergrößern">+</button><output aria-live="polite"></output></div>'
+      + '<div class="an-viewer-scroll" tabindex="0" aria-label="Vergrößerte Vorlage, verschiebbar"><p role="status">Vorschau wird geladen …</p><div class="an-viewer-page"></div></div></div>';
+    dlg.querySelector('strong').textContent = M.templateStyle(id).label + ' · Beispielvorschau';
+    var scroller = dlg.querySelector('.an-viewer-scroll'), page = dlg.querySelector('.an-viewer-page');
+    var canvas = null, zoom = null, closed = false, previousOverflow = document.documentElement.style.overflow;
+    function fit() {
+      if (!canvas) return;
+      var factor = zoom == null ? Math.min(1, Math.max(100, scroller.clientWidth - 4) / M.W) : zoom;
+      page.style.width = M.W * factor + 'px'; page.style.height = M.H * factor + 'px';
+      canvas.style.width = M.W + 'px'; canvas.style.height = M.H + 'px'; canvas.style.transform = 'scale(' + factor + ')';
+      dlg.querySelector('output').textContent = Math.round(factor * 100) + ' %';
+    }
+    var observer = new ResizeObserver(fit);
+    function close() {
+      if (closed) return; closed = true; observer.disconnect();
+      dlg.close(); dlg.remove(); document.documentElement.style.overflow = previousOverflow;
+      previewDialog = null; if (opener.isConnected) opener.focus();
+    }
+    dlg.addEventListener('close', close);
+    dlg.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
+    dlg.addEventListener('click', function (e) {
+      if (e.target.closest('[data-template-close]')) { close(); return; }
+      if (e.target.closest('[data-template-fit]')) { zoom = null; scroller.scrollLeft = 0; scroller.scrollTop = 0; }
+      if (e.target.closest('[data-template-actual]')) zoom = 1;
+      if (e.target.closest('[data-template-plus],[data-template-minus]')) {
+        var current = zoom == null ? Math.min(1, Math.max(100, scroller.clientWidth - 4) / M.W) : zoom;
+        zoom = Math.max(.25, Math.min(3, current + (e.target.closest('[data-template-plus]') ? .25 : -.25)));
+      }
+      fit();
+    });
+    document.body.appendChild(dlg); document.documentElement.style.overflow = 'hidden';
+    dlg.showModal(); observer.observe(scroller); previewDialog = close;
+    try {
+      var rendered = await M.render(sample(style, kind), 0, 2);
+      if (closed) return;
+      if (rendered.errors.length) throw M.problem(rendered.errors[0]);
+      canvas = rendered.canvas; canvas.setAttribute('aria-label', 'Große Stilvorschau ' + M.templateStyle(id).label);
+      scroller.querySelector('[role=status]').remove(); page.replaceChildren(canvas); fit();
+    } catch (error) { close(); throw error; }
   }
   function previewTabs(mode, attribute) {
     return '<nav class="an-tabs an-preview-tabs" aria-label="Ausgabevorschau">' + modes.map(function (option) {

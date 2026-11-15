@@ -10,6 +10,26 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+Artikelkernfelder werden über die vorhandenen `data-prop`-Änderungshandler
+direkt in der Liste bearbeitet. Zusatzfelder bleiben inline aufklappbar, der
+vorhandene Dialog optional für Bilder/Details. Feldänderungen aktualisieren
+Zusammenfassung, Rabatt, Literpreis und Vorschau ohne Austausch der Eingaben.
+Die bisherige starre Vier-Zeilen-Höhenprüfung wird zugunsten lesbarer
+Direkteingaben durch Feldgrößen-, Fokus- und Überlaufprüfungen ersetzt.
+
+Die Bildsuche verwendet als Korrelationsschlüssel eine nichtleere Artikelnummer
+oder den Strichcode; die tatsächliche EDEKA-Nummer bleibt separat. Damit kann
+die bestehende SharePoint-Batch-API EAN-only-Treffer wieder zuordnen. Fehlende
+Bilder bestehender Entwürfe werden beim Öffnen nachgeladen und ausschließlich
+über die private Angebotsbild-API übernommen. Keine Änderung der alten API.
+
+Die gemeinsame Vorlagenauswahl in `angebote-design.js` erhält delegierte
+Doppelklick-/Vergrößern-Aktionen für beide Editoren. Ein modaler Dialog nutzt
+die vorhandenen Viewer-CSS-Klassen und rendert eine isolierte Kopie der
+Vorlagen-Beispieldaten mit doppelter Auflösung. Zoom verändert nur die
+Darstellung; ResizeObserver, Dialogschließen und Fokus werden aufgeräumt.
+Es gibt keine neuen API- oder Speicherformate.
+
 | Thema | Entscheidung |
 |---|---|
 | Gemeinsamer Einstieg | Eine echte Editorseite aus Kiosk und CMS, keine kopierten Editoren und kein CMS-iframe |

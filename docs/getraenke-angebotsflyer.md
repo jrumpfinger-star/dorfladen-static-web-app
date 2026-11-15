@@ -16,8 +16,17 @@ Editor erreichbar. Sie werden weder migriert noch überschrieben.
    funktionieren ebenfalls. Bei Getränken Anzahl, Liter je Einheit, Gebindeart
    und Gesamtpfand oder Pfandfreiheit ergänzen. Der Literpreis enthält kein
    Pfand. Unvollständige Entwürfe dürfen gespeichert werden.
+   **Name, Angebotspreis, Stattpreis/UVP und Beschreibung direkt in der
+   Artikelliste ändern**, mit Tab zum nächsten Feld wechseln. Rabatt und
+   Literpreis werden berechnet. **Gebinde, Pfand und Kennungen** direkt in der
+   Artikelzeile aufklappen. **Bild** öffnet nur bei Bedarf den bisherigen
+   Bild-/Detaildialog. Speichern bleibt eine eigene Aktion.
+   Bilder werden auch bei Artikeln mit ausschließlich EAN/Strichcode
+   automatisch übernommen. Beim Öffnen werden fehlende Entwurfsbilder erneut
+   gesucht, vorhandene eigene Bilder bleiben erhalten. Die Statuszeile meldet
+   fehlende Treffer bzw. Fehler; veröffentlicht wird dadurch nichts.
 2. **Frei gestalten:** Die Mockup-nahe Schrittansicht hält Artikelliste,
-   Bild-/Preisdialog und Vorschau getrennt. Überschrift und Zeitraum sind
+   optionale Bildwerkzeuge und Vorschau getrennt. Überschrift und Zeitraum sind
    einklappbar. A4-Sammelflyer, Homepage-/Kioskkachel, Einzelflyer und
    Waagenmotiv haben **eigene, unabhängig gespeicherte Layouts je Artikel**.
    Elemente antippen oder in der Liste auswählen: Position, Größe, Drehung,
@@ -57,6 +66,11 @@ blendet elf anklickbare Vorschaukacheln ein: Landladen, Klassisch sowie die
 neun Originalstile Classic Red, Minimal Clean, Dark Modern, Organic Market,
 Bold Poster, Modern Magazine, Mag Fresh, Mag Bold und Mag XL.
 Jede Vorlage ist ein frei bearbeitbarer Startpunkt, kein fertiges Bild.
+Ein **Doppelklick auf eine Vorlagenkachel** öffnet die große, scharfe Vorschau.
+Alternativ **Vergrößern** unter der Kachel antippen oder per Tastatur öffnen.
+Mit +/− zoomen, **100 %** für Originalgröße oder **Einpassen** wählen;
+große Seiten innerhalb der Vorschau verschieben. **Schließen** oder Escape
+führt zurück. Diese Ansicht speichert oder übernimmt keine Vorlage.
 Darunter unabhängig 4 großzügige oder 6 kompakte Artikel je Seite wählen.
 Farben und Schrift sind direkt sichtbar; Größen und Drehung stehen unter
 „Feinabstimmung“. Ein Häkchen markiert die aktive Auswahl, die Kacheln sind

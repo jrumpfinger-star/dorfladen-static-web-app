@@ -26,3 +26,7 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF18 | Originalvorlagenliste, freie Layoutfamilien und API-Validierung ergänzen | GF16 | TC-F13-01..02 |
 | GF19 | Hochauflösendes Original-Logo als frei bearbeitbares Flyerelement integrieren | GF18 | TC-F13-03 |
 | GF20 | Auswahl direkt zugänglich machen, Hilfe aktualisieren und vier Viewports prüfen | GF17, GF18, GF19 | TC-F9-01, TC-F13-01..04 |
+| GF21 | Gemeinsame große Vorlagenvorschau mit Doppelklick, Touch/Tastatur, Zoom und Fokus ergänzen; Hilfe und Vier-Viewport-Tests | GF20 | TC-F13-05 |
+| GF22 | Artikel direkt bearbeiten, Inline-Zusatzfelder und abgeleitete Werte, Mobil-/Tab-/Speicherregression und Hilfe | GF13 | TC-F11-04..05 |
+| GF23 | Automatische EAN-only-Bildübernahme und Nachladen fehlender Entwurfsbilder mit sichtbarem Status korrigieren | GF12 | TC-F11-06 |
+| GF24 | GF21–GF23 zusammen in isolierter Feature-Vorschau bereitstellen und ausgelieferte UI prüfen | GF21, GF22, GF23 | TC-F11-04..06, TC-F13-05 |
