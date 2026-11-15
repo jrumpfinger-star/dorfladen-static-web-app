@@ -159,6 +159,8 @@ Bestätigung; freie Bearbeitung bleibt je Aktion möglich.
 
 - TC-F9-01: Neuen Getränkeflyer-Reiter im vorhandenen Designeditor öffnen,
   Standards ändern, speichern und nach erneutem Öffnen wiederfinden.
+  Die erste CMS-Anmeldung wird vor geschützten Designabrufen abgeschlossen,
+  ohne doppelte Passwortabfrage; Anmeldefehler bleiben sichtbar und wiederholbar.
 - TC-F9-02: A4-/Karten-/Waagenvorschau aktualisiert sich ohne Veröffentlichung.
 - TC-F9-03: Änderungen neuer Standards lassen bestehende Layouts, Veröffentlichungen
   und bisherige Plakat-/Einzelflyer-Einstellungen unverändert.

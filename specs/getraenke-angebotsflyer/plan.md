@@ -68,6 +68,8 @@ Verwaltungsantworten und freigabeabhängige Antworten `no-store`.
 Getränkeflyer-Einstellungen mit A4-/Karten-/Waagenvorschau. Gemeinsame
 Standard-/Typografie-Einstellungen stammen aus demselben Modell wie der
 Aktionseditor; alte Plakat-/Einzelflyer-Einstellungen bleiben unverändert.
+Geschützte Designabrufe warten auf eine noch laufende serverseitige
+CMS-Anmeldung; Fehler bleiben sichtbar und lassen einen neuen Versuch zu.
 `angebote-kunden.js` lädt Alt-/Neuangebote einmal und rendert Desktop/mobile
 Karten sowie einen skalierbaren Original-Flyer. Vorhandene Wochenumschaltung
 für Altbestand bleibt erhalten; neue Angebote sind strikt aktuell gültig.

@@ -31,13 +31,14 @@ async function setup(page, options = {}) {
     design: { version: 0, weekly: copy(layout), drinks: copy(layout) }, scale: { dauer: [], vollbild: [] },
     bridge: { bekannt: true, online: false, ok: true, vor_s: 200, initialisiert: true, ist: [] },
   };
+  if (options.loggedOut) state.loginReply = new Promise((resolve) => { state.finishLogin = resolve; });
   await page.clock.install({ time: new Date(NOW + 'T12:00:00Z') });
-  await page.addInitScript(() => {
+  await page.addInitScript((loggedOut) => {
     if (window !== window.top) return;
-    localStorage.setItem('cms_auth_token', 'test-auth');
+    if (!loggedOut) localStorage.setItem('cms_auth_token', 'test-auth');
     localStorage.setItem('dl_cookies', '1');
     window.print = () => { window.__printCalled = (window.__printCalled || 0) + 1; };
-  });
+  }, !!options.loggedOut);
   page.on('pageerror', (error) => state.errors.push(error.message));
   await page.context().route('**/*', (route) => {
     if (new URL(route.request().url()).origin !== new URL(BASE).origin) return route.abort();
@@ -51,7 +52,10 @@ async function setup(page, options = {}) {
     const fail = (status, error) => json({ success: false, error }, status);
     if (path === '/api/cms-config') return json({ success: true, data: { feature_flags: { kiosk_getraenke: true, kiosk_werbebilder: true },
       design_config: { flyer_decoTitleColor: '#0066aa', flyer_decoBgColor: '#fff9ed', priceFontFlyer: 62 } } });
-    if (path === '/api/cms-auth') return json({ success: true, token: 'test-auth' });
+    if (path === '/api/cms-auth') {
+      if (state.loginReply) await state.loginReply;
+      return state.failLogin ? fail(503, 'Die CMS-Anmeldung ist gerade nicht erreichbar.') : json({ success: true, token: 'test-auth' });
+    }
     if (path === '/api/angebote') return json({ success: true, data: [{
       dl_angeboteid: 'legacy-one', dl_produkt: 'Bisheriges Wochenangebot', dl_preis: 2.49, dl_statt_preis: 2.99,
       dl_aktion_id: 'legacy-action', dl_gueltig_von: '2026-11-15', dl_gueltig_bis: '2026-11-21',
@@ -70,6 +74,7 @@ async function setup(page, options = {}) {
       return state.images.has(id) ? route.fulfill({ contentType: 'image/png', body: state.images.get(id) }) : fail(404, 'Bild nicht verfügbar');
     }
     if (path.startsWith('/api/angebote-verwaltung')) {
+      if (options.loggedOut && entry.token !== 'test-auth') return fail(401, 'Bitte zuerst anmelden.');
       expect(entry.token).toBe('test-auth');
       if (method === 'GET' && state.failRead) return fail(503, 'Die Angebote sind gerade nicht erreichbar.');
       if (url.searchParams.get('view') === 'design') {
@@ -116,8 +121,10 @@ async function setup(page, options = {}) {
     }
     return json({ success: true, data: [], value: [], groups: [], artikel: [], gruppen: [], bestellungen: [], kunden: [], tage: [] });
   });
-  await page.goto(BASE + '/angebote.html');
-  await expect(page.getByRole('button', { name: '+ Getränkeaktion anlegen' })).toBeVisible();
+  if (!options.loggedOut) {
+    await page.goto(BASE + '/angebote.html');
+    await expect(page.getByRole('button', { name: '+ Getränkeaktion anlegen' })).toBeVisible();
+  }
   return state;
 }
 
@@ -171,6 +178,44 @@ async function cms(page, tab = 'cfg&flyer=drinks') {
 async function noOverflow(page, selector = 'html') {
   const size = await page.locator(selector).evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }));
   expect(size.scroll).toBeLessThanOrEqual(size.client + 1);
+}
+
+for (const failLogin of [false, true]) {
+  test(`TC-F9-01/F4-01: erster CMS-Login ${failLogin ? 'meldet Serverfehler und erlaubt erneute Anmeldung' : 'wartet vor geschütztem Designabruf'}`, async ({ page }) => {
+    const state = await setup(page, { loggedOut: true });
+    state.failLogin = failLogin;
+    const password = 'test-cms-password';
+    await page.route('**/cms.html**', async (route) => {
+      const response = await route.fetch();
+      const html = await response.text();
+      const pattern = /(<script\b[^>]*\bid="cms-pw-hash"[^>]*>)[\s\S]*?(<\/script>)/;
+      expect(html).toMatch(pattern);
+      await route.fulfill({ response, body: html.replace(pattern, (_, open, close) => open + JSON.stringify(hash(password, 64)) + close) });
+    });
+    try {
+      await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
+      await page.locator('#cms-login-pw').fill(password);
+      await page.locator('#cms-login-btn').click();
+      const root = page.locator('#an-design-root');
+      await expect(root.getByRole('status')).toContainText('CMS-Anmeldung wird abgeschlossen');
+      expect(state.log.filter((r) => r.path.startsWith('/api/angebote-verwaltung'))).toHaveLength(0);
+      await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
+      state.finishLogin();
+      if (failLogin) {
+        await expect(root.getByRole('alert')).toContainText('CMS-Anmeldung konnte nicht abgeschlossen werden');
+        await page.locator('dialog[open]').getByRole('button', { name: 'Schließen', exact: true }).click();
+        state.failLogin = false;
+        await page.locator('[data-id=sec-drinks]').click();
+        const login = page.getByRole('dialog').filter({ hasText: 'Admin-Anmeldung' });
+        await login.getByRole('textbox').fill(password);
+        await login.getByRole('button', { name: 'Anmelden', exact: true }).click();
+      }
+      await expect(root.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
+      expect(state.log.filter((r) => r.path === '/api/cms-auth')).toHaveLength(failLogin ? 2 : 1);
+      await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
+      expect(state.errors).toEqual([]);
+    } finally { state.finishLogin(); }
+  });
 }
 
 test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Kiosk-Einstieg', async ({ page }) => {

@@ -44,6 +44,8 @@ und Produktbilder. A4-, Karten- und Waagenvorschau verwenden Beispieldaten.
 Alte Flyer-Farben lassen sich ausdrücklich kopieren. Speichern verändert weder
 alte Einstellungen noch individuelle oder veröffentlichte Aktionen.
 Aktuelle Standards können im Aktionseditor ausdrücklich neu übernommen werden.
+Beim ersten CMS-Login wartet der Reiter auf die abgeschlossene Anmeldung.
+Bei Anmeldefehlern die Meldung schließen und den Getränkeflyer-Reiter erneut öffnen.
 
 ### Kundenansicht und Gültigkeit
 

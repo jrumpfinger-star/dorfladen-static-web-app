@@ -37,7 +37,7 @@
   var CMS_PW_KEY='cms_auth_ok';
   var cmsPwEl=document.getElementById('cms-pw-hash');
   var cmsPwHash=cmsPwEl?JSON.parse(cmsPwEl.textContent):'';
-  var _angeboteEntryApplied=false;
+  var _angeboteEntryApplied=false,_cmsAdminLogin=null;
   function cmsShowApp(){
     document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';
     if(!_angeboteEntryApplied){
@@ -73,7 +73,14 @@
     sha256(pw).then(function(hash){
       if(hash===cmsPwHash){
         sessionStorage.setItem(CMS_PW_KEY,hash);
-        if(window.dlAdminLogin){window.dlAdminLogin(pw).catch(function(){});}
+        if(window.dlAdminLogin){
+          var login=window.dlAdminLogin(pw);
+          _cmsAdminLogin=login;
+          login.then(function(){if(_cmsAdminLogin===login)_cmsAdminLogin=null;},function(error){
+            if(_cmsAdminLogin===login)_cmsAdminLogin=null;
+            console.error('[CMS] Server-Anmeldung fehlgeschlagen',error);
+          });
+        }
         document.getElementById('cms-login-err').style.display='none';
         cmsShowApp();
         init();
@@ -1757,7 +1764,17 @@
     if(legacy)legacy.style.display=secId==='sec-drinks'?'none':'';
     if(legacySave)legacySave.style.display=secId==='sec-drinks'?'none':'flex';
     if(secId==='sec-drinks'){
-      if(window.AngeboteDesign)window.AngeboteDesign.mount(document.getElementById('an-design-root'));
+      var drinksRoot=document.getElementById('an-design-root');
+      if(window.AngeboteDesign&&drinksRoot){
+        var mountDrinks=function(){return window.AngeboteDesign.mount(drinksRoot);};
+        if(_cmsAdminLogin){
+          drinksRoot.innerHTML='<p class="an-status" role="status">Die CMS-Anmeldung wird abgeschlossen …</p>';
+          _cmsAdminLogin.then(mountDrinks).catch(function(error){
+            drinksRoot.innerHTML='<p class="an-status an-error" role="alert">Die CMS-Anmeldung konnte nicht abgeschlossen werden. Bitte den Getränkeflyer-Reiter erneut öffnen.</p>';
+            window.AngeboteModel.error(error);
+          });
+        }else mountDrinks();
+      }
       return;
     }
     // Toggle sticky sidebar preview container
