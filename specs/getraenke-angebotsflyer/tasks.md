@@ -16,3 +16,9 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF8 | Gemeinsame Vorschaukacheln, Aufteilungswahl und gruppierte Felder | GF7 | TC-F10-01, TC-F10-02, TC-F10-04 |
 | GF9 | Sichtbare Ausgabevorschauen in beiden Editoren integrieren | GF8 | TC-F10-03, TC-F10-04 |
 | GF10 | Vier-Viewport-Abnahme, Regression, Anwenderhilfe und Preview aktualisieren | GF8, GF9 | TC-F10-01..04, TC-F8-03 |
+| GF11 | F11-Spezifikation: Artikelstamm, Mockup-Layout und Kundenkacheln | GF10 | TC-F11-01..04 |
+| GF12 | Artikelstamm-/Bildsuche und private Bildübernahme integrieren | GF11 | TC-F11-01..02 |
+| GF13 | Editor 1:1 nach Mockup verdichten, Artikeldialog/Bildpflege ergänzen | GF11, GF12 | TC-F11-02, TC-F11-04 |
+| GF14 | Vier unabhängige Ziellayouts im Modell, Validator, Editor und Ausgaben | GF11, GF12 | TC-F11-03 |
+| GF15 | API-, Renderer-, Komponenten- und Regressionstests ergänzen; Hilfe aktualisieren | GF13, GF14 | TC-F11-01..04, F2, F3, F4, F5, F7 |
+| GF16 | Vier-Viewport-Abnahme und erneute Preview-Verifikation | GF15 | TC-F11-01..04, TC-F8-03 |

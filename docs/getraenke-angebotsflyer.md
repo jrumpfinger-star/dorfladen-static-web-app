@@ -7,30 +7,36 @@ gestalten** öffnet sich die gemeinsame Verwaltung.
 Bestehende Aktionen bleiben über **Bisherige Angebote öffnen** im bisherigen
 Editor erreichbar. Sie werden weder migriert noch überschrieben.
 
-1. **Artikel:** Wochen- oder Getränkeaktion anlegen. Eigene Artikel erfassen oder
-   Getränke aus dem Katalog wählen. Den **Verkaufspreis selbst eintragen**;
-   Einkaufspreise und Bestelldaten werden nicht übernommen. Bei Getränken Anzahl,
-   Liter je Einheit, Gebindeart und Gesamtpfand oder Pfandfreiheit ergänzen.
-   Der Literpreis enthält kein Pfand. Unvollständige Entwürfe dürfen gespeichert
-   werden.
-2. **Gestalten:** Überschrift und Zeitraum festlegen. Vorlagen für vier oder sechs
-   Artikel sind nur Startpunkte und erzeugen bei Bedarf Folgeseiten.
+1. **Artikel und Bilder:** Wochen- oder Getränkeaktion anlegen. Getränke aus
+   **Artikelstamm wählen** suchen (Name, Artikelnummer oder EAN) und bei Bedarf
+   mehrere übernehmen. Der reguläre VK bleibt Vergleichswert; nur die optionale
+   Auswahl „Stamm-VK auch als Angebotspreis vorbelegen“ kopiert ihn in den
+   separaten Angebotspreis. Bilder werden nur lesend gesucht und als private
+   Angebotskopie gespeichert. Eigene Artikel, Bilddateien und Zwischenablage
+   funktionieren ebenfalls. Bei Getränken Anzahl, Liter je Einheit, Gebindeart
+   und Gesamtpfand oder Pfandfreiheit ergänzen. Der Literpreis enthält kein
+   Pfand. Unvollständige Entwürfe dürfen gespeichert werden.
+2. **Frei gestalten:** Die Mockup-nahe Schrittansicht hält Artikelliste,
+   Bild-/Preisdialog und Vorschau getrennt. Überschrift und Zeitraum sind
+   einklappbar. A4-Sammelflyer, Homepage-/Kioskkachel, Einzelflyer und
+   Waagenmotiv haben **eigene, unabhängig gespeicherte Layouts je Artikel**.
    Elemente antippen oder in der Liste auswählen: Position, Größe, Drehung,
-   Schrift, Farbe, Ebenen und Deckkraft lassen sich einzeln ändern. Eigene Texte,
-   Bilder und Flächen sowie Duplikate sind möglich. Statt Ziehen funktionieren
-   auch Eingaben, Pfeilknöpfe und die Tastatur (Umschalt + Pfeil: größere Schritte).
-   Die Bildgröße skaliert den Inhalt im Bildrahmen; dieser lässt sich separat
-   vergrößern. Eine Vorlage ersetzt freie Gestaltung erst nach Bestätigung.
+   Schrift, Farbe, Ebenen und Deckkraft lassen sich ändern. Eigene Texte, Bilder
+   und Flächen sowie Duplikate sind möglich. Zahlenfelder und Pfeilknöpfe
+   funktionieren auch ohne Ziehen. Eine Vorlage ersetzt freie Gestaltung erst
+   nach Bestätigung.
 3. **Ausgeben:** Die folgenden Aktionen sind bewusst getrennt:
    - **Entwurf speichern** ändert keine Kundenfassung.
    - **Für Homepage veröffentlichen** gibt eine vollständige Fassung frei.
      Spätere Änderungen bleiben bis zur nächsten Freigabe intern.
-   - **A4 drucken / als PDF speichern** öffnet den Browser-Druckdialog.
-     Dort A4 wählen, Browser-Kopf-/Fußzeilen ausschalten und bei Bedarf
-     „Als PDF speichern“ verwenden.
-   - **Für Waage vorbereiten** erzeugt entweder Einzelartikel (empfohlen) oder
-     eingepasste A4-Seiten. Profil und Dauerwerbung/Vollbild im vorhandenen
-     Waagendialog wählen. JPEGs können auch ohne Versand gespeichert werden.
+   - **Einzelflyer drucken / PDF** gibt pro Artikel dessen separates
+     Einzelflyer-Layout aus. **Sammelflyer A4 drucken / PDF** nutzt die
+     mehrseitige A4-Gestaltung. Beide öffnen den Browser-Druckdialog; dort
+     Browser-Kopf-/Fußzeilen ausschalten und bei Bedarf „Als PDF speichern“.
+   - **Für Waage vorbereiten** nutzt das separate Waagenlayout für Einzelartikel
+     oder die A4-Seiten für den gesamten Flyer. Profil und Dauerwerbung/Vollbild
+     im vorhandenen Waagendialog wählen. JPEGs können auch ohne Versand
+     gespeichert werden.
 
 Pflichtangaben, ungültige Preise oder überstehende/zu kleine Textfelder blockieren
 die Ausgabe mit einer verständlichen Meldung. Bei einem Versionskonflikt bleibt
@@ -52,14 +58,17 @@ auch per Tastatur bedienbar. Diese Auswahl ist im einzelnen Flyer ebenfalls
 direkt unter „Gestalten“ sichtbar, nicht in einem versteckten Untermenü.
 A4/PDF, Handy/Kiosk und die vorhandenen Waagenprofile sind über sichtbare
 Vorschau-Schaltflächen erreichbar. Die Vorschau ändert oder veröffentlicht
-keinen Entwurf. Freie Elemente werden weiterhin nur in der A4-Ansicht bearbeitet.
+keinen Entwurf. In der neuen Angebotsverwaltung ist jedes Ausgabeziel separat
+bearbeitbar; der bestehende Designeditor verwaltet weiterhin nur globale
+Startstandards.
 Beim ersten CMS-Login wartet der Reiter auf die abgeschlossene Anmeldung.
 Bei Anmeldefehlern die Meldung schließen und den Getränkeflyer-Reiter erneut öffnen.
 
 ### Kundenansicht und Gültigkeit
 
 Homepage und mobiles Angebotspopup bieten **Wochenangebote / Getränke**.
-Die lesbaren Karten enthalten Preis, Gebinde, Pfand und Literpreis.
+Die individuell gestalteten Kacheln enthalten Preis, Gebinde, Pfand und
+Literpreis; alte Veröffentlichungen ohne Kachellayout bleiben lesbar.
 **Flyer ansehen** öffnet zusätzlich das frei gestaltete Original mit Zoom und
 Seitennavigation. Altangebote erscheinen einmalig unter Wochenangebote; deren
 Wochenumschaltung bleibt erhalten.

@@ -60,8 +60,16 @@ async function setup(page, options = {}) {
       dl_angeboteid: 'legacy-one', dl_produkt: 'Bisheriges Wochenangebot', dl_preis: 2.49, dl_statt_preis: 2.99,
       dl_aktion_id: 'legacy-action', dl_gueltig_von: '2026-11-15', dl_gueltig_bis: '2026-11-21',
     }] });
-    if (path === '/api/getraenke-artikel') return json({ artikel: [{ nummer: 'KA40015', name: 'Unser Testgetränk',
-      gebinde: '20x0,50', pfand: 3.10, preis: 99.99, bestelltext: 'NICHT VERÖFFENTLICHEN', aktiv: true }], gruppen: [], pfand: [] });
+    if (path === '/api/preisliste') return json({ groups: { Getränke: [{ artikelnummer: 'ART2001',
+      strichcode: '4001234567890', bezeichnung: 'Unser Testgetränk', menge: '20x0,50 l', vk: 14.99,
+      angebot_statt: 14.99, uvp: null }] } });
+    if (path === '/api/werbebilder' && method === 'POST') {
+      entry.read_only_lookup = true;
+      const { articles } = req.postDataJSON();
+      return json(articles.map((article) => ({ dl_artikelnummer: article.artikelnummer,
+        dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') })));
+    }
+    if (path === '/api/getraenke-artikel') return fail(410, 'Der Bestellkatalog ist für Angebotsflyer nicht vorgesehen.');
     if (path === '/api/angebote-flyer') return state.failRead ? fail(503, 'Die Angebote sind gerade nicht erreichbar.')
       : json({ success: true, actions: [...state.published.values()].filter((a) => a.data.valid_from <= NOW && a.data.valid_to >= NOW) });
     if (path.startsWith('/api/angebote-bilder')) {
@@ -225,9 +233,12 @@ for (const cmsMode of [true, false]) {
     else {
       await page.reload();
       await page.locator('[data-open="' + head.id + '"]').click();
-      await page.getByRole('button', { name: '2 · Gestalten' }).click();
+      expect(state.errors).toEqual([]);
+      await expect(page.locator('dialog[open]')).toHaveCount(0);
+      await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
+    if (!cmsMode) await page.locator('#an-design-options > summary').click();
     await expect(host.locator('[data-template-preview] canvas')).toHaveCount(2);
     const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
     expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
@@ -266,6 +277,7 @@ for (const cmsMode of [true, false]) {
     }
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const attribute = cmsMode ? 'data-design-mode' : 'data-editor-mode';
+    if (!cmsMode) await page.getByRole('button', { name: '3 · Ausgeben' }).click();
     for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
       const button = page.locator('[' + attribute + '="' + mode + '"]');
       await button.click();
@@ -275,13 +287,20 @@ for (const cmsMode of [true, false]) {
       if (!cmsMode) await expect(page.locator('#an-stage')).toBeVisible({ visible: mode === 'paper' });
       expect(cmsMode ? state.design : state.actions.get(head.id)).toEqual(stored);
     }
+    if (!cmsMode) {
+      await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+      if (!(await page.locator('#an-design-options').evaluate((element) => element.open))) {
+        await page.locator('#an-design-options > summary').click();
+      }
+    }
     await noOverflow(page, cmsMode ? '#an-design-root' : 'html');
     await page.screenshot({ path: test.info().outputPath('layout-auswahl.png'), fullPage: true });
     await host.locator('.an-choice-group').first().screenshot({ path: test.info().outputPath('stil-kacheln.png') });
     await page.reload();
     if (!cmsMode) {
       await page.locator('[data-open="' + head.id + '"]').click();
-      await page.getByRole('button', { name: '2 · Gestalten' }).click();
+      await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+      await page.locator('#an-design-options > summary').click();
     }
     await expect(host.getByRole('radio', { name: /Klassisch/ })).toBeChecked();
     await expect(host.getByRole('radio', { name: /6 · kompakt/ })).toBeChecked();
@@ -322,50 +341,122 @@ test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Ki
   await page.goto(BASE + '/kiosk.html');
   await page.locator('.k-tab[data-tab=angebote]').click();
   await expect(page).toHaveURL(/angebote\.html/);
-  expect(state.log.filter((r) => r.method !== 'GET' && r.path !== '/api/track' && !r.path.startsWith('/api/angebote-'))).toEqual([]);
+  expect(state.log.filter((r) => r.method !== 'GET' && r.path !== '/api/track' && !r.path.startsWith('/api/angebote-') && !r.read_only_lookup)).toEqual([]);
 });
 
-test('TC-F1-02..03/F2-01..03/F4-01: Katalog, eigene Verkaufspreise, Pfand und unvollständiger Entwurf', async ({ page }) => {
+test('TC-F1-02..03/F2-01..03/F4-01: Artikelstamm, eigene Angebotspreise, Pfand und unvollständiger Entwurf', async ({ page }) => {
   const state = await setup(page);
   await page.getByRole('button', { name: '+ Getränkeaktion anlegen' }).click();
-  await page.getByRole('button', { name: 'Aus Getränkekatalog' }).click();
+  await page.getByRole('button', { name: '+ Aus Artikelstamm wählen' }).click();
   await page.getByRole('button', { name: /Unser Testgetränk/ }).click();
-  await expect(page.getByLabel('Angebotspreis € 1', { exact: true })).toHaveValue('');
-  await expect(page.getByLabel('Anzahl Flaschen / Einheiten 1')).toHaveValue('20');
-  await expect(page.getByLabel('Liter je Einheit 1')).toHaveValue('0.5');
+  await page.getByRole('button', { name: /Auswahl übernehmen/ }).click();
+  await expect(page.locator('#an-items')).toContainText('Unser Testgetränk');
   await saveDraft(page);
   const draft = [...state.actions.values()][0];
   expect(draft.draft.items[0].price_cents).toBeNull();
-  expect(JSON.stringify(draft)).not.toContain('99.99');
-  expect(JSON.stringify(draft)).not.toContain('NICHT VERÖFFENTLICHEN');
+  expect(JSON.stringify(draft)).not.toContain('14.99');
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
   await page.locator('#an-publish').click();
   await expect(page.locator('dialog[open]')).toContainText('Angebotspreis');
   await page.locator('dialog[open]').getByRole('button', { name: 'Schließen', exact: true }).click();
   expect(state.published.size).toBe(0);
-  await page.getByRole('button', { name: '1 · Artikel' }).click();
-  await page.getByLabel('Angebotspreis € 1', { exact: true }).fill('12.49');
-  await page.getByLabel('Gebindeart 1').selectOption('Mehrweg');
-  await page.getByLabel('Pfandentscheidung 1').selectOption('no');
-  await expect(page.getByLabel('Gesamtpfand € 1')).toHaveValue('0.00');
-  await expect(page.getByLabel('Gesamtpfand € 1')).toBeDisabled();
-  await page.getByLabel('Pfandentscheidung 1').selectOption('yes');
-  await page.getByLabel('Gesamtpfand € 1').fill('3.10');
-  await page.getByLabel('Gesamtpfand € 1').blur();
+  await page.getByRole('button', { name: '1 · Artikel und Bilder' }).click();
+  await page.locator('#an-items button[data-edit-item]').click();
+  await page.getByLabel('Angebotspreis €', { exact: true }).fill('12.49');
+  await page.locator('dialog[open] [data-item-field="packaging"]').selectOption('Mehrweg');
+  await page.locator('dialog[open] [data-item-field="deposit_mode"]').selectOption('no');
+  await expect(page.locator('dialog[open] [data-item-field="deposit_cents"]')).toHaveValue('0.00');
+  await expect(page.locator('dialog[open] [data-item-field="deposit_cents"]')).toBeDisabled();
+  await page.locator('dialog[open] [data-item-field="deposit_mode"]').selectOption('yes');
+  await page.locator('dialog[open] [data-item-field="deposit_cents"]').fill('3.10');
+  await page.locator('dialog[open] [data-item-field="deposit_cents"]').blur();
+  await page.getByRole('button', { name: 'Übernehmen' }).click();
   await expect(page.locator('[data-unit-price]')).toContainText('1,25 €/l');
-  await page.locator('[data-highlight]').click();
+  await page.locator('#an-items details summary').click();
+  await page.locator('#an-items button[data-highlight]').click();
   await saveDraft(page);
   expect([...state.actions.values()][0].draft.items[0]).toMatchObject({ price_cents: 1249, deposit_cents: 310, highlight: true });
-  expect(state.log.filter((r) => r.method !== 'GET' && !r.path.startsWith('/api/angebote-'))).toEqual([]);
+  expect([...state.actions.values()][0].draft.items[0].image_id).toMatch(/^[a-f0-9]{32}$/);
+  expect(state.log.filter((r) => r.method !== 'GET' && !r.path.startsWith('/api/angebote-') && !r.read_only_lookup)).toEqual([]);
+  expect(state.log.some((r) => r.path === '/api/getraenke-artikel')).toBe(false);
   await noOverflow(page);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F11: vier getrennte Ausgaben bearbeiten, speichern und als Kiosk-Kachel veröffentlichen', async ({ page }) => {
+  const state = await setup(page), head = await editSeed(page, state);
+  const itemId = head.draft.items[0].id;
+  const cardName = head.draft.layout.targets.card[0].elements.find((element) => element.type === 'name');
+  const singleName = head.draft.layout.targets.single[0].elements.find((element) => element.type === 'name');
+
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  for (const [target, width, height] of [['card', 630, 720], ['single', 1200, 1695], ['scale', 1200, 693], ['sheet', 1191, 1685]]) {
+    await page.locator('[data-layout-target="' + target + '"]').click();
+    await expect.poll(() => page.locator('#an-stage-canvas').evaluate((canvas) => [canvas.width, canvas.height]))
+      .toEqual([width, height]);
+  }
+  await page.locator('[data-layout-target="card"]').click();
+  await page.getByLabel('Gestaltungselement').selectOption(cardName.id);
+  await page.getByLabel('Position X', { exact: true }).fill('130');
+  await page.getByLabel('Position X', { exact: true }).blur();
+  await saveDraft(page);
+  const saved = state.actions.get(head.id).draft;
+  expect(saved.layout.targets.card[0].elements.find((element) => element.id === cardName.id).x).toBe(130);
+  expect(saved.layout.targets.single[0].elements.find((element) => element.id === singleName.id).x).toBe(330);
+  expect(saved.layout.pages[0].elements.some((element) => element.type === 'name' && element.x === 130)).toBe(false);
+
+  await page.getByRole('button', { name: '3 · Ausgeben' }).click();
+  await page.locator('#an-print-single').click();
+  await expect.poll(() => page.evaluate(() => window.__printCalled || 0)).toBe(1);
+  const singlePrint = await page.locator('#an-print img').evaluate((image) => [image.naturalWidth, image.naturalHeight]);
+  expect(singlePrint).toEqual([1600, 2260]);
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await page.locator('#an-publish').click();
+  await page.locator('dialog[open]').getByRole('button', { name: 'Jetzt freigeben' }).click();
+  const customer = await customerView(page);
+  await customer.shell.locator('[data-offer-kind=drinks]').click();
+  const card = customer.grid.locator('.an-product').first();
+  await expect(card).toContainText('12,49 €');
+  await expect(card.locator('canvas')).toHaveAttribute('aria-hidden', 'true');
+  expect(state.published.get(head.id).data.layout.targets.card[0].elements.find((element) => element.id === cardName.id).x).toBe(130);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F11-legacy: veröffentlichte Aktionen ohne Ziellayout behalten ihre bisherige Kachel', async ({ page }) => {
+  const state = await setup(page), head = await seed(page, state, { publish: true });
+  delete head.draft.layout.targets;
+  delete state.published.get(head.id).data.layout.targets;
+  const { grid, shell } = await customerView(page);
+  await shell.locator('[data-offer-kind=drinks]').click();
+  const card = grid.locator('.an-product').last();
+  await expect(card.locator('.an-price')).toBeVisible();
+  await expect(card.locator('canvas')).toHaveCount(0);
+});
+
+test('TC-F11-04: kompakte Artikelliste passt auf Desktop und Ladentablet ohne Seitenscrollen', async ({ page }) => {
+  const state = await setup(page), head = await seed(page, state, { count: 4 });
+  await page.reload();
+  await page.locator('[data-open="' + head.id + '"]').click();
+  await expect(page.locator('#an-items .an-item')).toHaveCount(4);
+  await noOverflow(page);
+  if (page.viewportSize().width > 480) {
+    const height = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    expect(height).toBeLessThanOrEqual(1);
+  }
+  for (const rect of await page.locator('#an-items button[data-edit-item]').evaluateAll((buttons) =>
+    buttons.map((button) => ({ width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })))) {
+    expect(rect.width).toBeGreaterThanOrEqual(44);
+    expect(rect.height).toBeGreaterThanOrEqual(44);
+  }
   expect(state.errors).toEqual([]);
 });
 
 test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Drehung/Transparenz', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state);
-  await page.getByLabel('Eigenes Produktbild 1', { exact: false }).setInputFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: PHOTO });
-  await expect(page.getByLabel(/Eigenes Produktbild 1 · Bild gespeichert/)).toBeVisible();
-  await page.getByRole('button', { name: '2 · Gestalten' }).click();
+  await page.locator('#an-items button[data-edit-item]').click();
+  await page.getByLabel('Bilddatei wählen / ersetzen').setInputFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: PHOTO });
+  await page.getByRole('button', { name: 'Übernehmen' }).click();
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
   await page.getByRole('button', { name: '+ Text', exact: true }).click();
   await page.getByRole('textbox', { name: 'Eigener Text', exact: true }).fill('Dein individueller Flyer');
   await page.getByLabel('Position X', { exact: true }).fill('88');
@@ -380,15 +471,18 @@ test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Dr
   await expect(page.getByLabel('Gestaltungselement')).toHaveValue(/^[a-f0-9]{32}$/);
   await saveDraft(page);
   const saved = state.actions.get(head.id).draft;
-  expect(saved.layout.mode).toBe('free');
-  const own = saved.layout.pages[0].elements.filter((e) => e.type === 'text');
+  expect(saved.layout.mode).toBe('template');
+  const cardLayout = saved.layout.targets.card.find((entry) => entry.item_id === saved.items[0].id);
+  const own = cardLayout.elements.filter((e) => e.type === 'text');
   expect(own).toHaveLength(2);
   expect(own[0]).toMatchObject({ text: 'Dein individueller Flyer', opacity: .65, rotation: 15 });
-  expect(saved.layout.pages[0].elements.some((e) => e.type === 'image' && e.image_id)).toBe(true);
+  expect(cardLayout.elements.some((e) => e.type === 'image' && e.image_id)).toBe(true);
+  expect(saved.layout.targets.single[0].elements.some((e) => e.type === 'text' && e.text === 'Dein individueller Flyer')).toBe(false);
   expect(saved.items[0].image_id).toMatch(/^[a-f0-9]{32}$/);
   await page.reload();
   await page.locator('[data-open="' + head.id + '"]').click();
-  await page.getByRole('button', { name: '2 · Gestalten' }).click();
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  await page.locator('#an-design-options > summary').click();
   await page.getByLabel('Gestaltungselement').selectOption(own[0].id);
   await expect(page.getByLabel('Drehung', { exact: true })).toHaveValue('15');
   await expect(page.getByLabel('Deckkraft', { exact: true })).toHaveValue('0.65');
@@ -439,7 +533,10 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   await expect(card).toContainText('20 × 0,5 l · Mehrweg');
   await expect(card).toContainText('zzgl. 3,10 € Pfand');
   await expect(card).toContainText('1 l = 1,25 €');
-  expect(await card.locator('.an-price').evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(28);
+  const firstItem = state.published.get(head.id).data.items[0];
+  const cardLayout = state.published.get(head.id).data.layout.targets.card.find((entry) => entry.item_id === firstItem.id);
+  expect(cardLayout.elements.find((element) => element.type === 'price').font_size).toBeGreaterThanOrEqual(28);
+  await expect(card.locator('canvas')).toHaveAttribute('aria-hidden', 'true');
   const columns = await grid.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
   expect(columns).toBe(page.viewportSize().width <= 480 ? 1 : page.viewportSize().width <= 850 ? 2 : 3);
   await noOverflow(page);
@@ -495,7 +592,9 @@ test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und le
 
 test('TC-F4-02/F4-04: Entwurfsänderung bleibt privat, Freigabe explizit und Konflikt sichtbar', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { publish: true });
-  await page.getByLabel('Angebotspreis € 1', { exact: true }).fill('10.99');
+  await page.locator('#an-items button[data-edit-item]').click();
+  await page.getByLabel('Angebotspreis €', { exact: true }).fill('10.99');
+  await page.getByRole('button', { name: 'Übernehmen' }).click();
   await saveDraft(page);
   expect(state.published.get(head.id).data.items[0].price_cents).toBe(1249);
   expect(state.actions.get(head.id).draft.items[0].price_cents).toBe(1099);
@@ -504,8 +603,10 @@ test('TC-F4-02/F4-04: Entwurfsänderung bleibt privat, Freigabe explizit und Kon
   await page.locator('dialog[open]').getByRole('button', { name: 'Jetzt freigeben' }).click();
   await expect(page.locator('#an-output-status')).toContainText('Freigegeben');
   expect(state.published.get(head.id).data.items[0].price_cents).toBe(1099);
-  await page.getByRole('button', { name: '1 · Artikel' }).click();
-  await page.getByLabel('Angebotspreis € 1', { exact: true }).fill('9.99');
+  await page.getByRole('button', { name: '1 · Artikel und Bilder' }).click();
+  await page.locator('#an-items button[data-edit-item]').click();
+  await page.getByLabel('Angebotspreis €', { exact: true }).fill('9.99');
+  await page.getByRole('button', { name: 'Übernehmen' }).click();
   state.failSave = true;
   await page.getByRole('button', { name: 'Entwurf speichern', exact: true }).click();
   await expect(page.locator('dialog[open]')).toContainText('inzwischen geändert');
@@ -574,7 +675,7 @@ test('TC-F6-02/F6-05: Ersatz nur eigener Aktion, Upload vor Löschen und tatsäc
   await page.getByRole('button', { name: 'Waagenvorschau öffnen' }).click();
   await expect(page.getByRole('checkbox', { name: other + ' löschen', exact: true })).toBeDisabled();
   await expect(page.getByRole('checkbox', { name: old + ' löschen', exact: true })).toBeChecked();
-  await expect(page.locator('#wb-ueb-start')).toBeEnabled();
+  await expect(page.locator('#wb-ueb-start')).toBeEnabled({ timeout: 15000 });
   await page.locator('#wb-ueb-start').click();
   await expect(page.locator('#wb-ueb')).toContainText('wartet auf Bestätigung');
   await expect(page.locator('#wb-ueb')).toContainText('Brücke offline');
@@ -599,12 +700,15 @@ test('TC-F1-02/F3-06: Wochenaktion duplizieren, Reihenfolge und fehlende Pflicht
   await expect(page.locator('#an-save')).toBeEnabled();
   const duplicate = [...state.actions.values()].find((a) => a.id !== head.id);
   expect(duplicate.published_revision).toBeNull();
-  await page.locator('[data-up]').nth(1).click();
-  await page.locator('[data-remove]').nth(1).click();
+  await page.locator('#an-items .an-item').nth(1).locator('details summary').click();
+  await page.locator('#an-items .an-item').nth(1).locator('[data-up]').click();
+  await page.locator('#an-items .an-item').nth(1).locator('details summary').click();
+  await page.locator('#an-items .an-item').nth(1).locator('[data-remove]').click();
   await saveDraft(page);
   expect(state.actions.get(duplicate.id).draft.items).toHaveLength(1);
   expect(state.actions.get(duplicate.id).draft.items[0].id).toBe(head.draft.items[1].id);
-  await page.getByRole('button', { name: '2 · Gestalten' }).click();
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  await page.locator('[data-layout-target="sheet"]').click();
   const price = state.actions.get(duplicate.id).draft.layout.pages[0].elements.find((e) => e.type === 'price');
   await page.getByLabel('Gestaltungselement').selectOption(price.id);
   await page.getByLabel('Ausblenden', { exact: true }).check();

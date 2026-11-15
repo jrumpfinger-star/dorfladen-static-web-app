@@ -122,3 +122,38 @@ PR-Vorschau durch vorhandenen Azure-Workflow; Namespace `preview-<PR>` und
 Storage-/CMS-Konfiguration auf Preview prüfen, keine Secrets ausgeben.
 Deployment und öffentliche/geschützte Routen an der Preview-URL verifizieren.
 Kein Merge, kein Produktivdeploy. Live-Waage bleibt eine gesonderte Abnahme.
+
+## F11: Mockup-getreue Artikelerfassung und gestaltbare Kacheln
+
+Die fachliche Korrektur nutzt nur die vorhandenen Stamm-Schnittstellen:
+
+- Artikel über `/api/preisliste?all=1` laden und Bezeichnung, Artikelnummer,
+  Strichcode/EAN, VK, Menge und Stattpreis/UVP explizit mappen. Keine Aufrufe
+  des Getränkekatalog-Endpunkts. VK bleibt Referenzpreis; eine separate Wahl
+  steuert, ob er in den Angebotspreis übernommen wird.
+- Stamm-/EAN-Bilder über den lesenden `/api/werbebilder?sharepoint=1`-Lookup
+  suchen. Gefundene Daten-URIs werden als Blob in den bestehenden privaten
+  `/api/angebote-bilder`-Namespace kopiert. Manuelle und geänderte Bilder
+  durchlaufen denselben Upload; weder Stamm noch SharePoint werden geschrieben.
+- Kompakten Kopf, Schrittleiste, zweigeteiltes Arbeits-/Vorschaupanel,
+  kurze Artikelliste und Artikeldialog nach dem V2-Mockup umsetzen. Vorhandene
+  Editoraktionen und zugängliche 44-px-Bedienflächen bleiben erhalten;
+  Metadaten, Zusatzfelder und erweiterte Bildaktionen klappen auf.
+- Pro Artikel eigenständige Gestaltungen in `layout.targets.card`,
+  `.single` und `.scale` speichern. Sie nutzen dieselben typisierten
+  Gestaltungselemente, stabile Artikel-IDs und private Bild-IDs wie A4-Seiten,
+  aber eigene 420×480-, 800×1130- bzw. 800×462-Koordinaten. Der API-
+  Normalisierer prüft alle Zielgruppen und Bildreferenzen. Veröffentlichungen
+  ohne Ziellayouts bleiben kompatibel und verwenden die bisherigen automatischen
+  Kunden-/Einzel-/Waagenausgaben; neue Ausgaben verwenden die gespeicherten Ziele.
+
+Änderungsorte: `static-site/js/angebote-editor.js`,
+`static-site/js/angebote-modell.js`, `static-site/js/angebote-kunden.js`,
+`static-site/css/angebote.css`, `api/shared/angebote.py`,
+`tests/angebote-flyer.spec.js`, `tests/test_angebote.py` und
+`docs/getraenke-angebotsflyer.md`. Der alte CMS-Editor bleibt unverändert.
+
+Abnahme mit gemocktem Stamm-/Bilddienst und den bestehenden vier Playwright-
+Viewports. Zusätzlich Negativassertions für den Kratzer-Endpunkt und alle
+mutierenden Stamm-/Werbebilder-Endpunkte; private Bild-Uploads bleiben im
+Preview-Namespace. Kein Merge oder Produktivdeployment.

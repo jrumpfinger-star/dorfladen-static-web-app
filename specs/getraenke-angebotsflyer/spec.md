@@ -32,8 +32,12 @@ derselben Übersicht im bisherigen Editor erreichbar. Kein dauerhaftes CMS-ifram
 Eingaben: Name, Artikelnummer (auch Zeichenketten/leer), Beschreibung, Bild,
 Verkaufspreis, optionaler Stattpreis. Getränke zusätzlich: Anzahl, Milliliter
 je Einheit, Gebindeart und Gesamtpfand oder ausdrückliche Pfandfreiheit.
-Preise werden in ganzen Cent gespeichert, Literpreise ohne Pfand berechnet
-und kaufmännisch auf Cent gerundet. Katalogpreise sind keine Vorbelegung.
+Neue Artikel werden aus dem normalen Artikelstamm übernommen: Bezeichnung,
+Artikelnummer, EAN, Inhalt und regulärer Verkaufspreis. Der Angebotspreis
+bleibt separat; der reguläre VK wird nur auf ausdrückliche Wahl als
+Angebotspreis vorbelegt. Preise werden in ganzen Cent gespeichert, Literpreise
+ohne Pfand berechnet und kaufmännisch auf Cent gerundet. Einkaufs- und
+Kratzer-Bestellkatalogpreise werden nicht verwendet.
 Unvollständige Angaben dürfen als Entwurf gespeichert, aber nicht freigegeben
 oder an die Waage gesendet werden.
 
@@ -41,6 +45,11 @@ oder an die Waage gesendet werden.
 - TC-F2-02: Fehlender Inhalt/Pfandentscheidung, Preis <= 0 oder ungültiger
   Zeitraum verhindert Freigabe und Versand mit verständlicher Meldung.
 - TC-F2-03: Artikel-, Bild- und Preisangaben stimmen in allen Ausgaben überein.
+
+Stammartikelbilder werden ausschließlich über die bestehende Werbebildsuche
+gelesen. Für den neuen Entwurf wird das Bild als privater, unveränderlicher
+Angebotsbild-Snapshot gespeichert. Eigene Bildänderungen schreiben niemals in
+Artikelstamm, SharePoint oder bestehende Werbebild-Datensätze zurück.
 
 ## F3: Freie Gestaltung und Druck
 
@@ -190,6 +199,54 @@ Speicher-/Freigabeverträge oder der Bestätigungen beim Ersetzen freier Layouts
   Vorlagenersetzung bleiben erhalten.
 - TC-F10-04: Alle Bedienelemente auf vier Zielgrößen ohne horizontalen
   Überlauf, mit mindestens 44 px hohen Klickflächen und eindeutigem Fokus.
+
+## F11: Artikelstamm, freie Kundenkacheln und Mockup-Layout
+
+Der neue Wochen-/Getränkeeditor wird im Aufbau und in der Bedienung 1:1 am
+freigegebenen Mockup V2 ausgerichtet: kompakter Kopf mit Entwurfsaktionen,
+dreistufige Navigation, links kompakte Artikelliste/Formulare und rechts die
+Vorschau. Artikelbearbeitung erfolgt in einem fokussierten Dialog mit Bild,
+Name und Kernpreisen sichtbar; Zusatzangaben und erweiterte Bildfunktionen
+bleiben einklappbar. Stil und Layoutwechsel dürfen diese Flächenordnung nicht
+verändern. Auf 1280×800 und 686×1095 müssen vier kompakte Artikel ohne
+Seitenscrollen sichtbar sein. Auf Mobilgeräten darf die Seite scrollen, aber
+Bildauswahl, Angebotspreis und Dialogaktion bleiben direkt erreichbar.
+
+Neue Artikel werden über `/api/preisliste?all=1` aus demselben Artikelstamm wie
+die bisherigen Angebote gesucht, per Name/Artikelnummer/EAN gefiltert und
+mehrfach ausgewählt. Getränke werden nicht aus `/api/getraenke-artikel` oder
+dem Kratzer-Bestellkatalog übernommen. Der Dialog zeigt den Stamm-VK und eine
+explizite Wahl, ob dieser als Angebotspreis vorbelegt wird. Der Nutzer kann
+Angebotspreis, Stattpreis und Angebotsdaten frei bearbeiten.
+
+Stammbilder werden mit der bestehenden `/api/werbebilder`-Suche
+(Dataverse-/SharePoint-Fallback) geladen und als private Angebotsbilder
+gespeichert. In manuellen und übernommenen Artikeln sind Bildvorschau,
+Datei-/Zwischenablage-Übernahme, Suche nach Nummer/EAN, Ersetzen und Entfernen
+sichtbar. Suche und Bearbeitung sind lesend gegenüber dem Stamm und schreiben
+nicht in vorhandene Werbebild-Datensätze zurück.
+
+Homepage-/Kioskkachel, Einzelflyer, Sammelflyer und Waage sind eigenständige,
+speicherbare Gestaltungsflächen. Kachel-, Einzel- und Waagenelemente werden je
+Artikel frei gewählt, verschoben, skaliert, gedreht, eingefärbt, aus-/eingeblendet,
+dupliziert und in der Ebene angeordnet. Das Kachellayout bleibt getrennt von
+Einzelflyer, Sammelflyer und Waagenprofilen erhalten. Die Kundenansicht
+verwendet die veröffentlichte Kachelgestaltung; fehlende Ziellayouts alter
+Datensätze fallen auf die bisherige automatische Ausgabe zurück.
+
+- TC-F11-01: Artikelsuche über Name, Nummer und EAN; Mehrfachauswahl übernimmt
+  Stammfelder, zeigt VK als Vergleich und übernimmt ihn nur nach ausdrücklicher
+  Auswahl als Angebotspreis. Kein Aufruf des Kratzer-Katalogs.
+- TC-F11-02: Stamm- und manuelle Artikel zeigen Bildvorschau, Suche, Datei-/
+  Zwischenablage, Ersetzen und Entfernen. Bildänderung speichert nur einen
+  privaten Snapshot; kein mutierender Werbebilder-/Stammaufruf.
+- TC-F11-03: Alle vier Ziele frei und unabhängig bearbeiten, speichern und
+  wieder öffnen; veröffentlichte Kacheln in der Kundenansicht rendern und
+  Einzelflyer/Waagenbilder aus ihren jeweiligen Layouts ausgeben.
+  Altveröffentlichungen ohne Ziellayouts funktionieren.
+- TC-F11-04: Artikelübersicht und Dialog entsprechen dem Mockup-Aufbau auf
+  vier Viewports, ohne horizontalen Überlauf und mit mindestens 44 px
+  Bedienflächen; Desktop und Ladentablet zeigen vier Artikel ohne Seitenscrollen.
 
 ## Verifikation und offene Fragen
 

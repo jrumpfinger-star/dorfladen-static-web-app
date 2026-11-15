@@ -22,6 +22,7 @@ def draft(kind="drinks"):
         "kind": kind, "title": "Unsere Angebote",
         "valid_from": "2026-11-16", "valid_to": "2026-11-21",
         "items": [{"id": item_id, "name": "Unser Getränk", "article_number": "KA40015",
+                   "barcode": "4000000000001", "retail_price_cents": 1499,
                    "price_cents": 1249, "old_price_cents": None, "units": 20,
                    "volume_ml": 500, "packaging": "Mehrweg", "deposit_cents": 310,
                    "deposit_free": False, "image_id": ""}],
@@ -125,6 +126,54 @@ class AngeboteTests(unittest.TestCase):
         head = self.service.create(data)
         self.assertEqual(self.service.get(head["id"])["draft"]["layout"]["mode"], "free")
         self.assertEqual(self.service.get(head["id"])["draft"]["layout"]["pages"][0]["elements"][-1]["rotation"], 15)
+
+    def test_TC_F11_independent_target_layouts_and_public_image_scope(self):
+        data = draft()
+        item_id = data["items"][0]["id"]
+        image_id = "b" * 32
+        data["layout"]["targets"] = {}
+        for target, width, image_y in (("card", 420, 320), ("single", 800, 900), ("scale", 800, 280)):
+            roles = [
+                {"id": format(i + 100 + len(data["layout"]["targets"]) * 10, "032x"),
+                 "type": role, "item_id": item_id, "x": 12, "y": i * 44 + 12,
+                 "w": width - 24, "h": 40}
+                for i, role in enumerate(("name", "price", "pack", "deposit", "base"))
+            ]
+            roles.append({"id": format(200 + len(data["layout"]["targets"]), "032x"),
+                          "type": "image", "item_id": item_id, "image_id": image_id,
+                          "x": 12, "y": image_y, "w": min(180, width - 24), "h": 40})
+            data["layout"]["targets"][target] = [{"item_id": item_id, "elements": roles}]
+        head = self.service.create(data)
+        stored = head["draft"]
+        self.assertEqual(stored["items"][0]["barcode"], "4000000000001")
+        self.assertEqual(stored["items"][0]["retail_price_cents"], 1499)
+        self.assertEqual(set(stored["layout"]["targets"]), {"card", "single", "scale"})
+        for target in ("card", "single", "scale"):
+            self.assertEqual(stored["layout"]["targets"][target][0]["item_id"], item_id)
+        self.store.put_image(image_id, b"private-image", "image/png")
+        head = self.service.publish(head["id"], head["version"])
+        public = self.service.public()[0]["data"]
+        for target in ("card", "single", "scale"):
+            self.assertEqual(public["layout"]["targets"][target][0]["item_id"], item_id)
+        self.assertTrue(self.service.image_public(image_id))
+        self.assertNotIn("barcode", public["items"][0])
+        self.assertNotIn("retail_price_cents", public["items"][0])
+
+    def test_TC_F11_invalid_target_layout_is_rejected(self):
+        data = draft()
+        item_id = data["items"][0]["id"]
+        data["layout"]["targets"] = {"card": [
+            {"item_id": item_id,
+             "elements": [{"id": "a" * 32, "type": "name", "item_id": item_id,
+                           "x": 421, "y": 0, "w": 10, "h": 20}]},
+        ]}
+        self.error(400, normalize, data)
+        data = draft()
+        data["layout"]["targets"] = {"card": [{"item_id": "f" * 32, "elements": []}]}
+        self.error(400, normalize, data)
+        data = draft()
+        data["layout"]["targets"] = {"unknown": []}
+        self.error(400, normalize, data)
 
     def test_TC_F3_06_missing_mandatory_fields(self):
         for mutate in (lambda e: e.update(hidden=True), lambda e: e.update(opacity=.1),

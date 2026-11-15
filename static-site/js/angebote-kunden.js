@@ -73,6 +73,7 @@ window.AngeboteKunden = (function () {
     grid.innerHTML = result.legacy.map(legacyHTML).join('') + result.actions.map(function (action) {
       return action.data.items.map(function (it) { return M.cardHTML(action.data, it); }).join('');
     }).join('');
+    Promise.all(result.actions.map(function (action) { return M.paintCards(grid, action.data); })).catch(M.error);
     if (!result.legacy.length && !result.actions.length) grid.innerHTML = '<p class="an-status">Aktuell keine ' + (state.kind === 'drinks' ? 'Getränkeangebote' : 'Wochenangebote') + ' in diesem Zeitraum.</p>';
     if (window.loadAngBilder && result.legacy.length) window.loadAngBilder(grid);
     grid.querySelectorAll('.an-product img').forEach(function (img) {

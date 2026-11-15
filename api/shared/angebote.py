@@ -87,7 +87,55 @@ def image_ids(data):
     found = {i["image_id"] for i in data.get("items", []) if i.get("image_id")}
     for page in data.get("layout", {}).get("pages", []):
         found.update(e["image_id"] for e in page["elements"] if e.get("image_id"))
+    for target in data.get("layout", {}).get("targets", {}).values():
+        for item_layout in target:
+            found.update(e["image_id"] for e in item_layout["elements"] if e.get("image_id"))
     return sorted(found)
+
+
+def _elements(source, known, seen, width, height):
+    if not isinstance(source, list) or len(source) > 300:
+        raise AngeboteFehler(400, "Bitte die Gestaltungselemente prüfen.")
+    elements = []
+    for raw_el in source:
+        if not isinstance(raw_el, dict) or raw_el.get("type") not in ELEMENTS:
+            raise AngeboteFehler(400, "Bitte die Gestaltungselemente prüfen.")
+        el = {"id": kennung(raw_el.get("id")), "type": raw_el["type"]}
+        if el["id"] in seen:
+            raise AngeboteFehler(400, "Ein Gestaltungselement ist doppelt vorhanden.")
+        seen.add(el["id"])
+        item_id = raw_el.get("item_id", "")
+        if not isinstance(item_id, str) or (item_id and item_id not in known):
+            raise AngeboteFehler(400, "Ein Gestaltungselement gehört zu keinem Artikel.")
+        if el["type"] in FIELDS and not item_id:
+            raise AngeboteFehler(400, "Bitte das Artikelfeld zuordnen.")
+        el["item_id"] = item_id
+        for name, low, high, default in (
+                ("x", 0, width, 0), ("y", 0, height, 0),
+                ("w", 8, width, 200), ("h", 8, height, 60),
+                ("font_size", 10, 160, 24), ("rotation", -180, 180, 0),
+                ("opacity", 0, 1, 1), ("image_scale", 20, 200, 100)):
+            el[name] = _number(raw_el.get(name, default), "die Elementmaße", low, high)
+        el["text"] = _text(raw_el.get("text", ""), "den Text", 2000)
+        el["font"] = raw_el.get("font", "Arial")
+        el["align"] = raw_el.get("align", "left")
+        el["shape"] = raw_el.get("shape", "rect")
+        el["bold"] = raw_el.get("bold", False) is True
+        el["hidden"] = raw_el.get("hidden", False) is True
+        if el["font"] not in FONTS or el["align"] not in ("left", "center", "right"):
+            raise AngeboteFehler(400, "Bitte Schrift und Ausrichtung prüfen.")
+        if el["shape"] not in ("rect", "round", "ellipse"):
+            raise AngeboteFehler(400, "Bitte eine gültige Form wählen.")
+        el["fill"] = raw_el.get("fill", "")
+        if el["fill"] and not COLOR.fullmatch(str(el["fill"])):
+            raise AngeboteFehler(400, "Bitte die Elementfarbe prüfen.")
+        el["image_id"] = raw_el.get("image_id", "")
+        if not isinstance(el["image_id"], str):
+            raise AngeboteFehler(400, "Bitte die Bildzuordnung prüfen.")
+        if el["image_id"]:
+            kennung(el["image_id"])
+        elements.append(el)
+    return elements
 
 
 def _layout(raw, items):
@@ -103,54 +151,30 @@ def _layout(raw, items):
     if not COLOR.fullmatch(str(color)) or not COLOR.fullmatch(str(background)):
         raise AngeboteFehler(400, "Bitte eine gültige Farbe wählen.")
     pages = raw.get("pages", [])
-    if not isinstance(pages, list) or len(pages) > MAX_PAGES:
-        raise AngeboteFehler(400, "Der Flyer enthält zu viele Seiten.")
-    result, known, seen = [], {i["id"] for i in items}, set()
+    targets = raw.get("targets", {})
+    if not isinstance(pages, list) or len(pages) > MAX_PAGES or not isinstance(targets, dict) or set(targets) - {"card", "single", "scale"}:
+        raise AngeboteFehler(400, "Der Flyer enthält zu viele Seiten oder Kacheln.")
+    known, seen, result = {i["id"] for i in items}, set(), []
     for page in pages:
         if not isinstance(page, dict) or not isinstance(page.get("elements"), list):
             raise AngeboteFehler(400, "Bitte die Flyerseiten prüfen.")
-        if len(page["elements"]) > 300:
-            raise AngeboteFehler(400, "Eine Flyerseite enthält zu viele Elemente.")
-        elements = []
-        for raw_el in page["elements"]:
-            if not isinstance(raw_el, dict) or raw_el.get("type") not in ELEMENTS:
-                raise AngeboteFehler(400, "Bitte die Gestaltungselemente prüfen.")
-            el = {"id": kennung(raw_el.get("id")), "type": raw_el["type"]}
-            if el["id"] in seen:
-                raise AngeboteFehler(400, "Ein Gestaltungselement ist doppelt vorhanden.")
-            seen.add(el["id"])
-            item_id = raw_el.get("item_id", "")
-            if not isinstance(item_id, str) or (item_id and item_id not in known):
-                raise AngeboteFehler(400, "Ein Gestaltungselement gehört zu keinem Artikel.")
-            if el["type"] in FIELDS and not item_id:
-                raise AngeboteFehler(400, "Bitte das Artikelfeld zuordnen.")
-            el["item_id"] = item_id
-            for name, low, high, default in (
-                    ("x", 0, WIDTH, 0), ("y", 0, HEIGHT, 0),
-                    ("w", 8, WIDTH, 200), ("h", 8, HEIGHT, 60),
-                    ("font_size", 10, 160, 24), ("rotation", -180, 180, 0),
-                    ("opacity", 0, 1, 1), ("image_scale", 20, 200, 100)):
-                el[name] = _number(raw_el.get(name, default), "die Elementmaße", low, high)
-            el["text"] = _text(raw_el.get("text", ""), "den Text", 2000)
-            el["font"] = raw_el.get("font", "Arial")
-            el["align"] = raw_el.get("align", "left")
-            el["shape"] = raw_el.get("shape", "rect")
-            el["bold"] = raw_el.get("bold", False) is True
-            el["hidden"] = raw_el.get("hidden", False) is True
-            if el["font"] not in FONTS or el["align"] not in ("left", "center", "right"):
-                raise AngeboteFehler(400, "Bitte Schrift und Ausrichtung prüfen.")
-            if el["shape"] not in ("rect", "round", "ellipse"):
-                raise AngeboteFehler(400, "Bitte eine gültige Form wählen.")
-            el["fill"] = raw_el.get("fill", "")
-            if el["fill"] and not COLOR.fullmatch(str(el["fill"])):
-                raise AngeboteFehler(400, "Bitte die Elementfarbe prüfen.")
-            el["image_id"] = raw_el.get("image_id", "")
-            if not isinstance(el["image_id"], str):
-                raise AngeboteFehler(400, "Bitte die Bildzuordnung prüfen.")
-            if el["image_id"]:
-                kennung(el["image_id"])
-            elements.append(el)
-        result.append({"elements": elements})
+        result.append({"elements": _elements(page["elements"], known, seen, WIDTH, HEIGHT)})
+    dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462)}
+    target_result = {}
+    for target, (width, height) in dimensions.items():
+        source = targets.get(target, [])
+        if not isinstance(source, list) or len(source) > MAX_ITEMS:
+            raise AngeboteFehler(400, "Bitte die Zielgestaltungen prüfen.")
+        target_items, result_target = set(), []
+        for item_layout in source:
+            if (not isinstance(item_layout, dict) or item_layout.get("item_id") not in known
+                    or item_layout["item_id"] in target_items
+                    or not isinstance(item_layout.get("elements"), list)):
+                raise AngeboteFehler(400, "Bitte die Zielgestaltungen prüfen.")
+            target_items.add(item_layout["item_id"])
+            result_target.append({"item_id": item_layout["item_id"],
+                                 "elements": _elements(item_layout["elements"], known, seen, width, height)})
+        target_result[target] = result_target
     theme = {}
     for key, default in THEME_DEFAULTS.items():
         value = raw.get(key, default)
@@ -169,7 +193,8 @@ def _layout(raw, items):
             value = _number(value, "die Bildgröße", 20, 200)
         theme[key] = value
     return {"mode": mode, "template": template, "density": density,
-            "color": color, "background": background, "pages": result, **theme}
+            "color": color, "background": background, "pages": result,
+            "targets": target_result, **theme}
 
 
 def normalize(raw, publish=False):
@@ -192,6 +217,11 @@ def normalize(raw, publish=False):
         for key, maximum in (("name", 160), ("article_number", 80),
                              ("description", 500), ("packaging", 100)):
             item[key] = _text(raw_item.get(key, ""), "die Artikelangaben", maximum)
+        if not publish:
+            item["barcode"] = _text(raw_item.get("barcode", ""), "die EAN", 80)
+            item["retail_price_cents"] = _number(raw_item.get("retail_price_cents"),
+                                                  "den Stammverkaufspreis", 0, 100000000,
+                                                  integer=True, optional=True)
         for key in ("price_cents", "old_price_cents", "deposit_cents"):
             item[key] = _number(raw_item.get(key), "die Preisangaben", 0, 100000000,
                                 integer=True, optional=True)
@@ -232,17 +262,29 @@ def normalize(raw, publish=False):
                 if not any(el["type"] == role and el["item_id"] == item["id"] and _readable(el)
                            for el in elements):
                     raise AngeboteFehler(422, "Im Flyer fehlen lesbare Artikel-, Preis-, Pfand- oder Grundpreisangaben. Bitte die Gestaltung prüfen.")
+        targets = result["layout"]["targets"]
+        if any(targets.values()):
+            dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462)}
+            for target, (width, height) in dimensions.items():
+                layouts = {entry["item_id"]: entry["elements"] for entry in targets[target]}
+                if set(layouts) != {item["id"] for item in items}:
+                    raise AngeboteFehler(422, "Für jeden Artikel muss jede Ausgabe gestaltet sein.")
+                for item in items:
+                    for role in required:
+                        if not any(el["type"] == role and el["item_id"] == item["id"] and
+                                   _readable(el, width, height) for el in layouts[item["id"]]):
+                            raise AngeboteFehler(422, "In einer Ausgabe fehlen lesbare Artikel-, Preis-, Pfand- oder Grundpreisangaben.")
     return result
 
 
-def _readable(el):
+def _readable(el, width=WIDTH, height=HEIGHT):
     angle = math.radians(el["rotation"])
     half_w = (abs(math.cos(angle)) * el["w"] + abs(math.sin(angle)) * el["h"]) / 2
     half_h = (abs(math.sin(angle)) * el["w"] + abs(math.cos(angle)) * el["h"]) / 2
     cx, cy = el["x"] + el["w"] / 2, el["y"] + el["h"] / 2
     return (not el["hidden"] and el["opacity"] >= .5 and el["font_size"] >= 12
             and cx - half_w >= -1 and cy - half_h >= -1
-            and cx + half_w <= WIDTH + 1 and cy + half_h <= HEIGHT + 1)
+            and cx + half_w <= width + 1 and cy + half_h <= height + 1)
 
 
 class AngeboteService:

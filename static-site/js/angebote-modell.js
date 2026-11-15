@@ -58,6 +58,15 @@ window.AngeboteModel = (function () {
   function date(value) { return value ? value.split('-').reverse().join('.') : 'Datum ergänzen'; }
   function cardHTML(data, it) {
     var l = data.layout || theme;
+    if (data.layout.targets && data.layout.targets.card &&
+        data.layout.targets.card.some(function (target) { return target.item_id === it.id; })) {
+      return '<article class="an-product an-custom-card" aria-label="' + esc(it.name) + '"><canvas data-card-item="'
+        + esc(it.id) + '" width="420" height="480" aria-label="' + esc(it.name) + '"></canvas><span class="an-sr-only">'
+        + esc(it.name) + (data.kind === 'drinks' ? ' · ' + esc(pack(it)) + ' · ' : ' · ')
+        + money(it.price_cents) + ' €' + (data.kind === 'drinks' ? ' · '
+          + (it.deposit_free ? 'Pfandfrei' : 'zzgl. ' + money(it.deposit_cents) + ' € Pfand')
+          + ' · 1 l = ' + money(base(it)) + ' €' : '') + '</span></article>';
+    }
     return '<article class="an-product" style="--an-price:' + esc(l.color || '#bb421e') + ';--an-text:' + esc(l.text_color || '#24362d')
       + ';--an-card-bg:' + esc(l.card_background || '#ffffff') + ';--an-font:' + esc(l.font || 'Arial') + '">'
       + (it.image_id ? '<img src="/api/angebote-bilder/' + encodeURIComponent(it.image_id) + '" alt="' + esc(it.name) + '" loading="lazy">' : '<div class="an-no-image">Kein Produktbild</div>')
@@ -74,10 +83,11 @@ window.AngeboteModel = (function () {
     return { kind: kind, title: kind === 'drinks' ? 'Unsere Getränkeangebote' : 'Unsere Wochenangebote',
       valid_from: today(), valid_to: today(), items: [],
       layout: Object.assign({}, theme, { mode: 'template', template: 'land', density: 4, color: '#bb421e',
-        background: '#fffdf6', pages: [] }, clone(defaults || {})) };
+        background: '#fffdf6', pages: [], targets: { card: [], single: [], scale: [] } }, clone(defaults || {})) };
   }
   function item() {
-    return { id: uid(), name: '', article_number: '', description: '', price_cents: null, old_price_cents: null,
+    return { id: uid(), name: '', article_number: '', barcode: '', retail_price_cents: null,
+      description: '', price_cents: null, old_price_cents: null,
       units: null, volume_ml: null, packaging: '', deposit_cents: null, deposit_free: false, highlight: false, image_id: '' };
   }
   async function request(url, options) {
@@ -138,7 +148,83 @@ window.AngeboteModel = (function () {
     }
     return pages;
   }
-  function applyTemplate(data) { data.layout.pages = templates(data); data.layout.mode = 'template'; }
+  var targetSizes = { card: { w: 420, h: 480 }, single: { w: 800, h: 1130 }, scale: { w: 800, h: 462 } };
+  function targetTemplate(data, target, item) {
+    var l = data.layout, id = item.id, elements = [], size = targetSizes[target];
+    function add(type, x, y, w, h, fontSize, extra) {
+      elements.push(el(type, x, y, w, h, Object.assign({ item_id: id, font_size: fontSize,
+        font: l.font, fill: l.text_color }, extra || {})));
+    }
+    if (target === 'card') {
+      add('shape', 8, 8, 404, 464, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
+        shape: l.template === 'classic' ? 'rect' : 'round' });
+      add('image', 24, 24, 116, 140, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+      add('name', 154, 24, 242, 76, Math.min(l.name_size, 28), { bold: true });
+      if (data.kind === 'drinks') add('pack', 154, 102, 242, 42, Math.min(l.details_size, 19));
+      add('price', 154, data.kind === 'drinks' ? 150 : 112, 242, 68, Math.min(l.price_size, 52), { bold: true, fill: l.color });
+      if (item.old_price_cents != null) add('old_price', 154, 218, 242, 28, 16);
+      if (item.description) add('description', 24, 276, 372, 46, 15);
+      if (data.kind === 'drinks') {
+        add('deposit', 24, 336, 372, 28, 15);
+        add('base', 24, 368, 372, 28, 15);
+      }
+      add('period', 24, 430, 372, 22, 12);
+    } else if (target === 'single') {
+      add('shape', 20, 20, 760, 1090, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
+        shape: l.template === 'classic' ? 'rect' : 'round' });
+      add('image', 44, 44, 260, 440, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+      add('name', 330, 54, 420, 160, Math.min(l.name_size + 18, 60), { bold: true });
+      if (data.kind === 'drinks') add('pack', 330, 224, 420, 60, l.details_size + 8);
+      add('price', 330, data.kind === 'drinks' ? 306 : 246, 420, 132, Math.min(l.price_size + 28, 100), { bold: true, fill: l.color });
+      if (item.old_price_cents != null) add('old_price', 330, 440, 420, 42, 22);
+      if (item.description) add('description', 44, 540, 706, 110, 22);
+      if (data.kind === 'drinks') {
+        add('deposit', 44, 900, 706, 52, 24);
+        add('base', 44, 960, 706, 52, 24);
+      }
+      add('period', 44, 1040, 706, 34, 16);
+    } else {
+      add('shape', 8, 8, 784, 446, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
+        shape: l.template === 'classic' ? 'rect' : 'round' });
+      add('image', 22, 24, 242, 414, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+      add('name', 286, 36, 486, 78, 50, { bold: true });
+      if (data.kind === 'drinks') add('pack', 286, 122, 486, 42, 23);
+      add('price', 286, data.kind === 'drinks' ? 170 : 126, 330, 94, 70, { bold: true, fill: l.color });
+      if (item.old_price_cents != null) add('old_price', 622, 190, 150, 42, 20);
+      if (item.description) add('description', 286, 232, 486, 56, 20);
+      if (data.kind === 'drinks') {
+        add('deposit', 286, 328, 486, 34, 20);
+        add('base', 286, 366, 486, 34, 20);
+      }
+      add('period', 286, 414, 486, 24, 14);
+    }
+    return { item_id: id, elements: elements, width: size.w, height: size.h };
+  }
+  function ensureTargets(data) {
+    if (!data.layout.targets || typeof data.layout.targets !== 'object') {
+      data.layout.targets = { card: [], single: [], scale: [] };
+    }
+    Object.keys(targetSizes).forEach(function (target) {
+      var current = data.layout.targets[target] || [];
+      var byItem = new Map(current.map(function (entry) { return [entry.item_id, entry]; }));
+      data.layout.targets[target] = data.items.map(function (it) {
+        return byItem.get(it.id) || targetTemplate(data, target, it);
+      });
+    });
+  }
+  function applyTargetTemplate(data, target, itemId) {
+    if (!targetSizes[target]) throw problem('Dieses Gestaltungsziel ist nicht verfügbar.');
+    ensureTargets(data);
+    var it = data.items.find(function (item) { return item.id === itemId; });
+    if (!it) throw problem('Bitte zuerst einen Artikel auswählen.');
+    var layout = targetTemplate(data, target, it);
+    data.layout.targets[target] = data.layout.targets[target].map(function (entry) {
+      return entry.item_id === itemId ? layout : entry;
+    });
+  }
+  function applyTemplate(data) {
+    data.layout.pages = templates(data); data.layout.mode = 'template'; ensureTargets(data);
+  }
   function textFor(element, data, pageNumber) {
     var it = data.items.find(function (i) { return i.id === element.item_id; });
     switch (element.type) {
@@ -208,14 +294,13 @@ window.AngeboteModel = (function () {
     } while (size >= 12);
     return { lines: result, size: size, fits: size >= 12 && result.length * size * 1.18 <= element.h };
   }
-  async function render(data, pageNumber, scale) {
+  async function renderElements(data, elements, width, height, background, scale, pageNumber) {
     var canvas = document.createElement('canvas'), factor = scale || 1;
-    canvas.width = Math.round(W * factor); canvas.height = Math.round(H * factor);
+    canvas.width = Math.round(width * factor); canvas.height = Math.round(height * factor);
     var ctx = canvas.getContext('2d');
-    ctx.scale(factor, factor); ctx.fillStyle = data.layout.background; ctx.fillRect(0, 0, W, H);
-    var errors = [], page = data.layout.pages[pageNumber];
-    if (!page) throw problem('Diese Flyerseite ist nicht vorhanden.');
-    for (var element of page.elements) {
+    ctx.scale(factor, factor); ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
+    var errors = [];
+    for (var element of elements) {
       if (element.hidden) continue;
       ctx.save();
       ctx.globalAlpha = element.opacity;
@@ -226,8 +311,8 @@ window.AngeboteModel = (function () {
       var angle = element.rotation * Math.PI / 180;
       var halfW = (Math.abs(Math.cos(angle)) * element.w + Math.abs(Math.sin(angle)) * element.h) / 2;
       var halfH = (Math.abs(Math.sin(angle)) * element.w + Math.abs(Math.cos(angle)) * element.h) / 2;
-      if (element.type !== 'shape' && (element.x + element.w / 2 - halfW < -1 || element.y + element.h / 2 - halfH < -1
-          || element.x + element.w / 2 + halfW > W + 1 || element.y + element.h / 2 + halfH > H + 1)) {
+      if (element.x + element.w / 2 - halfW < -1 || element.y + element.h / 2 - halfH < -1
+          || element.x + element.w / 2 + halfW > width + 1 || element.y + element.h / 2 + halfH > height + 1) {
         errors.push('Ein Element ragt über die Seite hinaus.');
       }
       if (element.type === 'shape') {
@@ -260,6 +345,26 @@ window.AngeboteModel = (function () {
     }
     return { canvas: canvas, errors: errors };
   }
+  async function render(data, pageNumber, scale) {
+    var page = data.layout.pages[pageNumber];
+    if (!page) throw problem('Diese Flyerseite ist nicht vorhanden.');
+    return renderElements(data, page.elements, W, H, data.layout.background, scale, pageNumber);
+  }
+  async function renderTarget(data, target, itemId, scale) {
+    var size = targetSizes[target], targets = data.layout.targets && data.layout.targets[target] || [];
+    var selected = targets.find(function (entry) { return entry.item_id === itemId; });
+    if (!size || !selected) throw problem('Diese Zielgestaltung ist nicht vorhanden.');
+    return renderElements(data, selected.elements, size.w, size.h, data.layout.background, scale, 0);
+  }
+  async function paintCards(host, data) {
+    var canvases = Array.from(host.querySelectorAll('[data-card-item]'));
+    for (var canvas of canvases) {
+      if (!data.items.some(function (item) { return item.id === canvas.dataset.cardItem; })) continue;
+      var result = await renderTarget(data, 'card', canvas.dataset.cardItem, 1);
+      result.canvas.setAttribute('aria-hidden', 'true');
+      if (canvas.isConnected) canvas.replaceWith(result.canvas);
+    }
+  }
   function validate(data) {
     if (!data.title.trim() || !data.items.length || !data.valid_from || !data.valid_to || data.valid_from > data.valid_to) {
       throw problem('Bitte Überschrift, mindestens einen Artikel und einen gültigen Zeitraum eintragen.');
@@ -280,6 +385,23 @@ window.AngeboteModel = (function () {
         }
       });
     });
+    var targets = data.layout.targets || {};
+    if (Object.keys(targets).some(function (key) { return targets[key] && targets[key].length; })) {
+      Object.keys(targetSizes).forEach(function (target) {
+        var layouts = targets[target] || [];
+        if (layouts.length !== data.items.length || data.items.some(function (it) {
+          return !layouts.some(function (entry) { return entry.item_id === it.id; });
+        })) throw problem('Bitte für jeden Artikel alle vier Ausgaben gestalten.');
+        layouts.forEach(function (entry) {
+          var required = ['name', 'price'].concat(data.kind === 'drinks' ? ['pack', 'deposit', 'base'] : []);
+          required.forEach(function (role) {
+            if (!entry.elements.some(function (e) { return e.type === role && e.item_id === entry.item_id && !e.hidden && e.opacity >= .5; })) {
+              throw problem('In einer Ausgabe fehlt ein Pflichtfeld. Bitte die Gestaltung prüfen.');
+            }
+          });
+        });
+      });
+    }
   }
   async function preflight(data) {
     validate(data);
@@ -289,10 +411,35 @@ window.AngeboteModel = (function () {
       if (rendered.errors.length) throw problem(rendered.errors[0]);
       result.push(rendered.canvas);
     }
+    var targets = data.layout.targets || {};
+    if (Object.keys(targets).some(function (key) { return targets[key] && targets[key].length; })) {
+      for (var target of Object.keys(targetSizes)) {
+        for (var itemLayout of targets[target]) {
+          var renderedTarget = await renderTarget(data, target, itemLayout.item_id, 1);
+          if (renderedTarget.errors.length) throw problem(renderedTarget.errors[0]);
+        }
+      }
+    }
     return result;
   }
   async function scaleImages(data, mode, dimensions) {
     validate(data);
+    if (mode === 'single' && data.layout.targets && data.layout.targets.scale && data.layout.targets.scale.length) {
+      var custom = [];
+      for (var layout of data.layout.targets.scale) {
+        var renderedCustom = await renderTarget(data, 'scale', layout.item_id, 1);
+        var output = document.createElement('canvas'); output.width = dimensions.w; output.height = dimensions.h;
+        var outputContext = output.getContext('2d'); outputContext.fillStyle = data.layout.background;
+        outputContext.fillRect(0, 0, output.width, output.height);
+        var ratio = Math.min(output.width / renderedCustom.canvas.width, output.height / renderedCustom.canvas.height);
+        outputContext.drawImage(renderedCustom.canvas,
+          (output.width - renderedCustom.canvas.width * ratio) / 2,
+          (output.height - renderedCustom.canvas.height * ratio) / 2,
+          renderedCustom.canvas.width * ratio, renderedCustom.canvas.height * ratio);
+        custom.push(output);
+      }
+      return custom;
+    }
     if (mode === 'single') {
       var singles = [];
       for (var it of data.items) {
@@ -345,8 +492,10 @@ window.AngeboteModel = (function () {
     var bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
     return Array.from(new Uint8Array(bytes), function (b) { return b.toString(16).padStart(2, '0'); }).join('').slice(0, length);
   }
-  return { W: W, H: H, uid: uid, clone: clone, esc: esc, money: money, cents: cents, base: base, pack: pack, date: date,
+  return { W: W, H: H, targetSizes: targetSizes, uid: uid, clone: clone, esc: esc, money: money, cents: cents, base: base, pack: pack, date: date,
     today: today, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
-    textFor: textFor, render: render, validate: validate, preflight: preflight, scaleImages: scaleImages,
-    image: image, imageFor: imageFor, hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML };
+    ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,
+    render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate,
+    preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor,
+    hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML };
 })();
