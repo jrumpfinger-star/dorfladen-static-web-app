@@ -72,6 +72,12 @@ async function setup(page, options = {}) {
     }] });
     if (path === '/api/preisliste') return json({ groups: { Getränke: state.catalog } });
     if (path === '/api/werbebilder' && method === 'POST') {
+      if (!req.postDataJSON().articles) {
+        entry.body = req.postDataJSON();
+        expect(entry.token).toBe('test-auth');
+        return state.failMasterUpload ? fail(503, 'Das Produktbild konnte nicht gespeichert werden.')
+          : json({ success: true, id: uid() });
+      }
       entry.read_only_lookup = true;
       const { articles } = req.postDataJSON();
       entry.articles = articles;
@@ -89,6 +95,7 @@ async function setup(page, options = {}) {
         return json({ success: true, image_id: id }, 201);
       }
       const id = path.split('/').pop();
+      if (options.privateImages && entry.token !== 'test-auth') return fail(401, 'Bitte zuerst anmelden.');
       return state.images.has(id) ? route.fulfill({ contentType: 'image/png', body: state.images.get(id) }) : fail(404, 'Bild nicht verfügbar');
     }
     if (path.startsWith('/api/angebote-verwaltung')) {
@@ -779,6 +786,61 @@ for (const kind of ['weekly', 'drinks']) {
     expect(state.errors).toEqual([]);
   });
 }
+
+for (const paste of [false, true]) {
+  test(`TC-F2-04/06: eigenes Produktbild aus ${paste ? 'Zwischenablage' : 'Datei'} in SharePoint und privater Vorschau`, async ({ page }) => {
+    const state = await setup(page, { privateImages: true });
+    const head = await editSeed(page, state);
+    await page.locator('#an-root[aria-busy=false]').waitFor();
+    await page.locator('[data-edit-item]').first().click();
+    const dialog = page.locator('.an-item-dialog');
+    await dialog.locator('.an-extra-fields > summary').click();
+    await dialog.locator('[data-item-field=barcode]').fill('42043362');
+    if (paste) {
+      await dialog.locator('[data-image-paste]').click();
+      await page.evaluate((base64) => {
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const clipboardData = new DataTransfer();
+        clipboardData.items.add(new File([bytes], 'produkt.png', { type: 'image/png' }));
+        document.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true }));
+      }, PHOTO.toString('base64'));
+    } else {
+      await dialog.locator('input[type=file]').setInputFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: PHOTO });
+    }
+    await dialog.locator('[data-item-save]').click();
+    await expect(dialog).toHaveCount(0);
+    const writes = state.log.filter((r) => r.path === '/api/werbebilder' && !r.read_only_lookup);
+    expect(writes).toHaveLength(1);
+    expect(writes[0].body).toMatchObject({ dl_artikelnummer: '42043362', dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') });
+    const thumb = page.locator('.an-item-thumb').first();
+    await expect.poll(() => thumb.evaluate((img) => img.naturalWidth)).toBeGreaterThan(0);
+    await saveDraft(page);
+    expect(state.actions.get(head.id).draft.items[0].image_id).toBeTruthy();
+    await page.locator('[data-edit-item]').first().click();
+    await expect.poll(() => page.locator('.an-image-preview img').evaluate((img) => img.naturalWidth)).toBeGreaterThan(0);
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F2-05: SharePoint-Fehler lässt Produktbilddialog mit Hinweis offen', async ({ page }) => {
+  const state = await setup(page);
+  await editSeed(page, state);
+  await page.locator('#an-root[aria-busy=false]').waitFor();
+  await page.locator('[data-edit-item]').first().click();
+  const dialog = page.locator('.an-item-dialog');
+  await dialog.locator('.an-extra-fields > summary').click();
+  await dialog.locator('[data-item-field=barcode]').fill('42043362');
+  await dialog.locator('input[type=file]').setInputFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: PHOTO });
+  state.failMasterUpload = true;
+  const before = state.log.filter((r) => r.path === '/api/angebote-bilder' && r.method === 'POST').length;
+  await dialog.locator('[data-item-save]').click();
+  await expect(dialog.locator('[data-image-status]')).toContainText('nicht in StrichcodeBilder gespeichert');
+  await expect(dialog).toBeVisible();
+  expect(state.log.filter((r) => r.path === '/api/angebote-bilder' && r.method === 'POST')).toHaveLength(before);
+  state.failMasterUpload = false;
+  await dialog.locator('[data-item-save]').click();
+  await expect(dialog).toHaveCount(0);
+});
 
 test('TC-F11-07: Liter in Liste und Dialog mit Komma eingeben, anzeigen und speichern', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { publish: true });

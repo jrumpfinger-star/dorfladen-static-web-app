@@ -53,8 +53,22 @@ oder an die Waage gesendet werden.
 
 Stammartikelbilder werden ausschließlich über die bestehende Werbebildsuche
 gelesen. Für den neuen Entwurf wird das Bild als privater, unveränderlicher
-Angebotsbild-Snapshot gespeichert. Eigene Bildänderungen schreiben niemals in
-Artikelstamm, SharePoint oder bestehende Werbebild-Datensätze zurück.
+Angebotsbild-Snapshot gespeichert. Eigene Produktbilder mit EAN/Strichcode
+werden zusätzlich über die bestehende Werbebilder-API in SharePoint
+`StrichcodeBilder` gespeichert. Preis- und Artikelstammdaten bleiben unverändert.
+Ohne Strichcode bleibt das Bild privat; der Bilddialog erklärt diese Grenze.
+Automatisch gefundene Bilder und freie Gestaltungselemente werden nicht
+als Stammbilder zurückgeschrieben.
+
+### Produktbild-Speicherung und angemeldete Vorschau
+
+- TC-F2-04: Eigene Datei oder Zwischenablage mit Strichcode wird beim
+  Übernehmen zusätzlich unter diesem Schlüssel in `StrichcodeBilder`
+  gespeichert; der private Snapshot bleibt für das Angebot erhalten.
+- TC-F2-05: Fehler beim Stammbild-Upload bleiben sichtbar; der Bilddialog
+  bleibt offen und das Artikelbild wird nicht als erfolgreich übernommen.
+- TC-F2-06: Private Bilder erscheinen angemeldet in Artikelliste und
+  Bilddialog, auch wenn sie noch nicht veröffentlicht sind.
 
 ## F3: Freie Gestaltung und Druck
 
@@ -247,8 +261,9 @@ Stammbilder werden mit der bestehenden `/api/werbebilder`-Suche
 (Dataverse-/SharePoint-Fallback) geladen und als private Angebotsbilder
 gespeichert. In manuellen und übernommenen Artikeln sind Bildvorschau,
 Datei-/Zwischenablage-Übernahme, Suche nach Nummer/EAN, Ersetzen und Entfernen
-sichtbar. Suche und Bearbeitung sind lesend gegenüber dem Stamm und schreiben
-nicht in vorhandene Werbebild-Datensätze zurück.
+sichtbar. Die Suche bleibt lesend. Eigene Produktbilder mit Strichcode
+aktualisieren zusätzlich das gemeinsame Bild in `StrichcodeBilder`;
+Preis- und Artikelstammdaten bleiben unverändert.
 Die automatische Übernahme funktioniert auch für Stammartikel ohne
 Artikelnummer, aber mit EAN/Strichcode (einschließlich kurzer eigener Codes).
 Beim Öffnen eines Entwurfs werden fehlende Bilder anhand dieser Kennungen
@@ -278,7 +293,8 @@ Rückgängig, Speichern/Öffnen und freigegebene Fassungen bleiben erhalten.
   Auswahl als Angebotspreis. Kein Aufruf des Kratzer-Katalogs.
 - TC-F11-02: Stamm- und manuelle Artikel zeigen Bildvorschau, Suche, Datei-/
   Zwischenablage, Ersetzen und Entfernen. Bildänderung speichert nur einen
-  privaten Snapshot; kein mutierender Werbebilder-/Stammaufruf.
+  privaten Snapshot; eigene Produktbilder mit Strichcode aktualisieren
+  zusätzlich das gemeinsame SharePoint-Bild, gefundene Bilder nicht.
 - TC-F11-03: Alle vier Ziele frei und unabhängig bearbeiten, speichern und
   wieder öffnen; veröffentlichte Kacheln in der Kundenansicht rendern und
   Einzelflyer/Waagenbilder aus ihren jeweiligen Layouts ausgeben.
@@ -295,7 +311,8 @@ Rückgängig, Speichern/Öffnen und freigegebene Fassungen bleiben erhalten.
   Artikelnummer mit EAN prüfen, einschließlich leerem Dataverse-Treffer mit
   anschließendem SharePoint-Bild. Beim Öffnen fehlende Bilder nachladen,
   vorhandene eigene Bilder und veröffentlichte Fassungen erhalten; fehlende
-  Treffer und technische Fehler erkennbar melden. Keine Stammschreibzugriffe.
+  Treffer und technische Fehler erkennbar melden. Keine Rückschreibung
+  automatisch gefundener Bilder.
 - TC-F11-07: Liste und Artikeldialog zeigen `0,5` statt `0.5`. Komma- und
   Punkteingaben, `0,029` Liter, Grundpreis und Gebindeausgabe prüfen.
   Speichern/erneut öffnen erhält ganze Milliliter und die Kommaschreibweise;

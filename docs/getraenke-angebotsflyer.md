@@ -33,6 +33,12 @@ Editor erreichbar. Sie werden weder migriert noch überschrieben.
    automatisch übernommen. Beim Öffnen werden fehlende Entwurfsbilder erneut
    gesucht, vorhandene eigene Bilder bleiben erhalten. Die Statuszeile meldet
    fehlende Treffer bzw. Fehler; veröffentlicht wird dadurch nichts.
+   **Eigene Produktbilder mit EAN/Strichcode** werden beim **Übernehmen** im
+   Bilddialog zusätzlich im SharePoint-Ordner **StrichcodeBilder** gespeichert.
+   Dabei wird das gemeinsame Produktbild für diesen Strichcode ersetzt.
+   Ohne Strichcode bleibt das Bild nur im Angebot. Suchtreffer und freie
+   Gestaltungsbilder werden nicht zurückgeschrieben. Ein Uploadfehler lässt
+   den Dialog mit einem Hinweis offen, damit du erneut versuchen kannst.
 2. **Direkt an der Vorschau gestalten:** Das Produktbild ist vorausgewählt.
    Mit **↶ / ↷ 15°**, **− / +** und **0°** drehen, proportional skalieren
    oder die Drehung zurücksetzen. **+ Eigenes Bild**, **Bild ersetzen**

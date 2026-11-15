@@ -99,7 +99,7 @@
     host.innerHTML = data.items.map(function (it, i) {
       var source = pendingImageUrls.get(it.id) || (it.image_id ? '/api/angebote-bilder/' + encodeURIComponent(it.image_id) : '');
       return '<article class="an-item" data-item-id="' + it.id + '">'
-        + (source ? '<img class="an-item-thumb" src="' + M.esc(source) + '" alt="">' : '<span class="an-item-thumb an-no-image" aria-hidden="true">Bild</span>')
+        + (source ? '<img class="an-item-thumb" data-image-id="' + M.esc(it.image_id) + '" alt="Artikelbild">' : '<span class="an-item-thumb an-no-image" aria-hidden="true">Bild</span>')
         + '<div class="an-item-main"><strong>' + M.esc(it.name || 'Neuer Artikel ' + (i + 1)) + '</strong>'
         + '<small>' + M.esc(it.article_number || 'ohne Artikelnummer') + (it.barcode ? ' · EAN ' + M.esc(it.barcode) : '')
         + ' · ' + (it.price_cents == null ? 'Preis offen' : M.money(it.price_cents) + ' €')
@@ -133,6 +133,22 @@
           : '') + '</div></details></article>';
     }).join('') || '<p>Noch keine Artikel ausgewählt.</p>';
     data.items.forEach(function (it) { updateItemValues(host.querySelector('[data-item-id="' + it.id + '"]'), it); });
+    host.querySelectorAll('img[data-image-id]').forEach(loadThumbnail);
+  }
+  async function loadThumbnail(element) {
+    try {
+      var image = await M.image(element.dataset.imageId);
+      if (!element.isConnected) return;
+      var canvas = document.createElement('canvas'), scale = Math.min(1, 320 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      element.src = canvas.toDataURL('image/png');
+    } catch (error) {
+      if (!element.isConnected) return;
+      element.alt = 'Bild konnte nicht geladen werden';
+      console.error('[Angebote] Bildvorschau', error);
+      await M.error(error);
+    }
   }
   function updateItemValues(row, it) {
     row.querySelector('.an-item-main strong').textContent = it.name || 'Neuer Artikel';
@@ -375,7 +391,7 @@
       + '<label class="an-field"><span>Gültig von</span><input type="date" data-action-prop="valid_from" value="' + data.valid_from + '"></label>'
       + '<label class="an-field"><span>Gültig bis</span><input type="date" data-action-prop="valid_to" value="' + data.valid_to + '"></label></div></details>'
       + '<h2>Artikel mit Bild auswählen</h2><div class="an-actions"><button id="an-add-catalog" class="an-primary">+ Aus Artikelstamm wählen</button><button id="an-add-manual">+ Manueller Artikel</button></div>'
-      + '<p class="an-muted">Artikeldaten direkt ändern · „Bild“ öffnet die optionalen Bildwerkzeuge.</p><div id="an-items"></div><p id="an-image-status" class="an-muted" role="status"></p><p class="an-note">Angebotspreis, Pfand und Veröffentlichung bleiben vom Stamm getrennt. Eigene Bildänderungen überschreiben keine Stammdaten.</p>'
+      + '<p class="an-muted">Artikeldaten direkt ändern · „Bild“ öffnet die optionalen Bildwerkzeuge.</p><div id="an-items"></div><p id="an-image-status" class="an-muted" role="status"></p><p class="an-note">Angebotspreis, Pfand und Veröffentlichung bleiben vom Stamm getrennt. Eigene Produktbilder mit Strichcode werden zusätzlich in StrichcodeBilder gespeichert.</p>'
       + '<button data-step="design" class="an-primary">Weiter · Kachel / Flyer gestalten</button></section>'
       + '<section id="an-step-design" hidden><h2>Die vertraute freie Gestaltung</h2><p class="an-muted">Bild, Preis und Texte antippen und ziehen – oder mit Zahlen und Pfeilen bearbeiten. Jedes Ausgabeziel bleibt separat gespeichert.</p>'
       + '<section id="an-design-options"><h3>Vorlagen, Farben und Schrift</h3><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
@@ -419,6 +435,16 @@
     if (!file) return '';
     var response = await M.request('/api/angebote-bilder', { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
     return response.image_id;
+  }
+  async function saveMasterImage(file, barcode) {
+    var encoded = await new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(M.problem('Das Bild konnte nicht gelesen werden. Bitte erneut auswählen.')); };
+      reader.readAsDataURL(file);
+    });
+    var result = await M.request('/api/werbebilder', M.json('POST', { dl_artikelnummer: barcode, dl_bild_base64: encoded }));
+    if (!result.success || !result.id) throw M.problem('Das Produktbild konnte nicht in StrichcodeBilder gespeichert werden. Bitte erneut versuchen.');
   }
   async function picker() {
     var response = await M.request('/api/preisliste?all=1');
@@ -489,16 +515,16 @@
     var drinks = data.kind === 'drinks', dlg = document.createElement('dialog');
     dlg.className = 'an-dialog an-item-dialog'; dlg.dataset.itemId = itemId;
     dlg.innerHTML = '<div class="an-dialog-top"><div><h2>Artikel und Bild bearbeiten</h2><p class="an-badge">'
-      + (item.article_number ? 'Artikelstamm · Änderungen nur in diesem Angebot' : 'Manuell · eigenes Bild hinzufügen') + '</p></div>'
+      + (item.article_number ? 'Artikelstamm · Preise nur in diesem Angebot' : 'Manuell · eigenes Bild hinzufügen') + '</p></div>'
       + '<button type="button" class="an-close" aria-label="Artikelbearbeitung schließen">×</button></div>'
       + '<section class="an-image-tools"><div class="an-image-preview">' + (item.image_id
-        ? '<img src="/api/angebote-bilder/' + encodeURIComponent(item.image_id) + '" alt="Aktuelles Artikelbild">'
+        ? '<img data-image-id="' + M.esc(item.image_id) + '" alt="Aktuelles Artikelbild">'
         : '<span>Kein Artikelbild</span>') + '</div><div class="an-image-actions"><strong>Artikelbild – auch bei manueller Anlage</strong>'
       + '<div class="an-actions"><label class="an-btn an-upload">Bilddatei wählen / ersetzen<input type="file" accept="image/jpeg,image/png,image/webp"></label>'
       + '<button type="button" data-image-search>🔍 Bild per Nummer / EAN suchen</button>'
       + '<button type="button" data-image-paste>📋 Zwischenablage einfügen</button>'
       + '<button type="button" data-image-remove' + (item.image_id ? '' : ' disabled') + '>Bild entfernen</button></div>'
-      + '<details class="an-image-more"><summary>Weitere Bildfunktionen</summary><p class="an-muted">Die Suche liest die vorhandene Stamm-/SharePoint-Bildquelle. Änderungen bleiben auf dieses Angebot beschränkt.</p></details>'
+      + '<details class="an-image-more"><summary>Weitere Bildfunktionen</summary><p class="an-muted">Eigene Produktbilder mit EAN / Strichcode werden zusätzlich in StrichcodeBilder gespeichert und ersetzen dort das gemeinsame Produktbild. Ohne Strichcode bleibt das Bild nur in diesem Angebot. Gefundene Bilder werden nicht zurückgeschrieben.</p></details>'
       + '<p class="an-muted" data-image-status role="status">Die Bildauswahl wird erst beim Speichern dem Angebot zugeordnet.</p></div></section>'
       + '<div class="an-fields an-core-fields"><label class="an-field wide"><span>Artikelname</span><input data-item-field="name" maxlength="160" value="' + M.esc(item.name) + '"></label>'
       + '<label class="an-field"><span>Regulärer VK · Artikelstamm</span><input value="' + (item.retail_price_cents == null ? '—' : M.money(item.retail_price_cents) + ' €') + '" readonly></label>'
@@ -520,10 +546,10 @@
       + '<label class="an-field wide"><span>Beschreibung / Inhalt</span><input data-item-field="description" maxlength="500" value="' + M.esc(item.description) + '"></label></div></details>'
       + '<div class="an-dialog-actions"><button type="button" class="an-primary" data-item-save>Übernehmen</button></div>';
     var preview = dlg.querySelector('.an-image-preview'), status = dlg.querySelector('[data-image-status]');
-    var imageBlob = null, imageUrl = '', clearImage = false, pasteEnabled = false, closed = false;
-    function setPreview(blob) {
+    var imageBlob = null, imageUrl = '', clearImage = false, pasteEnabled = false, closed = false, ownImage = false;
+    function setPreview(blob, own) {
       if (imageUrl) URL.revokeObjectURL(imageUrl);
-      imageBlob = blob; clearImage = false; imageUrl = blob ? URL.createObjectURL(blob) : '';
+      imageBlob = blob; ownImage = !!own; clearImage = false; imageUrl = blob ? URL.createObjectURL(blob) : '';
       preview.innerHTML = imageUrl ? '<img alt="Ausgewähltes Artikelbild" src="' + imageUrl + '">' : '<span>Kein Artikelbild</span>';
       dlg.querySelector('[data-image-remove]').disabled = !imageUrl && !item.image_id;
     }
@@ -538,7 +564,7 @@
       var files = Array.from(event.clipboardData && event.clipboardData.items || [])
         .map(function (entry) { return entry.getAsFile(); }).filter(function (file) { return file && /^image\/(png|jpeg|webp)$/.test(file.type); });
       if (!files.length) { status.textContent = 'In der Zwischenablage wurde kein PNG-, JPEG- oder WebP-Bild gefunden.'; return; }
-      event.preventDefault(); setPreview(files[0]); pasteEnabled = false;
+      event.preventDefault(); setPreview(files[0], true); pasteEnabled = false;
       status.textContent = 'Zwischenablagebild ausgewählt. Mit „Übernehmen“ wird es diesem Angebot hinzugefügt.';
     }
     dlg.querySelector('.an-close').onclick = close;
@@ -549,7 +575,7 @@
       if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 8 * 1024 * 1024) {
         status.textContent = 'Bitte ein PNG-, JPEG- oder WebP-Bild bis 8 MB wählen.'; return;
       }
-      setPreview(file); status.textContent = 'Bild ausgewählt. Mit „Übernehmen“ wird es diesem Angebot hinzugefügt.';
+      setPreview(file, true); status.textContent = 'Bild ausgewählt. Mit „Übernehmen“ wird es dem Angebot und bei vorhandenem Strichcode auch StrichcodeBilder hinzugefügt.';
     };
     dlg.querySelector('[data-image-paste]').onclick = function () {
       pasteEnabled = true; status.textContent = 'Jetzt das Bild mit Strg+V einfügen.';
@@ -593,6 +619,14 @@
         var imageId = item.image_id;
         if (imageBlob) {
           status.textContent = 'Das Bild wird sicher dem Angebotsentwurf zugeordnet …';
+          if (ownImage && value('barcode').value.trim()) {
+            try { await saveMasterImage(imageBlob, value('barcode').value.trim()); }
+            catch (error) {
+              console.error('[Angebote] Stammbild speichern', error);
+              status.textContent = 'Das Produktbild konnte nicht in StrichcodeBilder gespeichert werden. Bitte erneut versuchen. Das Bild wurde nicht übernommen.';
+              return;
+            }
+          }
           imageId = await upload(imageBlob);
         } else if (clearImage) imageId = '';
         edit(function () {
@@ -620,6 +654,8 @@
       if (event.target.dataset.itemField === 'volume') readVolume(event.target);
     });
     document.body.appendChild(dlg); dlg.showModal();
+    var existingImage = preview.querySelector('[data-image-id]');
+    if (existingImage) loadThumbnail(existingImage);
   }
   async function save() {
     var response = record ? await M.request('/api/angebote-verwaltung/' + record.id, M.json('PUT', { version: record.version, data: data }))

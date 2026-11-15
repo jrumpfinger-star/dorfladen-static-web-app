@@ -33,3 +33,5 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF25 | Kundenangebote ohne Kategorieumschaltung gemeinsam anzeigen, mobil und Desktop prüfen | GF24 | TC-F5-01..05 |
 | GF26 | Dezimale Mengen in Liste und Dialog mit Komma anzeigen, verlustfrei speichern und auf vier Viewports prüfen | GF22 | TC-F11-07, TC-F2-01..03 |
 | GF27 | Direkte Vorschauwerkzeuge und echten Maus-/Touch-Größenanfasser integrieren und testen | GF14, GF22 | TC-F11-08, TC-F3-04 |
+| GF28 | Eigene Produktbilder mit Strichcode zusätzlich nach SharePoint speichern, Fehler sichtbar behandeln und private Vorschaubilder authentifiziert laden | GF23 | TC-F2-04..06 |
+| GF29 | Bildregression auf vier Viewports, Hilfe aktualisieren und ausschließlich PR-Preview bereitstellen | GF28 | TC-F2-04..06, TC-F11-02, TC-F11-06 |

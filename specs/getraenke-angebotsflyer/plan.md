@@ -10,6 +10,16 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+Eigene Produktdateien und Zwischenablagebilder mit Strichcode werden beim
+Übernehmen im Artikeldialog zuerst über den bestehenden authentifizierten
+`POST /api/werbebilder` unter dem Strichcode gespeichert, danach als privater
+Angebots-Snapshot. Fehler brechen die Übernahme ab. Ohne Strichcode bleibt
+das Bild privat und ein Hinweis erklärt dies. Suchtreffer und freie
+Gestaltungsbilder bleiben reine Snapshots.
+Private Vorschaubilder werden über den bestehenden authentifizierten
+Modell-Bildloader geladen und als kleine Canvas-Vorschau dargestellt;
+direkte, nicht authentifizierbare img-API-URLs entfallen im Editor.
+
 Die gemeinsame Kundenansicht filtert ausschließlich nach Zeitraum, nicht
 nach interner Angebotsart. Kategorieknöpfe und Kategorienzustand entfallen
 in `angebote-kunden.js`; Flyerauswahl und Wochenumschaltung bleiben erhalten.
@@ -220,7 +230,8 @@ Die fachliche Korrektur nutzt nur die vorhandenen Stamm-Schnittstellen:
 - Stamm-/EAN-Bilder über den lesenden `/api/werbebilder?sharepoint=1`-Lookup
   suchen. Gefundene Daten-URIs werden als Blob in den bestehenden privaten
   `/api/angebote-bilder`-Namespace kopiert. Manuelle und geänderte Bilder
-  durchlaufen denselben Upload; weder Stamm noch SharePoint werden geschrieben.
+  durchlaufen denselben privaten Upload; eigene Produktbilder mit Strichcode
+  werden zusätzlich über den bestehenden Werbebilder-Schreibvertrag gespeichert.
 - Kompakten Kopf, Schrittleiste, zweigeteiltes Arbeits-/Vorschaupanel,
   kurze Artikelliste und Artikeldialog nach dem V2-Mockup umsetzen. Vorhandene
   Editoraktionen und zugängliche 44-px-Bedienflächen bleiben erhalten;
@@ -241,5 +252,6 @@ Die fachliche Korrektur nutzt nur die vorhandenen Stamm-Schnittstellen:
 
 Abnahme mit gemocktem Stamm-/Bilddienst und den bestehenden vier Playwright-
 Viewports. Zusätzlich Negativassertions für den Kratzer-Endpunkt und alle
-mutierenden Stamm-/Werbebilder-Endpunkte; private Bild-Uploads bleiben im
+mutierenden Artikelstamm-Endpunkte. Werbebilder-Schreibzugriffe sind nur bei
+eigenen Produktbildern mit Strichcode erlaubt; private Bild-Uploads bleiben im
 Preview-Namespace. Kein Merge oder Produktivdeployment.
