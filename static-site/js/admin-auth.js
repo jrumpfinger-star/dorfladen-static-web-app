@@ -137,7 +137,7 @@
       && url.indexOf('mode=my') === -1
       && url.indexOf('nr=') === -1;
     var isAngeboteRead = method === 'GET'
-      && /\/api\/angebote-(verwaltung|bilder)(?:[/?#]|$)/.test(url);
+      && /\/api\/angebote(?:-(?:verwaltung|bilder))?(?:[/?#]|$)/.test(url);
 
     if (isAdminCall || isKalenderRead || isLunchListe || isAngeboteRead) {
       var tok = getToken();

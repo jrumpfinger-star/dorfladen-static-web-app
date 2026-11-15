@@ -3,7 +3,7 @@ const BASE = process.env.TEST_URL || 'http://127.0.0.1:8818';
 const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6hywAAAAASUVORK5CYII=';
 
 async function setup(page) {
-  const state = { actions: new Map(), writes: [], errors: [], failSave: false, images: 0 };
+  const state = { actions: new Map(), writes: [], errors: [], offerReads: [], failSave: false, images: 0 };
   await page.clock.install({ time: new Date('2026-11-18T12:00:00Z') });
   await page.addInitScript((hash) => {
     if (window !== window.top) return;
@@ -31,8 +31,12 @@ async function setup(page) {
     }
     if (path === '/api/angebote') {
       if (req.method() === 'GET') {
+        const token = req.headers()['x-cms-auth'] || '';
+        state.offerReads.push(token);
+        const visible = [...state.actions.values()].filter((action) => token === 'test-cms-session'
+          || (action.valid_from <= '2026-11-18' && action.valid_to >= '2026-11-18'));
         return json({ success: true, config: { scale_enabled: false, scale_scope: 'preview', feature_archive_enabled: false },
-          data: [...state.actions.values()].flatMap((action) => action.items.map((it, i) => ({
+          data: visible.flatMap((action) => action.items.map((it, i) => ({
             id: it.id, dl_angeboteid: it.id, dl_aktion_id: action.aktion_id, dl_aktion_titel: action.title,
             dl_gueltig_von: action.valid_from, dl_gueltig_bis: action.valid_to, dl_sortierung: i,
             dl_produkt: it.name, dl_details: it.description, dl_preis: it.price_cents / 100,
@@ -77,6 +81,7 @@ test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artik
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), rows = dlg.locator('.cms-ang-row');
+  expect(state.offerReads[0]).toBe('test-cms-session');
   await expect(rows).toHaveCount(6);
   for (let i = 0; i < 6; i++) await fillDrink(rows.nth(i), i + 1);
   await dlg.locator('[data-density]').selectOption('4');
