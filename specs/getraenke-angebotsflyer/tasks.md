@@ -30,3 +30,4 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF22 | Artikel direkt bearbeiten, Inline-Zusatzfelder und abgeleitete Werte, Mobil-/Tab-/Speicherregression und Hilfe | GF13 | TC-F11-04..05 |
 | GF23 | Automatische EAN-only-Bildübernahme und Nachladen fehlender Entwurfsbilder mit sichtbarem Status korrigieren | GF12 | TC-F11-06 |
 | GF24 | GF21–GF23 zusammen in isolierter Feature-Vorschau bereitstellen und ausgelieferte UI prüfen | GF21, GF22, GF23 | TC-F11-04..06, TC-F13-05 |
+| GF25 | Kundenangebote ohne Kategorieumschaltung gemeinsam anzeigen, mobil und Desktop prüfen | GF24 | TC-F5-01..05 |

@@ -703,7 +703,7 @@ test('TC-F11: vier getrennte Ausgaben bearbeiten, speichern und als Kiosk-Kachel
   await page.locator('#an-publish').click();
   await page.locator('dialog[open]').getByRole('button', { name: 'Jetzt freigeben' }).click();
   const customer = await customerView(page);
-  await customer.shell.locator('[data-offer-kind=drinks]').click();
+  await expect(customer.shell.locator('[data-offer-kind]')).toHaveCount(0);
   const card = customer.grid.locator('.an-product').first();
   await expect(card).toContainText('12,49 €');
   await expect(card.locator('canvas')).toHaveAttribute('aria-hidden', 'true');
@@ -716,7 +716,7 @@ test('TC-F11-legacy: veröffentlichte Aktionen ohne Ziellayout behalten ihre bis
   delete head.draft.layout.targets;
   delete state.published.get(head.id).data.layout.targets;
   const { grid, shell } = await customerView(page);
-  await shell.locator('[data-offer-kind=drinks]').click();
+  await expect(shell.locator('[data-offer-kind]')).toHaveCount(0);
   const card = grid.locator('.an-product').last();
   await expect(card.locator('.an-price')).toBeVisible();
   await expect(card.locator('canvas')).toHaveCount(0);
@@ -922,11 +922,13 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   const state = await setup(page);
   const head = await seed(page, state, { count: 7, publish: true });
   await seed(page, state, { publish: true, title: 'Zweite Getränkeaktion' });
+  await seed(page, state, { kind: 'weekly', publish: true, title: 'Neue Wochenaktion' });
+  await seed(page, state, { kind: 'weekly', publish: false, title: 'Nicht freigegebener Entwurf', count: 3 });
   state.log.length = 0;
   const { grid, shell } = await customerView(page);
   await expect(grid.locator('.an-legacy')).toHaveCount(1);
-  await shell.locator('[data-offer-kind=drinks]').click();
-  await expect(grid.locator('.an-product')).toHaveCount(8);
+  await expect(shell.locator('[data-offer-kind]')).toHaveCount(0);
+  await expect(grid.locator('.an-product')).toHaveCount(9);
   const card = grid.locator('.an-product').first();
   await expect(card).toContainText('12,49 €');
   await expect(card).toContainText('20 × 0,5 l · Mehrweg');
@@ -977,7 +979,7 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und leere Getränkekategorie', async ({ page }) => {
+test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und leerer Zeitraum', async ({ page }) => {
   const state = await setup(page);
   state.failRead = true;
   const { grid, shell } = await customerView(page);
@@ -987,10 +989,11 @@ test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und le
   await grid.getByRole('button', { name: 'Erneut laden', exact: true }).click();
   await expect(grid.locator('.an-legacy')).toHaveCount(1);
   await expect(grid.getByRole('alert')).toHaveCount(0);
-  await shell.locator('[data-offer-kind=drinks]').click();
-  await expect(grid).toContainText('Aktuell keine Getränkeangebote');
+  await expect(shell.locator('[data-offer-kind]')).toHaveCount(0);
+  await grid.evaluate((el) => window.AngeboteKunden.mount({ grid: el.id, week: 'next' }));
+  await expect(grid).toContainText('Aktuell keine Angebote in diesem Zeitraum');
   await expect(shell.locator('[data-offer-flyer]')).toHaveCount(0);
-  await shell.locator('[data-offer-kind=weekly]').click();
+  await grid.evaluate((el) => window.AngeboteKunden.mount({ grid: el.id, week: 'this' }));
   await expect(grid.locator('.an-legacy')).toHaveCount(1);
   await noOverflow(page);
   expect(state.log.filter((r) => r.method !== 'GET' && r.path !== '/api/track')).toEqual([]);

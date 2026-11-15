@@ -91,7 +91,10 @@ erst ab Beginn, abgelaufene nicht mehr. Fehler werden sichtbar gemeldet.
 
 ## F5: Kundenansicht
 
-Wochenangebote/Getränke umschalten; Karten zeigen Bild, Name, Gebinde,
+Alle freigegebenen Wochen- und Getränkeangebote sowie Altangebote erscheinen
+automatisch gemeinsam im gewählten Zeitraum, ohne Kategorieumschaltung.
+Entwürfe bleiben intern; eine Freigabe gilt gemeinsam für Homepage und Kiosk,
+es gibt keine zusätzliche Homepage-Freigabe. Karten zeigen Bild, Name, Gebinde,
 Angebotspreis, separates Pfand und Grundpreis. Smartphones einspaltig,
 größere Bildschirme mehrspaltig. Desktopbereich und mobiles Angebotspopup
 verwenden denselben Datenzugriff und Renderer.
@@ -100,8 +103,9 @@ Mobil bildschirmfüllend, vergrößerbar, mit erreichbarem Schließen.
 Das A4-Layout wird nicht zur einzigen, unleserlichen Handyansicht.
 Bestehende Wochenumschaltung für Altangebote bleibt nutzbar.
 
-- TC-F5-01: Beide Kategorien und mehrseitigen Flyer anzeigen.
-- TC-F5-02: Lange Namen, mehrere Aktionen und leere Kategorien verständlich darstellen.
+- TC-F5-01: Beide Angebotsarten gemeinsam ohne Benutzeraktion sowie
+  mehrseitigen Flyer anzeigen; keine Kategorieauswahl vorhanden.
+- TC-F5-02: Lange Namen, mehrere Aktionen und leere Zeiträume verständlich darstellen.
 - TC-F5-03: Keine Verwaltungsfunktionen oder internen Daten in Kundenantworten.
 - TC-F5-04: 375×667: eine Kartenspalte, lesbare Pflichtpreise, kein horizontaler
   Seitenüberlauf, mindestens 44 px große zentrale Touchziele.

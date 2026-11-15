@@ -2,6 +2,11 @@
 
 ## Bedienung
 
+Auf der Homepage stehen alle freigegebenen Angebote im jeweiligen Zeitraum
+gemeinsam: Getränke, andere Wochenangebote und Altbestand. Es ist kein
+Wechsel der Angebotsart nötig. Eine zusätzliche Freigabe nur für die Homepage
+gibt es nicht; nicht freigegebene Entwürfe bleiben intern.
+
 Im **Kiosk → Angebote** oder im **CMS → Angebote → Getränke & neue Angebote
 gestalten** öffnet sich die gemeinsame Verwaltung.
 Bestehende Aktionen bleiben über **Bisherige Angebote öffnen** im bisherigen

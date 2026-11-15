@@ -31,9 +31,9 @@ window.AngeboteKunden = (function () {
   function overlaps(from, to, r) { return (!from || from <= r.end) && (!to || to >= r.start); }
   function selected(state) {
     var r = range(state.week);
-    var legacy = state.kind === 'weekly' ? loaded.legacy.filter(function (a) { return overlaps(a.von, a.bis, r); }) : [];
+    var legacy = loaded.legacy.filter(function (a) { return overlaps(a.von, a.bis, r); });
     var actions = loaded.actions.filter(function (a) {
-      return a.data.kind === state.kind && overlaps(a.data.valid_from, a.data.valid_to, r);
+      return overlaps(a.data.valid_from, a.data.valid_to, r);
     });
     return { legacy: legacy, actions: actions, range: r };
   }
@@ -55,8 +55,6 @@ window.AngeboteKunden = (function () {
       controls = document.createElement('div'); controls.id = state.grid + '-controls'; controls.className = 'an-customer-controls';
       grid.before(controls); grid.parentElement.classList.add('an-customer');
       controls.addEventListener('click', function (e) {
-        var kind = e.target.closest('[data-offer-kind]');
-        if (kind) { state.kind = kind.dataset.offerKind; render(state); }
         if (e.target.closest('[data-offer-flyer]')) {
           var chooser = controls.querySelector('[data-offer-action]');
           var action = selected(state).actions.find(function (a) { return !chooser || a.id === chooser.value; });
@@ -64,9 +62,7 @@ window.AngeboteKunden = (function () {
         }
       });
     }
-    controls.innerHTML = '<nav class="an-tabs" aria-label="Angebotsart"><button data-offer-kind="weekly" aria-pressed="' + (state.kind === 'weekly') + '">Wochenangebote</button>'
-      + '<button data-offer-kind="drinks" aria-pressed="' + (state.kind === 'drinks') + '">Getränke</button></nav>'
-      + (result.actions.length > 1 ? '<label class="an-field"><span>Flyer auswählen</span><select data-offer-action>' + result.actions.map(function (a) {
+    controls.innerHTML = (result.actions.length > 1 ? '<label class="an-field"><span>Flyer auswählen</span><select data-offer-action>' + result.actions.map(function (a) {
         return '<option value="' + M.esc(a.id) + '">' + M.esc(a.data.title) + '</option>'; }).join('') + '</select></label>' : '')
       + (result.actions.length ? '<button data-offer-flyer>Flyer ansehen</button>' : '');
     grid.classList.add('an-customer-grid');
@@ -74,7 +70,7 @@ window.AngeboteKunden = (function () {
       return action.data.items.map(function (it) { return M.cardHTML(action.data, it); }).join('');
     }).join('');
     Promise.all(result.actions.map(function (action) { return M.paintCards(grid, action.data); })).catch(M.error);
-    if (!result.legacy.length && !result.actions.length) grid.innerHTML = '<p class="an-status">Aktuell keine ' + (state.kind === 'drinks' ? 'Getränkeangebote' : 'Wochenangebote') + ' in diesem Zeitraum.</p>';
+    if (!result.legacy.length && !result.actions.length) grid.innerHTML = '<p class="an-status">Aktuell keine Angebote in diesem Zeitraum.</p>';
     if (window.loadAngBilder && result.legacy.length) window.loadAngBilder(grid);
     grid.querySelectorAll('.an-product img').forEach(function (img) {
       img.addEventListener('error', function () {
@@ -97,7 +93,7 @@ window.AngeboteKunden = (function () {
   async function mount(options) {
     var state = states.get(options.grid);
     if (state) Object.assign(state, options);
-    else { state = Object.assign({ kind: 'weekly', week: 'this' }, options); states.set(state.grid, state); }
+    else { state = Object.assign({ week: 'this' }, options); states.set(state.grid, state); }
     try { await load(); render(state); }
     catch (e) {
       console.error('[Angebote] Kundenansicht', e);

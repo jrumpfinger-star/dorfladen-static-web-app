@@ -10,6 +10,12 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+Die gemeinsame Kundenansicht filtert ausschließlich nach Zeitraum, nicht
+nach interner Angebotsart. Kategorieknöpfe und Kategorienzustand entfallen
+in `angebote-kunden.js`; Flyerauswahl und Wochenumschaltung bleiben erhalten.
+Der öffentliche Snapshot-/Gültigkeitsvertrag bleibt unverändert. Tests
+prüfen gemischte Wochen-/Getränkeaktionen und Altangebote schon beim Öffnen.
+
 Artikelkernfelder werden über die vorhandenen `data-prop`-Änderungshandler
 direkt in der Liste bearbeitet. Zusatzfelder bleiben inline aufklappbar, der
 vorhandene Dialog optional für Bilder/Details. Feldänderungen aktualisieren
