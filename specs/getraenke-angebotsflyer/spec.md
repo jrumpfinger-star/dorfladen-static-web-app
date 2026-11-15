@@ -165,6 +165,32 @@ Bestätigung; freie Bearbeitung bleibt je Aktion möglich.
 - TC-F9-03: Änderungen neuer Standards lassen bestehende Layouts, Veröffentlichungen
   und bisherige Plakat-/Einzelflyer-Einstellungen unverändert.
 
+## F10: Übersichtliche Layoutauswahl
+
+Im Getränkeflyer-Designeditor und im einzelnen Aktionseditor stehen die
+bestehenden Stile Landladen/Klassisch als echte Vorschaukacheln zur Auswahl.
+Stil und Seitenaufteilung (4 großzügige / 6 kompakte Artikel) sind getrennt.
+Nur die aktive Auswahl erhält eine eindeutige Aktiv-Markierung; Hover und
+Tastaturfokus bleiben unterscheidbar. Es gibt keine doppelte Dropdown-Auswahl.
+Layout, Farben und Schrift sind direkt sichtbar, Detailgrößen und Drehung
+stehen unter einer zunächst geschlossenen Feinabstimmung.
+
+Beide Editoren bieten sichtbare Vorschau-Umschalter A4/PDF, Handy/Kiosk und
+Waage mit den vorhandenen Profilen. Die A4-Vorschau bleibt frei bearbeitbar;
+andere Ansichten sind reine Vorschauen, keine unabhängigen Layouts.
+Keine neuen Stilvorlagen, keine Änderung bestehender Kundenlayouts,
+Speicher-/Freigabeverträge oder der Bestätigungen beim Ersetzen freier Layouts.
+
+- TC-F10-01: Beide Stile über Kacheln mit echten Miniatur-Canvas wählen,
+  aktive Markierung und gespeicherte Auswahl nach erneutem Öffnen prüfen.
+- TC-F10-02: 4/6 Artikel unabhängig vom Stil wählen; Farben/Schrift sichtbar,
+  Feinabstimmung geschlossen und bedienbar, Tastaturauswahl möglich.
+- TC-F10-03: Alle Vorschauarten in beiden Editoren umschalten; keine Änderung
+  des Entwurfs durch Vorschauwechsel; freie A4-Bearbeitung und geschützte
+  Vorlagenersetzung bleiben erhalten.
+- TC-F10-04: Alle Bedienelemente auf vier Zielgrößen ohne horizontalen
+  Überlauf, mit mindestens 44 px hohen Klickflächen und eindeutigem Fokus.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

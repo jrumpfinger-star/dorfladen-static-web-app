@@ -79,6 +79,19 @@ pro Poll erforderlich. Unzugeordnete Dateien verhalten sich unverändert.
 
 ## Dateiänderungen
 
+### F10: Layoutauswahl und Bedienbarkeit
+
+`angebote-design.js` liefert gemeinsame native Radio-Kacheln, getrennte
+Aufteilungswahl, gruppierte Basis-/Detailfelder und Vorschau-Umschalter.
+Miniaturen verwenden Beispieldaten und denselben Canvas-Renderer wie die
+Ausgabe. Radio-Gruppen erhalten eindeutige Namen, asynchrone Vorschauen
+verwerfen veraltete Render-Ergebnisse. Beide bestehenden Editoren verwenden
+dieselben Hilfen. A4 bleibt im Aktionseditor der interaktive Canvas;
+Handy-/Waagenansichten stehen in einem getrennten, nicht bearbeitbaren Host.
+Vorschauzustand wird nicht im Entwurf gespeichert. CSS unterscheidet aktiv,
+Hover und Tastaturfokus; Playwright prüft F10 auf allen vier Projekten.
+Anwenderhilfe und bestehende Selektoren werden der neuen Bedienung angepasst.
+
 | Bereich | Dateien |
 |---|---|
 | API-Kern | `api/shared/angebote.py`, `api/shared/angebote_store.py`, neue Routen |

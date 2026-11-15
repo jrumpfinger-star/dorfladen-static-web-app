@@ -5,6 +5,7 @@
   var M = window.AngeboteModel, D = window.AngeboteDesign;
   var record = null, data = null, config = null, design = null, dirty = false, busy = false;
   var step = 'articles', page = 0, selected = '', paint = 0, undo = [], redo = [];
+  var previewMode = 'paper';
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', text: 'Eigener Text', shape: 'Fläche' };
@@ -75,12 +76,12 @@
   async function create(kind) {
     var response = await M.request('/api/angebote-verwaltung?view=design'); design = response.design;
     record = null; data = M.blank(kind, design[kind]); M.applyTemplate(data);
-    dirty = true; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; renderEditor();
+    dirty = true; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; previewMode = 'paper'; renderEditor();
   }
   async function open(id) {
     var response = await M.request('/api/angebote-verwaltung/' + id);
     record = response.action; config = response.config; data = M.clone(record.draft);
-    dirty = false; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; renderEditor();
+    dirty = false; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; previewMode = 'paper'; renderEditor();
   }
   function field(label, prop, value, type, extra) {
     return '<label class="an-field"><span>' + label + '</span><input data-prop="' + prop + '" type="' + (type || 'text')
@@ -147,6 +148,7 @@
   async function preview() {
     if (!data || !$('an-stage-canvas')) return;
     var ticket = ++paint, draft = M.clone(data), n = page;
+    await D.previewChoices($('an-style-controls'), draft.layout, draft.kind);
     var result = await M.render(draft, n, 1.5);
     if (ticket !== paint || !data || !$('an-stage-canvas')) return;
     var canvas = result.canvas; canvas.id = 'an-stage-canvas'; canvas.setAttribute('aria-label', 'Live-Vorschau des Angebotsflyers');
@@ -155,6 +157,21 @@
     $('an-preview-info').classList.toggle('an-error', result.errors.length > 0);
     $('an-page-label').textContent = 'Seite ' + (page + 1) + ' / ' + data.layout.pages.length;
     $('an-page-prev').disabled = page === 0; $('an-page-next').disabled = page >= data.layout.pages.length - 1;
+    $('an-stage').hidden = previewMode !== 'paper';
+    $('an-other-preview').hidden = previewMode === 'paper';
+    $('an-page-tools').hidden = previewMode !== 'paper';
+    $('an-preview-hint').textContent = previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
+    if (previewMode !== 'paper') {
+      var host = $('an-other-preview');
+      if (!draft.items.length) host.innerHTML = '<p class="an-status">Füge einen Artikel hinzu, um diese Ausgabe anzusehen.</p>';
+      else if (previewMode === 'cards') host.innerHTML = D.cards(draft);
+      else {
+        var output = await D.outputPreview(draft, previewMode, n);
+        if (ticket !== paint) return;
+        output.setAttribute('aria-label', 'Waagenvorschau des Angebots');
+        host.replaceChildren(output);
+      }
+    }
     overlay();
   }
   function setStep(value) {
@@ -173,18 +190,19 @@
       + '<button data-step="design" class="an-primary">Weiter · Gestalten</button></section>'
       + '<section id="an-step-design" hidden><h2>Dein Stil. Frei gestaltbar.</h2><label class="an-field"><span>Überschrift</span><input id="an-title" data-action-prop="title" maxlength="120" value="' + M.esc(data.title) + '"></label>'
       + '<div class="an-fields"><label class="an-field"><span>Gültig ab</span><input type="date" data-action-prop="valid_from" value="' + data.valid_from + '"></label><label class="an-field"><span>Gültig bis</span><input type="date" data-action-prop="valid_to" value="' + data.valid_to + '"></label></div>'
-      + '<details><summary>Vorlage und globale Gestaltung</summary><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
+      + '<section><h3>Vorlage und globale Gestaltung</h3><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
       + '<p class="an-note">Im freien Modus bleiben Elementpositionen erhalten. Eine Vorlage oder neue Standards werden erst nach deiner Bestätigung erneut angewendet.</p>'
-      + '<div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Aktuelle Designstandards übernehmen</button></div></details>'
+      + '<div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Aktuelle Designstandards übernehmen</button></div></section>'
       + '<div id="an-inspector" class="an-inspector"></div><div class="an-actions"><button id="an-add-page">+ Seite</button><button id="an-remove-page">Seite entfernen</button></div>'
       + '<div class="an-actions"><button data-step="output" class="an-primary">Weiter · Ausgeben</button></div></section>'
       + '<section id="an-step-output" hidden><h2>Einmal gestalten. Überall zeigen.</h2><p>Speichern, Veröffentlichen, Drucken und Waagenversand sind getrennte Aktionen.</p>'
       + '<p class="an-status" id="an-output-status">' + (record && record.published_revision ? 'Eine veröffentlichte Fassung ist vorhanden. Änderungen bleiben bis zur nächsten Freigabe intern.' : 'Noch nicht veröffentlicht.') + '</p>'
       + '<div class="an-publish-actions"><button id="an-publish" class="an-primary">Für Homepage veröffentlichen</button><button id="an-print-action">A4 drucken / als PDF speichern</button><button id="an-scale">Für Waage vorbereiten</button></div>'
       + '<p class="an-note">Freigabe gilt im gewählten Zeitraum (Europe/Berlin). Die Waage wird nur nach eigenem Versand aktualisiert. Ist die Brücke offline, kann sie Änderungen und Ablauf erst nach Wiederverbindung übernehmen.</p></section></section>'
-      + '<section class="an-preview"><div class="an-preview-head"><h2>A4 · Live-Vorschau</h2><span class="an-muted">Zum Auswählen auf ein Element tippen</span></div>'
+      + '<section class="an-preview"><div class="an-preview-head"><h2>Live-Vorschau</h2><span class="an-muted" id="an-preview-hint">Zum Auswählen auf ein Element tippen</span></div>'
+      + D.previewTabs(previewMode, 'data-editor-mode') + '<div id="an-other-preview" hidden></div>'
       + '<div class="an-stage" id="an-stage"><canvas id="an-stage-canvas"></canvas><div class="an-hit-layer" id="an-hit-layer"></div></div>'
-      + '<p class="an-stage-info" id="an-preview-info" role="status"></p><div class="an-actions an-spread"><button id="an-page-prev" aria-label="Vorherige Flyerseite">←</button><span id="an-page-label"></span><button id="an-page-next" aria-label="Nächste Flyerseite">→</button></div></section></div>';
+      + '<p class="an-stage-info" id="an-preview-info" role="status"></p><div class="an-actions an-spread" id="an-page-tools"><button id="an-page-prev" aria-label="Vorherige Flyerseite">←</button><span id="an-page-label"></span><button id="an-page-next" aria-label="Nächste Flyerseite">→</button></div></section></div>';
     renderItems(); setStep(step); bind(); preview().catch(M.error);
     if (busy) lock(true);
   }
@@ -310,6 +328,10 @@
     root.onclick = async function (event) {
       var b = event.target.closest('button');
       if (!b || b.disabled || busy) return;
+      if (b.dataset.editorMode) {
+        previewMode = b.dataset.editorMode; D.selectPreview(root, previewMode, 'data-editor-mode');
+        preview().catch(M.error); return;
+      }
       if (b.dataset.step) setStep(b.dataset.step);
       if (b.dataset.select) { selected = b.dataset.select; setStep('design'); overlay(); }
       if (b.dataset.remove) {

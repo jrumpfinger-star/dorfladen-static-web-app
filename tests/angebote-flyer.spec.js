@@ -218,6 +218,77 @@ for (const failLogin of [false, true]) {
   });
 }
 
+for (const cmsMode of [true, false]) {
+  test(`TC-F10-01..04: Layoutkacheln, Tastatur und Ausgabevorschauen im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, async ({ page }) => {
+    const state = await setup(page), head = await seed(page, state, { count: 7 });
+    if (cmsMode) await cms(page);
+    else {
+      await page.reload();
+      await page.locator('[data-open="' + head.id + '"]').click();
+      await page.getByRole('button', { name: '2 · Gestalten' }).click();
+    }
+    const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(2);
+    const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
+    expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
+    await expect(host.locator('select[data-style=template],select[data-style=density]')).toHaveCount(0);
+    const classic = host.getByRole('radio', { name: /Klassisch/ });
+    await classic.check();
+    await expect(classic).toBeChecked();
+    await classic.focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(host.getByRole('radio', { name: /Landladen/ })).toBeChecked();
+    await page.keyboard.press('ArrowRight');
+    await expect(classic).toBeChecked();
+    await host.getByRole('radio', { name: /6 · kompakt/ }).check();
+    for (const group of await host.locator('.an-choice-group').all()) {
+      await expect(group.locator('.an-choice-active:visible')).toHaveCount(1);
+      const rect = await group.locator('.an-choice-body').first().boundingBox();
+      expect(rect.height).toBeGreaterThanOrEqual(44);
+    }
+    await expect(host.getByLabel('Schrift', { exact: true })).toBeVisible();
+    await expect(host.getByLabel('Angebots-/Preisfarbe')).toBeVisible();
+    await host.getByLabel('Flyer-Hintergrund', { exact: true }).fill('#fff0df');
+    await host.getByLabel('Flyer-Hintergrund', { exact: true }).dispatchEvent('change');
+    await expect.poll(() => host.locator('[data-template-preview=classic] canvas').evaluate((canvas) =>
+      Array.from(canvas.getContext('2d').getImageData(1, 1, 1, 1).data))).toEqual([255, 240, 223, 255]);
+    await expect(host.locator('.an-fine')).not.toHaveAttribute('open');
+    await host.getByText('Feinabstimmung · Größen und Drehung', { exact: true }).click();
+    await expect(host.getByLabel('Produktbild · Drehung in Grad')).toBeVisible();
+    await host.getByText('Feinabstimmung · Größen und Drehung', { exact: true }).click();
+    if (cmsMode) {
+      await host.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
+      await expect(host.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
+      expect(state.design.drinks).toMatchObject({ template: 'classic', density: 6 });
+    } else {
+      await saveDraft(page);
+      expect(state.actions.get(head.id).draft.layout).toMatchObject({ template: 'classic', density: 6 });
+    }
+    const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
+    const attribute = cmsMode ? 'data-design-mode' : 'data-editor-mode';
+    for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
+      const button = page.locator('[' + attribute + '="' + mode + '"]');
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      const preview = page.locator(cmsMode ? '[data-design-preview]' : mode === 'paper' ? '#an-stage' : '#an-other-preview');
+      await expect(preview.locator(mode === 'cards' ? '.an-product' : 'canvas').first()).toBeVisible();
+      if (!cmsMode) await expect(page.locator('#an-stage')).toBeVisible({ visible: mode === 'paper' });
+      expect(cmsMode ? state.design : state.actions.get(head.id)).toEqual(stored);
+    }
+    await noOverflow(page, cmsMode ? '#an-design-root' : 'html');
+    await page.screenshot({ path: test.info().outputPath('layout-auswahl.png'), fullPage: true });
+    await host.locator('.an-choice-group').first().screenshot({ path: test.info().outputPath('stil-kacheln.png') });
+    await page.reload();
+    if (!cmsMode) {
+      await page.locator('[data-open="' + head.id + '"]').click();
+      await page.getByRole('button', { name: '2 · Gestalten' }).click();
+    }
+    await expect(host.getByRole('radio', { name: /Klassisch/ })).toBeChecked();
+    await expect(host.getByRole('radio', { name: /6 · kompakt/ })).toBeChecked();
+    expect(state.errors).toEqual([]);
+  });
+}
+
 test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Kiosk-Einstieg', async ({ page }) => {
   const state = await setup(page);
   const head = await seed(page, state);
@@ -231,7 +302,7 @@ test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Ki
   await expect(page.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
   expect(state.actions.get(head.id).draft).toEqual(original);
   for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
-    await page.locator('[data-design-mode]').selectOption(mode);
+    await page.locator('[data-design-mode="' + mode + '"]').click();
     await expect(page.locator(mode === 'cards' ? '[data-design-preview] .an-product' : '[data-design-preview] canvas')).toBeVisible();
   }
   await noOverflow(page, '#an-design-root');
@@ -324,7 +395,6 @@ test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Dr
   await expect(page.getByRole('textbox', { name: 'Eigener Text', exact: true })).toHaveValue('Dein individueller Flyer');
   await page.locator('#an-stage').scrollIntoViewIfNeeded();
   await page.screenshot({ path: test.info().outputPath('flyer-editor.png') });
-  await page.getByText('Vorlage und globale Gestaltung', { exact: true }).click();
   await page.getByRole('button', { name: 'Vorlage neu anwenden' }).click();
   await page.locator('dialog[open]').getByRole('button', { name: 'Abbrechen' }).click();
   expect(state.actions.get(head.id).draft).toEqual(saved);
