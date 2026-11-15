@@ -33,7 +33,15 @@ Editor erreichbar. Sie werden weder migriert noch überschrieben.
    automatisch übernommen. Beim Öffnen werden fehlende Entwurfsbilder erneut
    gesucht, vorhandene eigene Bilder bleiben erhalten. Die Statuszeile meldet
    fehlende Treffer bzw. Fehler; veröffentlicht wird dadurch nichts.
-2. **Frei gestalten:** Die Mockup-nahe Schrittansicht hält Artikelliste,
+2. **Direkt an der Vorschau gestalten:** Das Produktbild ist vorausgewählt.
+   Mit **↶ / ↷ 15°**, **− / +** und **0°** drehen, proportional skalieren
+   oder die Drehung zurücksetzen. **+ Eigenes Bild**, **Bild ersetzen**
+   und **Duplizieren** stehen direkt daneben. Den sichtbaren **↘**-Anfasser
+   für Größenänderungen ziehen (Maus oder Touch); das Element selbst zum
+   Verschieben ziehen. Ein Schrittwechsel ist dafür nicht nötig.
+   **Weitere Werkzeuge** enthält exakte Positionen, Deckkraft, eigene Texte,
+   Formen, Logo, Ghost-Kopie und Ebenen. Rückgängig bleibt direkt erreichbar.
+   Die Mockup-nahe Schrittansicht hält Artikelliste,
    optionale Bildwerkzeuge und Vorschau getrennt. Überschrift und Zeitraum sind
    einklappbar. A4-Sammelflyer, Homepage-/Kioskkachel, Einzelflyer und
    Waagenmotiv haben **eigene, unabhängig gespeicherte Layouts je Artikel**.

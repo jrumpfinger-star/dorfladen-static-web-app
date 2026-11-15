@@ -229,15 +229,39 @@
   }
   function activeSize() { return designTarget === 'sheet' ? { w: M.W, h: M.H } : M.targetSizes[designTarget]; }
   function selection() { return elements().find(function (e) { return e.id === selected; }); }
+  function constrainElement(e) {
+    var size = activeSize(), angle = e.rotation * Math.PI / 180;
+    var cos = Math.abs(Math.cos(angle)), sin = Math.abs(Math.sin(angle));
+    var factor = Math.min(1, size.w / (cos * e.w + sin * e.h), size.h / (sin * e.w + cos * e.h));
+    e.w *= factor; e.h *= factor;
+    var halfW = (cos * e.w + sin * e.h) / 2, halfH = (sin * e.w + cos * e.h) / 2;
+    e.x = Math.max(halfW, Math.min(size.w - halfW, e.x + e.w / 2)) - e.w / 2;
+    e.y = Math.max(halfH, Math.min(size.h - halfH, e.y + e.h / 2)) - e.h / 2;
+  }
   function renderInspector() {
     var host = $('an-inspector'); if (!host) return;
+    var expanded = step === 'design' || !!(host.querySelector('details') && host.querySelector('details').open);
+    if (!selection()) {
+      var first = elements().find(function (e) { return e.type === 'image' && !e.hidden; }) || elements()[0];
+      selected = first ? first.id : '';
+    }
     var current = selection();
     var size = activeSize();
-    host.innerHTML = '<h3>Frei gestalten</h3><p class="an-muted">Element in der Vorschau antippen oder hier wählen. Ziehen ist optional; alle Positionen sind auch über Eingaben und Pfeile einstellbar.</p>'
+    host.innerHTML = '<fieldset class="an-direct-tools"' + (designTarget !== 'sheet' && !designItemId ? ' disabled' : '') + '><legend>Gestalten</legend>'
       + '<label class="an-field"><span>Gestaltungselement</span><select id="an-select-element"><option value="">Bitte auswählen</option>'
       + elements().map(function (e, i) { return '<option value="' + e.id + '"' + (e.id === selected ? ' selected' : '') + '>'
         + (i + 1) + ' · ' + roleNames[e.type] + (e.hidden ? ' (ausgeblendet)' : '') + '</option>'; }).join('') + '</select></label>'
-      + '<div class="an-element-actions"><button data-add-element="text">+ Text</button><button data-add-element="shape">+ Fläche</button><button data-add-element="image">+ Eigenes Bild</button><button data-add-element="logo">+ Dorfladen-Logo</button></div>'
+      + '<div class="an-element-actions"><button data-add-element="image">+ Eigenes Bild</button>'
+      + (current && current.type === 'image' ? '<button data-replace-image>Bild ersetzen</button>' : '')
+      + (current ? '<button data-element-action="copy">Duplizieren</button>' : '') + '</div>'
+      + (current ? '<div class="an-element-actions an-transform-tools" role="group" aria-label="Drehen und Größe">'
+        + '<button data-transform="left" aria-label="Element 15 Grad nach links drehen" title="15° nach links drehen">↶ 15°</button>'
+        + '<button data-transform="right" aria-label="Element 15 Grad nach rechts drehen" title="15° nach rechts drehen">↷ 15°</button>'
+        + '<button data-transform="smaller" aria-label="Element verkleinern" title="Proportional verkleinern">−</button>'
+        + '<button data-transform="larger" aria-label="Element vergrößern" title="Proportional vergrößern">+</button>'
+        + '<button data-transform="straight" aria-label="Drehung zurücksetzen" title="Drehung zurücksetzen">0°</button></div>' : '')
+      + '<details class="an-more-tools"' + (expanded ? ' open' : '') + '><summary>Weitere Werkzeuge · Position, Deckkraft, Text und Ebenen</summary>'
+      + '<div class="an-element-actions"><button data-add-element="text">+ Text</button><button data-add-element="shape">+ Fläche</button><button data-add-element="logo">+ Dorfladen-Logo</button></div>'
       + (current ? '<div class="an-fields">' + [
         ['x', 'Position X', 0, size.w], ['y', 'Position Y', 0, size.h], ['w', 'Breite', 8, size.w], ['h', 'Höhe', 8, size.h],
         ['font_size', 'Schriftgröße', 10, 160], ['rotation', 'Drehung', -180, 180], ['opacity', 'Deckkraft', 0, 1]
@@ -251,7 +275,8 @@
         + '<div class="an-row"><label class="an-field"><input type="checkbox" data-element-prop="bold"' + (current.bold ? ' checked' : '') + '> Fett</label>'
         + '<label class="an-field"><input type="checkbox" data-element-prop="hidden"' + (current.hidden ? ' checked' : '') + '> Ausblenden</label></div>'
         + '<div class="an-element-actions"><button data-nudge="-5,0" aria-label="Element nach links">←</button><button data-nudge="0,-5" aria-label="Element nach oben">↑</button><button data-nudge="0,5" aria-label="Element nach unten">↓</button><button data-nudge="5,0" aria-label="Element nach rechts">→</button></div>'
-        + '<div class="an-element-actions"><button data-element-action="copy">Duplizieren</button><button data-element-action="forward">Ebene nach vorn</button><button data-element-action="back">Ebene zurück</button><button data-element-action="delete">Element entfernen</button></div>' : '')
+        + '<div class="an-element-actions"><button data-element-action="ghost">Ghost-Kopie</button><button data-element-action="forward">Ebene nach vorn</button><button data-element-action="back">Ebene zurück</button><button data-element-action="delete">Element entfernen</button></div>' : '')
+      + '</details></fieldset>'
       + '<div class="an-actions"><button data-history="undo"' + (undo.length ? '' : ' disabled') + '>Rückgängig</button><button data-history="redo"' + (redo.length ? '' : ' disabled') + '>Wiederholen</button></div>';
   }
   function overlay() {
@@ -262,6 +287,13 @@
         + '" style="left:' + e.x / size.w * 100 + '%;top:' + e.y / size.h * 100 + '%;width:' + e.w / size.w * 100 + '%;height:' + e.h / size.h * 100
         + '%;transform:rotate(' + e.rotation + 'deg)"></button>';
     }).join('');
+    var current = selection();
+    if (current && !current.hidden) {
+      host.insertAdjacentHTML('beforeend', '<button type="button" class="an-resize-handle" data-resize="' + current.id
+        + '" aria-label="Elementgröße ziehen" title="Größe ziehen" style="left:clamp(44px,'
+        + (current.x + current.w) / size.w * 100 + '%,100%);top:clamp(44px,'
+        + (current.y + current.h) / size.h * 100 + '%,100%)">↘</button>');
+    }
   }
   async function preview() {
     if (!data || !$('an-stage-canvas')) return;
@@ -306,6 +338,7 @@
       button.setAttribute('aria-pressed', String(button.dataset.layoutTarget === designTarget));
     });
     $('an-stage').hidden = previewMode !== 'paper';
+    $('an-inspector').hidden = previewMode !== 'paper';
     $('an-other-preview').hidden = previewMode === 'paper';
     $('an-preview-hint').textContent = previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
     if (previewMode !== 'paper') {
@@ -328,7 +361,7 @@
     step = value;
     ['articles', 'design', 'output'].forEach(function (s) { $('an-step-' + s).hidden = value !== s; });
     root.querySelectorAll('[data-step]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.step === value)); });
-    if (step === 'design') renderInspector();
+    renderInspector();
   }
   function renderEditor() {
     root.innerHTML = header(data.title || 'Dein Angebotsflyer')
@@ -347,7 +380,7 @@
       + '<section id="an-step-design" hidden><h2>Die vertraute freie Gestaltung</h2><p class="an-muted">Bild, Preis und Texte antippen und ziehen – oder mit Zahlen und Pfeilen bearbeiten. Jedes Ausgabeziel bleibt separat gespeichert.</p>'
       + '<section id="an-design-options"><h3>Vorlagen, Farben und Schrift</h3><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
       + '<p class="an-note">Eine Vorlage ersetzt freie Positionen erst nach deiner Bestätigung – nur für das aktuelle Ausgabeziel und den gewählten Artikel.</p><div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Designstandards übernehmen</button></div></section>'
-      + '<div id="an-inspector" class="an-inspector"></div><div class="an-actions"><button id="an-add-page">+ Seite</button><button id="an-remove-page">Seite entfernen</button></div>'
+      + '<div class="an-actions"><button id="an-add-page">+ Seite</button><button id="an-remove-page">Seite entfernen</button></div>'
       + '<button data-step="output" class="an-primary">Weiter · Ausgeben</button></section>'
       + '<section id="an-step-output" hidden><h2>Wie bei den bisherigen Angeboten ausgeben</h2><div id="an-output-previews">'
       + D.previewTabs(previewMode, 'data-editor-mode') + '</div><p>Speichern, Veröffentlichen, Drucken und Waagenversand sind getrennte Aktionen.</p>'
@@ -360,7 +393,7 @@
       + '<button type="button" data-layout-target="sheet">Sammelflyer</button><button type="button" data-layout-target="scale">Waage</button></nav>'
       + '<label class="an-field" id="an-design-item-wrap"><span>Artikel für diese Gestaltung</span><select id="an-design-item">'
       + data.items.map(function (item) { return '<option value="' + item.id + '"' + (item.id === designItemId ? ' selected' : '') + '>' + M.esc(item.name || 'Neuer Artikel') + '</option>'; }).join('')
-      + '</select></label><div id="an-other-preview" hidden></div>'
+      + '</select></label><div id="an-inspector" class="an-inspector"></div><div id="an-other-preview" hidden></div>'
       + '<div class="an-stage" id="an-stage"><canvas id="an-stage-canvas"></canvas><div class="an-hit-layer" id="an-hit-layer"></div></div>'
       + '<p class="an-stage-info" id="an-stage-info" role="status"></p><div class="an-actions an-spread" id="an-page-tools"><button id="an-page-prev" aria-label="Vorherige Flyerseite">←</button><span id="an-page-label"></span><button id="an-page-next" aria-label="Nächste Flyerseite">→</button></div>'
       + '<p class="an-muted" id="an-stage-help">Tippen = auswählen · Ziehen = verschieben · Quadrat unten rechts = Größe ändern. Zahlenfelder funktionieren auch ohne Ziehen.</p></section></div>';
@@ -698,7 +731,7 @@
       }
       if (b.dataset.editItem) { openItemDialog(b.dataset.editItem); return; }
       if (b.dataset.step) setStep(b.dataset.step);
-      if (b.dataset.select) { selected = b.dataset.select; setStep('design'); overlay(); }
+      if (b.dataset.select) { selected = b.dataset.select; renderInspector(); overlay(); }
       if (b.dataset.remove) {
         edit(function () { data.items = data.items.filter(function (it) { return it.id !== b.dataset.remove; });
           data.layout.pages.forEach(function (p) { p.elements = p.elements.filter(function (e) { return e.item_id !== b.dataset.remove; }); });
@@ -725,20 +758,42 @@
           M.ensureTargets(data);
         }); renderItems();
       }
-      if (b.dataset.addElement) {
+      if (b.dataset.addElement || b.hasAttribute('data-replace-image')) {
         var type = b.dataset.addElement, imageId = '';
-        if (type === 'image') {
+        if (type === 'image' || b.hasAttribute('data-replace-image')) {
+          var replace = b.hasAttribute('data-replace-image') ? selection() : null;
           var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp';
-          input.onchange = function () { run(async function () { var id = await upload(input.files[0]); if (id) insertElement(type, id); }); }; input.click(); return;
+          input.onchange = function () { run(async function () {
+            var id = await upload(input.files[0]);
+            if (!id) return;
+            if (replace) { edit(function () { replace.image_id = id; }, true); renderInspector(); }
+            else insertElement(type, id);
+          }); }; input.click(); return;
         }
         insertElement(type, imageId);
       }
       if (b.dataset.nudge) { var nudge = b.dataset.nudge.split(',').map(Number); move(nudge[0], nudge[1]); }
+      if (b.dataset.transform && selection()) {
+        edit(function () {
+          var e = selection(), action = b.dataset.transform;
+          if (action === 'straight') e.rotation = 0;
+          else if (action === 'left' || action === 'right') e.rotation = ((e.rotation + (action === 'right' ? 15 : -15) + 540) % 360) - 180;
+          else {
+            var size = activeSize(), factor = action === 'larger' ? 1.1 : 1 / 1.1;
+            factor = Math.max(8 / e.w, 8 / e.h, Math.min(factor, size.w / e.w, size.h / e.h));
+            var w = e.w * factor, h = e.h * factor;
+            e.x = Math.max(0, Math.min(size.w - w, e.x + (e.w - w) / 2));
+            e.y = Math.max(0, Math.min(size.h - h, e.y + (e.h - h) / 2));
+            e.w = w; e.h = h;
+          }
+          constrainElement(e);
+        }, true); renderInspector();
+      }
       if (b.dataset.elementAction && selection()) {
         edit(function () {
           var e = selection(), i = elements().indexOf(e), action = b.dataset.elementAction;
           if (action === 'delete') { elements().splice(i, 1); selected = ''; }
-          if (action === 'copy') { var size = activeSize(), copy = M.clone(e); copy.id = M.uid(); copy.x = Math.min(size.w - copy.w, e.x + 12); copy.y = Math.min(size.h - copy.h, e.y + 12); elements().push(copy); selected = copy.id; }
+          if (action === 'copy' || action === 'ghost') { var size = activeSize(), copy = M.clone(e); copy.id = M.uid(); copy.x = Math.min(size.w - copy.w, e.x + 12); copy.y = Math.min(size.h - copy.h, e.y + 12); if (action === 'ghost') copy.opacity = .35; elements().push(copy); selected = copy.id; }
           if (action === 'forward' && i < elements().length - 1) { elements().splice(i, 1); elements().splice(i + 1, 0, e); }
           if (action === 'back' && i > 0) { elements().splice(i, 1); elements().splice(i - 1, 0, e); }
         }, true); renderInspector();
@@ -813,19 +868,42 @@
       }
     };
     $('an-stage').onpointerdown = function (event) {
-      var hit = event.target.closest('[data-select]');
+      var resize = event.target.closest('[data-resize]');
+      var hit = resize || event.target.closest('[data-select]');
       if (!hit || busy || event.button !== 0) return;
-      selected = hit.dataset.select; setStep('design');
-      var e = selection(), size = activeSize(), rect = $('an-stage').getBoundingClientRect(), startX = event.clientX, startY = event.clientY, x = e.x, y = e.y, moved = false;
+      event.preventDefault();
+      selected = resize ? hit.dataset.resize : hit.dataset.select; renderInspector();
+      var e = selection(), size = activeSize(), rect = $('an-stage').getBoundingClientRect(), startX = event.clientX, startY = event.clientY, x = e.x, y = e.y, w = e.w, h = e.h, moved = false;
       function drag(ev) {
+        if (ev.pointerId !== event.pointerId) return;
         if (!moved && Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 5) return;
         if (!moved) { checkpoint(); moved = true; }
-        e.x = Math.max(0, Math.min(size.w - e.w, x + (ev.clientX - startX) * size.w / rect.width));
-        e.y = Math.max(0, Math.min(size.h - e.h, y + (ev.clientY - startY) * size.h / rect.height));
-        hit.style.left = e.x / size.w * 100 + '%'; hit.style.top = e.y / size.h * 100 + '%';
+        var dx = (ev.clientX - startX) * size.w / rect.width, dy = (ev.clientY - startY) * size.h / rect.height;
+        if (resize) {
+          if (e.type === 'image' || e.type === 'logo') {
+            var factor = 1 + (Math.abs(dx / w) > Math.abs(dy / h) ? dx / w : dy / h);
+            factor = Math.max(8 / w, 8 / h, Math.min(factor, (size.w - x) / w, (size.h - y) / h));
+            e.w = w * factor; e.h = h * factor;
+          } else { e.w = Math.max(8, Math.min(size.w - x, w + dx)); e.h = Math.max(8, Math.min(size.h - y, h + dy)); }
+        } else {
+          e.x = Math.max(0, Math.min(size.w - e.w, x + dx));
+          e.y = Math.max(0, Math.min(size.h - e.h, y + dy));
+        }
+        constrainElement(e);
+        var box = $('an-hit-layer').querySelector('[data-select="' + selected + '"]');
+        if (box) {
+          box.style.left = e.x / size.w * 100 + '%'; box.style.top = e.y / size.h * 100 + '%';
+          box.style.width = e.w / size.w * 100 + '%'; box.style.height = e.h / size.h * 100 + '%';
+        }
+        var handle = $('an-hit-layer').querySelector('[data-resize]');
+        if (handle) {
+          handle.style.left = 'clamp(44px,' + (e.x + e.w) / size.w * 100 + '%,100%)';
+          handle.style.top = 'clamp(44px,' + (e.y + e.h) / size.h * 100 + '%,100%)';
+        }
         if (designTarget === 'sheet') data.layout.mode = 'free'; changed();
       }
-      function end() {
+      function end(ev) {
+        if (ev.pointerId !== event.pointerId) return;
         document.removeEventListener('pointermove', drag); document.removeEventListener('pointerup', end); document.removeEventListener('pointercancel', end);
         renderInspector(); preview().catch(M.error);
       }

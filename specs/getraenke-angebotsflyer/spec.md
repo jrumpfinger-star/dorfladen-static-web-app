@@ -264,6 +264,15 @@ Einzelflyer, Sammelflyer und Waagenprofilen erhalten. Die Kundenansicht
 verwendet die veröffentlichte Kachelgestaltung; fehlende Ziellayouts alter
 Datensätze fallen auf die bisherige automatische Ausgabe zurück.
 
+Die Vorschau bietet ihre Gestaltungswerkzeuge unmittelbar in jeder
+Bearbeitungsansicht, ohne Pflichtwechsel zu „Frei gestalten“. Das Produktbild
+ist zunächst ausgewählt. Drehen, proportional vergrößern/verkleinern,
+Bilddatei einfügen/ersetzen und Duplizieren sind direkt erreichbar.
+Ein sichtbarer Größenanfasser funktioniert mit Maus und Touch. Exakte Werte,
+Deckkraft, Texte und Ebenen bleiben unter weiteren Werkzeugen erreichbar.
+Änderungen betreffen ausschließlich das gewählte Ausgabeziel und den Artikel;
+Rückgängig, Speichern/Öffnen und freigegebene Fassungen bleiben erhalten.
+
 - TC-F11-01: Artikelsuche über Name, Nummer und EAN; Mehrfachauswahl übernimmt
   Stammfelder, zeigt VK als Vergleich und übernimmt ihn nur nach ausdrücklicher
   Auswahl als Angebotspreis. Kein Aufruf des Kratzer-Katalogs.
@@ -291,6 +300,10 @@ Datensätze fallen auf die bisherige automatische Ausgabe zurück.
   Punkteingaben, `0,029` Liter, Grundpreis und Gebindeausgabe prüfen.
   Speichern/erneut öffnen erhält ganze Milliliter und die Kommaschreibweise;
   ungültige Eingaben werden gemeldet. Die freigegebene Fassung bleibt unverändert.
+- TC-F11-08: Ohne Schrittwechsel direkt an der Vorschau drehen, proportional
+  skalieren, per Größenanfasser ändern, Bild einfügen/ersetzen und duplizieren.
+  Maus und Touch, vier Ausgabeziele, Rückgängig und Speichern/Öffnen prüfen.
+  Andere Ziele/Artikel und Veröffentlichungen bleiben unverändert.
 
 ## F13: Originalvorlagen und Dorfladen-Logo
 

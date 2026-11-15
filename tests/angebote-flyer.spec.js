@@ -928,6 +928,99 @@ test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontale
   expect(state.errors).toEqual([]);
 });
 
+for (const target of ['card', 'single', 'sheet', 'scale']) {
+  test(`TC-F11-08: ${target} direkt drehen, skalieren, Bilder einfügen und per Maus/Touch ändern`, async ({ page }, testInfo) => {
+    const state = await setup(page), head = await seed(page, state, { count: 2, publish: true });
+    const sourceId = uid();
+    const image = await page.evaluate(() => {
+      const canvas = document.createElement('canvas'); canvas.width = 120; canvas.height = 80;
+      const ctx = canvas.getContext('2d'); ctx.fillStyle = '#2244aa'; ctx.fillRect(0, 0, 120, 80);
+      ctx.fillStyle = '#cc3300'; ctx.fillRect(0, 0, 35, 40);
+      return canvas.toDataURL('image/png').split(',')[1];
+    });
+    state.images.set(sourceId, Buffer.from(image, 'base64')); head.draft.items[0].image_id = sourceId;
+    await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+    await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+    const published = copy(state.published.get(head.id));
+    const before = copy(head.draft.layout);
+    if (target !== 'card') await page.locator('[data-layout-target="' + target + '"]').click();
+    const layouts = (layout) => target === 'sheet' ? layout.pages[0] : layout.targets[target][0];
+    const original = layouts(before).elements.find((element) => element.type === 'image');
+    const inspector = page.locator('#an-inspector');
+    await expect(inspector).toBeVisible();
+    await expect(page.locator('[data-step=articles]').first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByLabel('Gestaltungselement')).toHaveValue(original.id);
+    await expect(page.locator('[data-resize]')).toBeVisible();
+    const pixels = hash(await page.locator('#an-stage-canvas').evaluate((canvas) => canvas.toDataURL()), 16);
+    await page.getByRole('button', { name: 'Element 15 Grad nach rechts drehen', exact: true }).click();
+    await expect.poll(async () => hash(await page.locator('#an-stage-canvas').evaluate((canvas) => canvas.toDataURL()), 16)).not.toBe(pixels);
+    await page.getByRole('button', { name: 'Element vergrößern', exact: true }).click();
+    await page.getByRole('button', { name: 'Element verkleinern', exact: true }).click();
+    await inspector.getByRole('button', { name: 'Rückgängig', exact: true }).click();
+    await page.locator('[data-resize]').scrollIntoViewIfNeeded();
+    const box = await page.locator('[data-resize]').boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    const x = box.x + box.width / 2, y = box.y + box.height / 2;
+    const beforeDrag = await page.locator('#an-hit-layer .an-selected').evaluate((element) => parseFloat(element.style.width));
+    if (testInfo.project.use.hasTouch) {
+      const session = await page.context().newCDPSession(page);
+      await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 12, y: y - 12 }] });
+      await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await session.detach();
+    } else {
+      await page.mouse.move(x, y); await page.mouse.down();
+      await page.mouse.move(x - 12, y - 12, { steps: 4 }); await page.mouse.up();
+    }
+    await expect.poll(() => page.locator('#an-hit-layer .an-selected').evaluate((element) => parseFloat(element.style.width))).toBeLessThan(beforeDrag);
+    await expect(page.locator('[data-step=articles]').first()).toHaveAttribute('aria-pressed', 'true');
+    let chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Bild ersetzen', exact: true }).click();
+    await (await chooser).setFiles({ name: 'ersatz.png', mimeType: 'image/png', buffer: PHOTO });
+    await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+    chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: '+ Eigenes Bild', exact: true }).click();
+    await (await chooser).setFiles({ name: 'eigenes-bild.png', mimeType: 'image/png', buffer: PHOTO });
+    await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+    const insertedId = await page.getByLabel('Gestaltungselement').inputValue();
+    expect(insertedId).not.toBe(original.id);
+    await inspector.getByRole('button', { name: 'Duplizieren', exact: true }).click();
+    await inspector.locator('.an-more-tools>summary').click();
+    await inspector.getByRole('button', { name: 'Ghost-Kopie', exact: true }).click();
+    await saveDraft(page);
+    const saved = state.actions.get(head.id).draft;
+    const changed = layouts(saved.layout).elements.find((element) => element.id === original.id);
+    expect(changed.rotation).toBe(15);
+    expect(changed.w).toBeGreaterThanOrEqual(8);
+    expect(changed.w / changed.h).toBeCloseTo(original.w / original.h, 8);
+    expect(state.images.has(changed.image_id)).toBe(true);
+    expect(layouts(saved.layout).elements.find((element) => element.id === insertedId).image_id).toMatch(/^[a-f0-9]{32}$/);
+    expect(layouts(saved.layout).elements.some((element) => element.opacity === .35 && element.image_id)).toBe(true);
+    expect(layouts(saved.layout).elements.length).toBe(layouts(before).elements.length + 3);
+    for (const other of ['card', 'single', 'scale']) {
+      if (other !== target) expect(saved.layout.targets[other]).toEqual(before.targets[other]);
+      else expect(saved.layout.targets[other][1]).toEqual(before.targets[other][1]);
+    }
+    if (target !== 'sheet') expect(saved.layout.pages).toEqual(before.pages);
+    expect(state.published.get(head.id)).toEqual(published);
+    const renderErrors = await page.evaluate(async ({ data, target }) =>
+      (target === 'sheet' ? await window.AngeboteModel.render(data, 0, 1)
+        : await window.AngeboteModel.renderTarget(data, target, data.items[0].id, 1)).errors, { data: saved, target });
+    expect(renderErrors).toEqual([]);
+    await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+    if (target !== 'card') await page.locator('[data-layout-target="' + target + '"]').click();
+    await page.getByLabel('Gestaltungselement').selectOption(original.id);
+    await page.locator('#an-inspector .an-more-tools>summary').click();
+    await expect(page.getByLabel('Drehung', { exact: true })).toHaveValue('15');
+    await expect(page.getByLabel('Breite', { exact: true })).toHaveValue(String(changed.w));
+    await page.locator('#an-inspector .an-more-tools>summary').click();
+    await noOverflow(page);
+    await page.locator('#an-preview').screenshot({ path: test.info().outputPath('direkte-gestaltung-' + target + '.png') });
+    expect(state.errors).toEqual([]);
+  });
+}
+
 test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Drehung/Transparenz', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state);
   await page.locator('#an-items button[data-edit-item]').click();

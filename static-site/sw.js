@@ -2,7 +2,7 @@
    loescht nur Zwischenspeicher, die anders heissen. Bleibt der Name
    gleich, behaelt jeder Browser seinen alten Inhalt — und damit unter
    Umstaenden Dateien aus einem Stand, den es laengst nicht mehr gibt. */
-var CACHE_NAME='dorfladen-v38';
+var CACHE_NAME='dorfladen-v39';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',

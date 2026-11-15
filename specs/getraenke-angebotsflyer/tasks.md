@@ -32,3 +32,4 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF24 | GF21–GF23 zusammen in isolierter Feature-Vorschau bereitstellen und ausgelieferte UI prüfen | GF21, GF22, GF23 | TC-F11-04..06, TC-F13-05 |
 | GF25 | Kundenangebote ohne Kategorieumschaltung gemeinsam anzeigen, mobil und Desktop prüfen | GF24 | TC-F5-01..05 |
 | GF26 | Dezimale Mengen in Liste und Dialog mit Komma anzeigen, verlustfrei speichern und auf vier Viewports prüfen | GF22 | TC-F11-07, TC-F2-01..03 |
+| GF27 | Direkte Vorschauwerkzeuge und echten Maus-/Touch-Größenanfasser integrieren und testen | GF14, GF22 | TC-F11-08, TC-F3-04 |

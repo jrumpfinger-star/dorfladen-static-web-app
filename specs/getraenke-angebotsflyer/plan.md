@@ -23,6 +23,14 @@ Zusammenfassung, Rabatt, Literpreis und Vorschau ohne Austausch der Eingaben.
 Die bisherige starre Vier-Zeilen-Höhenprüfung wird zugunsten lesbarer
 Direkteingaben durch Feldgrößen-, Fokus- und Überlaufprüfungen ersetzt.
 
+Der vorhandene Elementinspektor zieht direkt in die Vorschau. Häufige
+Werkzeuge sind immer sichtbar, weitere Felder aufklappbar; die explizite
+Gestaltungsansicht öffnet sie weiterhin. Bestehende Upload-, Element- und
+Undo-Wege werden wiederverwendet. Elementauswahl wechselt nicht mehr den
+Bearbeitungsschritt. Ein echter 44-Pixel-Größenanfasser erweitert die vorhandenen
+Pointer-Handler für Maus und Touch; Bilder werden proportional skaliert.
+Tests bedienen die sichtbaren Werkzeuge statt nur gespeicherte Layoutdaten.
+
 Literfelder in Liste und Artikeldialog verwenden Textfelder mit
 `inputmode="decimal"` statt browserabhängig lokalisierter Number-Felder.
 Gemeinsame Modellhelfer formatieren Milliliter als deutsche Literwerte und
