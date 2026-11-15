@@ -25,6 +25,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <!-- Das gemeinsame Designschema (Werte) vor dem Seitenblatt. -->
 <link rel="stylesheet" href="/css/dl-design.css">
 <link rel="stylesheet" href="/css/cms-neu.css">
+<link rel="stylesheet" href="/css/angebote.css">
 
 <div id="cms-login" class="cms-wrap" lang="de" style="display:none">
   <div class="cms-login-box">
@@ -133,6 +134,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   </div>
   <!-- Angebote -->
   <div id="cms-panel-ang" style="display:none">
+    <p><a class="cms-btn cms-btn-primary" href="/angebote.html">Getränke &amp; neue Angebote gestalten</a></p>
     <div class="cms-flex cms-between cms-mb">
       <h3 style="font-size:var(--schrift-gross);font-weight:600;color:var(--ink);margin:0;display:flex;align-items:center;gap:6px">Sonderangebote <span onclick="cmsTab('help'); cmsSwitchHelpTopic('ang-help')" title="Hilfe anzeigen" style="cursor:pointer;font-size:var(--schrift-klein);background:var(--gr-l);color:var(--gr);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></h3>
       <button class="cms-btn cms-btn-primary" data-action="openNewAktion">+ Neue Aktion erstellen</button>
@@ -1708,10 +1710,15 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <div class="cfg-section-nav" style="display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap">
         <button class="cfg-section-btn active" data-action="cfgSection" data-id="sec-plakat" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--c-m-pri);margin-bottom:-2px;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:.3px">&#128196; Plakat</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-flyer" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">&#128196; Einzelflyer</button>
+        <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-drinks" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">Getränkeflyer</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-shared" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">&#9881; Gemeinsame Einstellungen</button>
       </div>
 
-      <div class="cfg-split">
+      <div id="cfg-sec-drinks" style="display:none">
+        <div id="an-design-root"></div>
+        <p><a class="cms-btn cms-btn-primary" href="/angebote.html">Aktionen individuell gestalten</a></p>
+      </div>
+      <div class="cfg-split" id="cfg-offer-legacy">
       <div class="cfg-split-left">
 
       <!-- ════════════════════════════════════════════════ -->
@@ -2492,7 +2499,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div><!-- /cfg-split-right -->
 
       </div><!-- /cfg-split -->
-      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <div id="cfg-offer-legacy-save" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="cms-btn cms-btn-primary" id="cfg-plakat-save" data-action="savePlakatCfg">&#128190; Speichern</button>
         <span id="cfg-plakat-saved-hint" style="display:none;font-size:.82rem;color:var(--gr);font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
       </div>
@@ -3753,6 +3760,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <script src="hilfe-popup.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="/js/admin-auth.js"></script>
+<script src="/js/angebote-modell.js"></script>
+<script src="/js/angebote-design.js"></script>
 <script src="cms.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
 <script src="/js/dl-confirm.js"></script>

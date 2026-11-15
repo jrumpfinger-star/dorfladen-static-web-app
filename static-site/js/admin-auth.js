@@ -114,8 +114,10 @@
       && url.indexOf('/api/lunch-order') !== -1
       && url.indexOf('mode=my') === -1
       && url.indexOf('nr=') === -1;
+    var isAngeboteRead = method === 'GET'
+      && /\/api\/angebote-(verwaltung|bilder)(?:[/?#]|$)/.test(url);
 
-    if (isAdminCall || isKalenderRead || isLunchListe) {
+    if (isAdminCall || isKalenderRead || isLunchListe || isAngeboteRead) {
       var tok = getToken();
       if (tok) {
         var h = headersToObj(init.headers);
@@ -127,7 +129,7 @@
     var call = _fetch.call(this, input, init);
     // 401-Fallback (Login-Dialog + Retry) gilt auch für lesende Kalender-GETs,
     // damit reine Betrachter sich anmelden können und nicht nur bei Schreib-Aktionen.
-    if (!isAdminCall && !isKalenderRead && !isLunchListe) return call;
+    if (!isAdminCall && !isKalenderRead && !isLunchListe && !isAngeboteRead) return call;
 
     return call.then(function (resp) {
       if (resp.status !== 401) return resp;

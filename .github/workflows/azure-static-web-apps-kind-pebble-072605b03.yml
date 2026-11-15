@@ -58,7 +58,7 @@ jobs:
     needs: build_and_deploy_job
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
-    name: Set Preview Dev-DB Settings
+    name: Set Isolated Preview Settings
     steps:
       - name: Azure Login
         uses: azure/login@v2
@@ -66,13 +66,32 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Set Preview environment settings
         run: |
+          PRODUCTION_SETTINGS="$(az staticwebapp appsettings list \
+            --name dorfladen-website --resource-group rg-dorfladen \
+            --subscription 89dd5962-2356-4f41-aa6b-ab6c0e054877 \
+            --output json --only-show-errors)"
+          OFFER_SETTINGS=()
+          for KEY in STORAGE_CONN CMS_AUTH_TOKEN CMS_PW_HASH SHOP_JWT_SECRET; do
+            VALUE="$(jq -r --arg key "$KEY" '.properties[$key] // empty' <<< "$PRODUCTION_SETTINGS")"
+            if [ -z "$VALUE" ]; then
+              echo "::error::Required preview setting is missing: $KEY"
+              exit 1
+            fi
+            echo "::add-mask::$VALUE"
+            OFFER_SETTINGS+=("$KEY=$VALUE")
+          done
           az staticwebapp appsettings set \
             --name dorfladen-website \
+            --resource-group rg-dorfladen \
+            --subscription 89dd5962-2356-4f41-aa6b-ab6c0e054877 \
             --environment-name ${{ github.event.pull_request.number }} \
             --setting-names \
+              "${OFFER_SETTINGS[@]}" \
+              "ANGEBOTE_NAMESPACE=preview-${{ github.event.pull_request.number }}" \
+              "ANGEBOTE_WAAGE_SEND_ENABLED=false" \
               "DV_DEFAULT_URL=https://orgab4e2f00.crm16.dynamics.com" \
-              "SHOP_JWT_SECRET=${{ secrets.SHOP_JWT_SECRET }}"
-          echo "Preview environment configured with DEV Dataverse + Shop secrets"
+            --output none --only-show-errors
+          echo "Preview configured: existing Dataverse mapping, private offer namespace, managed scale sends disabled"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

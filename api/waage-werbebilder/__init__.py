@@ -13,7 +13,9 @@ import logging
 import azure.functions as func
 
 from shared import waage
-from shared.auth import admin_auth_guard
+from shared.auth import admin_auth_guard, token_valid
+from shared.angebote import AngeboteFehler, scale_scope
+from shared.angebote_store import namespace, scale_enabled
 
 CORS = {
     "Access-Control-Allow-Origin": "*",
@@ -39,10 +41,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return gesperrt
 
     try:
+        if req.method in ("POST", "DELETE") and not req.params.get("bruecke"):
+            raw_name = req.params.get("name", "")
+            name = waage.sauberer_name(raw_name, waage.bildtyp(req.get_body()) or "jpg") if req.method == "POST" else raw_name
+            meta = waage.angebotsdatei(name)
+            if meta or req.params.get("angebot") == "1":
+                if not token_valid(req):
+                    raise waage.WaageFehler(401, "Bitte zuerst mit dem CMS-Passwort anmelden.")
+                if not scale_enabled():
+                    raise waage.WaageFehler(403, "Echter Angebotsversand ist in dieser Vorschau gesperrt. Vorschau und Export bleiben möglich.")
+                if meta is None or meta["scope"] != scale_scope(namespace()):
+                    raise waage.WaageFehler(403, "Dieses Angebotsbild gehört zu einer anderen Umgebung.")
         status, typ, daten = waage.verarbeite(
             req.method, dict(req.params), req.get_body(),
             waage.GraphSpeicher(), waage.TabellenStatus())
     except waage.WaageFehler as e:
+        status, typ, daten = _fehler(e.status, e.text)
+    except AngeboteFehler as e:
         status, typ, daten = _fehler(e.status, e.text)
     except Exception:
         logging.exception("[waage-werbebilder] Fehler")

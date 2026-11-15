@@ -3,6 +3,8 @@ msal
 requests
 pywebpush
 azure-data-tables
+azure-storage-blob
+tzdata
 PyJWT
 bcrypt
 Pillow

@@ -17,6 +17,9 @@
 
 ## Projektstruktur
 
+Neue Wochen- und Getränkeaktionen: [Bedienung, Designeditor und Preview-Konfiguration](docs/getraenke-angebotsflyer.md).
+Die Entwicklung erfolgt isoliert im Feature-Branch; bestehende Aktionen bleiben im bisherigen Editor.
+
 ```
 dorfladen-static-web-app/
 ├── api/                        # Azure Functions (Python)

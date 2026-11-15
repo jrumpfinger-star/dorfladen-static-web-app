@@ -37,7 +37,20 @@
   var CMS_PW_KEY='cms_auth_ok';
   var cmsPwEl=document.getElementById('cms-pw-hash');
   var cmsPwHash=cmsPwEl?JSON.parse(cmsPwEl.textContent):'';
-  function cmsShowApp(){document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';}
+  var _angeboteEntryApplied=false;
+  function cmsShowApp(){
+    document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';
+    if(!_angeboteEntryApplied){
+      _angeboteEntryApplied=true;
+      setTimeout(function(){
+        var q=new URLSearchParams(location.search);
+        if(q.get('tab')==='ang')cmsTab('ang');
+        if(q.get('tab')==='cfg'&&q.get('flyer')==='drinks'){
+          cmsTab('cfg');cmsCfgSubTab('cfg-plakat');cfgSwitchSection('sec-drinks');
+        }
+      },0);
+    }
+  }
   function cmsShowLogin(){document.getElementById('cms-login').style.display='';document.getElementById('cms-app').style.display='none';}
 
   function sha256(str){
@@ -1728,7 +1741,7 @@
 
   // ── Section Navigation (Plakat / Flyer / Gemeinsam) ──
   window.cfgSwitchSection=function(secId){
-    ['sec-plakat','sec-flyer','sec-shared'].forEach(function(s){
+    ['sec-plakat','sec-flyer','sec-shared','sec-drinks'].forEach(function(s){
       var panel=document.getElementById('cfg-'+s);
       if(panel)panel.style.display=s===secId?'':'none';
     });
@@ -1739,6 +1752,14 @@
       btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
       btn.style.color=active?'var(--c-m-pri)':'#6b7280';
     });
+    var legacy=document.getElementById('cfg-offer-legacy');
+    var legacySave=document.getElementById('cfg-offer-legacy-save');
+    if(legacy)legacy.style.display=secId==='sec-drinks'?'none':'';
+    if(legacySave)legacySave.style.display=secId==='sec-drinks'?'none':'flex';
+    if(secId==='sec-drinks'){
+      if(window.AngeboteDesign)window.AngeboteDesign.mount(document.getElementById('an-design-root'));
+      return;
+    }
     // Toggle sticky sidebar preview container
     var lpPlakat=document.getElementById('cfg-live-preview-plakat');
     var lpFlyer=document.getElementById('cfg-live-preview-flyer');

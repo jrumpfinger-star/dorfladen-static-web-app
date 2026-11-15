@@ -397,121 +397,13 @@
   }).catch(function(){renderWP(wpFallback);});
 
   /* === ANGEBOTE (Kacheln im Popup) === */
-  function renderMobAngebote(items){
-    var grid=document.getElementById('mob-ang-grid');
-    var kwEl=document.getElementById('mob-ang-kw');
-    if(kwEl) kwEl.textContent='Diese Woche · KW '+getKW();
-    var subEl=document.getElementById('mob-offers-sub');
-    if(subEl&&items.length) subEl.innerHTML='<span style="display:inline-block;background:#5ea88a;color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:4px">'+items.length+'</span> diese Woche';
-    if(!grid) return;
-    if(!items.length){grid.innerHTML='<p style="text-align:center;color:#6b7280;padding:20px">Aktuell keine Sonderangebote</p>';return;}
-    var icons=['🥛','🧀','🍞','🥩','🍌','🥬','🥫','🍎'];
-    var html='';
-    items.forEach(function(a,idx){
-      var pct='';
-      if(a.statt>0&&a.preis>0){var p=Math.round((a.statt-a.preis)/a.statt*100);if(p>0) pct='-'+p+'%';}
-      var pi=Math.floor(a.preis);var pf=Math.round((a.preis-pi)*100);
-      var cs=pf<10?'0'+pf:String(pf);
-      html+='<div class="mob-ang-item"'+(a.artnr?' data-artnr="'+esc(a.artnr)+'"':'')+'>';
-      if(pct) html+='<div class="mob-ang-badge">'+pct+'</div>';
-      html+='<div class="mob-ang-img"><span>'+(icons[idx%icons.length])+'</span></div>';
-      html+='<div class="mob-ang-info">';
-      html+='<div class="mob-ang-name">'+esc(a.produkt)+'</div>';
-      if(a.details) html+='<div class="mob-ang-det">'+esc(a.details)+'</div>';
-      html+='</div>';
-      html+='<div class="mob-ang-tag">';
-      html+='<div class="mob-ang-price">'+pi+','+cs+'<span class="euro">€</span></div>';
-      if(a.statt) html+='<span class="mob-ang-statt">€ '+fmtP(a.statt)+'</span>';
-      html+='</div>';
-      html+='</div>';
-    });
-    grid.innerHTML=html;
-    loadMobBilder(grid);
-  }
-
   function fmtP(v){var n=Number(v);if(isNaN(n))return v;return n.toFixed(2).replace('.',',');}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  // Filter angebote by current week (So-Sa, matching desktop filterByWeek)
-  function filterMobByWeek(items){
-    var now=new Date();
-    var wStart=new Date(now);wStart.setDate(wStart.getDate()-wStart.getDay());wStart.setHours(0,0,0,0);
-    var wEnd=new Date(wStart);wEnd.setDate(wEnd.getDate()+6);wEnd.setHours(23,59,59);
-    return items.filter(function(a){
-      if(!a.von||!a.bis) return true;
-      var p1=a.von.split('-'),p2=a.bis.split('-');
-      var aVon=new Date(+p1[0],+p1[1]-1,+p1[2]);
-      var aBis=new Date(+p2[0],+p2[1]-1,+p2[2]);
-      return aVon<=wEnd && aBis>=wStart;
-    });
-  }
-
-  // Use allAngebote from app.js if available, otherwise fetch
-  function tryLoadAngebote(){
-    if(window.allAngebote&&window.allAngebote.length){
-      renderMobAngebote(filterMobByWeek(window.allAngebote));
-    }else{
-      fetch(API_BASE+'/angebote?filter=today').then(function(r){return r.json();}).then(function(payload){
-        var raw=payload;
-        if(payload.data) raw=payload.data;
-        if(!Array.isArray(raw)) raw=[raw];
-        var items=raw.map(function(item){
-          return{
-            produkt:item.dl_produkt||item.name||'',
-            details:item.dl_details||item.details||'',
-            preis:item.dl_preis||item.price||0,
-            statt:item.dl_statt_preis||item.old_price||0,
-            artnr:item.dl_artikelnummer||item.artikelnummer||''
-          };
-        });
-        renderMobAngebote(items);
-      }).catch(function(){renderMobAngebote([]);});
-    }
-  }
-  /* === WERBEBILDER nachladen === */
-  var _mobBildCache={};
-  function loadMobBilder(container){
-    var items=container.querySelectorAll('.mob-ang-item[data-artnr]');
-    if(!items.length) return;
-    var toLoad=[];
-    items.forEach(function(el){
-      var nr=el.getAttribute('data-artnr');
-      if(!nr) return;
-      if(_mobBildCache[nr]){
-        setMobBild(el,_mobBildCache[nr]);
-        return;
-      }
-      toLoad.push(nr);
-    });
-    if(!toLoad.length) return;
-    var unique=toLoad.filter(function(v,i,a){return a.indexOf(v)===i;});
-    fetch(API_BASE+'/werbebilder?artnrs='+encodeURIComponent(unique.join(','))+'&sharepoint=1')
-      .then(function(r){return r.json();})
-      .then(function(data){
-        (data||[]).forEach(function(r){if(r.dl_bild_base64) _mobBildCache[r.dl_artikelnummer]=r.dl_bild_base64;});
-        items.forEach(function(el){
-          var nr=el.getAttribute('data-artnr');
-          if(_mobBildCache[nr]) setMobBild(el,_mobBildCache[nr]);
-        });
-      }).catch(function(e){console.log('MOB-BILDER:',e);});
-  }
-  function setMobBild(el,src){
-    var div=el.querySelector('.mob-ang-img');
-    if(!div||div.querySelector('img')) return;
-    var img=document.createElement('img');
-    img.src=src;
-    img.alt='';
-    img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:6px;cursor:zoom-in';
-    if(window.dlImagePopup){
-      var nm=''; try{ var n=el.querySelector('.mob-ang-name'); if(n) nm=n.textContent||''; }catch(e){}
-      img.addEventListener('click',function(ev){ ev.stopPropagation(); window.dlImagePopup(img.src, nm, img.src); });
-    }
-    div.innerHTML='';
-    div.appendChild(img);
-  }
-
-  // Wait a bit for app.js to load angebote first
-  setTimeout(tryLoadAngebote,1500);
+  if(document.getElementById('mob-ang-grid'))window.AngeboteKunden.mount({grid:'mob-ang-grid',label:'mob-ang-kw',onLoaded:function(result){
+    var sub=document.getElementById('mob-offers-sub');
+    if(sub)sub.textContent=result.count?result.count+' Angebote diese Woche':'Aktuell keine Angebote';
+  }});
 
   /* === NEWS TICKER (mobile top) – only items marked as Laufband === */
   fetch(API_BASE+'/news').then(function(r){return r.json();}).then(function(data){
