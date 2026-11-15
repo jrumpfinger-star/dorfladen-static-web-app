@@ -68,7 +68,8 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-image-status:empty{display:none}
 .an-image-error{color:#a02727}
 .an-dialog.an-cms-capture,.an-cms-capture button,.an-cms-capture input,.an-cms-capture select,.an-cms-overview button{font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
-.an-cms-overview{--ink:#1f2521}
+.an-cms-overview{--ink:#1f2521;font-family:"Segoe UI",system-ui,-apple-system,sans-serif}
+.an-cms-overview .an-week-filter button{flex:0 1 auto}
 .an-cms-overview .an-action-list{display:block}
 .an-cms-overview .cms-card{background:#fff;border:1px solid #0000000a;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px #00000005;margin-bottom:12px}
 .an-cms-overview .cms-ang-toggle{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}

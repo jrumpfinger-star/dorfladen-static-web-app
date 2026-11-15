@@ -298,6 +298,7 @@ test('TC-F18-07/09: ursprüngliche aufklappbare CMS-Übersicht lädt ohne Vorlag
   await expect(page.locator('.an-cms-overview .cms-card')).toHaveCount(30, { timeout: 2000 });
   expect(templates).toBe(0);
   expect(state.imageLookups).toHaveLength(0);
+  expect((await page.getByRole('button', { name: 'Diese Woche', exact: true }).boundingBox()).width).toBeLessThan(200);
   const first = page.locator('.an-cms-overview .cms-card').first();
   await expect(first.locator('.cms-ang-items')).toBeHidden();
   await first.locator('[data-cms-toggle]').press('Enter');
