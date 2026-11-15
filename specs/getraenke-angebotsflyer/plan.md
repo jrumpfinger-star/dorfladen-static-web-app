@@ -10,6 +10,28 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F18-Korrektur Speichern/Meldungen: Neue Artikel werden mit der vom Client
+vergebenen GUID als Dataverse-Primärschlüssel angelegt, sodass Zeilen-,
+Layout- und Bildbezüge stabil bleiben und `original_ids` nach dem Speichern
+übereinstimmen. Der Client übernimmt die in der Antwort gelieferten
+gespeicherten Kennungen. Fehler der Aktions-API werden nach Status in
+verständliches Deutsch übersetzt. Globale Seitenresets dürfen den automatischen
+Dialogrand nicht entfernen: `.an-dialog`/`.an-viewer` erhalten `margin:auto`.
+
+F19: Nur die Aktionsvorschau erhält einen höhenbegrenzten Arbeitsbereich
+mit unabhängig scrollbar bedienbarer Seitenleiste und eingepasstem Motiv.
+Bestehende Artikel- und Gestaltungseingaben wiederverwenden. Der gemeinsame
+Wochen-Vorschaubearbeiter kann seine Werkzeuge in dieselbe Seitenleiste
+einsetzen; seine Original-Zeichenfunktionen bleiben unverändert.
+Aufklappende Werkzeuge im Pointer-Pfad entfernen: sie verschieben bisher
+die Zeichenfläche beim Auswählen. Auswahl unmittelbar aktualisieren und
+Drehgriffe für native sowie originale Wochen-Elemente ergänzen.
+Transformationen verwenden bestehende Layout-/Override-Daten und Historie.
+Gezielte Playwright-Tests messen echte Pointer-Bewegungen, unveränderte
+Canvas-Position beim Werkzeugscrollen und Speicherung auf vier Viewports.
+Betroffen: Angebote-Editor, gemeinsamer Vorschau-Editor, Angebote-CSS,
+bestehende UI-Tests und Anwenderhilfe. Keine API-/Schemaänderung.
+
 F18-Korrektur: Listenadaption bleibt ohne Vorlagen-/Bildnetzwerkzugriffe.
 Originale Wochenvorlagen erst beim Öffnen laden. Fehlende Artikelbilder im
 Erfassungsdialog asynchron nachladen; abgelaufene CMS-Downloadlinks über die

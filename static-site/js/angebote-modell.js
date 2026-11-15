@@ -152,8 +152,17 @@ window.AngeboteModel = (function () {
       try { data = await r.json(); }
       catch (e) { console.error('[Angebote] Ungültige Antwort', r.status, e); throw problem('Der Angebotsbereich hat nicht wie erwartet geantwortet. Bitte erneut versuchen.'); }
       if (!r.ok || data.success === false) {
-        var friendly = /^\/api\/angebote-/.test(url) || /^\/api\/angebote\?action=(?:save|delete)(?:&|$)/.test(url);
-        var error = problem(friendly && data.error ? data.error : 'Die Angebote konnten nicht geladen oder gespeichert werden.');
+        var action = /^\/api\/angebote\?action=(?:save|delete)(?:&|$)/.test(url);
+        var friendly = /^\/api\/angebote-/.test(url);
+        var message = 'Die Angebote konnten nicht geladen oder gespeichert werden.';
+        if (action) {
+          console.error('[Angebote] Aktion', r.status, data.error);
+          message = r.status === 409 ? 'Die Aktion wurde zwischenzeitlich geändert. Bitte erneut öffnen.'
+            : r.status === 400 ? 'Die Aktion enthält ungültige Angaben. Bitte Artikel, Preise und Zeitraum prüfen.'
+            : r.status === 401 || r.status === 403 ? 'Bitte erneut im CMS anmelden, um Angebote zu speichern.'
+            : 'Die Aktion konnte gerade nicht gespeichert werden. Bitte später erneut versuchen.';
+        } else if (friendly && data.error) message = data.error;
+        var error = problem(message);
         error.status = r.status;
         throw error;
       }

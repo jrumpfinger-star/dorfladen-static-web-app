@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import unittest
+import uuid
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
@@ -302,6 +303,11 @@ class DataverseActionsTests(unittest.TestCase):
                 if part["path"] == "/api/data/v9.2/dl_seiteninhalts"
             )
             self.assertEqual(json.loads(saved_layout["dl_wert"]), request["layout"])
+            created = [
+                part["payload"]["dl_angeboteid"] for part in request_parts
+                if part["path"] == "/api/data/v9.2/dl_angebotes"
+            ]
+            self.assertEqual(created, [str(uuid.UUID(entry["id"])) for entry in request["items"]])
             return batch_response(operations)
 
         with patch.object(angebote.requests, "get", side_effect=get_responses) as get_request, \

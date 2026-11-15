@@ -576,6 +576,45 @@ erfolgen ausschließlich isoliert; ein Feature-Rollout ändert main nicht.
   mit aufklappbaren Artikeln und farbigen Direktaktionen sowie ursprüngliche
   kompakte Erfassungszeilen. Nur Getränkezusatzfelder und 4/6-Auswahl ergänzen;
   keine neue Oberflächengestaltung.
+- TC-F18-10: Neue Artikel behalten ihre Kennung beim Speichern. Dadurch kann
+  die direkt nach dem Erfassen geöffnete Vorschau die Gestaltung ohne
+  Konflikt speichern, mehrfach hintereinander; Layout- und Bildbezüge bleiben
+  nach erneutem Öffnen derselben Artikel zugeordnet. Konflikte erscheinen als
+  verständliche deutsche Meldung ohne technische Details.
+- TC-F18-11: Meldungs- und Bestätigungsfenster der Angebotsverwaltung stehen
+  in CMS, Kiosk und Angebotsseite mittig im sichtbaren Bereich, nicht in einer
+  Ecke, auf allen vier Viewports.
+
+## F19: Direktbearbeitung mit gleichzeitig sichtbarer Vorschau
+
+Die Aktionsvorschau bietet eine dauerhafte Werkzeugleiste neben dem Motiv.
+Ab 600 px stehen Werkzeuge und Motiv nebeneinander; auf schmaleren Geräten
+bleibt das Motiv oberhalb der unabhängig scrollbar bedienbaren Werkzeuge
+sichtbar. Aufklappen oder Scrollen der Formatierung verschiebt das Motiv nicht.
+Die ursprüngliche Übersicht und Erfassung bleiben unverändert.
+
+Elemente lassen sich mit Maus und Touch direkt auswählen, verschieben,
+am Größenanfasser skalieren und am Drehgriff frei drehen. Die Vorschau
+aktualisiert sich während der Bewegung. Farben, Schrift, Dreh-/Größenknöpfe
+und Feinabstimmung sind in der Werkzeugleiste erreichbar. Artikeldaten können
+dort ebenfalls geändert werden. Original-Wochenvorlagen behalten ihre Renderer
+und Artikel-Overrides; Getränke ihre unabhängigen Ausgabeziele.
+Änderungen bleiben bis „Gestaltung speichern“ lokal; Rückgängig sowie
+Speichern/Öffnen erhalten Artikel und Layout ohne Änderungen anderer Ziele.
+
+- TC-F19-01: Echtes Pointer-Ziehen, Skalieren und freies Drehen in der
+  gemeinsamen Aktionsvorschau mit Maus und Touch; Auswahlrahmen und Motiv
+  aktualisieren sich, ohne beim Auswählen wegzuspringen.
+- TC-F19-02: Seitliche Werkzeugleiste auf drei großen Zielgrößen, fest
+  sichtbares Motiv über den Werkzeugen auf Mobilgeräten. Farben und
+  Feinabstimmung bedienen/scrollen, ohne das Motiv aus dem sichtbaren Bereich
+  zu bewegen; keine Überläufe oder abgeschnittenen Bedienelemente.
+- TC-F19-03: Artikelname/Preis und Elementfarbe ändern, rückgängig machen,
+  Gestaltung speichern und erneut öffnen. Werte und Transformationen bleiben
+  erhalten, andere Ausgabeziele unverändert; keine impliziten Schreibzugriffe.
+- TC-F19-04: Original-Wochenvorschau mit derselben seitlichen Bedienung,
+  direktem Drehgriff und Größenanfasser bearbeiten; Original-Overrides und
+  bestehende Vorschau-/Kioskfunktionen erhalten.
 
 ## Verifikation und offene Fragen
 

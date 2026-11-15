@@ -63,7 +63,9 @@ window.AngeboteDataverse = (function () {
       title: data.title, kind: data.kind, valid_from: data.valid_from, valid_to: data.valid_to,
       layout: data.layout, items: data.items
     }));
-    return { id: response.aktion_id, data: M.clone(data), original_ids: data.items.map(function (item) { return item.id; }) };
+    var savedIds = (response.items || []).map(function (entry) { return entry.id; }).filter(Boolean);
+    return { id: response.aktion_id, data: M.clone(data),
+      original_ids: savedIds.length === data.items.length ? savedIds : data.items.map(function (item) { return item.id; }) };
   }
   async function remove(action) {
     return M.request('/api/angebote?action=delete', M.json('POST', { aktion_id: action.id, original_ids: action.original_ids }));

@@ -51,10 +51,15 @@ async function setup(page) {
           }))) });
       }
       const body = req.postDataJSON(); state.writes.push(body);
-      if (state.failSave) return json({ success: false, error: 'Die Aktion wurde zwischenzeitlich geändert. Bitte erneut öffnen.' }, 409);
+      if (state.failSave) return json({ success: false, error: 'Offer action changed; reload before saving' }, 409);
       if (url.searchParams.get('action') === 'delete') { state.actions.delete(body.aktion_id); return json({ success: true }); }
+      const canonical = (id) => id.replace(/-/g, '').toLowerCase().replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+      const existing = state.actions.get(body.aktion_id);
+      if (existing && existing.items.map((it) => canonical(it.id)).sort().join() !== body.original_ids.map(canonical).sort().join()) {
+        return json({ success: false, error: 'Offer action changed; reload before saving' }, 409);
+      }
       state.actions.set(body.aktion_id, structuredClone(body));
-      return json({ success: true, aktion_id: body.aktion_id, items: body.items });
+      return json({ success: true, aktion_id: body.aktion_id, items: body.items.map((it) => ({ id: canonical(it.id), client_id: it.id })) });
     }
     if (path === '/api/angebote-verwaltung') return json({ success: true, actions: [], config: { scale_enabled: false } });
     return json({ success: true, data: [], groups: {}, value: [] });
@@ -205,9 +210,45 @@ test('TC-F18-01/06: Sonderaktion bleibt sechszeilig; ungültige Daten und Schrei
   state.failSave = true;
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('dialog').last()).toContainText('zwischenzeitlich geändert');
+  await expect(page.getByRole('dialog').last()).not.toContainText('Offer action');
   expect(state.actions.size).toBe(0);
   await expect(dlg).toBeVisible();
   expect(state.errors).toEqual([]);
+});
+
+test('TC-F18-10: Gestaltung direkt nach dem Erfassen mehrfach speichern ohne Konflikt', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const dlg = await create(page, 'drinks');
+  await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+  for (let i = 0; i < 2; i++) {
+    await page.getByRole('button', { name: 'Gestaltung speichern', exact: true }).click();
+    await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+    await expect(page.locator('dialog.an-dialog:not(.an-cms-preview-modal)[open]')).toHaveCount(0);
+  }
+  expect(state.writes).toHaveLength(3);
+  const ids = state.writes[0].items.map((it) => it.id.replace(/-/g, '').toLowerCase());
+  expect(state.writes[2].original_ids.map((id) => id.replace(/-/g, '').toLowerCase())).toEqual(ids);
+  expect(state.writes[2].items.map((it) => it.id)).toEqual(state.writes[0].items.map((it) => it.id));
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F18-11: Meldungsfenster stehen im Kiosk mittig im sichtbaren Bereich', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/kiosk.html');
+  await page.evaluate(() => window.K.switchTab('angebote'));
+  const dlg = await create(page, 'weekly');
+  await dlg.locator('[data-f=produkt]').first().fill('Ohne Preis');
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  const message = page.getByRole('dialog').last();
+  await expect(message).toContainText('gültigen Angebotspreis');
+  const box = await message.boundingBox(), view = page.viewportSize();
+  expect(Math.abs(box.x + box.width / 2 - view.width / 2)).toBeLessThan(2);
+  expect(Math.abs(box.y + box.height / 2 - view.height / 2)).toBeLessThan(2);
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(view.width);
 });
 
 test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speicherung erhalten', async ({ page }) => {

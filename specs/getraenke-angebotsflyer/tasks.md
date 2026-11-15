@@ -50,3 +50,7 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF42 | Ausschließlich Feature-Preview nach Schema-/Datenisolationsprüfung oder ausdrücklicher Freigabe des gemeinsamen produktiven Bestands bereitstellen; keine produktiven Schreibtests | GF41 | TC-F18-05, TC-F18-06 |
 | GF43 | Blockierende Vorlagenabrufe aus Übersicht entfernen, bestehende Bilder nachladen und abgelaufene Bildlinks erneuern | GF41 | TC-F18-07, TC-F18-08 |
 | GF44 | Ursprüngliche kompakte CMS-Übersicht/Erfassung mit aufklappbaren Artikeln wiederherstellen, vier Viewports prüfen und nur Feature-Preview aktualisieren | GF43 | TC-F18-07..09 |
+| GF45 | Vorschau mit fester Zeichenfläche, seitlichen Werkzeugen und wiederverwendeter Artikelbearbeitung integrieren | GF44 | TC-F19-02, TC-F19-03 |
+| GF46 | Auswahl ohne Layoutsprung, echte Direkttransformationen und Drehgriffe für Getränke und Original-Wochenvorlagen ergänzen | GF45 | TC-F19-01, TC-F19-04 |
+| GF48 | Stabile Artikelkennungen beim Speichern, deutsche Konfliktmeldungen und zentrierte Meldungsfenster | GF44 | TC-F18-10, TC-F18-11 |
+| GF47 | Vier-Viewport-Pointer-/Speicherregression und Hilfe aktualisieren; ausschließlich Feature-Preview prüfen und bereitstellen | GF46 | TC-F19-01..04 |

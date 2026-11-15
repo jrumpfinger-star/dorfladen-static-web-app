@@ -207,7 +207,7 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-element-actions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
 .an-element-actions button{font-size:13px}
 .an-publish-actions{display:grid;gap:12px}
-.an-dialog{border:1px solid var(--an-line);border-radius:16px;background:var(--an-bg);padding:24px;width:calc(100% - 24px);max-width:640px;max-height:90dvh;overflow:auto;box-shadow:0 12px 50px #0003}
+.an-dialog{margin:auto;border:1px solid var(--an-line);border-radius:16px;background:var(--an-bg);padding:24px;width:calc(100% - 24px);max-width:640px;max-height:90dvh;overflow:auto;box-shadow:0 12px 50px #0003}
 .an-dialog::backdrop,.an-viewer::backdrop{background:#0b211cb3}
 .an-dialog h2{font-size:22px;margin-top:0}
 .an-dialog p{white-space:pre-line}

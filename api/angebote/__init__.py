@@ -634,9 +634,13 @@ def _save_action(base_url, headers, body):
             saved_id = row_id
             incoming_ids.add(row_id)
         else:
+            # The client's GUID becomes the row key so layout and image
+            # references stay valid and the next save passes the ownership check.
+            new_id = row_id or str(uuid.uuid4())
             operation = {
-                "method": "POST", "path": ENTITY_SET, "payload": row_payload,
-                "client_id": item["id"] or str(uuid.uuid4()),
+                "method": "POST", "path": ENTITY_SET,
+                "payload": {**row_payload, "dl_angeboteid": new_id},
+                "client_id": item["id"] or new_id,
             }
             saved_id = None
         operations.append(operation)
