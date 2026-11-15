@@ -10,6 +10,44 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F16: Eine kleine gemeinsame Vorschau-Bearbeitungsfläche verbindet die
+vorhandenen Elementdaten bzw. Original-Override-Metadaten mit Pointer-,
+Tastatur-, Dreh- und Skalierwerkzeugen. Der Originalrenderer liefert zusätzlich
+Trefferflächen für Plakat-Bilder und Preise; seine bestehende Zeichenlogik und
+Overrides bleiben maßgeblich. Getränkestandards speichern artikelunabhängige
+relative Elementanpassungen im Layout. Neue Vorlagen instanziieren diese für
+die jeweiligen Artikel-IDs. Der bestehende `drawSavingsBurst` rendert die
+konfigurierbaren Ersparnismarker auch für Getränke; Beispieldaten haben
+Stattpreise. Der Validator erlaubt nur bekannte Markeroptionen und begrenzte
+Gestaltungsanpassungen.
+Ein bestätigter Reset setzt nur die Vorschau des gewählten Getränkestandards
+auf `blank` plus eingebaute Vorlagenwerte zurück. Ein separater Speicherklick
+bleibt erforderlich; die Oberfläche erklärt Standard und Vorlagenbibliothek.
+
+F15: Die Übersicht verwendet eine schmale Werkzeugleiste, Wochenfilter und
+kompakte Aktionszeilen mit allen Direktaktionen. Vorschau und Teilen rendern
+den Entwurf ohne Schreibzugriff; Waage verwendet den bestehenden Versanddialog.
+`POST ?action=delete` entfernt nach Versions- und ETag-Prüfung nur den
+Aktionskopf. Unveränderliche Revisionen/Bilder werden nicht rekursiv gelöscht
+und sind ohne aktive Freigabe nicht öffentlich erreichbar.
+
+F14: Plakat-/Einzelflyer-Zeichenfunktionen und ihre reinen Helfer werden
+mechanisch aus `cms.js` in `js/wochenangebote-renderer.js` ausgelagert.
+Das CMS ruft dieselben Funktionen mit seinen bestehenden Konfigurations- und
+Override-Gettern auf. Ein Adapter im Angebotsmodell bildet Centwerte und
+authentifiziert geladene Bilder auf die ursprüngliche Artikelform ab.
+`layout.cms` speichert ausschließlich die benötigten Designwerte und die
+Overrides der Aktionsartikel. Der API-Validator erhält den begrenzten,
+JSON-validierten Snapshot auch in der öffentlichen Revision.
+Neue Wochenaktionen verwenden sechs Artikel je Originalplakat; bestehende
+freie Dokumente wechseln nur nach ausdrücklicher Bestätigung.
+Originaleinstellungen ersetzen in diesem Modus die unpassenden freien
+Elementwerkzeuge. Getränkemodell und Altbestandsdaten bleiben unverändert.
+
+Der Kiosk erhält einen normalen `panel-angebote` mit dem gemeinsamen
+`an-root` und denselben Skripten wie die eigenständige Seite. Der Reiter ruft
+`K.switchTab('angebote')` auf; kein Seitenwechsel und kein iframe.
+
 Eigene Produktdateien und Zwischenablagebilder mit Strichcode werden beim
 Übernehmen im Artikeldialog zuerst über den bestehenden authentifizierten
 `POST /api/werbebilder` unter dem Strichcode gespeichert, danach als privater
@@ -76,9 +114,9 @@ Es gibt keine neuen API- oder Speicherformate.
 | Waage | Vorhandenen `KWerbebilder`-Dialog erweitern, aktionsbezogener Dateipräfix, Gültigkeit im Server-Sollzustand |
 | Preview | PR gegen main, keine Zusammenführung; eigener Namespace und abgeschalteter echter Waagenversand |
 
-Der große bisherige CMS-Renderer bleibt bewusst erhalten: Seine Extraktion
-würde den Altbestand unnötig gefährden. Neue Wochen-/Getränkeaktionen teilen
-vollständig Editor und Renderer; der bisherige Editor bleibt für Altaktionen.
+Die frühere Entscheidung gegen eine Renderer-Extraktion wird durch F14 ersetzt:
+Die Original-Zeichenfunktionen werden gemeinsam genutzt statt nachgebildet.
+Der bisherige Editor bleibt für Altaktionen erhalten.
 
 ## Datenvertrag
 

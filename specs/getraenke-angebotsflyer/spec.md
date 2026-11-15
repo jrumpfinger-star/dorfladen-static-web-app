@@ -383,6 +383,96 @@ die normale Vorlagenauswahl per Klick bleibt erhalten.
   Fokuswiederherstellung auf allen vier Viewports prüfen. Vergrößern einer
   anderen Vorlage verändert weder Auswahl noch Entwurf/Designstandards.
 
+## F14: Tatsächliche CMS-Wochenvorlagen und Kioskeinbettung
+
+F14 ersetzt für Wochenangebote die nachgebildeten Startlayouts aus F13.
+Die neue Oberfläche bleibt erhalten. Neue Wochenaktionen übernehmen automatisch
+die gespeicherten CMS-Einstellungen für Plakat und Einzelflyer einschließlich
+Vorlagenauswahl, Farben/Verläufen, Preisschildern, Bildaufbereitung und
+artikelbezogenen Positionen. Vorschau, Druck und Waagenausgabe verwenden die
+tatsächlichen gemeinsamen CMS-Zeichenfunktionen, keinen nachgebauten
+Getränkerenderer und keinen versteckten CMS-iframe. Das klassische Plakat
+behält insbesondere ANGEBOT, Logo und das 2-mal-3-Raster.
+
+Die übernommenen Einstellungen sind ein Aktionssnapshot; spätere CMS-Änderungen
+verändern weder gespeicherte Entwürfe noch Veröffentlichungen. Bereits frei
+gestaltete Wochenaktionen werden nicht automatisch überschrieben: Eine
+ausdrückliche, bestätigte Übernahme der CMS-Vorlage ist möglich.
+Getränkegestaltungen bleiben unverändert. Ladefehler der CMS-Einstellungen
+werden angezeigt und führen nicht zu einer Getränke-Ersatzvorlage.
+Für die Originalvorlagen werden deren Einstellungen und Artikelpositionen
+angeboten, keine wirkungslosen Werkzeuge des anderen Renderers.
+
+Der Kioskreiter Angebote öffnet die gemeinsame Angebotsverwaltung als normalen
+Inhaltsbereich innerhalb des Kiosks. Kopf, Navigation und Reiterwechsel bleiben
+erhalten. Beim Wechsel zu anderen Funktionen und zurück bleibt ein ungespeicherter
+Entwurf erhalten. Der direkte eigenständige Aufruf bleibt nutzbar.
+
+- TC-F14-01: Neue Wochenaktion übernimmt unterschiedliche gespeicherte Plakat-
+  und Flyervorlagen samt Farben, Schildern und Artikelpositionen. Vorschau und
+  Druck verwenden dieselben Original-Zeichenfunktionen wie das CMS.
+- TC-F14-02: Klassische und Magazinvorlagen, Centpreise, Bilder, Rabatte und
+  Folgeseiten mit mehr als sechs Artikeln prüfen. Getränke bleiben unverändert.
+- TC-F14-03: Snapshot speichern, öffnen, veröffentlichen und öffentlich rendern;
+  spätere CMS-Änderungen ändern ihn nicht. Alte freie Wochenlayouts bleiben
+  erhalten, bis ihre bestätigte Übernahme erfolgt. Ladefehler sichtbar melden.
+- TC-F14-04: Aus dem Kiosk Angebote öffnen, bearbeiten, anderen Reiter öffnen
+  und zurückkehren: URL, Kioskmenü und Entwurf bleiben erhalten. Auf allen
+  vier Viewports auch eigenständigen Einstieg und Überlauf prüfen.
+
+## F15: Kompakte Aktionsübersicht
+
+Die Verwaltung übernimmt die kompakte Zeilenstruktur der alten CMS-Übersicht.
+Eine kleine Werkzeugleiste ersetzt die großen Einstiegskacheln. Jede Aktion
+zeigt Titel, Art, Zeitraum, Artikelzahl und Freigabestatus zusammen mit
+Bearbeiten, Vorschau, Teilen/Download, Waage, Duplizieren und Löschen.
+Desktop und ausreichend breite Tablets zeigen die Funktionen in einer Zeile;
+mobil dürfen sie platzsparend umbrechen, bleiben aber mindestens 44 px groß.
+Diese Woche, nächste Woche und alle sind direkt auswählbare Zeitraumfilter.
+Löschen verlangt eine ausdrückliche Bestätigung und eine aktuelle Version;
+eine bestehende Homepagefreigabe endet damit, bereits versandte Waagenbilder
+werden nicht implizit gelöscht. Vorschau/Teilen veröffentlichen nichts.
+
+- TC-F15-01: Übersicht zeigt ohne Einstiegskacheln kompakte Zeilen, vollständige
+  Direktaktionen und korrekte Wochenfilter auf den vier Viewports, ohne Überlauf.
+- TC-F15-02: Vorschau, Teilen/Download, Bearbeiten, Duplizieren und Waage über
+  die Zeile öffnen; keine unbeabsichtigte Freigabe. Löschen abbrechen und
+  bestätigen, Versionskonflikt behandeln und öffentliche Freigabe entfernen.
+
+## F16: Direkt bearbeitbare Vorschau und originaler Ersparnismarker
+
+Auch die Vorschau der Designstandards ist eine Bearbeitungsfläche, nicht nur
+ein Bild. Elemente auswählen, verschieben, drehen und proportional vergrößern/
+verkleinern sowie per Größenanfasser ändern funktioniert mit Maus, Touch
+und Tastatur. Änderungen werden erst mit den Designstandards gespeichert und
+gelten danach für neue Aktionen, nicht rückwirkend für bestehende Aktionen.
+In Original-Wochenvorlagen lassen sich mindestens dieselben Bild- und
+Preiselemente wie im bisherigen Plakat-/Einzelflyereditor direkt bearbeiten;
+numerische Positionen bleiben als Ergänzung erreichbar.
+
+Der vorhandene CMS-Ersparnismarker wird gemeinsam verwendet, auch im
+Getränkelayout. Typ, Farbwelt und Größe sind sichtbar auswählbar; die Optionen
+entsprechen den vorhandenen Plakat-/Einzelflyereinstellungen. Die
+Designvorschau enthält positive Stattpreise, damit der Marker tatsächlich
+sichtbar und seine Wirkung prüfbar ist. Kein Marker ohne positive Ersparnis.
+Vorschau, gespeicherte Aktion, Druck und Waage verwenden dieselben Werte.
+
+- TC-F16-01: In CMS-Designvorschau ein Element mit Maus/Touch verschieben,
+  drehen und skalieren, speichern und neu laden; neue Aktionen übernehmen
+  das Layout, bestehende Aktionen bleiben unverändert.
+- TC-F16-02: Bilder und Preise einer Original-Wochenvorlage direkt auswählen,
+  verschieben, drehen und skalieren, speichern und erneut öffnen; die
+  Original-Zeichenfunktionen verwenden die bearbeiteten Overrides.
+- TC-F16-03: Ersparnismarker mit Stattpreis sichtbar, Typ/Farbwelt/Größe ändern,
+  Vorschau und gespeicherte Ausgaben vergleichen; ohne positive Ersparnis
+  kein Marker. Alle vier Viewports und Getränke-/Wochenvorlagen prüfen.
+- TC-F16-04: „Vorlage auf Original zurücksetzen“ stellt nach Bestätigung die
+  ausgewählte eingebaute Vorlage einschließlich Marker und freier Anpassungen
+  in der Vorschau wieder her. Erst „Designstandards speichern“ ersetzt den
+  bisherigen Startstandard. Vorlagenbibliothek, andere Angebotsarten und
+  bestehende Aktionen bleiben unverändert. Die Oberfläche erklärt diesen
+  Unterschied ausdrücklich.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

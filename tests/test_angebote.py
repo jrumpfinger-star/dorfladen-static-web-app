@@ -64,6 +64,12 @@ class MemoryStore:
     def put_image(self, image_id, data, mime):
         self.create("images/" + image_id, [data, mime])
 
+    def delete(self, path, etag):
+        _, current = self.get(path)
+        if self.fail_replace or current != etag:
+            raise AngeboteFehler(409, "Konflikt")
+        del self.data[self._key(path)]
+
     def get_image(self, image_id):
         image, _ = self.get("images/" + image_id)
         return image
@@ -79,6 +85,73 @@ class AngeboteTests(unittest.TestCase):
         with self.assertRaises(AngeboteFehler) as cm:
             fn(*args, **kwargs)
         self.assertEqual(cm.exception.status, code, str(cm.exception))
+
+    def test_TC_F14_03_weekly_design_snapshot_isolated_and_public(self):
+        data = draft("weekly")
+        key = data["items"][0]["name"].lower().replace(" ", "_")
+        data["layout"]["cms"] = {
+            "config": {"plakatTemplate": "classic-red", "flyerTemplate": "modern-mag-xl",
+                       "plakat_decoBgColor": "#123456",
+                       "tplColors": {"plakat:classic-red": {"bgColor_grad": True, "bgColor_c2": "#abcdef"}}},
+            "plakat_article_overrides": {key: {"imgDx": 23, "copies": [{"type": "ghost", "dx": 12}]},
+                                       "unrelated": {"customImg": None}},
+            "flyer_article_overrides": {key: {"priceDy": -12}},
+        }
+        head = self.service.create(data)
+        self.assertNotIn("unrelated", head["draft"]["layout"]["cms"]["plakat_article_overrides"])
+        head = self.service.publish(head["id"], head["version"])
+        data["layout"]["cms"]["config"]["plakat_decoBgColor"] = "#ffffff"
+        public = self.service.public()[0]["data"]["layout"]["cms"]
+        self.assertEqual(public["config"]["plakat_decoBgColor"], "#123456")
+        self.assertEqual(public["plakat_article_overrides"][key]["imgDx"], 23)
+        duplicate = self.service.duplicate(head["id"])
+        self.assertEqual(duplicate["draft"]["layout"]["cms"], head["draft"]["layout"]["cms"])
+
+    def test_TC_F14_03_invalid_weekly_design_rejected(self):
+        for config in ({"plakatTemplate": "land", "flyerTemplate": "classic-red"},
+                       {"plakatTemplate": "classic-red", "flyerTemplate": "classic-red", "secret": "no"}):
+            data = draft("weekly")
+            data["layout"]["cms"] = {"config": config, "plakat_article_overrides": {}, "flyer_article_overrides": {}}
+            self.error(400, normalize, data)
+        data["layout"]["cms"]["config"] = {"plakatTemplate": "classic-red", "flyerTemplate": "classic-red"}
+        data["layout"]["cms"]["plakat_article_overrides"] = {"test": {"customImg": "https://example.invalid/image.png"}}
+        self.error(400, normalize, data)
+        data["layout"]["cms"]["plakat_article_overrides"] = {}
+        data["kind"] = "drinks"
+        self.error(400, normalize, data)
+
+    def test_TC_F15_02_delete_requires_current_version_and_ends_publication(self):
+        head = self.service.create(draft())
+        head = self.service.publish(head["id"], head["version"])
+        self.assertEqual(len(self.service.public()), 1)
+        self.error(409, self.service.delete, head["id"], head["version"] - 1)
+        self.store.fail_replace = True
+        self.error(409, self.service.delete, head["id"], head["version"])
+        self.assertEqual(len(self.service.public()), 1)
+        self.store.fail_replace = False
+        self.service.delete(head["id"], head["version"])
+        self.assertEqual(self.service.list(), [])
+        self.assertEqual(self.service.public(), [])
+
+    def test_TC_F16_design_adjustments_and_markers_survive_publication(self):
+        data = draft()
+        data["layout"].update({
+            "marker_type": "heart", "marker_palette": "ocean-blue", "marker_scale": 140,
+            "adjustments": {"sheet:0:image:0": {"dx": 12, "dy": -23, "scale": 1.1, "rotation": 15}},
+        })
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        public = self.service.public()[0]["data"]["layout"]
+        for key in ("marker_type", "marker_palette", "marker_scale", "adjustments"):
+            self.assertEqual(public[key], data["layout"][key])
+
+    def test_TC_F16_invalid_marker_and_transform_values_rejected(self):
+        for field, value in (("marker_type", "invalid"), ("marker_palette", "invalid"), ("marker_scale", 181),
+                             ("adjustments", {"sheet:0:image:0": {"dx": 0, "dy": 0, "scale": 4, "rotation": 0}}),
+                             ("adjustments", {"invalid": {"dx": 0, "dy": 0, "scale": 1, "rotation": 0}})):
+            data = draft()
+            data["layout"][field] = value
+            self.error(400, normalize, data)
 
     def test_TC_F2_01_exact_base_price(self):
         self.assertEqual(base_cents(draft()["items"][0]), 125)
@@ -334,6 +407,14 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.call("PUT", body={"version": 1, "data": draft()}, action_id=action["id"]).status_code, 200)
         self.assertEqual(self.call("POST", body={"version": 1}, action_id=action["id"], params={"action": "publish"}).status_code, 409)
 
+    def test_TC_F15_02_delete_HTTP_auth_and_version(self):
+        created = json.loads(self.call("POST", body={"data": draft()}).get_body())["action"]
+        args = {"action_id": created["id"], "params": {"action": "delete"}}
+        self.assertEqual(self.call("POST", body={"version": 1}, auth=False, **args).status_code, 401)
+        self.assertEqual(self.call("POST", body={"version": 0}, **args).status_code, 409)
+        self.assertEqual(self.call("POST", body={"version": 1}, **args).status_code, 200)
+        self.assertEqual(self.call(action_id=created["id"]).status_code, 404)
+
     def test_TC_F4_01_image_upload_and_private_read(self):
         from PIL import Image
         from shared.angebote_http import handle
@@ -426,6 +507,20 @@ class BlobTests(unittest.TestCase):
         upload.side_effect = ResourceModifiedError()
         with self.assertRaises(AngeboteFehler) as cm:
             store.replace("actions/test.json", {"version": 3}, "e1")
+        self.assertEqual(cm.exception.status, 409)
+
+    def test_TC_F15_02_delete_adapter_is_conditional_and_namespaced(self):
+        from azure.core import MatchConditions
+        from azure.core.exceptions import ResourceModifiedError
+        from shared.angebote_store import BlobStore
+        store = BlobStore()
+        store.delete("actions/test.json", "e1")
+        self.container.get_blob_client.assert_called_with("preview-test/actions/test.json")
+        self.container.get_blob_client.return_value.delete_blob.assert_called_once_with(
+            etag="e1", match_condition=MatchConditions.IfNotModified)
+        self.container.get_blob_client.return_value.delete_blob.side_effect = ResourceModifiedError()
+        with self.assertRaises(AngeboteFehler) as cm:
+            store.delete("actions/test.json", "e1")
         self.assertEqual(cm.exception.status, 409)
 
     def test_TC_F4_04_corrupt_storage_is_reported(self):

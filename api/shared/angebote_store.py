@@ -109,6 +109,14 @@ class BlobStore:
         self._blob("images/" + kennung(image_id)).upload_blob(
             data, overwrite=False, content_settings=ContentSettings(content_type=mime))
 
+    def delete(self, path, etag):
+        if not etag:
+            raise AngeboteFehler(409, "Der gespeicherte Angebotsstand konnte nicht bestätigt werden. Bitte neu laden.")
+        try:
+            self._blob(path).delete_blob(etag=etag, match_condition=MatchConditions.IfNotModified)
+        except (ResourceModifiedError, ResourceNotFoundError) as exc:
+            raise AngeboteFehler(409, "Das Angebot wurde gleichzeitig geändert. Bitte neu laden.") from exc
+
     def get_image(self, image_id):
         try:
             download = self._blob("images/" + kennung(image_id)).download_blob()

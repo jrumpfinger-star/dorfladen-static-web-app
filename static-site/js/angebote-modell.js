@@ -6,7 +6,7 @@ window.AngeboteModel = (function () {
   var theme = {
     font: 'Arial', title_color: '#234c38', text_color: '#24362d',
     card_background: '#ffffff', price_background: '#ffffff', price_shape: 'rect',
-    name_size: 24, price_size: 58, details_size: 17, image_rotation: 0, image_scale: 100
+    name_size: 24, price_size: 58, details_size: 17,     image_rotation: 0, image_scale: 100, marker_type: 'starburst', marker_palette: 'harmonie', marker_scale: 100
   };
   var templateStyles = [
     { id: 'land', label: 'Landladen', settings: Object.assign({}, theme, { color: '#bb421e', background: '#fffdf6' }) },
@@ -206,15 +206,12 @@ window.AngeboteModel = (function () {
         elements.push(el('shape', x + 12, y + priceY - 5, 325, style.magazine ? priceHeight + 10 : compact ? 64 : 78,
           { item_id: it.id, fill: l.price_background, shape: l.price_shape }));
         bound('price', 24, priceY, 205, priceHeight, Math.min(l.price_size, style.magazine ? 36 : compact ? 46 : 70), { bold: true, fill: priceColor(l) });
-        if (it.old_price_cents != null) bound('old_price', 236, priceY + 9, 96, style.magazine ? 30 : 42, 18, { fill: priceColor(l) });
+        bound('old_price', 236, priceY + 9, 96, style.magazine ? 30 : 42, 18, { fill: priceColor(l) });
         if (data.kind === 'drinks') {
           bound('deposit', 18, compact ? (style.magazine ? 224 : 212) : 354, 313, compact && style.magazine ? 18 : 24, Math.min(l.details_size, compact && style.magazine ? 14 : 18));
           bound('base', 18, compact ? (style.magazine ? 244 : 237) : 380, 313, compact && style.magazine ? 18 : 24, Math.min(l.details_size, compact && style.magazine ? 14 : 18));
         }
-        if (savings(it)) {
-          elements.push(el('shape', x + 14, y + 12, 72, 28, { fill: l.color, shape: 'round' }));
-          bound('discount', 14, 15, 72, 23, 16, { bold: true, align: 'center', fill: '#ffffff' });
-        }
+        bound('discount', 14, 12, 80, 60, 16, { bold: true, align: 'center', fill: '#ffffff' });
       });
       pages.push({ elements: elements, background: l.background });
     }
@@ -240,13 +237,13 @@ window.AngeboteModel = (function () {
         add('name', 24, imageHeight + 32, 372, 58, Math.min(l.name_size, 28), { bold: true });
         if (data.kind === 'drinks') add('pack', 24, 278, 372, 28, Math.min(l.details_size, 19));
         price(32, 324, 218, 58, Math.min(l.price_size, 48));
-        if (item.old_price_cents != null) add('old_price', 266, 340, 122, 34, 16);
+        add('old_price', 266, 340, 122, 34, 16);
       } else {
         add('image', 24, 24, 116, 140, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
         add('name', 154, 24, 242, 76, Math.min(l.name_size, 28), { bold: true });
         if (data.kind === 'drinks') add('pack', 154, 102, 242, 42, Math.min(l.details_size, 19));
         price(154, data.kind === 'drinks' ? 150 : 112, 242, 68, Math.min(l.price_size, 52));
-        if (item.old_price_cents != null) add('old_price', 154, 230, 242, 28, 16);
+        add('old_price', 154, 230, 242, 28, 16);
         if (item.description) add('description', 24, 276, 372, 46, 15);
       }
       if (data.kind === 'drinks') {
@@ -264,13 +261,13 @@ window.AngeboteModel = (function () {
         add('image', 44, 292, 706, style.xl ? 440 : 370, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
         if (data.kind === 'drinks') add('pack', 44, style.xl ? 744 : 674, 706, 34, l.details_size + 8);
         price(52, style.xl ? 790 : 730, 460, 90, Math.min(l.price_size + 28, 100));
-        if (item.old_price_cents != null) add('old_price', 540, style.xl ? 810 : 750, 210, 42, 22);
+        add('old_price', 540, style.xl ? 810 : 750, 210, 42, 22);
       } else {
         add('image', 44, 44, 260, 440, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
         add('name', 330, 150, 420, 150, Math.min(l.name_size + 18, 60), { bold: true });
         if (data.kind === 'drinks') add('pack', 330, 306, 420, 60, l.details_size + 8);
         price(330, 376, 420, 132, Math.min(l.price_size + 28, 100));
-        if (item.old_price_cents != null) add('old_price', 330, 526, 420, 42, 22);
+        add('old_price', 330, 526, 420, 42, 22);
         if (item.description) add('description', 44, 600, 706, 110, 22);
       }
       if (data.kind === 'drinks') {
@@ -286,7 +283,7 @@ window.AngeboteModel = (function () {
       add('name', 286, 62, 486, 72, 50, { bold: true });
       if (data.kind === 'drinks') add('pack', 286, 142, 486, 38, 23);
       price(286, 188, 330, 88, 70);
-      if (item.old_price_cents != null) add('old_price', 632, 210, 140, 42, 20);
+      add('old_price', 632, 210, 140, 42, 20);
       if (item.description) add('description', 286, 290, 486, 32, 20);
       if (data.kind === 'drinks') {
         add('deposit', 286, 328, 486, 34, 20);
@@ -294,11 +291,9 @@ window.AngeboteModel = (function () {
       }
       add('period', 286, 414, 486, 24, 14);
     }
-    if (savings(item)) {
-      var badgeY = target === 'single' && style.magazine ? 292 : 24;
-      add('shape', 24, badgeY, 82, 30, 20, { fill: l.color, shape: 'round' });
-      add('discount', 24, badgeY + 3, 82, 24, 18, { fill: '#ffffff', bold: true, align: 'center' });
-    }
+    var badgeY = target === 'single' && style.magazine ? 292 : 24;
+    add('discount', 24, badgeY, 82, 64, 18, { fill: '#ffffff', bold: true, align: 'center' });
+    adjustElements(data, target, elements, size.w, size.h);
     return { item_id: id, elements: elements, background: l.background, width: size.w, height: size.h };
   }
   function ensureTargets(data) {
@@ -324,7 +319,140 @@ window.AngeboteModel = (function () {
     });
   }
   function applyTemplate(data) {
+    if (data.layout.cms) { data.layout.density = 6; syncWeeklyOverrides(data); }
     data.layout.pages = templates(data); data.layout.mode = 'template'; ensureTargets(data);
+    data.layout.pages.forEach(function (page) { adjustElements(data, 'sheet', page.elements, W, H); });
+  }
+  function adjustmentKey(data, target, element, elements) {
+    var index = data.items.findIndex(function (it) { return it.id === element.item_id; });
+    var matches = elements.filter(function (entry) { return entry.type === element.type && entry.item_id === element.item_id; });
+    return target + ':' + (index < 0 ? 'page' : index % data.layout.density) + ':' + element.type + ':' + matches.indexOf(element);
+  }
+  function updateAdjustment(layout, key, delta) {
+    if (!layout.adjustments) layout.adjustments = {};
+    var value = layout.adjustments[key] || { dx: 0, dy: 0, scale: 1, rotation: 0 };
+    value.dx = Math.max(-1000, Math.min(1000, value.dx + (delta.dx || 0)));
+    value.dy = Math.max(-1500, Math.min(1500, value.dy + (delta.dy || 0)));
+    value.scale = Math.max(.2, Math.min(3, value.scale * (delta.scale || 1)));
+    value.rotation = ((value.rotation + (delta.rotation || 0) + 540) % 360) - 180;
+    layout.adjustments[key] = value;
+  }
+  function adjustElements(data, target, elements, width, height) {
+    elements.forEach(function (element) {
+      var value = (data.layout.adjustments || {})[adjustmentKey(data, target, element, elements)];
+      if (!value) return;
+      var oldW = element.w, oldH = element.h;
+      element.rotation = ((element.rotation + value.rotation + 540) % 360) - 180;
+      var angle = element.rotation * Math.PI / 180, cos = Math.abs(Math.cos(angle)), sin = Math.abs(Math.sin(angle));
+      var factor = Math.min(value.scale, width / (cos * oldW + sin * oldH), height / (sin * oldW + cos * oldH));
+      element.w = Math.max(8, oldW * factor); element.h = Math.max(8, oldH * factor);
+      var halfW = (cos * element.w + sin * element.h) / 2, halfH = (sin * element.w + cos * element.h) / 2;
+      var centerX = element.x + oldW / 2 + value.dx, centerY = element.y + oldH / 2 + value.dy;
+      element.x = Math.max(halfW, Math.min(width - halfW, centerX)) - element.w / 2;
+      element.y = Math.max(halfH, Math.min(height - halfH, centerY)) - element.h / 2;
+      element.font_size = Math.max(10, Math.min(160, element.font_size * factor));
+    });
+  }
+  var weeklySource = null;
+  function weeklyKey(item) { return item.name.trim().toLowerCase().replace(/\s+/g, '_'); }
+  function syncWeeklyOverrides(data) {
+    if (!weeklySource) return;
+    ['plakat_article_overrides', 'flyer_article_overrides'].forEach(function (key) {
+      var source = weeklySource[key] || {}, selected = data.layout.cms[key];
+      data.items.forEach(function (item) {
+        var id = weeklyKey(item), found = source[id] || source[item.article_number] || source[item.barcode];
+        if (found && !selected[id]) selected[id] = clone(found);
+      });
+    });
+  }
+  async function adoptWeekly(data) {
+    var result = await request('/api/cms-config');
+    if (!result.data || typeof result.data !== 'object') throw problem('Die gespeicherten Wochenvorlagen konnten nicht geladen werden. Bitte erneut versuchen.');
+    var R = window.WochenangeboteRenderer;
+    var config = clone(R.CFG_DEFAULTS), saved = result.data.design_config || {};
+    Object.keys(config).concat(['tplColors']).forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(saved, key)) config[key] = clone(saved[key]);
+    });
+    weeklySource = result.data;
+    data.layout.cms = { config: config, plakat_article_overrides: {}, flyer_article_overrides: {} };
+    data.layout.template = config.plakatTemplate; data.layout.density = 6;
+    applyTemplate(data);
+  }
+  function weeklySnapshot(data) {
+    var snapshot = clone(data.layout.cms);
+    ['plakat_article_overrides', 'flyer_article_overrides'].forEach(function (key) {
+      var selected = {};
+      data.items.forEach(function (item) { var id = weeklyKey(item); if (snapshot[key][id]) selected[id] = snapshot[key][id]; });
+      snapshot[key] = selected;
+    });
+    return snapshot;
+  }
+  function changeWeekly(data, element, delta) {
+    var item = data.items.find(function (it) { return it.id === element.itemId; });
+    var key = weeklyKey(item), overrides = data.layout.cms[element.group];
+    var renderer = window.WochenangeboteRenderer.create({});
+    var defaults = element.group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault();
+    var value = Object.assign(defaults, overrides[key] || {}), prefix = element.ovKey;
+    if (prefix === 'copy') { value.copies = clone(value.copies || []); value = value.copies[element.copyIdx]; prefix = ''; }
+    if (!value) throw problem('Dieses Vorschau-Element ist nicht mehr vorhanden. Bitte die Vorschau erneut öffnen.');
+    var unit = element.unitScale || 1;
+    var dxKey = prefix ? prefix + 'Dx' : 'dx', dyKey = prefix ? prefix + 'Dy' : 'dy';
+    var scaleKey = prefix ? prefix + 'Scale' : 'scale', rotKey = prefix ? prefix + 'Rot' : 'rot';
+    value[dxKey] = Math.max(-1000, Math.min(1000, (value[dxKey] || 0) + (delta.dx || 0) / unit));
+    value[dyKey] = Math.max(-1500, Math.min(1500, (value[dyKey] || 0) + (delta.dy || 0) / unit));
+    value[scaleKey] = Math.max(20, Math.min(200, (value[scaleKey] || 100) * (delta.scale || 1)));
+    value[rotKey] = (((value[rotKey] || 0) + (delta.rotation || 0) * element.rotationSign + 540) % 360) - 180;
+    if (prefix) overrides[key] = value;
+    else overrides[key].copies[element.copyIdx] = value;
+  }
+  async function weeklyRender(data, pageNumber, scale, itemId, card) {
+    var R = window.WochenangeboteRenderer, snapshot = weeklySnapshot(data);
+    snapshot.config = Object.assign({}, R.CFG_DEFAULTS, snapshot.config);
+    var items = itemId ? data.items.filter(function (it) { return it.id === itemId; }) : data.items.slice(pageNumber * 6, pageNumber * 6 + 6);
+    var logo = await image('logo'), logoCanvas = document.createElement('canvas');
+    logoCanvas.width = logo.width; logoCanvas.height = logo.height; logoCanvas.getContext('2d').drawImage(logo, 0, 0);
+    var renderer = R.create({
+      cfgGet: function () { return snapshot.config; }, logo: logoCanvas.toDataURL('image/png'),
+      flyerArtOverrideGet: function (it) { return snapshot.flyer_article_overrides[it.key] || null; },
+      plakatArtOverrideGet: function (it) { return snapshot.plakat_article_overrides[it.key] || null; }
+    });
+    var originalItems = [], images = [];
+    for (var it of items) {
+      var img = it.image_id ? await image(it.image_id) : null, source = '';
+      if (img) {
+        var converted = document.createElement('canvas'); converted.width = img.width; converted.height = img.height;
+        converted.getContext('2d').drawImage(img, 0, 0); source = converted.toDataURL('image/png');
+      }
+      originalItems.push({ key: weeklyKey(it), produkt: it.name, details: it.description, artikelnummer: it.article_number,
+        preis: it.price_cents == null ? 0 : it.price_cents / 100, statt_preis: it.old_price_cents == null ? null : it.old_price_cents / 100, bild_data: source });
+      images.push(img);
+    }
+    var action = { von: data.valid_from, bis: data.valid_to, titel: data.title, items: originalItems };
+    var timer;
+    try {
+      var drawing = itemId && !card
+        ? renderer.generateEinzelflyer(originalItems[0], action, snapshot.config, { scale: scale || 1 })
+        : new Promise(function (resolve) {
+          renderer.drawAngebotPlakat(action, originalItems, images, resolve, snapshot.config, { scale: scale || 1, returnCanvas: true });
+        });
+      var canvas = await Promise.race([drawing, new Promise(function (_, reject) {
+        timer = setTimeout(function () { reject(problem('Die Wochenvorlage konnte nicht vollständig dargestellt werden. Bitte Bilder und Design prüfen und erneut versuchen.')); }, 30000);
+      })]);
+      if (!canvas) throw problem('Die Wochenvorlage konnte nicht dargestellt werden. Bitte erneut versuchen.');
+      var group = itemId && !card ? 'flyer_article_overrides' : 'plakat_article_overrides';
+      var magazine = /^modern-mag/.test(snapshot.config[group === 'flyer_article_overrides' ? 'flyerTemplate' : 'plakatTemplate']);
+      canvas._weeklyElements = (canvas._elMeta || []).map(function (meta) {
+        var it = itemId ? items[0] : items.find(function (it) { return weeklyKey(it) === meta.itemKey; });
+        if (!it) return null;
+        var override = snapshot[group][weeklyKey(it)] || {}, sign = !magazine && meta.ovKey === 'img' ? -1 : 1;
+        var rot = meta.ovKey === 'copy' ? ((override.copies || [])[meta.copyIdx] || {}).rot : override[meta.ovKey + 'Rot'];
+        var baseRotation = !magazine && meta.ovKey === 'img' ? -snapshot.config.imgRotation * (group === 'plakat_article_overrides' ? .85 : 1) : 0;
+        return Object.assign({}, meta, { id: it.id + ':' + meta.id, itemId: it.id, label: meta.label + ' · ' + it.name,
+          group: group, rotation: baseRotation + (rot || 0) * sign, rotationSign: sign, unitScale: 1 });
+      }).filter(Boolean);
+      canvas._weeklyWidth = W; canvas._weeklyHeight = H;
+      return { canvas: canvas, errors: [] };
+    } finally { clearTimeout(timer); }
   }
   function textFor(element, data, pageNumber) {
     var it = data.items.find(function (i) { return i.id === element.item_id; });
@@ -434,6 +562,14 @@ window.AngeboteModel = (function () {
           ctx.fillStyle = '#53644f'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
           ctx.fillText('Produktbild', element.w / 2, element.h / 2);
         }
+      } else if (element.type === 'discount') {
+        var discount = textFor(element, data, pageNumber);
+        if (discount) {
+          var marker = window.WochenangeboteRenderer.create({});
+          var radius = Math.min(element.w, element.h) / 3.8 * (data.layout.marker_scale || 100) / 100;
+          marker.drawSavingsBurst(ctx, element.w / 2, element.h / 2, radius, radius * .62, discount, 'plakat',
+            { savingsMarkerType: data.layout.marker_type || 'starburst', savingsPalette: data.layout.marker_palette || 'harmonie', savingsScalePlakat: 100 });
+        }
       } else {
         var value = textFor(element, data, pageNumber);
         var fit = fitted(ctx, element, value);
@@ -458,12 +594,40 @@ window.AngeboteModel = (function () {
   async function render(data, pageNumber, scale) {
     var page = data.layout.pages[pageNumber];
     if (!page) throw problem('Diese Flyerseite ist nicht vorhanden.');
+    if (data.kind === 'weekly' && data.layout.cms) return weeklyRender(data, pageNumber, scale);
     return renderElements(data, page.elements, W, H, page.background || data.layout.background, scale, pageNumber);
   }
   async function renderTarget(data, target, itemId, scale) {
     var size = targetSizes[target], targets = data.layout.targets && data.layout.targets[target] || [];
     var selected = targets.find(function (entry) { return entry.item_id === itemId; });
     if (!size || !selected) throw problem('Diese Zielgestaltung ist nicht vorhanden.');
+    if (data.kind === 'weekly' && data.layout.cms) {
+      var rendered = await weeklyRender(data, 0, scale, itemId, target === 'card');
+      if (target === 'single') return rendered;
+      var source = rendered.canvas, output = document.createElement('canvas'), factor = scale || 1;
+      output.width = Math.round(size.w * factor); output.height = Math.round(size.h * factor);
+      var ctx = output.getContext('2d');
+      ctx.fillStyle = data.layout.cms.config.flyer_decoBgColor; ctx.fillRect(0, 0, output.width, output.height);
+      if (target === 'card') {
+        var rect = source._offerCards[0], fit = Math.min(output.width / rect.w, output.height / rect.h);
+        ctx.drawImage(source, rect.x * factor, rect.y * factor, rect.w * factor, rect.h * factor,
+          (output.width - rect.w * fit) / 2, (output.height - rect.h * fit) / 2, rect.w * fit, rect.h * fit);
+        output._weeklyElements = source._weeklyElements.map(function (entry) {
+          var ratio = fit / factor;
+          return Object.assign({}, entry, { x: (entry.x - rect.x) * ratio + (size.w - rect.w * ratio) / 2,
+            y: (entry.y - rect.y) * ratio + (size.h - rect.h * ratio) / 2, w: entry.w * ratio, h: entry.h * ratio, unitScale: ratio });
+        });
+      } else {
+        var ratio = Math.min(output.width / source.width, output.height / source.height);
+        ctx.drawImage(source, (output.width - source.width * ratio) / 2, (output.height - source.height * ratio) / 2, source.width * ratio, source.height * ratio);
+        output._weeklyElements = source._weeklyElements.map(function (entry) {
+          return Object.assign({}, entry, { x: entry.x * ratio + (size.w - W * ratio) / 2,
+            y: entry.y * ratio + (size.h - H * ratio) / 2, w: entry.w * ratio, h: entry.h * ratio, unitScale: ratio });
+        });
+      }
+      output._weeklyWidth = size.w; output._weeklyHeight = size.h;
+      return { canvas: output, errors: [] };
+    }
     return renderElements(data, selected.elements, size.w, size.h, selected.background || data.layout.background, scale, 0);
   }
   async function paintCards(host, data) {
@@ -603,6 +767,9 @@ window.AngeboteModel = (function () {
     return Array.from(new Uint8Array(bytes), function (b) { return b.toString(16).padStart(2, '0'); }).join('').slice(0, length);
   }
   return { W: W, H: H, targetSizes: targetSizes, uid: uid, clone: clone, esc: esc, money: money, cents: cents,
+    adjustmentKey: adjustmentKey, updateAdjustment: updateAdjustment,
+    adoptWeekly: adoptWeekly, weeklyKey: weeklyKey, weeklySnapshot: weeklySnapshot,
+    changeWeekly: changeWeekly,
     litres: litres, millilitres: millilitres, base: base, pack: pack, date: date,
     today: today, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
     ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,

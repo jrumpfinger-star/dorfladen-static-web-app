@@ -4,7 +4,16 @@ window.AngeboteDesign = (function () {
   var controlId = 0;
   var choicePaint = new WeakMap();
   var choiceState = new WeakMap(), previewDialog = null;
+  var elementLabels = { image: 'Produktbild', logo: 'Dorfladen-Logo', shape: 'Fläche', text: 'Eigener Text',
+    brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile', name: 'Artikelname',
+    description: 'Beschreibung', pack: 'Gebinde', price: 'Preis', old_price: 'Stattpreis',
+    discount: 'Ersparnismarker', deposit: 'Pfand', base: 'Literpreis' };
   var modes = [['paper', 'A4 / PDF'], ['cards', 'Handy / Kiosk'], ['scale-large', 'Waage · 800 × 462'], ['scale-small', 'Waage · 800 × 280']];
+  var markerTypes = [['starburst', 'Stern (Zacken)'], ['badge', 'Kreis'], ['pill', 'Kapsel'], ['flag', 'Fahne'],
+    ['hexburst', 'Sechszack'], ['diamond', 'Raute'], ['shield', 'Schild'], ['ribbon', 'Band'], ['explosion', 'Explosion'], ['heart', 'Herz']];
+  var markerPalettes = [['harmonie', 'Harmonie Grün'], ['classic-red', 'Klassisch Rot'], ['warm-copper', 'Warmes Kupfer'],
+    ['berry-purple', 'Beere Violett'], ['ocean-blue', 'Ozean Blau'], ['sunset-orange', 'Sonnenuntergang Orange'],
+    ['fresh-lime', 'Frische Limette'], ['deep-rose', 'Dunkle Rose'], ['midnight-gold', 'Mitternacht Gold'], ['arctic-teal', 'Arktis Türkis']];
   var definitions = [
     ['template', 'Vorlage als Startpunkt', M.templateOptions],
     ['density', 'Artikel je Vorlagenseite', [['4', '4 · großzügig'], ['6', '6 · kompakt']]],
@@ -17,9 +26,41 @@ window.AngeboteDesign = (function () {
     ['price_size', 'Preis · Schriftgröße', 'number', 14, 100],
     ['details_size', 'Gebinde / Pfand / Literpreis · Schriftgröße', 'number', 14, 100],
     ['image_rotation', 'Produktbild · Drehung in Grad', 'number', -180, 180],
-    ['image_scale', 'Produktbild · Größe in Prozent', 'number', 20, 200]
+    ['image_scale', 'Produktbild · Größe in Prozent', 'number', 20, 200],
+    ['marker_type', 'Ersparnis-Marker Typ', markerTypes],
+    ['marker_palette', 'Ersparnis-Farbwelt', markerPalettes],
+    ['marker_scale', 'Ersparnis-Marker Größe %', 'number', 80, 180]
   ];
   function controls(layout) {
+    if (layout.cms) {
+      var cfg = layout.cms.config;
+      return '<p class="an-note">Originale CMS-Wochenvorlagen · gespeicherte Einstellungen dieser Aktion. Kein Getränkelayout.</p>'
+        + '<div class="an-fields">' + ['plakat', 'flyer'].map(function (kind) {
+          var label = kind === 'plakat' ? 'Sammelflyer / Kachel' : 'Einzelflyer / Waage';
+          return '<label class="an-field"><span>' + label + ' · Originalvorlage</span><select data-cms-config="' + kind + 'Template">'
+            + M.templateOptions.slice(2).map(function (option) { return '<option value="' + option[0] + '"' + (cfg[kind + 'Template'] === option[0] ? ' selected' : '') + '>' + option[1] + '</option>'; }).join('')
+            + '</select></label>'
+            + [['decoBgColor', 'Hintergrund'], ['decoTitleColor', 'Überschrift']].map(function (field) {
+              return '<label class="an-field"><span>' + label + ' · ' + field[1] + '</span><input type="color" data-cms-config="' + kind + '_' + field[0] + '" value="' + M.esc(cfg[kind + '_' + field[0]]) + '"></label>';
+            }).join('')
+            + '<label class="an-field"><span>' + label + ' · Preisschildform</span><select data-cms-config="' + kind + '_tagShape">'
+            + ['rect', 'rounded', 'circle', 'pill', 'banner', 'star', 'hexagon', 'diamond', 'ticket', 'explosion', 'trapez'].map(function (shape, n) {
+              var labels = ['Rechteck', 'Abgerundet', 'Kreis', 'Kapsel', 'Banner', 'Stern', 'Sechseck', 'Raute', 'Ticket', 'Zacken', 'Trapez'];
+              return '<option value="' + shape + '"' + (cfg[kind + '_tagShape'] === shape ? ' selected' : '') + '>' + labels[n] + '</option>';
+            }).join('') + '</select></label>';
+        }).join('') + [['priceFontPlakat', 'Preisgröße Sammelflyer', 14, 100], ['priceFontFlyer', 'Preisgröße Einzelflyer', 14, 160],
+          ['imgRotation', 'Bilddrehung', -180, 180], ['plakat_imgScale', 'Bildgröße Sammelflyer %', 20, 200],
+          ['flyer_imgScale', 'Bildgröße Einzelflyer %', 20, 200]].map(function (field) {
+          return '<label class="an-field"><span>' + field[1] + '</span><input type="number" data-cms-config="' + field[0] + '" min="' + field[2] + '" max="' + field[3] + '" value="' + cfg[field[0]] + '"></label>';
+        }).join('') + '</div><fieldset class="an-choice-group"><legend>Ersparnis-Marker</legend><div class="an-fields">'
+        + [['savingsMarkerType', 'Ersparnis-Marker Typ', markerTypes], ['savingsPalette', 'Ersparnis-Farbwelt', markerPalettes]].map(function (field) {
+          return '<label class="an-field"><span>' + field[1] + '</span><select data-cms-config="' + field[0] + '">' + field[2].map(function (option) {
+            return '<option value="' + option[0] + '"' + (cfg[field[0]] === option[0] ? ' selected' : '') + '>' + option[1] + '</option>';
+          }).join('') + '</select></label>';
+        }).join('') + [['savingsScalePlakat', 'Markergröße Plakat %'], ['savingsScaleFlyer', 'Markergröße Einzelflyer %']].map(function (field) {
+          return '<label class="an-field"><span>' + field[1] + '</span><input type="number" min="80" max="180" data-cms-config="' + field[0] + '" value="' + cfg[field[0]] + '"></label>';
+        }).join('') + '</div></fieldset>';
+    }
     var id = ++controlId;
     function choices(key, title, options) {
       var isTemplate = key === 'template';
@@ -171,7 +212,7 @@ window.AngeboteDesign = (function () {
     var d = M.blank(kind, layout); d.title = kind === 'drinks' ? 'Getränkeangebote · Designvorschau' : 'Wochenangebote · Designvorschau';
     for (var n = 0; n < layout.density; n++) {
       var it = M.item(); Object.assign(it, { name: (kind === 'drinks' ? 'Getränk' : 'Artikel') + ' – Beispiel ' + (n + 1),
-        price_cents: 1249, units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 });
+        price_cents: 1249, old_price_cents: 1499, units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 });
       d.items.push(it);
     }
     M.applyTemplate(d);
@@ -182,42 +223,67 @@ window.AngeboteDesign = (function () {
     root.dataset.mounted = 'true'; root.classList.add('an-design');
     root.innerHTML = '<p role="status">Die Getränkeflyer-Einstellungen werden geladen …</p>';
     try {
-      var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, kind = 'drinks', mode = 'paper', ticket = 0;
+      var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, kind = 'drinks', mode = 'paper', ticket = 0, surface = null;
       function html() {
-        root.innerHTML = '<div class="an-note">Standards für neue Aktionen. Bestehende individuelle Flyer und veröffentlichte Angebote bleiben unverändert.</div>'
+        root.innerHTML = '<div class="an-note">Speichern ersetzt den bisherigen Startstandard für neue Getränkeaktionen – nicht die eingebauten Vorlagen. Bestehende Flyer und veröffentlichte Angebote bleiben unverändert.</div>'
           + '<div class="an-design-layout"><section class="an-card"><h2>Getränkeflyer-Design</h2>'
-          + '<label class="an-field"><span>Standards bearbeiten für</span><select data-design-kind><option value="drinks">Getränkeangebote</option><option value="weekly">Neue Wochenangebote</option></select></label>'
+          + '<p>Standards für Getränkeangebote. Wochenangebote verwenden die gespeicherten Originalvorlagen aus dem <a href="/cms.html?tab=cfg">CMS-Wochenangebotsdesign</a>.</p>'
           + '<div data-design-fields>' + controls(design[kind]) + '</div>'
           + '<div class="an-actions"><button type="button" class="an-primary" data-design-save>Designstandards speichern</button>'
+          + '<button type="button" data-design-reset>Vorlage auf Original zurücksetzen</button>'
           + '<button type="button" data-design-copy>Bisherige Flyer-Farben übernehmen</button></div><p data-design-status role="status"></p></section>'
           + '<section class="an-preview"><div class="an-preview-head"><h2>Live-Vorschau · Beispieldaten</h2>'
           + '</div>' + previewTabs(mode, 'data-design-mode')
           + '<div data-design-preview></div></section></div>';
-        root.querySelector('[data-design-kind]').value = kind;
         preview().catch(M.error);
       }
       async function preview() {
         var current = ++ticket, data = sample(design[kind], kind), host = root.querySelector('[data-design-preview]');
         await previewChoices(root, design[kind], kind);
         if (current !== ticket) return;
-        if (mode === 'cards') {
-          data.items = data.items.slice(0, 1);
-          host.innerHTML = cards(data);
-          await M.paintCards(host, data); return;
-        }
-        var canvas = await outputPreview(data, mode, 0);
+        var target = mode === 'paper' ? 'sheet' : mode === 'cards' ? 'card' : 'scale';
+        var source = target === 'sheet' ? data.layout.pages[0] : data.layout.targets[target][0];
+        var rendered = target === 'sheet' ? await M.render(data, 0, 1) : await M.renderTarget(data, target, data.items[0].id, 1);
         if (current !== ticket) return;
-        canvas.style.width = '100%'; canvas.style.height = 'auto'; canvas.setAttribute('aria-label', 'Live-Vorschau der Designstandards');
-        host.replaceChildren(canvas);
+        if (!surface) {
+          surface = window.AngeboteVorschauEditor.mount(host, {
+            change: function (element, delta) {
+              if (delta.dx) delta.dx /= element.unitScale;
+              if (delta.dy) delta.dy /= element.unitScale;
+              M.updateAdjustment(design[kind], element.id, delta);
+              root.querySelector('[data-design-status]').textContent = 'Geändert · noch nicht gespeichert';
+              preview().catch(M.error);
+            }
+          });
+        }
+        var canvas = rendered.canvas, width = canvas.width, height = canvas.height, ratio = 1, offsetX = 0, offsetY = 0;
+        if (mode === 'scale-small') {
+          var fitted = document.createElement('canvas'); fitted.width = 800; fitted.height = 280;
+          var ctx = fitted.getContext('2d'); ctx.fillStyle = data.layout.background; ctx.fillRect(0, 0, 800, 280);
+          ratio = Math.min(800 / width, 280 / height); offsetX = (800 - width * ratio) / 2; offsetY = (280 - height * ratio) / 2;
+          ctx.drawImage(canvas, offsetX, offsetY, width * ratio, height * ratio); canvas = fitted; width = 800; height = 280;
+        }
+        canvas.setAttribute('aria-label', 'Live-Vorschau der Designstandards');
+        surface.update(canvas, source.elements.filter(function (element) { return !element.hidden; }).map(function (element) {
+          return { id: M.adjustmentKey(data, target, element, source.elements), type: element.type, label: elementLabels[element.type] + (element.item_id ? ' · ' + (data.items.findIndex(function (it) { return it.id === element.item_id; }) + 1) : ''),
+            x: element.x * ratio + offsetX, y: element.y * ratio + offsetY, w: element.w * ratio, h: element.h * ratio, rotation: element.rotation, unitScale: ratio };
+        }), width, height);
       }
       root.addEventListener('change', function (e) {
-        if (e.target.matches('[data-design-kind]')) { kind = e.target.value; root.querySelector('[data-design-fields]').innerHTML = controls(design[kind]); }
-        if (change(design[kind], e.target) || e.target.matches('[data-design-kind]')) preview().catch(M.error);
+        if (change(design[kind], e.target)) preview().catch(M.error);
         if (e.target.dataset.style) root.querySelector('[data-design-status]').textContent = 'Geändert · noch nicht gespeichert';
       });
       root.addEventListener('click', async function (e) {
         var tab = e.target.closest('[data-design-mode]');
         if (tab) { mode = tab.dataset.designMode; selectPreview(root, mode, 'data-design-mode'); preview().catch(M.error); return; }
+        if (e.target.closest('[data-design-reset]')) {
+          if (!(await M.dialog('Vorlage auf Original zurücksetzen?', 'Farben, Größen, Ersparnismarker und freie Anpassungen werden in der Vorschau auf die Originalwerte der ausgewählten Vorlage zurückgesetzt. Erst „Designstandards speichern“ übernimmt dies als Startstandard für neue Aktionen. Bestehende Flyer bleiben erhalten.', 'Vorschau zurücksetzen'))) return;
+          var reset = M.blank(kind).layout; M.useTemplate(reset, design[kind].template);
+          design[kind] = reset; root.querySelector('[data-design-fields]').innerHTML = controls(reset);
+          root.querySelector('[data-design-status]').textContent = 'Originalwerte in der Vorschau · noch nicht gespeichert';
+          try { await preview(); } catch (error) { await M.error(error); }
+          return;
+        }
         var save = e.target.closest('[data-design-save]'), copy = e.target.closest('[data-design-copy]');
         if (!save && !copy) return;
         var button = save || copy; button.disabled = true;

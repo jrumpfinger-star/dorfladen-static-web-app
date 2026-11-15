@@ -2,6 +2,7 @@
 
 import copy
 import hashlib
+import json
 import logging
 import math
 import re
@@ -24,7 +25,78 @@ THEME_DEFAULTS = {
     "card_background": "#ffffff", "price_background": "#ffffff",
     "price_shape": "rect", "name_size": 24, "price_size": 58, "details_size": 17,
     "image_rotation": 0, "image_scale": 100,
+    "marker_type": "starburst", "marker_palette": "harmonie", "marker_scale": 100,
 }
+MARKER_TYPES = ("starburst", "badge", "pill", "flag", "hexburst", "diamond", "shield", "ribbon", "explosion", "heart")
+MARKER_PALETTES = ("harmonie", "classic-red", "warm-copper", "berry-purple", "ocean-blue",
+                   "sunset-orange", "fresh-lime", "deep-rose", "midnight-gold", "arctic-teal")
+CMS_CONFIG_KEYS = set((
+    "bgColor tagColor leafColor titleColor decoFooterColor imgRotation imgFreistellen "
+    "imgThreshold imgMaxScale priceFontFlyer priceFontPlakat stattColor tagSkew "
+    "tagShape tagRadius tagPreset showLeaf leafSize showBag showTexture "
+    "savingsMarkerType savingsPalette savingsScalePlakat savingsScaleFlyer "
+    "plakatTemplate flyerTemplate tplColors"
+).split())
+CMS_CONFIG_KEYS.update(
+    f"{kind}_{key}" for kind in ("plakat", "flyer") for key in (
+        "tagPreset tagShape tagRadius tagSkew tagScale decoLeafColor decoTitleColor "
+        "decoBgColor decoFooterColor vorratColor showLeaf leafSize showBag "
+        "showTexture imgScale borderWidth borderColor imgAnchorX imgAnchorY "
+        "priceAnchorX priceAnchorY imgWidthPct"
+    ).split()
+)
+
+
+def _cms_design(raw, items):
+    if (not isinstance(raw, dict)
+            or set(raw) != {"config", "plakat_article_overrides", "flyer_article_overrides"}
+            or not isinstance(raw["config"], dict)
+            or set(raw["config"]) - CMS_CONFIG_KEYS):
+        raise AngeboteFehler(400, "Bitte die gespeicherte Wochenvorlage prüfen.")
+    for key in ("plakatTemplate", "flyerTemplate"):
+        if raw["config"].get(key) not in TEMPLATES[2:]:
+            raise AngeboteFehler(400, "Bitte eine gültige CMS-Wochenvorlage wählen.")
+    count = 0
+
+    def check(value, depth=0):
+        nonlocal count
+        count += 1
+        if count > 20000 or depth > 8:
+            raise AngeboteFehler(400, "Die Wochenvorlage ist zu umfangreich.")
+        if value is None or isinstance(value, bool):
+            return
+        if isinstance(value, (int, float)) and math.isfinite(value) and abs(value) <= 100000000:
+            return
+        if isinstance(value, str) and len(value) <= 700000:
+            return
+        if isinstance(value, list):
+            for entry in value:
+                check(entry, depth + 1)
+            return
+        if isinstance(value, dict):
+            for key, entry in value.items():
+                if not isinstance(key, str) or key in ("__proto__", "prototype", "constructor") or len(key) > 200:
+                    raise AngeboteFehler(400, "Bitte die Wochenvorlage prüfen.")
+                if key == "customImg" and entry is not None and (
+                        not isinstance(entry, str) or not re.fullmatch(
+                            r"data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=\r\n]+", entry)):
+                    raise AngeboteFehler(400, "Bitte das Zusatzbild der Wochenvorlage prüfen.")
+                check(entry, depth + 1)
+            return
+        raise AngeboteFehler(400, "Bitte die Werte der Wochenvorlage prüfen.")
+
+    check(raw)
+    if len(json.dumps(raw, ensure_ascii=False).encode("utf-8")) > 1000000:
+        raise AngeboteFehler(413, "Die Wochenvorlage ist zu umfangreich. Bitte weniger Zusatzbilder verwenden.")
+    result = copy.deepcopy(raw)
+    known = {re.sub(r"\s+", "_", item["name"].strip().lower()) for item in items}
+    for key in ("plakat_article_overrides", "flyer_article_overrides"):
+        if not isinstance(result[key], dict):
+            raise AngeboteFehler(400, "Bitte die Artikelpositionen der Wochenvorlage prüfen.")
+        result[key] = {key: value for key, value in result[key].items() if key in known}
+        if any(not isinstance(value, dict) for value in result[key].values()):
+            raise AngeboteFehler(400, "Bitte die Artikelpositionen der Wochenvorlage prüfen.")
+    return result
 
 
 class AngeboteFehler(Exception):
@@ -205,10 +277,31 @@ def _layout(raw, items):
             value = _number(value, "die Bilddrehung", -180, 180)
         elif key == "image_scale":
             value = _number(value, "die Bildgröße", 20, 200)
+        elif key == "marker_type" and value not in MARKER_TYPES:
+            raise AngeboteFehler(400, "Bitte einen gültigen Ersparnismarker wählen.")
+        elif key == "marker_palette" and value not in MARKER_PALETTES:
+            raise AngeboteFehler(400, "Bitte eine gültige Ersparnis-Farbwelt wählen.")
+        elif key == "marker_scale":
+            value = _number(value, "die Größe des Ersparnismarkers", 80, 180)
         theme[key] = value
+    adjustments = raw.get("adjustments", {})
+    if not isinstance(adjustments, dict) or len(adjustments) > 400:
+        raise AngeboteFehler(400, "Bitte die Vorlagenanpassungen prüfen.")
+    normalized_adjustments = {}
+    for key, value in adjustments.items():
+        if (not isinstance(key, str)
+                or not re.fullmatch(r"(sheet|card|single|scale):(page|[0-5]):[a-z_]+:\d{1,3}", key)
+                or not isinstance(value, dict) or set(value) != {"dx", "dy", "scale", "rotation"}):
+            raise AngeboteFehler(400, "Bitte die Vorlagenanpassungen prüfen.")
+        normalized_adjustments[key] = {
+            field: _number(value[field], "die Vorlagenanpassungen", low, high)
+            for field, low, high in (("dx", -1000, 1000), ("dy", -1500, 1500),
+                                     ("scale", .2, 3), ("rotation", -180, 180))
+        }
+    cms = {"cms": _cms_design(raw["cms"], items)} if "cms" in raw else {}
     return {"mode": mode, "template": template, "density": density,
             "color": color, "background": background, "pages": result,
-            "targets": target_result, **theme}
+            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms}
 
 
 def normalize(raw, publish=False):
@@ -265,6 +358,8 @@ def normalize(raw, publish=False):
         items.append(item)
     result["items"] = items
     result["layout"] = _layout(raw.get("layout", {}), items)
+    if "cms" in result["layout"] and result["kind"] != "weekly":
+        raise AngeboteFehler(400, "Die CMS-Wochenvorlage ist nur für Wochenangebote vorgesehen.")
     if publish:
         if (not result["title"] or not items or not result["valid_from"] or not result["valid_to"]
                 or result["valid_from"] > result["valid_to"]):
@@ -406,6 +501,11 @@ class AngeboteService:
         data = copy.deepcopy(self.get(action_id)["draft"])
         data["title"] = data["title"][:112] + " (Kopie)"
         return self.create(data)
+
+    def delete(self, action_id, version):
+        head, etag = self._head(action_id)
+        self._version(head, version)
+        self.store.delete("actions/" + head["id"] + ".json", etag)
 
     def public(self):
         result = []

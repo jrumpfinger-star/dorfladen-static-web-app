@@ -113,6 +113,9 @@ def handle(req, area, store_factory=BlobStore):
             head = service.publish(action_id, body.get("version"))
         elif req.method == "POST" and action_id and op == "duplicate":
             head = service.duplicate(action_id)
+        elif req.method == "POST" and action_id and op == "delete":
+            service.delete(action_id, body.get("version"))
+            return response({"success": True})
         else:
             raise AngeboteFehler(405, "Diese Aktion ist hier nicht möglich.")
         return response({"success": True, "action": head, "config": config()})

@@ -7,6 +7,8 @@
   var step = 'articles', page = 0, selected = '', paint = 0, undo = [], redo = [];
   var designTarget = 'sheet', designItemId = '', pendingImages = new Map(), pendingImageUrls = new Map();
   var previewMode = 'paper';
+  var overviewFilter = 'all';
+  var weeklySurface = null;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -50,20 +52,51 @@
     try { var old = await M.request('/api/angebote'); legacy = Array.isArray(old) ? old : old.data || []; }
     catch (e) { console.error('[Angebote] Altbestand', e); legacyError = 'Die bisherigen Angebote konnten nicht geladen werden. Der bisherige CMS-Editor bleibt erreichbar.'; }
     root.innerHTML = header('Angebote. Gemeinsam gestalten.')
-      + '<p>Artikel auswählen, frei gestalten und unabhängig auf Homepage, Papier oder Waage ausgeben.</p>'
-      + '<div class="an-overview"><section class="an-card"><h2>Wochenangebote</h2><p>Neue Aktionen mit eigenen Artikeln und vertrauter freier Gestaltung.</p><button class="an-primary" data-new="weekly">+ Wochenaktion anlegen</button></section>'
-      + '<section class="an-card"><h2>Getränkeangebote</h2><p>Gebinde, Pfand und Literpreis – einmal erfassen, überall konsistent.</p><button class="an-primary" data-new="drinks">+ Getränkeaktion anlegen</button></section></div>'
-      + '<h2>Deine Aktionen</h2><div class="an-list">' + (result.actions.length ? result.actions.map(function (head) {
+      + '<div class="an-overview-toolbar"><h2>Deine Aktionen</h2><div class="an-actions"><button class="an-primary" data-new="weekly">+ Wochenaktion anlegen</button>'
+      + '<button data-new="drinks">+ Getränkeaktion anlegen</button></div></div>'
+      + '<nav class="an-tabs an-week-filter" aria-label="Aktionszeitraum">' + [['current', 'Diese Woche'], ['next', 'Nächste Woche'], ['all', 'Alle']].map(function (filter) {
+        return '<button data-overview-filter="' + filter[0] + '" aria-pressed="' + (overviewFilter === filter[0]) + '">' + filter[1] + '</button>';
+      }).join('') + '</nav><div class="an-list an-action-list">' + (result.actions.length ? result.actions.map(function (head) {
         var d = head.draft, pub = head.published_summary;
-        return '<article class="an-card"><div><span class="an-badge">' + (d.kind === 'drinks' ? 'Getränke' : 'Wochenangebote') + '</span><h3>' + M.esc(d.title || 'Unbenannter Entwurf')
-          + '</h3><p class="an-muted">' + M.date(d.valid_from) + ' – ' + M.date(d.valid_to) + ' · ' + d.items.length + ' Artikel</p>'
-          + '<p>' + (pub ? 'Veröffentlichte Fassung vorhanden · neue Änderungen bleiben Entwurf' : 'Entwurf · nicht für Kunden sichtbar') + '</p></div>'
-          + '<div class="an-actions"><button data-open="' + head.id + '">Bearbeiten</button><button data-duplicate="' + head.id + '">Duplizieren</button></div></article>';
+        return '<article class="an-card an-action-row" data-action-id="' + head.id + '" data-valid-from="' + d.valid_from + '" data-valid-to="' + d.valid_to + '"><div class="an-action-summary"><h3>' + M.esc(d.title || 'Unbenannter Entwurf')
+          + '</h3><p class="an-muted">' + (d.kind === 'drinks' ? 'Getränke' : 'Wochenangebote') + ' · ' + M.date(d.valid_from) + ' – ' + M.date(d.valid_to) + ' · ' + d.items.length + ' Artikel'
+          + ' · ' + (pub ? 'Freigegeben · Änderungen bleiben Entwurf' : 'Entwurf · nicht für Kunden sichtbar') + '</p></div>'
+          + '<div class="an-actions" aria-label="Aktionsfunktionen"><button data-open="' + head.id + '">Bearbeiten</button>'
+          + '<button data-preview-action="' + head.id + '">Vorschau</button><button data-share-action="' + head.id + '">Teilen</button><button data-scale-action="' + head.id + '">Waage</button>'
+          + '<button data-duplicate="' + head.id + '">Duplizieren</button><button data-delete-action="' + head.id + '" aria-label="Aktion löschen" title="Aktion löschen">×</button></div></article>';
       }).join('') : '<p>Noch keine neuen Aktionen. Beginne mit einer Wochen- oder Getränkeaktion.</p>') + '</div>'
-      + '<section class="an-card"><h2>Bestehende Angebote</h2><p>Die bisherigen Aktionen und deren Design bleiben unverändert. Sie werden weiterhin im bisherigen Editor bearbeitet.</p>'
+      + '<p id="an-filter-empty" class="an-muted" hidden>Keine Aktionen in diesem Zeitraum.</p>'
+      + '<details class="an-legacy-links"><summary>Bestehende Angebote und Designstandards</summary><p>Die bisherigen Aktionen und deren Design bleiben unverändert.</p>'
       + (legacyError ? '<p class="an-status an-error" role="alert">' + legacyError + '</p>' : '<p>' + legacy.length + ' bestehende Angebotsartikel gefunden.</p>')
       + '<a class="an-btn" id="an-legacy" href="/cms.html?tab=ang">Bisherige Angebote öffnen</a>'
-      + '<a class="an-btn" href="/cms.html?tab=cfg&amp;flyer=drinks">Getränkeflyer-Designstandards</a></section>';
+      + '<a class="an-btn" href="/cms.html?tab=cfg&amp;flyer=drinks">Getränkeflyer-Designstandards</a></details>';
+    function filterRows() {
+      var today = new Date(M.today() + 'T12:00:00Z'), day = (today.getUTCDay() + 6) % 7;
+      today.setUTCDate(today.getUTCDate() - day + (overviewFilter === 'next' ? 7 : 0));
+      var start = today.toISOString().slice(0, 10); today.setUTCDate(today.getUTCDate() + 6);
+      var end = today.toISOString().slice(0, 10), visible = 0;
+      root.querySelectorAll('[data-action-id]').forEach(function (row) {
+        row.hidden = overviewFilter !== 'all' && (!row.dataset.validFrom || !row.dataset.validTo || row.dataset.validFrom > end || row.dataset.validTo < start);
+        if (!row.hidden) visible++;
+      });
+      root.querySelectorAll('[data-overview-filter]').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.overviewFilter === overviewFilter)); });
+      $('an-filter-empty').hidden = visible > 0 || !result.actions.length;
+    }
+    root.querySelectorAll('[data-overview-filter]').forEach(function (button) { button.onclick = function () { overviewFilter = button.dataset.overviewFilter; filterRows(); }; });
+    filterRows();
+    root.querySelectorAll('[data-preview-action],[data-share-action],[data-scale-action],[data-delete-action]').forEach(function (button) {
+      button.onclick = function () { run(async function () {
+        var id = button.dataset.previewAction || button.dataset.shareAction || button.dataset.scaleAction || button.dataset.deleteAction;
+        var head = result.actions.find(function (action) { return action.id === id; });
+        if (button.dataset.deleteAction) {
+          if (!(await M.dialog('Aktion löschen?', '„' + head.draft.title + '“ und die Homepagefreigabe werden entfernt. Bereits an die Waage gesendete Bilder bleiben dort erhalten und müssen bei Bedarf im Bereich Werbebilder entfernt werden.', 'Aktion löschen'))) return;
+          await M.request('/api/angebote-verwaltung/' + id + '?action=delete', M.json('POST', { version: head.version }));
+          await overview(); return;
+        }
+        if (button.dataset.scaleAction) { await open(id); await scale(); return; }
+        await previewAction(head.draft, !!button.dataset.shareAction);
+      }); };
+    });
     root.querySelectorAll('[data-new]').forEach(function (b) { b.onclick = function () { run(function () { return create(b.dataset.new); }); }; });
     root.querySelectorAll('[data-open]').forEach(function (b) { b.onclick = function () { run(function () { return open(b.dataset.open); }); }; });
     root.querySelectorAll('[data-duplicate]').forEach(function (b) {
@@ -73,10 +106,36 @@
       }); };
     });
   }
+  async function previewAction(draft, share) {
+    var canvases = await M.preflight(draft);
+    async function download(canvas, index) {
+      var blob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
+      if (!blob) throw M.problem('Das Vorschaubild konnte nicht erstellt werden. Bitte erneut versuchen.');
+      var file = new File([blob], 'Angebot-' + (index + 1) + '.png', { type: 'image/png' });
+      if (share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: draft.title }); }
+        catch (error) { if (error.name !== 'AbortError') throw error; }
+      } else {
+        var url = URL.createObjectURL(blob), link = document.createElement('a');
+        link.href = url; link.download = file.name; link.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+      }
+    }
+    if (share) { for (var i = 0; i < canvases.length; i++) await download(canvases[i], i); return; }
+    var dialog = document.createElement('dialog'); dialog.className = 'an-dialog an-action-preview';
+    dialog.setAttribute('aria-label', 'Aktionsvorschau');
+    dialog.innerHTML = '<div class="an-dialog-top"><h2>' + M.esc(draft.title) + '</h2><button aria-label="Vorschau schließen">×</button></div><div class="an-preview-pages"></div>';
+    canvases.forEach(function (canvas) { dialog.querySelector('.an-preview-pages').appendChild(canvas); });
+    dialog.querySelector('button').onclick = function () { dialog.close(); };
+    dialog.addEventListener('close', function () { dialog.remove(); });
+    document.body.appendChild(dialog); dialog.showModal();
+  }
   async function create(kind) {
     var response = await M.request('/api/angebote-verwaltung?view=design'); design = response.design;
     record = null; data = M.blank(kind, design[kind]); M.applyTemplate(data);
+    if (kind === 'weekly') await M.adoptWeekly(data);
     dirty = true; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; designTarget = 'card'; designItemId = '';
+    if (kind === 'weekly') designTarget = 'sheet';
     pendingImages.clear(); pendingImageUrls.clear(); previewMode = 'paper'; renderEditor();
   }
   async function open(id) {
@@ -256,6 +315,28 @@
   }
   function renderInspector() {
     var host = $('an-inspector'); if (!host) return;
+    if (weeklySurface) { weeklySurface.destroy(); weeklySurface = null; }
+    if (data.layout.cms) {
+      var itemId = designItemId || (data.items[0] && data.items[0].id);
+      var currentItem = data.items.find(function (item) { return item.id === itemId; });
+      var key = currentItem && M.weeklyKey(currentItem);
+      var group = designTarget === 'sheet' || designTarget === 'card' ? 'plakat_article_overrides' : 'flyer_article_overrides';
+      var renderer = window.WochenangeboteRenderer.create({});
+      var values = key && data.layout.cms[group][key] || (group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault());
+      host.innerHTML = '<div class="an-weekly-surface"></div><details><summary>Exakte CMS-Artikelpositionen</summary>'
+        + (currentItem ? '<label class="an-field"><span>Artikelpositionen bearbeiten</span><select id="an-cms-item">'
+          + data.items.map(function (item) { return '<option value="' + item.id + '"' + (item.id === itemId ? ' selected' : '') + '>' + M.esc(item.name || 'Neuer Artikel') + '</option>'; }).join('') + '</select></label>'
+          + '<div class="an-fields">' + [['imgDx', 'Bild X', -800, 800], ['imgDy', 'Bild Y', -1130, 1130],
+            ['imgScale', 'Bildgröße %', 20, 200], ['imgRot', 'Bilddrehung', -180, 180],
+            ['priceDx', 'Preis X', -800, 800], ['priceDy', 'Preis Y', -1130, 1130]].map(function (field) {
+              return '<label class="an-field"><span>' + field[1] + '</span><input type="number" data-cms-override="' + field[0] + '" data-cms-group="' + group + '" data-cms-item="' + itemId + '" value="' + values[field[0]] + '" min="' + field[2] + '" max="' + field[3] + '"></label>';
+            }).join('') + '</div>' : '') + '</details>';
+      weeklySurface = window.AngeboteVorschauEditor.mount(host.querySelector('.an-weekly-surface'), {
+        begin: checkpoint,
+        change: function (element, delta) { M.changeWeekly(data, element, delta); changed(); preview().catch(M.error); }
+      });
+      return;
+    }
     var expanded = step === 'design' || !!(host.querySelector('details') && host.querySelector('details').open);
     if (!selection()) {
       var first = elements().find(function (e) { return e.type === 'image' && !e.hidden; }) || elements()[0];
@@ -297,6 +378,7 @@
   }
   function overlay() {
     var host = $('an-hit-layer'); if (!host) return;
+    if (data.layout.cms) { host.replaceChildren(); return; }
     var size = activeSize();
     host.innerHTML = elements().filter(function (e) { return !e.hidden; }).map(function (e) {
       return '<button type="button" data-select="' + e.id + '" class="' + (selected === e.id ? 'an-selected' : '') + '" aria-label="Element auswählen: ' + roleNames[e.type]
@@ -326,6 +408,7 @@
     if (ticket !== paint || !data || !$('an-stage-canvas')) return;
     var canvas = result.canvas; canvas.id = 'an-stage-canvas'; canvas.setAttribute('aria-label', 'Live-Vorschau des Angebotsflyers');
     $('an-stage-canvas').replaceWith(canvas);
+    if (data.layout.cms && weeklySurface) weeklySurface.update(canvas, canvas._weeklyElements || [], canvas._weeklyWidth || activeSize().w, canvas._weeklyHeight || activeSize().h);
     var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv', sheet: 'Sammelflyer' };
     var size = activeSize();
     $('an-stage').style.aspectRatio = size.w + ' / ' + size.h;
@@ -353,10 +436,11 @@
     root.querySelectorAll('[data-layout-target]').forEach(function (button) {
       button.setAttribute('aria-pressed', String(button.dataset.layoutTarget === designTarget));
     });
-    $('an-stage').hidden = previewMode !== 'paper';
+    $('an-stage').hidden = previewMode !== 'paper' || !!data.layout.cms;
     $('an-inspector').hidden = previewMode !== 'paper';
     $('an-other-preview').hidden = previewMode === 'paper';
-    $('an-preview-hint').textContent = previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
+    $('an-preview-hint').textContent = data.layout.cms ? 'Originale CMS-Wochenvorlage' : previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
+    $('an-stage-help').hidden = !!data.layout.cms;
     if (previewMode !== 'paper') {
       var host = $('an-other-preview');
       if (!draft.items.length) host.innerHTML = '<p class="an-status">Füge einen Artikel hinzu, um diese Ausgabe anzusehen.</p>';
@@ -416,6 +500,12 @@
     var summary = $('an-action-summary');
     summary.textContent = data.title + ' · ' + M.date(data.valid_from) + ' – ' + M.date(data.valid_to);
     renderItems(); setStep(step); bind(); preview().catch(M.error);
+    if (data.kind === 'weekly') {
+      $('an-defaults').textContent = 'Gespeicherte CMS-Wochenvorlage übernehmen';
+      if (data.layout.cms) {
+        $('an-template').hidden = true; $('an-add-page').hidden = true; $('an-remove-page').hidden = true;
+      }
+    }
     if (busy) lock(true);
   }
   function addItem(it) {
@@ -839,6 +929,14 @@
         if (source.length) { dest.push(M.clone(data)); data = source.pop(); page = Math.min(page, data.layout.pages.length - 1); changed(); renderEditor(); }
       }
       if (b.id === 'an-template' || b.id === 'an-defaults') {
+        if (b.id === 'an-defaults' && data.kind === 'weekly') {
+          if (!(await M.dialog('CMS-Wochenvorlage übernehmen?', 'Die aktuell im CMS gespeicherten Plakat- und Einzelflyervorlagen ersetzen die Gestaltung aller Ausgaben dieser Aktion. Artikel, Preise und veröffentlichte Fassungen bleiben erhalten.', 'CMS-Vorlage übernehmen'))) return;
+          run(async function () {
+            var updated = M.clone(data); await M.adoptWeekly(updated);
+            checkpoint(); data = updated; page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor();
+          });
+          return;
+        }
         if (!(await M.dialog('Gestaltung ersetzen?', 'Die freien Positionen und eigenen Gestaltungselemente im aktuellen Ausgabeziel werden durch die gewählte Vorlage ersetzt. Bei Einzelansichten betrifft das nur den ausgewählten Artikel. Andere Ausgaben, Artikel und Preise bleiben erhalten.', 'Vorlage anwenden'))) return;
         run(async function () {
           var layout = data.layout;
@@ -871,6 +969,23 @@
     };
     root.onchange = function (event) {
       var target = event.target;
+      if (target.dataset.cmsConfig) {
+        if (!target.reportValidity()) return;
+        edit(function () {
+          data.layout.cms.config[target.dataset.cmsConfig] = target.type === 'number' ? Number(target.value) : target.value;
+          if (target.dataset.cmsConfig === 'plakatTemplate') data.layout.template = target.value;
+        });
+      }
+      if (target.id === 'an-cms-item') { designItemId = target.value; renderInspector(); preview().catch(M.error); }
+      if (target.dataset.cmsOverride) {
+        if (!target.reportValidity()) return;
+        edit(function () {
+          var item = data.items.find(function (it) { return it.id === target.dataset.cmsItem; });
+          var key = M.weeklyKey(item), overrides = data.layout.cms[target.dataset.cmsGroup];
+          if (!overrides[key]) overrides[key] = {};
+          overrides[key][target.dataset.cmsOverride] = Number(target.value);
+        });
+      }
       if (target.dataset.prop) {
         var it = data.items.find(function (item) { return item.id === target.closest('[data-item-id]').dataset.itemId; });
         edit(function () {
@@ -959,8 +1074,18 @@
     }, true); renderInspector();
   }
   window.addEventListener('beforeunload', function (event) { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
-  overview().catch(function (e) {
-    root.innerHTML = header('Angebote') + '<p class="an-status an-error" role="alert">Die Angebotsverwaltung ist gerade nicht verfügbar.</p><button id="an-retry">Erneut versuchen</button>';
-    $('an-retry').onclick = function () { location.reload(); }; M.error(e);
-  });
+  var started = false;
+  function start() {
+    if (started) { if (data) preview().catch(M.error); return; }
+    started = true;
+    overview().catch(function (e) {
+      started = false;
+      root.innerHTML = header('Angebote') + '<p class="an-status an-error" role="alert">Die Angebotsverwaltung ist gerade nicht verfügbar.</p><button id="an-retry">Erneut versuchen</button>';
+      $('an-retry').onclick = start; M.error(e);
+    });
+  }
+  if (root.closest('#panel-angebote')) {
+    window.KAngebote = { onShow: start, hasUnsavedChanges: function () { return dirty; } };
+    if (root.closest('#panel-angebote').classList.contains('active')) start();
+  } else start();
 })();

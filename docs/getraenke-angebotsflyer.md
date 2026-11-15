@@ -9,8 +9,36 @@ gibt es nicht; nicht freigegebene Entwürfe bleiben intern.
 
 Im **Kiosk → Angebote** oder im **CMS → Angebote → Getränke & neue Angebote
 gestalten** öffnet sich die gemeinsame Verwaltung.
+Im Kiosk bleibt sie als normaler Reiter eingebettet; Menü und ungespeicherte
+Eingaben bleiben beim Reiterwechsel erhalten.
 Bestehende Aktionen bleiben über **Bisherige Angebote öffnen** im bisherigen
 Editor erreichbar. Sie werden weder migriert noch überschrieben.
+
+Die Übersicht zeigt kompakte Aktionszeilen mit Wochenfiltern und direkten
+Knöpfen für Bearbeiten, Vorschau, Teilen/Download, Waage, Duplizieren und Löschen.
+Vorschau und Download veröffentlichen nichts. **Löschen** verlangt eine
+Bestätigung und beendet auch die Homepage-Freigabe. Bereits versandte
+Waagenbilder werden dadurch nicht vom Gerät entfernt.
+
+### Originale Wochenangebote
+
+Neue Wochenaktionen übernehmen die tatsächlich gespeicherten CMS-Vorlagen
+für **Plakat** und **Einzelflyer**, einschließlich Farben und Artikelanpassungen.
+Sie nutzen dieselben Zeichenfunktionen wie der bisherige Editor, nicht das
+Getränkelayout. Die Einstellungen werden als eigener Stand der Aktion
+gespeichert; spätere CMS-Änderungen verändern sie nicht. Ältere freie
+Wochenlayouts bleiben bis zur ausdrücklich bestätigten Übernahme erhalten.
+
+Produktbild und Preis lassen sich in der Vorschau auswählen, verschieben,
+drehen und vergrößern/verkleinern. Beim Einzelflyer stehen auch vorhandene
+zusätzliche Bildelemente zur Auswahl. Exakte Positionen bleiben aufklappbar.
+Die Kachel übernimmt den Original-Plakatausschnitt; das Waagenmotiv nutzt
+den Original-Einzelflyer proportional ohne Verzerrung.
+Unter **Ersparnis-Marker** stehen die originalen Markertypen, Farbwelten und
+Größen für Plakat bzw. Einzelflyer zur Auswahl. Ein Marker erscheint nur bei
+einem Stattpreis über dem Angebotspreis.
+
+### Getränke und freie Layouts
 
 1. **Artikel und Bilder:** Wochen- oder Getränkeaktion anlegen. Getränke aus
    **Artikelstamm wählen** suchen (Name, Artikelnummer oder EAN) und bei Bedarf
@@ -78,14 +106,23 @@ der Serverstand erhalten; den Entwurf erneut öffnen, bevor weitergespeichert wi
 ### Bestehender Designeditor
 
 **CMS → Design → Plakate & Flyer → Getränkeflyer** verwaltet die Standards neuer
-Getränke- und Wochenaktionen: Vorlagen, Farben, Schriften, Preisform, Typografie
+Getränkeaktionen: Vorlagen, Farben, Schriften, Preisform, Typografie
 und Produktbilder. A4-, Karten- und Waagenvorschau verwenden Beispieldaten.
-Alte Flyer-Farben lassen sich ausdrücklich kopieren. Speichern verändert weder
-alte Einstellungen noch individuelle oder veröffentlichte Aktionen.
+Elemente in dieser Vorschau lassen sich direkt auswählen, ziehen, skalieren
+und drehen. Ersparnismarker haben auswählbare Typen, Farbwelten und Größen.
+Alte Flyer-Farben lassen sich ausdrücklich kopieren.
+**Designstandards speichern** ersetzt den bisherigen Startstandard für neue
+Getränkeaktionen. Eingebaute Vorlagen sowie bestehende und veröffentlichte
+Aktionen werden nicht überschrieben.
+**Vorlage auf Original zurücksetzen** stellt nach Bestätigung Farben, Größen,
+Marker und freie Anpassungen der ausgewählten Vorlage zunächst nur in der
+Vorschau zurück. Erst anschließendes **Designstandards speichern** übernimmt
+den zurückgesetzten Stand dauerhaft. Wochenangebote verwenden stattdessen
+das bisherige **CMS-Wochenangebotsdesign**.
 Aktuelle Standards können im Aktionseditor ausdrücklich neu übernommen werden.
 Die kompakte Vorlagenauswahl zeigt das aktive Design. **Auswahl öffnen**
 blendet elf anklickbare Vorschaukacheln ein: Landladen, Klassisch sowie die
-neun Originalstile Classic Red, Minimal Clean, Dark Modern, Organic Market,
+neun nachgebildeten Stilfamilien Classic Red, Minimal Clean, Dark Modern, Organic Market,
 Bold Poster, Modern Magazine, Mag Fresh, Mag Bold und Mag XL.
 Jede Vorlage ist ein frei bearbeitbarer Startpunkt, kein fertiges Bild.
 Ein **Doppelklick auf eine Vorlagenkachel** öffnet die große, scharfe Vorschau.

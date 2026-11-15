@@ -35,3 +35,8 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF27 | Direkte Vorschauwerkzeuge und echten Maus-/Touch-Größenanfasser integrieren und testen | GF14, GF22 | TC-F11-08, TC-F3-04 |
 | GF28 | Eigene Produktbilder mit Strichcode zusätzlich nach SharePoint speichern, Fehler sichtbar behandeln und private Vorschaubilder authentifiziert laden | GF23 | TC-F2-04..06 |
 | GF29 | Bildregression auf vier Viewports, Hilfe aktualisieren und ausschließlich PR-Preview bereitstellen | GF28 | TC-F2-04..06, TC-F11-02, TC-F11-06 |
+| GF30 | Originale CMS-Zeichenfunktionen gemeinsam nutzen, Designsnapshot validieren und Wocheneditor anbinden | GF29 | TC-F14-01..03 |
+| GF31 | Gemeinsamen Editor als normalen Kioskinhalt einbetten, Reiter und Entwurf erhalten | GF29 | TC-F14-04 |
+| GF32 | Originalrenderer-/Snapshot-/Kioskregression, vier Viewports, Hilfe und Feature-Preview prüfen | GF30, GF31 | TC-F14-01..04 |
+| GF33 | Kompakte Zeilenübersicht mit Filtern und Direktaktionen; bestätigtes versionsgeschütztes Löschen | GF29 | TC-F15-01..02 |
+| GF34 | Gemeinsame Direktwerkzeuge für CMS-Designvorschau und Original-Wochenvorlagen, gespeicherte Anpassungen, Original-Ersparnismarker und bestätigter Vorschau-Reset | GF30 | TC-F16-01..04 |

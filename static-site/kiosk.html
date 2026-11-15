@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/css/kiosk-base.css">
   <link rel="stylesheet" href="/css/dl-design.css">
   <link rel="stylesheet" href="/css/kiosk-neu.css">
+  <link rel="stylesheet" href="/css/angebote.css">
   <script id="cms-pw-hash" type="application/json">"d324fb3c8c3a1ef449e1f776b2f29fd718d00e7967adbb0bbe8326c2452bea93"</script>
   <script>
     /* Sofort sperren, noch bevor der Kiosk gezeichnet wird - sonst blitzt
@@ -127,10 +128,10 @@
     <span class="k-tab-lbl"><span class="lang">Getränke</span><span class="kurz">Getränke</span></span>
     <span class="k-tab-badges" id="badges-getraenke"></span>
   </div>
-  <a class="k-tab" data-tab="angebote" href="/angebote.html" style="text-decoration:none;color:inherit">
+  <div class="k-tab" data-tab="angebote" onclick="K.switchTab('angebote')">
     <span class="k-tab-icon"><i data-lucide="tags"></i></span>
     <span class="k-tab-lbl">Angebote</span>
-  </a>
+  </div>
   <div class="k-tab" data-tab="drax" onclick="K.switchTab('drax')">
     <span class="k-tab-icon"><i data-lucide="wheat"></i></span>
     <span class="k-tab-lbl"><span class="lang">Drax Mühle</span><span class="kurz">Drax</span></span>
@@ -270,6 +271,12 @@
        im Kopf ein frei wählbarer Liefertermin. -->
   <div class="k-panel" id="panel-getraenke">
     <div id="getraenke-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="cup-soda" style="width:24px;height:24px"></i></div>Laden…</div></div>
+  </div>
+
+  <div class="k-panel" id="panel-angebote">
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
+      <p role="status">Die Angebotsverwaltung wird geladen …</p>
+    </section>
   </div>
 
   <!-- Ladenbestellung bei der Drax Mühle (specs/drax-bestellung/spec.md).
@@ -1191,6 +1198,7 @@ var K = (function(){
     if(id==='getraenke' && window.KGetraenke) window.KGetraenke.onShow();
     if(id==='drax' && window.KDrax) window.KDrax.onShow();
     if(id==='werbebilder' && window.KWerbebilder) window.KWerbebilder.onShow();
+    if(id==='angebote' && window.KAngebote) window.KAngebote.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -6024,6 +6032,11 @@ var K = (function(){
 <script src="/js/kiosk-getraenke.js"></script>
 <script src="/js/kiosk-drax.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
+<script src="/js/wochenangebote-renderer.js"></script>
+<script src="/js/angebote-vorschau-editor.js"></script>
+<script src="/js/angebote-modell.js"></script>
+<script src="/js/angebote-design.js"></script>
+<script src="/js/angebote-editor.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script src="/js/kiosk-neu-shell.js"></script>
@@ -6098,7 +6111,8 @@ var K = (function(){
     // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
+    if(window.KAngebote && window.KAngebote.hasUnsavedChanges()) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-angebote' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen
