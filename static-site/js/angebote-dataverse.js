@@ -24,7 +24,8 @@ window.AngeboteDataverse = (function () {
         var imageKey = row.image_key || row.barcode || row.dl_artikelnummer || '';
         var refs = first.action_layout && first.action_layout.image_refs || {};
         var imageId = refs[rowId] || (imageKey && (row.bild_data || row.dl_werbebildid) ? 'cms:' + imageKey : '');
-        if (imageId && row.bild_data) M.registerImage(imageId, row.bild_data);
+        var source = row.dl_bild_base64 || row.bild_data;
+        if (imageId && source && !/^https:\/\//i.test(source)) M.registerImage(imageId, source);
         return Object.assign(M.item(), {
           id: rowId, layout_key: rowId, name: row.dl_produkt || row.name || row.produkt || '',
           description: row.dl_details || row.details || '',
@@ -40,9 +41,9 @@ window.AngeboteDataverse = (function () {
       if (first.action_layout) {
         data.layout = M.clone(first.action_layout);
         M.ensureTargets(data);
-      } else if (kind === 'weekly') await M.adoptWeekly(data);
-      else M.applyTemplate(data);
-      result.push({ id: entry[0], data: data, original_ids: data.items.map(function (item) { return item.id; }) });
+      } else M.applyTemplate(data);
+      result.push({ id: entry[0], data: data, needs_weekly_template: !first.action_layout && kind === 'weekly',
+        restore_images: !first.action_layout, original_ids: data.items.map(function (item) { return item.id; }) });
     }
     return result.sort(function (a, b) { return b.data.valid_from.localeCompare(a.data.valid_from); });
   }
@@ -84,7 +85,7 @@ window.AngeboteDataverse = (function () {
     var key = item.barcode || item.article_number || item.name;
     if (!key || !/^[\p{L}\p{N}._ -]{1,128}$/u.test(key)) throw M.problem('Bitte eine gültige Artikelnummer, einen Strichcode oder Produktnamen zur Bildsuche eingeben.');
     var results = await M.request('/api/werbebilder?sharepoint=1', M.json('POST', {
-      articles: [{ artikelnummer: key, edeka_nr: item.article_number || '', strichcode: item.barcode || '' }]
+      articles: [{ artikelnummer: key, edeka_nr: item.article_number || key, strichcode: item.barcode || key }]
     }));
     if (!Array.isArray(results)) throw M.problem('Die Bildsuche hat keine gültige Antwort geliefert.');
     var found = results.find(function (row) { return row.dl_bild_base64; });
@@ -95,6 +96,12 @@ window.AngeboteDataverse = (function () {
     M.registerImage(id, found.dl_bild_base64);
     return { image_id: id, werbebild_id: found.dl_werbebildid || found.id || '', source: found.dl_bild_base64 };
   }
+  async function restoreImages(data) {
+    await Promise.all(data.items.filter(function (item) { return !item.image_id; }).map(async function (item) {
+      var found = await findImage(item);
+      if (found) Object.assign(item, found);
+    }));
+  }
   return { actions: actions, load: load, save: save, remove: remove, productImage: productImage, findImage: findImage,
-    settings: function () { return M.clone(config); } };
+    restoreImages: restoreImages, settings: function () { return M.clone(config); } };
 })();

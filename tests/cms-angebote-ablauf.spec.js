@@ -3,7 +3,7 @@ const BASE = process.env.TEST_URL || 'http://127.0.0.1:8818';
 const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6hywAAAAASUVORK5CYII=';
 
 async function setup(page) {
-  const state = { actions: new Map(), writes: [], errors: [], offerReads: [], failSave: false, images: 0 };
+  const state = { actions: new Map(), writes: [], errors: [], offerReads: [], imageLookups: [], failSave: false, images: 0 };
   await page.clock.install({ time: new Date('2026-11-18T12:00:00Z') });
   await page.addInitScript((hash) => {
     if (window !== window.top) return;
@@ -24,7 +24,10 @@ async function setup(page) {
     }] } });
     if (path === '/api/werbebilder') {
       const body = req.postDataJSON();
-      if (body.articles) return json([{ dl_artikelnummer: body.articles[0].artikelnummer, dl_werbebildid: '11111111-1111-4111-8111-111111111111', dl_bild_base64: PHOTO }]);
+      if (body.articles) {
+        state.imageLookups.push(...body.articles);
+        return json([{ dl_artikelnummer: body.articles[0].artikelnummer, dl_werbebildid: '11111111-1111-4111-8111-111111111111', dl_bild_base64: PHOTO }]);
+      }
       state.images++;
       if (state.failImages) return json({ success: false, error: 'Das Artikelbild konnte nicht gespeichert werden.' }, 503);
       return json({ success: true, id: '11111111-1111-4111-8111-111111111111' });
@@ -145,7 +148,10 @@ test('TC-F18-01/05: Erfassung direkt im Kiosk mit Produktsuche und erhaltenem Me
   expect(bounds.left).toBeGreaterThanOrEqual(0);
   expect(bounds.right).toBeLessThanOrEqual(page.viewportSize().width);
   expect(bounds.overflow).toBe(false);
-  if (page.viewportSize().width >= 1100) expect(bounds.right - bounds.left).toBeGreaterThanOrEqual(1000);
+  if (page.viewportSize().width >= 1100) {
+    expect(bounds.right - bounds.left).toBeGreaterThanOrEqual(900);
+    expect(bounds.right - bounds.left).toBeLessThanOrEqual(980);
+  }
   expect((await dlg.locator('.an-dialog-top').boundingBox()).height).toBeLessThan(180);
   for (const field of await dlg.locator('input:visible,select:visible,button:visible').all()) {
     const b = await field.boundingBox();
@@ -273,5 +279,62 @@ test('TC-F18-01/03: gefundene CMS-Bilder mit Produktnamen bleiben nach dem Speic
   await page.getByRole('button', { name: 'Alle', exact: true }).click();
   await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Getränkeaktion erfassen' }).locator('.cms-bild-preview').first()).toBeVisible();
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F18-07/09: ursprüngliche aufklappbare CMS-Übersicht lädt ohne Vorlagen- und Bildabrufe', async ({ page }) => {
+  const state = await setup(page);
+  let templates = 0;
+  await page.route('**/api/cms-config', async route => {
+    templates++;
+    await route.fulfill({ json: { success: true, data: { design_config: {} } } });
+  });
+  await page.route('**/api/angebote', route => route.fulfill({ json: { success: true, data: Array.from({ length: 30 }, (_, i) => ({
+    id: '00000000-0000-4000-8000-' + String(i).padStart(12, '0'), aktion_id: 'ALT-' + i,
+    aktion_titel: 'Vorhandene Aktion ' + i, name: 'Artikel ' + i, price: 1.99, old_price: 2.49,
+    valid_from: '2026-11-16', valid_to: '2026-11-21', barcode: '4001234567890'
+  })) } }));
+  await page.goto(BASE + '/angebote.html');
+  await expect(page.locator('.an-cms-overview .cms-card')).toHaveCount(30, { timeout: 2000 });
+  expect(templates).toBe(0);
+  expect(state.imageLookups).toHaveLength(0);
+  const first = page.locator('.an-cms-overview .cms-card').first();
+  await expect(first.locator('.cms-ang-items')).toBeHidden();
+  await first.locator('[data-cms-toggle]').press('Enter');
+  await expect(first.locator('.cms-ang-items')).toBeVisible();
+  await expect(first.locator('.cms-ang-name')).toHaveText('Artikel 0');
+  await expect(first.locator('.cms-btn-preview')).toBeVisible();
+  await expect(first.locator('.cms-btn-wa')).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('urspruengliche-cms-uebersicht.png') });
+  await first.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Sonderaktion erfassen' })).toBeVisible();
+  expect(templates).toBe(1);
+  expect(state.writes).toHaveLength(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelaufenem Link werden lesend geladen', async ({ page }) => {
+  const state = await setup(page);
+  await page.route('**/api/angebote', route => route.fulfill({ json: { success: true, data: [0, 1, 2].map(i => ({
+    id: '00000000-0000-4000-8000-' + String(i).padStart(12, '0'), aktion_id: 'ALT-BILDER',
+    aktion_titel: 'Vorhandene Bilder', name: 'Artikel ' + i, price: 1.99,
+    valid_from: '2026-11-16', valid_to: '2026-11-21', barcode: '400123456789' + i,
+    image_key: '400123456789' + i, dl_werbebildid: i ? '11111111-1111-4111-8111-111111111111' : '',
+    bild_data: i === 1 ? 'https://expired.invalid/image.jpg' : i === 2 ? PHOTO : '',
+    dl_bild_base64: i === 2 ? PHOTO : ''
+  })) } }));
+  await page.goto(BASE + '/angebote.html');
+  await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+  const dlg = page.getByRole('dialog', { name: 'Sonderaktion erfassen' });
+  await expect(dlg.locator('.cms-bild-preview:visible')).toHaveCount(3);
+  expect(state.imageLookups.map(it => it.artikelnummer).sort()).toEqual(['4001234567890', '4001234567891']);
+  expect(state.imageLookups.every(it => it.edeka_nr && it.strichcode)).toBe(true);
+  await dlg.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+  await expect(page.locator('#an-page-label')).toHaveText('Seite 1 / 1');
+  await expect(page.locator('#an-stage-info')).not.toHaveClass(/an-error/);
+  expect(state.imageLookups).toHaveLength(3);
+  expect(state.images).toBe(0);
+  expect(state.writes).toHaveLength(0);
   expect(state.errors).toEqual([]);
 });

@@ -522,21 +522,38 @@
     try {
       cmsAction = action; cmsReturn = onClose;
       record = { id: action.id }; data = M.clone(action.data);
+      var openingData = data;
       config = window.AngeboteDataverse.settings();
       dirty = false; undo = []; redo = []; page = 0; selected = '';
       step = 'design'; designTarget = 'sheet'; designItemId = data.items[0] ? data.items[0].id : '';
-      previewMode = 'paper'; M.ensureTargets(data); renderEditor();
+      previewMode = 'paper';
       cmsPlaceholder = document.createComment('Angebotsverwaltung');
       root.before(cmsPlaceholder);
+      root.classList.remove('an-cms-overview');
+      root.innerHTML = '<p role="status">Die Vorschau wird geladen …</p>';
       cmsDialog = document.createElement('dialog'); cmsDialog.className = 'an-dialog an-cms-preview-modal';
       cmsDialog.setAttribute('aria-label', 'Vorschau');
       cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
       cmsDialog.addEventListener('cancel', function (event) { event.preventDefault(); run(closeCmsPreview); });
       cmsDialog.showModal();
+      if (action.needs_weekly_template) await M.adoptWeekly(openingData);
+      if (data !== openingData || !cmsDialog) return;
+      if (action.restore_images) await window.AngeboteDataverse.restoreImages(openingData);
+      if (data !== openingData || !cmsDialog) return;
+      M.ensureTargets(data); renderEditor();
       await preview();
       if (mode === 'share') await previewAction(data, true);
       if (mode === 'scale') await scale();
-    } catch (error) { await M.error(error); }
+    } catch (error) {
+      if (cmsDialog && cmsPlaceholder) {
+        cmsPlaceholder.replaceWith(root); cmsPlaceholder = null;
+        cmsDialog.close(); cmsDialog.remove(); cmsDialog = null;
+        cmsAction = null; record = null; data = null; dirty = false; paint++;
+        root.classList.remove('an-cms-preview');
+        await cmsReturn();
+      }
+      await M.error(error);
+    }
   }
   async function closeCmsPreview() {
     if (!(await discard())) return;
@@ -1188,7 +1205,7 @@
     if (window.CMSAngebote && !new URLSearchParams(location.search).has('bestand')) {
       cmsHost = window.CMSAngebote.mount(root, {
         preview: cmsPreview,
-        legacy: function () { cmsAction = null; dirty = false; root.classList.remove('an-cms-preview'); overview().catch(M.error); }
+        legacy: function () { cmsAction = null; dirty = false; root.classList.remove('an-cms-preview', 'an-cms-overview'); overview().catch(M.error); }
       });
       load = cmsHost.start;
     }

@@ -11,6 +11,9 @@ Das eigentliche Getränke-Bestellsystem bleibt unverändert.
 Die kompakte Übersicht bietet Wochenfilter und direkte Aktionen:
 **Bearbeiten**, **Vorschau** (grau), **Teilen** (grün), **Waage** (orange)
 und **Löschen** (rot, mit Bestätigung).
+Die ursprünglichen CMS-Aktionszeilen mit aufklappbarer Artikelliste bleiben
+erhalten. Die Übersicht wartet nicht auf Vorlagen oder Artikelbilder;
+Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
 
 ### Angebote erfassen
 
@@ -83,6 +86,10 @@ nicht als neue Stammbilder zurückgeschrieben.
 
 Bildfehler werden angezeigt. Eine fehlgeschlagene Übernahme wird nicht als
 erfolgreich gespeichertes Artikelbild behandelt.
+Beim Öffnen bestehender CMS-Aktionen werden Bilder auch ohne gespeicherte
+Werbebildverknüpfung automatisch nachgeladen. Abgelaufene SharePoint-Downloadlinks
+werden über die vorhandene Bildsuche erneuert. Das Lesen verändert keine
+Angebote oder Stammbilder; ein Ladefehler wird an der betroffenen Zeile angezeigt.
 
 ### Designstandards
 

@@ -48,3 +48,5 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF40 | Vorschau/Karten-/Einzelflyerbearbeitung und bestehende Renderer in CMS/Kiosk verbinden, Altbestand erhalten | GF38, GF39 | TC-F18-04, TC-F18-05 |
 | GF41 | Vier-Viewport-Abnahme, Daten-/Speicherregression und Anwenderhilfe | GF38, GF39, GF40 | TC-F18-01..06 |
 | GF42 | Ausschließlich Feature-Preview nach Schema-/Datenisolationsprüfung oder ausdrücklicher Freigabe des gemeinsamen produktiven Bestands bereitstellen; keine produktiven Schreibtests | GF41 | TC-F18-05, TC-F18-06 |
+| GF43 | Blockierende Vorlagenabrufe aus Übersicht entfernen, bestehende Bilder nachladen und abgelaufene Bildlinks erneuern | GF41 | TC-F18-07, TC-F18-08 |
+| GF44 | Ursprüngliche kompakte CMS-Übersicht/Erfassung mit aufklappbaren Artikeln wiederherstellen, vier Viewports prüfen und nur Feature-Preview aktualisieren | GF43 | TC-F18-07..09 |

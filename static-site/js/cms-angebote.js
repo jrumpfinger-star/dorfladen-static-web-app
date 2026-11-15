@@ -30,8 +30,9 @@ window.CMSAngebote = (function () {
       }
     }
     function render() {
+      root.classList.add('an-cms-overview');
       var selected = list.filter(function (action) { return overlaps(action.data); });
-      root.innerHTML = '<div class="an-overview-toolbar"><h2>Sonderangebote &amp; Getränkeaktionen</h2>'
+      root.innerHTML = '<div class="an-overview-toolbar"><h2>Sonderangebote</h2>'
         + '<button class="an-primary" data-create>+ Neue Aktion erstellen</button></div>'
         + '<nav class="an-tabs an-week-filter" aria-label="Aktionszeitraum">'
         + [['this', 'Diese Woche'], ['next', 'Nächste Woche'], ['all', 'Alle']].map(function (entry) {
@@ -39,20 +40,31 @@ window.CMSAngebote = (function () {
         }).join('') + '</nav><div class="an-list an-action-list">'
         + selected.map(function (action) {
           var data = action.data;
-          return '<article class="an-card an-action-row"><div class="an-action-summary"><h3>' + M.esc(data.title)
-            + '</h3><p>' + (data.kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion') + ' · ' + M.date(data.valid_from) + ' – '
-            + M.date(data.valid_to) + ' · ' + data.items.length + ' Artikel</p></div><div class="an-actions">'
-            + '<button data-edit="' + M.esc(action.id) + '">Bearbeiten</button>'
-            + '<button data-preview-action="' + M.esc(action.id) + '">Vorschau</button>'
-            + '<button data-share-action="' + M.esc(action.id) + '">Teilen</button>'
-            + '<button data-scale-action="' + M.esc(action.id) + '">Waage</button>'
-            + '<button data-delete-action="' + M.esc(action.id) + '" aria-label="Aktion löschen">×</button></div></article>';
+          var card = window.CMSAngeboteForm.action({
+            aktion_id: action.id, titel: data.title, von: data.valid_from, bis: data.valid_to,
+            items: data.items.map(function (item) { return { produkt: item.name, preis: item.price_cents == null ? null : item.price_cents / 100,
+              statt_preis: item.old_price_cents == null ? null : item.old_price_cents / 100 }; })
+          }, M.esc, function (value) { return M.money(Math.round(value * 100)) + ' €'; });
+          var commands = { editAktion: 'edit', previewAktion: 'previewAction', shareAktion: 'shareAction', waageAktion: 'scaleAction', deleteAktion: 'deleteAction' };
+          card.querySelectorAll('[data-action]').forEach(function (element) {
+            var command = commands[element.dataset.action];
+            if (command) element.dataset[command] = action.id;
+            else element.dataset.cmsToggle = '';
+            delete element.dataset.action; delete element.dataset.id;
+          });
+          return card.outerHTML;
         }).join('') + (selected.length ? '' : '<p>Keine Aktionen in diesem Zeitraum.</p>') + '</div>'
         + '<details class="an-legacy-links"><summary>Bereits gespeicherte Feature-Aktionen</summary>'
         + '<p>Die bisherigen Feature-Entwürfe und Freigaben bleiben unverändert erhalten. Neue Aktionen werden im gemeinsamen CMS-Angebotsbestand gespeichert.</p>'
         + '<button data-feature-stock>Feature-Bestand öffnen</button></details>';
       root.onclick = function (event) {
         var b = event.target.closest('button');
+        var toggle = event.target.closest('[data-cms-toggle]');
+        if (!b && toggle) {
+          var collapsed = toggle.nextElementSibling.classList.toggle('collapsed');
+          toggle.querySelector('.cms-ang-chevron').classList.toggle('collapsed', collapsed);
+          toggle.setAttribute('aria-expanded', String(!collapsed)); return;
+        }
         if (!b) return;
         if (b.dataset.week) { filter = b.dataset.week; render(); return; }
         if (b.hasAttribute('data-create')) { choose().catch(M.error); return; }
@@ -68,6 +80,11 @@ window.CMSAngebote = (function () {
             try { await A.remove(action); await overview(); } finally { b.disabled = false; }
           })().catch(M.error);
         } else options.preview(action, b.dataset.scaleAction ? 'scale' : b.dataset.shareAction ? 'share' : 'preview', overview);
+      };
+      root.onkeydown = function (event) {
+        if (event.target.matches('[data-cms-toggle]') && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault(); event.target.click();
+        }
       };
     }
     async function choose() {
@@ -87,6 +104,7 @@ window.CMSAngebote = (function () {
     async function capture(action, kind) {
       var draft = action ? M.clone(action.data) : M.blank(kind);
       var isNew = !action, drinks = draft.kind === 'drinks', changedRows = false;
+      if (action && action.needs_weekly_template) await M.adoptWeekly(draft);
       if (isNew) {
         if (drinks && A.settings().feature_archive_enabled !== false) {
           var standards = await M.request('/api/angebote-verwaltung?view=design');
@@ -125,15 +143,20 @@ window.CMSAngebote = (function () {
         Array.from(host.children).forEach(function (row, index) { row.querySelector('.cms-ang-row-num').textContent = index + 1; });
       }
       function mark() { dirty = true; }
-      async function imagePreview(row, item) {
+      function imageStatus(row, text, failed) {
+        var note = row.querySelector('[data-image-status]');
+        note.textContent = text; note.classList.toggle('an-image-error', !!failed);
+      }
+      async function imagePreview(row, item, token) {
         if (!item.image_id) return;
         var img = await M.image(item.image_id);
-        if (!row.isConnected) return;
+        if (!row.isConnected || imageRequests.get(row) !== token) return;
         var canvas = document.createElement('canvas'), factor = Math.min(1, 150 / Math.max(img.width, img.height));
         canvas.width = Math.max(1, img.width * factor); canvas.height = Math.max(1, img.height * factor);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         var preview = row.querySelector('.cms-bild-preview'); preview.src = canvas.toDataURL(); preview.style.display = '';
         row.querySelector('.cms-bild-clear').style.display = '';
+        imageStatus(row, '', false);
       }
       function rowItem(row) {
         var it = states.get(row);
@@ -159,6 +182,8 @@ window.CMSAngebote = (function () {
           statt_preis: item.old_price_cents == null ? null : item.old_price_cents / 100, artikelnummer: item.barcode }, ++sequence);
         row.id = 'cms-offer-row-' + sequence;
         row.querySelectorAll('[data-action]').forEach(function (el) { el.dataset.offerAction = el.dataset.action; delete el.dataset.action; });
+        var note = document.createElement('span'); note.dataset.imageStatus = ''; note.className = 'an-image-status';
+        note.setAttribute('role', 'status'); row.appendChild(note);
         states.set(row, item);
         if (drinks) {
           var extra = document.createElement('div'); extra.className = 'an-drinks-fields';
@@ -183,7 +208,17 @@ window.CMSAngebote = (function () {
           if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (row.previousElementSibling) { host.insertBefore(row, row.previousElementSibling); changedRows = true; mark(); renumber(); } }
         };
         host.appendChild(row); renumber();
-        imagePreview(row, item).catch(M.error);
+        if (item.image_id) {
+          var token = invalidateImage(row);
+          imageStatus(row, 'Bild wird geladen …', false);
+          track(imagePreview(row, item, token)).catch(function (error) {
+            console.error('[Angebote] Artikelbild', error);
+            if (row.isConnected && imageRequests.get(row) === token) imageStatus(row, error.userMessage || 'Artikelbild konnte nicht geladen werden. Bitte erneut suchen.', true);
+          });
+        } else if (action && action.restore_images && item.name) find(row, true).catch(function (error) {
+          console.error('[Angebote] Artikelbild', error);
+          if (row.isConnected) imageStatus(row, error.userMessage || 'Artikelbild konnte nicht geladen werden. Bitte erneut suchen.', true);
+        });
         return row;
       }
       function track(task) {
@@ -192,15 +227,16 @@ window.CMSAngebote = (function () {
         task.then(done, done);
         return task;
       }
-      async function find(row) {
+      async function find(row, automatic) {
         var token = invalidateImage(row);
+        imageStatus(row, 'Bild wird geladen …', false);
         var task = (async function () {
           var it = rowItem(row), button = row.querySelector('[data-offer-action="loadBildSharePoint"]'); button.disabled = true;
           try {
             var result = await A.findImage(it);
-            if (!result) { status.textContent = 'Kein Bild gefunden. Du kannst eine Datei oder die Zwischenablage verwenden.'; return; }
             if (!row.isConnected || imageRequests.get(row) !== token) return;
-            Object.assign(it, result); pending.delete(row); mark(); await imagePreview(row, it);
+            if (!result) { imageStatus(row, 'Kein Bild gefunden. Bildsuche oder eigene Datei verwenden.', false); return; }
+            Object.assign(it, result); pending.delete(row); if (!automatic) mark(); await imagePreview(row, it, token);
             status.textContent = 'Artikelbild gefunden.';
           } finally { button.disabled = false; }
         })();
@@ -208,11 +244,12 @@ window.CMSAngebote = (function () {
       }
       function setFile(row, file) {
         if (!file || !/^image\/(?:png|jpeg|webp)$/.test(file.type)) throw M.problem('Bitte ein PNG-, JPEG- oder WebP-Bild auswählen.');
-        invalidateImage(row);
+        var token = invalidateImage(row);
+        imageStatus(row, '', false);
         pending.set(row, file); mark();
         var reader = new FileReader();
         reader.onload = function () {
-          if (!row.isConnected) return;
+          if (!row.isConnected || imageRequests.get(row) !== token) return;
           var preview = row.querySelector('.cms-bild-preview'); preview.src = reader.result; preview.style.display = '';
           row.querySelector('.cms-bild-clear').style.display = '';
         };
@@ -332,6 +369,7 @@ window.CMSAngebote = (function () {
         if (cmd === 'removeAngRow') { pending.delete(row); states.delete(row); row.remove(); changedRows = true; mark(); renumber(); }
         if (cmd === 'clearBild') {
           invalidateImage(row);
+          imageStatus(row, '', false);
           Object.assign(states.get(row), { image_id: '', werbebild_id: '' }); pending.delete(row);
           row.querySelector('.cms-bild-preview').style.display = 'none'; b.style.display = 'none'; mark();
         }

@@ -566,6 +566,16 @@ erfolgen ausschließlich isoliert; ein Feature-Rollout ändert main nicht.
 - TC-F18-06: Neue Aktionen im Gültigkeitszeitraum ohne zusätzliche Freigabe
   sichtbar; ungültige Daten und fehlendes Schema verhindern den Schreibvorgang
   mit verständlicher Meldung. Keine unautorisierten Schreibzugriffe.
+- TC-F18-07: Die Übersicht zeigt vorhandene Aktionen ohne Vorlagen- oder
+  Bildabrufe; langsame CMS-Konfiguration darf die Liste nicht blockieren.
+  Originalvorlagen werden erst beim Öffnen einer Aktion geladen.
+- TC-F18-08: Bestehende Artikelbilder auch ohne Werbebildverknüpfung automatisch
+  aus SharePoint lesen; abgelaufene Download-URLs erneuern. Bildfehler sichtbar
+  an der betroffenen Zeile anzeigen, keine ungefragten Stammbild-Schreibzugriffe.
+- TC-F18-09: Ursprüngliche CMS-Darstellung beibehalten: kompakte Aktionszeile
+  mit aufklappbaren Artikeln und farbigen Direktaktionen sowie ursprüngliche
+  kompakte Erfassungszeilen. Nur Getränkezusatzfelder und 4/6-Auswahl ergänzen;
+  keine neue Oberflächengestaltung.
 
 ## Verifikation und offene Fragen
 

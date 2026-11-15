@@ -10,6 +10,14 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F18-Korrektur: Listenadaption bleibt ohne Vorlagen-/Bildnetzwerkzugriffe.
+Originale Wochenvorlagen erst beim Öffnen laden. Fehlende Artikelbilder im
+Erfassungsdialog asynchron nachladen; abgelaufene CMS-Downloadlinks über die
+bestehende Werbebildsuche erneuern. Ursprüngliches CMS-Markup und kompakte
+Darstellung wiederverwenden, einschließlich aufklappbarer Aktionsartikel.
+Betroffen: gemeinsames Formular, Dataverse-Adapter, Modell-Bildauflösung,
+Erfassungscontroller, Vorschau, gezielte Tests und Anwenderhilfe.
+
 F18 ersetzt den separaten Schritt-Editor und die Blob-Aktionsablage für neue
 Aktionen. Bestehende Dataverse-Angebote erhalten typisierte Getränke-/Artfelder;
 aktionsbezogene Layouts verwenden vorhandene Seitenkonfiguration. Ein

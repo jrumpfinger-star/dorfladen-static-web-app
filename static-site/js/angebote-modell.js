@@ -491,10 +491,10 @@ window.AngeboteModel = (function () {
     if (!imageCache.has(id)) {
       var promise = (async function () {
         var source = cmsImages.get(id);
-        if (id.startsWith('cms:') && !source) {
+        if (id.startsWith('cms:') && (!source || /^https:\/\//i.test(source))) {
           var key = id.slice(4);
           if (!key || /['\r\n]/.test(key)) throw problem('Der Bildschlüssel ist nicht gültig.');
-          var matches = await request('/api/werbebilder?sharepoint=1', json('POST', { articles: [{ artikelnummer: key, strichcode: key }] }));
+          var matches = await request('/api/werbebilder?sharepoint=1', json('POST', { articles: [{ artikelnummer: key, edeka_nr: key, strichcode: key }] }));
           var found = Array.isArray(matches) && matches.find(function (entry) { return entry.dl_bild_base64; });
           if (!found) throw problem('Ein Artikelbild wurde nicht gefunden. Bitte die Bildzuordnung prüfen.');
           source = found.dl_bild_base64;
