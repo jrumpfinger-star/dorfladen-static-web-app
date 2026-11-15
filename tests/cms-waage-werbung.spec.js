@@ -13,6 +13,7 @@
  */
 const zlib = require('zlib');
 const { test, expect } = require('@playwright/test');
+const cmsAngemeldet = require('./_cms-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 test.describe.configure({ mode: 'serial' });
@@ -143,6 +144,7 @@ async function cmsMit(page, opts = {}) {
     return json(405, { success: false });
   });
 
+  await cmsAngemeldet(page);
   await page.goto(BASE + '/cms.html', { waitUntil: 'domcontentloaded' });
   const hash = await page.evaluate(() => { const el = document.getElementById('cms-pw-hash'); return el ? JSON.parse(el.textContent) : null; });
   if (!hash) test.skip(true, 'Diese Seite ist hier nicht ausgeliefert');

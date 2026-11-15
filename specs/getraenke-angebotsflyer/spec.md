@@ -170,6 +170,12 @@ Bestätigung; freie Bearbeitung bleibt je Aktion möglich.
   Standards ändern, speichern und nach erneutem Öffnen wiederfinden.
   Die erste CMS-Anmeldung wird vor geschützten Designabrufen abgeschlossen,
   ohne doppelte Passwortabfrage; Anmeldefehler bleiben sichtbar und wiederholbar.
+  Eine vorhandene serverseitige Anmeldung wird auch nach Seiten-/Tabwechsel
+  wiederverwendet. Eine alte rein lokale Freigabe reicht nicht als Anmeldung:
+  Fehlt die Serversitzung oder ist sie ungültig, erfolgt die Anmeldung einmal
+  am CMS-Eingang, nicht zusätzlich im Getränkeflyer. Ein falsches Passwort oder
+  ein Serverfehler lässt die Hauptanmeldung offen, ohne weiteren Passwortdialog.
+  Passwort und Token erscheinen weder in URLs noch in Meldungen.
 - TC-F9-02: A4-/Karten-/Waagenvorschau aktualisiert sich ohne Veröffentlichung.
 - TC-F9-03: Änderungen neuer Standards lassen bestehende Layouts, Veröffentlichungen
   und bisherige Plakat-/Einzelflyer-Einstellungen unverändert.
@@ -187,7 +193,8 @@ stehen unter einer zunächst geschlossenen Feinabstimmung.
 Beide Editoren bieten sichtbare Vorschau-Umschalter A4/PDF, Handy/Kiosk und
 Waage mit den vorhandenen Profilen. Die A4-Vorschau bleibt frei bearbeitbar;
 andere Ansichten sind reine Vorschauen, keine unabhängigen Layouts.
-Keine neuen Stilvorlagen, keine Änderung bestehender Kundenlayouts,
+Zum damaligen Ausbaustand keine neuen Stilvorlagen; F13 erweitert diese Auswahl.
+Keine Änderung bestehender Kundenlayouts,
 Speicher-/Freigabeverträge oder der Bestätigungen beim Ersetzen freier Layouts.
 
 - TC-F10-01: Beide Stile über Kacheln mit echten Miniatur-Canvas wählen,
@@ -247,6 +254,52 @@ Datensätze fallen auf die bisherige automatische Ausgabe zurück.
 - TC-F11-04: Artikelübersicht und Dialog entsprechen dem Mockup-Aufbau auf
   vier Viewports, ohne horizontalen Überlauf und mit mindestens 44 px
   Bedienflächen; Desktop und Ladentablet zeigen vier Artikel ohne Seitenscrollen.
+
+## F13: Originalvorlagen und Dorfladen-Logo
+
+Der neue Editor bietet zusätzlich zu Landladen/Klassisch die neun Vorlagen
+des bisherigen Angebotseditors als frei bearbeitbare Startpunkte an:
+Classic Red, Minimal Clean, Dark Modern, Organic Market, Bold Poster,
+Modern Magazine, Mag Fresh, Mag Bold und Mag XL. Namen, Grundfarben und die
+Unterscheidung zwischen klassischem Angebotslayout und Magazinlayout bleiben
+erkennbar. Mag XL verwendet eine größere Bildfläche. Alle Vorlagen stehen
+für Wochen- und Getränkeangebote sowie 4/6 Artikel bereit.
+
+Die Auswahl ist unter „Frei gestalten“ direkt erreichbar, nicht nur in einer
+zunächst geschlossenen Einstellungsgruppe. Vorschaukacheln zeigen das
+tatsächliche Design. Die Auswahl einer Vorlage aktualisiert die Startwerte;
+bereits frei positionierte Elemente werden weiterhin erst durch bestätigtes
+Anwenden ersetzt. Änderungen betreffen nur das gewählte Ausgabeziel.
+Bestehende gespeicherte Layouts bleiben beim Öffnen unverändert.
+Auch die Hintergrundfarbe anderer Ziele bleibt erhalten. Der Rabatt wird wie
+im Original aus Angebots-/Stattpreis berechnet, nicht unabhängig erfasst;
+ohne positive Ersparnis wird kein Rabatt angezeigt.
+
+Wie im Original verwenden Sammel- und Einzelflyer das echte Dorfladen-Logo
+im Kopfbereich. Verwendet wird dieselbe hochauflösende Originaldatei wie beim
+bisherigen Druck. Das Logo wird proportional, ohne Beschnitt und ohne
+Überlagerung von Titel, Zeitraum oder Artikeldaten dargestellt. Es ist ein
+eigenes verschieb-/skalier-/dreh-/ausblendbares Element und wird identisch
+in Vorschau, Originalansicht, Druck/PDF und Waagenexport übernommen.
+Keine zusätzliche Logo-Wiederholung auf jeder kleinen Kundenkarte.
+Ein fehlendes/unlesbares Logo löst eine verständliche Fehlermeldung aus;
+es wird nicht stillschweigend ohne Logo exportiert.
+
+- TC-F13-01: Alle neun Originalstile und beide bisherigen neuen Stile sind
+  in Aktionseditor und CMS auswählbar, mit echten Miniaturen und eindeutiger
+  Aktiv-Markierung. Auswahl, Farben und freie Elemente bleiben nach Speichern
+  und Öffnen erhalten; unbekannte Vorlagen werden serverseitig abgelehnt.
+- TC-F13-02: Jede Vorlage mit beiden Angebotsarten, 4/6 Artikeln und Folgeseiten
+  rendern; Namen, Preise und Getränkepflichtfelder passen. Klassische und
+  Magazinvorlagen sowie die größere XL-Bildfläche unterscheiden sich sichtbar.
+- TC-F13-03: Original-Logo auf jeder neuen Sammelflyerseite und jedem
+  Einzelflyer prüfen; keine Wiederholung auf Kundenkarten. Lage/Größe ändern,
+  speichern, öffnen und in Druck-/Waagenausgabe wiederfinden. Alte Layouts
+  werden nicht ungefragt verändert; Logo-Ladefehler verhindern eine
+  unvollständige Ausgabe und erlauben erneutes Laden.
+- TC-F13-04: Vorlagenauswahl und Logo auf den vier Zielgrößen ohne horizontalen
+  Überlauf oder abgeschnittene Bedienelemente bedienen; bestehender
+  Bestätigungsdialog schützt frei gestaltete Ziele.
 
 ## Verifikation und offene Fragen
 

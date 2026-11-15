@@ -24,7 +24,9 @@ Editor erreichbar. Sie werden weder migriert noch überschrieben.
    Schrift, Farbe, Ebenen und Deckkraft lassen sich ändern. Eigene Texte, Bilder
    und Flächen sowie Duplikate sind möglich. Zahlenfelder und Pfeilknöpfe
    funktionieren auch ohne Ziehen. Eine Vorlage ersetzt freie Gestaltung erst
-   nach Bestätigung.
+   nach Bestätigung und nur im gewählten Ausgabeziel; bei Einzelansichten
+   bleibt sie auf den ausgewählten Artikel beschränkt. Andere Artikel und
+   Ausgabeziele bleiben unverändert.
 3. **Ausgeben:** Die folgenden Aktionen sind bewusst getrennt:
    - **Entwurf speichern** ändert keine Kundenfassung.
    - **Für Homepage veröffentlichen** gibt eine vollständige Fassung frei.
@@ -50,7 +52,11 @@ und Produktbilder. A4-, Karten- und Waagenvorschau verwenden Beispieldaten.
 Alte Flyer-Farben lassen sich ausdrücklich kopieren. Speichern verändert weder
 alte Einstellungen noch individuelle oder veröffentlichte Aktionen.
 Aktuelle Standards können im Aktionseditor ausdrücklich neu übernommen werden.
-Landladen und Klassisch werden als anklickbare Vorschaukacheln angeboten.
+Die kompakte Vorlagenauswahl zeigt das aktive Design. **Auswahl öffnen**
+blendet elf anklickbare Vorschaukacheln ein: Landladen, Klassisch sowie die
+neun Originalstile Classic Red, Minimal Clean, Dark Modern, Organic Market,
+Bold Poster, Modern Magazine, Mag Fresh, Mag Bold und Mag XL.
+Jede Vorlage ist ein frei bearbeitbarer Startpunkt, kein fertiges Bild.
 Darunter unabhängig 4 großzügige oder 6 kompakte Artikel je Seite wählen.
 Farben und Schrift sind direkt sichtbar; Größen und Drehung stehen unter
 „Feinabstimmung“. Ein Häkchen markiert die aktive Auswahl, die Kacheln sind
@@ -61,8 +67,25 @@ Vorschau-Schaltflächen erreichbar. Die Vorschau ändert oder veröffentlicht
 keinen Entwurf. In der neuen Angebotsverwaltung ist jedes Ausgabeziel separat
 bearbeitbar; der bestehende Designeditor verwaltet weiterhin nur globale
 Startstandards.
-Beim ersten CMS-Login wartet der Reiter auf die abgeschlossene Anmeldung.
-Bei Anmeldefehlern die Meldung schließen und den Getränkeflyer-Reiter erneut öffnen.
+
+Das echte **Dorfladen-Logo** steht wie im Original im Flyer-Kopf; kleine
+Kundenkacheln erhalten kein zusätzliches Logo. Es ist als eigenes Element
+verschiebbar, skalierbar und drehbar. **+ Dorfladen-Logo** fügt es bei Bedarf
+auch in bestehende Gestaltungen ein. Druck/PDF und Waagenbilder verwenden
+dasselbe hochauflösende Original. Ein Ladefehler blockiert die Ausgabe,
+statt einen Flyer ohne Logo zu erzeugen. Bereits gespeicherte Layouts
+werden nicht automatisch verändert.
+
+### Gemeinsame CMS-Anmeldung
+
+Eine erfolgreiche CMS-Anmeldung gilt auch für die Getränkeflyer-Gestaltung.
+Der CMS-Einstieg prüft eine gespeicherte Serversitzung und öffnet die
+Verwaltung ohne erneute Passwortabfrage, solange sie gültig ist. Ein lokaler
+Anmeldemerker allein ersetzt keine Serverberechtigung. Falsche Passwörter
+und Verbindungsfehler werden direkt an der Hauptanmeldung angezeigt;
+der Login öffnet keinen zweiten Passwortdialog.
+Frontend und API müssen zusammen aktualisiert werden, da die
+Sitzungsprüfung `GET /api/cms-auth` benötigt.
 
 ### Kundenansicht und Gültigkeit
 

@@ -32,7 +32,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <h2>Dorfladen CMS</h2>
     <p>Bitte Passwort eingeben</p>
     <div class="cms-pw-wrap"><input type="password" id="cms-login-pw" placeholder="Passwort" autocomplete="current-password"><button type="button" class="cms-pw-toggle" id="cms-pw-eye" title="Passwort anzeigen">&#128065;</button></div>
-    <div class="cms-login-err" id="cms-login-err">Falsches Passwort</div>
+    <p id="cms-login-status" role="status" hidden></p>
+    <div class="cms-login-err" id="cms-login-err" role="alert">Falsches Passwort</div>
     <button class="cms-btn-login" id="cms-login-btn">Anmelden</button>
   </div>
 </div>

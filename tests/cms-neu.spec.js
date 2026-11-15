@@ -5,16 +5,15 @@
  *   F3  Navigation fÃ¼r 15 Bereiche
  *   F6  Bedienbarkeit und Erscheinungsbild
  *
- * Die Seite verlangt ein Kennwort. Es wird **nicht** hinterlegt: Der
- * Vergleichswert steht offen im Markup (`#cms-pw-hash`) und wird von dort
- * Ã¼bernommen. Die eigentliche Absicherung liegt ohnehin serverseitig im
- * `admin_auth_guard` der API â€” das Gatter hier hÃ¤lt nur die OberflÃ¤che zu.
+ * Die UI-Tests emulieren eine bestaetigte Serversitzung ohne echtes
+ * Kennwort. Den Anmeldevertrag pruefen die Angebots-/Anmeldetests separat.
  *
  * AusfÃ¼hren:
  *   npx playwright test tests/cms-neu.spec.js
  */
 
 const { test, expect } = require('@playwright/test');
+const cmsAngemeldet = require('./_cms-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -29,6 +28,7 @@ const BEREICHE = ['wp', 'hours', 'ang', 'sort', 'hp', 'news', 'gallery', 'cfg',
   'orders', 'metzger', 'stats', 'social', 'push', 'settings', 'help'];
 
 async function oeffne(page, adresse) {
+  await cmsAngemeldet(page);
   await page.goto(adresse || URL, { waitUntil: 'domcontentloaded' });
   const hash = await page.evaluate(() => {
     const el = document.getElementById('cms-pw-hash');

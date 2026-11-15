@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "api"))
 
-from shared.angebote import (AngeboteFehler, AngeboteService, active, base_cents,
+from shared.angebote import (AngeboteFehler, AngeboteService, TEMPLATES, active, base_cents,
                              normalize, today)
 
 
@@ -126,6 +126,33 @@ class AngeboteTests(unittest.TestCase):
         head = self.service.create(data)
         self.assertEqual(self.service.get(head["id"])["draft"]["layout"]["mode"], "free")
         self.assertEqual(self.service.get(head["id"])["draft"]["layout"]["pages"][0]["elements"][-1]["rotation"], 15)
+
+    def test_TC_F13_original_templates_and_logo_roundtrip(self):
+        self.assertEqual(len(TEMPLATES), 11)
+        for template in TEMPLATES:
+            with self.subTest(template=template):
+                data = draft()
+                data["layout"].update(template=template, background="#f4f1ea")
+                page = data["layout"]["pages"][0]
+                page["background"] = "#ffffff"
+                page["elements"].extend([
+                    {"id": "a" * 32, "type": "logo", "x": 518, "y": 28,
+                     "w": 236, "h": 70, "rotation": 5},
+                    {"id": "b" * 32, "type": "discount", "item_id": "1" * 32,
+                     "x": 40, "y": 600, "w": 80, "h": 30},
+                ])
+                head = self.service.create(data)
+                stored = self.service.get(head["id"])["draft"]["layout"]
+                self.assertEqual(stored["template"], template)
+                self.assertEqual(stored["pages"][0]["background"], "#ffffff")
+                self.assertEqual(stored["pages"][0]["elements"][-2]["type"], "logo")
+                self.assertEqual(stored["pages"][0]["elements"][-2]["rotation"], 5)
+        data["layout"]["template"] = "unknown"
+        self.error(400, normalize, data)
+        data["layout"]["template"] = "land"
+        for invalid in ("red", "#fff", None, 123):
+            data["layout"]["pages"][0]["background"] = invalid
+            self.error(400, normalize, data)
 
     def test_TC_F11_independent_target_layouts_and_public_image_scope(self):
         data = draft()

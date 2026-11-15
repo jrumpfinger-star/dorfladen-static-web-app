@@ -25,6 +25,7 @@
  */
 
 const { test, expect } = require('./_kiosk-angemeldet');
+const cmsAngemeldet = require('./_cms-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -766,9 +767,8 @@ test.describe('Getränke-Einstellungen im CMS', () => {
       });
     });
 
+    await cmsAngemeldet(page);
     await page.goto(CMS_URL, { waitUntil: 'domcontentloaded' });
-    // Das Gatter der Oberfläche trägt seinen Vergleichswert offen im Markup;
-    // die echte Absicherung liegt serverseitig im admin_auth_guard.
     const hash = await page.evaluate(() => {
       const el = document.getElementById('cms-pw-hash');
       return el ? JSON.parse(el.textContent) : null;
@@ -1225,4 +1225,3 @@ test.describe('Getränke – Terminleiste (GT)', () => {
     await expect(page.locator('#gk-foot')).toContainText('17');
   });
 });
-

@@ -8,6 +8,49 @@ window.AngeboteModel = (function () {
     card_background: '#ffffff', price_background: '#ffffff', price_shape: 'rect',
     name_size: 24, price_size: 58, details_size: 17, image_rotation: 0, image_scale: 100
   };
+  var templateStyles = [
+    { id: 'land', label: 'Landladen', settings: Object.assign({}, theme, { color: '#bb421e', background: '#fffdf6' }) },
+    { id: 'classic', label: 'Klassisch', settings: Object.assign({}, theme, { color: '#bb421e', background: '#ffffff' }) },
+    { id: 'classic-red', label: 'Classic Red', original: true,
+      settings: { background: '#f4f1ea', title_color: '#a51d2d', color: '#a51d2d', card_background: '#ffffff', text_color: '#1a1a1a', price_background: '#a51d2d', price_shape: 'round' } },
+    { id: 'minimal-clean', label: 'Minimal Clean', original: true,
+      settings: { background: '#ffffff', title_color: '#111827', color: '#047857', card_background: '#ffffff', text_color: '#1a1a1a', price_background: '#047857', price_shape: 'round' } },
+    { id: 'dark-modern', label: 'Dark Modern', original: true,
+      settings: { background: '#0f172a', title_color: '#e5e7eb', color: '#0ea5e9', card_background: '#f5f5f5', text_color: '#111827', price_background: '#0ea5e9', price_shape: 'round' } },
+    { id: 'organic-market', label: 'Organic Market', original: true,
+      settings: { background: '#f7f2e7', title_color: '#355e3b', color: '#8b1e3f', card_background: '#fffdf8', text_color: '#2f3d2f', price_background: '#8b1e3f', price_shape: 'round' } },
+    { id: 'bold-poster', label: 'Bold Poster', original: true,
+      settings: { background: '#fff7ed', title_color: '#b91c1c', color: '#ea580c', card_background: '#fffaf2', text_color: '#7c2d12', price_background: '#ea580c', price_shape: 'rect' } },
+    { id: 'modern-magazine', label: 'Modern Magazine', original: true, magazine: true, header: '#d6e5d0', accent: '#8aad7e',
+      settings: { background: '#edf4ea', title_color: '#5e7057', color: '#6f835f', card_background: '#f6fbf5', text_color: '#2c3a2a', price_background: '#eaf3e6', price_shape: 'round' } },
+    { id: 'modern-mag-fresh', label: 'Mag Fresh (Türkis)', original: true, magazine: true, header: '#cffafe', accent: '#06b6d4',
+      settings: { background: '#e8f6f8', title_color: '#0e7490', color: '#0891b2', card_background: '#f0fdfa', text_color: '#134e4a', price_background: '#ecfeff', price_shape: 'round' } },
+    { id: 'modern-mag-bold', label: 'Mag Bold (Violett)', original: true, magazine: true, header: '#ede9fe', accent: '#8b5cf6',
+      settings: { background: '#faf5ff', title_color: '#7c3aed', color: '#db2777', card_background: '#fefcff', text_color: '#1e1b4b', price_background: '#f5f3ff', price_shape: 'round' } },
+    { id: 'modern-mag-xl', label: 'Mag XL (Großbild)', original: true, magazine: true, xl: true, header: '#dbeafe', accent: '#3b82f6',
+      settings: { background: '#f0f4f8', title_color: '#1e40af', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#eff6ff', price_shape: 'round' } }
+  ];
+  function templateStyle(id) {
+    var style = templateStyles.find(function (entry) { return entry.id === id; });
+    if (!style) throw problem('Diese Designvorlage ist nicht verfügbar. Bitte eine andere wählen.');
+    return style;
+  }
+  function useTemplate(layout, id) { Object.assign(layout, templateStyle(id).settings, { template: id }); }
+  function preserveBackgrounds(data) {
+    data.layout.pages.forEach(function (page) { if (!page.background) page.background = data.layout.background; });
+    Object.values(data.layout.targets || {}).forEach(function (targets) {
+      targets.forEach(function (target) { if (!target.background) target.background = data.layout.background; });
+    });
+  }
+  function savings(item) {
+    if (!(item.price_cents > 0 && item.old_price_cents > item.price_cents)) return null;
+    return Math.round((1 - item.price_cents / item.old_price_cents) * 100) || null;
+  }
+  function priceColor(layout) {
+    var value = layout.price_background.slice(1);
+    var lightness = parseInt(value.slice(0, 2), 16) * 299 + parseInt(value.slice(2, 4), 16) * 587 + parseInt(value.slice(4, 6), 16) * 114;
+    return lightness >= 160000 ? layout.color : '#ffffff';
+  }
   function uid() { return crypto.randomUUID().replace(/-/g, ''); }
   function clone(value) { return structuredClone(value); }
   function problem(message) { var e = new Error(message); e.userMessage = message; return e; }
@@ -113,14 +156,22 @@ window.AngeboteModel = (function () {
       fill: '', text: '', item_id: '', image_id: '', image_scale: 100, shape: 'rect' }, extra);
   }
   function templates(data) {
-    var l = data.layout, density = l.density, compact = density === 6, pages = [];
+    var l = data.layout, density = l.density, compact = density === 6, pages = [], style = templateStyle(l.template);
     for (var start = 0; start < Math.max(1, data.items.length); start += density) {
-      var elements = [
-        el('brand', 40, 28, 714, 30, { font_size: 18, bold: true, fill: l.title_color, font: l.font }),
-        el('title', 40, 65, 714, 72, { font_size: 43, bold: true, fill: l.color, font: l.font }),
-        el('period', 40, 143, 714, 28, { font_size: 17, fill: l.text_color, font: l.font }),
-        el('footer', 40, 1060, 714, 40, { font_size: 13, align: 'center', fill: l.text_color, font: l.font })
-      ];
+      var elements = [];
+      if (style.magazine) {
+        elements.push(el('shape', 0, 0, W, 170, { fill: style.header }),
+          el('shape', 0, 170, W, 3, { fill: style.accent }),
+          el('logo', 28, 30, 180, 76),
+          el('title', 222, 38, 300, 90, { font_size: 40, bold: true, fill: l.title_color, font: l.font }),
+          el('period', 542, 40, 220, 76, { font_size: 17, align: 'right', fill: l.title_color, font: l.font }));
+      } else {
+        if (!style.original) elements.push(el('brand', 40, 28, 440, 30, { font_size: 18, bold: true, fill: l.title_color, font: l.font }));
+        elements.push(el('logo', 518, 28, 236, 70),
+          el('title', 40, style.original ? 30 : 65, 450, 72, { font_size: style.original ? 50 : 43, bold: true, fill: style.original ? l.title_color : l.color, font: l.font }),
+          el('period', 40, 143, 714, 28, { font_size: 17, fill: style.original ? l.title_color : l.text_color, font: l.font }));
+      }
+      elements.push(el('footer', 40, 1060, 714, 40, { font_size: 13, align: 'center', fill: style.original ? l.title_color : l.text_color, font: l.font }));
       data.items.slice(start, start + density).forEach(function (it, n) {
         var x = 40 + (n % 2) * 365, y = 190 + Math.floor(n / 2) * (compact ? 282 : 427);
         var h = compact ? 264 : 407;
@@ -130,54 +181,89 @@ window.AngeboteModel = (function () {
             Object.assign({}, shared, { font_size: size }, extra)));
         }
         elements.push(el('shape', x, y, 349, h, { item_id: it.id, fill: it.highlight ? '#f2ead8' : l.card_background, shape: l.template === 'classic' ? 'rect' : 'round' }));
-        bound('image', 14, 14, 122, compact ? 110 : 160, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
-        bound('name', 148, 18, 185, compact ? 75 : 100, Math.min(l.name_size, compact ? 22 : 28), { bold: true });
-        if (data.kind === 'drinks') bound('pack', 148, compact ? 98 : 130, 185, compact ? 40 : 55, Math.min(l.details_size, 18));
-        if (!compact) bound('description', 16, 200, 317, 50, l.details_size);
-        var priceY = compact ? 149 : 260;
-        elements.push(el('shape', x + 12, y + priceY - 5, 325, compact ? 64 : 78,
+        if (style.magazine) {
+          var imageHeight = compact ? (style.xl ? 90 : 74) : (style.xl ? 178 : 145);
+          bound('image', 14, 12, 321, imageHeight, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
+          bound('name', 16, imageHeight + 20, 317, compact ? 40 : 60, Math.min(l.name_size, compact ? 22 : 28), { bold: true });
+          if (data.kind === 'drinks') bound('pack', 16, compact ? 151 : 260, 317, compact ? 22 : 24, Math.min(l.details_size, 18));
+        } else {
+          bound('image', 14, 14, 122, compact ? 110 : 160, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
+          bound('name', 148, 18, 185, compact ? 75 : 100, Math.min(l.name_size, compact ? 22 : 28), { bold: true });
+          if (data.kind === 'drinks') bound('pack', 148, compact ? 98 : 130, 185, compact ? 40 : 55, Math.min(l.details_size, 18));
+          if (!compact) bound('description', 16, 200, 317, 50, l.details_size);
+        }
+        var priceY = style.magazine ? (compact ? 180 : 290) : compact ? 149 : 260;
+        var priceHeight = style.magazine ? (compact ? 38 : 45) : compact ? 55 : 70;
+        elements.push(el('shape', x + 12, y + priceY - 5, 325, style.magazine ? priceHeight + 10 : compact ? 64 : 78,
           { item_id: it.id, fill: l.price_background, shape: l.price_shape }));
-        bound('price', 24, priceY, 205, compact ? 55 : 70, Math.min(l.price_size, compact ? 46 : 70), { bold: true, fill: l.color });
-        if (it.old_price_cents != null) bound('old_price', 236, priceY + 9, 96, 42, 18);
+        bound('price', 24, priceY, 205, priceHeight, Math.min(l.price_size, style.magazine ? 36 : compact ? 46 : 70), { bold: true, fill: priceColor(l) });
+        if (it.old_price_cents != null) bound('old_price', 236, priceY + 9, 96, style.magazine ? 30 : 42, 18, { fill: priceColor(l) });
         if (data.kind === 'drinks') {
-          bound('deposit', 18, compact ? 212 : 344, 313, 24, Math.min(l.details_size, 18));
-          bound('base', 18, compact ? 237 : 374, 313, 24, Math.min(l.details_size, 18));
+          bound('deposit', 18, compact ? (style.magazine ? 224 : 212) : 354, 313, compact && style.magazine ? 18 : 24, Math.min(l.details_size, compact && style.magazine ? 14 : 18));
+          bound('base', 18, compact ? (style.magazine ? 244 : 237) : 380, 313, compact && style.magazine ? 18 : 24, Math.min(l.details_size, compact && style.magazine ? 14 : 18));
+        }
+        if (savings(it)) {
+          elements.push(el('shape', x + 14, y + 12, 72, 28, { fill: l.color, shape: 'round' }));
+          bound('discount', 14, 15, 72, 23, 16, { bold: true, align: 'center', fill: '#ffffff' });
         }
       });
-      pages.push({ elements: elements });
+      pages.push({ elements: elements, background: l.background });
     }
     return pages;
   }
   var targetSizes = { card: { w: 420, h: 480 }, single: { w: 800, h: 1130 }, scale: { w: 800, h: 462 } };
   function targetTemplate(data, target, item) {
-    var l = data.layout, id = item.id, elements = [], size = targetSizes[target];
+    var l = data.layout, id = item.id, elements = [], size = targetSizes[target], style = templateStyle(l.template);
     function add(type, x, y, w, h, fontSize, extra) {
       elements.push(el(type, x, y, w, h, Object.assign({ item_id: id, font_size: fontSize,
         font: l.font, fill: l.text_color }, extra || {})));
     }
+    function price(x, y, w, h, fontSize) {
+      add('shape', x - 8, y - 6, w + 16, h + 12, 20, { fill: l.price_background, shape: l.price_shape });
+      add('price', x, y, w, h, fontSize, { bold: true, fill: priceColor(l) });
+    }
     if (target === 'card') {
       add('shape', 8, 8, 404, 464, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
         shape: l.template === 'classic' ? 'rect' : 'round' });
-      add('image', 24, 24, 116, 140, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
-      add('name', 154, 24, 242, 76, Math.min(l.name_size, 28), { bold: true });
-      if (data.kind === 'drinks') add('pack', 154, 102, 242, 42, Math.min(l.details_size, 19));
-      add('price', 154, data.kind === 'drinks' ? 150 : 112, 242, 68, Math.min(l.price_size, 52), { bold: true, fill: l.color });
-      if (item.old_price_cents != null) add('old_price', 154, 218, 242, 28, 16);
-      if (item.description) add('description', 24, 276, 372, 46, 15);
+      if (style.magazine) {
+        var imageHeight = style.xl ? 184 : 136;
+        add('image', 24, 24, 372, imageHeight, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        add('name', 24, imageHeight + 32, 372, 58, Math.min(l.name_size, 28), { bold: true });
+        if (data.kind === 'drinks') add('pack', 24, 278, 372, 28, Math.min(l.details_size, 19));
+        price(32, 324, 218, 58, Math.min(l.price_size, 48));
+        if (item.old_price_cents != null) add('old_price', 266, 340, 122, 34, 16);
+      } else {
+        add('image', 24, 24, 116, 140, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        add('name', 154, 24, 242, 76, Math.min(l.name_size, 28), { bold: true });
+        if (data.kind === 'drinks') add('pack', 154, 102, 242, 42, Math.min(l.details_size, 19));
+        price(154, data.kind === 'drinks' ? 150 : 112, 242, 68, Math.min(l.price_size, 52));
+        if (item.old_price_cents != null) add('old_price', 154, 230, 242, 28, 16);
+        if (item.description) add('description', 24, 276, 372, 46, 15);
+      }
       if (data.kind === 'drinks') {
-        add('deposit', 24, 336, 372, 28, 15);
-        add('base', 24, 368, 372, 28, 15);
+        add('deposit', 24, style.magazine ? 390 : 336, 372, style.magazine ? 18 : 20, 15);
+        add('base', 24, style.magazine ? 410 : 368, 372, style.magazine ? 18 : 20, 15);
       }
       add('period', 24, 430, 372, 22, 12);
     } else if (target === 'single') {
       add('shape', 20, 20, 760, 1090, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
         shape: l.template === 'classic' ? 'rect' : 'round' });
-      add('image', 44, 44, 260, 440, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
-      add('name', 330, 54, 420, 160, Math.min(l.name_size + 18, 60), { bold: true });
-      if (data.kind === 'drinks') add('pack', 330, 224, 420, 60, l.details_size + 8);
-      add('price', 330, data.kind === 'drinks' ? 306 : 246, 420, 132, Math.min(l.price_size + 28, 100), { bold: true, fill: l.color });
-      if (item.old_price_cents != null) add('old_price', 330, 440, 420, 42, 22);
-      if (item.description) add('description', 44, 540, 706, 110, 22);
+      add('logo', 520, 44, 230, 80, 20);
+      if (style.magazine) {
+        add('name', 44, 142, 706, 90, Math.min(l.name_size + 18, 60), { bold: true, align: 'center' });
+        if (item.description) add('description', 44, 238, 706, 44, 22, { align: 'center' });
+        add('image', 44, 292, 706, style.xl ? 440 : 370, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        if (data.kind === 'drinks') add('pack', 44, style.xl ? 744 : 674, 706, 34, l.details_size + 8);
+        price(52, style.xl ? 790 : 730, 460, 90, Math.min(l.price_size + 28, 100));
+        if (item.old_price_cents != null) add('old_price', 540, style.xl ? 810 : 750, 210, 42, 22);
+      } else {
+        add('image', 44, 44, 260, 440, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        add('name', 330, 150, 420, 150, Math.min(l.name_size + 18, 60), { bold: true });
+        if (data.kind === 'drinks') add('pack', 330, 306, 420, 60, l.details_size + 8);
+        price(330, 376, 420, 132, Math.min(l.price_size + 28, 100));
+        if (item.old_price_cents != null) add('old_price', 330, 526, 420, 42, 22);
+        if (item.description) add('description', 44, 600, 706, 110, 22);
+      }
       if (data.kind === 'drinks') {
         add('deposit', 44, 900, 706, 52, 24);
         add('base', 44, 960, 706, 52, 24);
@@ -186,19 +272,25 @@ window.AngeboteModel = (function () {
     } else {
       add('shape', 8, 8, 784, 446, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
         shape: l.template === 'classic' ? 'rect' : 'round' });
+      add('logo', 614, 12, 158, 44, 20);
       add('image', 22, 24, 242, 414, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
-      add('name', 286, 36, 486, 78, 50, { bold: true });
-      if (data.kind === 'drinks') add('pack', 286, 122, 486, 42, 23);
-      add('price', 286, data.kind === 'drinks' ? 170 : 126, 330, 94, 70, { bold: true, fill: l.color });
-      if (item.old_price_cents != null) add('old_price', 622, 190, 150, 42, 20);
-      if (item.description) add('description', 286, 232, 486, 56, 20);
+      add('name', 286, 62, 486, 72, 50, { bold: true });
+      if (data.kind === 'drinks') add('pack', 286, 142, 486, 38, 23);
+      price(286, 188, 330, 88, 70);
+      if (item.old_price_cents != null) add('old_price', 632, 210, 140, 42, 20);
+      if (item.description) add('description', 286, 290, 486, 32, 20);
       if (data.kind === 'drinks') {
         add('deposit', 286, 328, 486, 34, 20);
         add('base', 286, 366, 486, 34, 20);
       }
       add('period', 286, 414, 486, 24, 14);
     }
-    return { item_id: id, elements: elements, width: size.w, height: size.h };
+    if (savings(item)) {
+      var badgeY = target === 'single' && style.magazine ? 292 : 24;
+      add('shape', 24, badgeY, 82, 30, 20, { fill: l.color, shape: 'round' });
+      add('discount', 24, badgeY + 3, 82, 24, 18, { fill: '#ffffff', bold: true, align: 'center' });
+    }
+    return { item_id: id, elements: elements, background: l.background, width: size.w, height: size.h };
   }
   function ensureTargets(data) {
     if (!data.layout.targets || typeof data.layout.targets !== 'object') {
@@ -238,6 +330,7 @@ window.AngeboteModel = (function () {
       case 'pack': return it ? pack(it) : '';
       case 'price': return it ? money(it.price_cents) + ' €' : '';
       case 'old_price': return it && it.old_price_cents != null ? 'statt ' + money(it.old_price_cents) + ' €' : '';
+      case 'discount': return it && savings(it) ? '-' + savings(it) + '%' : '';
       case 'deposit': return it ? (it.deposit_free ? 'Pfandfrei' : it.deposit_cents == null ? 'Pfand bitte ergänzen' : 'zzgl. ' + money(it.deposit_cents) + ' € Pfand') : '';
       case 'base': return it ? '1 l = ' + money(base(it)) + ' €' : '';
       default: return '';
@@ -250,14 +343,14 @@ window.AngeboteModel = (function () {
   async function image(id) {
     if (!imageCache.has(id)) {
       var promise = (async function () {
-        var r = await fetch('/api/angebote-bilder/' + encodeURIComponent(id), { cache: 'no-store' });
-        if (!r.ok) throw problem('Ein Angebotsbild konnte nicht geladen werden. Bitte erneut versuchen.');
+        var r = await fetch(id === 'logo' ? '/images/dorfladen-logo.png' : '/api/angebote-bilder/' + encodeURIComponent(id), { cache: 'no-store' });
+        if (!r.ok) throw problem(id === 'logo' ? 'Das Dorfladen-Logo konnte nicht geladen werden. Bitte erneut versuchen.' : 'Ein Angebotsbild konnte nicht geladen werden. Bitte erneut versuchen.');
         var url = URL.createObjectURL(await r.blob());
         try {
           return await new Promise(function (resolve, reject) {
             var img = new Image();
             img.onload = function () { resolve(img); };
-            img.onerror = function () { reject(problem('Ein Angebotsbild konnte nicht dargestellt werden.')); };
+            img.onerror = function () { reject(problem(id === 'logo' ? 'Das Dorfladen-Logo konnte nicht dargestellt werden.' : 'Ein Angebotsbild konnte nicht dargestellt werden.')); };
             img.src = url;
           });
         } finally { URL.revokeObjectURL(url); }
@@ -321,8 +414,8 @@ window.AngeboteModel = (function () {
         else if (element.shape === 'round') ctx.roundRect(0, 0, element.w, element.h, Math.min(16, element.w / 2, element.h / 2));
         else ctx.rect(0, 0, element.w, element.h);
         ctx.fill();
-      } else if (element.type === 'image') {
-        var id = imageFor(element, data);
+      } else if (element.type === 'image' || element.type === 'logo') {
+        var id = element.type === 'logo' ? 'logo' : imageFor(element, data);
         if (id) {
           var img = await image(id), ratio = Math.min(element.w / img.width, element.h / img.height) * (element.image_scale || 100) / 100;
           ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
@@ -340,6 +433,14 @@ window.AngeboteModel = (function () {
         ctx.textBaseline = 'top'; ctx.textAlign = element.align;
         var tx = element.align === 'center' ? element.w / 2 : element.align === 'right' ? element.w : 0;
         fit.lines.forEach(function (line, i) { ctx.fillText(line, tx, i * fit.size * 1.18); });
+        if (element.type === 'old_price') {
+          ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = Math.max(1, fit.size / 16);
+          fit.lines.forEach(function (line, i) {
+            var lineWidth = ctx.measureText(line).width, left = element.align === 'center' ? (element.w - lineWidth) / 2 : element.align === 'right' ? element.w - lineWidth : 0;
+            ctx.beginPath(); ctx.moveTo(left, i * fit.size * 1.18 + fit.size * .5);
+            ctx.lineTo(left + lineWidth, i * fit.size * 1.18 + fit.size * .5); ctx.stroke();
+          });
+        }
       }
       ctx.restore();
     }
@@ -348,13 +449,13 @@ window.AngeboteModel = (function () {
   async function render(data, pageNumber, scale) {
     var page = data.layout.pages[pageNumber];
     if (!page) throw problem('Diese Flyerseite ist nicht vorhanden.');
-    return renderElements(data, page.elements, W, H, data.layout.background, scale, pageNumber);
+    return renderElements(data, page.elements, W, H, page.background || data.layout.background, scale, pageNumber);
   }
   async function renderTarget(data, target, itemId, scale) {
     var size = targetSizes[target], targets = data.layout.targets && data.layout.targets[target] || [];
     var selected = targets.find(function (entry) { return entry.item_id === itemId; });
     if (!size || !selected) throw problem('Diese Zielgestaltung ist nicht vorhanden.');
-    return renderElements(data, selected.elements, size.w, size.h, data.layout.background, scale, 0);
+    return renderElements(data, selected.elements, size.w, size.h, selected.background || data.layout.background, scale, 0);
   }
   async function paintCards(host, data) {
     var canvases = Array.from(host.querySelectorAll('[data-card-item]'));
@@ -429,7 +530,7 @@ window.AngeboteModel = (function () {
       for (var layout of data.layout.targets.scale) {
         var renderedCustom = await renderTarget(data, 'scale', layout.item_id, 1);
         var output = document.createElement('canvas'); output.width = dimensions.w; output.height = dimensions.h;
-        var outputContext = output.getContext('2d'); outputContext.fillStyle = data.layout.background;
+        var outputContext = output.getContext('2d'); outputContext.fillStyle = layout.background || data.layout.background;
         outputContext.fillRect(0, 0, output.width, output.height);
         var ratio = Math.min(output.width / renderedCustom.canvas.width, output.height / renderedCustom.canvas.height);
         outputContext.drawImage(renderedCustom.canvas,
@@ -480,9 +581,9 @@ window.AngeboteModel = (function () {
       return singles;
     }
     var sources = await preflight(data);
-    return sources.map(function (source) {
+    return sources.map(function (source, index) {
       var canvas = document.createElement('canvas'); canvas.width = dimensions.w; canvas.height = dimensions.h;
-      var ctx = canvas.getContext('2d'); ctx.fillStyle = data.layout.background; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      var ctx = canvas.getContext('2d'); ctx.fillStyle = data.layout.pages[index].background || data.layout.background; ctx.fillRect(0, 0, canvas.width, canvas.height);
       var ratio = Math.min(canvas.width / source.width, canvas.height / source.height);
       ctx.drawImage(source, (canvas.width - source.width * ratio) / 2, (canvas.height - source.height * ratio) / 2, source.width * ratio, source.height * ratio);
       return canvas;
@@ -497,5 +598,7 @@ window.AngeboteModel = (function () {
     ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,
     render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate,
     preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor,
-    hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML };
+    hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
+    templateOptions: templateStyles.map(function (style) { return [style.id, style.label]; }),
+    templateStyle: templateStyle, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
 })();

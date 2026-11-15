@@ -5,7 +5,7 @@ window.AngeboteDesign = (function () {
   var choicePaint = new WeakMap();
   var modes = [['paper', 'A4 / PDF'], ['cards', 'Handy / Kiosk'], ['scale-large', 'Waage · 800 × 462'], ['scale-small', 'Waage · 800 × 280']];
   var definitions = [
-    ['template', 'Vorlage als Startpunkt', [['land', 'Landladen'], ['classic', 'Klassisch']]],
+    ['template', 'Vorlage als Startpunkt', M.templateOptions],
     ['density', 'Artikel je Vorlagenseite', [['4', '4 · großzügig'], ['6', '6 · kompakt']]],
     ['font', 'Schrift', ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS']],
     ['price_shape', 'Preis-Hintergrundform', [['rect', 'Rechteck'], ['round', 'Abgerundet'], ['ellipse', 'Oval']]],
@@ -21,13 +21,17 @@ window.AngeboteDesign = (function () {
   function controls(layout) {
     var id = ++controlId;
     function choices(key, title, options) {
-      return '<fieldset class="an-choice-group"><legend>' + title + '</legend><div class="an-choices">'
+      var isTemplate = key === 'template';
+      return '<fieldset class="an-choice-group"><legend>' + title + '</legend>'
+        + (isTemplate ? '<details class="an-template-picker"><summary><span class="an-template-current" data-current-template="' + M.esc(layout.template) + '"></span><span><strong data-template-label>'
+          + M.esc(M.templateStyle(layout.template).label) + '</strong><small>' + options.length + ' Designvorlagen · Auswahl öffnen</small></span></summary>' : '')
+        + '<div class="an-choices' + (isTemplate ? ' an-template-gallery' : '') + '">'
         + options.map(function (option) {
           return '<label class="an-choice"><input type="radio" name="an-' + key + '-' + id + '" data-style="' + key
             + '" value="' + option[0] + '"' + (String(layout[key]) === option[0] ? ' checked' : '') + '>'
             + '<span class="an-choice-body">' + (key === 'template' ? '<span class="an-choice-picture" data-template-preview="' + option[0] + '"></span>' : '')
             + '<strong>' + option[1] + '</strong><span class="an-choice-active">✓ Aktiv</span></span></label>';
-        }).join('') + '</div></fieldset>';
+        }).join('') + '</div>' + (isTemplate ? '</details>' : '') + '</fieldset>';
     }
     function fields(advanced) {
       return '<div class="an-fields">' + definitions.filter(function (def) {
@@ -47,19 +51,28 @@ window.AngeboteDesign = (function () {
         return html + '</label>';
       }).join('') + '</div>';
     }
-    return choices('template', '1 · Stil wählen', [['land', 'Landladen'], ['classic', 'Klassisch']])
+    return choices('template', '1 · Stil wählen', M.templateOptions)
       + choices('density', '2 · Artikel pro Seite', [['4', '4 · großzügig'], ['6', '6 · kompakt']])
       + '<h3 class="an-settings-heading">3 · Farben und Schrift</h3>' + fields(false)
       + '<details class="an-fine"><summary>Feinabstimmung · Größen und Drehung</summary>' + fields(true) + '</details>';
   }
   async function previewChoices(host, layout, kind) {
     var ticket = (choicePaint.get(host) || 0) + 1; choicePaint.set(host, ticket);
-    var targets = Array.from(host.querySelectorAll('[data-template-preview]'));
+    host.querySelectorAll('[data-style]').forEach(function (control) {
+      var value = layout[control.dataset.style];
+      if (value == null) return;
+      if (control.type === 'radio') control.checked = control.value === String(value);
+      else control.value = value;
+    });
+    var current = host.querySelector('[data-current-template]'), label = host.querySelector('[data-template-label]');
+    if (current) current.dataset.currentTemplate = layout.template;
+    if (label) label.textContent = M.templateStyle(layout.template).label;
+    var targets = Array.from(host.querySelectorAll('[data-template-preview], [data-current-template]'));
     await Promise.all(targets.map(async function (target) {
-      var style = M.clone(layout); style.template = target.dataset.templatePreview;
-      if (style.template !== layout.template) style.background = style.template === 'classic' ? '#ffffff' : '#fffdf6';
+      var style = M.clone(layout), id = target.dataset.templatePreview || target.dataset.currentTemplate;
+      if (id !== layout.template) M.useTemplate(style, id);
       var result = await M.render(sample(style, kind), 0, .25);
-      result.canvas.setAttribute('aria-label', 'Stilvorschau ' + (style.template === 'classic' ? 'Klassisch' : 'Landladen'));
+      result.canvas.setAttribute('aria-label', 'Stilvorschau ' + M.templateStyle(style.template).label);
       if (target.isConnected && choicePaint.get(host) === ticket) target.replaceChildren(result.canvas);
     }));
   }
@@ -83,10 +96,9 @@ window.AngeboteDesign = (function () {
   function change(layout, target) {
     var key = target.dataset.style;
     if (!key || !definitions.some(function (d) { return d[0] === key; })) return false;
-    layout[key] = target.type === 'number' || key === 'density' ? Number(target.value) : target.value;
     if (key === 'template') {
-      layout.background = target.value === 'classic' ? '#ffffff' : '#fffdf6';
-    }
+      M.useTemplate(layout, target.value);
+    } else layout[key] = target.type === 'number' || key === 'density' ? Number(target.value) : target.value;
     return true;
   }
   function sample(layout, kind) {
@@ -124,7 +136,8 @@ window.AngeboteDesign = (function () {
         if (current !== ticket) return;
         if (mode === 'cards') {
           data.items = data.items.slice(0, 1);
-          host.innerHTML = cards(data); return;
+          host.innerHTML = cards(data);
+          await M.paintCards(host, data); return;
         }
         var canvas = await outputPreview(data, mode, 0);
         if (current !== ticket) return;

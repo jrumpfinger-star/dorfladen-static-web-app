@@ -53,40 +53,39 @@
   }
   function cmsShowLogin(){document.getElementById('cms-login').style.display='';document.getElementById('cms-app').style.display='none';}
 
-  function sha256(str){
-    var buf=new TextEncoder().encode(str);
-    return crypto.subtle.digest('SHA-256',buf).then(function(h){
-      return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-    });
+  function cmsLoginBusy(value,text){
+    document.getElementById('cms-login-pw').disabled=value;
+    document.getElementById('cms-login-btn').disabled=value;
+    var status=document.getElementById('cms-login-status');
+    status.hidden=!value;status.textContent=text||'';
   }
-
-  // Check session
-  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+  function cmsLoginError(error){
+    console.error('[CMS] Server-Anmeldung fehlgeschlagen',error);
+    var el=document.getElementById('cms-login-err');
+    el.textContent=error.userMessage||'Die CMS-Anmeldung ist gerade nicht erreichbar. Bitte erneut versuchen.';
+    el.style.display='block';
+  }
+  function cmsAuthenticated(){
+    sessionStorage.setItem(CMS_PW_KEY,cmsPwHash);
+    document.getElementById('cms-login-pw').value='';
     cmsShowApp();
-  } else {
-    cmsShowLogin();
+    init();
   }
+  cmsShowLogin();
+  cmsLoginBusy(true,'Die CMS-Anmeldung wird geprüft …');
 
   // Login button
   document.getElementById('cms-login-btn').addEventListener('click',function(){
     var pw=document.getElementById('cms-login-pw').value;
-    sha256(pw).then(function(hash){
-      if(hash===cmsPwHash){
-        sessionStorage.setItem(CMS_PW_KEY,hash);
-        if(window.dlAdminLogin){
-          var login=window.dlAdminLogin(pw);
-          _cmsAdminLogin=login;
-          login.then(function(){if(_cmsAdminLogin===login)_cmsAdminLogin=null;},function(error){
-            if(_cmsAdminLogin===login)_cmsAdminLogin=null;
-            console.error('[CMS] Server-Anmeldung fehlgeschlagen',error);
-          });
-        }
-        document.getElementById('cms-login-err').style.display='none';
-        cmsShowApp();
-        init();
-      } else {
-        document.getElementById('cms-login-err').style.display='block';
-        document.getElementById('cms-login-pw').value='';
+    if(document.getElementById('cms-login-btn').disabled)return;
+    document.getElementById('cms-login-err').style.display='none';
+    cmsLoginBusy(true,'Die CMS-Anmeldung wird abgeschlossen …');
+    var login=window.dlAdminLogin(pw);
+    _cmsAdminLogin=login;
+    login.then(cmsAuthenticated).catch(cmsLoginError).finally(function(){
+      if(_cmsAdminLogin===login)_cmsAdminLogin=null;
+      cmsLoginBusy(false);
+      if(document.getElementById('cms-login').style.display!=='none'){
         document.getElementById('cms-login-pw').focus();
       }
     });
@@ -12023,8 +12022,12 @@
     });
   }
 
-  // --- Init (only if already authenticated via session) ---
-  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
-    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+  function cmsResumeSession(){
+    window.dlCheckAdminSession().then(function(authenticated){
+      if(authenticated)cmsAuthenticated();
+      else sessionStorage.removeItem(CMS_PW_KEY);
+    }).catch(cmsLoginError).finally(function(){cmsLoginBusy(false);});
   }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',cmsResumeSession);}
+  else cmsResumeSession();
 })();

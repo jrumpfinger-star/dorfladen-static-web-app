@@ -9,7 +9,7 @@
   var previewMode = 'paper';
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
-    old_price: 'Stattpreis', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', text: 'Eigener Text', shape: 'Fläche' };
+    old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
   var $ = function (id) { return document.getElementById(id); };
   function header(title) {
     return '<header class="an-head"><div><small>DORFLADEN · WOCHEN- UND GETRÄNKEANGEBOTE</small><h1>Angebote gestalten</h1></div>'
@@ -172,7 +172,7 @@
       + '<label class="an-field"><span>Gestaltungselement</span><select id="an-select-element"><option value="">Bitte auswählen</option>'
       + elements().map(function (e, i) { return '<option value="' + e.id + '"' + (e.id === selected ? ' selected' : '') + '>'
         + (i + 1) + ' · ' + roleNames[e.type] + (e.hidden ? ' (ausgeblendet)' : '') + '</option>'; }).join('') + '</select></label>'
-      + '<div class="an-element-actions"><button data-add-element="text">+ Text</button><button data-add-element="shape">+ Fläche</button><button data-add-element="image">+ Eigenes Bild</button></div>'
+      + '<div class="an-element-actions"><button data-add-element="text">+ Text</button><button data-add-element="shape">+ Fläche</button><button data-add-element="image">+ Eigenes Bild</button><button data-add-element="logo">+ Dorfladen-Logo</button></div>'
       + (current ? '<div class="an-fields">' + [
         ['x', 'Position X', 0, size.w], ['y', 'Position Y', 0, size.h], ['w', 'Breite', 8, size.w], ['h', 'Höhe', 8, size.h],
         ['font_size', 'Schriftgröße', 10, 160], ['rotation', 'Drehung', -180, 180], ['opacity', 'Deckkraft', 0, 1]
@@ -280,8 +280,8 @@
       + '<div id="an-items"></div><p class="an-note">Angebotspreis, Pfand und Veröffentlichung bleiben vom Stamm getrennt. Eigene Bildänderungen überschreiben keine Stammdaten.</p>'
       + '<button data-step="design" class="an-primary">Weiter · Kachel / Flyer gestalten</button></section>'
       + '<section id="an-step-design" hidden><h2>Die vertraute freie Gestaltung</h2><p class="an-muted">Bild, Preis und Texte antippen und ziehen – oder mit Zahlen und Pfeilen bearbeiten. Jedes Ausgabeziel bleibt separat gespeichert.</p>'
-      + '<details id="an-design-options"><summary>Vorlagen, Farben und Schrift</summary><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
-      + '<p class="an-note">Eine Vorlage ersetzt freie Positionen erst nach deiner Bestätigung.</p><div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Designstandards übernehmen</button></div></details>'
+      + '<section id="an-design-options"><h3>Vorlagen, Farben und Schrift</h3><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
+      + '<p class="an-note">Eine Vorlage ersetzt freie Positionen erst nach deiner Bestätigung – nur für das aktuelle Ausgabeziel und den gewählten Artikel.</p><div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Designstandards übernehmen</button></div></section>'
       + '<div id="an-inspector" class="an-inspector"></div><div class="an-actions"><button id="an-add-page">+ Seite</button><button id="an-remove-page">Seite entfernen</button></div>'
       + '<button data-step="output" class="an-primary">Weiter · Ausgeben</button></section>'
       + '<section id="an-step-output" hidden><h2>Wie bei den bisherigen Angeboten ausgeben</h2><div id="an-output-previews">'
@@ -674,17 +674,18 @@
         if (source.length) { dest.push(M.clone(data)); data = source.pop(); page = Math.min(page, data.layout.pages.length - 1); changed(); renderEditor(); }
       }
       if (b.id === 'an-template' || b.id === 'an-defaults') {
-        if (!(await M.dialog('Gestaltung ersetzen?', 'Alle freien Positionen und eigenen Gestaltungselemente werden durch die gewählte Vorlage ersetzt. Artikel und Preise bleiben erhalten.', 'Vorlage anwenden'))) return;
+        if (!(await M.dialog('Gestaltung ersetzen?', 'Die freien Positionen und eigenen Gestaltungselemente im aktuellen Ausgabeziel werden durch die gewählte Vorlage ersetzt. Bei Einzelansichten betrifft das nur den ausgewählten Artikel. Andere Ausgaben, Artikel und Preise bleiben erhalten.', 'Vorlage anwenden'))) return;
         run(async function () {
           var layout = data.layout;
           if (b.id === 'an-defaults') { var result = await M.request('/api/angebote-verwaltung?view=design'); layout = result.design[data.kind]; }
           edit(function () {
+            M.preserveBackgrounds(data);
             if (b.id === 'an-defaults') {
-              var targets = data.layout.targets;
-              data.layout = M.clone(layout); data.layout.targets = targets;
+              var targets = data.layout.targets, pages = data.layout.pages, mode = data.layout.mode;
+              data.layout = M.clone(layout); data.layout.targets = targets; data.layout.pages = pages; data.layout.mode = mode;
             }
             if (designTarget === 'sheet') { M.applyTemplate(data); page = 0; }
-            else data.items.forEach(function (it) { M.applyTargetTemplate(data, designTarget, it.id); });
+            else M.applyTargetTemplate(data, designTarget, designItemId);
             selected = '';
           });
           renderEditor();
@@ -729,7 +730,7 @@
         $('an-action-summary').textContent = data.title + ' · ' + M.date(data.valid_from) + ' – ' + M.date(data.valid_to);
       }
       if (target.dataset.style) {
-        edit(function () { D.change(data.layout, target); if (data.layout.mode === 'template' && designTarget === 'sheet') M.applyTemplate(data); });
+        edit(function () { M.preserveBackgrounds(data); D.change(data.layout, target); if (data.layout.mode === 'template' && designTarget === 'sheet') M.applyTemplate(data); });
       }
       if (target.id === 'an-design-item') { designItemId = target.value; selected = ''; renderInspector(); preview().catch(M.error); }
       if (target.id === 'an-select-element') { selected = target.value; renderInspector(); overlay(); }

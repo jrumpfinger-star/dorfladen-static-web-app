@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const cmsAngemeldet = require('./_cms-angemeldet');
 
 /**
  * CMS-Aktion: Bild zum Strichcode auch von Hand holen.
@@ -62,6 +63,7 @@ async function cmsOeffnen(page, opts = {}) {
     });
   });
 
+  await cmsAngemeldet(page);
   await page.goto(BASE + '/cms.html', { waitUntil: 'domcontentloaded' });
   const hash = await page.evaluate(() => {
     const el = document.getElementById('cms-pw-hash');
@@ -185,6 +187,7 @@ test.describe('CMS-Aktion – Bild zum Strichcode', () => {
           body: JSON.stringify({ success: true, data: [], groups: [], value: [] }) });
       });
 
+      await cmsAngemeldet(page);
       await page.goto(BASE + '/cms.html', { waitUntil: 'domcontentloaded' });
       const hash = await page.evaluate(() => {
         const el = document.getElementById('cms-pw-hash');

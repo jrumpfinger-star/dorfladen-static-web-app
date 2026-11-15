@@ -79,6 +79,49 @@ pro Poll erforderlich. Unzugeordnete Dateien verhalten sich unverändert.
 
 ## Dateiänderungen
 
+### F9: Eine gemeinsame CMS-Anmeldung
+
+`cms-auth` erhält einen rein lesenden GET zur Prüfung des vorhandenen Tokens.
+Er verwendet denselben serverseitigen Vergleich wie geschützte Angebotszugriffe,
+liefert kein Token aus und wird nicht gecacht. `admin-auth.js` verwendet den
+ursprünglichen Fetch für Anmelde-/Sitzungsanfragen, damit ein abgelehntes
+Passwort nicht den allgemeinen 401-Passwortdialog rekursiv öffnet.
+
+Das CMS wartet am vorhandenen Anmeldebildschirm auf die erfolgreiche
+Serveranmeldung. Ein gültiges gespeichertes Token wird vor dem Einstieg geprüft
+und wiederverwendet; ein lokaler Hash-Merker allein öffnet das CMS nicht.
+Fehler erscheinen am selben Anmeldebildschirm mit erneut bedienbarem Knopf.
+Die bestehende nachgelagerte Anmeldung in eigenständigen Verwaltungsseiten
+bleibt als Rückweg für tatsächlich abgelaufene/fehlende Sitzungen erhalten.
+F9-Tests decken Erstlogin, Wiederaufnahme ohne lokalen Merker, ungültiges Token,
+falsches Passwort und Serverfehler ab. Server-Tests prüfen die GET-Antworten.
+
+### F13: Originalvorlagen und Logo
+
+`angebote-modell.js` verwaltet eine gemeinsame Vorlagenliste mit IDs, Namen und
+den Originalfarbwerten aus `cms.js`. Die bisherigen IDs `land`/`classic` bleiben
+gültig. Klassische Vorlagen und Magazinvorlagen erzeugen frei bearbeitbare
+Elemente; Mag XL vergrößert die Bildzone. Die API-Positivliste akzeptiert dieselben
+IDs. Kein Import des großen Legacy-CMS-Renderers und kein Rasterbild als Ersatz
+für bearbeitbare Vorlagenelemente.
+Seiten und Ziellayouts erhalten optional ihre eigene Hintergrundfarbe; bei
+alten Dokumenten bleibt der globale Hintergrund der kompatible Rückweg.
+Vor einem expliziten Stilwechsel werden fehlende Hintergrundwerte mit dem
+aktuellen Wert fixiert, damit andere Ziele optisch unverändert bleiben.
+Ein gebundenes Rabattfeld verwendet dieselbe Rundungsformel wie das Original.
+
+Ein eigener Elementtyp `logo` rendert die bereits vorhandene hochauflösende
+Datei `images/dorfladen-logo.png` proportional. Neue Sammel-/Einzelflyervorlagen
+reservieren Platz im Kopf. Die gemeinsame Renderfunktion erwartet ein vollständig
+geladenes Logo vor jeder Ausgabe; der Bildcache erlaubt nach Fehlern einen neuen
+Versuch. Vorhandene freie Seiten ohne Logo bleiben unverändert.
+
+`angebote-design.js` verwendet dieselbe Liste für Vorschaukacheln und Startwerte.
+Der Aktionseditor zeigt die Auswahl offen, Detailgrößen bleiben einklappbar.
+Bestätigtes Neuanwenden betrifft nur das aktuelle Ziel, nie andere Ziellayouts.
+API- und Playwright-Tests prüfen alle Stile, beide Angebotsarten, beide Dichten,
+Logo-Pixel/Proportionen, gespeicherte Elemente und reale PDF-/JPEG-Ausgaben.
+
 ### F10: Layoutauswahl und Bedienbarkeit
 
 `angebote-design.js` liefert gemeinsame native Radio-Kacheln, getrennte

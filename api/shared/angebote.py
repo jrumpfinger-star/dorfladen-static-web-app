@@ -11,9 +11,12 @@ from zoneinfo import ZoneInfo
 
 ID = re.compile(r"^[a-f0-9]{32}$")
 COLOR = re.compile(r"^#[a-fA-F0-9]{6}$")
-FIELDS = ("name", "pack", "description", "price", "old_price", "deposit", "base")
-ELEMENTS = ("text", "image", "shape") + FIELDS + ("title", "period", "brand", "footer")
+FIELDS = ("name", "pack", "description", "price", "old_price", "deposit", "base", "discount")
+ELEMENTS = ("text", "image", "shape", "logo") + FIELDS + ("title", "period", "brand", "footer")
 FONTS = ("Arial", "Georgia", "Verdana", "Trebuchet MS")
+TEMPLATES = ("land", "classic", "classic-red", "minimal-clean", "dark-modern",
+             "organic-market", "bold-poster", "modern-magazine", "modern-mag-fresh",
+             "modern-mag-bold", "modern-mag-xl")
 WIDTH, HEIGHT = 794, 1123
 MAX_ITEMS, MAX_PAGES = 99, 99
 THEME_DEFAULTS = {
@@ -138,11 +141,20 @@ def _elements(source, known, seen, width, height):
     return elements
 
 
+def _background(source):
+    if "background" not in source:
+        return {}
+    value = source["background"]
+    if not isinstance(value, str) or not COLOR.fullmatch(value):
+        raise AngeboteFehler(400, "Bitte eine gültige Hintergrundfarbe wählen.")
+    return {"background": value}
+
+
 def _layout(raw, items):
     if not isinstance(raw, dict):
         raise AngeboteFehler(400, "Die Gestaltung konnte nicht gelesen werden.")
     mode, template = raw.get("mode", "template"), raw.get("template", "land")
-    if mode not in ("template", "free") or template not in ("land", "classic"):
+    if mode not in ("template", "free") or template not in TEMPLATES:
         raise AngeboteFehler(400, "Bitte eine gültige Gestaltung wählen.")
     density = _number(raw.get("density", 4), "die Artikelzahl", 4, 6, integer=True)
     if density not in (4, 6):
@@ -158,7 +170,8 @@ def _layout(raw, items):
     for page in pages:
         if not isinstance(page, dict) or not isinstance(page.get("elements"), list):
             raise AngeboteFehler(400, "Bitte die Flyerseiten prüfen.")
-        result.append({"elements": _elements(page["elements"], known, seen, WIDTH, HEIGHT)})
+        result.append({"elements": _elements(page["elements"], known, seen, WIDTH, HEIGHT),
+                       **_background(page)})
     dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462)}
     target_result = {}
     for target, (width, height) in dimensions.items():
@@ -173,7 +186,8 @@ def _layout(raw, items):
                 raise AngeboteFehler(400, "Bitte die Zielgestaltungen prüfen.")
             target_items.add(item_layout["item_id"])
             result_target.append({"item_id": item_layout["item_id"],
-                                 "elements": _elements(item_layout["elements"], known, seen, width, height)})
+                                  "elements": _elements(item_layout["elements"], known, seen, width, height),
+                                  **_background(item_layout)})
         target_result[target] = result_target
     theme = {}
     for key, default in THEME_DEFAULTS.items():

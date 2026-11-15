@@ -7,6 +7,10 @@ const PHOTO = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQ
 const copy = (value) => structuredClone(value);
 const uid = () => crypto.randomBytes(16).toString('hex');
 const hash = (value, n) => crypto.createHash('sha256').update(value).digest('hex').slice(0, n);
+const ORIGINAL_TEMPLATES = [
+  'classic-red', 'minimal-clean', 'dark-modern', 'organic-market', 'bold-poster',
+  'modern-magazine', 'modern-mag-fresh', 'modern-mag-bold', 'modern-mag-xl',
+];
 
 function jpegSize(buf) {
   for (let i = 2; i < buf.length;) {
@@ -53,7 +57,10 @@ async function setup(page, options = {}) {
     if (path === '/api/cms-config') return json({ success: true, data: { feature_flags: { kiosk_getraenke: true, kiosk_werbebilder: true },
       design_config: { flyer_decoTitleColor: '#0066aa', flyer_decoBgColor: '#fff9ed', priceFontFlyer: 62 } } });
     if (path === '/api/cms-auth') {
+      if (method === 'GET') return entry.token === 'test-auth'
+        ? json({ authenticated: true }) : json({ authenticated: false }, 401);
       if (state.loginReply) await state.loginReply;
+      if (req.postDataJSON().password !== 'test-cms-password') return fail(401, 'invalid password');
       return state.failLogin ? fail(503, 'Die CMS-Anmeldung ist gerade nicht erreichbar.') : json({ success: true, token: 'test-auth' });
     }
     if (path === '/api/angebote') return json({ success: true, data: [{
@@ -188,43 +195,242 @@ async function noOverflow(page, selector = 'html') {
   expect(size.scroll).toBeLessThanOrEqual(size.client + 1);
 }
 
+test('Kundenangebote: filigrane Semibold-Schrift für Namen, Preise und Rabatt', async ({ page }) => {
+  await setup(page);
+  const { grid } = await customerView(page);
+  const card = grid.locator('.an-legacy').first();
+  await expect(card).toBeVisible();
+  for (const selector of ['.ang-name', '.ang-tag-inner', '.ang-badge']) {
+    await expect(card.locator(selector)).toHaveCSS('font-weight', '600');
+  }
+  await expect(card.locator('.ang-name')).toHaveCSS('font-family', /sans-serif/);
+  const name = await card.locator('.ang-name').evaluate((el) => ({
+    width: el.clientWidth, height: el.clientHeight, scrollWidth: el.scrollWidth, scrollHeight: el.scrollHeight,
+  }));
+  expect(name.scrollWidth).toBeLessThanOrEqual(name.width + 1);
+  expect(name.scrollHeight).toBeLessThanOrEqual(name.height + 1);
+  await noOverflow(page);
+});
+
 for (const failLogin of [false, true]) {
   test(`TC-F9-01/F4-01: erster CMS-Login ${failLogin ? 'meldet Serverfehler und erlaubt erneute Anmeldung' : 'wartet vor geschütztem Designabruf'}`, async ({ page }) => {
     const state = await setup(page, { loggedOut: true });
     state.failLogin = failLogin;
     const password = 'test-cms-password';
-    await page.route('**/cms.html**', async (route) => {
-      const response = await route.fetch();
-      const html = await response.text();
-      const pattern = /(<script\b[^>]*\bid="cms-pw-hash"[^>]*>)[\s\S]*?(<\/script>)/;
-      expect(html).toMatch(pattern);
-      await route.fulfill({ response, body: html.replace(pattern, (_, open, close) => open + JSON.stringify(hash(password, 64)) + close) });
-    });
     try {
       await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
+      await expect(page.locator('#cms-login-btn')).toBeEnabled();
       await page.locator('#cms-login-pw').fill(password);
       await page.locator('#cms-login-btn').click();
       const root = page.locator('#an-design-root');
-      await expect(root.getByRole('status')).toContainText('CMS-Anmeldung wird abgeschlossen');
+      await expect(page.locator('#cms-login-status')).toContainText('CMS-Anmeldung wird abgeschlossen');
+      await expect(page.locator('#cms-app')).toBeHidden();
       expect(state.log.filter((r) => r.path.startsWith('/api/angebote-verwaltung'))).toHaveLength(0);
       await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
       state.finishLogin();
       if (failLogin) {
-        await expect(root.getByRole('alert')).toContainText('CMS-Anmeldung konnte nicht abgeschlossen werden');
-        await page.locator('dialog[open]').getByRole('button', { name: 'Schließen', exact: true }).click();
+        await expect(page.locator('#cms-login-err')).toContainText('CMS-Anmeldung ist gerade nicht erreichbar');
+        await expect(page.locator('#cms-login-btn')).toBeEnabled();
+        await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
         state.failLogin = false;
-        await page.locator('[data-id=sec-drinks]').click();
-        const login = page.getByRole('dialog').filter({ hasText: 'Admin-Anmeldung' });
-        await login.getByRole('textbox').fill(password);
-        await login.getByRole('button', { name: 'Anmelden', exact: true }).click();
+        await page.locator('#cms-login-pw').fill(password);
+        await page.locator('#cms-login-btn').click();
       }
       await expect(root.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
-      expect(state.log.filter((r) => r.path === '/api/cms-auth')).toHaveLength(failLogin ? 2 : 1);
+      expect(state.log.filter((r) => r.path === '/api/cms-auth' && r.method === 'POST')).toHaveLength(failLogin ? 2 : 1);
+      await expect(page.locator('#cms-login-pw')).toHaveValue('');
       await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
       expect(state.errors).toEqual([]);
     } finally { state.finishLogin(); }
   });
 }
+
+test('TC-F9-01: Serversitzung gilt ohne lokalen Merker auch nach Seitenwechsel', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
+  await expect(page.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
+  await expect(page.locator('#cms-login')).toBeHidden();
+  await page.goto(BASE + '/angebote.html');
+  await expect(page.getByRole('button', { name: '+ Getränkeaktion anlegen' })).toBeVisible();
+  await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
+  await expect(page.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
+  expect(state.log.filter((r) => r.path === '/api/cms-auth' && r.method === 'GET')).toHaveLength(2);
+  expect(state.log.filter((r) => r.path === '/api/cms-auth' && r.method === 'POST')).toHaveLength(0);
+  await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F9-01: lokaler Merker allein öffnet keine unvollständige CMS-Sitzung', async ({ page }) => {
+  const state = await setup(page, { loggedOut: true });
+  try {
+    await cms(page);
+    await expect(page.locator('#cms-login')).toBeVisible();
+    await expect(page.locator('#cms-app')).toBeHidden();
+    await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
+    expect(state.log.filter((r) => r.path.startsWith('/api/angebote-verwaltung'))).toHaveLength(0);
+  } finally { state.finishLogin(); }
+});
+
+test('TC-F9-01: abgelehntes Token und falsches Passwort bleiben in derselben Anmeldung', async ({ page }) => {
+  const state = await setup(page, { loggedOut: true });
+  state.finishLogin();
+  await page.addInitScript(() => localStorage.setItem('cms_auth_token', 'expired'));
+  await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
+  await expect(page.locator('#cms-login-btn')).toBeEnabled();
+  await page.locator('#cms-login-pw').fill('wrong-password');
+  await page.locator('#cms-login-btn').click();
+  await expect(page.locator('#cms-login-err')).toContainText('Passwort stimmt nicht');
+  await expect(page.getByText('Admin-Anmeldung', { exact: true })).toHaveCount(0);
+  await expect(page.locator('#cms-app')).toBeHidden();
+  expect(state.log.filter((r) => r.path.startsWith('/api/angebote-verwaltung'))).toHaveLength(0);
+  await page.locator('#cms-login-pw').fill('test-cms-password');
+  await page.locator('#cms-login-btn').click();
+  await expect(page.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
+  expect(state.log.filter((r) => r.path === '/api/cms-auth' && r.method === 'GET')).toHaveLength(1);
+  expect(state.log.filter((r) => r.path === '/api/cms-auth' && r.method === 'POST')).toHaveLength(2);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F13-02..03: alle Vorlagen rendern lesbar mit Original-Logo, beiden Arten und 4/6 Artikeln', async ({ page }) => {
+  const state = await setup(page);
+  const results = await page.evaluate(async () => {
+    const M = window.AngeboteModel, results = [];
+    const intersects = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > .5
+      && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > .5;
+    for (const [id] of M.templateOptions) for (const kind of ['weekly', 'drinks']) for (const density of [4, 6]) {
+      const data = M.blank(kind);
+      M.useTemplate(data.layout, id); data.layout.density = density;
+      for (let n = 0; n <= density; n++) {
+        const it = M.item();
+        Object.assign(it, { name: 'Ein langer, gut lesbarer Getränkename aus unserer Region',
+          description: 'Regional genießen', price_cents: 1249, old_price_cents: 1499,
+          units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 });
+        data.items.push(it);
+      }
+      M.applyTemplate(data); M.validate(data);
+      const errors = [], layouts = [...data.layout.pages];
+      for (let n = 0; n < data.layout.pages.length; n++) {
+        errors.push(...(await M.render(data, n, .3)).errors);
+        const logo = data.layout.pages[n].elements.filter((e) => e.type === 'logo');
+        if (logo.length !== 1) errors.push('Logo fehlt auf Seite ' + n);
+        else if (data.layout.pages[n].elements.some((e) => ['title', 'period', 'brand'].includes(e.type) && intersects(logo[0], e))) errors.push('Logo überlagert Kopf');
+      }
+      for (const target of ['card', 'single', 'scale']) {
+        const layout = data.layout.targets[target][0];
+        layouts.push(layout);
+        const logos = layout.elements.filter((e) => e.type === 'logo').length;
+        if (logos !== (target === 'card' ? 0 : 1)) errors.push('Falsche Logoanzahl: ' + target);
+        errors.push(...(await M.renderTarget(data, target, data.items[0].id, .4)).errors);
+      }
+      for (const layout of layouts) {
+        const fields = layout.elements.filter((e) => ['name', 'price', 'old_price', 'pack', 'deposit', 'base'].includes(e.type));
+        for (let a = 0; a < fields.length; a++) for (let b = a + 1; b < fields.length; b++) {
+          if (fields[a].item_id === fields[b].item_id && intersects(fields[a], fields[b])) errors.push(fields[a].type + '/' + fields[b].type + ' überlagert');
+        }
+      }
+      results.push({ id, kind, density, pages: data.layout.pages.length, errors,
+        background: data.layout.background,
+        image: data.layout.pages[0].elements.find((e) => e.type === 'image') });
+    }
+    return results;
+  });
+  expect(results).toHaveLength(44);
+  expect(results.filter((result) => result.errors.length)).toEqual([]);
+  expect(results.every((result) => result.pages === 2)).toBe(true);
+  const first = (id) => results.find((result) => result.id === id);
+  expect(first('classic-red').background).toBe('#f4f1ea');
+  expect(first('dark-modern').background).toBe('#0f172a');
+  expect(first('modern-mag-fresh').background).toBe('#e8f6f8');
+  expect(first('modern-magazine').image.w).toBeGreaterThan(first('classic-red').image.w);
+  expect(first('modern-mag-xl').image.h).toBeGreaterThan(first('modern-magazine').image.h);
+  const savings = await page.evaluate(() => [[139, 165], [1249, 1499], [0, 100], [100, 100], [200, 100], [9999, 10000], [100, null]]
+    .map(([price_cents, old_price_cents]) => window.AngeboteModel.savings({ price_cents, old_price_cents })));
+  expect(savings).toEqual([16, 17, null, null, null, null, null]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F13-01/03..04: Logo bearbeiten und Vorlage nur auf das gewählte Ziel anwenden', async ({ page }) => {
+  const state = await setup(page), head = await editSeed(page, state, { count: 2 });
+  const original = copy(head.draft), logo = original.layout.pages[0].elements.find((e) => e.type === 'logo');
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  await page.locator('[data-layout-target=sheet]').click();
+  await page.locator('#an-select-element').selectOption(logo.id);
+  await page.locator('[data-element-prop=x]').fill('500');
+  await page.locator('[data-element-prop=x]').dispatchEvent('change');
+  await page.locator('[data-element-prop=rotation]').fill('5');
+  await page.locator('[data-element-prop=rotation]').dispatchEvent('change');
+  await saveDraft(page);
+  await page.reload();
+  await page.locator('[data-open="' + head.id + '"]').click();
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  await page.locator('[data-layout-target=sheet]').click();
+  await page.locator('#an-select-element').selectOption(logo.id);
+  await expect(page.locator('[data-element-prop=x]')).toHaveValue('500');
+  await expect(page.locator('[data-element-prop=rotation]')).toHaveValue('5');
+  const preserved = copy(state.actions.get(head.id).draft);
+  await page.locator('[data-layout-target=card]').click();
+  await page.locator('.an-template-picker > summary').click();
+  await page.locator('input[data-style=template][value=modern-mag-fresh]').check();
+  await page.locator('#an-template').click();
+  await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await saveDraft(page);
+  expect(state.actions.get(head.id).draft.layout.targets.card).toEqual(preserved.layout.targets.card);
+  await page.locator('#an-template').click();
+  await page.getByRole('button', { name: 'Vorlage anwenden', exact: true }).click();
+  await saveDraft(page);
+  const changed = state.actions.get(head.id).draft;
+  expect(changed.layout.pages).toEqual(preserved.layout.pages);
+  expect(changed.layout.targets.single).toEqual(preserved.layout.targets.single);
+  expect(changed.layout.targets.scale).toEqual(preserved.layout.targets.scale);
+  expect(changed.layout.targets.card[1]).toEqual(preserved.layout.targets.card[1]);
+  expect(changed.layout.targets.card[0].background).toBe('#e8f6f8');
+  expect(changed.layout.targets.card[0].elements.find((e) => e.type === 'image').w).toBe(372);
+  const output = await page.evaluate(async (data) => {
+    const M = window.AngeboteModel, pages = await M.preflight(data);
+    const isolated = M.clone(data);
+    isolated.layout.pages = [{ background: '#ffffff', elements: [M.el('logo', 100, 100, 200, 100)] }];
+    const rendered = (await M.render(isolated, 0, 1)).canvas;
+    const logo = await M.image('logo'), expected = document.createElement('canvas');
+    expected.width = rendered.width; expected.height = rendered.height;
+    const ctx = expected.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, expected.width, expected.height);
+    const ratio = Math.min(200 / logo.width, 100 / logo.height);
+    ctx.drawImage(logo, 100 + (200 - logo.width * ratio) / 2, 100 + (100 - logo.height * ratio) / 2, logo.width * ratio, logo.height * ratio);
+    const actual = rendered.getContext('2d').getImageData(100, 100, 200, 100).data;
+    const pixels = ctx.getImageData(100, 100, 200, 100).data;
+    const scale = (await M.scaleImages(data, 'flyer', { w: 1600, h: 924 }))[0];
+    return { logo: [logo.width, logo.height], pixels: {
+      different: actual.reduce((count, value, i) => count + (value !== pixels[i] ? 1 : 0), 0),
+      maxDifference: actual.reduce((max, value, i) => Math.max(max, Math.abs(value - pixels[i])), 0),
+    },
+      pages: pages.length, scale: scale.toDataURL('image/jpeg').slice(0, 23) };
+  }, changed);
+  expect(output.logo[0]).toBeGreaterThanOrEqual(1000);
+  expect(output.logo[1]).toBeGreaterThanOrEqual(300);
+  expect(output).toMatchObject({ pixels: { different: 0, maxDifference: 0 }, pages: 1, scale: 'data:image/jpeg;base64,' });
+  await noOverflow(page);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F13-03: Logo-Ladefehler verhindert unvollständiges Rendern und ist wiederholbar', async ({ page }) => {
+  const state = await setup(page);
+  let blocked = true;
+  await page.route('**/images/dorfladen-logo.png', (route) => blocked
+    ? route.fulfill({ status: 503, body: '' }) : route.fallback());
+  const failed = await page.evaluate(async () => {
+    const M = window.AngeboteModel, data = M.blank('weekly'); M.applyTemplate(data);
+    try { await M.render(data, 0, 1); return ''; }
+    catch (error) { return error.userMessage; }
+  });
+  expect(failed).toContain('Dorfladen-Logo konnte nicht geladen');
+  blocked = false;
+  const recovered = await page.evaluate(async () => {
+    const M = window.AngeboteModel, data = M.blank('weekly'); M.applyTemplate(data);
+    const output = await M.render(data, 0, 1);
+    return { errors: output.errors, png: output.canvas.toDataURL().slice(0, 22) };
+  });
+  expect(recovered).toEqual({ errors: [], png: 'data:image/png;base64,' });
+  expect(state.errors).toEqual([]);
+});
 
 for (const cmsMode of [true, false]) {
   test(`TC-F10-01..04: Layoutkacheln, Tastatur und Ausgabevorschauen im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, async ({ page }) => {
@@ -238,11 +444,19 @@ for (const cmsMode of [true, false]) {
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
-    if (!cmsMode) await page.locator('#an-design-options > summary').click();
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(2);
+    await expect(host.locator('.an-template-picker > summary')).toContainText('11 Designvorlagen');
+    await host.locator('.an-template-picker > summary').click();
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(11);
     const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
     expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
     await expect(host.locator('select[data-style=template],select[data-style=density]')).toHaveCount(0);
+    for (const id of ORIGINAL_TEMPLATES) {
+      await host.locator('input[data-style=template][value="' + id + '"]').check();
+      await expect(host.locator('[data-template-label]')).not.toBeEmpty();
+      const expected = await page.evaluate((id) => window.AngeboteModel.templateStyle(id).settings, id);
+      await expect(host.getByLabel('Angebots-/Preisfarbe')).toHaveValue(expected.color);
+      await expect(host.getByLabel('Flyer-Hintergrund', { exact: true })).toHaveValue(expected.background);
+    }
     const classic = host.getByRole('radio', { name: /Klassisch/ });
     await classic.check();
     await expect(classic).toBeChecked();
@@ -266,6 +480,12 @@ for (const cmsMode of [true, false]) {
     await expect(host.locator('.an-fine')).not.toHaveAttribute('open');
     await host.getByText('Feinabstimmung · Größen und Drehung', { exact: true }).click();
     await expect(host.getByLabel('Produktbild · Drehung in Grad')).toBeVisible();
+    const clippedLabels = await host.locator('.an-field > span').evaluateAll((labels) => labels.filter((label) => {
+      const bounds = label.parentElement.getBoundingClientRect(), range = document.createRange();
+      range.selectNodeContents(label);
+      return [...range.getClientRects()].some((rect) => rect.width && (rect.left < bounds.left - 1 || rect.right > bounds.right + 1));
+    }).map((label) => label.textContent));
+    expect(clippedLabels).toEqual([]);
     await host.getByText('Feinabstimmung · Größen und Drehung', { exact: true }).click();
     if (cmsMode) {
       await host.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
@@ -284,14 +504,15 @@ for (const cmsMode of [true, false]) {
       await expect(button).toHaveAttribute('aria-pressed', 'true');
       const preview = page.locator(cmsMode ? '[data-design-preview]' : mode === 'paper' ? '#an-stage' : '#an-other-preview');
       await expect(preview.locator(mode === 'cards' ? '.an-product' : 'canvas').first()).toBeVisible();
+      if (mode === 'cards') {
+        await expect.poll(() => preview.locator('canvas').first().evaluate((canvas) =>
+          canvas.getContext('2d').getImageData(0, 0, 1, 1).data[3])).toBe(255);
+      }
       if (!cmsMode) await expect(page.locator('#an-stage')).toBeVisible({ visible: mode === 'paper' });
       expect(cmsMode ? state.design : state.actions.get(head.id)).toEqual(stored);
     }
     if (!cmsMode) {
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
-      if (!(await page.locator('#an-design-options').evaluate((element) => element.open))) {
-        await page.locator('#an-design-options > summary').click();
-      }
     }
     await noOverflow(page, cmsMode ? '#an-design-root' : 'html');
     await page.screenshot({ path: test.info().outputPath('layout-auswahl.png'), fullPage: true });
@@ -300,8 +521,8 @@ for (const cmsMode of [true, false]) {
     if (!cmsMode) {
       await page.locator('[data-open="' + head.id + '"]').click();
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
-      await page.locator('#an-design-options > summary').click();
     }
+    await host.locator('.an-template-picker > summary').click();
     await expect(host.getByRole('radio', { name: /Klassisch/ })).toBeChecked();
     await expect(host.getByRole('radio', { name: /6 · kompakt/ })).toBeChecked();
     expect(state.errors).toEqual([]);
@@ -482,7 +703,6 @@ test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Dr
   await page.reload();
   await page.locator('[data-open="' + head.id + '"]').click();
   await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
-  await page.locator('#an-design-options > summary').click();
   await page.getByLabel('Gestaltungselement').selectOption(own[0].id);
   await expect(page.getByLabel('Drehung', { exact: true })).toHaveValue('15');
   await expect(page.getByLabel('Deckkraft', { exact: true })).toHaveValue('0.65');
