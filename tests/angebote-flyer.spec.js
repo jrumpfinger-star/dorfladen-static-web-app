@@ -1230,6 +1230,100 @@ for (const technical of [false, true]) {
   });
 }
 
+test('TC-F17-01/03: kompakte Artikelzeilen auf voller Breite und farbige Direktaktionen', async ({ page }) => {
+  const state = await setup(page), head = await seed(page, state, { kind: 'weekly', count: 6 });
+  await page.reload();
+  const action = page.locator('[data-action-id="' + head.id + '"]');
+  const colors = await action.locator('[data-preview-action],[data-share-action],[data-scale-action],[data-delete-action]').evaluateAll((buttons) =>
+    buttons.map((button) => ({ bg: getComputedStyle(button).backgroundColor, fg: getComputedStyle(button).color })));
+  expect(new Set(colors.map((value) => value.bg)).size).toBe(4);
+  expect(colors.every((value) => value.fg !== value.bg)).toBe(true);
+  await action.locator('[data-open]').click();
+  const rows = page.locator('#an-items .an-item');
+  await expect(rows).toHaveCount(6);
+  const panel = await page.locator('.an-work-panel').boundingBox(), layout = await page.locator('.an-layout').boundingBox();
+  expect(panel.width).toBeCloseTo(layout.width, 0);
+  if (page.viewportSize().width >= 1101) {
+    for (const height of await rows.evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))) {
+      expect(height).toBeLessThanOrEqual(110);
+    }
+    if (page.viewportSize().width >= 600 && page.viewportSize().width <= 1100) {
+      for (const height of await rows.evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))) {
+        expect(height).toBeLessThanOrEqual(210);
+      }
+    }
+  }
+  for (const row of await rows.all()) {
+    await expect(row.getByLabel('EAN / Strichcode', { exact: true })).toBeVisible();
+  }
+  await rows.first().getByLabel('EAN / Strichcode', { exact: true }).fill('4311500164160');
+  await rows.first().getByLabel('EAN / Strichcode', { exact: true }).blur();
+  await saveDraft(page);
+  expect(state.actions.get(head.id).draft.items[0].barcode).toBe('4311500164160');
+  await noOverflow(page);
+  const clipped = await rows.locator('input:visible').evaluateAll((inputs) => inputs.filter((input) => {
+    const r = input.getBoundingClientRect(), parent = input.closest('.an-item').getBoundingClientRect();
+    return r.width && (r.left < parent.left || r.right > parent.right || r.height < 44 || r.width < 44);
+  }).map((input) => input.dataset.prop));
+  expect(clipped).toEqual([]);
+  await page.locator('.an-work-panel').screenshot({ path: test.info().outputPath('kompakte-artikelzeilen.png') });
+  await page.addInitScript((hash) => sessionStorage.setItem('cms_auth_ok', hash), require('./_kiosk-angemeldet').PW_HASH);
+  await page.goto(BASE + '/kiosk.html');
+  await page.locator('.k-tab[data-tab=angebote]').click();
+  await page.locator('[data-open="' + head.id + '"]').click();
+  await expect(page.locator('#an-items .an-item')).toHaveCount(6);
+  const outside = await page.locator('#an-items .an-item-fields input').evaluateAll((inputs) => inputs.filter((input) => {
+    const box = input.getBoundingClientRect(), row = input.closest('.an-item').getBoundingClientRect();
+    return box.left < row.left || box.right > row.right || box.width < 44;
+  }).map((input) => input.dataset.prop));
+  expect(outside).toEqual([]);
+  await noOverflow(page);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F17-02: Mehrfachauswahl behält Trefferknoten, Fokus und Auswahl über Suchen hinweg', async ({ page }) => {
+  const state = await setup(page);
+  state.catalog = Array.from({ length: 30 }, (_, index) => ({
+    artikelnummer: 'ART' + index, strichcode: '40000000' + index,
+    bezeichnung: 'Artikel ' + String(index).padStart(2, '0'), vk: 1.49, menge: '100 g',
+  }));
+  await page.getByRole('button', { name: '+ Getränkeaktion anlegen' }).click();
+  await page.locator('#an-add-catalog').click();
+  const dialog = page.getByRole('dialog'), search = dialog.getByLabel('Artikel suchen', { exact: true });
+  const target = dialog.locator('[data-master-index="15"]');
+  await target.scrollIntoViewIfNeeded();
+  const scrollTop = await dialog.evaluate((node) => node.scrollTop);
+  await target.evaluate((button) => { window.__selectedResult = button; });
+  await target.click();
+  await expect(target).toBeFocused();
+  expect(await target.evaluate((button) => button === window.__selectedResult)).toBe(true);
+  expect(await dialog.evaluate((node) => node.scrollTop)).toBe(scrollTop);
+  await target.press('Space');
+  await expect(target).toHaveAttribute('aria-pressed', 'false');
+  await target.press('Space');
+  await expect(target).toHaveAttribute('aria-pressed', 'true');
+  await search.fill('Artikel 29');
+  await dialog.locator('[data-master-index="29"]').click();
+  await search.fill('Artikel 15');
+  await expect(target).toHaveAttribute('aria-pressed', 'true');
+  await expect(dialog.locator('#an-master-add')).toHaveText('Auswahl übernehmen (2)');
+  await page.evaluate(() => {
+    const original = window.AngeboteModel.applyTemplate;
+    window.__batchLayouts = 0;
+    window.AngeboteModel.applyTemplate = function (...args) {
+      if (args[0].items.some((item) => item.article_number === 'ART15')) window.__batchLayouts++;
+      return original(...args);
+    };
+  });
+  await dialog.locator('#an-master-add').click();
+  await expect(page.locator('#an-items .an-item')).toHaveCount(2);
+  expect(await page.evaluate(() => window.__batchLayouts)).toBe(1);
+  expect(state.actions.size).toBe(0);
+  await saveDraft(page);
+  expect([...state.actions.values()][0].draft.items.map((item) => item.article_number)).toEqual(['ART15', 'ART29']);
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontalen Überlauf', async ({ page }) => {
   const state = await setup(page), head = await seed(page, state, { count: 4 });
   await page.reload();

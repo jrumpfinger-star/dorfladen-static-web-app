@@ -159,7 +159,7 @@
       var source = pendingImageUrls.get(it.id) || (it.image_id ? '/api/angebote-bilder/' + encodeURIComponent(it.image_id) : '');
       return '<article class="an-item" data-item-id="' + it.id + '">'
         + (source ? '<img class="an-item-thumb" data-image-id="' + M.esc(it.image_id) + '" alt="Artikelbild">' : '<span class="an-item-thumb an-no-image" aria-hidden="true">Bild</span>')
-        + '<div class="an-item-main"><strong>' + M.esc(it.name || 'Neuer Artikel ' + (i + 1)) + '</strong>'
+        + '<div class="an-item-main an-sr-only"><strong>' + M.esc(it.name || 'Neuer Artikel ' + (i + 1)) + '</strong>'
         + '<small>' + M.esc(it.article_number || 'ohne Artikelnummer') + (it.barcode ? ' · EAN ' + M.esc(it.barcode) : '')
         + ' · ' + (it.price_cents == null ? 'Preis offen' : M.money(it.price_cents) + ' €')
         + (data.kind === 'drinks' && it.price_cents != null && it.units && it.volume_ml
@@ -174,10 +174,10 @@
         + field('Angebotspreis €', 'price_cents', it.price_cents == null ? '' : M.money(it.price_cents), 'text', 'inputmode="decimal"')
         + field('Stattpreis / UVP €', 'old_price_cents', it.old_price_cents == null ? '' : M.money(it.old_price_cents), 'text', 'inputmode="decimal"')
         + field('Beschreibung / Inhalt', 'description', it.description, 'text', 'maxlength="500"')
+        + field('EAN / Strichcode', 'barcode', it.barcode, 'text', 'maxlength="80"')
         + '</div><p class="an-item-values" data-item-values></p>'
         + '<details class="an-item-extra"><summary>' + (data.kind === 'drinks' ? 'Gebinde, Pfand und Kennungen' : 'Artikelnummer und EAN') + '</summary><div class="an-fields">'
         + field('Artikelnummer', 'article_number', it.article_number, 'text', 'maxlength="80"')
-        + field('EAN / Strichcode', 'barcode', it.barcode, 'text', 'maxlength="80"')
         + (data.kind === 'drinks'
           ? field('Anzahl Flaschen / Einheiten', 'units', it.units, 'number', 'min="1" step="1"')
             + field('Liter je Einheit', 'volume_ml', M.litres(it.volume_ml), 'text', 'inputmode="decimal"')
@@ -459,6 +459,7 @@
   }
   function setStep(value) {
     step = value;
+    root.querySelector('.an-layout').classList.toggle('an-article-layout', value === 'articles');
     ['articles', 'design', 'output'].forEach(function (s) { $('an-step-' + s).hidden = value !== s; });
     root.querySelectorAll('[data-step]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.step === value)); });
     renderInspector();
@@ -509,16 +510,21 @@
     if (busy) lock(true);
   }
   function addItem(it) {
+    addItems([it]);
+  }
+  function addItems(items) {
     edit(function () {
-      data.items.push(it);
+      data.items.push.apply(data.items, items);
       if (data.layout.mode === 'template') M.applyTemplate(data);
       else {
-        var extra = M.clone(data); extra.items = [it]; M.applyTemplate(extra);
-        data.layout.pages.push(extra.layout.pages[0]);
+        items.forEach(function (it) {
+          var extra = M.clone(data); extra.items = [it]; M.applyTemplate(extra);
+          data.layout.pages.push(extra.layout.pages[0]);
+        });
       }
       M.ensureTargets(data);
     });
-    if (!designItemId) designItemId = it.id;
+    if (!designItemId) designItemId = items[0].id;
     renderItems(); renderInspector();
   }
   async function upload(file) {
@@ -551,20 +557,24 @@
       + '<div class="an-picker-results"></div><p class="an-muted" id="an-picker-status" role="status"></p>'
       + '<div class="an-dialog-actions"><button type="button" class="an-primary" id="an-master-add" disabled>Auswahl übernehmen</button></div>';
     function close() { dlg.close(); dlg.remove(); }
+    function updateSelection() {
+      dlg.querySelector('#an-master-add').disabled = chosen.size === 0;
+      dlg.querySelector('#an-master-add').textContent = 'Auswahl übernehmen (' + chosen.size + ')';
+    }
     function results() {
       var q = dlg.querySelector('input').value.toLocaleLowerCase('de');
-      var matches = catalog.filter(function (a) {
+      var matches = catalog.map(function (article, index) { return { article: article, index: index }; }).filter(function (entry) {
+        var a = entry.article;
         return [a.bezeichnung, a.artikelnummer, a.strichcode].join(' ').toLocaleLowerCase('de').includes(q);
       });
-      dlg.querySelector('.an-picker-results').innerHTML = matches.map(function (a) {
-        var index = catalog.indexOf(a), price = M.cents(a.vk);
+      dlg.querySelector('.an-picker-results').innerHTML = matches.map(function (entry) {
+        var a = entry.article, index = entry.index, price = M.cents(a.vk);
         return '<button type="button" data-master-index="' + index + '" aria-pressed="' + chosen.has(index) + '"><span><strong>'
           + M.esc(a.bezeichnung) + '</strong><br><small>' + M.esc(a.artikelnummer || 'ohne Artikelnummer') + (a.strichcode ? ' · EAN ' + M.esc(a.strichcode) : '')
           + (a.menge ? ' · ' + M.esc(a.menge) : '') + '</small></span><span>' + (price == null ? 'VK —' : 'VK ' + M.money(price) + ' €')
-          + (chosen.has(index) ? ' · ✓' : ' · + Auswählen') + '</span></button>';
+          + '<span data-master-selected>' + (chosen.has(index) ? ' · ✓' : ' · + Auswählen') + '</span></span></button>';
       }).join('') || '<p>Kein Artikel gefunden. Du kannst einen eigenen Artikel erfassen.</p>';
-      dlg.querySelector('#an-master-add').disabled = chosen.size === 0;
-      dlg.querySelector('#an-master-add').textContent = 'Auswahl übernehmen (' + chosen.size + ')';
+      updateSelection();
     }
     dlg.querySelector('.an-close').onclick = close; dlg.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
     dlg.querySelector('input').oninput = results;
@@ -573,7 +583,9 @@
       if (b) {
         var index = Number(b.dataset.masterIndex);
         if (chosen.has(index)) chosen.delete(index); else chosen.add(index);
-        results();
+        b.setAttribute('aria-pressed', String(chosen.has(index)));
+        b.querySelector('[data-master-selected]').textContent = chosen.has(index) ? ' · ✓' : ' · + Auswählen';
+        updateSelection();
       }
     });
     dlg.querySelector('#an-master-add').onclick = function () {
@@ -582,16 +594,16 @@
         var imageResults = await lookupMasterImages(selectedSources.map(function (source) {
           return { article_number: String(source.artikelnummer || ''), barcode: String(source.strichcode || '') };
         }));
-        var missingImageCount = 0;
+        var missingImageCount = 0, items = [];
         for (var source of selectedSources) {
           var it = masterItem(source, dlg.querySelector('#an-copy-vk').checked);
           var blob = imageForMaster(imageResults, it);
           if (blob) it.image_id = await upload(blob);
           else missingImageCount++;
-          addItem(it);
+          items.push(it);
         }
+        addItems(items);
         close();
-        renderItems();
         $('an-image-status').textContent = missingImageCount
           ? 'Für ' + missingImageCount + ' Artikel wurde kein Bild gefunden. Du kannst es über „Bild“ ergänzen.'
           : 'Artikelbilder automatisch übernommen.';

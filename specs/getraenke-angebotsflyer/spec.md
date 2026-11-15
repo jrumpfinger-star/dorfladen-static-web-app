@@ -473,6 +473,37 @@ Vorschau, gespeicherte Aktion, Druck und Waage verwenden dieselben Werte.
   bestehende Aktionen bleiben unverändert. Die Oberfläche erklärt diesen
   Unterschied ausdrücklich.
 
+## F17: Schnell erfassbare Artikelzeilen und farbige Direktaktionen
+
+Die Artikelerfassung nutzt die gesamte verfügbare Breite statt einer schmalen
+Spalte neben den Gestaltungswerkzeugen. Auf breiten Bildschirmen zeigt jede
+Artikelzeile Bild, Name, Beschreibung, Angebotspreis, Stattpreis und Strichcode
+direkt nebeneinander. Kein doppelter Artikelname als zusätzlicher Kartenkopf.
+Bildbearbeitung und weitere Aktionen bleiben direkt erreichbar; Zusatzangaben
+und berechnete Werte werden platzsparend dargestellt. Auf schmalen Geräten
+brechen die Felder lesbar um, ohne horizontales Scrollen oder kleinere Touchziele.
+Die Gestaltung bleibt unverändert erreichbar und wird nicht automatisch gespeichert.
+
+Die Artikelstammauswahl bleibt über mehrere Suchbegriffe hinweg erhalten.
+Ein Auswahltipp aktualisiert nur den betroffenen Treffer und Auswahlzähler,
+ohne die Trefferliste neu aufzubauen oder Scrollposition/Fokus zu verlieren.
+Mehrere Artikel werden gemeinsam übernommen; Vorlagen und Vorschau werden dabei
+nur einmal für die gesamte Übernahme aktualisiert.
+
+Die Übersicht kennzeichnet Vorschau schiefergrau, Teilen grün, Waage warm
+orange und Löschen rot. Beschriftung, Tastaturfokus und ausreichender Kontrast
+bleiben erhalten; Farbe ist nicht das einzige Unterscheidungsmerkmal.
+
+- TC-F17-01: Sechs Artikel auf Desktop als kompakte Zeilen (höchstens 110 px
+  je geschlossener Zeile) mit direkt sichtbaren Kernfeldern; auf allen vier
+  Viewports keine abgeschnittenen Felder, Touchziele mindestens 44 px,
+  Bearbeiten/Tab/Speichern/Neuöffnen ohne Datenverlust.
+- TC-F17-02: Mehrere Artikel über unterschiedliche Suchen auswählen, ohne
+  Fokus-/Scrollverlust; gemeinsam übernehmen, Reihenfolge und Preise erhalten,
+  keine implizite Speicherung oder Freigabe.
+- TC-F17-03: Übersicht hat unterscheidbare Aktionsfarben; bestehende Direkt-
+  aktionen, Bestätigungen und Tastaturbedienung bleiben unverändert.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

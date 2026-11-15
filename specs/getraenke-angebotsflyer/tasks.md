@@ -40,3 +40,5 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF32 | Originalrenderer-/Snapshot-/Kioskregression, vier Viewports, Hilfe und Feature-Preview prüfen | GF30, GF31 | TC-F14-01..04 |
 | GF33 | Kompakte Zeilenübersicht mit Filtern und Direktaktionen; bestätigtes versionsgeschütztes Löschen | GF29 | TC-F15-01..02 |
 | GF34 | Gemeinsame Direktwerkzeuge für CMS-Designvorschau und Original-Wochenvorlagen, gespeicherte Anpassungen, Original-Ersparnismarker und bestätigter Vorschau-Reset | GF30 | TC-F16-01..04 |
+| GF35 | Artikelschritt auf volle Breite, kompakte direkt bearbeitbare Zeilen und semantisch farbige Übersichtsknöpfe | GF33, GF34 | TC-F17-01, TC-F17-03 |
+| GF36 | Stabile Mehrfachauswahl ohne Treffer-Neuaufbau, gemeinsame Artikelübernahme mit einmaliger Layoutaktualisierung, Hilfe und Vier-Viewport-Tests | GF35 | TC-F17-01..03 |

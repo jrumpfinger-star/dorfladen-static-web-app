@@ -168,6 +168,22 @@ Dateinamen der Waagenausgabe enthalten Scope-/Aktions-/Revisionskennung und
 Start/Ende. Die Brücke erhält nur gültige Dateien; keine Dataverse-Abfrage
 pro Poll erforderlich. Unzugeordnete Dateien verhalten sich unverändert.
 
+## F17: Kompakte Artikelerfassung
+
+`angebote-editor.js` markiert den Artikelschritt am bestehenden Layoutcontainer,
+damit die Arbeitsfläche volle Breite erhält und die Vorschau darunter steht.
+Der doppelte Zeilenkopf wird nur für Screenreader beibehalten; Kernfelder und
+Strichcode erscheinen direkt in einem responsiven Raster. Bestehende
+Ereignisdelegation, Bilddialoge, Zusatzfelder und Datenverträge bleiben erhalten.
+`angebote.css` definiert kompakte Zeilen und semantische Aktionsfarben.
+
+Die Artikelstammauswahl speichert den Katalogindex einmal beim Filtern und
+ändert bei Auswahl nur den betroffenen Knopf und Zähler. Die gemeinsame
+Übernahme sammelt Artikel zunächst und aktualisiert Layout und Oberfläche
+anschließend einmal statt pro Artikel. Bestehende Bild-/Fehlerpfade bleiben.
+Playwright ergänzt TC-F17 mit messbarer Zeilenhöhe, vier Viewports, stabilen
+Trefferknoten/Fokus und Auswahl über mehrere Suchen. Anwenderhilfe nachführen.
+
 ## Dateiänderungen
 
 ### F9: Eine gemeinsame CMS-Anmeldung

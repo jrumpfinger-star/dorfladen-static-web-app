@@ -16,6 +16,7 @@ Editor erreichbar. Sie werden weder migriert noch überschrieben.
 
 Die Übersicht zeigt kompakte Aktionszeilen mit Wochenfiltern und direkten
 Knöpfen für Bearbeiten, Vorschau, Teilen/Download, Waage, Duplizieren und Löschen.
+Vorschau ist grau, Teilen grün, Waage orange und Löschen rot gekennzeichnet.
 Vorschau und Download veröffentlichen nichts. **Löschen** verlangt eine
 Bestätigung und beendet auch die Homepage-Freigabe. Bereits versandte
 Waagenbilder werden dadurch nicht vom Gerät entfernt.
@@ -39,6 +40,16 @@ Größen für Plakat bzw. Einzelflyer zur Auswahl. Ein Marker erscheint nur bei
 einem Stattpreis über dem Angebotspreis.
 
 ### Getränke und freie Layouts
+
+Die Artikelerfassung nutzt die volle Breite. Bild, Name, Preise, Beschreibung
+und Strichcode stehen auf breiten Bildschirmen in einer kompakten Zeile statt
+in großen Karten. Auf Tablets und Telefonen brechen sie lesbar um.
+**Bild** öffnet die Bildwerkzeuge, **⋯** die Artikelaktionen und **+** die
+Zusatzangaben. Die Gestaltungsvorschau steht während der Artikelerfassung
+unterhalb der Liste; im Gestaltungsschritt wieder daneben.
+Im Artikelstamm mehrere Treffer markieren, weitersuchen und gemeinsam
+**Auswahl übernehmen** wählen. Die Auswahl bleibt über Suchbegriffe hinweg
+erhalten; Markieren baut die Trefferliste nicht neu auf.
 
 1. **Artikel und Bilder:** Wochen- oder Getränkeaktion anlegen. Getränke aus
    **Artikelstamm wählen** suchen (Name, Artikelnummer oder EAN) und bei Bedarf
