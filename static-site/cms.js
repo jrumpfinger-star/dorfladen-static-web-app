@@ -290,37 +290,7 @@
     angRowCounter++;
     var c=document.getElementById('cms-akt-items');
     if(!c) return;
-    var row=document.createElement('div');
-    row.className='cms-ang-row';
-    row.id='cms-ar-'+angRowCounter;
-    var produktVal=esc((item&&item.produkt)||'');
-    var hasBild=!!(item&&item.bild_data);
-    row.setAttribute('draggable','false');
-    row.innerHTML=''
-      +'<div class="cms-ang-row-num">'+angRowCounter+'</div>'
-      +'<span class="cms-ang-drag" title="Reihenfolge ändern (ziehen)">&#9776;</span>'
-      +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
-      +'<div class="cms-ang-fields">'
-      +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
-      +'<input type="hidden" data-f="bild_data" data-bild-dirty="" value="'+esc((item&&item.bild_data)||'')+'">'
-      +'<input type="hidden" data-f="dl_werbebildid" value="'+esc((item&&item.dl_werbebildid)||'')+'">'
-      +'<div class="cms-ang-row-img">'
-      +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
-      +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
-      // Bild zum Strichcode holen. Ohne diesen Knopf laesst sich das Bild
-      // nur ueber die Vorschlagsliste laden - wer einen Artikel von Hand
-      // eintraegt (weil er nicht in der Preisliste steht), kam nie daran.
-      // (Spec cms-aktion-bild, F1)
-      +'<button class="cms-bild-load-sp" type="button" title="Bild zum Strichcode suchen" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" style="font-size:11px;background:none;border:none;cursor:pointer;padding:0 2px">&#128269;</button>'
-      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:var(--schrift-normal);background:none;border:none;cursor:pointer;padding:0 2px;color:var(--mut)">\uD83D\uDCC1</button>'
-+'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:var(--schrift-klein);background:none;border:1px solid var(--line);border-radius:var(--r-s);cursor:pointer;padding:1px 4px;color:var(--mut)">\uD83D\uDCCB</button>'
-      +'</div>'
-      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
-      +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
-      +'<input class="cms-input cms-price" data-f="preis" placeholder="Preis" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="statt" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="Strichcode" value="'+esc((item&&item.artikelnummer)||'')+'" title="Strichcode">'
-      +'</div>';
+    var row=window.CMSAngeboteForm.row(item,angRowCounter,esc);
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
     if(prodInp){

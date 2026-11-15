@@ -3,6 +3,7 @@ window.AngeboteModel = (function () {
   'use strict';
   var W = 794, H = 1123;
   var imageCache = new Map();
+  var cmsImages = new Map();
   var theme = {
     font: 'Arial', title_color: '#234c38', text_color: '#24362d',
     card_background: '#ffffff', price_background: '#ffffff', price_shape: 'rect',
@@ -151,7 +152,8 @@ window.AngeboteModel = (function () {
       try { data = await r.json(); }
       catch (e) { console.error('[Angebote] Ungültige Antwort', r.status, e); throw problem('Der Angebotsbereich hat nicht wie erwartet geantwortet. Bitte erneut versuchen.'); }
       if (!r.ok || data.success === false) {
-        var error = problem(/^\/api\/angebote-/.test(url) && data.error ? data.error : 'Die Angebote konnten nicht geladen oder gespeichert werden.');
+        var friendly = /^\/api\/angebote-/.test(url) || /^\/api\/angebote\?action=(?:save|delete)(?:&|$)/.test(url);
+        var error = problem(friendly && data.error ? data.error : 'Die Angebote konnten nicht geladen oder gespeichert werden.');
         error.status = r.status;
         throw error;
       }
@@ -354,13 +356,14 @@ window.AngeboteModel = (function () {
     });
   }
   var weeklySource = null;
-  function weeklyKey(item) { return item.name.trim().toLowerCase().replace(/\s+/g, '_'); }
+  function weeklyKey(item) { return item.layout_key || item.name.trim().toLowerCase().replace(/\s+/g, '_'); }
   function syncWeeklyOverrides(data) {
     if (!weeklySource) return;
     ['plakat_article_overrides', 'flyer_article_overrides'].forEach(function (key) {
       var source = weeklySource[key] || {}, selected = data.layout.cms[key];
       data.items.forEach(function (item) {
-        var id = weeklyKey(item), found = source[id] || source[item.article_number] || source[item.barcode];
+        var id = weeklyKey(item), nameKey = item.name.trim().toLowerCase().replace(/\s+/g, '_');
+        var found = source[id] || source[nameKey] || source[item.article_number] || source[item.barcode];
         if (found && !selected[id]) selected[id] = clone(found);
       });
     });
@@ -477,10 +480,27 @@ window.AngeboteModel = (function () {
     var it = data.items.find(function (i) { return i.id === element.item_id; });
     return element.image_id || (it && it.image_id) || '';
   }
+  function registerImage(id, source) {
+    if (!/^cms:/.test(id) || !/^(data:image\/(?:png|jpeg|webp);base64,|https:\/\/)/i.test(source)) {
+      throw problem('Das Artikelbild hat kein unterstütztes Format.');
+    }
+    if (cmsImages.get(id) !== source) imageCache.delete(id);
+    cmsImages.set(id, source);
+  }
   async function image(id) {
     if (!imageCache.has(id)) {
       var promise = (async function () {
-        var r = await fetch(id === 'logo' ? '/images/dorfladen-logo.png' : '/api/angebote-bilder/' + encodeURIComponent(id), { cache: 'no-store' });
+        var source = cmsImages.get(id);
+        if (id.startsWith('cms:') && !source) {
+          var key = id.slice(4);
+          if (!key || /['\r\n]/.test(key)) throw problem('Der Bildschlüssel ist nicht gültig.');
+          var matches = await request('/api/werbebilder?sharepoint=1', json('POST', { articles: [{ artikelnummer: key, strichcode: key }] }));
+          var found = Array.isArray(matches) && matches.find(function (entry) { return entry.dl_bild_base64; });
+          if (!found) throw problem('Ein Artikelbild wurde nicht gefunden. Bitte die Bildzuordnung prüfen.');
+          source = found.dl_bild_base64;
+          registerImage(id, source);
+        }
+        var r = await fetch(source || (id === 'logo' ? '/images/dorfladen-logo.png' : '/api/angebote-bilder/' + encodeURIComponent(id)), { cache: 'no-store' });
         if (!r.ok) throw problem(id === 'logo' ? 'Das Dorfladen-Logo konnte nicht geladen werden. Bitte erneut versuchen.' : 'Ein Angebotsbild konnte nicht geladen werden. Bitte erneut versuchen.');
         var url = URL.createObjectURL(await r.blob());
         try {
@@ -774,7 +794,7 @@ window.AngeboteModel = (function () {
     today: today, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
     ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,
     render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate,
-    preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor,
+    preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor, registerImage: registerImage,
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
     templateOptions: templateStyles.map(function (style) { return [style.id, style.label]; }),
     templateStyle: templateStyle, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };

@@ -9,13 +9,15 @@
   var previewMode = 'paper';
   var overviewFilter = 'all';
   var weeklySurface = null;
+  var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
   var $ = function (id) { return document.getElementById(id); };
   function header(title) {
     return '<header class="an-head"><div><small>DORFLADEN · WOCHEN- UND GETRÄNKEANGEBOTE</small><h1>Angebote gestalten</h1></div>'
-      + '</header>' + (config && !config.scale_enabled ? '<p class="an-note">Vorschauumgebung · Neue Angebote sind getrennt gespeichert. Kein echter Waagenversand aus dieser Umgebung.</p>' : '');
+      + '</header>' + (config && !config.scale_enabled ? '<p class="an-note">'
+        + (cmsAction ? 'Kein echter Waagenversand aus dieser Umgebung.' : 'Vorschauumgebung · Feature-Entwürfe sind getrennt gespeichert. Kein echter Waagenversand aus dieser Umgebung.') + '</p>' : '');
   }
   function lock(value) {
     busy = value; root.setAttribute('aria-busy', String(value));
@@ -40,7 +42,7 @@
     checkpoint(); fn(); if (free && designTarget === 'sheet') data.layout.mode = 'free'; changed(); preview().catch(M.error);
   }
   async function discard() {
-    return !dirty || await M.dialog('Ungespeicherte Änderungen', 'Möchtest du die Änderungen verwerfen? Der zuletzt gespeicherte Entwurf bleibt erhalten.', 'Änderungen verwerfen');
+    return !dirty || await M.dialog('Ungespeicherte Änderungen', 'Möchtest du die Änderungen verwerfen? Der zuletzt gespeicherte Stand bleibt erhalten.', 'Änderungen verwerfen');
   }
   async function overview() {
     if (!(await discard())) return;
@@ -52,6 +54,7 @@
     try { var old = await M.request('/api/angebote'); legacy = Array.isArray(old) ? old : old.data || []; }
     catch (e) { console.error('[Angebote] Altbestand', e); legacyError = 'Die bisherigen Angebote konnten nicht geladen werden. Der bisherige CMS-Editor bleibt erreichbar.'; }
     root.innerHTML = header('Angebote. Gemeinsam gestalten.')
+      + (cmsHost ? '<button id="an-cms-back">Zur gemeinsamen Aktionsübersicht</button>' : '')
       + '<div class="an-overview-toolbar"><h2>Deine Aktionen</h2><div class="an-actions"><button class="an-primary" data-new="weekly">+ Wochenaktion anlegen</button>'
       + '<button data-new="drinks">+ Getränkeaktion anlegen</button></div></div>'
       + '<nav class="an-tabs an-week-filter" aria-label="Aktionszeitraum">' + [['current', 'Diese Woche'], ['next', 'Nächste Woche'], ['all', 'Alle']].map(function (filter) {
@@ -98,6 +101,7 @@
       }); };
     });
     root.querySelectorAll('[data-new]').forEach(function (b) { b.onclick = function () { run(function () { return create(b.dataset.new); }); }; });
+    if ($('an-cms-back')) $('an-cms-back').onclick = function () { cmsHost.start(); };
     root.querySelectorAll('[data-open]').forEach(function (b) { b.onclick = function () { run(function () { return open(b.dataset.open); }); }; });
     root.querySelectorAll('[data-duplicate]').forEach(function (b) {
       b.onclick = function () { run(async function () {
@@ -131,6 +135,9 @@
     document.body.appendChild(dialog); dialog.showModal();
   }
   async function create(kind) {
+    if (cmsHost && !new URLSearchParams(location.search).has('bestand')) {
+      await cmsHost.capture(null, kind); return;
+    }
     var response = await M.request('/api/angebote-verwaltung?view=design'); design = response.design;
     record = null; data = M.blank(kind, design[kind]); M.applyTemplate(data);
     if (kind === 'weekly') await M.adoptWeekly(data);
@@ -416,6 +423,7 @@
     var maxHeight = window.innerHeight - (window.innerWidth > 1000 ? 455 : window.innerWidth > 480 ? 560 : 350);
     if (window.innerWidth <= 480) maxHeight = Math.min(430, maxHeight);
     maxHeight = Math.max(160, maxHeight);
+    if (cmsAction) maxHeight = Math.max(420, window.innerHeight - 150);
     var stageWidth = Math.min(availableWidth, maxHeight * size.w / size.h);
     $('an-stage').style.width = stageWidth + 'px';
     $('an-stage').style.height = stageWidth * size.h / size.w + 'px';
@@ -507,7 +515,88 @@
         $('an-template').hidden = true; $('an-add-page').hidden = true; $('an-remove-page').hidden = true;
       }
     }
+    if (cmsAction) cmsPreviewTools();
     if (busy) lock(true);
+  }
+  async function cmsPreview(action, mode, onClose) {
+    try {
+      cmsAction = action; cmsReturn = onClose;
+      record = { id: action.id }; data = M.clone(action.data);
+      config = window.AngeboteDataverse.settings();
+      dirty = false; undo = []; redo = []; page = 0; selected = '';
+      step = 'design'; designTarget = 'sheet'; designItemId = data.items[0] ? data.items[0].id : '';
+      previewMode = 'paper'; M.ensureTargets(data); renderEditor();
+      cmsPlaceholder = document.createComment('Angebotsverwaltung');
+      root.before(cmsPlaceholder);
+      cmsDialog = document.createElement('dialog'); cmsDialog.className = 'an-dialog an-cms-preview-modal';
+      cmsDialog.setAttribute('aria-label', 'Vorschau');
+      cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
+      cmsDialog.addEventListener('cancel', function (event) { event.preventDefault(); run(closeCmsPreview); });
+      cmsDialog.showModal();
+      await preview();
+      if (mode === 'share') await previewAction(data, true);
+      if (mode === 'scale') await scale();
+    } catch (error) { await M.error(error); }
+  }
+  async function closeCmsPreview() {
+    if (!(await discard())) return;
+    cmsAction = null; record = null; data = null; dirty = false; paint++;
+    root.classList.remove('an-cms-preview');
+    cmsPlaceholder.replaceWith(root); cmsPlaceholder = null;
+    cmsDialog.close(); cmsDialog.remove(); cmsDialog = null;
+    await cmsReturn();
+  }
+  function cmsPreviewTools() {
+    root.classList.add('an-cms-preview');
+    $('an-state').textContent = dirty ? 'Gestaltung geändert · noch nicht gespeichert' : 'Vorschau · gespeicherte Aktion';
+    $('an-save').textContent = 'Gestaltung speichern';
+    $('an-reload-saved').hidden = true;
+    $('an-overview').textContent = 'Schließen';
+    $('an-overview').onclick = function () { run(closeCmsPreview); };
+    var panel = root.querySelector('.an-work-panel');
+    panel.hidden = true;
+    var previewPanel = $('an-preview');
+    previewPanel.querySelector('h2').textContent = 'Vorschau';
+    var actions = document.createElement('div'); actions.className = 'an-actions an-cms-output';
+    actions.innerHTML = '<button data-cms-download>Download</button><button data-cms-print>Drucken / PDF</button>'
+      + '<button data-cms-scale>Auf die Waage</button><button data-cms-singles>Alle Einzelflyer</button>';
+    previewPanel.prepend(actions);
+    var options = document.createElement('details'); options.className = 'an-cms-style-options';
+    options.innerHTML = '<summary>Vorlage und Gestaltung</summary>';
+    options.appendChild($('an-design-options')); previewPanel.appendChild(options);
+    var tools = null;
+    if (!data.layout.cms) {
+      tools = document.createElement('details'); tools.className = 'an-cms-element-options';
+      tools.innerHTML = '<summary>Artikel und Elemente bearbeiten</summary>';
+      $('an-inspector').before(tools); tools.appendChild($('an-inspector'));
+    }
+    actions.querySelector('[data-cms-download]').onclick = function () {
+      run(async function () {
+        var canvases;
+        if (designTarget === 'single') {
+          canvases = [];
+          for (var item of data.items) {
+            var result = await M.renderTarget(data, 'single', item.id, 2);
+            if (result.errors.length) throw M.problem(result.errors[0]);
+            canvases.push(result.canvas);
+          }
+        } else canvases = await M.preflight(data);
+        for (var index = 0; index < canvases.length; index++) {
+          var blob = await new Promise(function (resolve) { canvases[index].toBlob(resolve, 'image/png'); });
+          if (!blob) throw M.problem('Das Bild konnte nicht erstellt werden.');
+          var url = URL.createObjectURL(blob), link = document.createElement('a');
+          link.href = url; link.download = 'Angebot-' + (index + 1) + '.png'; link.click();
+          setTimeout(function (value) { URL.revokeObjectURL(value); }, 10000, url);
+        }
+      });
+    };
+    actions.querySelector('[data-cms-print]').onclick = function () { run(designTarget === 'single' ? printSingles : print); };
+    actions.querySelector('[data-cms-scale]').onclick = function () { run(scale); };
+    actions.querySelector('[data-cms-singles]').onclick = function () {
+      designTarget = 'single'; designItemId = data.items[0] ? data.items[0].id : '';
+      selected = ''; renderInspector(); preview().catch(M.error);
+    };
+    if (tools) $('an-hit-layer').addEventListener('pointerdown', function () { tools.open = true; });
   }
   function addItem(it) {
     addItems([it]);
@@ -529,6 +618,7 @@
   }
   async function upload(file) {
     if (!file) return '';
+    if (cmsAction) return (await window.AngeboteDataverse.productImage(file, 'ANG-' + M.uid())).image_id;
     var response = await M.request('/api/angebote-bilder', { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
     return response.image_id;
   }
@@ -760,6 +850,10 @@
     if (existingImage) loadThumbnail(existingImage);
   }
   async function save() {
+    if (cmsAction) {
+      cmsAction = await window.AngeboteDataverse.save(cmsAction, data);
+      dirty = false; renderEditor(); return;
+    }
     var response = record ? await M.request('/api/angebote-verwaltung/' + record.id, M.json('PUT', { version: record.version, data: data }))
       : await M.request('/api/angebote-verwaltung', M.json('POST', { data: data }));
     record = response.action; data = M.clone(record.draft); config = response.config; dirty = false;
@@ -1090,14 +1184,22 @@
   function start() {
     if (started) { if (data) preview().catch(M.error); return; }
     started = true;
-    overview().catch(function (e) {
+    var load = overview;
+    if (window.CMSAngebote && !new URLSearchParams(location.search).has('bestand')) {
+      cmsHost = window.CMSAngebote.mount(root, {
+        preview: cmsPreview,
+        legacy: function () { cmsAction = null; dirty = false; root.classList.remove('an-cms-preview'); overview().catch(M.error); }
+      });
+      load = cmsHost.start;
+    }
+    load().catch(function (e) {
       started = false;
       root.innerHTML = header('Angebote') + '<p class="an-status an-error" role="alert">Die Angebotsverwaltung ist gerade nicht verfügbar.</p><button id="an-retry">Erneut versuchen</button>';
       $('an-retry').onclick = start; M.error(e);
     });
   }
   if (root.closest('#panel-angebote')) {
-    window.KAngebote = { onShow: start, hasUnsavedChanges: function () { return dirty; } };
+    window.KAngebote = { onShow: start, hasUnsavedChanges: function () { return dirty || !!(cmsHost && cmsHost.hasUnsavedChanges()); } };
     if (root.closest('#panel-angebote').classList.contains('active')) start();
   } else start();
 })();

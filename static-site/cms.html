@@ -135,7 +135,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   </div>
   <!-- Angebote -->
   <div id="cms-panel-ang" style="display:none">
-    <p><a class="cms-btn cms-btn-primary" href="/angebote.html">Getränke &amp; neue Angebote gestalten</a></p>
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung"></section>
+    <div hidden>
     <div class="cms-flex cms-between cms-mb">
       <h3 style="font-size:var(--schrift-gross);font-weight:600;color:var(--ink);margin:0;display:flex;align-items:center;gap:6px">Sonderangebote <span onclick="cmsTab('help'); cmsSwitchHelpTopic('ang-help')" title="Hilfe anzeigen" style="cursor:pointer;font-size:var(--schrift-klein);background:var(--gr-l);color:var(--gr);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></h3>
       <button class="cms-btn cms-btn-primary" data-action="openNewAktion">+ Neue Aktion erstellen</button>
@@ -151,6 +152,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     </div>
     <div id="cms-akt-list"></div>
     <div class="cms-empty" id="cms-ang-empty" style="display:none">Noch keine Angebote. Erstellen Sie eine neue Aktion mit Sonderangeboten.</div>
+    </div>
   </div>
   <!-- Aktuelles / News -->
   <div id="cms-panel-news" style="display:none">
@@ -3765,7 +3767,11 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <script src="/js/angebote-vorschau-editor.js"></script>
 <script src="/js/angebote-design.js"></script>
 <script src="/js/wochenangebote-renderer.js"></script>
+<script src="/js/cms-angebote-form.js"></script>
+<script src="/js/angebote-dataverse.js"></script>
+<script src="/js/cms-angebote.js"></script>
 <script src="cms.js"></script>
+<script src="/js/angebote-editor.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
 <script src="/js/dl-confirm.js"></script>
 <script src="/js/social.js?v=20260824b"></script>

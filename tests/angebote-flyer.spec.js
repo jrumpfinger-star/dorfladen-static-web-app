@@ -153,7 +153,7 @@ async function setup(page, options = {}) {
     return json({ success: true, data: [], value: [], groups: [], artikel: [], gruppen: [], bestellungen: [], kunden: [], tage: [] });
   });
   if (!options.loggedOut) {
-    await page.goto(BASE + '/angebote.html');
+    await page.goto(BASE + '/angebote.html?bestand=1');
     await expect(page.getByRole('button', { name: '+ Getränkeaktion anlegen' })).toBeVisible();
   }
   return state;
@@ -266,7 +266,7 @@ test('TC-F9-01: Serversitzung gilt ohne lokalen Merker auch nach Seitenwechsel',
   await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
   await expect(page.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
   await expect(page.locator('#cms-login')).toBeHidden();
-  await page.goto(BASE + '/angebote.html');
+  await page.goto(BASE + '/angebote.html?bestand=1');
   await expect(page.getByRole('button', { name: '+ Getränkeaktion anlegen' })).toBeVisible();
   await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
   await expect(page.getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
@@ -636,11 +636,12 @@ test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Ki
   await page.locator('[data-id=sec-shared]').click();
   await expect(page.locator('#cfg-sec-shared')).toBeVisible();
   await cms(page, 'ang');
-  await page.getByRole('link', { name: 'Getränke & neue Angebote gestalten' }).click();
+  await expect(page.locator('#an-root').getByRole('button', { name: '+ Neue Aktion erstellen', exact: true })).toBeVisible();
+  await page.goto(BASE + '/angebote.html?bestand=1');
   await page.getByRole('button', { name: '+ Getränkeaktion anlegen' }).click();
   await saveDraft(page);
   expect([...state.actions.values()].at(-1).draft.layout.color).toBe('#0066aa');
-  await page.goto(BASE + '/kiosk.html');
+  await page.goto(BASE + '/kiosk.html?bestand=1');
   await page.locator('.k-tab[data-tab=angebote]').click();
   await expect(page).toHaveURL(/kiosk\.html/);
   await expect(page.locator('#panel-angebote')).toBeVisible();
@@ -671,7 +672,7 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   expect(state.design.drinks.marker_type).toBe('heart');
   expect(state.actions.get(existing.id)).toEqual(before);
   const saved = copy(state.design);
-  await page.goto(BASE + '/angebote.html');
+  await page.goto(BASE + '/angebote.html?bestand=1');
   await page.getByRole('button', { name: '+ Getränkeaktion anlegen' }).click();
   await saveDraft(page);
   expect([...state.actions.values()].at(-1).draft.layout.adjustments).toEqual(saved.drinks.adjustments);
@@ -838,7 +839,7 @@ test('TC-F14-03: alte freie Wochenlayouts bleiben erhalten; Übernahme nur best�
 test('TC-F14-04: Kioskmenü und ungespeicherter Angebotsentwurf bleiben beim Reiterwechsel erhalten', async ({ page }) => {
   const state = await setup(page);
   await page.addInitScript((hash) => sessionStorage.setItem('cms_auth_ok', hash), require('./_kiosk-angemeldet').PW_HASH);
-  await page.goto(BASE + '/kiosk.html');
+  await page.goto(BASE + '/kiosk.html?bestand=1');
   await page.locator('.k-tab[data-tab=angebote]').click();
   await expect(page).toHaveURL(/kiosk\.html/);
   await expect(page.locator('#panel-angebote')).toBeVisible();
@@ -1268,7 +1269,7 @@ test('TC-F17-01/03: kompakte Artikelzeilen auf voller Breite und farbige Direkta
   expect(clipped).toEqual([]);
   await page.locator('.an-work-panel').screenshot({ path: test.info().outputPath('kompakte-artikelzeilen.png') });
   await page.addInitScript((hash) => sessionStorage.setItem('cms_auth_ok', hash), require('./_kiosk-angemeldet').PW_HASH);
-  await page.goto(BASE + '/kiosk.html');
+  await page.goto(BASE + '/kiosk.html?bestand=1');
   await page.locator('.k-tab[data-tab=angebote]').click();
   await page.locator('[data-open="' + head.id + '"]').click();
   await expect(page.locator('#an-items .an-item')).toHaveCount(6);

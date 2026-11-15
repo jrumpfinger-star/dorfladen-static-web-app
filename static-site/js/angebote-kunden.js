@@ -13,10 +13,15 @@ window.AngeboteKunden = (function () {
     if (pending) return pending;
     if (loaded && !force) return loaded;
     pending = (async function () {
-      var responses = await Promise.all([M.request('/api/angebote'), M.request('/api/angebote-flyer')]);
-      var old = Array.isArray(responses[0]) ? responses[0] : responses[0].data || responses[0].value;
-      if (!Array.isArray(old) || !Array.isArray(responses[1].actions)) throw M.problem('Die Angebote konnten nicht vollständig geladen werden.');
-      loaded = { legacy: old.map(normalizeOld), actions: responses[1].actions };
+      var offers = await M.request('/api/angebote');
+      var archive = offers.config && offers.config.feature_archive_enabled === false
+        ? { actions: [] } : await M.request('/api/angebote-flyer');
+      var old = Array.isArray(offers) ? offers : offers.data || offers.value;
+      if (!Array.isArray(old) || !Array.isArray(archive.actions)) throw M.problem('Die Angebote konnten nicht vollständig geladen werden.');
+      var typed = old.filter(function (row) { return row.action_kind === 'drinks' || row.action_layout; });
+      var typedActions = await window.AngeboteDataverse.actions(typed);
+      loaded = { legacy: old.filter(function (row) { return !typed.includes(row); }).map(normalizeOld),
+        actions: typedActions.concat(archive.actions) };
       return loaded;
     })();
     try { return await pending; } finally { pending = null; }

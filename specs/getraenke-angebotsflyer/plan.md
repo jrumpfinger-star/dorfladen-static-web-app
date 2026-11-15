@@ -10,6 +10,34 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F18 ersetzt den separaten Schritt-Editor und die Blob-Aktionsablage für neue
+Aktionen. Bestehende Dataverse-Angebote erhalten typisierte Getränke-/Artfelder;
+aktionsbezogene Layouts verwenden vorhandene Seitenkonfiguration. Ein
+transaktionaler Action-Save übernimmt Artikel und Layout zusammen. Schema und
+Testumgebung werden vor realen Schreibzugriffen geprüft. Die acht optionalen
+Schemaergänzungen und ein Preview-Rollout mit gemeinsamem produktivem Bestand
+benötigen ausdrückliche Freigabe; keine Migration bestehender Datensätze.
+Schreibtests bleiben auf isolierte Testdaten beschränkt.
+
+Ein gemeinsamer CMS-Erfassungscontroller stellt kompakte Zeilen mit direkter
+Autovervollständigung und Bildwerkzeugen für CMS, Kiosk und Angebotsseite bereit.
+Die bestehende Vorschau-/Elementgestaltung wird wiederverwendet, aber aus der
+Vorschau geöffnet statt als Pflichtschritt. Speichern statt Entwurf/Freigabe.
+Bestehende Feature-Blob-Aktionen bleiben über einen gekennzeichneten Bestandsweg
+erreichbar. Sie werden weder migriert noch in Dataverse doppelt geschrieben.
+
+Die 4/6-Auswahl sitzt bereits im Getränkedialog und speichert `layout.density`.
+Vorhandene `templates` teilen nach dieser Dichte in vollständige Folgeseiten auf.
+Ein Wechsel erhält Artikel, Bilder, Pfand und Reihenfolge, erzeugt neue
+Sammelraster nur nach dem vorhandenen Bestätigungsmechanismus für freie Layouts.
+Einzelziele bleiben dabei unangetastet. Sonderaktionen behalten ihre
+Originalrenderer und deren bestehende Raster.
+
+Betroffene Komponenten: bestehende Angebote-API und gezielte Validierung,
+gemeinsamer Erfassungscontroller, Angebotseditor als Vorschauwerkzeug,
+CMS/Kiosk-Einstiege, Kundenadapter, direkt betroffene Tests und Hilfe.
+F18 hat Vorrang vor den folgenden historischen Architekturentscheidungen.
+
 F16: Eine kleine gemeinsame Vorschau-Bearbeitungsfläche verbindet die
 vorhandenen Elementdaten bzw. Original-Override-Metadaten mit Pointer-,
 Tastatur-, Dreh- und Skalierwerkzeugen. Der Originalrenderer liefert zusätzlich

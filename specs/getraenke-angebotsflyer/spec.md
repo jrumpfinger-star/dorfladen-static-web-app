@@ -1,7 +1,9 @@
 # Gemeinsame Angebote und Getränkeflyer
 
-Status: Zur Umsetzung freigegeben; ergänzt um freie Gestaltung, mobile Ansicht
-und ein isoliertes Preview-Deployment.
+Status: Zur Umsetzung freigegeben. F18 ersetzt den bisherigen Schritt-Editor
+und dessen getrennte Entwurf-/Veröffentlichungsablage für neue Aktionen.
+Frühere Anforderungen an Blob-Snapshots gelten nur noch für den erhaltenen
+Feature-Altbestand, nicht für neue Dataverse-Aktionen.
 
 ## Ziel und Grenzen
 
@@ -18,9 +20,9 @@ sie werden nicht automatisch migriert oder von neuen Aktionen überschrieben.
 ## F1: Gemeinsame Verwaltung
 
 Ein gemeinsamer Editor für neue Wochen- und Getränkeaktionen ist aus Kiosk
-und CMS erreichbar. Schritte: Artikel, Gestalten, Ausgeben. Aktionen lassen
-sich speichern, erneut öffnen und duplizieren. Bestehende Aktionen sind aus
-derselben Übersicht im bisherigen Editor erreichbar. Kein dauerhaftes CMS-iframe.
+und CMS erreichbar. Ablauf: Aktionsart wählen, kompakter Erfassungsdialog,
+Speichern, Vorschau mit Karten-/Einzelflyerbearbeitung. Angebote werden in
+der bestehenden Dataverse-Angebotstabelle gespeichert. Kein CMS-iframe.
 
 - TC-F1-01: Alte Aktionen bleiben erreichbar und unverändert bearbeitbar.
 - TC-F1-02: Neue Aktionen beider Arten anlegen/duplizieren; Artikel hinzufügen,
@@ -43,8 +45,9 @@ angezeigt und eingegeben, beispielsweise `0,5` Liter. Punkteingaben bleiben
 kompatibel und werden nach Abschluss der Eingabe in Kommaschreibweise
 angezeigt. Literwerte mit bis zu drei Nachkommastellen werden verlustfrei
 als ganze Milliliter gespeichert; ungültige Mengen werden erkennbar gemeldet.
-Unvollständige Angaben dürfen als Entwurf gespeichert, aber nicht freigegeben
-oder an die Waage gesendet werden.
+Unvollständige Eingaben bleiben lokal; Speichern und Waagenversand erfordern
+vollständige gültige Angaben. Der erhaltene Feature-Altbestand behält seine
+bisherige Entwurfssemantik.
 
 - TC-F2-01: 12,49 EUR / (20 × 0,5 l) ergibt 1,25 EUR/l, 3,10 EUR Pfand separat.
 - TC-F2-02: Fehlender Inhalt/Pfandentscheidung, Preis <= 0 oder ungültiger
@@ -91,7 +94,15 @@ A4-Druck über den Browserdialog, auch als PDF; keine externen PDF-Dienste.
 - TC-F3-05: Druck und Originalansicht erhalten das freie Layout unverändert.
 - TC-F3-06: Fehlende oder nicht lesbar platzierte Pflichtangaben verhindern Ausgabe.
 
-## F4: Entwurf und Veröffentlichung
+## F4: Speichern und Sichtbarkeit
+
+Neue Aktionen verwenden die bestehende Dataverse-Datenhaltung. Speichern
+übernimmt die vollständige gültige Aktion; im Gültigkeitszeitraum ist sie
+für Kunden sichtbar. Kein zusätzlicher Veröffentlichungsknopf. Layout und
+Artikel dürfen bei einem fehlgeschlagenen Speichern nicht teilweise als
+erfolgreich übernommen werden. F18 konkretisiert diesen Vertrag.
+
+### Erhaltener Feature-Altbestand
 
 Verwaltungszugriffe, einschließlich Lesen von Entwürfen und Bildern, erfordern
 eine serverseitig geprüfte CMS-Anmeldung. Speichern veröffentlicht nichts.
@@ -503,6 +514,58 @@ bleiben erhalten; Farbe ist nicht das einzige Unterscheidungsmerkmal.
   keine implizite Speicherung oder Freigabe.
 - TC-F17-03: Übersicht hat unterscheidbare Aktionsfarben; bestehende Direkt-
   aktionen, Bestätigungen und Tastaturbedienung bleiben unverändert.
+
+## F18: Originaler CMS-Ablauf mit Getränkeauswahl
+
+F18 ersetzt widersprechende Ablauf-/Speichervorgaben aus F1, F4, F10, F11
+und F17 für neue Aktionen. Bestellungen bleiben unverändert.
+
+Der gemeinsame Einstieg aus CMS, Kiosk und Angebotsseite führt zur kompakten
+Aktionsübersicht mit farbigen Direktaktionen. „Neue Aktion erstellen“ bietet
+Sonderaktion/Getränkeaktion. Es folgt der vertraute Dialog mit Titel, Zeitraum,
+Speichern/Abbrechen, nummerierten Zeilen, direkter Produktsuche, Details,
+Angebots-/Stattpreis, Strichcode, Bildsuche/Datei/Zwischenablage, Entfernen
+und Sortieren. Sonderaktionen starten mit sechs leeren Zeilen; Getränke
+zusätzlich mit Gebinde-/Inhalts-/Pfandangaben.
+
+Im Getränkedialog wird 4 Kacheln (2×2) oder 6 Kacheln (2×3) gewählt.
+Dies bestimmt vorbereitete Zeilen und Sammelflyer-Raster, nicht die maximale
+Artikelzahl. Wechsel erhalten alle Artikel und deren Daten; sechs Artikel
+bei vier Kacheln ergeben Folgeseiten mit 4+2 Artikeln. Die Wahl bleibt beim
+Speichern/Öffnen erhalten. Alte Aktionen ohne Auswahl behalten ihr Layout.
+
+Neue Artikel stehen ausschließlich in den bestehenden Dataverse-Angeboten;
+aktionsbezogene Layoutmetadaten verwenden vorhandene Dataverse-Konfiguration.
+Es gibt keinen parallelen Blob-Schreibpfad. Speichern veröffentlicht gültige
+Aktionen innerhalb ihres Zeitraums wie das bisherige CMS. Fehler/Konflikte
+bleiben sichtbar; kein teilweise erfolgreiches Speichern.
+
+Danach dient die vertraute Vorschau als Arbeitszentrum: Karten anklicken,
+Sammel-/Einzelflyer gestalten, Elemente verschieben/drehen/skalieren,
+Ersparnismarker einstellen, Download/Druck/Teilen/Waage. Sonderaktionen
+verwenden Original-CMS-Vorlagen; Getränke behalten Getränkevorlagen.
+Einzelflyer sind vom Sammelraster unabhängig. Der Kiosk bleibt eingebettet.
+Bestehende Feature-Aktionen bleiben gekennzeichnet erreichbar und werden
+nicht automatisch migriert oder freigegeben.
+
+Ein Preview-Rollout mit gemeinsamem produktivem Dataverse-Bestand und die acht
+optionalen Schemaergänzungen benötigen ausdrückliche Freigabe. Bestehende
+Angebote werden nicht migriert oder für Schreibtests verwendet. Schreibtests
+erfolgen ausschließlich isoliert; ein Feature-Rollout ändert main nicht.
+
+- TC-F18-01: Beide Arten über gemeinsamen Einstieg mit passenden Dialogen
+  anlegen; direkte Suche nach Name/Artikelnummer/EAN und Bildfunktionen.
+- TC-F18-02: Vier/sechs vorbereitete Getränkezeilen und Raster 2×2/2×3;
+  verlustfreier Wechsel 6→4 (4+2) und 4→6; alle Ausgabeseiten vollständig.
+- TC-F18-03: Dataverse-Felder und Raster speichern/öffnen, alte Sonderaktionen
+  ohne neue Felder kompatibel; transaktionales Speichern/Löschen und Fehlerfall.
+- TC-F18-04: Vorschau-Kartenklick, Einzel-/Sammelflyerbearbeitung, Marker und
+  Ausgaben für beide Arten; gespeicherte Layouts beeinflussen keine andere Aktion.
+- TC-F18-05: Eingebetteter Kiosk und CMS, keine Doppelanzeigen, unveränderter
+  Bestellablauf, Feature-Bestand erhalten, kein echter Preview-Waagenversand.
+- TC-F18-06: Neue Aktionen im Gültigkeitszeitraum ohne zusätzliche Freigabe
+  sichtbar; ungültige Daten und fehlendes Schema verhindern den Schreibvorgang
+  mit verständlicher Meldung. Keine unautorisierten Schreibzugriffe.
 
 ## Verifikation und offene Fragen
 

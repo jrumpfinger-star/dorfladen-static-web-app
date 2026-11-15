@@ -1,235 +1,149 @@
-# Wochenangebote und Getränkeflyer
+# Sonderangebote und Getränkeaktionen
 
-## Bedienung
+## Ein gemeinsamer CMS-Ablauf
 
-Auf der Homepage stehen alle freigegebenen Angebote im jeweiligen Zeitraum
-gemeinsam: Getränke, andere Wochenangebote und Altbestand. Es ist kein
-Wechsel der Angebotsart nötig. Eine zusätzliche Freigabe nur für die Homepage
-gibt es nicht; nicht freigegebene Entwürfe bleiben intern.
+**Kiosk → Angebote**, **CMS → Angebote** und die eigenständige Angebotsseite
+verwenden dieselbe Verwaltung. Im Kiosk ist auch die vollständige
+**Erfassung** möglich, nicht nur das Ansehen. Das Kioskmenü bleibt erhalten;
+Erfassung und Vorschau öffnen sich über dem eingebetteten Angebotsbereich.
+Das eigentliche Getränke-Bestellsystem bleibt unverändert.
 
-Im **Kiosk → Angebote** oder im **CMS → Angebote → Getränke & neue Angebote
-gestalten** öffnet sich die gemeinsame Verwaltung.
-Im Kiosk bleibt sie als normaler Reiter eingebettet; Menü und ungespeicherte
-Eingaben bleiben beim Reiterwechsel erhalten.
-Bestehende Aktionen bleiben über **Bisherige Angebote öffnen** im bisherigen
-Editor erreichbar. Sie werden weder migriert noch überschrieben.
+Die kompakte Übersicht bietet Wochenfilter und direkte Aktionen:
+**Bearbeiten**, **Vorschau** (grau), **Teilen** (grün), **Waage** (orange)
+und **Löschen** (rot, mit Bestätigung).
 
-Die Übersicht zeigt kompakte Aktionszeilen mit Wochenfiltern und direkten
-Knöpfen für Bearbeiten, Vorschau, Teilen/Download, Waage, Duplizieren und Löschen.
-Vorschau ist grau, Teilen grün, Waage orange und Löschen rot gekennzeichnet.
-Vorschau und Download veröffentlichen nichts. **Löschen** verlangt eine
-Bestätigung und beendet auch die Homepage-Freigabe. Bereits versandte
-Waagenbilder werden dadurch nicht vom Gerät entfernt.
+### Angebote erfassen
 
-### Originale Wochenangebote
+1. **Neue Aktion erstellen** und **Sonderaktion** oder **Getränkeaktion** wählen.
+2. Titel und Gültigkeitszeitraum eintragen.
+3. Artikel direkt in den nummerierten Zeilen erfassen. Im Produktfeld nach
+   Name, Artikelnummer oder EAN suchen und den Treffer übernehmen. Der
+   reguläre Stamm-VK bleibt vom separat einzugebenden Angebotspreis getrennt.
+   Stattpreis und Details sind direkt bearbeitbar.
+4. Die Bildknöpfe an der Zeile dienen Bildsuche, Dateiauswahl, Zwischenablage
+   und Entfernen. Reihenfolge am Griff ändern; der Griff kann per Tastatur
+   auch die Zeile nach oben bewegen. **+ Artikel** ergänzt weitere Zeilen.
+5. Bei Getränken Anzahl, Liter je Einheit, Gebindeart und Gesamtpfand oder
+   ausdrücklich **Pfandfrei** ergänzen. Der Literpreis enthält kein Pfand.
+   Komma und Punkt bei Literangaben sind möglich, bis zu drei Nachkommastellen
+   werden als ganze Milliliter erhalten.
+6. **Speichern** übernimmt die vollständige Aktion. Während ihres
+   Gültigkeitszeitraums ist sie für Kunden sichtbar – **ohne zusätzliche
+   Veröffentlichung**. Abbrechen verwirft ungespeicherte Eingaben erst nach
+   Bestätigung. Fehler lassen den Dialog mit den Eingaben offen.
 
-Neue Wochenaktionen übernehmen die tatsächlich gespeicherten CMS-Vorlagen
-für **Plakat** und **Einzelflyer**, einschließlich Farben und Artikelanpassungen.
-Sie nutzen dieselben Zeichenfunktionen wie der bisherige Editor, nicht das
-Getränkelayout. Die Einstellungen werden als eigener Stand der Aktion
-gespeichert; spätere CMS-Änderungen verändern sie nicht. Ältere freie
-Wochenlayouts bleiben bis zur ausdrücklich bestätigten Übernahme erhalten.
+### Vier oder sechs Getränkekacheln
 
-Produktbild und Preis lassen sich in der Vorschau auswählen, verschieben,
-drehen und vergrößern/verkleinern. Beim Einzelflyer stehen auch vorhandene
-zusätzliche Bildelemente zur Auswahl. Exakte Positionen bleiben aufklappbar.
-Die Kachel übernimmt den Original-Plakatausschnitt; das Waagenmotiv nutzt
-den Original-Einzelflyer proportional ohne Verzerrung.
-Unter **Ersparnis-Marker** stehen die originalen Markertypen, Farbwelten und
-Größen für Plakat bzw. Einzelflyer zur Auswahl. Ein Marker erscheint nur bei
-einem Stattpreis über dem Angebotspreis.
+Bereits im Getränkedialog steht **Kacheln je Sammelflyer-Seite**:
 
-### Getränke und freie Layouts
+- **4 Kacheln (2×2)**: vier vorbereitete Erfassungszeilen und vier Kacheln
+  auf einer Sammelflyer-Seite.
+- **6 Kacheln (2×3)**: sechs vorbereitete Zeilen und sechs Kacheln pro Seite.
 
-Die Artikelerfassung nutzt die volle Breite. Bild, Name, Preise, Beschreibung
-und Strichcode stehen auf breiten Bildschirmen in einer kompakten Zeile statt
-in großen Karten. Auf Tablets und Telefonen brechen sie lesbar um.
-**Bild** öffnet die Bildwerkzeuge, **⋯** die Artikelaktionen und **+** die
-Zusatzangaben. Die Gestaltungsvorschau steht während der Artikelerfassung
-unterhalb der Liste; im Gestaltungsschritt wieder daneben.
-Im Artikelstamm mehrere Treffer markieren, weitersuchen und gemeinsam
-**Auswahl übernehmen** wählen. Die Auswahl bleibt über Suchbegriffe hinweg
-erhalten; Markieren baut die Trefferliste nicht neu auf.
+Die Auswahl begrenzt **nicht** die Anzahl der Artikel. Beim Wechsel bleiben
+alle ausgefüllten Zeilen, Bilder und Getränkedaten erhalten. Sechs Artikel
+mit der Auswahl „4“ ergeben zwei Seiten mit **4 + 2** Artikeln. Nur überzählige,
+vollständig unbenutzte Eingabezeilen dürfen entfallen.
 
-1. **Artikel und Bilder:** Wochen- oder Getränkeaktion anlegen. Getränke aus
-   **Artikelstamm wählen** suchen (Name, Artikelnummer oder EAN) und bei Bedarf
-   mehrere übernehmen. Der reguläre VK bleibt Vergleichswert; nur die optionale
-   Auswahl „Stamm-VK auch als Angebotspreis vorbelegen“ kopiert ihn in den
-   separaten Angebotspreis. Bilder werden nur lesend gesucht und als private
-   Angebotskopie gespeichert. Eigene Artikel, Bilddateien und Zwischenablage
-   funktionieren ebenfalls. Bei Getränken Anzahl, Liter je Einheit, Gebindeart
-   und Gesamtpfand oder Pfandfreiheit ergänzen. Der Literpreis enthält kein
-   Pfand. Unvollständige Entwürfe dürfen gespeichert werden.
-   Dezimale Mengen stehen immer mit Komma, beispielsweise **0,5 Liter**.
-   Punkteingaben werden ebenfalls angenommen und danach mit Komma angezeigt.
-   Bis zu drei Nachkommastellen bleiben als ganze Milliliter erhalten.
-   **Name, Angebotspreis, Stattpreis/UVP und Beschreibung direkt in der
-   Artikelliste ändern**, mit Tab zum nächsten Feld wechseln. Rabatt und
-   Literpreis werden berechnet. **Gebinde, Pfand und Kennungen** direkt in der
-   Artikelzeile aufklappen. **Bild** öffnet nur bei Bedarf den bisherigen
-   Bild-/Detaildialog. Speichern bleibt eine eigene Aktion.
-   Bilder werden auch bei Artikeln mit ausschließlich EAN/Strichcode
-   automatisch übernommen. Beim Öffnen werden fehlende Entwurfsbilder erneut
-   gesucht, vorhandene eigene Bilder bleiben erhalten. Die Statuszeile meldet
-   fehlende Treffer bzw. Fehler; veröffentlicht wird dadurch nichts.
-   **Eigene Produktbilder mit EAN/Strichcode** werden beim **Übernehmen** im
-   Bilddialog zusätzlich im SharePoint-Ordner **StrichcodeBilder** gespeichert.
-   Dabei wird das gemeinsame Produktbild für diesen Strichcode ersetzt.
-   Ohne Strichcode bleibt das Bild nur im Angebot. Suchtreffer und freie
-   Gestaltungsbilder werden nicht zurückgeschrieben. Ein Uploadfehler lässt
-   den Dialog mit einem Hinweis offen, damit du erneut versuchen kannst.
-2. **Direkt an der Vorschau gestalten:** Das Produktbild ist vorausgewählt.
-   Mit **↶ / ↷ 15°**, **− / +** und **0°** drehen, proportional skalieren
-   oder die Drehung zurücksetzen. **+ Eigenes Bild**, **Bild ersetzen**
-   und **Duplizieren** stehen direkt daneben. Den sichtbaren **↘**-Anfasser
-   für Größenänderungen ziehen (Maus oder Touch); das Element selbst zum
-   Verschieben ziehen. Ein Schrittwechsel ist dafür nicht nötig.
-   **Weitere Werkzeuge** enthält exakte Positionen, Deckkraft, eigene Texte,
-   Formen, Logo, Ghost-Kopie und Ebenen. Rückgängig bleibt direkt erreichbar.
-   Die Mockup-nahe Schrittansicht hält Artikelliste,
-   optionale Bildwerkzeuge und Vorschau getrennt. Überschrift und Zeitraum sind
-   einklappbar. A4-Sammelflyer, Homepage-/Kioskkachel, Einzelflyer und
-   Waagenmotiv haben **eigene, unabhängig gespeicherte Layouts je Artikel**.
-   Elemente antippen oder in der Liste auswählen: Position, Größe, Drehung,
-   Schrift, Farbe, Ebenen und Deckkraft lassen sich ändern. Eigene Texte, Bilder
-   und Flächen sowie Duplikate sind möglich. Zahlenfelder und Pfeilknöpfe
-   funktionieren auch ohne Ziehen. Eine Vorlage ersetzt freie Gestaltung erst
-   nach Bestätigung und nur im gewählten Ausgabeziel; bei Einzelansichten
-   bleibt sie auf den ausgewählten Artikel beschränkt. Andere Artikel und
-   Ausgabeziele bleiben unverändert.
-3. **Ausgeben:** Die folgenden Aktionen sind bewusst getrennt:
-   - **Entwurf speichern** ändert keine Kundenfassung.
-   - **Für Homepage veröffentlichen** gibt eine vollständige Fassung frei.
-     Spätere Änderungen bleiben bis zur nächsten Freigabe intern.
-   - **Einzelflyer drucken / PDF** gibt pro Artikel dessen separates
-     Einzelflyer-Layout aus. **Sammelflyer A4 drucken / PDF** nutzt die
-     mehrseitige A4-Gestaltung. Beide öffnen den Browser-Druckdialog; dort
-     Browser-Kopf-/Fußzeilen ausschalten und bei Bedarf „Als PDF speichern“.
-   - **Für Waage vorbereiten** nutzt das separate Waagenlayout für Einzelartikel
-     oder die A4-Seiten für den gesamten Flyer. Profil und Dauerwerbung/Vollbild
-     im vorhandenen Waagendialog wählen. JPEGs können auch ohne Versand
-     gespeichert werden.
+Die Wahl wird mit der Aktion gespeichert. Vorschau und Ausgaben berücksichtigen
+sämtliche Folgeseiten. Einzelflyer bleiben unabhängig vom Sammelraster.
+Sonderaktionen behalten ihre ursprüngliche Sechser-Erfassung und CMS-Vorlagen.
 
-Pflichtangaben, ungültige Preise oder überstehende/zu kleine Textfelder blockieren
-die Ausgabe mit einer verständlichen Meldung. Bei einem Versionskonflikt bleibt
-der Serverstand erhalten; den Entwurf erneut öffnen, bevor weitergespeichert wird.
+## Vorschau und Gestaltung
 
-### Bestehender Designeditor
+Nach dem Speichern öffnet sich die Vorschau. Sonderaktionen verwenden die
+echten gespeicherten CMS-Plakat-/Einzelflyervorlagen und deren Zeichenfunktionen;
+Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpreis.
 
-**CMS → Design → Plakate & Flyer → Getränkeflyer** verwaltet die Standards neuer
-Getränkeaktionen: Vorlagen, Farben, Schriften, Preisform, Typografie
-und Produktbilder. A4-, Karten- und Waagenvorschau verwenden Beispieldaten.
-Elemente in dieser Vorschau lassen sich direkt auswählen, ziehen, skalieren
-und drehen. Ersparnismarker haben auswählbare Typen, Farbwelten und Größen.
-Alte Flyer-Farben lassen sich ausdrücklich kopieren.
-**Designstandards speichern** ersetzt den bisherigen Startstandard für neue
-Getränkeaktionen. Eingebaute Vorlagen sowie bestehende und veröffentlichte
-Aktionen werden nicht überschrieben.
-**Vorlage auf Original zurücksetzen** stellt nach Bestätigung Farben, Größen,
-Marker und freie Anpassungen der ausgewählten Vorlage zunächst nur in der
-Vorschau zurück. Erst anschließendes **Designstandards speichern** übernimmt
-den zurückgesetzten Stand dauerhaft. Wochenangebote verwenden stattdessen
-das bisherige **CMS-Wochenangebotsdesign**.
-Aktuelle Standards können im Aktionseditor ausdrücklich neu übernommen werden.
-Die kompakte Vorlagenauswahl zeigt das aktive Design. **Auswahl öffnen**
-blendet elf anklickbare Vorschaukacheln ein: Landladen, Klassisch sowie die
-neun nachgebildeten Stilfamilien Classic Red, Minimal Clean, Dark Modern, Organic Market,
-Bold Poster, Modern Magazine, Mag Fresh, Mag Bold und Mag XL.
-Jede Vorlage ist ein frei bearbeitbarer Startpunkt, kein fertiges Bild.
-Ein **Doppelklick auf eine Vorlagenkachel** öffnet die große, scharfe Vorschau.
-Alternativ **Vergrößern** unter der Kachel antippen oder per Tastatur öffnen.
-Mit +/− zoomen, **100 %** für Originalgröße oder **Einpassen** wählen;
-große Seiten innerhalb der Vorschau verschieben. **Schließen** oder Escape
-führt zurück. Diese Ansicht speichert oder übernimmt keine Vorlage.
-Darunter unabhängig 4 großzügige oder 6 kompakte Artikel je Seite wählen.
-Farben und Schrift sind direkt sichtbar; Größen und Drehung stehen unter
-„Feinabstimmung“. Ein Häkchen markiert die aktive Auswahl, die Kacheln sind
-auch per Tastatur bedienbar. Diese Auswahl ist im einzelnen Flyer ebenfalls
-direkt unter „Gestalten“ sichtbar, nicht in einem versteckten Untermenü.
-A4/PDF, Handy/Kiosk und die vorhandenen Waagenprofile sind über sichtbare
-Vorschau-Schaltflächen erreichbar. Die Vorschau ändert oder veröffentlicht
-keinen Entwurf. In der neuen Angebotsverwaltung ist jedes Ausgabeziel separat
-bearbeitbar; der bestehende Designeditor verwaltet weiterhin nur globale
-Startstandards.
+- **Alle Einzelflyer** öffnet die Einzelansichten; den Artikel direkt auswählen.
+- Ein Element in der Vorschau antippen und die Artikel-/Elementwerkzeuge
+  verwenden: Verschieben, Drehen, Vergrößern/Verkleinern, Bild-/Preisanpassungen.
+- **Vorlage und Gestaltung** enthält Vorlagen, Farben, Schrift und
+  Ersparnismarker. Der Marker benötigt einen Stattpreis über dem Angebotspreis.
+- Weitere Elementwerkzeuge umfassen eigene Bilder/Texte, Kopien, Ghost,
+  Deckkraft und Ebenen. Original-Wochenvorlagen behalten ihre originalen
+  Artikelanpassungen.
+- **Gestaltung speichern** erhält die Anpassungen für diese Aktion.
+  Andere Aktionen und globale Designstandards werden dadurch nicht verändert.
+- **Download**, **Drucken / PDF**, **Teilen** und **Auf die Waage** verwenden
+  dieselben Artikeldaten. Die Sammelflyer-Ausgabe enthält alle Seiten.
 
-Das echte **Dorfladen-Logo** steht wie im Original im Flyer-Kopf; kleine
-Kundenkacheln erhalten kein zusätzliches Logo. Es ist als eigenes Element
-verschiebbar, skalierbar und drehbar. **+ Dorfladen-Logo** fügt es bei Bedarf
-auch in bestehende Gestaltungen ein. Druck/PDF und Waagenbilder verwenden
-dasselbe hochauflösende Original. Ein Ladefehler blockiert die Ausgabe,
-statt einen Flyer ohne Logo zu erzeugen. Bereits gespeicherte Layouts
-werden nicht automatisch verändert.
+Ein neues Raster oder eine erneut angewandte Vorlage darf freie Positionen
+nur nach Bestätigung ersetzen. Pflichtangaben und unlesbare Textfelder
+werden vor der Ausgabe geprüft.
 
-### Gemeinsame CMS-Anmeldung
+### Bilder
 
-Eine erfolgreiche CMS-Anmeldung gilt auch für die Getränkeflyer-Gestaltung.
-Der CMS-Einstieg prüft eine gespeicherte Serversitzung und öffnet die
-Verwaltung ohne erneute Passwortabfrage, solange sie gültig ist. Ein lokaler
-Anmeldemerker allein ersetzt keine Serverberechtigung. Falsche Passwörter
-und Verbindungsfehler werden direkt an der Hauptanmeldung angezeigt;
-der Login öffnet keinen zweiten Passwortdialog.
-Frontend und API müssen zusammen aktualisiert werden, da die
-Sitzungsprüfung `GET /api/cms-auth` benötigt.
+Eigene Produktdateien und Zwischenablagebilder werden beim Speichern über
+die bestehende Werbebilder-API in **StrichcodeBilder** übernommen. Mit
+Strichcode ersetzen sie dort das gemeinsame Produktbild; ohne Strichcode
+erhalten sie einen eigenen Angebotsschlüssel. Preise und Produktstammdaten
+werden dabei nicht geändert. Automatisch gefundene Bilder werden nur gelesen,
+nicht als neue Stammbilder zurückgeschrieben.
 
-### Kundenansicht und Gültigkeit
+Bildfehler werden angezeigt. Eine fehlgeschlagene Übernahme wird nicht als
+erfolgreich gespeichertes Artikelbild behandelt.
 
-Homepage und mobiles Angebotspopup bieten **Wochenangebote / Getränke**.
-Die individuell gestalteten Kacheln enthalten Preis, Gebinde, Pfand und
-Literpreis; alte Veröffentlichungen ohne Kachellayout bleiben lesbar.
-**Flyer ansehen** öffnet zusätzlich das frei gestaltete Original mit Zoom und
-Seitennavigation. Altangebote erscheinen einmalig unter Wochenangebote; deren
-Wochenumschaltung bleibt erhalten.
+### Designstandards
 
-Veröffentlichung gilt ab Beginn bis einschließlich Enddatum in **Europe/Berlin**.
-Geplante oder abgelaufene neue Aktionen sind nicht öffentlich sichtbar.
-Zugeordnete Waagenbilder gehören außerhalb ihres Zeitraums nicht zum Sollstand.
-Andere Aktionen und unzugeordnete Werbung bleiben erhalten. Cloudbereitstellung
-ist **keine Waagenbestätigung**: Bei Offline-Brücke sind Übernahme oder physische
-Entfernung erst nach Wiederverbindung möglich. Der Dialog prüft die Bestätigung.
+Der bestehende CMS-Designeditor unter **Design → Plakate & Flyer →
+Getränkeflyer** bleibt erhalten. **Designstandards speichern** bestimmt den
+Startstandard neuer Getränkeaktionen, nicht das Layout bestehender Aktionen.
+Eingebaute Vorlagen werden dadurch nicht überschrieben.
+**Vorlage auf Original zurücksetzen** setzt erst die Vorschau zurück;
+dauerhaft wird dies erst nach separatem Speichern.
 
-## Betrieb und Preview
+## Bestehende Daten
 
-Neue Dokumente und Bilder liegen im **privaten** Blob-Container `angebote`.
-Ein bereits öffentlich freigegebener Container wird ausdrücklich abgelehnt.
-Der Server bestimmt den Namespace; der Browser kann ihn nicht auswählen.
+Bestehende CMS-Aktionen bleiben in Dataverse und ohne Konvertierung nutzbar.
+Neue Sonder- und Getränkeaktionen erweitern denselben Angebotsbestand.
+Aktionsbezogene Layoutmetadaten verwenden vorhandene Dataverse-Konfiguration,
+keine zweite führende Aktionsablage.
 
-| App-Setting | Bedeutung |
+Unter **Bereits gespeicherte Feature-Aktionen → Feature-Bestand öffnen**
+bleiben die zuvor angelegten Blob-Entwürfe und Veröffentlichungen erreichbar.
+Sie behalten ihre bisherige Entwurf-/Freigabesemantik. Es erfolgt keine
+automatische Migration oder Freigabe und kein paralleles Schreiben neuer
+Aktionen in beide Ablagen.
+
+## Betrieb, Schema und Preview
+
+Der erweiterte Dataverse-Vertrag benötigt folgende Spalten auf `dl_angebote`:
+
+| Spalte | Typ / Zweck |
 |---|---|
-| `STORAGE_CONN` | Bestehende Storage-Verbindung, ausschließlich als App-Setting |
-| `CMS_AUTH_TOKEN`, `CMS_PW_HASH` | Bestehende serverseitige CMS-Anmeldung; keine Werte ins Repository schreiben |
-| `ANGEBOTE_NAMESPACE` | Zwingender, je Umgebung eigener Bereich, z. B. `preview-42` |
-| `ANGEBOTE_WAAGE_SEND_ENABLED` | Nur `true` erlaubt echten Versand verwalteter Angebote; sonst gesperrt |
+| `dl_aktionsart` | Text: `weekly` oder `drinks`; fehlend bei Altbestand bedeutet Sonderaktion |
+| `dl_stamm_artikelnummer` | Text: Artikelnummer getrennt vom bisherigen Strichcodefeld `dl_artikelnummer` |
+| `dl_anzahl` | Ganzzahl: Einheiten |
+| `dl_inhalt_ml` | Ganzzahl: Milliliter je Einheit |
+| `dl_gebinde` | Text: Gebindeart |
+| `dl_pfand_cent` | Ganzzahl: Gesamtpfand in Cent |
+| `dl_pfandfrei` | Ja/Nein: ausdrückliche Pfandfreiheit |
+| `dl_stamm_vk_cent` | Ganzzahl: Stamm-VK als interner Vergleichswert |
 
-Der PR-Workflow konfiguriert `preview-<PR>` und deaktiviert echten Angebotsversand
-ausdrücklich. Er übernimmt erforderliche vorhandene Storage-/CMS-Einstellungen
-sowie die bereits benötigte Shop-Anmeldung (`SHOP_JWT_SECRET`),
-maskiert deren Werte und gibt die Einstellungsantwort nicht aus.
-Die vorhandene Dataverse-Zuordnung bleibt bestehen; neue Angebote verändern
-weder Altangebote noch Katalog-/Bestelldaten.
+Aktionslayouts liegen als JSON in der bestehenden Seitenkonfiguration
+`dl_seiteninhalt`; Produktbilder behalten die vorhandene Werbebildverknüpfung.
+Schema-/Berechtigungsprüfung und transaktionale Speicherung verhindern eine
+teilweise erfolgreich gemeldete Aktion. Fehlende Spalten müssen vor einem
+realen Einsatz durch die zuständige Administration bereitgestellt werden.
+Die Implementierung legt keine Produktivspalten automatisch an.
 
-Veröffentlichte Revisionen und hochgeladene Bilder sind unveränderlich.
-ETag-Bedingungen verhindern, dass konkurrierende Änderungen überschrieben werden.
-Öffentliche Bildzugriffe sind auf Bilder aktuell veröffentlichter Fassungen
-begrenzt; Verwaltungszugriffe erfordern immer Anmeldung, unabhängig vom
-älteren allgemeinen Auth-Rollout-Schalter.
+**Wichtig:** Ein PR-Hostname und ein eigener Blob-Namespace isolieren
+Dataverse **nicht**. Schreibtests benötigen eine isolierte Dataverse-Testumgebung.
+Ein Preview-Rollout mit gemeinsamem produktivem Angebotsbestand ist nur nach
+ausdrücklicher Freigabe zulässig: Speichern und Löschen betreffen dann echte
+Angebote. Ebenso benötigen die acht optionalen Schemaergänzungen eine
+ausdrückliche Freigabe. Bestehende Datensätze werden dabei nicht migriert oder
+als Testdaten verändert. Keine Tests an produktiven Angeboten, keine
+ungefragten Schemaänderungen und kein main-Deployment.
 
-**Kein Produktivrollout durch diesen Feature-Branch.** Vor einem späteren Merge
-müssen ausdrücklich ein eigener Produktiv-Namespace und die CMS-/Storage-Werte
-eingerichtet und geprüft werden. Echter Waagenversand und physische Lesbarkeit
-werden anschließend gesondert freigegeben. Keine Brücke auf die PR-Vorschau umstellen.
+Für den erhaltenen Feature-Bestand gelten weiterhin privater Blob-Container
+`angebote`, `STORAGE_CONN` und umgebungsbezogener `ANGEBOTE_NAMESPACE`.
+Die bestehende CMS-Anmeldung schützt Schreibzugriffe.
+`ANGEBOTE_WAAGE_SEND_ENABLED` erlaubt echten Versand nur bei ausdrücklicher
+Aktivierung; Preview bleibt gesperrt. Zugangsdaten gehören ausschließlich
+in App-Settings, niemals ins Repository.
 
-## Automatisierte Abnahme
-
-```powershell
-python -m unittest discover -s tests -p 'test_angebote*.py' -v
-python tests\test_waage_relais_api.py
-python tests\test_waage_bruecke.py
-$env:TEST_URL = 'http://127.0.0.1:8817'
-node node_modules\@playwright\test\cli.js test angebote-flyer
-```
-
-Der lokale statische Server muss vorher auf diesen Port gestartet werden.
-Die UI-Tests mocken die API und laufen in allen vier Playwright-Projekten.
-Sie prüfen unter anderem echte A4-PDF-Seiten und JPEG-Abmessungen, freie
-Gestaltung, den bestehenden CMS-Reiter, Namespace/Anmeldung und Offline-Reconnect.
-Keine echten Bestellungen oder Waagenübertragungen sind Teil der Tests.
+Löschen entfernt keine bereits physisch übertragenen Waagenbilder.
+Cloudbereitstellung ist keine Waagenbestätigung; Offline-Brücke und
+physische Lesbarkeit müssen gesondert geprüft werden.

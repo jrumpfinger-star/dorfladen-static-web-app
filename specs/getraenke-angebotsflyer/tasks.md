@@ -42,3 +42,9 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF34 | Gemeinsame Direktwerkzeuge für CMS-Designvorschau und Original-Wochenvorlagen, gespeicherte Anpassungen, Original-Ersparnismarker und bestätigter Vorschau-Reset | GF30 | TC-F16-01..04 |
 | GF35 | Artikelschritt auf volle Breite, kompakte direkt bearbeitbare Zeilen und semantisch farbige Übersichtsknöpfe | GF33, GF34 | TC-F17-01, TC-F17-03 |
 | GF36 | Stabile Mehrfachauswahl ohne Treffer-Neuaufbau, gemeinsame Artikelübernahme mit einmaliger Layoutaktualisierung, Hilfe und Vier-Viewport-Tests | GF35 | TC-F17-01..03 |
+| GF37 | F18-Datenvertrag/SDD aktualisieren, Dataverse-Schema prüfen und nur ausdrücklich freigegebene optionale Spalten ergänzen; keine Testangebote in Produktion | GF36 | TC-F18-03, TC-F18-06 |
+| GF38 | Bestehende Dataverse-API für Art/Getränkedaten und transaktionale Aktions-/Layoutspeicherung erweitern | GF37 | TC-F18-03, TC-F18-06 |
+| GF39 | Gemeinsamen CMS-Erfassungsdialog mit direkter Suche/Bildwerkzeugen und Getränke-Kachelwahl 4/6 integrieren | GF37 | TC-F18-01, TC-F18-02 |
+| GF40 | Vorschau/Karten-/Einzelflyerbearbeitung und bestehende Renderer in CMS/Kiosk verbinden, Altbestand erhalten | GF38, GF39 | TC-F18-04, TC-F18-05 |
+| GF41 | Vier-Viewport-Abnahme, Daten-/Speicherregression und Anwenderhilfe | GF38, GF39, GF40 | TC-F18-01..06 |
+| GF42 | Ausschließlich Feature-Preview nach Schema-/Datenisolationsprüfung oder ausdrücklicher Freigabe des gemeinsamen produktiven Bestands bereitstellen; keine produktiven Schreibtests | GF41 | TC-F18-05, TC-F18-06 |
