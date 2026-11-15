@@ -537,8 +537,16 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   const cardLayout = state.published.get(head.id).data.layout.targets.card.find((entry) => entry.item_id === firstItem.id);
   expect(cardLayout.elements.find((element) => element.type === 'price').font_size).toBeGreaterThanOrEqual(28);
   await expect(card.locator('canvas')).toHaveAttribute('aria-hidden', 'true');
-  const columns = await grid.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
-  expect(columns).toBe(page.viewportSize().width <= 480 ? 1 : page.viewportSize().width <= 850 ? 2 : 3);
+  const lesbar = await grid.evaluate((el) => [...el.children].map((n) => ({
+    breite: n.clientWidth,
+    gitter: el.clientWidth,
+    abgeschnitten: [...n.querySelectorAll('.ang-name')].some((t) => t.scrollWidth > t.clientWidth + 1),
+  })));
+  expect(lesbar.length).toBeGreaterThan(0);
+  for (const eintrag of lesbar) {
+    expect(eintrag.breite).toBeGreaterThanOrEqual(Math.min(300, eintrag.gitter - 2));
+    expect(eintrag.abgeschnitten).toBe(false);
+  }
   await noOverflow(page);
   await page.screenshot({ path: test.info().outputPath('customer-cards.png') });
   await shell.locator('[data-offer-action]').selectOption(head.id);
