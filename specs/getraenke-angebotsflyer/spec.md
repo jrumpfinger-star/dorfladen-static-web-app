@@ -38,6 +38,11 @@ bleibt separat; der reguläre VK wird nur auf ausdrückliche Wahl als
 Angebotspreis vorbelegt. Preise werden in ganzen Cent gespeichert, Literpreise
 ohne Pfand berechnet und kaufmännisch auf Cent gerundet. Einkaufs- und
 Kratzer-Bestellkatalogpreise werden nicht verwendet.
+Dezimale Mengen werden in Liste und Artikeldialog mit deutschem Komma
+angezeigt und eingegeben, beispielsweise `0,5` Liter. Punkteingaben bleiben
+kompatibel und werden nach Abschluss der Eingabe in Kommaschreibweise
+angezeigt. Literwerte mit bis zu drei Nachkommastellen werden verlustfrei
+als ganze Milliliter gespeichert; ungültige Mengen werden erkennbar gemeldet.
 Unvollständige Angaben dürfen als Entwurf gespeichert, aber nicht freigegeben
 oder an die Waage gesendet werden.
 
@@ -282,6 +287,10 @@ Datensätze fallen auf die bisherige automatische Ausgabe zurück.
   anschließendem SharePoint-Bild. Beim Öffnen fehlende Bilder nachladen,
   vorhandene eigene Bilder und veröffentlichte Fassungen erhalten; fehlende
   Treffer und technische Fehler erkennbar melden. Keine Stammschreibzugriffe.
+- TC-F11-07: Liste und Artikeldialog zeigen `0,5` statt `0.5`. Komma- und
+  Punkteingaben, `0,029` Liter, Grundpreis und Gebindeausgabe prüfen.
+  Speichern/erneut öffnen erhält ganze Milliliter und die Kommaschreibweise;
+  ungültige Eingaben werden gemeldet. Die freigegebene Fassung bleibt unverändert.
 
 ## F13: Originalvorlagen und Dorfladen-Logo
 

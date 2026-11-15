@@ -121,7 +121,7 @@
         + field('EAN / Strichcode', 'barcode', it.barcode, 'text', 'maxlength="80"')
         + (data.kind === 'drinks'
           ? field('Anzahl Flaschen / Einheiten', 'units', it.units, 'number', 'min="1" step="1"')
-            + field('Liter je Einheit', 'volume_ml', it.volume_ml == null ? '' : it.volume_ml / 1000, 'number', 'min=".001" step=".001"')
+            + field('Liter je Einheit', 'volume_ml', M.litres(it.volume_ml), 'text', 'inputmode="decimal"')
             + '<label class="an-field"><span>Gebindeart</span><select data-prop="packaging"><option value="">Bitte wählen</option>'
             + ['Mehrweg', 'Einweg', 'Dose', 'Flasche', 'Karton', 'Fass'].map(function (value) {
               return '<option' + (it.packaging === value ? ' selected' : '') + '>' + value + '</option>';
@@ -173,6 +173,14 @@
     var factor = /^(?:ml)$/i.test(match[3] || '') ? 1 : /^(?:cl)$/i.test(match[3] || '') ? 10 : 1000;
     var packaging = /mehrweg/i.test(value) ? 'Mehrweg' : /dose/i.test(value) ? 'Dose' : /einweg/i.test(value) ? 'Einweg' : '';
     return { units: Number(match[1]), volume_ml: Math.round(Number(match[2].replace(',', '.')) * factor), packaging: packaging };
+  }
+  function readVolume(input) {
+    var ml = M.millilitres(input.value), invalid = input.value.trim() !== '' && ml == null;
+    input.setCustomValidity(invalid ? 'Bitte einen Literinhalt größer als null mit höchstens drei Nachkommastellen eingeben, zum Beispiel 0,5.' : '');
+    input.setAttribute('aria-invalid', String(invalid));
+    if (invalid) input.reportValidity();
+    else if (ml != null) input.value = M.litres(ml);
+    return ml;
   }
   function masterItem(source, offerPrice) {
     var it = M.item(), retail = M.cents(source.vk);
@@ -464,7 +472,7 @@
       + '<label class="an-field"><span>Angebotspreis €</span><input data-item-field="price_cents" inputmode="decimal" value="' + (item.price_cents == null ? '' : M.money(item.price_cents)) + '"></label>'
       + '<label class="an-field"><span>Stattpreis €</span><input data-item-field="old_price_cents" inputmode="decimal" value="' + (item.old_price_cents == null ? '' : M.money(item.old_price_cents)) + '"></label>'
       + (drinks ? '<label class="an-field"><span>Anzahl Flaschen / Einheiten</span><input data-item-field="units" type="number" min="1" step="1" value="' + (item.units || '') + '"></label>'
-        + '<label class="an-field"><span>Liter je Einheit</span><input data-item-field="volume" type="number" min=".001" step=".001" value="' + (item.volume_ml ? item.volume_ml / 1000 : '') + '"></label>'
+        + '<label class="an-field"><span>Liter je Einheit</span><input data-item-field="volume" inputmode="decimal" value="' + M.litres(item.volume_ml) + '"></label>'
         + '<label class="an-field"><span>Gebindeart</span><select data-item-field="packaging"><option value="">Bitte wählen</option>'
         + ['Mehrweg', 'Einweg', 'Dose', 'Flasche', 'Karton', 'Fass'].map(function (value) {
           return '<option value="' + value + '"' + (item.packaging === value ? ' selected' : '') + '>' + value + '</option>';
@@ -547,6 +555,8 @@
         var value = function (key) { return dlg.querySelector('[data-item-field="' + key + '"]'); };
         var name = value('name').value.trim();
         if (!name) { status.textContent = 'Bitte einen Artikelnamen eingeben.'; value('name').focus(); return; }
+        var volume = drinks ? readVolume(value('volume')) : null;
+        if (drinks && !value('volume').checkValidity()) { status.textContent = value('volume').validationMessage; return; }
         var imageId = item.image_id;
         if (imageBlob) {
           status.textContent = 'Das Bild wird sicher dem Angebotsentwurf zugeordnet …';
@@ -561,8 +571,7 @@
           item.description = value('description').value.trim();
           if (drinks) {
             item.units = value('units').value === '' ? null : Number(value('units').value);
-            var ml = Number(value('volume').value) * 1000;
-            item.volume_ml = value('volume').value !== '' && Number.isInteger(ml) ? ml : null;
+            item.volume_ml = volume;
             item.packaging = value('packaging').value;
             item.deposit_free = value('deposit_mode').value === 'no';
             item.deposit_cents = item.deposit_free ? 0 : M.cents(value('deposit_cents').value);
@@ -574,6 +583,9 @@
       });
     };
     document.addEventListener('paste', onPaste);
+    dlg.addEventListener('change', function (event) {
+      if (event.target.dataset.itemField === 'volume') readVolume(event.target);
+    });
     document.body.appendChild(dlg); dlg.showModal();
   }
   async function save() {
@@ -774,13 +786,13 @@
           var prop = target.dataset.prop;
           if (prop.endsWith('_cents')) it[prop] = M.cents(target.value);
           else if (prop === 'units') it.units = target.value === '' ? null : Number(target.value);
-          else if (prop === 'volume_ml') { var ml = Number(target.value) * 1000; it.volume_ml = target.value !== '' && Math.abs(ml - Math.round(ml)) < .00001 ? Math.round(ml) : null; }
+          else if (prop === 'volume_ml') it.volume_ml = readVolume(target);
           else if (prop === 'deposit_mode') {
             it.deposit_free = target.value === 'no';
             if (it.deposit_free) it.deposit_cents = 0;
             else if (!target.value || it.deposit_cents === 0) it.deposit_cents = null;
             var pfand = target.closest('[data-item-id]').querySelector('[data-prop=deposit_cents]');
-            pfand.disabled = it.deposit_free; pfand.value = it.deposit_cents == null ? '' : (it.deposit_cents / 100).toFixed(2);
+            pfand.disabled = it.deposit_free; pfand.value = it.deposit_cents == null ? '' : M.money(it.deposit_cents);
           }
           else it[prop] = target.value;
         });

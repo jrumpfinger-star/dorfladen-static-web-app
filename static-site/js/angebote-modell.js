@@ -90,13 +90,22 @@ window.AngeboteModel = (function () {
     if (!/^\d+(?:\.\d{1,2})?$/.test(value)) return null;
     return Math.round(Number(value) * 100);
   }
+  function litres(millilitres) {
+    return millilitres == null ? '' : (millilitres / 1000).toLocaleString('de-DE', { useGrouping: false, maximumFractionDigits: 3 });
+  }
+  function millilitres(input) {
+    var value = String(input).trim().replace(',', '.');
+    if (!/^\d+(?:\.\d{1,3})?$/.test(value)) return null;
+    var result = Math.round(Number(value) * 1000);
+    return Number.isSafeInteger(result) && result > 0 ? result : null;
+  }
   function base(item) {
     var volume = item.units * item.volume_ml;
     return volume && item.price_cents != null ? Math.floor((2 * item.price_cents * 1000 + volume) / (2 * volume)) : null;
   }
   function pack(item) {
     if (!item.units || !item.volume_ml) return item.packaging || 'Gebinde bitte ergänzen';
-    return item.units + ' × ' + (item.volume_ml / 1000).toLocaleString('de-DE') + ' l · ' + (item.packaging || 'Gebindeart ergänzen');
+    return item.units + ' × ' + litres(item.volume_ml) + ' l · ' + (item.packaging || 'Gebindeart ergänzen');
   }
   function date(value) { return value ? value.split('-').reverse().join('.') : 'Datum ergänzen'; }
   function cardHTML(data, it) {
@@ -593,7 +602,8 @@ window.AngeboteModel = (function () {
     var bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
     return Array.from(new Uint8Array(bytes), function (b) { return b.toString(16).padStart(2, '0'); }).join('').slice(0, length);
   }
-  return { W: W, H: H, targetSizes: targetSizes, uid: uid, clone: clone, esc: esc, money: money, cents: cents, base: base, pack: pack, date: date,
+  return { W: W, H: H, targetSizes: targetSizes, uid: uid, clone: clone, esc: esc, money: money, cents: cents,
+    litres: litres, millilitres: millilitres, base: base, pack: pack, date: date,
     today: today, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
     ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,
     render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate,

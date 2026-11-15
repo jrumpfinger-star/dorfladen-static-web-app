@@ -780,6 +780,84 @@ for (const kind of ['weekly', 'drinks']) {
   });
 }
 
+test('TC-F11-07: Liter in Liste und Dialog mit Komma eingeben, anzeigen und speichern', async ({ page }) => {
+  const state = await setup(page), head = await editSeed(page, state, { publish: true });
+  const published = copy(state.published.get(head.id));
+  await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+  let row = page.locator('#an-items .an-item').first();
+  await row.locator('.an-item-extra>summary').click();
+  let volume = row.getByLabel('Liter je Einheit', { exact: true });
+  await expect(volume).toHaveAttribute('inputmode', 'decimal');
+  expect(await volume.evaluate((input) => input.type)).toBe('text');
+  await expect(volume).toHaveValue('0,5');
+  await volume.fill('0.75');
+  await volume.blur();
+  await expect(volume).toHaveValue('0,75');
+  await expect(row.locator('[data-unit-price]')).toContainText('0,83 €/l');
+
+  await row.locator('[data-edit-item]').click();
+  let dialog = page.locator('dialog[open]');
+  let dialogVolume = dialog.getByLabel('Liter je Einheit', { exact: true });
+  await expect(dialogVolume).toHaveValue('0,75');
+  await expect(dialogVolume).toHaveAttribute('inputmode', 'decimal');
+  await dialogVolume.fill('0,1234');
+  await dialogVolume.blur();
+  await expect(dialogVolume).toHaveAttribute('aria-invalid', 'true');
+  expect(await dialogVolume.evaluate((input) => input.validationMessage)).toContain('höchstens drei Nachkommastellen');
+  await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('[data-image-status]')).toContainText('höchstens drei Nachkommastellen');
+  await dialogVolume.fill('0,029');
+  await dialogVolume.blur();
+  await expect(dialogVolume).toHaveAttribute('aria-invalid', 'false');
+  await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  row = page.locator('#an-items .an-item').first();
+  await row.locator('.an-item-extra>summary').click();
+  volume = row.getByLabel('Liter je Einheit', { exact: true });
+  await expect(volume).toHaveValue('0,029');
+  await expect(row.locator('[data-unit-price]')).toContainText('21,53 €/l');
+  await volume.fill('kein Inhalt');
+  await volume.blur();
+  await expect(volume).toHaveAttribute('aria-invalid', 'true');
+  await volume.fill('0,029');
+  await volume.blur();
+  await expect(volume).toHaveAttribute('aria-invalid', 'false');
+  await noOverflow(page);
+  await saveDraft(page);
+  expect(state.actions.get(head.id).draft.items[0].volume_ml).toBe(29);
+  expect(state.published.get(head.id)).toEqual(published);
+
+  await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+  await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+  row = page.locator('#an-items .an-item').first();
+  await row.locator('.an-item-extra>summary').click();
+  await expect(row.getByLabel('Liter je Einheit', { exact: true })).toHaveValue('0,029');
+  await row.locator('[data-edit-item]').click();
+  dialog = page.locator('dialog[open]');
+  dialogVolume = dialog.getByLabel('Liter je Einheit', { exact: true });
+  await expect(dialogVolume).toHaveValue('0,029');
+  await dialogVolume.fill('1.5');
+  await dialogVolume.blur();
+  await expect(dialogVolume).toHaveValue('1,5');
+  await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  await saveDraft(page);
+  expect(state.actions.get(head.id).draft.items[0].volume_ml).toBe(1500);
+  expect(state.published.get(head.id)).toEqual(published);
+  const values = await page.evaluate(() => {
+    const M = window.AngeboteModel;
+    return {
+      parsed: ['0,5', '0.5', ' 0,029 ', '1,005', '0,000', '-0,5', '0,5.1', '0,1234', '1e3', ''].map(M.millilitres),
+      formatted: [null, 29, 500, 1000, 1005, 1500].map(M.litres),
+      pack: M.pack({ units: 20, volume_ml: 500, packaging: 'Mehrweg' }),
+    };
+  });
+  expect(values.parsed).toEqual([500, 500, 29, 1005, null, null, null, null, null, null]);
+  expect(values.formatted).toEqual(['', '0,029', '0,5', '1', '1,005', '1,5']);
+  expect(values.pack).toBe('20 × 0,5 l · Mehrweg');
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F11-06: automatische Bilder auch nur mit EAN oder kurzem Strichcode', async ({ page }) => {
   const state = await setup(page);
   state.catalog.push(

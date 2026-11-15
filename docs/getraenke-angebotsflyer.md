@@ -21,6 +21,9 @@ Editor erreichbar. Sie werden weder migriert noch überschrieben.
    funktionieren ebenfalls. Bei Getränken Anzahl, Liter je Einheit, Gebindeart
    und Gesamtpfand oder Pfandfreiheit ergänzen. Der Literpreis enthält kein
    Pfand. Unvollständige Entwürfe dürfen gespeichert werden.
+   Dezimale Mengen stehen immer mit Komma, beispielsweise **0,5 Liter**.
+   Punkteingaben werden ebenfalls angenommen und danach mit Komma angezeigt.
+   Bis zu drei Nachkommastellen bleiben als ganze Milliliter erhalten.
    **Name, Angebotspreis, Stattpreis/UVP und Beschreibung direkt in der
    Artikelliste ändern**, mit Tab zum nächsten Feld wechseln. Rabatt und
    Literpreis werden berechnet. **Gebinde, Pfand und Kennungen** direkt in der

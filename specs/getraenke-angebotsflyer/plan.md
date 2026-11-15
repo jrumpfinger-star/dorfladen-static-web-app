@@ -23,6 +23,15 @@ Zusammenfassung, Rabatt, Literpreis und Vorschau ohne Austausch der Eingaben.
 Die bisherige starre Vier-Zeilen-Höhenprüfung wird zugunsten lesbarer
 Direkteingaben durch Feldgrößen-, Fokus- und Überlaufprüfungen ersetzt.
 
+Literfelder in Liste und Artikeldialog verwenden Textfelder mit
+`inputmode="decimal"` statt browserabhängig lokalisierter Number-Felder.
+Gemeinsame Modellhelfer formatieren Milliliter als deutsche Literwerte und
+lesen Komma oder Punkt mit höchstens drei Nachkommastellen ein. Anzeige,
+Dialogübernahme und Inlineänderungen verwenden dieselben Helfer; gespeicherte
+Milliliter und der API-Vertrag bleiben unverändert. Ungültige Eingaben erhalten
+eine verständliche Feldmeldung. Vier-Viewport-Tests prüfen beide Eingabewege,
+die Normalisierung, Speichern/Öffnen und unveränderte Veröffentlichungen.
+
 Die Bildsuche verwendet als Korrelationsschlüssel eine nichtleere Artikelnummer
 oder den Strichcode; die tatsächliche EDEKA-Nummer bleibt separat. Damit kann
 die bestehende SharePoint-Batch-API EAN-only-Treffer wieder zuordnen. Fehlende
