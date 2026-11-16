@@ -225,7 +225,7 @@ window.AngeboteDesign = (function () {
     try {
       var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, kind = 'drinks', mode = 'paper', ticket = 0, surface = null;
       function html() {
-        root.innerHTML = '<div class="an-note">Speichern ersetzt den bisherigen Startstandard für neue Getränkeaktionen – nicht die eingebauten Vorlagen. Bestehende Flyer und veröffentlichte Angebote bleiben unverändert.</div>'
+        root.innerHTML = '<div class="an-note">Speichern ersetzt den bisherigen Startstandard für neue Getränkeaktionen – nicht die eingebauten Vorlagen. Bestehende Flyer und veröffentlichte Angebote bleiben unverändert. Für eine bestehende Aktion: Aktion öffnen, Gestaltung → Ausgabeziel wählen → „Designstandards übernehmen“, dann speichern und veröffentlichen.</div>'
           + '<div class="an-design-layout"><section class="an-card"><h2>Getränkeflyer-Design</h2>'
           + '<p>Standards für Getränkeangebote. Wochenangebote verwenden die gespeicherten Originalvorlagen aus dem <a href="/cms.html?tab=cfg">CMS-Wochenangebotsdesign</a>.</p>'
           + '<div data-design-fields>' + controls(design[kind]) + '</div>'

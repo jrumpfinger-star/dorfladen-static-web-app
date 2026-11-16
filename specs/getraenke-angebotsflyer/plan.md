@@ -10,6 +10,13 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F30: `an-defaults` im Editor ruft für Nicht-Sammelziele `applyTargetStyleToAll`
+statt `applyTargetTemplate` (nur gewählter Artikel) auf und übernimmt nur die
+Feinverschiebungen des gewählten Ziels aus den Designstandards; Verschiebungen
+anderer Ziele bleiben. Dialogtext angepasst, Hinweis in `angebote-design.js`.
+Keine API-Änderung. Betroffen: `angebote-editor.js`, `angebote-design.js`,
+Editor-Tests, Anwenderhilfe.
+
 F29: Der gemeinsame Kundenadapter fügt die Flyer-Werkzeuge in die vorhandene
 `.ang-week-nav` ein; Kundenansichten ohne Wochenleiste behalten den bisherigen
 Werkzeugcontainer. Die mobile Zeitraumanzeige zieht in dieselbe Leiste um.

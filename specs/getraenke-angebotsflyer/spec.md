@@ -755,6 +755,20 @@ die Tastaturbedienung bleiben unverändert.
   Schließen erhält der Button den Fokus zurück. Ein Zeitraum ohne Flyer
   lässt keinen leeren Aktionsbereich stehen.
 
+**F30:** Gespeicherte Designstandards gelten weiterhin nur für neue Aktionen.
+Für eine bestehende Aktion übernimmt „Designstandards übernehmen“ in einem
+Handy-/Kiosk-, Einzelflyer- oder Waagenziel die Standards für **alle** Artikel
+dieses Ziels (nicht nur den gewählten Artikel) einschließlich der dafür
+gespeicherten Feinverschiebungen. Eine Rückfrage warnt vor dem Ersetzen freier
+Positionen; Feinverschiebungen anderer Ziele bleiben erhalten. Erst nach
+Speichern und Veröffentlichen sehen Kunden das neue Layout. Die Designseite
+weist darauf hin, wie bestehende Aktionen den Standard erhalten.
+
+- TC-F30-01: Eine bestehende Aktion mit altem Layout und mehreren Artikeln
+  erhält im Ziel Handy/Kiosk für jeden Artikel Vorlage, Farbe und
+  Feinverschiebung der Designstandards; Einzelflyer und Sammelflyer bleiben
+  unverändert; nach Veröffentlichen zeigt die Kundenansicht (Handy) das Layout.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

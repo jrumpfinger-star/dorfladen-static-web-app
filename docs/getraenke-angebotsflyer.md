@@ -128,6 +128,10 @@ Der bestehende CMS-Designeditor unter **Design → Plakate & Flyer →
 Getränkeflyer** bleibt erhalten. **Designstandards speichern** bestimmt den
 Startstandard neuer Getränkeaktionen, nicht das Layout bestehender Aktionen.
 Eingebaute Vorlagen werden dadurch nicht überschrieben.
+Eine bereits angelegte Aktion erhält den Standard erst, wenn Sie sie öffnen,
+unter **Gestaltung** das Ausgabeziel (z. B. Handy / Kiosk) wählen und
+**Designstandards übernehmen** bestätigen. Das gilt für alle Artikel dieses
+Ziels. Danach Entwurf speichern und veröffentlichen, damit Kunden es sehen.
 **Vorlage auf Original zurücksetzen** setzt erst die Vorschau zurück;
 dauerhaft wird dies erst nach separatem Speichern.
 

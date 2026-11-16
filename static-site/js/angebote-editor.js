@@ -1131,17 +1131,28 @@
           });
           return;
         }
-        if (!(await M.dialog('Gestaltung ersetzen?', 'Die freien Positionen und eigenen Gestaltungselemente im aktuellen Ausgabeziel werden durch die gewählte Vorlage ersetzt. Bei Einzelansichten betrifft das nur den ausgewählten Artikel. Andere Ausgaben, Artikel und Preise bleiben erhalten.', 'Vorlage anwenden'))) return;
+        var standards = b.id === 'an-defaults' && designTarget !== 'sheet';
+        if (!(await M.dialog('Gestaltung ersetzen?', standards
+          ? 'Alle Artikel im aktuellen Ausgabeziel erhalten die gespeicherten Designstandards. Freie Positionen und eigene Gestaltungselemente dieses Ziels werden ersetzt. Andere Ausgaben, Artikel und Preise bleiben erhalten.'
+          : 'Die freien Positionen und eigenen Gestaltungselemente im aktuellen Ausgabeziel werden durch die gewählte Vorlage ersetzt. Bei Einzelansichten betrifft das nur den ausgewählten Artikel. Andere Ausgaben, Artikel und Preise bleiben erhalten.', 'Vorlage anwenden'))) return;
         run(async function () {
           var layout = data.layout;
           if (b.id === 'an-defaults') { var result = await M.request('/api/angebote-verwaltung?view=design'); layout = result.design[data.kind]; }
           edit(function () {
             M.preserveBackgrounds(data);
             if (b.id === 'an-defaults') {
-              var targets = data.layout.targets, pages = data.layout.pages, mode = data.layout.mode;
+              var targets = data.layout.targets, pages = data.layout.pages, mode = data.layout.mode, kept = {};
+              Object.keys(data.layout.adjustments || {}).forEach(function (key) {
+                if (key.split(':')[0] !== designTarget) kept[key] = data.layout.adjustments[key];
+              });
               data.layout = M.clone(layout); data.layout.targets = targets; data.layout.pages = pages; data.layout.mode = mode;
+              Object.keys(layout.adjustments || {}).forEach(function (key) {
+                if (key.split(':')[0] === designTarget) kept[key] = M.clone(layout.adjustments[key]);
+              });
+              data.layout.adjustments = kept;
             }
             if (designTarget === 'sheet') { M.applyTemplate(data); page = 0; }
+            else if (standards) M.applyTargetStyleToAll(data, designTarget);
             else M.applyTargetTemplate(data, designTarget, designItemId);
             selected = '';
           });

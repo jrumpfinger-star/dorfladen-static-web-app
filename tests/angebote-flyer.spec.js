@@ -1754,3 +1754,33 @@ test('TC-F1-02/F3-06: Wochenaktion duplizieren, Reihenfolge und fehlende Pflicht
   expect(state.published.size).toBe(0);
   expect(state.actions.get(head.id).draft.items).toHaveLength(2);
 });
+
+test('TC-F30-01: Designstandards übernehmen wirkt auf alle Artikel des Handy-Ziels', async ({ page }) => {
+  const state = await setup(page);
+  state.design.drinks = await page.evaluate(() => {
+    const M = window.AngeboteModel, layout = M.blank('drinks').layout;
+    M.useTemplate(layout, 'modern-mag-fresh');
+    M.updateAdjustment(layout, 'card:0:image:0', { dx: 30, dy: 20, scale: 1, rotation: 15 });
+    return layout;
+  });
+  const head = await editSeed(page, state, { count: 2 }), before = copy(state.actions.get(head.id).draft.layout);
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  await page.locator('[data-layout-target=card]').click();
+  await page.locator('#an-defaults').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Vorlage anwenden', exact: true }).click();
+  await saveDraft(page);
+  const draft = state.actions.get(head.id).draft, image = (entry) => entry.elements.find((e) => e.type === 'image');
+  expect(draft.layout.targets.card.map((entry) => entry.background)).toEqual(['#e8f6f8', '#e8f6f8']);
+  expect(draft.layout.targets.card.map((entry) => image(entry).w)).toEqual([372, 372]);
+  expect(image(draft.layout.targets.card[0]).rotation).toBe(15);
+  expect(image(draft.layout.targets.card[1]).rotation).toBe(0);
+  expect(draft.layout.targets.single).toEqual(before.targets.single);
+  expect(draft.layout.targets.scale).toEqual(before.targets.scale);
+  expect(draft.layout.pages).toEqual(before.pages);
+  state.published.set(head.id, { id: head.id, revision: uid(), data: copy(draft) });
+  const { grid } = await customerView(page);
+  await expect(grid.locator('canvas')).toHaveCount(2);
+  await expect.poll(() => grid.locator('canvas').first().evaluate((canvas) =>
+    Array.from(canvas.getContext('2d').getImageData(2, 2, 1, 1).data))).toEqual([232, 246, 248, 255]);
+  expect(state.errors).toEqual([]);
+});

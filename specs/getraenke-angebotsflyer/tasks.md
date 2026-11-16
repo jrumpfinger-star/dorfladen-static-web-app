@@ -67,3 +67,4 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF59 | Ghost, Duplikat, Kopien, Eigenes Bild, Drehung und Zurücksetzen in allen Editoren (Original-Renderer liefert Elemente für Auswahl) | GF58 | TC-F27-01, TC-F27-02 |
 | GF60 | Kiosk-Reiter „Angebote“ in Quelle und Generator übernehmen | GF59 | TC-S8a, TC-S8c |
 | GF61 | Flyer-Aktion nach Mockup A in Wochenleiste integrieren; Mehrfachauswahl, Fokus, Leerzustand und vier Viewports prüfen; Preview bereitstellen | GF60 | TC-F29-01, TC-F29-02 |
+| GF62 | „Designstandards übernehmen“ wirkt im gewählten Ausgabeziel auf alle Artikel, mit Zielfeinverschiebungen; Hinweis auf der Designseite; Preview bereitstellen | GF61 | TC-F30-01 |
