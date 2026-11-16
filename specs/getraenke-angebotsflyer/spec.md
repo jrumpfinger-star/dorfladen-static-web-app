@@ -739,6 +739,22 @@ und im CMS (`cms.html?tab=ang`) identisch.
 `tools/build-kiosk-neu.js` verändert die ausgelieferten Dateien nicht
 (TC-S8a, TC-S8c).
 
+**F29:** Die freigegebene Mockup-Variante A integriert „Flyer ansehen“ rechts
+in die Wochenleiste der Homepage. Die separate Zeile zwischen Wochenwahl und
+Angebotskacheln entfällt. Der Button erhält ein Dokument-Symbol und eine
+kontrastreiche rote Kontur. Mobil bleibt derselbe Ablauf erhalten: Bei wenig
+Platz stehen Zeitraum und Flyer-Aktion kompakt unter der Wochenwahl. Bei
+mehreren Aktionen bleibt die Auswahl des Flyers verfügbar. Ohne Flyer wird
+kein leerer Aktionsbereich angezeigt. Der Original-Flyer, Wochenfilter und
+die Tastaturbedienung bleiben unverändert.
+
+- TC-F29-01: Bei einem und mehreren Flyern sitzt die Aktion in der Wochenleiste,
+  nicht vor dem Raster; rechts ausgerichtet auf Desktop, ohne horizontalen
+  Überlauf auf allen vier Viewports. Der Button ist mindestens 44 px hoch.
+- TC-F29-02: Auswahl und Öffnen des Original-Flyers funktionieren; beim
+  Schließen erhält der Button den Fokus zurück. Ein Zeitraum ohne Flyer
+  lässt keinen leeren Aktionsbereich stehen.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

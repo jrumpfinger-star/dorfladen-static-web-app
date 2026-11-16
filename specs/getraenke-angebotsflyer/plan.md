@@ -10,6 +10,15 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F29: Der gemeinsame Kundenadapter fügt die Flyer-Werkzeuge in die vorhandene
+`.ang-week-nav` ein; Kundenansichten ohne Wochenleiste behalten den bisherigen
+Werkzeugcontainer. Die mobile Zeitraumanzeige zieht in dieselbe Leiste um.
+Gezielte Regeln in `angebote.css` richten die Aktion rechts aus und wechseln
+bei schmaler Breite auf ein kompaktes Zweispaltenraster. Mehrfachauswahl,
+Wochenfilter und Original-Viewer werden wiederverwendet. Keine API-Änderung.
+Betroffen: `angebote-kunden.js`, `index.html`, `angebote.css`, Kundenansicht-
+Tests und Anwenderhilfe.
+
 F21: `paintCards` rendert mit der Option „halbfett“. `fitted`/`renderElements`
 wählen dann Gewicht 600 mit Systemschriftstapel; der Original-Wochenrenderer
 erhält `opts.semibold` und ersetzt dafür Schriftsetzungen (bold/600–900) am

@@ -270,6 +270,22 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-customer{width:100%;min-width:0}
 .an-customer-controls{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:12px 0}
 .an-customer-controls .an-tabs{margin:0;flex:1 1 270px}
+.an-customer .ang-week-nav{flex-wrap:wrap;min-width:0}
+.ang-week-nav .an-customer-controls{margin:0 0 0 auto;justify-content:flex-end;flex-wrap:nowrap;min-width:0;max-width:100%}
+.ang-week-nav .an-customer-controls .an-field{flex:1 1 140px;max-width:160px;margin:0}
+.ang-week-nav .an-customer-controls select{font-size:14px}
+.ang-week-nav .an-customer-controls .an-field>span{display:none}
+.an-customer button.an-flyer-button{flex:none;background:#fff5f3;color:#a92020;border-color:#b5524b;box-shadow:none;font-size:14px;font-weight:600;white-space:nowrap}
+.an-customer button.an-flyer-button:hover{background:#ffe7e3;border-color:#a92020;color:#8d1919}
+.an-flyer-button svg{flex:none}
+@media(max-width:640px){
+  .an-customer .ang-week-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .an-customer .ang-week-nav .ang-week-btn{padding:8px 10px;font-size:14px}
+  .an-customer .ang-week-nav .ang-week-label{font-size:11px;min-width:0}
+  .ang-week-nav .an-customer-controls{width:100%;margin:0}
+  .ang-week-nav .an-customer-controls.an-has-choice{grid-column:1/-1}
+  .an-customer .ang-week-nav button.an-flyer-button{padding:8px 10px}
+}
 .an-customer-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr))!important;gap:14px!important;padding:0!important}
 .an-product{background:var(--an-card-bg,#fff);border:1px solid var(--an-line);border-radius:14px;padding:20px;min-width:0;color:var(--an-text,#24362d);font-family:var(--an-font,inherit)}
 .an-product h3{font-size:20px;font-weight:600;margin:12px 0 8px;line-height:1.35;overflow-wrap:anywhere;color:inherit}

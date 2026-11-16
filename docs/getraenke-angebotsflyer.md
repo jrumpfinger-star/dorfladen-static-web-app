@@ -93,6 +93,10 @@ Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpr
   verschobene Elemente, fragt das Fenster „Gestaltung ersetzen?“ vorher nach.
 - Auf der Startseite wechseln **Diese Woche / Nächste Woche** auch mobil;
   eine bereits angelegte Aktion der nächsten Woche erscheint dort.
+- **Flyer ansehen** steht rechts in der Wochenleiste, ohne separate Leerzeile
+  über den Angebotskacheln. Mobil ordnen sich Zeitraum und Flyer-Aktion kompakt
+  unter der Wochenwahl an. Bei mehreren Aktionen bleibt **Flyer auswählen**
+  verfügbar; ohne Flyer wird der Aktionsbereich ausgeblendet.
 - **Gestaltung speichern** erhält die Anpassungen für diese Aktion.
   Andere Aktionen und globale Designstandards werden dadurch nicht verändert.
 - **Download**, **Drucken / PDF**, **Teilen** und **Auf die Waage** verwenden

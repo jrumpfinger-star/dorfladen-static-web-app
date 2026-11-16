@@ -1558,6 +1558,53 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   expect(state.errors).toEqual([]);
 });
 
+for (const count of [1, 2]) {
+  test(`TC-F29-01/02: Flyer in der Wochenleiste (${count} Aktionen)`, async ({ page }) => {
+    const state = await setup(page);
+    let selected;
+    for (let n = 0; n < count; n++) {
+      selected = await seed(page, state, { publish: true, title: 'Unsere Angebote ' + (n + 1) });
+      state.published.get(selected.id).data.valid_to = '2026-11-21';
+    }
+    state.log.length = 0;
+    const { grid, shell } = await customerView(page);
+    const nav = shell.locator('.ang-week-nav'), controls = nav.locator('.an-customer-controls');
+    const button = controls.getByRole('button', { name: 'Flyer ansehen', exact: true });
+    await expect(button).toBeVisible();
+    await expect(shell.locator('> .an-customer-controls')).toHaveCount(0);
+    const boxes = await Promise.all([nav, button, grid].map((locator) => locator.boundingBox()));
+    const [navBox, buttonBox, gridBox] = boxes;
+    expect(buttonBox.height).toBeGreaterThanOrEqual(44);
+    expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(navBox.y + navBox.height + 1);
+    expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(navBox.x + navBox.width + 1);
+    expect(gridBox.y - (navBox.y + navBox.height)).toBeLessThanOrEqual(2);
+    if (page.viewportSize().width > 768) {
+      const next = await nav.getByRole('button', { name: 'Nächste Woche', exact: true }).boundingBox();
+      expect(buttonBox.x).toBeGreaterThan(next.x + next.width);
+      expect(Math.abs(buttonBox.y - next.y)).toBeLessThanOrEqual(2);
+    }
+    await noOverflow(page, '.ang-week-nav:visible');
+    await noOverflow(page);
+    if (count > 1) await controls.getByRole('combobox', { name: 'Flyer auswählen', exact: true }).selectOption(selected.id);
+    else await expect(controls.locator('select')).toHaveCount(0);
+    await nav.screenshot({ path: test.info().outputPath('flyer-week-toolbar.png') });
+    await button.locator('svg').click();
+    const viewer = page.getByRole('dialog', { name: 'Original-Angebotsflyer', exact: true });
+    await expect(viewer.locator('strong')).toHaveText(selected.draft.title);
+    await expect(viewer.locator('canvas')).toBeVisible();
+    await viewer.getByRole('button', { name: 'Flyer schließen', exact: true }).click();
+    await expect(button).toBeFocused();
+    await nav.getByRole('button', { name: 'Nächste Woche', exact: true }).click();
+    await expect(button).toHaveCount(0);
+    await expect(controls).toBeHidden();
+    expect(await controls.evaluate((element) => element.getBoundingClientRect().height)).toBe(0);
+    await nav.getByRole('button', { name: 'Diese Woche', exact: true }).click();
+    await expect(button).toBeVisible();
+    expect(state.log.filter((r) => r.method !== 'GET' && r.path !== '/api/track')).toEqual([]);
+    expect(state.errors).toEqual([]);
+  });
+}
+
 test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und leerer Zeitraum', async ({ page }) => {
   const state = await setup(page);
   state.failRead = true;

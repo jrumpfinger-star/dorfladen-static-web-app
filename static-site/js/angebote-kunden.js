@@ -58,18 +58,23 @@ window.AngeboteKunden = (function () {
     var result = selected(state), controls = document.getElementById(state.grid + '-controls');
     if (!controls) {
       controls = document.createElement('div'); controls.id = state.grid + '-controls'; controls.className = 'an-customer-controls';
-      grid.before(controls); grid.parentElement.classList.add('an-customer');
+      var weekNav = grid.parentElement.querySelector('.ang-week-nav');
+      if (weekNav) weekNav.appendChild(controls);
+      else grid.before(controls);
+      grid.parentElement.classList.add('an-customer');
       controls.addEventListener('click', function (e) {
         if (e.target.closest('[data-offer-flyer]')) {
           var chooser = controls.querySelector('[data-offer-action]');
           var action = selected(state).actions.find(function (a) { return !chooser || a.id === chooser.value; });
-          if (action) viewer(action, e.target).catch(M.error);
+          if (action) viewer(action, e.target.closest('[data-offer-flyer]')).catch(M.error);
         }
       });
     }
-    controls.innerHTML = (result.actions.length > 1 ? '<label class="an-field"><span>Flyer auswählen</span><select data-offer-action>' + result.actions.map(function (a) {
+    controls.hidden = !result.actions.length;
+    controls.classList.toggle('an-has-choice', result.actions.length > 1);
+    controls.innerHTML = (result.actions.length > 1 ? '<label class="an-field"><span>Flyer auswählen</span><select data-offer-action aria-label="Flyer auswählen">' + result.actions.map(function (a) {
         return '<option value="' + M.esc(a.id) + '">' + M.esc(a.data.title) + '</option>'; }).join('') + '</select></label>' : '')
-      + (result.actions.length ? '<button data-offer-flyer>Flyer ansehen</button>' : '');
+      + (result.actions.length ? '<button class="an-flyer-button" data-offer-flyer><svg aria-hidden="true" focusable="false" width="16" height="20" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="18" rx="2"/><path d="M4 6h8M4 10h8M4 14h8"/></svg><span>Flyer ansehen</span></button>' : '');
     grid.classList.add('an-customer-grid');
     grid.innerHTML = result.legacy.map(legacyHTML).join('') + result.actions.map(function (action) {
       return action.data.items.map(function (it) { return M.cardHTML(action.data, it); }).join('');
