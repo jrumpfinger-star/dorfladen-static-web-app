@@ -563,6 +563,7 @@ erfolgen ausschließlich isoliert; ein Feature-Rollout ändert main nicht.
   Ausgaben für beide Arten; gespeicherte Layouts beeinflussen keine andere Aktion.
 - TC-F18-05: Eingebetteter Kiosk und CMS, keine Doppelanzeigen, unveränderter
   Bestellablauf, Feature-Bestand erhalten, kein echter Preview-Waagenversand.
+  Der Kioskreiter „Angebote“ steht als letzter Menüpunkt unter „Werbebilder“.
 - TC-F18-06: Neue Aktionen im Gültigkeitszeitraum ohne zusätzliche Freigabe
   sichtbar; ungültige Daten und fehlendes Schema verhindern den Schreibvorgang
   mit verständlicher Meldung. Keine unautorisierten Schreibzugriffe.
@@ -588,7 +589,10 @@ erfolgen ausschließlich isoliert; ein Feature-Rollout ändert main nicht.
 ## F19: Direktbearbeitung mit gleichzeitig sichtbarer Vorschau
 
 Die Aktionsvorschau bietet eine dauerhafte Werkzeugleiste neben dem Motiv.
-Ab 600 px stehen Werkzeuge und Motiv nebeneinander; auf schmaleren Geräten
+Das Motiv beansprucht mindestens die halbe Arbeitsbreite und wird so groß,
+wie es ohne Scrollen ins Fenster passt; Eingabefelder und Schaltflächen sind
+kompakt (höchstens 40 px hoch), damit auf großen Bildschirmen nichts gescrollt
+werden muss. Ab 600 px stehen Werkzeuge und Motiv nebeneinander; auf schmaleren Geräten
 bleibt das Motiv oberhalb der unabhängig scrollbar bedienbaren Werkzeuge
 sichtbar. Aufklappen oder Scrollen der Formatierung verschiebt das Motiv nicht.
 Die ursprüngliche Übersicht und Erfassung bleiben unverändert.

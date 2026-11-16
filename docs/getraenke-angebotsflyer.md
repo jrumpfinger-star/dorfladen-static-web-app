@@ -5,7 +5,8 @@
 **Kiosk → Angebote**, **CMS → Angebote** und die eigenständige Angebotsseite
 verwenden dieselbe Verwaltung. Im Kiosk ist auch die vollständige
 **Erfassung** möglich, nicht nur das Ansehen. Das Kioskmenü bleibt erhalten;
-Erfassung und Vorschau öffnen sich über dem eingebetteten Angebotsbereich.
+Erfassung, Vorschau und Gestaltung öffnen sich über dem eingebetteten Angebotsbereich.
+Der Reiter **Angebote** steht im Kioskmenü ganz unten, unter „Werbebilder“.
 Das eigentliche Getränke-Bestellsystem bleibt unverändert.
 
 Die kompakte Übersicht bietet Wochenfilter und direkte Aktionen:
@@ -58,9 +59,19 @@ Nach dem Speichern öffnet sich die Vorschau. Sonderaktionen verwenden die
 echten gespeicherten CMS-Plakat-/Einzelflyervorlagen und deren Zeichenfunktionen;
 Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpreis.
 
+- Die Vorschau steht links (mindestens die halbe Breite), die kompakten
+  Werkzeuge rechts daneben. Auf schmalen Geräten bleibt das Motiv oben fixiert
+  und füllt mehr als die halbe Breite; die Werkzeuge scrollen darunter. So ist
+  jede Änderung sofort am Motiv sichtbar. Die Vorschau wird so groß, wie sie
+  ohne Scrollen in das Fenster passt. Unter **Artikel bearbeiten** lassen sich
+  Name, Angebots- und Stattpreis direkt ändern.
+- Ein Element antippen, dann direkt **ziehen** (verschieben), am Quadrat
+  ↘ **vergrößern** und am runden Griff ↻ oben **frei drehen** (rastet bei
+  15°-Schritten ein). Die Schnellleiste bietet Farbe, Deckkraft und
+  Feinverschiebung per Pfeilen; Zahlenfelder, Schrift, Ausrichtung und Ebenen
+  stehen unter **Weitere Werkzeuge**. **Rückgängig** macht den letzten Schritt
+  rückgängig.
 - **Alle Einzelflyer** öffnet die Einzelansichten; den Artikel direkt auswählen.
-- Ein Element in der Vorschau antippen und die Artikel-/Elementwerkzeuge
-  verwenden: Verschieben, Drehen, Vergrößern/Verkleinern, Bild-/Preisanpassungen.
 - **Vorlage und Gestaltung** enthält Vorlagen, Farben, Schrift und
   Ersparnismarker. Der Marker benötigt einen Stattpreis über dem Angebotspreis.
 - Weitere Elementwerkzeuge umfassen eigene Bilder/Texte, Kopien, Ghost,

@@ -133,6 +133,7 @@ test('TC-F18-01/05: Erfassung direkt im Kiosk mit Produktsuche und erhaltenem Me
   const state = await setup(page);
   await page.goto(BASE + '/kiosk.html');
   await page.evaluate(() => window.K.switchTab('angebote'));
+  await expect(page.locator('.k-tabs .k-tab').last()).toHaveAttribute('data-tab', 'angebote');
   const dlg = await create(page, 'drinks');
   await dlg.locator('[data-density]').selectOption('4');
   await expect(dlg.locator('.cms-ang-row')).toHaveCount(4);
@@ -378,5 +379,129 @@ test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelauf
   expect(state.imageLookups).toHaveLength(3);
   expect(state.images).toBe(0);
   expect(state.writes).toHaveLength(0);
+  expect(state.errors).toEqual([]);
+});
+
+async function openPreview(page, kind, count) {
+  const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
+  if (kind === 'drinks') for (let i = 0; i < count; i++) await fillDrink(rows.nth(i), i + 1);
+  else for (let i = 0; i < count; i++) {
+    await rows.nth(i).locator('[data-f=produkt]').fill('Original ' + (i + 1));
+    await rows.nth(i).locator('[data-f=preis]').fill('1,99');
+  }
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+}
+const middle = async (locator) => { const b = await locator.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
+async function drag(page, from, to) {
+  await page.mouse.move(from.x, from.y); await page.mouse.down();
+  await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 3 });
+  await page.mouse.move(to.x, to.y, { steps: 5 }); await page.mouse.up();
+}
+const saveDesign = async (page) => {
+  await page.getByRole('button', { name: 'Gestaltung speichern', exact: true }).click();
+  await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+};
+
+test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const stage = page.locator('#an-stage'), selected = page.locator('#an-hit-layer .an-selected');
+  await expect(selected).toBeVisible();
+  const stageBefore = await stage.boundingBox(), before = await selected.boundingBox();
+  const id = await page.locator('#an-select-element').inputValue();
+  const xBefore = Number(await page.locator('[data-element-prop=x]').inputValue());
+  const start = await selected.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    for (let y = box.top + 3; y < box.bottom; y += 3) for (let x = box.left + 3; x < box.right; x += 3) {
+      if (document.elementFromPoint(x, y) === element) return { x, y };
+    }
+    return null;
+  });
+  expect(start).not.toBeNull();
+  await drag(page, start, { x: start.x + 30, y: start.y + 20 });
+  expect(await page.locator('#an-select-element').inputValue()).toBe(id);
+  expect(Number(await page.locator('[data-element-prop=x]').inputValue())).toBeGreaterThan(xBefore + 10);
+  expect(await stage.boundingBox()).toEqual(stageBefore);
+  const width = Number(await page.locator('[data-element-prop=w]').inputValue());
+  const grip = await middle(page.locator('#an-hit-layer [data-resize]'));
+  await drag(page, grip, { x: grip.x + 30, y: grip.y + 30 });
+  expect(Number(await page.locator('[data-element-prop=w]').inputValue())).toBeGreaterThan(width);
+  const turn = await middle(page.locator('#an-hit-layer [data-rotate]')), center = await middle(page.locator('#an-hit-layer .an-selected'));
+  await drag(page, turn, { x: center.x + 80, y: center.y });
+  await expect(page.locator('[data-element-prop=rotation]')).toHaveValue('90');
+  await saveDesign(page);
+  const saved = state.writes.at(-1).layout.pages.flatMap((entry) => entry.elements).find((entry) => entry.id === id);
+  expect(saved.rotation).toBe(90);
+  expect(saved.w).toBeGreaterThan(width);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F19-02: Werkzeuge stehen neben bzw. unter dem fest sichtbaren Motiv', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const modal = page.locator('.an-cms-preview-modal'), canvas = page.locator('.an-cms-canvas'), side = page.locator('.an-cms-side');
+  const view = page.viewportSize(), dialogBox = await modal.boundingBox();
+  const canvasBox = await canvas.boundingBox(), sideBox = await side.boundingBox();
+  if (dialogBox.width >= 640) expect(canvasBox.x + canvasBox.width).toBeLessThanOrEqual(sideBox.x + 2);
+  else expect(canvasBox.y + canvasBox.height).toBeLessThanOrEqual(sideBox.y + 2);
+  if (dialogBox.width >= 640) expect(canvasBox.width).toBeGreaterThanOrEqual((canvasBox.width + sideBox.width) * .49);
+  else expect((await page.locator('#an-stage').boundingBox()).width).toBeGreaterThanOrEqual(view.width * .5);
+  for (const field of await side.locator('input:visible,select:visible').all()) expect((await field.boundingBox()).height).toBeLessThanOrEqual(40);
+  if (view.width >= 1200) expect(await modal.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+  await expect(side.locator('[data-element-prop=fill]')).toBeVisible();
+  await expect(side.locator('[data-element-prop=opacity]')).toBeVisible();
+  await expect(side.locator('[data-nudge]')).toHaveCount(4);
+  await modal.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  const stage = await page.locator('#an-stage').boundingBox();
+  expect(stage.y).toBeGreaterThanOrEqual(0);
+  expect(stage.y + stage.height).toBeLessThanOrEqual(view.height);
+  expect(await modal.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath('vorschau-mit-seitlichen-werkzeugen.png') });
+});
+
+test('TC-F19-03: Artikel, Farbe und Rückgängig in der Vorschau bearbeiten und speichern', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const name = page.locator('[data-cms-article=name]'), price = page.locator('[data-cms-article=price_cents]');
+  await name.fill('Geändertes Bier'); await name.dispatchEvent('change');
+  await price.fill('9,5'); await price.dispatchEvent('change');
+  await expect(price).toHaveValue('9,50');
+  const id = await page.locator('#an-select-element').inputValue();
+  const fill = page.locator('[data-element-prop=fill]'), original = await fill.inputValue();
+  await fill.fill('#ff0000');
+  await expect(fill).toHaveValue('#ff0000');
+  await page.locator('#an-inspector [data-history=undo]').click();
+  await expect(page.locator('[data-element-prop=fill]')).toHaveValue(original);
+  await page.locator('[data-element-prop=fill]').fill('#00aa00');
+  await saveDesign(page);
+  const write = state.writes.at(-1);
+  expect(write.items[0].name).toBe('Geändertes Bier');
+  expect(write.items[0].price_cents).toBe(950);
+  expect(write.layout.pages.flatMap((entry) => entry.elements).find((entry) => entry.id === id).fill).toBe('#00aa00');
+  await name.fill(''); await name.dispatchEvent('change');
+  await expect(page.getByRole('dialog').last()).toContainText('Artikelnamen');
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Drehgriff', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 1);
+  const surface = page.locator('.an-weekly-surface');
+  await expect(surface.locator('canvas')).toBeVisible();
+  const stageBox = await surface.locator('.an-stage').boundingBox(), toolsBox = await surface.locator('.an-direct-tools').boundingBox();
+  const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 640;
+  if (stacked) expect(stageBox.y + stageBox.height).toBeLessThanOrEqual(toolsBox.y + 2);
+  else expect(stageBox.x + stageBox.width).toBeLessThanOrEqual(toolsBox.x + 2);
+  const turn = await middle(surface.locator('[data-preview-rotate]')), center = await middle(surface.locator('.an-selected'));
+  await drag(page, turn, { x: center.x + 80, y: center.y });
+  await saveDesign(page);
+  const overrides = Object.values(state.writes.at(-1).layout.cms.plakat_article_overrides)[0];
+  const part = (await surface.locator('select').inputValue()).split(':').pop();
+  expect(Math.abs(overrides[part + 'Rot'])).toBeGreaterThan(60);
   expect(state.errors).toEqual([]);
 });

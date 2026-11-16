@@ -9,7 +9,7 @@
   var previewMode = 'paper';
   var overviewFilter = 'all';
   var weeklySurface = null;
-  var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null;
+  var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -34,7 +34,7 @@
   function changed() {
     dirty = true;
     var status = $('an-state');
-    if (status) status.textContent = 'Entwurf geändert · noch nicht gespeichert oder veröffentlicht';
+    if (status) status.textContent = cmsAction ? 'Gestaltung geändert · noch nicht gespeichert' : 'Entwurf geändert · noch nicht gespeichert oder veröffentlicht';
     root.querySelectorAll('[data-history="undo"]').forEach(function (button) { button.disabled = !undo.length; });
   }
   function checkpoint() { undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
@@ -320,7 +320,22 @@
     e.x = Math.max(halfW, Math.min(size.w - halfW, e.x + e.w / 2)) - e.w / 2;
     e.y = Math.max(halfH, Math.min(size.h - halfH, e.y + e.h / 2)) - e.h / 2;
   }
+  function renderCmsArticle() {
+    var host = $('an-cms-article'); if (!host || !data) return;
+    var current = !data.layout.cms && selection();
+    var id = (current && current.item_id) || designItemId || (data.items[0] && data.items[0].id);
+    var item = data.items.find(function (entry) { return entry.id === id; });
+    if (!item) { host.replaceChildren(); return; }
+    var open = host.querySelector('details') ? host.querySelector('details').open : true;
+    host.innerHTML = '<details class="an-article-edit" data-cms-article-id="' + item.id + '"' + (open ? ' open' : '') + '><summary>Artikel bearbeiten</summary><div class="an-fields">'
+      + '<label class="an-field"><span>Artikelname</span><input data-cms-article="name" maxlength="160" value="' + M.esc(item.name) + '"></label>'
+      + '<label class="an-field"><span>Angebot €</span><input data-cms-article="price_cents" inputmode="decimal" value="' + (item.price_cents == null ? '' : M.money(item.price_cents)) + '"></label>'
+      + '<label class="an-field"><span>Statt €</span><input data-cms-article="old_price_cents" inputmode="decimal" value="' + (item.old_price_cents == null ? '' : M.money(item.old_price_cents)) + '"></label></div></details>';
+  }
   function renderInspector() {
+    renderInspectorBody(); renderCmsArticle();
+  }
+  function renderInspectorBody() {
     var host = $('an-inspector'); if (!host) return;
     if (weeklySurface) { weeklySurface.destroy(); weeklySurface = null; }
     if (data.layout.cms) {
@@ -330,7 +345,7 @@
       var group = designTarget === 'sheet' || designTarget === 'card' ? 'plakat_article_overrides' : 'flyer_article_overrides';
       var renderer = window.WochenangeboteRenderer.create({});
       var values = key && data.layout.cms[group][key] || (group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault());
-      host.innerHTML = '<div class="an-weekly-surface"></div><details><summary>Exakte CMS-Artikelpositionen</summary>'
+      host.innerHTML = '<div class="an-weekly-surface"></div><div id="an-cms-article"></div><details><summary>Exakte CMS-Artikelpositionen</summary>'
         + (currentItem ? '<label class="an-field"><span>Artikelpositionen bearbeiten</span><select id="an-cms-item">'
           + data.items.map(function (item) { return '<option value="' + item.id + '"' + (item.id === itemId ? ' selected' : '') + '>' + M.esc(item.name || 'Neuer Artikel') + '</option>'; }).join('') + '</select></label>'
           + '<div class="an-fields">' + [['imgDx', 'Bild X', -800, 800], ['imgDy', 'Bild Y', -1130, 1130],
@@ -364,21 +379,23 @@
         + '<button data-transform="smaller" aria-label="Element verkleinern" title="Proportional verkleinern">−</button>'
         + '<button data-transform="larger" aria-label="Element vergrößern" title="Proportional vergrößern">+</button>'
         + '<button data-transform="straight" aria-label="Drehung zurücksetzen" title="Drehung zurücksetzen">0°</button></div>' : '')
-      + '<details class="an-more-tools"' + (expanded ? ' open' : '') + '><summary>Weitere Werkzeuge · Position, Deckkraft, Text und Ebenen</summary>'
+      + (current ? '<div class="an-quickbar" role="toolbar" aria-label="Schnellformatierung">'
+        + '<label class="an-quick"><span>Farbe</span><input type="color" data-element-prop="fill" value="' + M.esc(current.fill || data.layout.text_color) + '"></label>'
+        + '<label class="an-quick"><span>Deckkraft</span><input type="range" min="0" max="1" step=".05" data-element-prop="opacity" value="' + current.opacity + '"></label>'
+        + '<div class="an-quick-nudge" role="group" aria-label="Fein verschieben"><button data-nudge="-5,0" aria-label="Element nach links">←</button><button data-nudge="0,-5" aria-label="Element nach oben">↑</button><button data-nudge="0,5" aria-label="Element nach unten">↓</button><button data-nudge="5,0" aria-label="Element nach rechts">→</button></div></div>' : '')
+      + '<details class="an-more-tools"' + (expanded ? ' open' : '') + '><summary>Weitere Werkzeuge · Position, Text und Ebenen</summary>'
       + '<div class="an-element-actions"><button data-add-element="text">+ Text</button><button data-add-element="shape">+ Fläche</button><button data-add-element="logo">+ Dorfladen-Logo</button></div>'
       + (current ? '<div class="an-fields">' + [
         ['x', 'Position X', 0, size.w], ['y', 'Position Y', 0, size.h], ['w', 'Breite', 8, size.w], ['h', 'Höhe', 8, size.h],
-        ['font_size', 'Schriftgröße', 10, 160], ['rotation', 'Drehung', -180, 180], ['opacity', 'Deckkraft', 0, 1]
+        ['font_size', 'Schriftgröße', 10, 160], ['rotation', 'Drehung', -180, 180]
       ].map(function (p) { return '<label class="an-field"><span>' + p[1] + '</span><input type="number" data-element-prop="' + p[0] + '" value="'
-          + current[p[0]] + '" min="' + p[2] + '" max="' + p[3] + '" step="' + (p[0] === 'opacity' ? '.05' : '1') + '"></label>'; }).join('')
-        + '<label class="an-field"><span>Elementfarbe</span><input type="color" data-element-prop="fill" value="' + M.esc(current.fill || data.layout.text_color) + '"></label></div>'
-        + '<label class="an-field"><span>Schrift des Elements</span><select data-element-prop="font">' + ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS'].map(function (font) { return '<option' + (current.font === font ? ' selected' : '') + '>' + font + '</option>'; }).join('') + '</select></label>'
-        + '<label class="an-field"><span>Ausrichtung</span><select data-element-prop="align">' + [['left', 'Links'], ['center', 'Zentriert'], ['right', 'Rechts']].map(function (p) { return '<option value="' + p[0] + '"' + (current.align === p[0] ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select></label>'
+          + current[p[0]] + '" min="' + p[2] + '" max="' + p[3] + '" step="1"></label>'; }).join('') + '</div>'
+        + '<div class="an-pair"><label class="an-field"><span>Schrift</span><select data-element-prop="font">' + ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS'].map(function (font) { return '<option' + (current.font === font ? ' selected' : '') + '>' + font + '</option>'; }).join('') + '</select></label>'
+        + '<label class="an-field"><span>Ausrichtung</span><select data-element-prop="align">' + [['left', 'Links'], ['center', 'Zentriert'], ['right', 'Rechts']].map(function (p) { return '<option value="' + p[0] + '"' + (current.align === p[0] ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select></label></div>'
         + (current.type === 'text' ? '<label class="an-field"><span>Eigener Text</span><textarea data-element-prop="text" maxlength="2000">' + M.esc(current.text) + '</textarea></label>' : '')
         + (current.type === 'shape' ? '<label class="an-field"><span>Form</span><select data-element-prop="shape">' + [['rect', 'Rechteck'], ['round', 'Abgerundet'], ['ellipse', 'Oval']].map(function (p) { return '<option value="' + p[0] + '"' + (current.shape === p[0] ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select></label>' : '')
         + '<div class="an-row"><label class="an-field"><input type="checkbox" data-element-prop="bold"' + (current.bold ? ' checked' : '') + '> Fett</label>'
         + '<label class="an-field"><input type="checkbox" data-element-prop="hidden"' + (current.hidden ? ' checked' : '') + '> Ausblenden</label></div>'
-        + '<div class="an-element-actions"><button data-nudge="-5,0" aria-label="Element nach links">←</button><button data-nudge="0,-5" aria-label="Element nach oben">↑</button><button data-nudge="0,5" aria-label="Element nach unten">↓</button><button data-nudge="5,0" aria-label="Element nach rechts">→</button></div>'
         + '<div class="an-element-actions"><button data-element-action="ghost">Ghost-Kopie</button><button data-element-action="forward">Ebene nach vorn</button><button data-element-action="back">Ebene zurück</button><button data-element-action="delete">Element entfernen</button></div>' : '')
       + '</details></fieldset>'
       + '<div class="an-actions"><button data-history="undo"' + (undo.length ? '' : ' disabled') + '>Rückgängig</button><button data-history="redo"' + (redo.length ? '' : ' disabled') + '>Wiederholen</button></div>';
@@ -394,10 +411,13 @@
     }).join('');
     var current = selection();
     if (current && !current.hidden) {
+      var points = window.AngeboteVorschauEditor.handlePoints(current, size.w, size.h);
       host.insertAdjacentHTML('beforeend', '<button type="button" class="an-resize-handle" data-resize="' + current.id
-        + '" aria-label="Elementgröße ziehen" title="Größe ziehen" style="left:clamp(44px,'
-        + (current.x + current.w) / size.w * 100 + '%,100%);top:clamp(44px,'
-        + (current.y + current.h) / size.h * 100 + '%,100%)">↘</button>');
+        + '" aria-label="Elementgröße ziehen" title="Größe ziehen" style="left:clamp(22px,'
+        + points.resize.x + '%,calc(100% - 22px));top:clamp(22px,' + points.resize.y + '%,calc(100% - 22px))">↘</button>'
+        + '<button type="button" class="an-rotate-handle" data-rotate="' + current.id
+        + '" aria-label="Element frei drehen" title="Ziehen zum Drehen" style="left:clamp(22px,'
+        + points.rotate.x + '%,calc(100% - 22px));top:clamp(22px,' + points.rotate.y + '%,calc(100% - 22px))">↻</button>');
     }
   }
   async function preview() {
@@ -419,15 +439,26 @@
     var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv', sheet: 'Sammelflyer' };
     var size = activeSize();
     $('an-stage').style.aspectRatio = size.w + ' / ' + size.h;
-    var availableWidth = Math.max(100, $('an-preview').clientWidth - 48);
+    var canvasColumn = cmsAction && root.querySelector('.an-cms-canvas');
+    if (cmsAction && cmsDialog) root.classList.toggle('an-cms-stacked', cmsDialog.clientWidth < 640);
+    var availableWidth = Math.max(100, canvasColumn ? canvasColumn.clientWidth : $('an-preview').clientWidth - 48);
     var maxHeight = window.innerHeight - (window.innerWidth > 1000 ? 455 : window.innerWidth > 480 ? 560 : 350);
     if (window.innerWidth <= 480) maxHeight = Math.min(430, maxHeight);
     maxHeight = Math.max(160, maxHeight);
-    if (cmsAction) maxHeight = Math.max(420, window.innerHeight - 150);
+    if (cmsAction) {
+      var workspaceBox = root.querySelector('.an-cms-workspace');
+      var chrome = workspaceBox.getBoundingClientRect().top - cmsDialog.getBoundingClientRect().top + cmsDialog.scrollTop + (canvasColumn.firstElementChild ? canvasColumn.firstElementChild.offsetHeight : 0);
+      maxHeight = Math.max(220, root.classList.contains('an-cms-stacked') ? window.innerHeight * .48 : window.innerHeight - 12 - chrome - 64);
+    }
     var stageWidth = Math.min(availableWidth, maxHeight * size.w / size.h);
     $('an-stage').style.width = stageWidth + 'px';
     $('an-stage').style.height = stageWidth * size.h / size.w + 'px';
     $('an-stage').style.marginInline = 'auto';
+    if (cmsAction && !cmsScrolled && root.classList.contains('an-cms-stacked')) {
+      cmsScrolled = true;
+      var pinned = data.layout.cms ? root.querySelector('.an-weekly-surface .an-stage') : canvasColumn;
+      if (pinned) pinned.scrollIntoView({ block: 'start' });
+    }
     $('an-stage-info').textContent = result.errors.length ? result.errors.join(' ')
       : noTargetItem ? 'Füge einen Artikel hinzu, um diese Ausgabe zu gestalten.'
       : names[designTarget] + ' · ' + (designTarget === 'sheet' ? (data.layout.mode === 'free' ? 'freie Gestaltung' : 'Vorlagenmodus') : 'individuell je Artikel');
@@ -520,7 +551,7 @@
   }
   async function cmsPreview(action, mode, onClose) {
     try {
-      cmsAction = action; cmsReturn = onClose;
+      cmsAction = action; cmsReturn = onClose; cmsScrolled = false;
       record = { id: action.id }; data = M.clone(action.data);
       var openingData = data;
       config = window.AngeboteDataverse.settings();
@@ -577,16 +608,21 @@
     var actions = document.createElement('div'); actions.className = 'an-actions an-cms-output';
     actions.innerHTML = '<button data-cms-download>Download</button><button data-cms-print>Drucken / PDF</button>'
       + '<button data-cms-scale>Auf die Waage</button><button data-cms-singles>Alle Einzelflyer</button>';
-    previewPanel.prepend(actions);
     var options = document.createElement('details'); options.className = 'an-cms-style-options';
     options.innerHTML = '<summary>Vorlage und Gestaltung</summary>';
-    options.appendChild($('an-design-options')); previewPanel.appendChild(options);
-    var tools = null;
-    if (!data.layout.cms) {
-      tools = document.createElement('details'); tools.className = 'an-cms-element-options';
-      tools.innerHTML = '<summary>Artikel und Elemente bearbeiten</summary>';
-      $('an-inspector').before(tools); tools.appendChild($('an-inspector'));
-    }
+    options.appendChild($('an-design-options'));
+    var workspace = document.createElement('div'); workspace.className = 'an-cms-workspace' + (data.layout.cms ? ' an-cms-weekly' : '');
+    var canvasColumn = document.createElement('div'); canvasColumn.className = 'an-cms-canvas';
+    var sideColumn = document.createElement('div'); sideColumn.className = 'an-cms-side';
+    var article = document.createElement('div'); article.id = 'an-cms-article';
+    var stagebar = document.createElement('div'); stagebar.className = 'an-cms-stagebar';
+    var tabs = previewPanel.querySelector('.an-target-tabs');
+    tabs.after(workspace); workspace.append(canvasColumn, sideColumn);
+    stagebar.append($('an-stage-info'), $('an-page-tools'));
+    canvasColumn.append(tabs, $('an-other-preview'), $('an-stage'), stagebar, $('an-stage-help'));
+    sideColumn.append(actions, $('an-design-item-wrap'), $('an-inspector'), options);
+    if (!data.layout.cms) $('an-inspector').before(article);
+    renderCmsArticle();
     actions.querySelector('[data-cms-download]').onclick = function () {
       run(async function () {
         var canvases;
@@ -613,7 +649,6 @@
       designTarget = 'single'; designItemId = data.items[0] ? data.items[0].id : '';
       selected = ''; renderInspector(); preview().catch(M.error);
     };
-    if (tools) $('an-hit-layer').addEventListener('pointerdown', function () { tools.open = true; });
   }
   function addItem(it) {
     addItems([it]);
@@ -1138,27 +1173,49 @@
       if (target.id === 'an-select-element') { selected = target.value; renderInspector(); overlay(); }
       if (target.dataset.elementProp && selection()) {
         var e = selection();
-        edit(function () { e[target.dataset.elementProp] = target.type === 'checkbox' ? target.checked : target.type === 'number' ? Number(target.value) : target.value; }, true);
+        edit(function () { e[target.dataset.elementProp] = target.type === 'checkbox' ? target.checked : target.type === 'number' || target.type === 'range' ? Number(target.value) : target.value; }, true);
+      }
+      if (target.dataset.cmsArticle) {
+        var holder = target.closest('[data-cms-article-id]');
+        var article = data.items.find(function (it) { return it.id === holder.dataset.cmsArticleId; });
+        var field = target.dataset.cmsArticle;
+        var value = field === 'name' ? target.value.trim() : M.cents(target.value);
+        if (!article || (field === 'name' && !value) || (field === 'price_cents' && value == null) || (field === 'old_price_cents' && target.value.trim() !== '' && value == null)) {
+          M.dialog('Bitte prüfen', field === 'name' ? 'Bitte einen Artikelnamen eingeben.' : 'Bitte einen gültigen Preis, z. B. 1,99, eingeben.');
+          renderCmsArticle(); return;
+        }
+        edit(function () { article[field] = value; }, false);
+        target.value = field === 'name' ? value : value == null ? '' : M.money(value);
+        var option = $('an-design-item') && Array.from($('an-design-item').options).find(function (entry) { return entry.value === article.id; });
+        if (option) option.textContent = article.name || 'Neuer Artikel';
+        if (data.layout.cms && field === 'name') renderInspector();
       }
     };
     $('an-stage').onpointerdown = function (event) {
-      var resize = event.target.closest('[data-resize]');
-      var hit = resize || event.target.closest('[data-select]');
+      var resize = event.target.closest('[data-resize]'), rotate = event.target.closest('[data-rotate]');
+      var hit = resize || rotate || event.target.closest('[data-select]');
       if (!hit || busy || event.button !== 0) return;
       event.preventDefault();
-      selected = resize ? hit.dataset.resize : hit.dataset.select; renderInspector();
+      selected = resize ? hit.dataset.resize : rotate ? hit.dataset.rotate : hit.dataset.select; renderInspector();
       var e = selection(), size = activeSize(), rect = $('an-stage').getBoundingClientRect(), startX = event.clientX, startY = event.clientY, x = e.x, y = e.y, w = e.w, h = e.h, moved = false;
+      var surface = window.AngeboteVorschauEditor;
+      var centerX = rect.left + (x + w / 2) / size.w * rect.width, centerY = rect.top + (y + h / 2) / size.h * rect.height;
       function drag(ev) {
         if (ev.pointerId !== event.pointerId) return;
         if (!moved && Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 5) return;
         if (!moved) { checkpoint(); moved = true; }
         var dx = (ev.clientX - startX) * size.w / rect.width, dy = (ev.clientY - startY) * size.h / rect.height;
-        if (resize) {
+        if (rotate) {
+          var turn = surface.pointerAngle(centerX, centerY, ev) + 90;
+          var snapped = Math.round(turn / 15) * 15;
+          e.rotation = Math.round(surface.normalizeTurn(Math.abs(turn - snapped) < 3 ? snapped : turn) * 10) / 10;
+        } else if (resize) {
+          var angle = e.rotation * Math.PI / 180, along = dx * Math.cos(angle) + dy * Math.sin(angle), across = -dx * Math.sin(angle) + dy * Math.cos(angle);
           if (e.type === 'image' || e.type === 'logo') {
-            var factor = 1 + (Math.abs(dx / w) > Math.abs(dy / h) ? dx / w : dy / h);
+            var factor = 1 + (Math.abs(along / w) > Math.abs(across / h) ? along / w : across / h);
             factor = Math.max(8 / w, 8 / h, Math.min(factor, (size.w - x) / w, (size.h - y) / h));
             e.w = w * factor; e.h = h * factor;
-          } else { e.w = Math.max(8, Math.min(size.w - x, w + dx)); e.h = Math.max(8, Math.min(size.h - y, h + dy)); }
+          } else { e.w = Math.max(8, Math.min(size.w - x, w + along)); e.h = Math.max(8, Math.min(size.h - y, h + across)); }
         } else {
           e.x = Math.max(0, Math.min(size.w - e.w, x + dx));
           e.y = Math.max(0, Math.min(size.h - e.h, y + dy));
@@ -1168,11 +1225,18 @@
         if (box) {
           box.style.left = e.x / size.w * 100 + '%'; box.style.top = e.y / size.h * 100 + '%';
           box.style.width = e.w / size.w * 100 + '%'; box.style.height = e.h / size.h * 100 + '%';
+          box.style.transform = 'rotate(' + e.rotation + 'deg)';
         }
+        var points = surface.handlePoints(e, size.w, size.h);
         var handle = $('an-hit-layer').querySelector('[data-resize]');
         if (handle) {
-          handle.style.left = 'clamp(44px,' + (e.x + e.w) / size.w * 100 + '%,100%)';
-          handle.style.top = 'clamp(44px,' + (e.y + e.h) / size.h * 100 + '%,100%)';
+          handle.style.left = 'clamp(22px,' + points.resize.x + '%,calc(100% - 22px))';
+          handle.style.top = 'clamp(22px,' + points.resize.y + '%,calc(100% - 22px))';
+        }
+        var turner = $('an-hit-layer').querySelector('[data-rotate]');
+        if (turner) {
+          turner.style.left = 'clamp(22px,' + points.rotate.x + '%,calc(100% - 22px))';
+          turner.style.top = 'clamp(22px,' + points.rotate.y + '%,calc(100% - 22px))';
         }
         if (designTarget === 'sheet') data.layout.mode = 'free'; changed();
       }
@@ -1197,6 +1261,12 @@
     }, true); renderInspector();
   }
   window.addEventListener('beforeunload', function (event) { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
+  var resizeTimer = 0;
+  window.addEventListener('resize', function () {
+    if (!cmsAction || !data) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { if (cmsAction && data) preview().catch(M.error); }, 150);
+  });
   var started = false;
   function start() {
     if (started) { if (data) preview().catch(M.error); return; }
