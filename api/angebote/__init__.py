@@ -129,6 +129,25 @@ def _validate_layout(layout):
                 raise ActionRequestError(400, "layout page elements must be an array")
             if any(not isinstance(element, dict) for element in elements):
                 raise ActionRequestError(400, "each layout element must be an object")
+    target_styles = layout.get("target_styles")
+    if target_styles is not None and (
+            not isinstance(target_styles, dict) or set(target_styles) - {"card", "single", "scale"}
+            or any(not isinstance(style, dict) for style in target_styles.values())):
+        raise ActionRequestError(400, "layout.target_styles must map card, single and scale to objects")
+    cms = layout.get("cms")
+    if cms is not None:
+        if not isinstance(cms, dict):
+            raise ActionRequestError(400, "layout.cms must be an object")
+        for group in ("plakat_article_overrides", "flyer_article_overrides"):
+            overrides = cms.get(group, {})
+            if not isinstance(overrides, dict):
+                raise ActionRequestError(400, f"layout.cms.{group} must be an object")
+            for override in overrides.values():
+                image = override.get("customImg") if isinstance(override, dict) else None
+                if image is not None and (
+                        not isinstance(image, str) or len(image) > 700000
+                        or not re.fullmatch(r"data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=\r\n]+", image)):
+                    raise ActionRequestError(400, "layout custom image must be an inline png, jpeg or webp image")
     image_refs = layout.get("image_refs")
     if image_refs is not None:
         if not isinstance(image_refs, dict) or len(image_refs) > 99:
@@ -314,15 +333,16 @@ def _today_berlin():
     return datetime.now(ZoneInfo("Europe/Berlin")).date()
 
 
-def _currently_valid(offer, today):
+def _not_expired(offer, today):
+    """Public readers also receive upcoming actions; the homepage filters weeks."""
     start = (offer.get("valid_from") or "")[:10]
     end = (offer.get("valid_to") or "")[:10]
     try:
-        start_date = date.fromisoformat(start)
+        date.fromisoformat(start)
         end_date = date.fromisoformat(end)
     except ValueError:
         return False
-    return start_date <= today <= end_date
+    return end_date >= today
 
 
 def _is_extended_offer(offer):
@@ -941,7 +961,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     for item in angebote_list:
                         item.pop("retail_price_cents", None)
 
-                # Public readers get only currently valid new Dataverse actions.
+                # Public readers get new Dataverse actions until they expire, so
+                # the homepage can show next week's actions (it filters weeks).
                 # Legacy rows retain the previous all-active-rows behavior.
                 # Admin readers retain the overview, including planned/expired rows.
                 filter_param = req.params.get("filter", "").lower()
@@ -949,7 +970,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     today = _today_berlin()
                     filtered = []
                     for a in angebote_list:
-                        if not is_admin and _is_extended_offer(a) and not _currently_valid(a, today):
+                        if not is_admin and _is_extended_offer(a) and not _not_expired(a, today):
                             continue
                         if filter_param == "today":
                             try:

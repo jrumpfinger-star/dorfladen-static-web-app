@@ -355,7 +355,39 @@
             }).join('') + '</div>' : '') + '</details>';
       weeklySurface = window.AngeboteVorschauEditor.mount(host.querySelector('.an-weekly-surface'), {
         begin: checkpoint,
-        change: function (element, delta) { M.changeWeekly(data, element, delta); changed(); preview().catch(M.error); }
+        change: function (element, delta) { M.changeWeekly(data, element, delta); changed(); preview().catch(M.error); },
+        override: function (entry) { return M.weeklyOverride(data, entry.itemId, entry.group); },
+        fields: M.weeklyFields, newCopy: M.weeklyNewCopy,
+        mutate: function (entry, fn, quiet) {
+          if (!quiet) checkpoint();
+          var id = fn(M.weeklyOverride(data, entry.itemId, entry.group));
+          changed(); preview().catch(M.error); return id;
+        },
+        reset: function (entry, scope) {
+          run(async function () {
+            if (scope === 'all' && !(await M.dialog('Alle Anpassungen zurücksetzen?', 'Position, Größe, Drehung, Ghost, Duplikate, Kopien und das eigene Bild dieses Artikels werden zurückgesetzt. Andere Artikel bleiben unverändert.', 'Zurücksetzen'))) return;
+            checkpoint();
+            var ov = M.weeklyOverride(data, entry.itemId, entry.group), defaults = M.weeklyDefaults(entry.group), key = Object.keys(data.layout.cms[entry.group]).find(function (k) { return data.layout.cms[entry.group][k] === ov; });
+            if (scope === 'all') data.layout.cms[entry.group][key] = defaults;
+            else {
+              var fields = M.weeklyFields(ov, entry);
+              if (fields) ['dx', 'dy', 'scale', 'rot'].forEach(function (name) {
+                fields.obj[fields[name]] = entry.ovKey === 'copy' ? (name === 'scale' ? 100 : 0) : (defaults[fields[name]] != null ? defaults[fields[name]] : (name === 'scale' ? 100 : 0));
+              });
+            }
+            changed(); await preview();
+          });
+        },
+        addImage: function (entry, file) {
+          run(async function () {
+            var url = await M.weeklyCompress(file);
+            checkpoint();
+            var ov = M.weeklyOverride(data, entry.itemId, entry.group);
+            ov.customImg = url; ov.customImgDx = 0; ov.customImgDy = 0; ov.customImgScale = 100; ov.customImgRot = 0;
+            if (ov.customImgAlpha == null) ov.customImgAlpha = 100;
+            changed(); await preview();
+          });
+        }
       });
       return;
     }
@@ -372,7 +404,7 @@
         + (i + 1) + ' · ' + roleNames[e.type] + (e.hidden ? ' (ausgeblendet)' : '') + '</option>'; }).join('') + '</select></label>'
       + '<div class="an-element-actions"><button data-add-element="image">+ Eigenes Bild</button>'
       + (current && current.type === 'image' ? '<button data-replace-image>Bild ersetzen</button>' : '')
-      + (current ? '<button data-element-action="copy">Duplizieren</button>' : '') + '</div>'
+      + (current ? '<button data-element-action="copy">Duplizieren</button><button data-element-action="ghost">Ghost</button>' : '') + '</div>'
       + (current ? '<div class="an-element-actions an-transform-tools" role="group" aria-label="Drehen und Größe">'
         + '<button data-transform="left" aria-label="Element 15 Grad nach links drehen" title="15° nach links drehen">↶ 15°</button>'
         + '<button data-transform="right" aria-label="Element 15 Grad nach rechts drehen" title="15° nach rechts drehen">↷ 15°</button>'
@@ -381,6 +413,7 @@
         + '<button data-transform="straight" aria-label="Drehung zurücksetzen" title="Drehung zurücksetzen">0°</button></div>' : '')
       + (current ? '<div class="an-quickbar" role="toolbar" aria-label="Schnellformatierung">'
         + '<label class="an-quick"><span>Farbe</span><input type="color" data-element-prop="fill" value="' + M.esc(current.fill || data.layout.text_color) + '"></label>'
+        + '<label class="an-quick"><span>↻ Drehung</span><input type="range" min="-180" max="180" step="1" data-element-prop="rotation" value="' + current.rotation + '" aria-label="Drehung in Grad"></label>'
         + '<label class="an-quick"><span>Deckkraft</span><input type="range" min="0" max="1" step=".05" data-element-prop="opacity" value="' + current.opacity + '"></label>'
         + '<div class="an-quick-nudge" role="group" aria-label="Fein verschieben"><button data-nudge="-5,0" aria-label="Element nach links">←</button><button data-nudge="0,-5" aria-label="Element nach oben">↑</button><button data-nudge="0,5" aria-label="Element nach unten">↓</button><button data-nudge="5,0" aria-label="Element nach rechts">→</button></div></div>' : '')
       + '<details class="an-more-tools"' + (expanded ? ' open' : '') + '><summary>Weitere Werkzeuge · Position, Text und Ebenen</summary>'
@@ -396,7 +429,7 @@
         + (current.type === 'shape' ? '<label class="an-field"><span>Form</span><select data-element-prop="shape">' + [['rect', 'Rechteck'], ['round', 'Abgerundet'], ['ellipse', 'Oval']].map(function (p) { return '<option value="' + p[0] + '"' + (current.shape === p[0] ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select></label>' : '')
         + '<div class="an-row"><label class="an-field"><input type="checkbox" data-element-prop="bold"' + (current.bold ? ' checked' : '') + '> Fett</label>'
         + '<label class="an-field"><input type="checkbox" data-element-prop="hidden"' + (current.hidden ? ' checked' : '') + '> Ausblenden</label></div>'
-        + '<div class="an-element-actions"><button data-element-action="ghost">Ghost-Kopie</button><button data-element-action="forward">Ebene nach vorn</button><button data-element-action="back">Ebene zurück</button><button data-element-action="delete">Element entfernen</button></div>' : '')
+        + '<div class="an-element-actions"><button data-element-action="forward">Ebene nach vorn</button><button data-element-action="back">Ebene zurück</button><button data-element-action="delete">Element entfernen</button></div>' : '')
       + '</details></fieldset>'
       + '<div class="an-actions"><button data-history="undo"' + (undo.length ? '' : ' disabled') + '>Rückgängig</button><button data-history="redo"' + (redo.length ? '' : ' disabled') + '>Wiederholen</button></div>';
   }
@@ -423,7 +456,10 @@
   async function preview() {
     if (!data || !$('an-stage-canvas')) return;
     var ticket = ++paint, draft = M.clone(data), n = page;
-    await D.previewChoices($('an-style-controls'), draft.layout, draft.kind);
+    var ownStyle = designTarget !== 'sheet' && !draft.layout.cms;
+    await D.previewChoices($('an-style-controls'), ownStyle ? Object.assign(M.clone(draft.layout), M.styleOf(draft.layout, designTarget)) : draft.layout, draft.kind);
+    var density = $('an-style-controls').querySelector('[data-style=density]');
+    if (density) density.closest('fieldset').hidden = ownStyle;
     var noTargetItem = designTarget !== 'sheet' && !designItemId;
     var result;
     if (noTargetItem) {
@@ -1166,8 +1202,15 @@
         edit(function () { data[target.dataset.actionProp] = target.value; });
         $('an-action-summary').textContent = data.title + ' · ' + M.date(data.valid_from) + ' – ' + M.date(data.valid_to);
       }
-      if (target.dataset.style) {
+      if (target.dataset.style && (designTarget === 'sheet' || data.layout.cms)) {
         edit(function () { M.preserveBackgrounds(data); D.change(data.layout, target); if (data.layout.mode === 'template' && designTarget === 'sheet') M.applyTemplate(data); });
+      } else if (target.dataset.style) {
+        var applyStyle = function () { edit(function () { M.setTargetStyle(data.layout, designTarget, function (style) { D.change(style, target); }); M.applyTargetStyleToAll(data, designTarget); }); };
+        if (!M.targetCustomized(data, designTarget)) applyStyle();
+        else run(async function () {
+          if (await M.dialog('Gestaltung ersetzen?', 'Dieses Ausgabeziel enthält frei verschobene oder eigene Elemente. Sie werden durch den gewählten Stil ersetzt. Andere Ausgaben bleiben unverändert.', 'Stil anwenden')) applyStyle();
+          else preview().catch(M.error);
+        });
       }
       if (target.id === 'an-design-item') { designItemId = target.value; selected = ''; renderInspector(); preview().catch(M.error); }
       if (target.id === 'an-select-element') { selected = target.value; renderInspector(); overlay(); }

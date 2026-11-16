@@ -373,8 +373,8 @@ test('TC-F13-01/03..04: Logo bearbeiten und Vorlage nur auf das gewählte Ziel a
   await page.locator('#an-select-element').selectOption(logo.id);
   await page.locator('[data-element-prop=x]').fill('500');
   await page.locator('[data-element-prop=x]').dispatchEvent('change');
-  await page.locator('[data-element-prop=rotation]').fill('5');
-  await page.locator('[data-element-prop=rotation]').dispatchEvent('change');
+  await page.locator('[data-element-prop=rotation][type=number]').fill('5');
+  await page.locator('[data-element-prop=rotation][type=number]').dispatchEvent('change');
   await saveDraft(page);
   await page.reload();
   await page.locator('[data-open="' + head.id + '"]').click();
@@ -382,25 +382,22 @@ test('TC-F13-01/03..04: Logo bearbeiten und Vorlage nur auf das gewählte Ziel a
   await page.locator('[data-layout-target=sheet]').click();
   await page.locator('#an-select-element').selectOption(logo.id);
   await expect(page.locator('[data-element-prop=x]')).toHaveValue('500');
-  await expect(page.locator('[data-element-prop=rotation]')).toHaveValue('5');
+  await expect(page.locator('[data-element-prop=rotation][type=number]')).toHaveValue('5');
   const preserved = copy(state.actions.get(head.id).draft);
   await page.locator('[data-layout-target=card]').click();
   await page.locator('.an-template-picker > summary').click();
   await page.locator('input[data-style=template][value=modern-mag-fresh]').check();
-  await page.locator('#an-template').click();
-  await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
-  await saveDraft(page);
-  expect(state.actions.get(head.id).draft.layout.targets.card).toEqual(preserved.layout.targets.card);
-  await page.locator('#an-template').click();
-  await page.getByRole('button', { name: 'Vorlage anwenden', exact: true }).click();
   await saveDraft(page);
   const changed = state.actions.get(head.id).draft;
   expect(changed.layout.pages).toEqual(preserved.layout.pages);
   expect(changed.layout.targets.single).toEqual(preserved.layout.targets.single);
   expect(changed.layout.targets.scale).toEqual(preserved.layout.targets.scale);
-  expect(changed.layout.targets.card[1]).toEqual(preserved.layout.targets.card[1]);
-  expect(changed.layout.targets.card[0].background).toBe('#e8f6f8');
-  expect(changed.layout.targets.card[0].elements.find((e) => e.type === 'image').w).toBe(372);
+  expect(changed.layout.template).toBe(preserved.layout.template);
+  expect(changed.layout.target_styles.card.template).toBe('modern-mag-fresh');
+  for (const card of changed.layout.targets.card) {
+    expect(card.background).toBe('#e8f6f8');
+    expect(card.elements.find((e) => e.type === 'image').w).toBe(372);
+  }
   const output = await page.evaluate(async (data) => {
     const M = window.AngeboteModel, pages = await M.preflight(data);
     const isolated = M.clone(data);
@@ -1398,7 +1395,7 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
     expect(insertedId).not.toBe(original.id);
     await inspector.getByRole('button', { name: 'Duplizieren', exact: true }).click();
     await inspector.locator('.an-more-tools>summary').click();
-    await inspector.getByRole('button', { name: 'Ghost-Kopie', exact: true }).click();
+    await inspector.getByRole('button', { name: 'Ghost', exact: true }).click();
     await saveDraft(page);
     const saved = state.actions.get(head.id).draft;
     const changed = layouts(saved.layout).elements.find((element) => element.id === original.id);

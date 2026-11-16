@@ -676,6 +676,69 @@ unverändert; die Gestaltungsdaten werden nicht verändert.
   Getränkekachel) wird keine fette Schrift (bold, 700, 900) gesetzt, aber
   halbfette (600). Die normale Ausgabe (Vorschau/Flyer) verwendet weiterhin fett.
 
+## F22–F26: Korrekturrunde Marker, Zielstile, Buttons, Homepage, Wochenvorschau
+
+**F25:** Die öffentliche Angebots-API liefert neue Dataverse-Aktionen, solange
+sie nicht abgelaufen sind (Ende ≥ heute, Europe/Berlin). Die Homepage filtert
+Wochen im Browser; „Nächste Woche“ zeigt damit schon vor Beginn die
+Getränkeaktion, „Diese Woche“ nicht. Abgelaufene bleiben ausgeblendet,
+`?filter=today` bleibt strikt.
+
+- TC-F25-01: API liefert künftige, nicht abgelaufene Aktionen; abgelaufene
+  nicht; `filter=today` unverändert.
+- TC-F25-02: Homepage zeigt eine Aktion der nächsten Woche nur unter
+  „Nächste Woche“.
+
+**F24:** Buttons und Eingabefelder im Angebotsbereich sind klar erkennbar:
+Rand mit mindestens 3 : 1 Kontrast, leichte Tönung, Schatten, sichtbarer
+Fokus/Hover; primäre Aktionen bleiben gefüllt grün.
+
+- TC-F24-01: Rand-Kontrast ≥ 3 : 1 und Text-Kontrast ≥ 4,5 : 1 für
+  Standard-, Primär-, Tab-Buttons und Felder.
+
+**F26:** In der Original-Wochenvorschau stehen die Werkzeuge oben zusammen,
+ohne Streckung, mit Pfeilen zur Feinverschiebung und kompakten Feldern.
+
+- TC-F26-01: Abstand zwischen Werkzeugblöcken ≤ 60 px (Hinweiszeile); Pfeilbutton verändert
+  die Override-Werte; Original-Renderer unverändert.
+
+**F22:** Der Ersparnismarker wird bei langem Text (z. B. „−12 %“) passend zur
+Textbreite vergrößert; die Textgröße bleibt; gilt für alle Markertypen.
+
+- TC-F22-01: Für alle Typen und −5/−12/−45/−99 % liegt der Text innerhalb
+  des Markers (Pixelprüfung) und der Marker bleibt im Bild.
+
+**F23:** Vorlage, Farben und Schrift gelten je Ausgabeziel (Kachel,
+Einzelflyer, Waage, Sammelflyer) für alle Artikel dieses Ziels
+(`layout.target_styles`); das Panel zeigt die Werte des aktiven Reiters.
+Alte Aktionen ohne Zielstil verhalten sich unverändert.
+
+- TC-F23-01: Stiländerung im Reiter wirkt nur auf dieses Ziel; Reiterwechsel
+  zeigt die jeweiligen Werte.
+- TC-F23-02: Speichern/Öffnen erhält Zielstile; alte Aktion unverändert.
+- TC-F23-03: API akzeptiert gültige und lehnt ungültige Zielstile ab.
+  Eine Stiländerung wird sofort auf alle Artikel des Ziels angewendet; enthält
+  das Ziel frei verschobene Elemente, erscheint vorher „Gestaltung ersetzen?“.
+
+**F27:** Alle Werkzeuge des bisherigen CMS-Editors stehen in jedem neuen Editor
+zur Verfügung: Ghost, Duplikat (je mit Deckkraft/Größe), weitere Kopien
+(+ Ghost, + Duplikat, löschen), eigenes Bild (+ Bild, Deckkraft, entfernen),
+Drehung per Schieber samt 0°-Knopf sowie Element- und Alles-Zurücksetzen. Das
+gilt in der Original-Wochenvorschau (Sammelflyer, Einzelflyer) und – soweit
+fachlich vorhanden (Ghost, Duplizieren, Eigenes Bild, Drehung) – im Editor der
+Getränke-Gestaltung. Bedienung und Aussehen sind auf `angebote.html`, im Kiosk
+und im CMS (`cms.html?tab=ang`) identisch.
+
+- TC-F27-01: Ghost, Duplikat, Kopien, Eigenes Bild, Drehung und Zurücksetzen
+  in der Original-Wochenvorschau auf allen drei Seiten; Werte werden gespeichert.
+- TC-F27-02: Ghost, Duplizieren, Eigenes Bild und Drehung im Getränke-Editor auf
+  allen drei Seiten.
+
+**F28:** Der Reiter „Angebote“ ist Teil der Kiosk-Quelle
+(`kiosk-klassisch.html`) und der REITER-Liste des Generators; ein Lauf von
+`tools/build-kiosk-neu.js` verändert die ausgelieferten Dateien nicht
+(TC-S8a, TC-S8c).
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

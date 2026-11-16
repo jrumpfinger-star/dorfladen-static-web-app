@@ -91,8 +91,12 @@ window.AngeboteKunden = (function () {
       if (empty) empty.style.display = 'none';
       ['this', 'next'].forEach(function (week) { var b = document.getElementById('ang-btn-' + week); if (b) b.classList.toggle('active', state.week === week); });
     }
+    if (state.grid === 'mob-ang-grid') {
+      ['this', 'next'].forEach(function (week) { var b = document.getElementById('mob-ang-btn-' + week); if (b) b.classList.toggle('active', state.week === week); });
+    }
     var count = loaded.legacy.filter(function (a) { return overlaps(a.von, a.bis, range('this')); }).length
-      + loaded.actions.reduce(function (n, a) { return n + a.data.items.length; }, 0);
+      + loaded.actions.filter(function (a) { return overlaps(a.data.valid_from, a.data.valid_to, range('this')); })
+        .reduce(function (n, a) { return n + a.data.items.length; }, 0);
     if (state.onLoaded) state.onLoaded({ legacy: loaded.legacy, count: count });
   }
   async function mount(options) {

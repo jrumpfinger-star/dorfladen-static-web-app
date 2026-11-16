@@ -16,10 +16,34 @@ window.AngeboteVorschauEditor = (function () {
       + '<div class="an-element-actions"><button type="button" data-preview-transform="left" aria-label="Vorschauelement nach links drehen">↶ 15°</button>'
       + '<button type="button" data-preview-transform="right" aria-label="Vorschauelement nach rechts drehen">↷ 15°</button>'
       + '<button type="button" data-preview-transform="smaller" aria-label="Vorschauelement verkleinern">−</button>'
-      + '<button type="button" data-preview-transform="larger" aria-label="Vorschauelement vergrößern">+</button></div></div>'
+      + '<button type="button" data-preview-transform="larger" aria-label="Vorschauelement vergrößern">+</button>'
+      + '<span class="an-nudge" role="group" aria-label="Fein verschieben">'
+      + '<button type="button" data-preview-nudge="-2,0" aria-label="Vorschauelement nach links">←</button>'
+      + '<button type="button" data-preview-nudge="0,-2" aria-label="Vorschauelement nach oben">↑</button>'
+      + '<button type="button" data-preview-nudge="0,2" aria-label="Vorschauelement nach unten">↓</button>'
+      + '<button type="button" data-preview-nudge="2,0" aria-label="Vorschauelement nach rechts">→</button></span></div></div>'
       + '<div class="an-stage" tabindex="0" aria-label="Direkt bearbeitbare Vorschau"><div class="an-hit-layer"></div></div>'
       + '<p class="an-muted">Element antippen · ziehen = verschieben · ↘ = Größe · Pfeiltasten = verschieben</p>';
-    var stage = host.querySelector('.an-stage'), layer = host.querySelector('.an-hit-layer');
+    var extrasHost = null;
+    if (options.override) {
+      extrasHost = document.createElement('div'); extrasHost.className = 'an-extras';
+      extrasHost.innerHTML = '<label class="an-quick an-rot"><span>↻ Drehung</span><input type="range" min="-180" max="180" step="1" data-x-rot aria-label="Drehung in Grad"><output data-x-rot-out>0°</output><button type="button" data-x-rot-reset aria-label="Drehung zurücksetzen">⭯ 0°</button></label>'
+        + '<div class="an-element-actions an-copy-tools" role="group" aria-label="Ghost, Duplikat und Bild">'
+        + '<button type="button" data-x-toggle="ghost" aria-pressed="false">Ghost</button>'
+        + '<button type="button" data-x-toggle="dup" aria-pressed="false">Duplikat</button>'
+        + '<button type="button" data-x-add="ghost" title="Weitere Ghost-Kopie hinzufügen">+ Ghost</button>'
+        + '<button type="button" data-x-add="dup" title="Weitere Duplikat-Kopie hinzufügen">+ Duplikat</button>'
+        + '<label class="an-file-btn" title="Eigenes Bild hinzufügen">+ Bild<input type="file" accept="image/*" data-x-image></label>'
+        + '<button type="button" data-x-image-remove hidden>Bild entfernen</button></div>'
+        + '<div class="an-chips" data-x-copies></div>'
+        + '<div class="an-quickbar an-sliders">'
+        + '<label class="an-quick" data-x-row="ghost"><span>Ghost Deckkraft</span><input type="range" min="10" max="90" data-x-prop="ghostAlpha" aria-label="Ghost Deckkraft"></label>'
+        + '<label class="an-quick" data-x-row="ghost"><span>Ghost Größe</span><input type="range" min="10" max="300" data-x-prop="ghostScale" aria-label="Ghost Größe"></label>'
+        + '<label class="an-quick" data-x-row="dup"><span>Duplikat Größe</span><input type="range" min="10" max="300" data-x-prop="dupScale" aria-label="Duplikat Größe"></label>'
+        + '<label class="an-quick" data-x-row="image"><span>Bild Deckkraft</span><input type="range" min="10" max="100" data-x-prop="customImgAlpha" aria-label="Eigenes Bild Deckkraft"></label></div>'
+        + '<div class="an-element-actions"><button type="button" data-x-reset="element">Element zurücksetzen</button><button type="button" data-x-reset="all">Alles zurücksetzen</button></div>';
+      host.querySelector('.an-direct-tools').appendChild(extrasHost);
+    }    var stage = host.querySelector('.an-stage'), layer = host.querySelector('.an-hit-layer');
     var select = host.querySelector('select'), entries = [], chosen = '', width = 1, height = 1, endDrag = null;
     function current() { return entries.find(function (entry) { return entry.id === chosen; }); }
     function overlay() {
@@ -46,14 +70,113 @@ window.AngeboteVorschauEditor = (function () {
         turn.style.top = 'clamp(22px,' + points.rotate.y + '%,calc(100% - 22px))'; layer.appendChild(turn);
       }
       select.value = chosen;
-      host.querySelectorAll('[data-preview-transform]').forEach(function (button) { button.disabled = !selected; });
+      host.querySelectorAll('[data-preview-transform],[data-preview-nudge]').forEach(function (button) { button.disabled = !selected; });
+      if (typeof refreshExtras === 'function') refreshExtras();
     }
     function change(delta) {
       var entry = current(); if (!entry) return;
       options.change(entry, delta);
     }
+    function ghostOff(entry) { return entry.group === 'plakat_article_overrides' ? 'off' : 'auto'; }
+    function refreshExtras() {
+      if (!extrasHost) return;
+      var entry = current(), disabled = !entry;
+      extrasHost.hidden = false;
+      extrasHost.querySelectorAll('button,input').forEach(function (control) { control.disabled = disabled; });
+      if (disabled) return;
+      var ov = options.override(entry), fields = options.fields(ov, entry);
+      var rot = fields ? Math.round(fields.obj[fields.rot] || 0) : 0;
+      extrasHost.querySelector('[data-x-rot]').value = rot;
+      extrasHost.querySelector('[data-x-rot-out]').textContent = rot + '°';
+      var ghostOn = ov.ghostMode === 'on';
+      var ghostButton = extrasHost.querySelector('[data-x-toggle=ghost]'), dupButton = extrasHost.querySelector('[data-x-toggle=dup]');
+      ghostButton.setAttribute('aria-pressed', String(ghostOn)); dupButton.setAttribute('aria-pressed', String(!!ov.dupOn));
+      ghostButton.classList.toggle('an-on', ghostOn); dupButton.classList.toggle('an-on', !!ov.dupOn);
+      var hasImage = !!ov.customImg;
+      extrasHost.querySelector('[data-x-image-remove]').hidden = !hasImage;
+      extrasHost.querySelectorAll('[data-x-row]').forEach(function (row) {
+        row.hidden = row.dataset.xRow === 'ghost' ? !ghostOn : row.dataset.xRow === 'dup' ? !ov.dupOn : !hasImage;
+      });
+      extrasHost.querySelector('.an-sliders').hidden = !ghostOn && !ov.dupOn && !hasImage;
+      var values = { ghostAlpha: Math.round((ov.ghostAlpha || .45) * 100), ghostScale: ov.ghostScale || 100, dupScale: ov.dupScale || 100,
+        customImgAlpha: ov.customImgAlpha != null ? ov.customImgAlpha : 100 };
+      extrasHost.querySelectorAll('[data-x-prop]').forEach(function (input) { input.value = values[input.dataset.xProp]; });
+      var chips = extrasHost.querySelector('[data-x-copies]');
+      chips.replaceChildren();
+      (ov.copies || []).forEach(function (copy, index) {
+        var chip = document.createElement('span'); chip.className = 'an-chip';
+        var label = document.createElement('button'); label.type = 'button'; label.dataset.xCopy = String(index);
+        label.textContent = (copy.type === 'ghost' ? 'Ghost ' : 'Duplikat ') + (index + 1);
+        label.setAttribute('aria-label', 'Kopie ' + (index + 1) + ' auswählen');
+        var remove = document.createElement('button'); remove.type = 'button'; remove.dataset.xDelCopy = String(index);
+        remove.textContent = '×'; remove.setAttribute('aria-label', 'Kopie ' + (index + 1) + ' löschen');
+        chip.append(label, remove); chips.appendChild(chip);
+      });
+    }
+    var sliding = false, pending = '';
+    function mutate(entry, fn, quiet) {
+      var id = options.mutate(entry, fn, quiet);
+      if (id) pending = entry.id.split(':')[0] + ':' + id;
+    }
+    if (extrasHost) {
+      extrasHost.addEventListener('click', function (event) {
+        var entry = current(), target = event.target.closest('button'); if (!entry || !target) return;
+        if (target.dataset.xToggle) {
+          var kind = target.dataset.xToggle;
+          mutate(entry, function (ov) {
+            if (kind === 'ghost') {
+              if (ov.ghostMode === 'on') ov.ghostMode = ghostOff(entry);
+              else { ov.ghostMode = 'on'; if (!ov.ghostDx && !ov.ghostDy) { ov.ghostDx = 80; ov.ghostDy = -60; } return 'ghost'; }
+            } else {
+              ov.dupOn = !ov.dupOn;
+              if (ov.dupOn) { if (!ov.dupDx && !ov.dupDy) { ov.dupDx = -70; ov.dupDy = 50; } return 'dup'; }
+            }
+          });
+        } else if (target.dataset.xAdd) {
+          mutate(entry, function (ov) {
+            ov.copies.push(options.newCopy(target.dataset.xAdd, ov.copies.length));
+            return 'copy-' + (ov.copies.length - 1);
+          });
+        } else if (target.dataset.xDelCopy != null) {
+          mutate(entry, function (ov) { ov.copies.splice(Number(target.dataset.xDelCopy), 1); return 'img'; });
+        } else if (target.dataset.xCopy != null) {
+          chosen = entry.id.split(':')[0] + ':copy-' + target.dataset.xCopy; overlay();
+        } else if (target.hasAttribute('data-x-image-remove')) {
+          mutate(entry, function (ov) {
+            ov.customImg = null; ov.customImgDx = 0; ov.customImgDy = 0; ov.customImgScale = 100; ov.customImgAlpha = 100; ov.customImgRot = 0; return 'img';
+          });
+        } else if (target.hasAttribute('data-x-rot-reset')) {
+          mutate(entry, function (ov) { var f = options.fields(ov, entry); if (f) f.obj[f.rot] = 0; });
+        } else if (target.dataset.xReset) {
+          options.reset(entry, target.dataset.xReset);
+        }
+      });
+      extrasHost.addEventListener('input', function (event) {
+        var entry = current(), input = event.target; if (!entry) return;
+        var quiet = sliding; sliding = true;
+        if (input.hasAttribute('data-x-rot')) {
+          mutate(entry, function (ov) { var f = options.fields(ov, entry); if (f) f.obj[f.rot] = Number(input.value); }, quiet);
+          extrasHost.querySelector('[data-x-rot-out]').textContent = input.value + '°';
+        } else if (input.dataset.xProp) {
+          var key = input.dataset.xProp;
+          mutate(entry, function (ov) { ov[key] = key === 'ghostAlpha' ? Number(input.value) / 100 : Number(input.value); }, quiet);
+        }
+      });
+      extrasHost.addEventListener('change', function (event) {
+        var input = event.target; sliding = false;
+        if (!input.hasAttribute('data-x-image') || !input.files || !input.files[0]) return;
+        var entry = current(), file = input.files[0]; input.value = '';
+        if (entry) { pending = entry.id.split(':')[0] + ':customImg'; options.addImage(entry, file); }
+      });
+    }
     select.onchange = function () { chosen = select.value; overlay(); };
     host.onclick = function (event) {
+      var nudge = event.target.closest('[data-preview-nudge]');
+      if (nudge && current()) {
+        var step = nudge.dataset.previewNudge.split(',').map(Number);
+        if (options.begin) options.begin();
+        change({ dx: step[0], dy: step[1] }); return;
+      }
       var button = event.target.closest('[data-preview-transform]'); if (!button || !current()) return;
       if (options.begin) options.begin();
       var action = button.dataset.previewTransform;
@@ -100,6 +223,7 @@ window.AngeboteVorschauEditor = (function () {
     return {
       update: function (canvas, elements, logicalWidth, logicalHeight) {
         width = logicalWidth; height = logicalHeight; entries = elements;
+        if (pending && elements.some(function (entry) { return entry.id === pending; })) { chosen = pending; pending = ''; }
         if (!entries.some(function (entry) { return entry.id === chosen; })) {
           var first = entries.find(function (entry) { return entry.type === 'image' || entry.ovKey === 'img'; }) || entries[0];
           chosen = first ? first.id : '';

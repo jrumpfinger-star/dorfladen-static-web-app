@@ -276,8 +276,25 @@ window.AngeboteModel = (function () {
     return pages;
   }
   var targetSizes = { card: { w: 420, h: 480 }, single: { w: 800, h: 1130 }, scale: { w: 800, h: 462 } };
+  var STYLE_KEYS = ['template', 'color', 'background', 'font', 'title_color', 'text_color', 'card_background', 'price_background',
+    'price_shape', 'name_size', 'price_size', 'details_size', 'image_rotation', 'image_scale', 'marker_type', 'marker_palette', 'marker_scale'];
+  // Wirksamer Stil eines Ausgabeziels: globale Werte, überlagert vom Zielstil (alte Aktionen haben keinen).
+  function styleFor(layout, target) {
+    var own = target && target !== 'sheet' && layout.target_styles && layout.target_styles[target];
+    return own ? Object.assign({}, layout, own) : layout;
+  }
+  function styleOf(layout, target) {
+    var effective = styleFor(layout, target), result = { density: layout.density };
+    STYLE_KEYS.forEach(function (key) { if (effective[key] != null) result[key] = effective[key]; });
+    return result;
+  }
+  function setTargetStyle(layout, target, apply) {
+    if (!layout.target_styles) layout.target_styles = {};
+    var style = styleOf(layout, target); delete style.density;
+    apply(style); layout.target_styles[target] = style;
+  }
   function targetTemplate(data, target, item) {
-    var l = data.layout, id = item.id, elements = [], size = targetSizes[target], style = templateStyle(l.template);
+    var l = styleFor(data.layout, target), id = item.id, elements = [], size = targetSizes[target], style = templateStyle(l.template);
     function add(type, x, y, w, h, fontSize, extra) {
       elements.push(el(type, x, y, w, h, Object.assign({ item_id: id, font_size: fontSize,
         font: l.font, fill: l.text_color }, extra || {})));
@@ -471,6 +488,23 @@ window.AngeboteModel = (function () {
       });
     });
   }
+  function applyTargetStyleToAll(data, target) {
+    ensureTargets(data);
+    data.layout.targets[target] = data.items.map(function (it) { return targetTemplate(data, target, it); });
+  }
+  function signature(elements) {
+    return JSON.stringify(elements.map(function (e) {
+      return [e.type, e.x, e.y, e.w, e.h, e.rotation, e.opacity, e.hidden, e.font_size, e.bold, e.align, e.fill, e.text, e.image_id, e.image_scale, e.shape, e.font];
+    }));
+  }
+  // Wahr, wenn Positionen/Elemente von der Vorlage abweichen (dann erst nach Bestätigung ersetzen).
+  function targetCustomized(data, target) {
+    ensureTargets(data);
+    return data.items.some(function (it) {
+      var current = data.layout.targets[target].find(function (entry) { return entry.item_id === it.id; });
+      return !current || signature(current.elements) !== signature(targetTemplate(data, target, it).elements);
+    });
+  }
   function applyTargetTemplate(data, target, itemId) {
     if (!targetSizes[target]) throw problem('Dieses Gestaltungsziel ist nicht verfügbar.');
     ensureTargets(data);
@@ -550,6 +584,51 @@ window.AngeboteModel = (function () {
       snapshot[key] = selected;
     });
     return snapshot;
+  }
+  // Zugriff auf die Original-CMS-Overrides (Ghost, Duplikat, Kopien, Eigenes Bild) eines Artikels.
+  function weeklyOverride(data, itemId, group) {
+    var item = data.items.find(function (it) { return it.id === itemId; });
+    if (!item) throw problem('Dieser Artikel ist nicht mehr vorhanden. Bitte die Vorschau erneut öffnen.');
+    var key = weeklyKey(item), overrides = data.layout.cms[group], renderer = window.WochenangeboteRenderer.create({});
+    var defaults = group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault();
+    overrides[key] = Object.assign(defaults, overrides[key] || {});
+    if (!Array.isArray(overrides[key].copies)) overrides[key].copies = [];
+    return overrides[key];
+  }
+  function weeklyDefaults(group) {
+    var renderer = window.WochenangeboteRenderer.create({});
+    return group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault();
+  }
+  function weeklyNewCopy(type, count) {
+    var spread = (count || 0) * 30;
+    return { id: Date.now() + (count || 0), type: type, dx: type === 'dup' ? -60 - spread : 60 + spread,
+      dy: type === 'dup' ? 40 + spread : -40 - spread, scale: 100, alpha: type === 'ghost' ? .35 : 1, rot: 0 };
+  }
+  // Liefert das Objekt und die Schlüssel für Position/Größe/Drehung des gewählten Vorschauelements.
+  function weeklyFields(override, entry) {
+    var prefix = entry.ovKey;
+    if (prefix === 'copy') {
+      var copy = override.copies[entry.copyIdx];
+      return copy ? { obj: copy, dx: 'dx', dy: 'dy', scale: 'scale', rot: 'rot' } : null;
+    }
+    return { obj: override, dx: prefix + 'Dx', dy: prefix + 'Dy', scale: prefix + 'Scale', rot: prefix + 'Rot' };
+  }
+  async function weeklyCompress(file) {
+    var url = await new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(problem('Das Bild konnte nicht gelesen werden. Bitte erneut auswählen.')); };
+      reader.readAsDataURL(file);
+    });
+    var img = await new Promise(function (resolve, reject) {
+      var image = new Image(); image.onload = function () { resolve(image); };
+      image.onerror = function () { reject(problem('Dieses Bildformat wird nicht unterstützt. Bitte JPG oder PNG wählen.')); };
+      image.src = url;
+    });
+    var factor = Math.min(1, 400 / Math.max(img.width, img.height)), canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.width * factor)); canvas.height = Math.max(1, Math.round(img.height * factor));
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', .85);
   }
   function changeWeekly(data, element, delta) {
     var item = data.items.find(function (it) { return it.id === element.itemId; });
@@ -720,7 +799,7 @@ window.AngeboteModel = (function () {
     } while (size >= 12);
     return { lines: result, size: size, fits: size >= 12 && result.length * size * 1.18 <= element.h };
   }
-  async function renderElements(data, elements, width, height, background, scale, pageNumber, light) {
+  async function renderElements(data, elements, width, height, background, scale, pageNumber, light, style) {
     var canvas = document.createElement('canvas'), factor = scale || 1;
     canvas.width = Math.round(width * factor); canvas.height = Math.round(height * factor);
     var ctx = canvas.getContext('2d');
@@ -734,7 +813,7 @@ window.AngeboteModel = (function () {
       ctx.translate(element.x + element.w / 2, element.y + element.h / 2);
       ctx.rotate(element.rotation * Math.PI / 180);
       ctx.translate(-element.w / 2, -element.h / 2);
-      ctx.fillStyle = element.fill || data.layout.text_color;
+      ctx.fillStyle = element.fill || (style || data.layout).text_color;
       var angle = element.rotation * Math.PI / 180;
       var halfW = (Math.abs(Math.cos(angle)) * element.w + Math.abs(Math.sin(angle)) * element.h) / 2;
       var halfH = (Math.abs(Math.sin(angle)) * element.w + Math.abs(Math.cos(angle)) * element.h) / 2;
@@ -763,9 +842,9 @@ window.AngeboteModel = (function () {
         var discount = textFor(element, data, pageNumber);
         if (discount) {
           var marker = window.WochenangeboteRenderer.create({});
-          var radius = Math.min(element.w, element.h) / 3.8 * (data.layout.marker_scale || 100) / 100;
+          var radius = Math.min(element.w, element.h) / 3.8 * ((style || data.layout).marker_scale || 100) / 100;
           marker.drawSavingsBurst(ctx, element.w / 2, element.h / 2, radius, radius * .62, discount, 'plakat',
-            { savingsMarkerType: data.layout.marker_type || 'starburst', savingsPalette: data.layout.marker_palette || 'harmonie', savingsScalePlakat: 100 });
+            { savingsMarkerType: (style || data.layout).marker_type || 'starburst', savingsPalette: (style || data.layout).marker_palette || 'harmonie', savingsScalePlakat: 100 });
         }
       } else {
         var value = textFor(element, data, pageNumber);
@@ -825,7 +904,7 @@ window.AngeboteModel = (function () {
       output._weeklyWidth = size.w; output._weeklyHeight = size.h;
       return { canvas: output, errors: [] };
     }
-    return renderElements(data, selected.elements, size.w, size.h, selected.background || data.layout.background, scale, 0, light);
+    return renderElements(data, selected.elements, size.w, size.h, selected.background || data.layout.background, scale, 0, light, styleFor(data.layout, target));
   }
   async function paintCards(host, data) {
     var canvases = Array.from(host.querySelectorAll('[data-card-item]'));
@@ -975,5 +1054,5 @@ window.AngeboteModel = (function () {
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
     templateOptions: templateStyles.map(function (style) { return [style.id, style.label]; }),
     cmsTemplateOptions: templateStyles.filter(function (style) { return style.original && !style.half && !style.tag; }).map(function (style) { return [style.id, style.label]; }),
-    templateStyle: templateStyle, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
+    weeklyOverride: weeklyOverride, weeklyDefaults: weeklyDefaults, weeklyNewCopy: weeklyNewCopy, weeklyFields: weeklyFields, weeklyCompress: weeklyCompress, templateStyle: templateStyle, styleFor: styleFor, styleOf: styleOf, setTargetStyle: setTargetStyle, applyTargetStyleToAll: applyTargetStyleToAll, targetCustomized: targetCustomized, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
 })();

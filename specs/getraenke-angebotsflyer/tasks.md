@@ -59,3 +59,10 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF52 | Drei Preisschild-Vorlagen (Aufteilung der Originalkachel) mit Flag `tag` für alle Ausgabeziele ergänzen | GF50 | TC-F20-04 |
 | GF53 | Startseitenkacheln halbfett statt fett zeichnen (Option nur für `paintCards`), CMS-/Flyerausgaben unverändert | GF52 | TC-F21-01 |
 | GF47 | Vier-Viewport-Pointer-/Speicherregression und Hilfe aktualisieren; ausschließlich Feature-Preview prüfen und bereitstellen | GF46 | TC-F19-01..04 |
+| GF54 | Öffentliche API liefert künftige, nicht abgelaufene Aktionen (Homepage Nächste Woche) | GF53 | TC-F25-01, TC-F25-02 |
+| GF55 | Kontraststarke Buttons und Felder im Angebotsbereich | GF54 | TC-F24-01 |
+| GF56 | Kompakte Werkzeugspalte der Original-Wochenvorschau mit Feinverschiebung | GF55 | TC-F26-01 |
+| GF57 | Ersparnismarker passend zur Textbreite vergrößern | GF56 | TC-F22-01 |
+| GF58 | Stil je Ausgabeziel (layout.target_styles) in Modell, UI und API | GF57 | TC-F23-01..03 |
+| GF59 | Ghost, Duplikat, Kopien, Eigenes Bild, Drehung und Zurücksetzen in allen Editoren (Original-Renderer liefert Elemente für Auswahl) | GF58 | TC-F27-01, TC-F27-02 |
+| GF60 | Kiosk-Reiter „Angebote“ in Quelle und Generator übernehmen | GF59 | TC-S8a, TC-S8c |

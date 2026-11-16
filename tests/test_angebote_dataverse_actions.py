@@ -435,6 +435,13 @@ class DataverseActionsTests(unittest.TestCase):
                 "dl_gueltig_von": "2099-01-01",
                 "dl_gueltig_bis": "2099-12-31",
             },
+            {
+                "dl_angeboteid": "6" * 32,
+                "dl_aktion_id": "d" * 8 + "-" + "d" * 4 + "-" + "d" * 4 + "-" + "d" * 4 + "-" + "d" * 12,
+                "dl_aktionsart": "drinks",
+                "dl_gueltig_von": "2000-01-01",
+                "dl_gueltig_bis": "2000-12-31",
+            },
         ]})
         layouts = Response(200, {"value": [{
             "dl_schluessel": "angebote_layout_" + action_id,
@@ -459,7 +466,9 @@ class DataverseActionsTests(unittest.TestCase):
         self.assertEqual(result["data"][1]["image_key"], "BARCODE-2")
         self.assertEqual(result["data"][0]["action_layout"], {"density": 4})
         self.assertNotIn("retail_price_cents", result["data"][0])
-        self.assertEqual(len(result["data"]), 3)
+        # Upcoming actions are public (homepage filters weeks); expired ones are not.
+        self.assertEqual(len(result["data"]), 4)
+        self.assertNotIn("6" * 32, [row["id"] for row in result["data"]])
         self.assertEqual(result["config"], {"feature_archive_enabled": True})
 
     def test_public_empty_get_still_includes_runtime_config(self):

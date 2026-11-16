@@ -153,6 +153,19 @@ class AngeboteTests(unittest.TestCase):
             data["layout"][field] = value
             self.error(400, normalize, data)
 
+    def test_TC_F23_target_styles_survive_publication_and_are_validated(self):
+        data = draft()
+        data["layout"]["target_styles"] = {"card": {"template": "half-red", "marker_type": "pill", "text_color": "#112233"}}
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        public = self.service.public()[0]["data"]["layout"]
+        self.assertEqual(public["target_styles"], data["layout"]["target_styles"])
+        for styles in ({"sheet": {}}, {"card": {"template": "unbekannt"}}, {"card": {"marker_type": "invalid"}},
+                       {"single": {"text_color": "rot"}}, {"scale": {"unbekannt": 1}}, {"card": []}, []):
+            data = draft()
+            data["layout"]["target_styles"] = styles
+            self.error(400, normalize, data)
+
     def test_TC_F2_01_exact_base_price(self):
         self.assertEqual(base_cents(draft()["items"][0]), 125)
         self.assertEqual(base_cents({"units": 1, "volume_ml": 8000, "price_cents": 100}), 13)

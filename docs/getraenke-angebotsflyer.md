@@ -80,9 +80,19 @@ Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpr
   gedrehtem Preisschild). Beide gelten für Sammelflyer, Kachel, Einzelflyer und Waage.
 - Auf der Startseite erscheinen die Kacheltexte halbfett statt fett und wirken
   dadurch filigraner; Flyer, Druck und Waage bleiben unverändert.
-- Weitere Elementwerkzeuge umfassen eigene Bilder/Texte, Kopien, Ghost,
-  Deckkraft und Ebenen. Original-Wochenvorlagen behalten ihre originalen
-  Artikelanpassungen.
+- Wie im bisherigen CMS-Editor stehen in jeder Vorschau **Ghost**, **Duplikat**,
+  **+ Ghost** / **+ Duplikat** (weitere Kopien, einzeln wählbar und löschbar),
+  **+ Bild** (eigenes Bild mit Deckkraft, **Bild entfernen**), der
+  **Drehungs-Schieber** mit **0°** sowie **Element zurücksetzen** und **Alles
+  zurücksetzen** zur Verfügung. Das gilt auf `angebote.html`, im Kiosk und im
+  CMS gleichermaßen. Original-Wochenvorlagen behalten ihre originalen
+  Artikelanpassungen; Kopien und Bilder erscheinen in der Elementauswahl.
+- **Vorlage, Farben und Schrift** gelten je Ausgabeziel: Wer im Reiter
+  „Einzelflyer“ den Stil ändert, ändert ihn für alle Einzelflyer dieser Aktion,
+  nicht aber für Kachel, Sammelflyer oder Waage. Enthält das Ziel frei
+  verschobene Elemente, fragt das Fenster „Gestaltung ersetzen?“ vorher nach.
+- Auf der Startseite wechseln **Diese Woche / Nächste Woche** auch mobil;
+  eine bereits angelegte Aktion der nächsten Woche erscheint dort.
 - **Gestaltung speichern** erhält die Anpassungen für diese Aktion.
   Andere Aktionen und globale Designstandards werden dadurch nicht verändert.
 - **Download**, **Drucken / PDF**, **Teilen** und **Auf die Waage** verwenden

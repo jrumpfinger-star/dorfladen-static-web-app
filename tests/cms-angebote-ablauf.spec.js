@@ -37,7 +37,7 @@ async function setup(page) {
         const token = req.headers()['x-cms-auth'] || '';
         state.offerReads.push(token);
         const visible = [...state.actions.values()].filter((action) => token === 'test-cms-session'
-          || (action.valid_from <= '2026-11-18' && action.valid_to >= '2026-11-18'));
+          || action.valid_to >= '2026-11-18');
         return json({ success: true, config: { scale_enabled: false, scale_scope: 'preview', feature_archive_enabled: false },
           data: visible.flatMap((action) => action.items.map((it, i) => ({
             id: it.id, dl_angeboteid: it.id, dl_aktion_id: action.aktion_id, dl_aktion_titel: action.title,
@@ -195,6 +195,29 @@ test('TC-F18-04/06: gespeicherte Getränke sind ohne weitere Freigabe mit Flyer 
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F25-02: Aktion der nächsten Woche erscheint auf der Startseite nur unter „Nächste Woche“', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const dlg = await create(page, 'drinks');
+  await dlg.locator('[data-density]').selectOption('4');
+  await dlg.locator('[data-meta=valid_from]').fill('2026-11-23');
+  await dlg.locator('[data-meta=valid_to]').fill('2026-11-28');
+  await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+  expect(state.writes).toHaveLength(1);
+  await page.goto(BASE + '/index.html');
+  const mobile = page.viewportSize().width <= 768;
+  if (mobile) await page.locator('.mob-action[onclick*="offers"]').click();
+  const grid = page.locator(mobile ? '#mob-ang-grid' : '#ang-grid');
+  await expect(grid.locator('.an-product')).toHaveCount(0);
+  await page.locator(mobile ? '#mob-ang-btn-next' : '#ang-btn-next').click();
+  await expect(grid.locator('.an-product')).toHaveCount(1);
+  await expect(grid).toContainText('1,25');
+  await page.locator(mobile ? '#mob-ang-btn-this' : '#ang-btn-this').click();
+  await expect(grid.locator('.an-product')).toHaveCount(0);
+  expect(state.errors).toEqual([]);
+});
 test('TC-F18-01/06: Sonderaktion bleibt sechszeilig; ungültige Daten und Schreibfehler bleiben sichtbar', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
@@ -500,12 +523,17 @@ test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelauf
   expect(state.errors).toEqual([]);
 });
 
-async function openPreview(page, kind, count) {
+async function openPreview(page, kind, count, withImage) {
   const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
   if (kind === 'drinks') for (let i = 0; i < count; i++) await fillDrink(rows.nth(i), i + 1);
   else for (let i = 0; i < count; i++) {
     await rows.nth(i).locator('[data-f=produkt]').fill('Original ' + (i + 1));
     await rows.nth(i).locator('[data-f=preis]').fill('1,99');
+  }
+  if (withImage) {
+    const chooser = page.waitForEvent('filechooser');
+    await rows.first().locator('[data-offer-action=uploadBildSP]').click();
+    await (await chooser).setFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
   }
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dlg).toHaveCount(0);
@@ -548,7 +576,7 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', asy
   expect(Number(await page.locator('[data-element-prop=w]').inputValue())).toBeGreaterThan(width);
   const turn = await middle(page.locator('#an-hit-layer [data-rotate]')), center = await middle(page.locator('#an-hit-layer .an-selected'));
   await drag(page, turn, { x: center.x + 80, y: center.y });
-  await expect(page.locator('[data-element-prop=rotation]')).toHaveValue('90');
+  await expect(page.locator('[data-element-prop=rotation][type=number]')).toHaveValue('90');
   await saveDesign(page);
   const saved = state.writes.at(-1).layout.pages.flatMap((entry) => entry.elements).find((entry) => entry.id === id);
   expect(saved.rotation).toBe(90);
@@ -622,4 +650,153 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   const part = (await surface.locator('select').inputValue()).split(':').pop();
   expect(Math.abs(overrides[part + 'Rot'])).toBeGreaterThan(60);
   expect(state.errors).toEqual([]);
+});
+
+const SURFACES = [['angebote', '/angebote.html'], ['kiosk', '/kiosk.html'], ['cms', '/cms.html?tab=ang']];
+async function openSurface(page, path) {
+  await page.goto(BASE + path);
+  if (path.startsWith('/kiosk')) await page.evaluate(() => window.K.switchTab('angebote'));
+}
+
+for (const [surface, path] of SURFACES) {
+  test(`TC-F26-01/F27-01: Original-Wochenvorschau hat überall dieselben Werkzeuge (${surface})`, async ({ page }) => {
+    const state = await setup(page);
+    await openSurface(page, path);
+    await openPreview(page, 'weekly', 1, true);
+    const surfaceBox = page.locator('.an-weekly-surface');
+    await expect(surfaceBox.locator('canvas')).toBeVisible();
+    const select = surfaceBox.locator('[data-preview-element]');
+    const part = async (suffix) => select.locator('option[value$=":' + suffix + '"]');
+    // kompakt: keine Streckung zwischen den Werkzeugblöcken
+    const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 640;
+    if (!stacked) {
+      const boxes = [];
+      for (const selector of ['.an-direct-tools', '.an-extras', '#an-cms-article', '#an-inspector > details']) boxes.push(await page.locator('.an-cms-preview-modal ' + selector).first().boundingBox());
+      for (let i = 1; i < boxes.length; i++) expect(boxes[i].y - (boxes[i - 1].y + boxes[i - 1].height)).toBeLessThanOrEqual(60);
+    }
+    // Pfeile, Drehung
+    await surfaceBox.locator('[data-preview-nudge="2,0"]').click();
+    await surfaceBox.locator('[data-x-rot]').fill('40');
+    await expect(surfaceBox.locator('[data-x-rot-out]')).toHaveText('40°');
+    // Ghost, Duplikat, Kopien
+    await surfaceBox.getByRole('button', { name: 'Ghost', exact: true }).click();
+    await expect(surfaceBox.getByRole('button', { name: 'Ghost', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(await part('ghost')).toHaveCount(1);
+    await surfaceBox.getByRole('button', { name: 'Duplikat', exact: true }).click();
+    await expect(await part('dup')).toHaveCount(1);
+    await surfaceBox.getByRole('button', { name: '+ Ghost', exact: true }).click();
+    await expect(surfaceBox.locator('.an-chip')).toHaveCount(1);
+    await expect(await part('copy-0')).toHaveCount(1);
+    await surfaceBox.getByRole('button', { name: 'Kopie 1 löschen', exact: true }).click();
+    await expect(surfaceBox.locator('.an-chip')).toHaveCount(0);
+    await surfaceBox.locator('[data-x-prop=ghostAlpha]').fill('60');
+    // Eigenes Bild
+    await surfaceBox.locator('[data-x-image]').setInputFiles({ name: 'eigen.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
+    await expect(await part('customImg')).toHaveCount(1, { timeout: 15000 });
+    await saveDesign(page);
+    const saved = Object.values(state.writes.at(-1).layout.cms.plakat_article_overrides)[0];
+    expect(saved).toMatchObject({ ghostMode: 'on', dupOn: true, imgRot: 40 });
+    expect(saved.imgDx).toBeGreaterThan(0);
+    expect(saved.ghostAlpha).toBeCloseTo(.6);
+    expect(saved.customImg).toMatch(/^data:image\/png;base64,/);
+    // Alles zurücksetzen
+    await surfaceBox.getByRole('button', { name: 'Alles zurücksetzen', exact: true }).click();
+    await page.getByRole('dialog').last().getByRole('button', { name: 'Zurücksetzen', exact: true }).click();
+    await expect(surfaceBox.getByRole('button', { name: 'Ghost', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    await expect(await part('customImg')).toHaveCount(0);
+    expect(state.errors).toEqual([]);
+  });
+
+  test(`TC-F27-02: Freie Gestaltung bietet überall Ghost, Duplizieren, Eigenes Bild und Drehung (${surface})`, async ({ page }) => {
+    const state = await setup(page);
+    await openSurface(page, path);
+    await openPreview(page, 'drinks', 2);
+    const tools = page.locator('#an-inspector');
+    const count = async () => (await page.locator('#an-select-element option').count());
+    const before = await count();
+    await expect(tools.getByRole('button', { name: '+ Eigenes Bild', exact: true })).toBeVisible();
+    await tools.getByRole('button', { name: 'Ghost', exact: true }).click();
+    await expect.poll(count).toBe(before + 1);
+    await tools.getByRole('button', { name: 'Duplizieren', exact: true }).click();
+    await expect.poll(count).toBe(before + 2);
+    await tools.locator('[data-element-prop=rotation][type=range]').fill('30');
+    await saveDesign(page);
+    const elements = state.writes.at(-1).layout.pages.flatMap((entry) => entry.elements);
+    expect(elements.some((e) => e.opacity === .35)).toBe(true);
+    expect(elements.some((e) => e.rotation === 30)).toBe(true);
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F23-01..03: Stil gilt je Ausgabeziel; freie Positionen werden erst nach Bestätigung ersetzt', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const chosen = () => page.locator('input[data-style=template]:checked').first().inputValue();
+  const pick = async (id) => {
+    for (const selector of ['.an-cms-style-options', '.an-template-picker']) {
+      const box = page.locator(selector).first();
+      if (!(await box.evaluate((d) => d.open))) await box.locator('> summary').click();
+    }
+    await page.locator('label.an-choice', { has: page.locator('input[data-style=template][value=' + id + ']') }).click();
+  };
+  const original = await chosen();
+  await page.locator('[data-layout-target=card]').click();
+  await pick('half-red');
+  await expect.poll(chosen).toBe('half-red');
+  await expect(page.getByRole('dialog', { name: 'Gestaltung ersetzen?' })).toHaveCount(0);
+  await expect(page.locator('[data-style=density]').first()).toBeHidden();
+  await page.locator('[data-layout-target=single]').click();
+  await expect.poll(chosen).toBe(original);
+  await page.locator('[data-layout-target=card]').click();
+  await expect.poll(chosen).toBe('half-red');
+  await saveDesign(page);
+  let layout = state.writes.at(-1).layout;
+  expect(layout.target_styles.card.template).toBe('half-red');
+  expect(layout.target_styles.single).toBeUndefined();
+  expect(layout.template).toBe(original);
+  expect(layout.targets.card.every((entry) => entry.background === layout.target_styles.card.background)).toBe(true);
+  // freie Position → Rückfrage
+  await page.locator('#an-select-element').selectOption({ index: 1 });
+  await page.locator('[data-element-prop=x]').fill('77');
+  await page.locator('[data-element-prop=x]').dispatchEvent('change');
+  await pick('tag-green');
+  const dialog = page.getByRole('dialog').last();
+  await expect(dialog).toContainText('Gestaltung ersetzen?');
+  await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await expect.poll(chosen).toBe('half-red');
+  await pick('tag-green');
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Stil anwenden', exact: true }).click();
+  await expect.poll(chosen).toBe('tag-green');
+  await saveDesign(page);
+  layout = state.writes.at(-1).layout;
+  expect(layout.target_styles.card.template).toBe('tag-green');
+  expect(state.errors).toEqual([]);
+});
+test('TC-F24-01: Buttons und Felder sind klar erkennbar (Kontrast)', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const result = await page.evaluate(() => {
+    const parse = (value) => value.match(/[\d.]+/g).slice(0, 4).map(Number);
+    const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
+    const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+    const out = [];
+    const check = (label, element, around) => {
+      const style = getComputedStyle(element);
+      out.push({ label, border: ratio(parse(style.borderTopColor), around), text: ratio(parse(style.color), parse(style.backgroundColor)) });
+    };
+    const dialog = document.querySelector('.an-cms-preview-modal');
+    const white = [255, 255, 255];
+    check('Standard', [...dialog.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Download'), white);
+    check('Standard klein', [...dialog.querySelectorAll('.an-cms-side button')].find((b) => b.textContent.includes('Duplizieren')), white);
+    check('Feld', dialog.querySelector('.an-cms-side input[data-cms-article=name]'), white);
+    const primary = [...dialog.querySelectorAll('button')].find((b) => b.textContent.includes('Gestaltung speichern'));
+    out.push({ label: 'Primär', border: 4, text: ratio(parse(getComputedStyle(primary).color), parse(getComputedStyle(primary).backgroundColor)) });
+    return out;
+  });
+  for (const entry of result) {
+    expect(entry.border, entry.label).toBeGreaterThanOrEqual(3);
+    expect(entry.text, entry.label).toBeGreaterThanOrEqual(4.5);
+  }
 });

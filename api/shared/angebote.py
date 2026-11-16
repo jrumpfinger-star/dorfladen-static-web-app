@@ -223,6 +223,53 @@ def _background(source):
     return {"background": value}
 
 
+def _theme_value(key, value):
+    if key.endswith("_color") or key.endswith("_background"):
+        if not COLOR.fullmatch(str(value)):
+            raise AngeboteFehler(400, "Bitte die Gestaltungsfarben prüfen.")
+    elif key == "font" and value not in FONTS:
+        raise AngeboteFehler(400, "Bitte eine gültige Schrift wählen.")
+    elif key == "price_shape" and value not in ("rect", "round", "ellipse"):
+        raise AngeboteFehler(400, "Bitte eine gültige Preisform wählen.")
+    elif key in ("name_size", "price_size", "details_size"):
+        value = _number(value, "die Schriftgröße", 14, 100)
+    elif key == "image_rotation":
+        value = _number(value, "die Bilddrehung", -180, 180)
+    elif key == "image_scale":
+        value = _number(value, "die Bildgröße", 20, 200)
+    elif key == "marker_type" and value not in MARKER_TYPES:
+        raise AngeboteFehler(400, "Bitte einen gültigen Ersparnismarker wählen.")
+    elif key == "marker_palette" and value not in MARKER_PALETTES:
+        raise AngeboteFehler(400, "Bitte eine gültige Ersparnis-Farbwelt wählen.")
+    elif key == "marker_scale":
+        value = _number(value, "die Größe des Ersparnismarkers", 80, 180)
+    return value
+
+
+def _target_styles(raw):
+    """Eigener Stil je Ausgabeziel (Kachel, Einzelflyer, Waage); fehlt er, gilt der Stil des Flyers."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict) or set(raw) - {"card", "single", "scale"}:
+        raise AngeboteFehler(400, "Bitte die Gestaltung der Ausgabeziele prüfen.")
+    result = {}
+    for target, style in raw.items():
+        if not isinstance(style, dict) or set(style) - set(THEME_DEFAULTS) - {"template", "color", "background"}:
+            raise AngeboteFehler(400, "Bitte die Gestaltung der Ausgabeziele prüfen.")
+        checked = {}
+        for key, value in style.items():
+            if key == "template" and value not in TEMPLATES:
+                raise AngeboteFehler(400, "Bitte eine gültige Gestaltung wählen.")
+            if key in ("color", "background"):
+                if not COLOR.fullmatch(str(value)):
+                    raise AngeboteFehler(400, "Bitte eine gültige Farbe wählen.")
+            elif key != "template":
+                value = _theme_value(key, value)
+            checked[key] = value
+        result[target] = checked
+    return result
+
+
 def _layout(raw, items):
     if not isinstance(raw, dict):
         raise AngeboteFehler(400, "Die Gestaltung konnte nicht gelesen werden.")
@@ -262,29 +309,8 @@ def _layout(raw, items):
                                   "elements": _elements(item_layout["elements"], known, seen, width, height),
                                   **_background(item_layout)})
         target_result[target] = result_target
-    theme = {}
-    for key, default in THEME_DEFAULTS.items():
-        value = raw.get(key, default)
-        if key.endswith("_color") or key.endswith("_background"):
-            if not COLOR.fullmatch(str(value)):
-                raise AngeboteFehler(400, "Bitte die Gestaltungsfarben prüfen.")
-        elif key == "font" and value not in FONTS:
-            raise AngeboteFehler(400, "Bitte eine gültige Schrift wählen.")
-        elif key == "price_shape" and value not in ("rect", "round", "ellipse"):
-            raise AngeboteFehler(400, "Bitte eine gültige Preisform wählen.")
-        elif key in ("name_size", "price_size", "details_size"):
-            value = _number(value, "die Schriftgröße", 14, 100)
-        elif key == "image_rotation":
-            value = _number(value, "die Bilddrehung", -180, 180)
-        elif key == "image_scale":
-            value = _number(value, "die Bildgröße", 20, 200)
-        elif key == "marker_type" and value not in MARKER_TYPES:
-            raise AngeboteFehler(400, "Bitte einen gültigen Ersparnismarker wählen.")
-        elif key == "marker_palette" and value not in MARKER_PALETTES:
-            raise AngeboteFehler(400, "Bitte eine gültige Ersparnis-Farbwelt wählen.")
-        elif key == "marker_scale":
-            value = _number(value, "die Größe des Ersparnismarkers", 80, 180)
-        theme[key] = value
+    theme = {key: _theme_value(key, raw.get(key, default)) for key, default in THEME_DEFAULTS.items()}
+    target_styles = _target_styles(raw.get("target_styles"))
     adjustments = raw.get("adjustments", {})
     if not isinstance(adjustments, dict) or len(adjustments) > 400:
         raise AngeboteFehler(400, "Bitte die Vorlagenanpassungen prüfen.")
@@ -302,7 +328,8 @@ def _layout(raw, items):
     cms = {"cms": _cms_design(raw["cms"], items)} if "cms" in raw else {}
     return {"mode": mode, "template": template, "density": density,
             "color": color, "background": background, "pages": result,
-            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms}
+            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms,
+            **({"target_styles": target_styles} if target_styles else {})}
 
 
 def normalize(raw, publish=False):

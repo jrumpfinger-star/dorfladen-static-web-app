@@ -404,6 +404,7 @@
     var sub=document.getElementById('mob-offers-sub');
     if(sub)sub.textContent=result.count?result.count+' Angebote diese Woche':'Aktuell keine Angebote';
   }});
+  window.mobAngSetWeek=function(mode){window.AngeboteKunden.mount({grid:'mob-ang-grid',week:mode});};
 
   /* === NEWS TICKER (mobile top) – only items marked as Laufband === */
   fetch(API_BASE+'/news').then(function(r){return r.json();}).then(function(data){
