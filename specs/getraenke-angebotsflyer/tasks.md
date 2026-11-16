@@ -54,4 +54,8 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF46 | Auswahl ohne Layoutsprung, echte Direkttransformationen und Drehgriffe für Getränke und Original-Wochenvorlagen ergänzen | GF45 | TC-F19-01, TC-F19-04 |
 | GF48 | Stabile Artikelkennungen beim Speichern, deutsche Konfliktmeldungen und zentrierte Meldungsfenster | GF44 | TC-F18-10, TC-F18-11 |
 | GF49 | Kopf der Magazinvorlagen (Logo, Titel, Zeitraum) vertikal ausrichten, Titel einzeilig | GF45 | TC-F19-05 |
+| GF50 | Drei bildbetonte Standardvorlagen (Bild 50 %) für Sammelflyer, Kachel, Einzelflyer und Waage; Serverfreigabe; CMS-Originalauswahl unverändert | GF49 | TC-F20-01, TC-F20-02 |
+| GF51 | Mockups aller Ausgabeziele aus dem echten Renderer erzeugen und zur Abnahme bereitstellen | GF50 | TC-F20-03 |
+| GF52 | Drei Preisschild-Vorlagen (Aufteilung der Originalkachel) mit Flag `tag` für alle Ausgabeziele ergänzen | GF50 | TC-F20-04 |
+| GF53 | Startseitenkacheln halbfett statt fett zeichnen (Option nur für `paintCards`), CMS-/Flyerausgaben unverändert | GF52 | TC-F21-01 |
 | GF47 | Vier-Viewport-Pointer-/Speicherregression und Hilfe aktualisieren; ausschließlich Feature-Preview prüfen und bereitstellen | GF46 | TC-F19-01..04 |

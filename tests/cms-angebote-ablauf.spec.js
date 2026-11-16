@@ -283,6 +283,93 @@ test('TC-F19-05: Magazinkopf richtet Logo, Titel und Zeitraum auf einer Mittelli
   }
 });
 
+test('TC-F20-01/02/04: bildbetonte und Preisschild-Vorlagen ohne Überlappung und Überlauf', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const result = await page.evaluate(async () => {
+    const M = window.AngeboteModel, ids = ['half-red', 'half-green', 'half-blue', 'tag-red', 'tag-green', 'tag-blue'], output = { ids: M.templateOptions.map((o) => o[0]), cms: M.cmsTemplateOptions.map((o) => o[0]), cases: [] };
+    const overlap = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    for (const template of ids) for (const kind of ['drinks', 'weekly']) for (const density of [4, 6]) {
+      const data = M.blank(kind); data.layout.density = density; data.title = 'Angebote'; data.valid_from = '2026-11-23'; data.valid_to = '2026-11-28';
+      M.useTemplate(data.layout, template);
+      data.items = ['Mineralwasser still', 'Franziskaner Hefe-Weissbier naturtrüb', 'Cola Zero', 'Apfelschorle', 'Bio-Orangensaft', 'Weißbier'].map((name, i) => Object.assign(M.item(), {
+        name, description: 'Kurzbeschreibung', price_cents: 1099 + i, old_price_cents: 1399, units: 12, volume_ml: 750, packaging: 'Mehrweg', deposit_cents: 330 }));
+      M.applyTemplate(data); M.ensureTargets(data);
+      const problems = [], text = ['name', 'pack', 'description', 'price', 'old_price', 'deposit', 'base', 'period'];
+      const check = (elements, box, label) => {
+        const shown = elements.filter((e) => !e.hidden);
+        for (const e of shown) if (e.x < box.x - 0.5 || e.y < box.y - 0.5 || e.x + e.w > box.x + box.w + 0.5 || e.y + e.h > box.y + box.h + 0.5) problems.push(label + ': ' + e.type + ' außerhalb');
+        const words = shown.filter((e) => text.includes(e.type));
+        for (let i = 0; i < words.length; i++) for (let j = i + 1; j < words.length; j++) {
+          if (words[i].item_id === words[j].item_id && overlap(words[i], words[j])) problems.push(label + ': ' + words[i].type + ' überlappt ' + words[j].type);
+        }
+      };
+      const sheet = data.layout.pages[0], first = data.items[0].id, ratios = [], isHalf = template.startsWith('half');
+      const markerOnTag = (elements, label) => {
+        const tag = elements.find((e) => e.type === 'shape' && e.rotation !== 0), marker = elements.find((e) => e.type === 'discount');
+        if (!tag || !marker || !overlap(tag, marker)) problems.push(label + ': Marker liegt nicht auf dem Preisschild');
+      };
+      for (const item of data.items.slice(0, density)) {
+        const parts = sheet.elements.filter((e) => e.item_id === item.id), card = parts.find((e) => e.type === 'shape');
+        const image = parts.find((e) => e.type === 'image');
+        if (isHalf) ratios.push(image.w / card.w); else markerOnTag(parts, template + ' Sammelflyer ' + density);
+        check(parts, card, template + ' Sammelflyer ' + density);
+      }
+      for (const target of ['card', 'single', 'scale']) {
+        const layout = data.layout.targets[target].find((entry) => entry.item_id === first), image = layout.elements.find((e) => e.type === 'image');
+        if (isHalf) ratios.push(image.w / layout.width); else markerOnTag(layout.elements, template + ' ' + target);
+        check(layout.elements, { x: 0, y: 0, w: layout.width, h: layout.height }, template + ' ' + target);
+      }
+      const errors = [];
+      for (let n = 0; n < data.layout.pages.length; n++) errors.push(...(await M.render(data, n, 1)).errors);
+      for (const target of ['card', 'single', 'scale']) errors.push(...(await M.renderTarget(data, target, first, 1)).errors);
+      output.cases.push({ label: template + ' ' + kind + ' ' + density, ratios, problems, errors });
+    }
+    return output;
+  });
+  expect(result.ids).toEqual(expect.arrayContaining(['half-red', 'half-green', 'half-blue', 'tag-red', 'tag-green', 'tag-blue']));
+  expect(result.cms).not.toEqual(expect.arrayContaining(['half-red']));
+  expect(result.cms).not.toEqual(expect.arrayContaining(['tag-red']));
+  expect(result.cms).toContain('modern-mag-xl');
+  for (const entry of result.cases) {
+    for (const ratio of entry.ratios) expect(Math.abs(ratio - 0.5), entry.label).toBeLessThanOrEqual(0.01);
+    expect(entry.problems, entry.label).toEqual([]);
+    expect(entry.errors, entry.label).toEqual([]);
+  }
+});
+
+test('TC-F21-01: Startseitenkacheln verwenden halbfette statt fette Schrift', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const result = await page.evaluate(async () => {
+    const M = window.AngeboteModel, proto = CanvasRenderingContext2D.prototype, desc = Object.getOwnPropertyDescriptor(proto, 'font');
+    let fonts = [];
+    Object.defineProperty(proto, 'font', { configurable: true, get() { return desc.get.call(this); }, set(value) { fonts.push(String(value)); desc.set.call(this, value); } });
+    const output = {};
+    const build = async (kind) => {
+      const data = M.blank(kind);
+      data.title = 'Angebote'; data.valid_from = '2026-11-23'; data.valid_to = '2026-11-28';
+      data.items = [Object.assign(M.item(), { name: 'Cookie&Cream 154g', price_cents: 119, old_price_cents: 149, units: 12, volume_ml: 750, packaging: 'Mehrweg', deposit_cents: 330 })];
+      M.applyTemplate(data); if (kind === 'weekly') await M.adoptWeekly(data);
+      M.ensureTargets(data); return data;
+    };
+    const heavy = /(^|\s)(bold|700|800|900)\s/;
+    for (const kind of ['weekly', 'drinks']) {
+      const data = await build(kind), id = data.items[0].id;
+      fonts = []; await M.renderTarget(data, 'card', id, 1, true); const light = fonts.slice();
+      fonts = []; await M.renderTarget(data, 'card', id, 1); const normal = fonts.slice();
+      output[kind] = { lightHeavy: light.filter((f) => heavy.test(f)), lightSemibold: light.filter((f) => /^600\s/.test(f)).length, normalHeavy: normal.filter((f) => heavy.test(f)).length };
+    }
+    Object.defineProperty(proto, 'font', desc);
+    return output;
+  });
+  for (const kind of ['weekly', 'drinks']) {
+    expect(result[kind].lightHeavy, kind).toEqual([]);
+    expect(result[kind].lightSemibold, kind).toBeGreaterThan(0);
+    expect(result[kind].normalHeavy, kind).toBeGreaterThan(0);
+  }
+});
+
 test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speicherung erhalten', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');

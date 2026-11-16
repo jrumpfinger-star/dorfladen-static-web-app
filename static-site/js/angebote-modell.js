@@ -29,7 +29,19 @@ window.AngeboteModel = (function () {
     { id: 'modern-mag-bold', label: 'Mag Bold (Violett)', original: true, magazine: true, header: '#ede9fe', accent: '#8b5cf6',
       settings: { background: '#faf5ff', title_color: '#7c3aed', color: '#db2777', card_background: '#fefcff', text_color: '#1e1b4b', price_background: '#f5f3ff', price_shape: 'round' } },
     { id: 'modern-mag-xl', label: 'Mag XL (Großbild)', original: true, magazine: true, xl: true, header: '#dbeafe', accent: '#3b82f6',
-      settings: { background: '#f0f4f8', title_color: '#1e40af', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#eff6ff', price_shape: 'round' } }
+      settings: { background: '#f0f4f8', title_color: '#1e40af', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#eff6ff', price_shape: 'round' } },
+    { id: 'half-red', label: 'Bild 50 % · Rot', original: true, half: true,
+      settings: { background: '#f6f1ea', title_color: '#a51d2d', color: '#a51d2d', card_background: '#ffffff', text_color: '#1f1a1a', price_background: '#a51d2d', price_shape: 'round' } },
+    { id: 'half-green', label: 'Bild 50 % · Grün', original: true, half: true,
+      settings: { background: '#f2f6ee', title_color: '#234c38', color: '#2f7d4f', card_background: '#ffffff', text_color: '#1f2d24', price_background: '#2f7d4f', price_shape: 'round' } },
+    { id: 'half-blue', label: 'Bild 50 % · Blau', original: true, half: true,
+      settings: { background: '#eef3f9', title_color: '#1e3a8a', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#2563eb', price_shape: 'round' } },
+    { id: 'tag-red', label: 'Preisschild · Rot', original: true, tag: true, soft: '#f4f0ea',
+      settings: { background: '#f1eee8', title_color: '#a51d2d', color: '#a51d2d', card_background: '#ffffff', text_color: '#1a1a1a', price_background: '#a51d2d', price_shape: 'rect' } },
+    { id: 'tag-green', label: 'Preisschild · Grün', original: true, tag: true, soft: '#eef3ea',
+      settings: { background: '#f2f6ee', title_color: '#234c38', color: '#2f7d4f', card_background: '#ffffff', text_color: '#1f2d24', price_background: '#2f7d4f', price_shape: 'rect' } },
+    { id: 'tag-blue', label: 'Preisschild · Blau', original: true, tag: true, soft: '#eaf0f8',
+      settings: { background: '#eef3f9', title_color: '#1e3a8a', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#2563eb', price_shape: 'rect' } }
   ];
   function templateStyle(id) {
     var style = templateStyles.find(function (entry) { return entry.id === id; });
@@ -201,6 +213,41 @@ window.AngeboteModel = (function () {
             Object.assign({}, shared, { font_size: size }, extra)));
         }
         elements.push(el('shape', x, y, 349, h, { item_id: it.id, fill: it.highlight ? '#f2ead8' : l.card_background, shape: l.template === 'classic' ? 'rect' : 'round' }));
+        if (style.tag) {
+          var tagTop = compact ? 68 : 84, tagHeight = compact ? 138 : 250;
+          bound('name', 16, compact ? 8 : 10, 317, compact ? 36 : 44, Math.min(l.name_size, compact ? 20 : 26), { bold: true });
+          if (data.kind === 'drinks') bound('pack', 16, compact ? 44 : 56, 317, 20, 15);
+          else bound('description', 16, compact ? 44 : 56, 317, 20, 15);
+          elements.push(el('shape', x + 12, y + tagTop, 325, tagHeight, { item_id: it.id, fill: style.soft, shape: 'round' }));
+          bound('image', 12, tagTop, compact ? 190 : 230, tagHeight, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
+          var tagBox = compact ? { x: 188, y: 104, w: 140, h: 56, pad: 8 } : { x: 206, y: 174, w: 124, h: 66, pad: 8 };
+          elements.push(el('shape', x + tagBox.x, y + tagBox.y, tagBox.w, tagBox.h, { item_id: it.id, fill: l.price_background, shape: l.price_shape, rotation: -6 }));
+          bound('price', tagBox.x + tagBox.pad, tagBox.y + tagBox.pad, tagBox.w - 2 * tagBox.pad, tagBox.h - 2 * tagBox.pad, Math.min(l.price_size, compact ? 30 : 34), { bold: true, align: 'center', fill: priceColor(l), rotation: -6 });
+          bound('old_price', tagBox.x, tagBox.y + tagBox.h + (compact ? 8 : 10), tagBox.w, compact ? 24 : 26, compact ? 15 : 16, { align: 'center' });
+          if (data.kind === 'drinks') {
+            bound('deposit', 18, compact ? 212 : 342, 313, compact ? 18 : 24, compact ? 14 : 16);
+            bound('base', 18, compact ? 232 : 368, 313, compact ? 18 : 24, compact ? 14 : 16);
+          }
+          bound('discount', compact ? 194 : 210, compact ? 74 : 128, compact ? 70 : 82, compact ? 54 : 64, 16, { bold: true, align: 'center', fill: '#ffffff' });
+          return;
+        }
+        if (style.half) {
+          var half = { name: compact ? 18 : 24, pack: compact ? 14 : 16, price: compact ? 40 : 58, note: compact ? 14 : 16 };
+          var rowTop = compact ? 152 : 240, rowHeight = compact ? 46 : 70;
+          bound('image', 12, 12, 174, compact ? 124 : 214, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
+          bound('name', 198, 12, 139, compact ? 58 : 96, Math.min(l.name_size, half.name), { bold: true });
+          if (data.kind === 'drinks') bound('pack', 198, compact ? 74 : 112, 139, compact ? 56 : 72, half.pack);
+          else bound('description', 198, compact ? 74 : 112, 139, compact ? 56 : 100, half.pack);
+          elements.push(el('shape', x + 12, y + rowTop - 6, 325, rowHeight + 12, { item_id: it.id, fill: l.price_background, shape: l.price_shape }));
+          bound('price', 24, rowTop, 205, rowHeight, Math.min(l.price_size, half.price), { bold: true, fill: priceColor(l) });
+          bound('old_price', 236, rowTop + (compact ? 8 : 14), 96, compact ? 30 : 42, 18, { fill: priceColor(l) });
+          if (data.kind === 'drinks') {
+            bound('deposit', 18, compact ? 212 : 332, 313, compact ? 18 : 24, half.note);
+            bound('base', 18, compact ? 232 : 360, 313, compact ? 18 : 24, half.note);
+          }
+          bound('discount', 14, 12, 80, 60, 16, { bold: true, align: 'center', fill: '#ffffff' });
+          return;
+        }
         if (style.magazine) {
           var imageHeight = compact ? (style.xl ? 90 : 74) : (style.xl ? 178 : 145);
           bound('image', 14, 12, 321, imageHeight, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
@@ -239,7 +286,110 @@ window.AngeboteModel = (function () {
       add('shape', x - 8, y - 6, w + 16, h + 12, 20, { fill: l.price_background, shape: l.price_shape });
       add('price', x, y, w, h, fontSize, { bold: true, fill: priceColor(l) });
     }
-    if (target === 'card') {
+    function halfTarget() {
+      var shape = l.price_shape, ink = priceColor(l);
+      var note = { fill: ink, align: 'right' };
+      if (target === 'card') {
+        add('shape', 8, 8, 404, 464, 20, { fill: item.highlight ? '#f2ead8' : l.card_background, shape: 'round' });
+        add('image', 16, 16, 210, 270, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        add('name', 242, 16, 162, 120, Math.min(l.name_size, 26), { bold: true });
+        if (data.kind === 'drinks') add('pack', 242, 142, 162, 76, 17);
+        else add('description', 242, 142, 162, 140, 15);
+        add('shape', 16, 302, 388, 70, 20, { fill: l.price_background, shape: shape });
+        add('price', 32, 308, 230, 58, Math.min(l.price_size, 48), { bold: true, fill: ink });
+        add('old_price', 274, 322, 120, 34, 18, note);
+        if (data.kind === 'drinks') {
+          add('deposit', 24, 380, 372, 20, 15);
+          add('base', 24, 402, 372, 20, 15);
+        }
+        add('period', 24, 436, 372, 22, 12);
+      } else if (target === 'single') {
+        add('shape', 20, 20, 760, 1090, 20, { fill: item.highlight ? '#f2ead8' : l.card_background, shape: 'round' });
+        add('logo', 520, 44, 230, 80, 20);
+        add('image', 40, 140, 400, 600, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        add('name', 464, 150, 296, 150, Math.min(l.name_size + 18, 46), { bold: true });
+        if (data.kind === 'drinks') {
+          add('pack', 464, 312, 296, 70, l.details_size + 8);
+          if (item.description) add('description', 464, 400, 296, 330, 22);
+        } else add('description', 464, 312, 296, 418, 24);
+        add('shape', 40, 770, 720, 130, 20, { fill: l.price_background, shape: shape });
+        add('price', 60, 782, 440, 106, Math.min(l.price_size + 28, 100), { bold: true, fill: ink });
+        add('old_price', 520, 806, 220, 56, 26, note);
+        if (data.kind === 'drinks') {
+          add('deposit', 44, 925, 706, 44, 24);
+          add('base', 44, 975, 706, 44, 24);
+        }
+        add('period', 44, 1050, 706, 34, 16);
+      } else {
+        add('shape', 8, 8, 784, 446, 20, { fill: item.highlight ? '#f2ead8' : l.card_background, shape: 'round' });
+        add('logo', 614, 12, 158, 44, 20);
+        add('image', 22, 24, 400, 414, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        add('name', 446, 62, 326, 100, Math.min(l.name_size + 14, 40), { bold: true });
+        if (data.kind === 'drinks') add('pack', 446, 168, 326, 36, 22);
+        else add('description', 446, 168, 326, 36, 20);
+        add('shape', 438, 212, 346, 92, 20, { fill: l.price_background, shape: shape });
+        add('price', 452, 220, 320, 76, Math.min(l.price_size + 12, 70), { bold: true, fill: ink });
+        add('old_price', 446, 312, 326, 30, 20);
+        if (data.kind === 'drinks') {
+          add('deposit', 446, 348, 326, 28, 18);
+          add('base', 446, 378, 326, 28, 18);
+        }
+        add('period', 446, 418, 326, 24, 14);
+      }
+    }
+    function tagTarget() {
+      var soft = style.soft, ink = priceColor(l), round = 'round';
+      function tag(box, size) {
+        add('shape', box.x, box.y, box.w, box.h, 20, { fill: l.price_background, shape: l.price_shape, rotation: -6 });
+        add('price', box.x + box.pad, box.y + (box.padV || box.pad), box.w - 2 * box.pad, box.h - 2 * (box.padV || box.pad), size, { bold: true, align: 'center', fill: ink, rotation: -6 });
+        add('old_price', box.x, box.y + box.h + 14, box.w, box.oldHeight, box.oldSize, { align: 'center' });
+      }
+      if (target === 'card') {
+        add('shape', 8, 8, 404, 464, 20, { fill: item.highlight ? '#f2ead8' : l.card_background, shape: round });
+        add('name', 24, 20, 372, 44, Math.min(l.name_size, 30), { bold: true });
+        if (data.kind === 'drinks') add('pack', 24, 66, 372, 26, 18);
+        else add('description', 24, 66, 372, 26, 16);
+        add('shape', 16, 104, 388, 260, 20, { fill: soft, shape: round });
+        add('image', 16, 104, 250, 260, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        tag({ x: 240, y: 190, w: 158, h: 80, pad: 10, oldHeight: 28, oldSize: 18 }, Math.min(l.price_size, 44));
+        if (data.kind === 'drinks') {
+          add('deposit', 24, 376, 372, 22, 15);
+          add('base', 24, 400, 372, 22, 15);
+        }
+        add('period', 24, 436, 372, 22, 12);
+      } else if (target === 'single') {
+        add('shape', 20, 20, 760, 1090, 20, { fill: item.highlight ? '#f2ead8' : l.card_background, shape: round });
+        add('logo', 520, 44, 230, 80, 20);
+        add('name', 44, 60, 460, 90, Math.min(l.name_size + 24, 52), { bold: true });
+        if (data.kind === 'drinks') add('pack', 44, 156, 460, 44, 28);
+        else add('description', 44, 156, 460, 44, 24);
+        add('shape', 40, 220, 720, 560, 20, { fill: soft, shape: round });
+        add('image', 40, 220, 470, 560, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        tag({ x: 470, y: 400, w: 270, h: 150, pad: 14, padV: 24, oldHeight: 50, oldSize: 28 }, Math.min(l.price_size + 28, 86));
+        if (data.kind === 'drinks') {
+          add('deposit', 44, 820, 706, 44, 24);
+          add('base', 44, 872, 706, 44, 24);
+        }
+        add('period', 44, 1040, 706, 34, 16);
+      } else {
+        add('shape', 8, 8, 784, 446, 20, { fill: item.highlight ? '#f2ead8' : l.card_background, shape: round });
+        add('logo', 614, 12, 158, 44, 20);
+        add('name', 24, 18, 560, 50, Math.min(l.name_size + 14, 40), { bold: true });
+        if (data.kind === 'drinks') add('pack', 24, 72, 560, 32, 22);
+        else add('description', 24, 72, 560, 32, 20);
+        add('shape', 16, 112, 768, 296, 20, { fill: soft, shape: round });
+        add('image', 16, 112, 460, 296, 20, { image_scale: l.image_scale, rotation: l.image_rotation });
+        tag({ x: 480, y: 190, w: 280, h: 110, pad: 12, oldHeight: 34, oldSize: 22 }, Math.min(l.price_size + 12, 70));
+        add('period', 480, 380, 280, 24, 14, { align: 'center' });
+        if (data.kind === 'drinks') {
+          add('deposit', 24, 416, 380, 26, 17);
+          add('base', 404, 416, 380, 26, 17);
+        }
+      }
+    }
+    if (style.half) halfTarget();
+    else if (style.tag) tagTarget();
+    else if (target === 'card') {
       add('shape', 8, 8, 404, 464, 20, { fill: item.highlight ? '#f2ead8' : l.card_background,
         shape: l.template === 'classic' ? 'rect' : 'round' });
       if (style.magazine) {
@@ -303,7 +453,9 @@ window.AngeboteModel = (function () {
       add('period', 286, 414, 486, 24, 14);
     }
     var badgeY = target === 'single' && style.magazine ? 292 : 24;
-    add('discount', 24, badgeY, 82, 64, 18, { fill: '#ffffff', bold: true, align: 'center' });
+    var badge = style.half ? { card: [28, 28, 82, 64], single: [52, 152, 82, 64], scale: [34, 36, 82, 64] }[target]
+      : style.tag ? { card: [228, 140, 86, 70], single: [452, 300, 130, 104], scale: [468, 128, 100, 82] }[target] : [24, badgeY, 82, 64];
+    add('discount', badge[0], badge[1], badge[2], badge[3], 18, { fill: '#ffffff', bold: true, align: 'center' });
     adjustElements(data, target, elements, size.w, size.h);
     return { item_id: id, elements: elements, background: l.background, width: size.w, height: size.h };
   }
@@ -417,7 +569,7 @@ window.AngeboteModel = (function () {
     if (prefix) overrides[key] = value;
     else overrides[key].copies[element.copyIdx] = value;
   }
-  async function weeklyRender(data, pageNumber, scale, itemId, card) {
+  async function weeklyRender(data, pageNumber, scale, itemId, card, light) {
     var R = window.WochenangeboteRenderer, snapshot = weeklySnapshot(data);
     snapshot.config = Object.assign({}, R.CFG_DEFAULTS, snapshot.config);
     var items = itemId ? data.items.filter(function (it) { return it.id === itemId; }) : data.items.slice(pageNumber * 6, pageNumber * 6 + 6);
@@ -445,7 +597,7 @@ window.AngeboteModel = (function () {
       var drawing = itemId && !card
         ? renderer.generateEinzelflyer(originalItems[0], action, snapshot.config, { scale: scale || 1 })
         : new Promise(function (resolve) {
-          renderer.drawAngebotPlakat(action, originalItems, images, resolve, snapshot.config, { scale: scale || 1, returnCanvas: true });
+          renderer.drawAngebotPlakat(action, originalItems, images, resolve, snapshot.config, { scale: scale || 1, returnCanvas: true, semibold: !!light });
         });
       var canvas = await Promise.race([drawing, new Promise(function (_, reject) {
         timer = setTimeout(function () { reject(problem('Die Wochenvorlage konnte nicht vollständig dargestellt werden. Bitte Bilder und Design prüfen und erneut versuchen.')); }, 30000);
@@ -543,20 +695,36 @@ window.AngeboteModel = (function () {
     });
     return result;
   }
-  function fitted(ctx, element, value) {
-    var size = element.font_size, result;
+  var LIGHT_STACK = '"Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif';
+  // Startseite: halbfett statt fett wirkt filigraner.
+  function fontFor(element, size, light) {
+    if (!light) return (element.bold ? 'bold ' : '') + size + 'px "' + element.font + '"';
+    return (element.bold ? '600 ' : '') + size + 'px ' + (element.font === 'Arial' ? LIGHT_STACK : '"' + element.font + '"');
+  }
+  function fitted(ctx, element, value, light) {
+    var words = String(value).split(/\s+/).filter(Boolean), size;
+    // Prefer a smaller font over breaking a word in the middle.
+    for (size = element.font_size; size >= 12; size--) {
+      ctx.font = fontFor(element, size, light);
+      if (words.some(function (word) { return ctx.measureText(word).width > element.w; })) continue;
+      var whole = lines(ctx, value, element.w);
+      if (whole.length * size * 1.18 <= element.h) return { lines: whole, size: size, fits: true };
+    }
+    var result;
+    size = element.font_size;
     do {
-      ctx.font = (element.bold ? 'bold ' : '') + size + 'px "' + element.font + '"';
+      ctx.font = fontFor(element, size, light);
       result = lines(ctx, value, element.w);
       if (result.length * size * 1.18 <= element.h) break;
       size--;
     } while (size >= 12);
     return { lines: result, size: size, fits: size >= 12 && result.length * size * 1.18 <= element.h };
   }
-  async function renderElements(data, elements, width, height, background, scale, pageNumber) {
+  async function renderElements(data, elements, width, height, background, scale, pageNumber, light) {
     var canvas = document.createElement('canvas'), factor = scale || 1;
     canvas.width = Math.round(width * factor); canvas.height = Math.round(height * factor);
     var ctx = canvas.getContext('2d');
+    if (light) window.WochenangeboteRenderer.create({}).semibold(ctx);
     ctx.scale(factor, factor); ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
     var errors = [];
     for (var element of elements) {
@@ -601,7 +769,7 @@ window.AngeboteModel = (function () {
         }
       } else {
         var value = textFor(element, data, pageNumber);
-        var fit = fitted(ctx, element, value);
+        var fit = fitted(ctx, element, value, light);
         if (!fit.fits) errors.push('Der Text „' + value.slice(0, 35) + '“ passt nicht vollständig. Bitte das Textfeld vergrößern.');
         ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
         ctx.textBaseline = 'top'; ctx.textAlign = element.align;
@@ -626,12 +794,12 @@ window.AngeboteModel = (function () {
     if (data.kind === 'weekly' && data.layout.cms) return weeklyRender(data, pageNumber, scale);
     return renderElements(data, page.elements, W, H, page.background || data.layout.background, scale, pageNumber);
   }
-  async function renderTarget(data, target, itemId, scale) {
+  async function renderTarget(data, target, itemId, scale, light) {
     var size = targetSizes[target], targets = data.layout.targets && data.layout.targets[target] || [];
     var selected = targets.find(function (entry) { return entry.item_id === itemId; });
     if (!size || !selected) throw problem('Diese Zielgestaltung ist nicht vorhanden.');
     if (data.kind === 'weekly' && data.layout.cms) {
-      var rendered = await weeklyRender(data, 0, scale, itemId, target === 'card');
+      var rendered = await weeklyRender(data, 0, scale, itemId, target === 'card', light);
       if (target === 'single') return rendered;
       var source = rendered.canvas, output = document.createElement('canvas'), factor = scale || 1;
       output.width = Math.round(size.w * factor); output.height = Math.round(size.h * factor);
@@ -657,13 +825,13 @@ window.AngeboteModel = (function () {
       output._weeklyWidth = size.w; output._weeklyHeight = size.h;
       return { canvas: output, errors: [] };
     }
-    return renderElements(data, selected.elements, size.w, size.h, selected.background || data.layout.background, scale, 0);
+    return renderElements(data, selected.elements, size.w, size.h, selected.background || data.layout.background, scale, 0, light);
   }
   async function paintCards(host, data) {
     var canvases = Array.from(host.querySelectorAll('[data-card-item]'));
     for (var canvas of canvases) {
       if (!data.items.some(function (item) { return item.id === canvas.dataset.cardItem; })) continue;
-      var result = await renderTarget(data, 'card', canvas.dataset.cardItem, 1);
+      var result = await renderTarget(data, 'card', canvas.dataset.cardItem, 1, true);
       result.canvas.setAttribute('aria-hidden', 'true');
       if (canvas.isConnected) canvas.replaceWith(result.canvas);
     }
@@ -806,5 +974,6 @@ window.AngeboteModel = (function () {
     preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor, registerImage: registerImage,
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
     templateOptions: templateStyles.map(function (style) { return [style.id, style.label]; }),
+    cmsTemplateOptions: templateStyles.filter(function (style) { return style.original && !style.half && !style.tag; }).map(function (style) { return [style.id, style.label]; }),
     templateStyle: templateStyle, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
 })();

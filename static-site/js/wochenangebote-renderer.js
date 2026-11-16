@@ -1015,6 +1015,18 @@ window.WochenangeboteRenderer = (function () {
     });
   }
 
+  // Nur Startseite: halbfette statt fetter Schrift (filigraner). Der CMS-Druck bleibt unveraendert.
+  var SEMIBOLD_STACK='"Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif';
+  function semibold(ctx){
+    var proto=Object.getPrototypeOf(ctx),desc=Object.getOwnPropertyDescriptor(proto,'font');
+    if(!desc||!desc.set)return;
+    Object.defineProperty(ctx,'font',{configurable:true,
+      get:function(){return desc.get.call(ctx);},
+      set:function(value){
+        desc.set.call(ctx,String(value).replace(/^\s*(?:bold|[6-9]00)\s+(\d+(?:\.\d+)?px)\s+.*$/,'600 $1 '+SEMIBOLD_STACK));
+      }});
+  }
+
   function drawAngebotPlakat(data,items,images,callback,cfgOverride,opts){
     var S=(opts&&opts.scale)||1;
     var cols=2,maxRows=3,perPage=maxRows*cols;
@@ -1030,10 +1042,11 @@ window.WochenangeboteRenderer = (function () {
     c._offerCards=[];
     c._elMeta=[];
     var ctx=hdKontext(c,S);
+    if(opts&&opts.semibold)semibold(ctx);
     // Bei Speichermangel (z. B. aelteres iPad) eine Stufe kleiner erneut versuchen.
     var _cb=callback;
     callback=function(blob){
-      if(!blob&&S>1){drawAngebotPlakat(data,items,images,_cb,cfgOverride,{scale:S-1});return;}
+      if(!blob&&S>1){drawAngebotPlakat(data,items,images,_cb,cfgOverride,{scale:S-1,semibold:opts&&opts.semibold});return;}
       _cb(blob);
     };
     var isMagPlakat=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
@@ -1510,6 +1523,7 @@ window.WochenangeboteRenderer = (function () {
       getSavingsBurstTheme:getSavingsBurstTheme,
       getSavingsMarkerType:getSavingsMarkerType,
       drawSavingsBurst:drawSavingsBurst,
+      semibold:semibold,
       generateEinzelflyer:generateEinzelflyer,
       drawAngebotPlakat:drawAngebotPlakat
     };

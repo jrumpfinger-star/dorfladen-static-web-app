@@ -350,7 +350,7 @@ test('TC-F13-02..03: alle Vorlagen rendern lesbar mit Original-Logo, beiden Arte
     }
     return results;
   });
-  expect(results).toHaveLength(44);
+  expect(results).toHaveLength(68);
   expect(results.filter((result) => result.errors.length)).toEqual([]);
   expect(results.every((result) => result.pages === 2)).toBe(true);
   const first = (id) => results.find((result) => result.id === id);
@@ -458,7 +458,7 @@ for (const cmsMode of [true, false]) {
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
     await host.locator('.an-template-picker > summary').click();
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(11);
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const writes = state.log.filter((r) => !['GET', 'HEAD', 'OPTIONS'].includes(r.method)).length;
     await host.locator('.an-choice-option').first().locator('.an-choice-body').dblclick();
@@ -525,9 +525,9 @@ for (const cmsMode of [true, false]) {
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
-    await expect(host.locator('.an-template-picker > summary')).toContainText('11 Designvorlagen');
+    await expect(host.locator('.an-template-picker > summary')).toContainText('17 Designvorlagen');
     await host.locator('.an-template-picker > summary').click();
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(11);
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
     const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
     expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
     await expect(host.locator('select[data-style=template],select[data-style=density]')).toHaveCount(0);

@@ -271,7 +271,7 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-customer-controls .an-tabs{margin:0;flex:1 1 270px}
 .an-customer-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr))!important;gap:14px!important;padding:0!important}
 .an-product{background:var(--an-card-bg,#fff);border:1px solid var(--an-line);border-radius:14px;padding:20px;min-width:0;color:var(--an-text,#24362d);font-family:var(--an-font,inherit)}
-.an-product h3{font-size:20px;margin:12px 0 8px;line-height:1.35;overflow-wrap:anywhere;color:inherit}
+.an-product h3{font-size:20px;font-weight:600;margin:12px 0 8px;line-height:1.35;overflow-wrap:anywhere;color:inherit}
 .an-product p{margin:5px 0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
 .an-product img,.an-product .an-no-image{height:150px;width:100%;object-fit:contain;display:block;margin:auto}
 .an-product.an-custom-card{padding:0;overflow:hidden}.an-custom-card canvas{display:block;width:100%;height:auto;aspect-ratio:420/480}

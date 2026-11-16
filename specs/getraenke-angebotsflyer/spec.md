@@ -624,6 +624,58 @@ Speichern/Öffnen erhalten Artikel und Layout ohne Änderungen anderer Ziele.
   bleibt einzeilig ohne Umbruch mitten im Wort, Logo und Zeitraum haben denselben
   seitlichen Rand und die Textfelder überlappen sich nicht.
 
+## F20: Bildbetonte Standardvorlagen (Bild 50 % der Breite)
+
+Zusätzlich zu den bestehenden Vorlagen stehen drei Standardvorlagen
+„Bild 50 % · Rot“, „Bild 50 % · Grün“ und „Bild 50 % · Blau“ bereit. In
+ihnen nimmt das Produktbild genau die halbe Breite der jeweiligen Fläche ein
+(Sammelflyer-Kachel, Homepage-/Kioskkachel, Einzelflyer, Waagenmotiv). Die
+übrigen Elemente sind harmonisch verteilt: Bild links, rechts davon Name,
+Gebinde bzw. Beschreibung, darunter ein durchgehendes Preisband mit Preis und
+Stattpreis, danach Pfand, Literpreis und Zeitraum. Der Ersparnismarker liegt
+auf dem Bild. Die Vorlagen funktionieren mit 4 und 6 Kacheln, für Getränke und
+Wochenangebote ohne originale CMS-Vorlage und sind wie alle Vorlagen danach
+frei bearbeitbar. Bestehende Vorlagen, gespeicherte Layouts und die originalen
+CMS-Wochenvorlagen bleiben unverändert; die neuen Vorlagen erscheinen nur in
+der Vorlagenauswahl der freien Gestaltung. Der Server akzeptiert die neuen
+Kennungen.
+
+- TC-F20-01: Die drei Vorlagen sind auswählbar (mit echter Miniatur), nicht in
+  der Originalvorlagenauswahl der CMS-Wochenangebote, und werden vom Server
+  akzeptiert.
+- TC-F20-02: Für Sammelflyer (4 und 6 Kacheln), Kachel, Einzelflyer und Waage
+  hat das Bild 50 % (±1 %) der Flächenbreite, alle Elemente liegen innerhalb
+  der Fläche, überlappen sich nicht untereinander und es entstehen keine
+  Textüberläufe (auch mit langen Namen).
+- TC-F20-03: Mockup-Bilder aller Ausgabeziele für jede Vorlage werden aus dem
+  echten Renderer erzeugt und zur Abnahme bereitgestellt.
+
+Zusätzlich gibt es drei Vorlagen „Preisschild · Rot/Grün/Blau“ mit der
+Aufteilung der Originalkachel: Artikelname und Gebinde bzw. Beschreibung oben
+links, darunter eine große helle Bildfläche über die volle Kartenbreite. Auf
+dem rechten Bildrand überlappt ein leicht gedrehtes farbiges Preisschild mit dem
+Preis, der Ersparnismarker sitzt auf dessen oberer Ecke und der durchgestrichene
+Stattpreis darunter. Pfand und Literpreis stehen unter der Bildfläche. Die
+Vorlagen gelten für Sammelflyer (4/6 Kacheln), Kachel, Einzelflyer und Waage.
+
+- TC-F20-04: Die drei Preisschild-Vorlagen sind wählbar, nicht in der
+  CMS-Originalvorlagenauswahl; Preisschild und Bildfläche liegen innerhalb der
+  Fläche, Textfelder überlappen sich nicht, der Marker überlappt das Schild und
+  es entstehen keine Textüberläufe.
+
+## F21: Filigranere Schrift auf der Startseite
+
+Die Angebotskacheln der Startseite (Kundenansicht) verwenden für sonst fette
+Texte (Artikelname, Preis, Stattpreis, Zeitraum) die Schriftstärke „halbfett“
+(600) statt „fett“ (700/900) und die Systemschrift der Seite. Das gilt für
+Kacheln aus den Original-CMS-Wochenvorlagen und für freie Getränkekacheln.
+Vorschau, Flyer, Einzelflyer, Waage, Druck und CMS-Ausgaben bleiben
+unverändert; die Gestaltungsdaten werden nicht verändert.
+
+- TC-F21-01: Beim Zeichnen einer Startseitenkachel (Original-Wochenvorlage und
+  Getränkekachel) wird keine fette Schrift (bold, 700, 900) gesetzt, aber
+  halbfette (600). Die normale Ausgabe (Vorschau/Flyer) verwendet weiterhin fett.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

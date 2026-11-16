@@ -17,7 +17,8 @@ ELEMENTS = ("text", "image", "shape", "logo") + FIELDS + ("title", "period", "br
 FONTS = ("Arial", "Georgia", "Verdana", "Trebuchet MS")
 TEMPLATES = ("land", "classic", "classic-red", "minimal-clean", "dark-modern",
              "organic-market", "bold-poster", "modern-magazine", "modern-mag-fresh",
-             "modern-mag-bold", "modern-mag-xl")
+             "modern-mag-bold", "modern-mag-xl", "half-red", "half-green", "half-blue",
+             "tag-red", "tag-green", "tag-blue")
 WIDTH, HEIGHT = 794, 1123
 MAX_ITEMS, MAX_PAGES = 99, 99
 THEME_DEFAULTS = {

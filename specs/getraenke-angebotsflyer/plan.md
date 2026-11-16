@@ -10,6 +10,19 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F21: `paintCards` rendert mit der Option „halbfett“. `fitted`/`renderElements`
+wählen dann Gewicht 600 mit Systemschriftstapel; der Original-Wochenrenderer
+erhält `opts.semibold` und ersetzt dafür Schriftsetzungen (bold/600–900) am
+Zeichenkontext. Ohne Option bleibt alles unverändert.
+
+F20: Neue Stilkennungen `half-red`, `half-green`, `half-blue` (Flag `half`) sowie `tag-red`, `tag-green`,
+`tag-blue` (Flag `tag`, Aufteilung der Originalkachel mit gedrehtem Preisschild)
+in `templateStyles`. Sammelflyer-Kacheln und die Zielgestaltungen
+(Kachel, Einzelflyer, Waage) erhalten je einen eigenen Zweig mit festen
+Koordinaten: bei `half` Bildbreite = halbe Flächenbreite, rechte Textspalte, volles
+Preisband; bei `tag` Bildfläche über die volle Breite mit überlappendem Preisschild. Die Originalvorlagenauswahl der CMS-Wochenangebote filtert `half`
+heraus, weil deren Renderer nur die Originalvorlagen kennt. Die Serverliste
+`TEMPLATES` wird um die drei Kennungen erweitert. Keine Datenmigration.
 F18-Korrektur Speichern/Meldungen: Neue Artikel werden mit der vom Client
 vergebenen GUID als Dataverse-Primärschlüssel angelegt, sodass Zeilen-,
 Layout- und Bildbezüge stabil bleiben und `original_ids` nach dem Speichern

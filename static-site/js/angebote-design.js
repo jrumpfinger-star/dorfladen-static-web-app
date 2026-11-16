@@ -38,7 +38,7 @@ window.AngeboteDesign = (function () {
         + '<div class="an-fields">' + ['plakat', 'flyer'].map(function (kind) {
           var label = kind === 'plakat' ? 'Sammelflyer / Kachel' : 'Einzelflyer / Waage';
           return '<label class="an-field"><span>' + label + ' · Originalvorlage</span><select data-cms-config="' + kind + 'Template">'
-            + M.templateOptions.slice(2).map(function (option) { return '<option value="' + option[0] + '"' + (cfg[kind + 'Template'] === option[0] ? ' selected' : '') + '>' + option[1] + '</option>'; }).join('')
+            + M.cmsTemplateOptions.map(function (option) { return '<option value="' + option[0] + '"' + (cfg[kind + 'Template'] === option[0] ? ' selected' : '') + '>' + option[1] + '</option>'; }).join('')
             + '</select></label>'
             + [['decoBgColor', 'Hintergrund'], ['decoTitleColor', 'Überschrift']].map(function (field) {
               return '<label class="an-field"><span>' + label + ' · ' + field[1] + '</span><input type="color" data-cms-config="' + kind + '_' + field[0] + '" value="' + M.esc(cfg[kind + '_' + field[0]]) + '"></label>';

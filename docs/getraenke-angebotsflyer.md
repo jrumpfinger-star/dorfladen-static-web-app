@@ -74,6 +74,12 @@ Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpr
 - **Alle Einzelflyer** öffnet die Einzelansichten; den Artikel direkt auswählen.
 - **Vorlage und Gestaltung** enthält Vorlagen, Farben, Schrift und
   Ersparnismarker. Der Marker benötigt einen Stattpreis über dem Angebotspreis.
+  Neu sind „Bild 50 % · Rot/Grün/Blau“ (Bild nimmt die halbe Breite ein, rechts
+  Name und Gebinde, darunter ein durchgehendes Preisband) und „Preisschild ·
+  Rot/Grün/Blau“ (Aufteilung der Originalkachel mit großer Bildfläche und
+  gedrehtem Preisschild). Beide gelten für Sammelflyer, Kachel, Einzelflyer und Waage.
+- Auf der Startseite erscheinen die Kacheltexte halbfett statt fett und wirken
+  dadurch filigraner; Flyer, Druck und Waage bleiben unverändert.
 - Weitere Elementwerkzeuge umfassen eigene Bilder/Texte, Kopien, Ghost,
   Deckkraft und Ebenen. Original-Wochenvorlagen behalten ihre originalen
   Artikelanpassungen.

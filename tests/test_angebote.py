@@ -201,7 +201,7 @@ class AngeboteTests(unittest.TestCase):
         self.assertEqual(self.service.get(head["id"])["draft"]["layout"]["pages"][0]["elements"][-1]["rotation"], 15)
 
     def test_TC_F13_original_templates_and_logo_roundtrip(self):
-        self.assertEqual(len(TEMPLATES), 11)
+        self.assertEqual(len(TEMPLATES), 17)
         for template in TEMPLATES:
             with self.subTest(template=template):
                 data = draft()
