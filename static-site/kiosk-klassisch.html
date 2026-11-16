@@ -1929,6 +1929,7 @@
        Bedarf. (Spec bestellliste-schuetzen) -->
   <script src="/js/admin-auth.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
+  <link rel="stylesheet" href="/css/angebote.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -2117,6 +2118,12 @@
   <!-- Werbebilder der PC-Waage (specs/kiosk-werbebilder-upload/spec.md). -->
   <div class="k-panel" id="panel-werbebilder">
     <div id="wb-root"><div class="k-empty">Laden…</div></div>
+  </div>
+
+  <div class="k-panel" id="panel-angebote">
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
+      <p role="status">Die Angebotsverwaltung wird geladen …</p>
+    </section>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -3023,6 +3030,7 @@ var K = (function(){
     if(id==='getraenke' && window.KGetraenke) window.KGetraenke.onShow();
     if(id==='drax' && window.KDrax) window.KDrax.onShow();
     if(id==='werbebilder' && window.KWerbebilder) window.KWerbebilder.onShow();
+    if(id==='angebote' && window.KAngebote) window.KAngebote.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -7856,6 +7864,14 @@ var K = (function(){
 <script src="/js/kiosk-getraenke.js"></script>
 <script src="/js/kiosk-drax.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
+<script src="/js/wochenangebote-renderer.js"></script>
+<script src="/js/angebote-vorschau-editor.js"></script>
+<script src="/js/angebote-modell.js"></script>
+<script src="/js/angebote-design.js"></script>
+<script src="/js/cms-angebote-form.js"></script>
+<script src="/js/angebote-dataverse.js"></script>
+<script src="/js/cms-angebote.js"></script>
+<script src="/js/angebote-editor.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script>
@@ -7929,7 +7945,8 @@ var K = (function(){
     // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
+    if(window.KAngebote && window.KAngebote.hasUnsavedChanges()) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-angebote' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen

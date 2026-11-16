@@ -23,7 +23,6 @@
   <link rel="stylesheet" href="/css/kiosk-base.css">
   <link rel="stylesheet" href="/css/dl-design.css">
   <link rel="stylesheet" href="/css/kiosk-neu.css">
-  <link rel="stylesheet" href="/css/angebote.css">
   <script id="cms-pw-hash" type="application/json">"d324fb3c8c3a1ef449e1f776b2f29fd718d00e7967adbb0bbe8326c2452bea93"</script>
   <script>
     /* Sofort sperren, noch bevor der Kiosk gezeichnet wird - sonst blitzt
@@ -59,6 +58,7 @@
        Bedarf. (Spec bestellliste-schuetzen) -->
   <script src="/js/admin-auth.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
+  <link rel="stylesheet" href="/css/angebote.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -153,7 +153,7 @@
   </div>
   <div class="k-tab" data-tab="angebote" onclick="K.switchTab('angebote')">
     <span class="k-tab-icon"><i data-lucide="tags"></i></span>
-    <span class="k-tab-lbl">Angebote</span>
+    <span class="k-tab-lbl"><span class="lang">Angebote</span><span class="kurz">Angebote</span></span>
   </div>
   <span class="k-tab-pfeil k-tab-pfeil-r" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
 </nav>
@@ -273,12 +273,6 @@
     <div id="getraenke-body"><div class="k-empty"><div class="k-empty-icon"><i data-lucide="cup-soda" style="width:24px;height:24px"></i></div>Laden…</div></div>
   </div>
 
-  <div class="k-panel" id="panel-angebote">
-    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
-      <p role="status">Die Angebotsverwaltung wird geladen …</p>
-    </section>
-  </div>
-
   <!-- Ladenbestellung bei der Drax Mühle (specs/drax-bestellung/spec.md).
        Liefertag ist der Donnerstag, Bestellschluss Mittwoch 12:00. Erfasst
        werden nur Stückzahlen je Artikelnummer – welches Gebinde gemeint ist,
@@ -290,6 +284,12 @@
   <!-- Werbebilder der PC-Waage (specs/kiosk-werbebilder-upload/spec.md). -->
   <div class="k-panel" id="panel-werbebilder">
     <div id="wb-root"><div class="k-empty">Laden…</div></div>
+  </div>
+
+  <div class="k-panel" id="panel-angebote">
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
+      <p role="status">Die Angebotsverwaltung wird geladen …</p>
+    </section>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
