@@ -1,6 +1,57 @@
 window.AngeboteKunden = (function () {
   'use strict';
   var M = window.AngeboteModel, loaded = null, pending = null, states = new Map(), currentViewer = null;
+  var homepageDefaults = {
+    gridBg: '#f4f1ea', cardBg: '#ffffff', cardBorder: '#d8dfd7', nameColor: '#1f2521', detColor: '#555555',
+    tagBg: '#a51d2d', tagText: '#ffffff', badgeBg: '#31704b', stattColor: '#666666',
+    tagSkew: -4, tagRadius: 5, headerBg: '#c62828', headerText: '#ffffff',
+    cardRadius: 10, imgSize: 95, showLeaf: false, showBasket: false
+  };
+  function homepageCard(it, kind, legacy) {
+    var pct = M.savings(it), price = M.money(it.price_cents).split(',');
+    return '<article class="an-hp-card' + (legacy ? ' an-legacy ang-item' : ' an-product') + '"'
+      + (legacy && it.article_number ? ' data-artnr="' + M.esc(it.article_number) + '"' : '') + '>'
+      + '<h3 class="ang-name">' + M.esc(it.name) + '</h3>'
+      + '<p class="an-hp-details">' + M.esc(kind === 'drinks' ? M.pack(it) : it.description || '') + '</p>'
+      + '<div class="an-hp-visual"><div class="an-hp-image ang-img"'
+      + (it.image_id ? ' data-hp-image="' + M.esc(it.image_id) + '"' : '')
+      + '><span class="an-hp-placeholder" aria-label="Produktbild">◇</span></div>'
+      + '<div class="an-hp-prices" style="--hp-price-chars:' + (price[0].length + 1.5) + '">' + (pct ? '<span class="an-hp-discount">−' + pct + '%</span>' : '')
+      + '<strong class="an-hp-price">' + price[0] + ',<sup>' + price[1] + '</sup><small> €</small></strong>'
+      + (it.old_price_cents > it.price_cents ? '<del>' + M.money(it.old_price_cents) + ' €</del>' : '') + '</div></div>'
+      + (kind === 'drinks' ? '<p class="an-hp-deposit">' + (it.deposit_free ? 'Pfandfrei' : 'zzgl. ' + M.money(it.deposit_cents) + ' € Pfand')
+        + '<br>1 l = ' + M.money(M.base(it)) + ' €</p>' + (it.description ? '<p class="an-hp-details">' + M.esc(it.description) + '</p>' : '') : '')
+      + '<span class="an-hp-leaf" aria-hidden="true">🌿</span><span class="an-hp-basket" aria-hidden="true">🛒</span></article>';
+  }
+  function applyHomepage(host, config) {
+    var c = Object.assign({}, homepageDefaults, config);
+    host.classList.add('an-homepage');
+    Object.keys(homepageDefaults).forEach(function (key) {
+      host.style.setProperty('--hp-' + key, typeof c[key] === 'number' ? c[key] + (key === 'tagSkew' ? 'deg' : 'px') : String(c[key]));
+    });
+    host.classList.toggle('an-hp-leaves', c.showLeaf);
+    host.classList.toggle('an-hp-baskets', c.showBasket);
+  }
+  async function paintHomepage(host) {
+    await Promise.all(Array.from(host.querySelectorAll('[data-hp-image]')).map(async function (box) {
+      try {
+        var image = await M.image(box.dataset.hpImage);
+        if (!box.isConnected) return;
+        var canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+        canvas.getContext('2d').drawImage(image, 0, 0);
+        var copy = new Image(); copy.alt = box.closest('article').querySelector('h3').textContent;
+        copy.src = canvas.toDataURL(); await copy.decode();
+        if (box.isConnected) box.replaceChildren(copy);
+      } catch (e) {
+        console.error('[Angebote] Homepage-Bild', e);
+        if (!box.isConnected) return;
+        box.textContent = 'Bild nicht verfügbar';
+        var retry = document.createElement('button'); retry.type = 'button'; retry.textContent = 'Erneut laden';
+        retry.onclick = function () { paintHomepage(box.parentElement).catch(M.error); }; box.appendChild(retry);
+      }
+    }));
+  }
   function normalizeOld(item) {
     return { id: item.dl_angeboteid || item.id || '', produkt: item.dl_produkt || item.name || '',
       details: item.dl_details || item.details || '', preis: Number(item.dl_preis || item.price || 0),
@@ -20,8 +71,10 @@ window.AngeboteKunden = (function () {
       if (!Array.isArray(old) || !Array.isArray(archive.actions)) throw M.problem('Die Angebote konnten nicht vollständig geladen werden.');
       var typed = old.filter(function (row) { return row.action_kind === 'drinks' || row.action_layout; });
       var typedActions = await window.AngeboteDataverse.actions(typed);
+      var homepage = await M.request('/api/angebote-flyer?view=homepage');
+      if (!homepage.homepage || typeof homepage.homepage !== 'object') throw M.problem('Die Homepage-Gestaltung konnte nicht geladen werden.');
       loaded = { legacy: old.filter(function (row) { return !typed.includes(row); }).map(normalizeOld),
-        actions: typedActions.concat(archive.actions) };
+        actions: typedActions.concat(archive.actions), homepage: homepage.homepage };
       return loaded;
     })();
     try { return await pending; } finally { pending = null; }
@@ -76,10 +129,16 @@ window.AngeboteKunden = (function () {
         return '<option value="' + M.esc(a.id) + '">' + M.esc(a.data.title) + '</option>'; }).join('') + '</select></label>' : '')
       + (result.actions.length ? '<button class="an-flyer-button" data-offer-flyer><svg aria-hidden="true" focusable="false" width="16" height="20" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="18" rx="2"/><path d="M4 6h8M4 10h8M4 14h8"/></svg><span>Flyer ansehen</span></button>' : '');
     grid.classList.add('an-customer-grid');
-    grid.innerHTML = result.legacy.map(legacyHTML).join('') + result.actions.map(function (action) {
-      return action.data.items.map(function (it) { return M.cardHTML(action.data, it); }).join('');
+    var homepage = state.grid === 'ang-grid' || state.grid === 'mob-ang-grid';
+    if (homepage) applyHomepage(grid.parentElement, loaded.homepage);
+    grid.innerHTML = result.legacy.map(function (a) {
+      return homepage ? homepageCard({ name: a.produkt, description: a.details, article_number: a.artnr,
+        price_cents: Math.round(a.preis * 100), old_price_cents: Math.round(a.statt * 100) }, 'weekly', true) : legacyHTML(a);
+    }).join('') + result.actions.map(function (action) {
+      return action.data.items.map(function (it) { return homepage ? homepageCard(it, action.data.kind) : M.cardHTML(action.data, it); }).join('');
     }).join('');
-    Promise.all(result.actions.map(function (action) { return M.paintCards(grid, action.data); })).catch(M.error);
+    if (homepage) paintHomepage(grid).catch(M.error);
+    else Promise.all(result.actions.map(function (action) { return M.paintCards(grid, action.data); })).catch(M.error);
     if (!result.legacy.length && !result.actions.length) grid.innerHTML = '<p class="an-status">Aktuell keine Angebote in diesem Zeitraum.</p>';
     if (window.loadAngBilder && result.legacy.length) window.loadAngBilder(grid);
     grid.querySelectorAll('.an-product img').forEach(function (img) {
@@ -179,5 +238,6 @@ window.AngeboteKunden = (function () {
   }
   setInterval(refresh, 60000);
   document.addEventListener('visibilitychange', refresh);
-  return { mount: mount, refresh: refresh, viewer: viewer };
+  return { mount: mount, refresh: refresh, viewer: viewer, homepageDefaults: homepageDefaults,
+    homepageCard: homepageCard, applyHomepage: applyHomepage };
 })();

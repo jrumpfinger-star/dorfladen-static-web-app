@@ -1,0 +1,13 @@
+{
+  "static-site/js/app.js": ["angebote-flyer"],
+  "static-site/cms*.html": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/cms.js": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/css/cms*.css": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/js/angebote-*.js": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/js/cms-angebote*.js": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/js/wochenangebote-renderer.js": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/css/angebote.css": ["angebote-flyer", "cms-angebote-ablauf"],
+  "static-site/angebote.html": ["angebote-flyer", "cms-angebote-ablauf"],
+  "api/angebote/*": ["angebote-flyer"],
+  "api/shared/angebote*.py": ["angebote-flyer"]
+}

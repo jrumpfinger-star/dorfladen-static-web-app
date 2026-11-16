@@ -18,6 +18,24 @@
 // mit 1200×2000 Bildpunkten, das im Laden im Hochformat bedient wird.
 // Es ist die Auflösung, auf der der Kiosk täglich läuft — Fehler dort
 // treffen den Betrieb sofort.
+const fs = require('fs');
+const path = require('path');
+
+// Viewport-unabhaengige Dateien werden ausschliesslich explizit markiert:
+//   // @ansichten: alle      immer auf allen vier Ansichten
+//   // @ansichten: desktop   immer nur auf dem Desktop
+// ALLE_ANSICHTEN=1 erzwingt alle Ansichten fuer alle Dateien.
+function nurDesktop() {
+  if (process.env.ALLE_ANSICHTEN) return [];
+  const verzeichnis = path.join(__dirname, 'tests');
+  return fs.readdirSync(verzeichnis).filter((f) => f.endsWith('.spec.js')).filter((f) => {
+    const text = fs.readFileSync(path.join(verzeichnis, f), 'utf8');
+    const marke = /\/\/\s*@ansichten:\s*(alle|desktop)/.exec(text);
+    return marke ? marke[1] === 'desktop' : false;
+  });
+}
+const OHNE_LAYOUT = nurDesktop();
+
 module.exports = {
   testDir: './tests',
   timeout: 60000,
@@ -59,10 +77,14 @@ module.exports = {
   projects: [
     {
       name: 'mobile',
+      grepInvert: /@ohne-layout/,
+      testIgnore: OHNE_LAYOUT,
       use: { viewport: { width: 375, height: 667 } },
     },
     {
       name: 'ipad-mini',
+      grepInvert: /@ohne-layout/,
+      testIgnore: OHNE_LAYOUT,
       use: { viewport: { width: 768, height: 1024 } },
     },
     {
@@ -82,6 +104,8 @@ module.exports = {
        wird. */
     {
       name: 'tablet-hoch',
+      grepInvert: /@ohne-layout/,
+      testIgnore: OHNE_LAYOUT,
       use: {
         viewport: { width: 686, height: 1095 },
         deviceScaleFactor: 1.75,

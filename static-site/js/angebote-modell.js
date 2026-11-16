@@ -7,7 +7,17 @@ window.AngeboteModel = (function () {
   var theme = {
     font: 'Arial', title_color: '#234c38', text_color: '#24362d',
     card_background: '#ffffff', price_background: '#ffffff', price_shape: 'rect',
+    price_outline_color: '#ffffff', old_price_color: '#000000', price_strike_color: '#ed1c24',
     name_size: 24, price_size: 58, details_size: 17,     image_rotation: 0, image_scale: 100, marker_type: 'starburst', marker_palette: 'harmonie', marker_scale: 100
+  };
+  var decorationDefaults = {
+    show_leaf: false, leaf_size: 34, leaf_color: '#4a7c3f', show_bag: false, show_texture: false,
+    footer_color: '#24362d', vorrat_color: '#24362d', details_color: '#24362d',
+    card_border_color: '#eeeeee', card_border_width: 0, border_width: 0, border_color: '#2e7d32',
+    image_background: '#e8ede7', background_gradient: false, background_color2: '#ffffff',
+    background_direction: 'to bottom', background_pct: 50, image_gradient: false, image_color2: '#ffffff',
+    image_direction: 'to bottom', image_pct: 50, price_radius: 0, price_skew: 0, price_scale: 100,
+    image_width_pct: 50, image_dx: 0, image_dy: 0, price_dx: 0, price_dy: 0
   };
   var templateStyles = [
     { id: 'land', label: 'Landladen', settings: Object.assign({}, theme, { color: '#bb421e', background: '#fffdf6' }) },
@@ -41,7 +51,11 @@ window.AngeboteModel = (function () {
     { id: 'tag-green', label: 'Preisschild · Grün', original: true, tag: true, soft: '#eef3ea',
       settings: { background: '#f2f6ee', title_color: '#234c38', color: '#2f7d4f', card_background: '#ffffff', text_color: '#1f2d24', price_background: '#2f7d4f', price_shape: 'rect' } },
     { id: 'tag-blue', label: 'Preisschild · Blau', original: true, tag: true, soft: '#eaf0f8',
-      settings: { background: '#eef3f9', title_color: '#1e3a8a', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#2563eb', price_shape: 'rect' } }
+      settings: { background: '#eef3f9', title_color: '#1e3a8a', color: '#2563eb', card_background: '#ffffff', text_color: '#1e293b', price_background: '#2563eb', price_shape: 'rect' } },
+    { id: 'price-image', label: 'Preisbild · Rot/Gelb', original: true, tag: true, priceImage: true, soft: '#dff1f8',
+      settings: { background: '#f1f7fa', title_color: '#a51d2d', color: '#ed1c24', card_background: '#ffffff',
+        text_color: '#1a1a1a', price_background: '#fff000', price_shape: 'rect',
+        price_outline_color: '#ffffff', old_price_color: '#000000', price_strike_color: '#ed1c24' } }
   ];
   function templateStyle(id) {
     var style = templateStyles.find(function (entry) { return entry.id === id; });
@@ -210,7 +224,7 @@ window.AngeboteModel = (function () {
         var shared = { item_id: it.id, font: l.font, fill: l.text_color };
         function bound(role, dx, dy, width, height, size, extra) {
           elements.push(el(role, x + dx, y + dy, width, height,
-            Object.assign({}, shared, { font_size: size }, extra)));
+            Object.assign({}, shared, { font_size: size, hidden: !!style.priceImage && role === 'old_price' }, extra)));
         }
         elements.push(el('shape', x, y, 349, h, { item_id: it.id, fill: it.highlight ? '#f2ead8' : l.card_background, shape: l.template === 'classic' ? 'rect' : 'round' }));
         if (style.tag) {
@@ -221,8 +235,11 @@ window.AngeboteModel = (function () {
           elements.push(el('shape', x + 12, y + tagTop, 325, tagHeight, { item_id: it.id, fill: style.soft, shape: 'round' }));
           bound('image', 12, tagTop, compact ? 190 : 230, tagHeight, 20, { rotation: l.image_rotation, image_scale: l.image_scale });
           var tagBox = compact ? { x: 188, y: 104, w: 140, h: 56, pad: 8 } : { x: 206, y: 174, w: 124, h: 66, pad: 8 };
-          elements.push(el('shape', x + tagBox.x, y + tagBox.y, tagBox.w, tagBox.h, { item_id: it.id, fill: l.price_background, shape: l.price_shape, rotation: -6 }));
-          bound('price', tagBox.x + tagBox.pad, tagBox.y + tagBox.pad, tagBox.w - 2 * tagBox.pad, tagBox.h - 2 * tagBox.pad, Math.min(l.price_size, compact ? 30 : 34), { bold: true, align: 'center', fill: priceColor(l), rotation: -6 });
+          if (style.priceImage) tagBox = compact ? { x: 188, y: 80, w: 140, h: 120, pad: 4 } : { x: 196, y: 120, w: 140, h: 210, pad: 4 };
+          elements.push(el('shape', x + tagBox.x, y + tagBox.y, tagBox.w, tagBox.h, { item_id: it.id, fill: l.price_background, shape: l.price_shape, rotation: -6, hidden: !!style.priceImage }));
+          bound('price', tagBox.x + tagBox.pad, tagBox.y + tagBox.pad, tagBox.w - 2 * tagBox.pad, tagBox.h - 2 * tagBox.pad,
+            style.priceImage ? Math.min(l.price_size + 36, 100) : Math.min(l.price_size, compact ? 30 : 34),
+            { bold: true, align: 'center', fill: priceColor(l), rotation: style.priceImage ? 0 : -6 });
           bound('old_price', tagBox.x, tagBox.y + tagBox.h + (compact ? 8 : 10), tagBox.w, compact ? 24 : 26, compact ? 15 : 16, { align: 'center' });
           if (data.kind === 'drinks') {
             bound('deposit', 18, compact ? 212 : 342, 313, compact ? 18 : 24, compact ? 14 : 16);
@@ -277,7 +294,8 @@ window.AngeboteModel = (function () {
   }
   var targetSizes = { card: { w: 420, h: 480 }, single: { w: 800, h: 1130 }, scale: { w: 800, h: 462 } };
   var STYLE_KEYS = ['template', 'color', 'background', 'font', 'title_color', 'text_color', 'card_background', 'price_background',
-    'price_shape', 'name_size', 'price_size', 'details_size', 'image_rotation', 'image_scale', 'marker_type', 'marker_palette', 'marker_scale'];
+    'price_shape', 'price_outline_color', 'old_price_color', 'price_strike_color', 'decoration',
+    'name_size', 'price_size', 'details_size', 'image_rotation', 'image_scale', 'marker_type', 'marker_palette', 'marker_scale'];
   // Wirksamer Stil eines Ausgabeziels: globale Werte, überlagert vom Zielstil (alte Aktionen haben keinen).
   function styleFor(layout, target) {
     var own = target && target !== 'sheet' && layout.target_styles && layout.target_styles[target];
@@ -296,7 +314,7 @@ window.AngeboteModel = (function () {
   function targetTemplate(data, target, item) {
     var l = styleFor(data.layout, target), id = item.id, elements = [], size = targetSizes[target], style = templateStyle(l.template);
     function add(type, x, y, w, h, fontSize, extra) {
-      elements.push(el(type, x, y, w, h, Object.assign({ item_id: id, font_size: fontSize,
+      elements.push(el(type, x, y, w, h, Object.assign({ item_id: id, font_size: fontSize, hidden: !!style.priceImage && type === 'old_price',
         font: l.font, fill: l.text_color }, extra || {})));
     }
     function price(x, y, w, h, fontSize) {
@@ -357,8 +375,14 @@ window.AngeboteModel = (function () {
     function tagTarget() {
       var soft = style.soft, ink = priceColor(l), round = 'round';
       function tag(box, size) {
-        add('shape', box.x, box.y, box.w, box.h, 20, { fill: l.price_background, shape: l.price_shape, rotation: -6 });
-        add('price', box.x + box.pad, box.y + (box.padV || box.pad), box.w - 2 * box.pad, box.h - 2 * (box.padV || box.pad), size, { bold: true, align: 'center', fill: ink, rotation: -6 });
+        if (style.priceImage) {
+          box = Object.assign({}, box, target === 'card' ? { y: 154, h: 174, padV: 4 }
+            : target === 'single' ? { y: 350, h: 280, padV: 8 } : { y: 140, h: 220, padV: 6 });
+          size = Math.min(l.price_size + 36, 100);
+        }
+        add('shape', box.x, box.y, box.w, box.h, 20, { fill: l.price_background, shape: l.price_shape, rotation: -6, hidden: !!style.priceImage });
+        add('price', box.x + box.pad, box.y + (box.padV || box.pad), box.w - 2 * box.pad, box.h - 2 * (box.padV || box.pad), size,
+          { bold: true, align: 'center', fill: ink, rotation: style.priceImage ? 0 : -6 });
         add('old_price', box.x, box.y + box.h + 14, box.w, box.oldHeight, box.oldSize, { align: 'center' });
       }
       if (target === 'card') {
@@ -535,8 +559,18 @@ window.AngeboteModel = (function () {
     layout.adjustments[key] = value;
   }
   function adjustElements(data, target, elements, width, height) {
+    var decoration = styleFor(data.layout, target).decoration || {};
     elements.forEach(function (element) {
       var value = (data.layout.adjustments || {})[adjustmentKey(data, target, element, elements)];
+      var isImage = element.type === 'image', isPrice = element.type === 'price' || priceShape(elements, element);
+      var positionKeys = isImage ? ['image_dx', 'image_dy', 'image_width_pct'] : ['price_dx', 'price_dy', 'price_scale'];
+      if ((isImage || isPrice) && positionKeys.some(function (key) { return decoration[key] != null; })) {
+        value = Object.assign({ dx: 0, dy: 0, scale: 1, rotation: 0 }, value);
+        value.dx += decoration[isImage ? 'image_dx' : 'price_dx'] || 0;
+        value.dy += decoration[isImage ? 'image_dy' : 'price_dy'] || 0;
+        if (isPrice) value.scale *= (decoration.price_scale || 100) / 100;
+        if (isImage && decoration.image_width_pct != null) element.w *= decoration.image_width_pct / 50;
+      }
       if (!value) return;
       var oldW = element.w, oldH = element.h;
       element.rotation = ((element.rotation + value.rotation + 540) % 360) - 180;
@@ -549,6 +583,10 @@ window.AngeboteModel = (function () {
       element.y = Math.max(halfH, Math.min(height - halfH, centerY)) - element.h / 2;
       element.font_size = Math.max(10, Math.min(160, element.font_size * factor));
     });
+  }
+  function priceShape(elements, element) {
+    var next = elements[elements.indexOf(element) + 1];
+    return element.type === 'shape' && next && next.type === 'price' && next.item_id === element.item_id;
   }
   var weeklySource = null;
   function weeklyKey(item) { return item.layout_key || item.name.trim().toLowerCase().replace(/\s+/g, '_'); }
@@ -799,12 +837,61 @@ window.AngeboteModel = (function () {
     } while (size >= 12);
     return { lines: result, size: size, fits: size >= 12 && result.length * size * 1.18 <= element.h };
   }
+  function drawPriceImage(ctx, element, item, layout) {
+    var euros = Math.floor(item.price_cents / 100) + '.', cents = String(item.price_cents % 100).padStart(2, '0');
+    var comparison = item.old_price_cents > item.price_cents;
+    var font = '"' + element.font + '"';
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
+    ctx.font = 'bold 160px ' + font;
+    var euroWidth = ctx.measureText(euros).width;
+    ctx.font = 'bold 82px ' + font;
+    var width = euroWidth + ctx.measureText(cents).width + 20, height = comparison ? 218 : 164;
+    var fit = Math.min(element.w / width, element.h / height, element.font_size / 160);
+    var left = element.align === 'right' ? element.w - width * fit : element.align === 'center' ? (element.w - width * fit) / 2 : 0;
+    ctx.translate(left, (element.h - height * fit) / 2); ctx.scale(fit, fit);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = layout.price_outline_color || theme.price_outline_color; ctx.lineWidth = 10;
+    ctx.fillStyle = layout.color;
+    ctx.font = 'bold 160px ' + font;
+    ctx.strokeText(euros, 8, 150); ctx.fillText(euros, 8, 150);
+    ctx.font = 'bold 82px ' + font;
+    ctx.strokeText(cents, euroWidth + 8, 84); ctx.fillText(cents, euroWidth + 8, 84);
+    if (comparison) {
+      ctx.fillStyle = layout.price_background;
+      ctx.beginPath(); ctx.moveTo(12, 174); ctx.lineTo(width - 4, 168);
+      ctx.lineTo(width - 12, 212); ctx.lineTo(4, 218); ctx.closePath(); ctx.fill();
+      var old = money(item.old_price_cents) + ' €';
+      ctx.font = 'bold 32px ' + font;
+      var oldSize = Math.min(32, 32 * (width - 36) / ctx.measureText(old).width);
+      ctx.font = 'bold ' + oldSize + 'px ' + font; ctx.textAlign = 'center';
+      ctx.fillStyle = layout.old_price_color || theme.old_price_color;
+      ctx.fillText(old, width / 2, 204);
+      ctx.strokeStyle = layout.price_strike_color || theme.price_strike_color; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(18, 182); ctx.lineTo(width - 18, 210); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function decorationFill(ctx, decoration, key, color, width, height) {
+    return window.WochenangeboteRenderer.create({}).tplGradFill(ctx, {
+      bgColor: color, bgColor_grad: !!decoration[key + '_gradient'],
+      bgColor_c2: decoration[key + '_color2'] || color,
+      bgColor_dir: decoration[key + '_direction'], bgColor_pct: decoration[key + '_pct']
+    }, 'bgColor', 0, 0, width, height);
+  }
   async function renderElements(data, elements, width, height, background, scale, pageNumber, light, style) {
     var canvas = document.createElement('canvas'), factor = scale || 1;
     canvas.width = Math.round(width * factor); canvas.height = Math.round(height * factor);
     var ctx = canvas.getContext('2d');
     if (light) window.WochenangeboteRenderer.create({}).semibold(ctx);
-    ctx.scale(factor, factor); ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
+    var layout = style || data.layout, decoration = layout.decoration || {};
+    ctx.scale(factor, factor); ctx.fillStyle = decorationFill(ctx, decoration, 'background', background, width, height); ctx.fillRect(0, 0, width, height);
+    if (decoration.show_texture) {
+      ctx.save(); ctx.globalAlpha = .04; ctx.fillStyle = '#000000';
+      for (var ty = 0; ty < height; ty += 7) for (var tx = 0; tx < width; tx += 7) {
+        if ((tx * 13 + ty * 7) % 17 < 8) ctx.fillRect(tx, ty, 2, 2);
+      }
+      ctx.restore();
+    }
     var errors = [];
     for (var element of elements) {
       if (element.hidden) continue;
@@ -814,6 +901,9 @@ window.AngeboteModel = (function () {
       ctx.rotate(element.rotation * Math.PI / 180);
       ctx.translate(-element.w / 2, -element.h / 2);
       ctx.fillStyle = element.fill || (style || data.layout).text_color;
+      if (['pack', 'deposit', 'base', 'description'].indexOf(element.type) >= 0 && decoration.details_color) ctx.fillStyle = decoration.details_color;
+      if (element.type === 'footer' && (decoration.vorrat_color || decoration.footer_color)) ctx.fillStyle = decoration.vorrat_color || decoration.footer_color;
+      if ((element.type === 'period' || element.type === 'brand') && decoration.footer_color) ctx.fillStyle = decoration.footer_color;
       var angle = element.rotation * Math.PI / 180;
       var halfW = (Math.abs(Math.cos(angle)) * element.w + Math.abs(Math.sin(angle)) * element.h) / 2;
       var halfH = (Math.abs(Math.sin(angle)) * element.w + Math.abs(Math.cos(angle)) * element.h) / 2;
@@ -823,18 +913,47 @@ window.AngeboteModel = (function () {
       }
       if (element.type === 'shape') {
         ctx.beginPath();
-        if (element.shape === 'ellipse') ctx.ellipse(element.w / 2, element.h / 2, element.w / 2, element.h / 2, 0, 0, 2 * Math.PI);
+        if (priceShape(elements, element) && (decoration.price_radius || decoration.price_skew)
+            || ['rect', 'round', 'ellipse'].indexOf(element.shape) < 0) {
+          ctx.save(); ctx.translate(element.w / 2, element.h / 2);
+          var skew = priceShape(elements, element) ? (decoration.price_skew || 0) / 100 : 0;
+          ctx.scale(element.w / (element.w + skew * element.h), 1); ctx.transform(1, 0, -skew, 1, 0, 0);
+          var square = ['circle', 'star', 'explosion'].indexOf(element.shape) >= 0, side = Math.min(element.w, element.h);
+          window.WochenangeboteRenderer.create({}).drawTagShapePath(ctx, square ? side : element.w, square ? side : element.h,
+            element.shape === 'round' ? 'rounded' : element.shape, decoration.price_radius || 0);
+          ctx.restore();
+        } else if (element.shape === 'ellipse') ctx.ellipse(element.w / 2, element.h / 2, element.w / 2, element.h / 2, 0, 0, 2 * Math.PI);
         else if (element.shape === 'round') ctx.roundRect(0, 0, element.w, element.h, Math.min(16, element.w / 2, element.h / 2));
         else ctx.rect(0, 0, element.w, element.h);
         ctx.fill();
+        var card = element.item_id && elements.find(function (entry) { return entry.item_id === element.item_id && entry.type === 'shape'; }) === element;
+        if (card) {
+          if (decoration.card_border_width) {
+            ctx.save(); ctx.strokeStyle = decoration.card_border_color || decorationDefaults.card_border_color;
+            ctx.lineWidth = decoration.card_border_width; ctx.stroke(); ctx.restore();
+          }
+          if (decoration.show_leaf) {
+            var size = decoration.leaf_size || 34;
+            window.WochenangeboteRenderer.drawLeafDecoration(ctx, element.w - size - 12, size, size, decoration.leaf_color || '#4a7c3f');
+          }
+          if (decoration.show_bag) {
+            ctx.save(); ctx.font = '32px Arial'; ctx.textAlign = 'right'; ctx.fillStyle = decoration.leaf_color || '#4a7c3f';
+            ctx.fillText('\uD83D\uDECD', element.w - 12, element.h - 12); ctx.restore();
+          }
+        }
       } else if (element.type === 'image' || element.type === 'logo') {
+        if (element.type === 'image' && (decoration.image_background || decoration.image_gradient)) {
+          ctx.fillStyle = decorationFill(ctx, decoration, 'image', decoration.image_background || '#e8ede7', element.w, element.h);
+          ctx.fillRect(0, 0, element.w, element.h);
+        }
         var id = element.type === 'logo' ? 'logo' : imageFor(element, data);
         if (id) {
           var img = await image(id), ratio = Math.min(element.w / img.width, element.h / img.height) * (element.image_scale || 100) / 100;
           ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
           ctx.drawImage(img, (element.w - img.width * ratio) / 2, (element.h - img.height * ratio) / 2, img.width * ratio, img.height * ratio);
         } else {
-          ctx.fillStyle = '#e8ede7'; ctx.fillRect(0, 0, element.w, element.h);
+          ctx.fillStyle = decorationFill(ctx, decoration, 'image', decoration.image_background || '#e8ede7', element.w, element.h);
+          ctx.fillRect(0, 0, element.w, element.h);
           ctx.fillStyle = '#53644f'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
           ctx.fillText('Produktbild', element.w / 2, element.h / 2);
         }
@@ -846,6 +965,9 @@ window.AngeboteModel = (function () {
           marker.drawSavingsBurst(ctx, element.w / 2, element.h / 2, radius, radius * .62, discount, 'plakat',
             { savingsMarkerType: (style || data.layout).marker_type || 'starburst', savingsPalette: (style || data.layout).marker_palette || 'harmonie', savingsScalePlakat: 100 });
         }
+      } else if (element.type === 'price' && templateStyle((style || data.layout).template).priceImage
+          && data.items.some(function (item) { return item.id === element.item_id && item.price_cents != null; })) {
+        drawPriceImage(ctx, element, data.items.find(function (item) { return item.id === element.item_id; }), style || data.layout);
       } else {
         var value = textFor(element, data, pageNumber);
         var fit = fitted(ctx, element, value, light);
@@ -864,6 +986,11 @@ window.AngeboteModel = (function () {
         }
       }
       ctx.restore();
+    }
+    if (decoration.border_width) {
+      ctx.save(); ctx.lineWidth = decoration.border_width; ctx.strokeStyle = decoration.border_color || '#2e7d32';
+      var inset = decoration.border_width / 2;
+      ctx.strokeRect(inset, inset, width - decoration.border_width, height - decoration.border_width); ctx.restore();
     }
     return { canvas: canvas, errors: errors };
   }
@@ -1052,6 +1179,7 @@ window.AngeboteModel = (function () {
     render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate,
     preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor, registerImage: registerImage,
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
+    decorationDefaults: decorationDefaults,
     templateOptions: templateStyles.map(function (style) { return [style.id, style.label]; }),
     cmsTemplateOptions: templateStyles.filter(function (style) { return style.original && !style.half && !style.tag; }).map(function (style) { return [style.id, style.label]; }),
     weeklyOverride: weeklyOverride, weeklyDefaults: weeklyDefaults, weeklyNewCopy: weeklyNewCopy, weeklyFields: weeklyFields, weeklyCompress: weeklyCompress, templateStyle: templateStyle, styleFor: styleFor, styleOf: styleOf, setTargetStyle: setTargetStyle, applyTargetStyleToAll: applyTargetStyleToAll, targetCustomized: targetCustomized, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };

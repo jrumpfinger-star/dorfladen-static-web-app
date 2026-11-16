@@ -10,6 +10,16 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F31/F32: `cmsPreviewTools()` hängt `#an-design-options` direkt als Seitenpanel ein
+(kein `details`). `D.controls()` kennzeichnet Bereiche mit `data-side-panel`
+(`design`, `marker`); der Editor ergänzt Element/Artikel. Breite des CMS-Dialogs
+steuert die Klasse `an-cms-cols` (≥ 1000 px, drei Spalten) bzw. `an-cms-tabs`
+(Reiter Element · Artikel · Vorlage · Marker), die Reiterwahl bleibt im Editor-
+Zustand. F32 ändert nur Markup-Titel/Reihenfolge in `cms-klassisch.html` und die
+Darstellung in `cms-neu.css`; IDs und `data-action` bleiben (Wächter
+`tools/pruef-cms-abgleich.js`), Generator `tools/build-cms-neu.js` erzeugt
+`cms.html`/`cms-neu.html`. Keine API-Änderung.
+
 F30: `an-defaults` im Editor ruft für Nicht-Sammelziele `applyTargetStyleToAll`
 statt `applyTargetTemplate` (nur gewählter Artikel) auf und übernimmt nur die
 Feinverschiebungen des gewählten Ziels aus den Designstandards; Verschiebungen
@@ -396,3 +406,87 @@ Viewports. Zusätzlich Negativassertions für den Kratzer-Endpunkt und alle
 mutierenden Artikelstamm-Endpunkte. Werbebilder-Schreibzugriffe sind nur bei
 eigenen Produktbildern mit Strichcode erlaubt; private Bild-Uploads bleiben im
 Preview-Namespace. Kein Merge oder Produktivdeployment.
+
+### F33: Einheitliche Musterkachel im Designstandard-Designer
+
+- `static-site/js/angebote-design.js`: Die vorhandenen Anpassungsschlüssel
+  bleiben API-kompatibel. Vor jeder Vorschau und Speicherung werden je
+  Ausgabeziel die Anpassungen von Kachel 0 auf sämtliche Rasterplätze kopiert;
+  abweichende Anpassungen anderer Plätze werden entfernt. Seitenweite
+  Anpassungen bleiben erhalten. Nur die erste Artikel-ID wird dem gemeinsamen
+  Vorschauwerkzeug als bearbeitbar übergeben.
+- Die Synchronisation bleibt auf Designstandards beschränkt. Modell,
+  Renderer, API und individuelle Aktionseditoren ändern sich nicht.
+- `tests/angebote-flyer.spec.js`: Auswahlbeschränkung, direkte Änderungen,
+  Bestandsnormalisierung, Dichtewechsel, Speicherung und tatsächliche
+  Elementgeometrie neuer mehrseitiger Aktionen prüfen.
+- `docs/getraenke-angebotsflyer.md`: Musterkachel und Geltungsbereich erklären.
+  Gezielte F33-/F16-Regression auf den vier vorhandenen Viewports.
+
+### F34: Preisbild mit durchgestrichenem Stattpreis
+
+- Additive Vorlage `price-image` in Modell und API-Freigabe; keine neue
+  Bilddatei und keine Änderung bestehender Vorlagen. Bestehende Preisfarbe
+  und Preis-Hintergrund für Rot und Gelb wiederverwenden; zusätzliche
+  Themenfarben `price_outline_color`, `old_price_color`, `price_strike_color`
+  für Kontur, Stattpreis und Strich aufnehmen und validieren. Sie nutzt die
+  vorhandene Preisschild-Aufteilung mit angepasstem
+  Platz für das kombinierte Preisbild.
+- Gemeinsame Canvas-Zeichenfunktion im Angebotsmodell: dynamische Euro-/Cent-
+  Typografie, weiße Kontur, gelber Vergleichspreisstreifen mit rotem Strich.
+  Sie passt das gesamte Motiv proportional in das Preisfeld. Separate
+  Preishintergründe und Stattpreisfelder der neuen Vorlage bleiben ausgeblendet.
+- Dieselbe Zeichenfunktion für Papier, Kacheln, Einzelflyer und Waage nutzen.
+  Vorhandene Auswahl, Standardspeicherung und Zielstile wiederverwenden.
+- Bestehende Playwright-Datei um Auswahl-/Speicherprüfung und tatsächliche
+  Canvas-Text-/Pixelprüfungen einschließlich Preisrandfällen ergänzen;
+  Python-Vertragstest für Standard, Veröffentlichung und Zielstil ergänzen.
+  Dokumentierte Vorlagenzahl und Hilfe aktualisieren.
+
+### F35: Zusätzliche Gestaltungsoptionen und eigene Vorlagen
+
+- Optionale, sparsame `layout.decoration` für bisher fehlende Einstellungen
+  einführen, ebenfalls in Zielstilen. Fehlende Eigenschaften behalten exakt
+  den bisherigen Zeichenpfad. API validiert die erlaubten Eigenschaften.
+- Formen und Verläufe aus dem bestehenden Wochenrenderer wiederverwenden.
+  Blatt-, Taschen- und Papierdekoration als gemeinsame Zeichenfunktion für
+  alle Getränkeausgaben, einschließlich eigener Farben und Rahmen.
+  Gemeinsame numerische Bild-/Preisposition vor bestehenden
+  Feinverschiebungen anwenden, damit F33 erhalten bleibt.
+- Zusätzliche Felder kompakt unter „Weitere Gestaltung“ in denselben
+  Controls für Standards und Aktionen ergänzen. Gemeinsame
+  Preisschild-Farbvorlagen statt neuer Kopien der vorhandenen Vorgaben nutzen.
+- Optionale Liste benannter `presets` im versionierten Design-Dokument;
+  Layouts ohne Artikel-/Seiten-/Zielinhalte speichern. Expliziter Hinweis auf
+  persistierende Standardspeicherung, zugängliche Eingabe und Löschbestätigung.
+- Gezielte Playwright- und API-Vertragstests für Darstellung, Wiederladen,
+  Vorlagenverwaltung und nicht gesetzte Optionen; Hilfe aktualisieren.
+
+### F36: Zentrale kompakte Homepage
+
+- Optionale `homepage`-Eigenschaft im bestehenden versionierten
+  `design/defaults.json`; bekannte Farben, Booleans und numerische Grenzen
+  validieren. Fehlende Eigenschaft älterer Clients erhält den gespeicherten Wert.
+- Geschützte Design-API für CMS, öffentliche Projektion über
+  `angebote-flyer?view=homepage` ohne Entwürfe oder private Vorlagen.
+- Gemeinsame HTML-Karten und CSS-Variablen für CMS-Vorschau und Homepage im
+  Kundenmodul. Bestehende Modell-Bildauflösung nutzen, keine neuen öffentlichen
+  Bildspeicher. Homepage-Kontext explizit von Kiosk/Originalausgaben trennen.
+- Vorhandene HP-Controls laden/speichern mit Version und verständlichen Fehlern.
+  Keine Speicherung in produktionsgeteiltem Dataverse-CMS-Config.
+- Containerabhängiges 3/2/1-Raster, Homepage-Typografie, kompakte Desktop-
+  und mindestens 44 px hohe mobile Buttons; Getränkepflichtangaben erhalten.
+- Funktionales CMS-Markup in Quelle pflegen, neue Darstellung über vorhandenen
+  Generator/CSS ableiten; Abgleich und wiederholbarer Generatorlauf.
+
+### F37: Gezielte Tests
+
+- Explizite Dateimarkierung und `@ohne-layout` für reine Verträge statt
+  Inhaltsheuristik; unbekannte UI-Tests bleiben auf allen Viewports.
+- Änderungszuordnung mit sichtbaren Fehlern und konservativer Eskalation.
+  Asynchroner Playwright-Prozess, ansprechbarer lokaler Node-Server mit
+  Readiness und sicherem Cleanup. Windows-kompatible Selektoren.
+- Kleine zusammenhängende Läufe; abschließend betroffene UI auf vier Viewports,
+  API/Renderer ohne Viewportbezug einmal, keine pauschale Gesamtsuite.
+- Erst nach Abnahme committen und bestehenden PR #15 aktualisieren; isolierte
+  Feature-Preview und ausgelieferte Dateien read-only verifizieren.

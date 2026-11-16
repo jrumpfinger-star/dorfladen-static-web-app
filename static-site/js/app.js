@@ -235,11 +235,11 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     var ov=(dc.tplColors&&dc.tplColors[tpl])||{};
     var v=function(k){return ov[k]||ad[k];};
     var css=[];
-    css.push('.ang-img{background:'+v('imgBg')+'!important}');
-    css.push('.ang-item{background:'+v('cardBg')+'!important;border-color:'+v('cardBorder')+'!important}');
-    css.push('.ang-name{color:'+v('textColor')+'!important}');
-    css.push('.ang-det{color:'+v('detailsColor')+'!important}');
-    css.push('.ang-tag .ang-tag-inner{background:'+v('tagColor')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-img{background:'+v('imgBg')+'!important}');
+    css.push('.ang-item:not(.an-hp-card){background:'+v('cardBg')+'!important;border-color:'+v('cardBorder')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-name{color:'+v('textColor')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-det{color:'+v('detailsColor')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-tag .ang-tag-inner{background:'+v('tagColor')+'!important}');
     var s=document.getElementById('ang-tile-colors');
     if(!s){s=document.createElement('style');s.id='ang-tile-colors';document.head.appendChild(s);}
     s.textContent=css.join('');

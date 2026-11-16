@@ -706,3 +706,18 @@ html[data-theme="dark"] .cmsneu-inhalt .soc-card{
   color:var(--ink);
   border-color:var(--line);
 }
+/* Angebotsdesign: dieselben kompakten Karten wie der Getraenkedesigner. */
+#cfg-offer-legacy{height:auto;min-height:0;align-items:start}
+#cfg-offer-legacy .cfg-split-left{overflow:visible;padding:0}
+#cfg-offer-legacy .cfg-split-right{overflow:visible;position:sticky;top:8px}
+#cfg-offer-legacy [id^="cfg-sec-"]{counter-reset:cfgstep}
+#cfg-offer-legacy [id^="cfg-sec-"]>.cms-card,
+#cfg-offer-legacy [id^="cfg-sec-"]>div{background:transparent!important;border:0!important;padding:0!important}
+#cfg-offer-legacy .cms-card-header{background:transparent!important;color:var(--ink)!important;font-size:14px;border:0;padding:12px;font-weight:600}
+#cfg-offer-legacy .cms-card-header::before{counter-increment:cfgstep;content:counter(cfgstep) " · ";color:var(--gr)}
+#cfg-offer-legacy .cms-card{border:1px solid #d8dfd7!important;border-radius:12px!important;background:#fff!important}
+#cfg-offer-legacy .cms-input{border-color:#7d8f84!important;background:#fff!important;color:#24362d!important}
+#cfg-offer-legacy .cms-wp-preview.active{border-color:#234c38!important;position:relative}
+#cfg-offer-legacy .cms-wp-preview.active::after{content:"✓ Aktiv";display:block;color:#234c38;font-size:12px;font-weight:600}
+#cfg-offer-legacy-save{position:sticky;bottom:0;z-index:5;background:var(--bg,#fff);padding:10px;border-top:1px solid var(--line);margin-top:12px!important}
+@media(max-width:900px){#cfg-offer-legacy{flex-direction:column}#cfg-offer-legacy .cfg-split-right{width:100%;position:static}}

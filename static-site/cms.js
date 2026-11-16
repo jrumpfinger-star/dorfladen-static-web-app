@@ -1986,21 +1986,27 @@
   });
 
   // --- HP-Sonderangebote Card Design ---
-  var HPANG_KEY='dl_hpang_design';
-  var HPANG_DEFAULTS={
-    gridBg:'#f4f1ea',cardBg:'#ffffff',cardBorder:'#e8e5de',nameColor:'#111111',detColor:'#555555',
-    tagBg:'#a51d2d',tagText:'#ffffff',badgeBg:'#a51d2d',stattColor:'#666666',
-    tagSkew:-4,tagRadius:5,headerBg:'#c62828',headerText:'#ffffff',
-    cardRadius:16,imgSize:95,showLeaf:true,showBasket:true
-  };
+  var HPANG_DEFAULTS=window.AngeboteKunden.homepageDefaults;
   var _hpangViewMode='desktop';
 
-  var _hpangCurrent=null;
+  var _hpangCurrent=null, _hpangDocument=null;
   function hpangGet(){
     if(_hpangCurrent){var r2={};for(var k2 in HPANG_DEFAULTS)r2[k2]=_hpangCurrent[k2]!=null?_hpangCurrent[k2]:HPANG_DEFAULTS[k2];return r2;}
     return _clone(HPANG_DEFAULTS);
   }
-  function hpangSave(cfg){_hpangCurrent=_clone(cfg);}
+  async function hpangLoad(){
+    var result=await window.AngeboteModel.request('/api/angebote-verwaltung?view=design');
+    _hpangDocument=result.design;
+    _hpangCurrent=Object.assign({},HPANG_DEFAULTS,result.design.homepage);
+    hpangApplyUI(hpangGet());
+  }
+  async function hpangSave(cfg){
+    if(!_hpangDocument)throw window.AngeboteModel.problem('Bitte die Homepage-Gestaltung zuerst erneut öffnen.');
+    var M=window.AngeboteModel, data=M.clone(_hpangDocument);data.homepage=cfg;
+    var result=await M.request('/api/angebote-verwaltung?view=design',M.json('PUT',{version:_hpangDocument.version,data:data}));
+    _hpangDocument=result.design;_hpangCurrent=M.clone(result.design.homepage);
+    hpangApplyUI(hpangGet());
+  }
 
   function hpangReadUI(){
     var c={};
@@ -2042,56 +2048,12 @@
     var wrap=document.getElementById('hpang-preview-wrap');
     var container=document.getElementById('hpang-preview');
     if(!container||!wrap)return;
-    var c=hpangReadUI();
-    var isMobile=_hpangViewMode==='mobile';
-
-    wrap.style.background=c.gridBg;
-    container.style.maxWidth=isMobile?'380px':'100%';
-
-    // Build header
-    var html='<div style="background:linear-gradient(135deg,'+c.headerBg+' 0%,'+c.headerBg+' 50%,'+adjustColor(c.headerBg,20)+' 100%);color:'+c.headerText+';padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;border-radius:12px 12px 0 0">';
-    html+='<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:'+c.headerText+'"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
-    html+='<span>Sonderangebote</span>';
-    html+='<span style="font-size:var(--schrift-klein);font-weight:400;opacity:.85;margin-left:auto">'+HPANG_SAMPLES.length+' Artikel</span>';
-    html+='</div>';
-
-    // Build grid
-    var cols=isMobile?'1fr':'repeat(auto-fill,minmax(320px,1fr))';
-    html+='<div style="display:grid;grid-template-columns:'+cols+';gap:14px;padding:14px;background:'+c.gridBg+';border-radius:0 0 12px 12px">';
-
-    HPANG_SAMPLES.forEach(function(a){
-      var pct=a.statt>0&&a.preis>0?Math.round((a.statt-a.preis)/a.statt*100):0;
-      var pi=Math.floor(a.preis);var pf=Math.round((a.preis-pi)*100);var cs=pf<10?'0'+pf:String(pf);
-      var imgSz=isMobile?'70':String(c.imgSize);
-      var cardMinH=isMobile?'90':'110';
-
-      html+='<div style="background:'+c.cardBg+';border:1px solid '+c.cardBorder+';border-radius:'+c.cardRadius+'px;padding:'+(isMobile?'10':'14')+'px 12px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.06);display:grid;grid-template-columns:'+imgSz+'px 1fr auto;gap:0 10px;overflow:visible;min-height:'+cardMinH+'px">';
-      // Leaf
-      if(c.showLeaf) html+='<span style="position:absolute;top:6px;right:6px;opacity:.15;font-size:1.4rem;pointer-events:none">\uD83C\uDF3F</span>';
-      // Badge
-      if(pct>0) html+='<div style="position:absolute;top:-4px;left:6px;background:'+c.badgeBg+';color:#fff;font-size:.68rem;font-weight:600;padding:3px 9px;border-radius:0 0 8px 8px;letter-spacing:.3px;z-index:3">-'+pct+'%</div>';
-      // Image placeholder
-      html+='<div style="width:'+imgSz+'px;height:'+imgSz+'px;overflow:hidden;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;grid-row:1/3">';
-      html+='<span style="font-size:2rem;opacity:.4">\uD83D\uDED2</span></div>';
-      // Info
-      html+='<div style="min-width:0;display:flex;flex-direction:column;justify-content:flex-start;grid-column:2;grid-row:1/3;padding-top:2px">';
-      html+='<div style="font-weight:600;font-size:'+(isMobile?'1rem':'1.02rem')+';color:'+c.nameColor+';margin-bottom:3px;line-height:1.22">'+a.produkt+'</div>';
-      if(a.details) html+='<div style="font-size:.88rem;color:'+c.detColor+';font-weight:500">'+a.details+'</div>';
-      html+='</div>';
-      // Price tag
-      html+='<div style="grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:'+(isMobile?'75':'82')+'px;gap:6px">';
-      html+='<div style="background:'+c.tagBg+';color:'+c.tagText+';font-weight:600;font-size:'+(isMobile?'1.2rem':'1.6rem')+';padding:'+(isMobile?'10px 12px':'14px 18px')+';border-radius:'+c.tagRadius+'px;transform:rotate('+c.tagSkew+'deg) skewY('+(c.tagSkew*0.75)+'deg);box-shadow:5px 5px 0 rgba(80,0,0,.35);text-align:center;line-height:1;white-space:nowrap;position:relative">';
-      html+=pi+','+cs+'<span style="font-size:.5em;vertical-align:super;margin-left:1px">\u20AC</span>';
-      html+='<div style="position:absolute;top:0;left:0;right:0;bottom:50%;background:linear-gradient(to bottom,rgba(255,255,255,.15),transparent);border-radius:'+c.tagRadius+'px '+c.tagRadius+'px 0 0"></div>';
-      html+='</div>';
-      if(a.statt) html+='<span style="font-size:.78rem;color:'+c.stattColor+';text-decoration:line-through;font-weight:400;font-style:italic;transform:rotate(-2deg)">'+a.statt.toFixed(2).replace('.',',')+' \u20AC</span>';
-      html+='</div>';
-      // Basket
-      if(c.showBasket) html+='<span style="position:absolute;bottom:4px;right:12px;opacity:.12;font-size:1.6rem;pointer-events:none">\uD83D\uDED2</span>';
-      html+='</div>';
-    });
-    html+='</div>';
-    container.innerHTML=html;
+    var c=hpangReadUI(), K=window.AngeboteKunden;
+    container.style.maxWidth=_hpangViewMode==='mobile'?'375px':'100%';
+    K.applyHomepage(container,c);
+    container.innerHTML='<div class="ang-header" style="padding:12px;font-weight:600">Sonderangebote</div><div class="an-customer-grid">'
+      +HPANG_SAMPLES.map(function(a){return K.homepageCard({name:a.produkt,description:a.details,
+        price_cents:Math.round(a.preis*100),old_price_cents:Math.round(a.statt*100)},'weekly');}).join('')+'</div>';
   }
 
   function adjustColor(hex,amt){
@@ -2113,20 +2075,17 @@
   };
 
   // Save / Revert / Reset
-  window.hpangSaveCfg=function(){
-    var c=hpangReadUI();
-    hpangSave(c);
-    toast('HP-Sonderangebote Design gespeichert','ok');
+  window.hpangSaveCfg=async function(){
+    try{await hpangSave(hpangReadUI());toast('Homepage-Gestaltung gespeichert','ok');}
+    catch(e){window.AngeboteModel.error(e);}
   };
   window.hpangRevert=function(){
     hpangApplyUI(hpangGet());
     toast('\u00c4nderungen verworfen','ok');
   };
   window.hpangReset=function(){
-    var d=_clone(HPANG_DEFAULTS);
-    hpangSave(d);
-    hpangApplyUI(d);
-    toast('Auf Standardwerte zur\u00fcckgesetzt','ok');
+    hpangApplyUI(_clone(HPANG_DEFAULTS));
+    toast('Standardwerte eingestellt. Zum Übernehmen bitte speichern.','ok');
   };
 
   // Live update on input
@@ -2152,7 +2111,7 @@
     _origCmsCfgSubTab(id);
     if(id==='cfg-hpang'&&!_hpangLoaded){
       _hpangLoaded=true;
-      hpangApplyUI(hpangGet());
+      hpangLoad().catch(function(e){_hpangLoaded=false;window.AngeboteModel.error(e);});
     }
   };
 
@@ -7397,18 +7356,7 @@
       if(sp&&sp.querySelector('option[value="'+e.target.value+'"]'))sp.value=e.target.value;
     }
     if(e.target&&(e.target.id==='cfg-savingsMarkerType'||e.target.id==='cfg-savingsPalette'||e.target.id==='cfg-savingsStarStyle'||e.target.id==='cfg-tagShape'))cfgRenderSavingsPreview();
-    var TAG_PRESETS={
-      'classic-red-rect':{tagColor:'#a51d2d',tagShape:'rect',tagRadius:0},
-      'green-rounded':{tagColor:'#3d7a4a',tagShape:'rounded',tagRadius:16},
-      'dark-pill':{tagColor:'#1e293b',tagShape:'pill',tagRadius:0},
-      'gold-banner':{tagColor:'#b8860b',tagShape:'banner',tagRadius:0},
-      'blue-circle':{tagColor:'#1d4ed8',tagShape:'circle',tagRadius:0},
-      'orange-star':{tagColor:'#ea580c',tagShape:'star',tagRadius:0},
-      'purple-hexagon':{tagColor:'#7c3aed',tagShape:'hexagon',tagRadius:0},
-      'teal-ticket':{tagColor:'#0d9488',tagShape:'ticket',tagRadius:0},
-      'rose-diamond':{tagColor:'#e11d48',tagShape:'diamond',tagRadius:0},
-      'copper-explosion':{tagColor:'#b45309',tagShape:'explosion',tagRadius:0}
-    };
+    var TAG_PRESETS=window.WochenangeboteRenderer.TAG_PRESETS;
     if(e.target&&e.target.id==='cfg-tagPreset'){
       var preset=TAG_PRESETS[e.target.value];
       if(preset){

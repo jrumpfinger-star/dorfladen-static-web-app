@@ -68,3 +68,13 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF60 | Kiosk-Reiter „Angebote“ in Quelle und Generator übernehmen | GF59 | TC-S8a, TC-S8c |
 | GF61 | Flyer-Aktion nach Mockup A in Wochenleiste integrieren; Mehrfachauswahl, Fokus, Leerzustand und vier Viewports prüfen; Preview bereitstellen | GF60 | TC-F29-01, TC-F29-02 |
 | GF62 | „Designstandards übernehmen“ wirkt im gewählten Ausgabeziel auf alle Artikel, mit Zielfeinverschiebungen; Hinweis auf der Designseite; Preview bereitstellen | GF61 | TC-F30-01 |
+| GF63 | Gestaltungsmodus: Einstellungen neben der Vorschau (3 Spalten, Reiter bis 1000 px, Handy mit fester Aktionsleiste); Funktionsparität in vier Zielen | GF62 | TC-F31-01, TC-F31-02 |
+| GF64 | Reiter Plakat/Einzelflyer im Stil des Getränkeflyers (Quelle cms-klassisch.html, cms-neu.css, Generator, Abgleichwächter); Preview bereitstellen | GF63 | TC-F32-01, TC-F32-02 |
+| GF65 | Designstandard-Designer auf erste Musterkachel begrenzen; Änderungen über bestehende Anpassungsschlüssel für alle Rasterplätze synchronisieren; Altstände und Dichtewechsel vereinheitlichen; Hilfe aktualisieren | GF64 | TC-F33-01, TC-F33-02 |
+| GF66 | Additive Preisbildvorlage mit hochgestellten Cent, weißer Kontur und gelbem, rot durchgestrichenem Stattpreis in Modell, API und allen Getränkeausgaben ergänzen; Randfälle und UI prüfen | GF65 | TC-F34-01, TC-F34-02 |
+| GF67 | Zusätzliche Dekorations-, Farb-, Form-, Verlaufs- und Positionsoptionen für Getränke ergänzen; eigene versionierte Designvorlagen und Verwerfen; Renderer-, UI- und API-Parität gezielt prüfen | GF66 | TC-F35-01, TC-F35-02, TC-F35-03 |
+| GF68 | Versionierte umgebungsgetrennte HP-Einstellungen und öffentliche Projektion; bestehende CMS-Controls wirksam anbinden | GF67 | TC-F36-01, TC-F36-04 |
+| GF69 | Kompakte Homepage nach Mockup mit gemeinsamer CMS-Vorschau, Originalausgaben erhalten und vier Viewports prüfen | GF68 | TC-F36-02, TC-F36-03 |
+| GF70 | Offene responsive F31/F32-Lücken und Generatorquellen schließen; idempotente CMS-Ausgaben erzeugen | GF64, GF68 | TC-F31-01..02, TC-F32-01..02 |
+| GF71 | Explizite Testzuordnung, asynchroner lokaler Server, Fehlerbehandlung und gezielte Testbefehle fertigstellen | GF67 | TC-F37-01..02 |
+| GF72 | Gezielte Abnahme F31-F37, Hilfe und Regression; Commit/PR #15/Feature-Preview mit read-only Nachweis, kein main-Merge | GF69, GF70, GF71 | TC-F31-01..TC-F37-02, Preview-Smoke |

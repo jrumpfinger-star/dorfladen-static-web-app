@@ -769,6 +769,171 @@ weist darauf hin, wie bestehende Aktionen den Standard erhalten.
   Feinverschiebung der Designstandards; Einzelflyer und Sammelflyer bleiben
   unverändert; nach Veröffentlichen zeigt die Kundenansicht (Handy) das Layout.
 
+**F31:** Im Gestaltungsmodus einer Aktion (CMS, Reiter Homepage/Kiosk,
+Einzelflyer, Sammelflyer, Waage) liegen die Einstellungen **neben** der Vorschau
+und nicht darunter. „Vorlage und Gestaltung“ ist kein zugeklappter Bereich mehr.
+Ab 1000 px Dialogbreite stehen Vorschau, „Element und Artikel“ und „Vorlage,
+Farben und Marker“ nebeneinander und sind ohne Aufklappen und ohne Scrollen des
+Dialogs sichtbar. Darunter bis 640 px steht die Vorschau links und rechts eine
+Reiterleiste Element · Artikel · Vorlage · Marker, die jeweils einen Bereich
+zeigt. Auf dem Handy steht die Vorschau oben, darunter dieselben Reiter;
+Rückgängig und „Gestaltung speichern“ bleiben sichtbar. Die zuletzt gewählte
+Reiterwahl bleibt beim Wechsel des Ausgabeziels erhalten. Alle Werkzeuge
+(Ghost, Duplikat, weitere Kopien, Eigenes Bild, Drehung, Zurücksetzen,
+Feinverschiebung, CMS-Artikelpositionen) bleiben in jedem Reiter verfügbar.
+Touch-Ziele sind auf dem Handy mindestens 44 px hoch.
+
+- TC-F31-01: Desktop – Gestaltungsfelder rechts neben der Vorschau ohne
+  `details`-Aufklappen; Vorschau mindestens 40 % der Dialogbreite; kein
+  horizontaler Überlauf auf allen vier Viewports. Tablet/Handy – Reiter sichtbar,
+  je Reiter nur ein Bereich, Speichern erreichbar.
+- TC-F31-02: In allen vier Ausgabezielen wirken Farb-/Vorlagenänderungen sofort
+  und Ghost, Duplikat, Eigenes Bild, Drehung und Zurücksetzen bleiben erreichbar.
+
+**F32:** Die Einstellungsreiter „Plakat“ und „Einzelflyer“ unter Design →
+Plakate & Flyer folgen im Stil dem Getränkeflyer: nummerierte Bereiche statt
+grüner Kartenbalken, kontrastreiche Felder (Rand mindestens 3:1, Text
+mindestens 4,5:1), Vorlagenkacheln mit „✓ Aktiv“ und ein Einstellungsbereich
+ohne inneren Scrollbereich. „Speichern“, „Verwerfen“ und „Auf Default
+zurücksetzen“ sind fest erreichbar. Alle Felder, Kennungen, Voreinstellungen
+und Speicherwege bleiben unverändert; die „gewohnte Fassung“ (`cms-klassisch.html`)
+bleibt wie bisher. Die Vorschau behält Aktualisieren und Auto; Ausgabereiter und
+Elementwerkzeuge der Aktionsvorschau gehören nicht zu diesem Bereich.
+
+- TC-F32-01: Plakat und Einzelflyer zeigen nummerierte Bereiche, die aktive
+  Vorlage mit „✓ Aktiv“, Speichern ohne Scrollen erreichbar, keinen inneren
+  Scrollcontainer und keinen horizontalen Überlauf auf allen vier Viewports.
+- TC-F32-02: Vorlagenwechsel, Farbänderung und Preisschildform wirken in der
+  Vorschau; die Speicheranfrage bleibt unverändert.
+
+**F33:** Im Designstandard-Designer ist nur die erste Artikelkachel als
+Musterkachel bearbeitbar. Verschieben, Drehen und Skalieren eines ihrer
+Elemente gelten automatisch für die entsprechenden Elemente aller Kacheln
+des jeweiligen Ausgabeziels, auch nach einem Wechsel zwischen vier und sechs
+Kacheln und auf Folgeseiten neuer Aktionen. Die übrigen Kacheln sind weder
+durch Antippen noch über die Elementauswahl individuell bearbeitbar.
+Seitenweite Elemente wie Titel und Logo bleiben separat bearbeitbar.
+Ein Hinweis erklärt die Musterkachel. Beim Laden älterer Designstandards
+ersetzt die Gestaltung der ersten Kachel abweichende Anpassungen weiterer
+Kacheln; fehlt dort eine Anpassung, gilt für dieses Element die Vorlage.
+Erst Speichern persistiert die vereinheitlichten Standards. Bereits angelegte
+Aktionen und ihre individuellen Aktionseditoren bleiben unverändert.
+
+- TC-F33-01: Bei vier und sechs Kacheln sind nur Elemente der ersten Kachel
+  sowie seitenweite Elemente auswählbar. Drehen, Skalieren und Verschieben
+  synchronisieren alle Kacheln des Ausgabeziels, nicht andere Ausgabeziele.
+  Speichern, Neuladen und neue mehrseitige Aktionen erhalten die einheitliche
+  Gestaltung. Die Prüfung läuft auf allen vier Viewports.
+- TC-F33-02: Alte abweichende Anpassungen weiterer Kacheln werden im Designer
+  durch die erste Kachel vereinheitlicht, ohne bestehende Aktionen oder
+  Standards vor dem Speichern zu verändern. Der Wechsel von vier auf sechs
+  Kacheln synchronisiert auch die zusätzlichen Kacheln.
+
+**F34:** Eine zusätzliche Getränkevorlage „Preisbild · Rot/Gelb“ zeigt den
+Angebotspreis mit großer roter Eurozahl samt Dezimalpunkt, kleineren
+hochgestellten Cent und weißer Kontur. Ein tatsächlich höherer Stattpreis
+erscheint darunter schwarz mit Währungszeichen auf einem gelben, leicht
+schrägen Streifen und wird rot durchgestrichen. Ohne höheren Stattpreis wird
+kein Vergleichspreis erfunden und kein leerer gelber Streifen angezeigt.
+Die Vorlage ist im Designstandard- und Aktionseditor wählbar und gilt für
+Sammelflyer, Homepage/Kiosk, Einzelflyer und beide Waagenformate. Preise stammen
+aus den Artikeldaten; ein- und mehrstellige Eurobeträge passen in das
+Preisfeld. Alle bisherigen Vorlagen und deren Standarddarstellung bleiben
+unverändert. Musterkachel-Synchronisation gemäß F33 gilt auch hier.
+Alle fünf Farben sind konfigurierbar: Angebotspreis (Standard Rot),
+Kontur (Weiß), Stattpreis-Streifen (Gelb), Stattpreistext (Schwarz) und
+Durchstreichung (Rot). Die Auswahl wird in Standards und Ausgabezielstilen
+gespeichert und in jeder Ausgabe berücksichtigt.
+
+- TC-F34-01: Neue Vorlage im Designer wählen, speichern und erneut laden.
+  Neue Aktionen übernehmen sie; alle Ausgabeziele zeichnen echte Preise,
+  hochgestellte Cent, weiße Kontur und den gelben durchgestrichenen Stattpreis
+  ohne doppelte Preisfelder. Alle fünf Farben ändern und nach dem Neuladen
+  sowie in den gerenderten Ausgaben prüfen. UI-Prüfung auf vier Viewports.
+- TC-F34-02: Preise von 0,99 bis zu mehrstelligen Eurobeträgen passen in das
+  Preisfeld. Fehlende, gleiche oder niedrigere Stattpreise erzeugen keinen
+  Vergleichspreisstreifen. Die API erhält die Vorlage in Standards,
+  Veröffentlichung und Zielstilen und lehnt unbekannte Vorlagen weiterhin ab.
+
+**F35:** Der Getränkeflyer-Designer erhält die zusätzlichen Gestaltungsgruppen
+aus Plakat/Einzelflyer: Blatt-Dekoration (Farbe/Größe), Einkaufstasche,
+Papiertextur, Rahmen (Breite/Farbe), getrennte Detail-/Fußzeilen-/Vorratfarben,
+Kartenrahmen, Bildhintergrund sowie Farbverläufe für Flyer- und Bildhintergrund.
+Preisschilder bieten alle bisherigen Formen (einschließlich der elf
+Plakat-/Einzelflyerformen), Eckenradius, Neigung, Größe und
+Farbvorlagen. Bildbreite und relative Bild-/Preisposition sind als Zahlenfelder
+sowie weiterhin direkt an der Musterkachel einstellbar. Alle neuen Optionen
+wirken auf alle Kacheln des Ausgabeziels und sind im Aktionseditor über dieselben
+Gestaltungsfelder verfügbar. Nicht gesetzte Optionen verändern alte Ausgaben
+nicht. Neue Elemente werden nicht artikelindividuell im Designer bearbeitet.
+
+Eigene benannte Getränke-Designvorlagen lassen sich anlegen, laden und nach
+Bestätigung löschen. Sie enthalten Gestaltung einschließlich Feinverschiebungen,
+aber keine Artikeldaten. Die Verwaltung erfolgt gemeinsam mit den versionierten
+Designstandards; erst „Designstandards speichern“ persistiert Änderungen.
+„Änderungen verwerfen“ stellt den zuletzt gespeicherten Stand wieder her.
+„Vorlage auf Original zurücksetzen“ bleibt erhalten.
+
+- TC-F35-01: Zusätzliche Felder einstellen, Vorschauänderungen beobachten,
+  speichern und nach Neuladen sowie in neuen Aktionen wiederfinden. Blatt,
+  Tasche, Textur, Rahmen, Farben, Verläufe und Preisschildform wirken tatsächlich
+  im Renderer. Keine individuellen Bearbeitungsflächen für weitere Kacheln.
+- TC-F35-02: Benannte Vorlage mit vollständiger Gestaltung anlegen, speichern,
+  neuladen, laden und löschen (Abbrechen/Bestätigen); Änderungen verwerfen
+  stellt den gespeicherten Stand her. Namen werden als Text behandelt.
+- TC-F35-03: API erhält zusätzliche Optionen und Vorlagen samt
+  Zielüberschreibungen; ungültige Typen, Farben, Grenzen und unbekannte
+  Eigenschaften werden zurückgewiesen. Bestehende Aktionen ohne diese
+  Optionen bleiben unverändert. UI-Prüfung auf vier Viewports.
+
+## F36: Kompakte Homepage mit wirksamen zentralen Einstellungen
+
+Die Homepage zeigt Angebote aller Arten in kompakten HTML-Karten nach dem
+freigegebenen Mockup. Schrift und Buttons folgen dem Homepage-Stil statt den
+Schriftgrößen eines skalierten Portraitflyers. Das Raster wählt automatisch
+drei Spalten bei ausreichend breitem Container, sonst zwei und unter 340 px
+eine. Mobile Touchflächen bleiben mindestens 44 px hoch. Produktbild, Name,
+Details, echter Angebots-/Stattpreis und Rabatt bleiben sichtbar; bei Getränken
+zusätzlich Gebinde, Pfand und Grundpreis. Originalflyer, gespeicherte Ziellayouts,
+Kiosk, Druck und Waage werden durch diese Homepage-Darstellung nicht verändert.
+Wochenwahl, Flyerauswahl, Viewer und Fokus-Rückgabe bleiben erhalten.
+
+Design → HP-Sonderangebote steuert diese tatsächliche Darstellung zentral:
+Farben, Radien, Bildgröße, Preisschildneigung, Blatt und Tasche. Vorschau und
+Homepage verwenden dieselbe Kartendarstellung. Speichern persistiert versioniert
+im umgebungsgetrennten Angebotsspeicher, nicht in der produktionsgeteilten
+Dataverse-Konfiguration. Andere Designbereiche und eigene Vorlagen bleiben
+erhalten. Ohne gespeicherte Einstellungen gelten dokumentierte Standards;
+Lade-/Speicherfehler und Konflikte werden sichtbar statt als Erfolg behandelt.
+Es gibt keinen zusätzlichen Darstellungsform- oder Spalten-Umschalter.
+
+- TC-F36-01: HP-Einstellungen speichern, neu laden und in anderer Kundensitzung
+  wiederfinden; andere Designbereiche und Vorlagen bleiben erhalten.
+- TC-F36-02: Gemischte Angebote zeigen kompakte Karten, vollständige Pflichtangaben
+  und passende Typografie ohne Überlauf auf vier Viewports; Kiosk und
+  Originalausgaben bleiben unverändert.
+- TC-F36-03: Wochenfilter, mehrere Flyer, Viewer und Fokus-Rückgabe funktionieren;
+  Bild-/Konfigurationsfehler sind sichtbar und können erneut geladen werden.
+- TC-F36-04: API validiert Farben, Typen, Grenzen, Version und Zugriffsschutz;
+  öffentliche Homepage-Antwort enthält keine privaten Designs oder Vorlagen.
+  Einstellungen unterschiedlicher Namespaces bleiben getrennt.
+
+## F37: Gezielte und zuverlässige Testausführung
+
+Der Teststarter wählt anhand geänderter Dateien betroffene Tests aus und zeigt
+den Umfang. UI-Prüfungen laufen auf den vier vorgesehenen Viewports; reine
+viewportunabhängige Verträge können explizit nur einmal laufen. Keine automatische
+Klassifizierung anhand von Suchworten. Nicht klassifizierte UI-Tests bleiben auf
+vier Viewports. Gitfehler, ungültige Zuordnungen und nicht zugeordnete
+Verhaltensänderungen dürfen nicht zu stillen erfolgreichen Null-Läufen führen.
+Der lokale Server bleibt während des Tests ansprechbar, wird vorab geprüft und
+nach Abschluss einschließlich Fehlerfällen beendet.
+
+- TC-F37-01: Geänderte Dateien, explizite Markierungen, ungültige Zuordnungen
+  und Gitfehler wählen nachvollziehbar passende Tests oder melden einen Fehler.
+- TC-F37-02: Lokaler Server antwortet während des Testlaufs; dessen Exitcode
+  wird weitergegeben und der selbst gestartete Server danach aufgeräumt.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

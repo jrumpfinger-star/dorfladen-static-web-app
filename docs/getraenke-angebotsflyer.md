@@ -55,6 +55,42 @@ Sonderaktionen behalten ihre ursprüngliche Sechser-Erfassung und CMS-Vorlagen.
 
 ## Vorschau und Gestaltung
 
+### Einheitliche Kacheln im Designstandard-Designer
+
+Unter **Design → Getränkeflyer** ist ausschließlich die **erste Kachel als
+Musterkachel** bearbeitbar. Verschieben, Drehen und Größenänderungen eines
+Elements werden sofort auf die entsprechenden Elemente aller Kacheln der
+gewählten Ausgabe übertragen. Das gilt bei vier und sechs Kacheln sowie auf
+Folgeseiten neuer Aktionen. Die anderen Kacheln zeigen das Ergebnis, sind aber
+nicht einzeln auswählbar. Titel und Logo bleiben seitenweit bearbeitbar.
+
+Beim Laden älterer Standards ist die erste Kachel maßgeblich; abweichende
+Anpassungen anderer Kacheln werden im Designer vereinheitlicht. Ohne Anpassung
+der ersten Kachel gilt für das betreffende Element wieder die Vorlage.
+**Designstandards speichern** sichert die einheitliche Gestaltung für neue
+Aktionen. Bestehende Aktionen bleiben unverändert und können in ihrem
+Aktionseditor weiterhin individuell gestaltet werden.
+
+### Gestaltung einer einzelnen Aktion
+
+Unter **Weitere Gestaltung** stehen auch im Getränkedesigner Blatt- und
+Taschen-Dekoration, Papiertextur, Rahmen, Detail-/Fußzeilenfarben,
+Hintergrund- und Bildverläufe sowie zusätzliche Preisschildformen bereit.
+Bild- und Preisgröße und ihre Abstände lassen sich fein einstellen.
+**Eigene Vorlagen** sichern benannte Gestaltungen ohne Artikeldaten.
+Laden wirkt auf die aktuelle Mustergestaltung; Löschen fragt nach.
+**Verwerfen** lädt nach Bestätigung den zuletzt gespeicherten Stand neu.
+
+Die zusätzliche Vorlage **Preisbild · Rot/Gelb** zeigt große Euroziffern mit
+hochgestellten Cent und weißer Kontur. Ein höherer Stattpreis steht darunter
+auf einem gelben Streifen und ist rot durchgestrichen. Ohne höheren Stattpreis
+entfällt der Streifen. Die Beträge stammen immer aus dem jeweiligen Artikel.
+Die Vorlage funktioniert für Sammelflyer, Homepage/Kiosk, Einzelflyer und Waage.
+Alle fünf Farben lassen sich einstellen: **Angebots-/Preisfarbe**,
+**Stattpreis-Streifen**, **Preisbild · Konturfarbe**, **Preisbild · Stattpreisfarbe**
+und **Preisbild · Durchstreichungsfarbe**. Die Standardfarben entsprechen
+Rot, Gelb, Weiß, Schwarz und Rot wie im Beispiel.
+
 Nach dem Speichern öffnet sich die Vorschau. Sonderaktionen verwenden die
 echten gespeicherten CMS-Plakat-/Einzelflyervorlagen und deren Zeichenfunktionen;
 Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpreis.
@@ -99,8 +135,35 @@ Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpr
   verfügbar; ohne Flyer wird der Aktionsbereich ausgeblendet.
 - **Gestaltung speichern** erhält die Anpassungen für diese Aktion.
   Andere Aktionen und globale Designstandards werden dadurch nicht verändert.
+- Im Gestaltungsmodus liegen die Einstellungen **neben** der Vorschau: auf
+  großen Bildschirmen in zwei Spalten (Element und Artikel · Vorlage, Farben
+  und Marker), auf Tablet und Handy als Reiter **Element · Artikel · Vorlage ·
+  Marker** unter bzw. neben der Vorschau. Nichts muss aufgeklappt werden; die
+  Reiterwahl bleibt beim Wechsel des Ausgabeziels erhalten.
 - **Download**, **Drucken / PDF**, **Teilen** und **Auf die Waage** verwenden
   dieselben Artikeldaten. Die Sammelflyer-Ausgabe enthält alle Seiten.
+
+### Kompakte Homepage-Angebote
+
+Die Homepage verwendet kompakte HTML-Karten, nicht die vollständigen
+Flyermotive: automatisch drei Spalten bei ausreichend breitem Angebotsbereich,
+zwei auf Tablet/Handy und eine bei sehr wenig Platz. Schrift und Buttons sind
+an die Homepage angepasst; auf schmalen Geräten bleiben Bedienelemente
+mindestens 44 px hoch. Lange Namen und Preise bleiben innerhalb der Karten.
+Gebinde, Pfand und Literpreis bleiben bei Getränken sichtbar.
+
+**Design → HP-Sonderangebote** steuert die Homepage tatsächlich:
+Farben, Karten- und Preisschildrundung, Neigung, Bildgröße und Dekoration
+werden mit **HP-Sonderangebote speichern** versioniert in den
+umgebungsgetrennten Angebots-Designstandards gespeichert.
+Die gemeinsame Kartenvorschau zeigt dieselbe Darstellung wie die Homepage.
+Zurücksetzen ändert zunächst nur die Vorschau; erst Speichern übernimmt es.
+Die öffentliche API liefert nur diese HP-Einstellungen, keine privaten
+Designvorlagen. Es gibt keinen zusätzlichen Darstellungsform-Umschalter.
+
+Plakat-, Einzelflyer-, Kiosk- und Waagenmotive werden dadurch nicht
+umgestaltet. **Flyer ansehen** öffnet weiterhin das unveränderte Original.
+Ladefehler sind sichtbar und können erneut versucht werden.
 
 Ein neues Raster oder eine erneut angewandte Vorlage darf freie Positionen
 nur nach Bestätigung ersetzen. Pflichtangaben und unlesbare Textfelder
@@ -189,3 +252,26 @@ in App-Settings, niemals ins Repository.
 Löschen entfernt keine bereits physisch übertragenen Waagenbilder.
 Cloudbereitstellung ist keine Waagenbestätigung; Offline-Brücke und
 physische Lesbarkeit müssen gesondert geprüft werden.
+
+## Gezielt testen
+
+- `npm run test:geaendert`: nur explizit zugeordnete Tests der geänderten
+  Dateien, zunächst Desktop. Unbekannte Verhaltensdateien brechen mit Hinweis
+  auf `tools/test-zuordnung.json` ab statt unbemerkt ungetestet zu bleiben.
+- `npm run test:geaendert:alle`: dieselbe Auswahl auf den vier UI-Ansichten.
+  Fälle mit `@ohne-layout` laufen dabei nur einmal. Ganze layoutunabhängige
+  Dateien können mit `// @ansichten: desktop` markiert werden; ohne Markierung
+  bleiben bei einem Mehransichtenlauf alle Ansichten aktiv.
+- `npm run test:geaendert -- --seit=origin/main --grep "TC-F36"`:
+  Änderungen seit dem angegebenen Vergleichsstand plus lokale Änderungen,
+  eingegrenzt auf bestimmte Fälle.
+- `node --test tests/test-lauf.test.js`: Testauswahl und ansprechbarer
+  lokaler HTTP-Server; `python tests/test_angebote.py`: API-Verträge einmal.
+
+Der Starter stellt ohne `TEST_URL` selbst einen lokalen Server bereit,
+startet Playwright asynchron und beendet den Server anschließend auch bei
+fehlgeschlagenen Tests. Der Exitcode bleibt erhalten.
+`test:schnell` prüft alle Dateien nur am Desktop, `test:voll` alle relevanten
+Ansichten. Diese breiten Läufe sind keine Pflicht nach jeder Kleinigkeit.
+Überholte Homepage-Canvas-/Mindestbreiten-Erwartungen wurden durch Prüfungen
+der kompakten Karten ersetzt; Originalausgaben werden weiterhin separat geprüft.

@@ -1,6 +1,10 @@
 {
   "scripts": {
     "test": "playwright test",
+    "test:geaendert": "node tools/test-lauf.js geaendert",
+    "test:geaendert:alle": "node tools/test-lauf.js geaendert --alle-ansichten",
+    "test:schnell": "node tools/test-lauf.js schnell",
+    "test:voll": "node tools/test-lauf.js voll",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui-host=127.0.0.1 --ui-port=9250",
     "test:report": "playwright show-report --host 127.0.0.1 --port 9323"

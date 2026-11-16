@@ -10,6 +10,7 @@
   var overviewFilter = 'all';
   var weeklySurface = null;
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
+  var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -333,7 +334,37 @@
       + '<label class="an-field"><span>Statt €</span><input data-cms-article="old_price_cents" inputmode="decimal" value="' + (item.old_price_cents == null ? '' : M.money(item.old_price_cents)) + '"></label></div></details>';
   }
   function renderInspector() {
-    renderInspectorBody(); renderCmsArticle();
+    renderInspectorBody(); renderCmsArticle(); cmsLayout();
+  }
+  function cmsLayout() {
+    if (!cmsAction || !cmsDialog) return;
+    var narrow = cmsDialog.clientWidth < 1000;
+    root.classList.toggle('an-cms-stacked', narrow);
+    root.classList.toggle('an-cms-phone', cmsDialog.clientWidth < 640);
+    var workspace = root.querySelector('.an-cms-workspace');
+    if (!workspace || !cmsPanel || !cmsTabbar) return;
+    var inspector = $('an-inspector');
+    if (narrow) {
+      if (cmsPanel.parentNode !== inspector) inspector.appendChild(cmsPanel);
+      if (data.layout.cms) { if (cmsTabbar.parentNode !== inspector) inspector.prepend(cmsTabbar); }
+      else {
+        var side = workspace.querySelector('.an-cms-side'), anchor = $('an-cms-article');
+        if (anchor && cmsTabbar.nextElementSibling !== anchor) side.insertBefore(cmsTabbar, anchor);
+      }
+    } else if (cmsPanel.parentNode !== workspace) workspace.appendChild(cmsPanel);
+    cmsTabs();
+    cmsNarrow = narrow;
+  }
+  function cmsTabs() {
+    var tabs = [['element', 'Element'], ['article', 'Artikel'], ['design', 'Vorlage']].concat(data.layout.cms ? [['marker', 'Marker']] : []);
+    if (!tabs.some(function (tab) { return tab[0] === cmsTab; })) cmsTab = 'element';
+    var wanted = tabs.map(function (tab) { return tab[0]; }).join();
+    if (cmsTabbar.dataset.tabs !== wanted) {
+      cmsTabbar.dataset.tabs = wanted;
+      cmsTabbar.innerHTML = tabs.map(function (tab) { return '<button type="button" data-cms-tab="' + tab[0] + '">' + tab[1] + '</button>'; }).join('');
+    }
+    cmsTabbar.querySelectorAll('button').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.cmsTab === cmsTab)); });
+    root.querySelector('.an-cms-workspace').dataset.anTab = cmsTab;
   }
   function renderInspectorBody() {
     var host = $('an-inspector'); if (!host) return;
@@ -458,6 +489,16 @@
     var ticket = ++paint, draft = M.clone(data), n = page;
     var ownStyle = designTarget !== 'sheet' && !draft.layout.cms;
     await D.previewChoices($('an-style-controls'), ownStyle ? Object.assign(M.clone(draft.layout), M.styleOf(draft.layout, designTarget)) : draft.layout, draft.kind);
+    if (draft.layout.cms) {
+      var group = designTarget === 'sheet' || designTarget === 'card' ? 'plakat' : 'flyer';
+      $('an-style-controls').querySelectorAll('[data-cms-config]').forEach(function (control) {
+        var key = control.dataset.cmsConfig, owner = /plakat/i.test(key) ? 'plakat' : /flyer/i.test(key) ? 'flyer' : '';
+        control.closest('.an-field').hidden = !!owner && owner !== group;
+      });
+      $('an-style-controls').querySelectorAll('[data-side-panel=design]>.an-compact-group').forEach(function (fieldset) {
+        fieldset.hidden = !fieldset.querySelector('.an-field:not([hidden])');
+      });
+    }
     var density = $('an-style-controls').querySelector('[data-style=density]');
     if (density) density.closest('fieldset').hidden = ownStyle;
     var noTargetItem = designTarget !== 'sheet' && !designItemId;
@@ -476,7 +517,7 @@
     var size = activeSize();
     $('an-stage').style.aspectRatio = size.w + ' / ' + size.h;
     var canvasColumn = cmsAction && root.querySelector('.an-cms-canvas');
-    if (cmsAction && cmsDialog) root.classList.toggle('an-cms-stacked', cmsDialog.clientWidth < 640);
+    if (cmsAction && cmsDialog) cmsLayout();
     var availableWidth = Math.max(100, canvasColumn ? canvasColumn.clientWidth : $('an-preview').clientWidth - 48);
     var maxHeight = window.innerHeight - (window.innerWidth > 1000 ? 455 : window.innerWidth > 480 ? 560 : 350);
     if (window.innerWidth <= 480) maxHeight = Math.min(430, maxHeight);
@@ -484,12 +525,14 @@
     if (cmsAction) {
       var workspaceBox = root.querySelector('.an-cms-workspace');
       var chrome = workspaceBox.getBoundingClientRect().top - cmsDialog.getBoundingClientRect().top + cmsDialog.scrollTop + (canvasColumn.firstElementChild ? canvasColumn.firstElementChild.offsetHeight : 0);
-      maxHeight = Math.max(220, root.classList.contains('an-cms-stacked') ? window.innerHeight * .48 : window.innerHeight - 12 - chrome - 64);
+      maxHeight = Math.max(180, root.classList.contains('an-cms-stacked') ? window.innerHeight * (cmsDialog.clientWidth >= 640 ? .56 : .35) : window.innerHeight - 12 - chrome - 64);
+      if (root.classList.contains('an-cms-phone')) maxHeight = Math.max(maxHeight, Math.min(availableWidth, window.innerWidth * .52) * size.h / size.w);
     }
     var stageWidth = Math.min(availableWidth, maxHeight * size.w / size.h);
     $('an-stage').style.width = stageWidth + 'px';
     $('an-stage').style.height = stageWidth * size.h / size.w + 'px';
     $('an-stage').style.marginInline = 'auto';
+    if (canvasColumn) root.style.setProperty('--an-canvas-height', canvasColumn.offsetHeight + 'px');
     if (cmsAction && !cmsScrolled && root.classList.contains('an-cms-stacked')) {
       cmsScrolled = true;
       var pinned = data.layout.cms ? root.querySelector('.an-weekly-surface .an-stage') : canvasColumn;
@@ -603,6 +646,14 @@
       cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
       cmsDialog.addEventListener('cancel', function (event) { event.preventDefault(); run(closeCmsPreview); });
       cmsDialog.showModal();
+      cmsTab = 'element'; cmsNarrow = null;
+      if (window.ResizeObserver) {
+        cmsObserver = new ResizeObserver(function () {
+          if (!cmsDialog || !cmsPanel || cmsNarrow === (cmsDialog.clientWidth < 1000)) return;
+          cmsLayout(); preview().catch(M.error);
+        });
+        cmsObserver.observe(cmsDialog);
+      }
       if (action.needs_weekly_template) await M.adoptWeekly(openingData);
       if (data !== openingData || !cmsDialog) return;
       if (action.restore_images) await window.AngeboteDataverse.restoreImages(openingData);
@@ -613,6 +664,7 @@
       if (mode === 'scale') await scale();
     } catch (error) {
       if (cmsDialog && cmsPlaceholder) {
+        cmsCleanup();
         cmsPlaceholder.replaceWith(root); cmsPlaceholder = null;
         cmsDialog.close(); cmsDialog.remove(); cmsDialog = null;
         cmsAction = null; record = null; data = null; dirty = false; paint++;
@@ -622,8 +674,13 @@
       await M.error(error);
     }
   }
+  function cmsCleanup() {
+    if (cmsObserver) { cmsObserver.disconnect(); cmsObserver = null; }
+    cmsPanel = null; cmsTabbar = null; cmsNarrow = null;
+  }
   async function closeCmsPreview() {
     if (!(await discard())) return;
+    cmsCleanup();
     cmsAction = null; record = null; data = null; dirty = false; paint++;
     root.classList.remove('an-cms-preview');
     cmsPlaceholder.replaceWith(root); cmsPlaceholder = null;
@@ -644,9 +701,14 @@
     var actions = document.createElement('div'); actions.className = 'an-actions an-cms-output';
     actions.innerHTML = '<button data-cms-download>Download</button><button data-cms-print>Drucken / PDF</button>'
       + '<button data-cms-scale>Auf die Waage</button><button data-cms-singles>Alle Einzelflyer</button>';
-    var options = document.createElement('details'); options.className = 'an-cms-style-options';
-    options.innerHTML = '<summary>Vorlage und Gestaltung</summary>';
-    options.appendChild($('an-design-options'));
+    cmsPanel = document.createElement('section'); cmsPanel.className = 'an-cms-style-options';
+    cmsPanel.setAttribute('aria-label', 'Vorlage und Gestaltung');
+    cmsPanel.appendChild($('an-design-options'));
+    cmsTabbar = document.createElement('nav'); cmsTabbar.className = 'an-tabs an-cms-tabbar'; cmsTabbar.setAttribute('aria-label', 'Gestaltungsbereich');
+    cmsTabbar.onclick = function (event) {
+      var button = event.target.closest('[data-cms-tab]'); if (!button) return;
+      cmsTab = button.dataset.cmsTab; cmsTabs();
+    };
     var workspace = document.createElement('div'); workspace.className = 'an-cms-workspace' + (data.layout.cms ? ' an-cms-weekly' : '');
     var canvasColumn = document.createElement('div'); canvasColumn.className = 'an-cms-canvas';
     var sideColumn = document.createElement('div'); sideColumn.className = 'an-cms-side';
@@ -656,9 +718,9 @@
     tabs.after(workspace); workspace.append(canvasColumn, sideColumn);
     stagebar.append($('an-stage-info'), $('an-page-tools'));
     canvasColumn.append(tabs, $('an-other-preview'), $('an-stage'), stagebar, $('an-stage-help'));
-    sideColumn.append(actions, $('an-design-item-wrap'), $('an-inspector'), options);
+    sideColumn.append(actions, $('an-design-item-wrap'), $('an-inspector'));
     if (!data.layout.cms) $('an-inspector').before(article);
-    renderCmsArticle();
+    renderCmsArticle(); cmsLayout();
     actions.querySelector('[data-cms-download]').onclick = function () {
       run(async function () {
         var canvases;

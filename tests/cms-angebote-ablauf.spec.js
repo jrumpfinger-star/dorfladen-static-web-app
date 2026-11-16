@@ -18,6 +18,7 @@ async function setup(page) {
     const req = route.request(), url = new URL(req.url()), path = url.pathname;
     const json = (data, status = 200) => route.fulfill({ status, json: data });
     if (path === '/api/cms-auth') return json({ authenticated: true });
+    if (path === '/api/angebote-flyer') return json({ success: true, homepage: {}, actions: [] });
     if (path === '/api/cms-config') return json({ success: true, data: { feature_flags: { kiosk_werbebilder: true }, design_config: {} } });
     if (path === '/api/preisliste') return json({ groups: { Getränke: [{
       bezeichnung: 'Testgetränk', artikelnummer: 'ART1', strichcode: '4001234567890', vk: 14.99, menge: '20x0,5 l'
@@ -426,6 +427,7 @@ test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen
   await row.locator('[data-f=preis]').fill('1,99');
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dlg).toHaveCount(0);
+  await showTab(page, 'Artikel');
   await page.getByText('Exakte CMS-Artikelpositionen', { exact: true }).click();
   await page.locator('[data-cms-override=imgDx]').fill('13');
   await page.locator('[data-cms-override=imgDx]').dispatchEvent('change');
@@ -548,6 +550,11 @@ const saveDesign = async (page) => {
   await page.getByRole('button', { name: 'Gestaltung speichern', exact: true }).click();
   await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
 };
+// Unter 1000 px Dialogbreite liegen die Einstellungen hinter Reitern; sonst stehen sie neben der Vorschau.
+const showTab = async (page, name) => {
+  const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
+  if (await tab.isVisible()) await tab.click();
+};
 
 test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', async ({ page }) => {
   const state = await setup(page);
@@ -593,9 +600,13 @@ test('TC-F19-02: Werkzeuge stehen neben bzw. unter dem fest sichtbaren Motiv', a
   const canvasBox = await canvas.boundingBox(), sideBox = await side.boundingBox();
   if (dialogBox.width >= 640) expect(canvasBox.x + canvasBox.width).toBeLessThanOrEqual(sideBox.x + 2);
   else expect(canvasBox.y + canvasBox.height).toBeLessThanOrEqual(sideBox.y + 2);
-  if (dialogBox.width >= 640) expect(canvasBox.width).toBeGreaterThanOrEqual((canvasBox.width + sideBox.width) * .49);
-  else expect((await page.locator('#an-stage').boundingBox()).width).toBeGreaterThanOrEqual(view.width * .5);
-  for (const field of await side.locator('input:visible,select:visible').all()) expect((await field.boundingBox()).height).toBeLessThanOrEqual(40);
+  if (dialogBox.width >= 1000) expect(canvasBox.width).toBeGreaterThanOrEqual((canvasBox.width + sideBox.width) * .49);
+  else expect((await page.locator('#an-stage').boundingBox()).width).toBeGreaterThanOrEqual(view.width * (dialogBox.width >= 640 ? .35 : .5));
+  for (const field of await side.locator('input:not([type=checkbox]):visible,select:visible').all()) {
+    const height = (await field.boundingBox()).height;
+    if (dialogBox.width < 640) expect(height).toBeGreaterThanOrEqual(44);
+    else expect(height).toBeLessThanOrEqual(40);
+  }
   if (view.width >= 1200) expect(await modal.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
   await expect(side.locator('[data-element-prop=fill]')).toBeVisible();
   await expect(side.locator('[data-element-prop=opacity]')).toBeVisible();
@@ -613,9 +624,11 @@ test('TC-F19-03: Artikel, Farbe und Rückgängig in der Vorschau bearbeiten und 
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
   const name = page.locator('[data-cms-article=name]'), price = page.locator('[data-cms-article=price_cents]');
+  await showTab(page, 'Artikel');
   await name.fill('Geändertes Bier'); await name.dispatchEvent('change');
   await price.fill('9,5'); await price.dispatchEvent('change');
   await expect(price).toHaveValue('9,50');
+  await showTab(page, 'Element');
   const id = await page.locator('#an-select-element').inputValue();
   const fill = page.locator('[data-element-prop=fill]'), original = await fill.inputValue();
   await fill.fill('#ff0000');
@@ -628,6 +641,7 @@ test('TC-F19-03: Artikel, Farbe und Rückgängig in der Vorschau bearbeiten und 
   expect(write.items[0].name).toBe('Geändertes Bier');
   expect(write.items[0].price_cents).toBe(950);
   expect(write.layout.pages.flatMap((entry) => entry.elements).find((entry) => entry.id === id).fill).toBe('#00aa00');
+  await showTab(page, 'Artikel');
   await name.fill(''); await name.dispatchEvent('change');
   await expect(page.getByRole('dialog').last()).toContainText('Artikelnamen');
   expect(state.errors).toEqual([]);
@@ -640,7 +654,7 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   const surface = page.locator('.an-weekly-surface');
   await expect(surface.locator('canvas')).toBeVisible();
   const stageBox = await surface.locator('.an-stage').boundingBox(), toolsBox = await surface.locator('.an-direct-tools').boundingBox();
-  const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 640;
+  const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 1000;
   if (stacked) expect(stageBox.y + stageBox.height).toBeLessThanOrEqual(toolsBox.y + 2);
   else expect(stageBox.x + stageBox.width).toBeLessThanOrEqual(toolsBox.x + 2);
   const turn = await middle(surface.locator('[data-preview-rotate]')), center = await middle(surface.locator('.an-selected'));
@@ -668,7 +682,7 @@ for (const [surface, path] of SURFACES) {
     const select = surfaceBox.locator('[data-preview-element]');
     const part = async (suffix) => select.locator('option[value$=":' + suffix + '"]');
     // kompakt: keine Streckung zwischen den Werkzeugblöcken
-    const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 640;
+    const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 1000;
     if (!stacked) {
       const boxes = [];
       for (const selector of ['.an-direct-tools', '.an-extras', '#an-cms-article', '#an-inspector > details']) boxes.push(await page.locator('.an-cms-preview-modal ' + selector).first().boundingBox());
@@ -734,10 +748,9 @@ test('TC-F23-01..03: Stil gilt je Ausgabeziel; freie Positionen werden erst nach
   await openPreview(page, 'drinks', 2);
   const chosen = () => page.locator('input[data-style=template]:checked').first().inputValue();
   const pick = async (id) => {
-    for (const selector of ['.an-cms-style-options', '.an-template-picker']) {
-      const box = page.locator(selector).first();
-      if (!(await box.evaluate((d) => d.open))) await box.locator('> summary').click();
-    }
+    await showTab(page, 'Vorlage');
+    const picker = page.locator('.an-template-picker').first();
+    if (!(await picker.evaluate((d) => d.open))) await picker.locator('> summary').click();
     await page.locator('label.an-choice', { has: page.locator('input[data-style=template][value=' + id + ']') }).click();
   };
   const original = await chosen();
@@ -757,6 +770,7 @@ test('TC-F23-01..03: Stil gilt je Ausgabeziel; freie Positionen werden erst nach
   expect(layout.template).toBe(original);
   expect(layout.targets.card.every((entry) => entry.background === layout.target_styles.card.background)).toBe(true);
   // freie Position → Rückfrage
+  await showTab(page, 'Element');
   await page.locator('#an-select-element').selectOption({ index: 1 });
   await page.locator('[data-element-prop=x]').fill('77');
   await page.locator('[data-element-prop=x]').dispatchEvent('change');
@@ -799,4 +813,96 @@ test('TC-F24-01: Buttons und Felder sind klar erkennbar (Kontrast)', async ({ pa
     expect(entry.border, entry.label).toBeGreaterThanOrEqual(3);
     expect(entry.text, entry.label).toBeGreaterThanOrEqual(4.5);
   }
+});
+
+for (const kind of ['weekly', 'drinks']) {
+  test(`TC-F31-01: Gestaltung liegt neben der Vorschau bzw. hinter Reitern (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, kind, 2);
+    const modal = page.locator('.an-cms-preview-modal'), panel = page.locator('.an-cms-style-options');
+    const stage = page.locator(kind === 'weekly' ? '.an-weekly-surface .an-stage' : '#an-stage');
+    const dialog = await modal.boundingBox(), view = page.viewportSize();
+    await expect(page.locator('details.an-cms-style-options')).toHaveCount(0);
+    const inView = async (locator) => {
+      const b = await locator.boundingBox();
+      expect(b.y).toBeGreaterThanOrEqual(-1);
+      expect(b.y + b.height).toBeLessThanOrEqual(view.height + 1);
+    };
+    if (dialog.width >= 1000) {
+      await expect(panel).toBeVisible();
+      const s = await stage.boundingBox(), p = await panel.boundingBox();
+      expect(s.x + s.width).toBeLessThanOrEqual(p.x + 2);
+      const previewWidth = kind === 'weekly'
+        ? await page.locator('#an-inspector').evaluate((node) => parseFloat(getComputedStyle(node).gridTemplateColumns))
+        : await page.locator('.an-cms-canvas').evaluate((node) => node.clientWidth);
+      expect(previewWidth).toBeGreaterThanOrEqual(dialog.width * .4);
+      await expect(page.locator('.an-cms-tabbar')).toBeHidden();
+      await inView(kind === 'weekly' ? page.locator('[data-cms-config=savingsMarkerType]') : panel.locator('.an-template-picker > summary'));
+    } else {
+      await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 4 : 3);
+      await expect(panel).toBeHidden();
+      await showTab(page, 'Vorlage');
+      await expect(panel).toBeVisible();
+      await inView(stage);
+      if (kind === 'weekly') {
+        await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeVisible();
+        await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeHidden();
+        await showTab(page, 'Marker');
+        await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeVisible();
+        await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeHidden();
+        await inView(stage);
+      }
+      await showTab(page, 'Element');
+      await expect(panel).toBeHidden();
+    }
+    expect(await modal.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofort in der Vorschau', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 2);
+  const surface = page.locator('.an-weekly-surface');
+  for (const target of ['card', 'single', 'sheet', 'scale']) {
+    await page.locator('[data-layout-target=' + target + ']').click();
+    await showTab(page, 'Element');
+    await expect(surface.locator('canvas')).toBeVisible();
+    for (const name of ['Ghost', 'Duplikat', '+ Ghost', '+ Duplikat', 'Element zurücksetzen', 'Alles zurücksetzen']) {
+      await expect(surface.getByRole('button', { name, exact: true })).toBeVisible();
+    }
+    await expect(surface.locator('[data-x-image]')).toBeAttached();
+    await expect(surface.locator('[data-x-rot]')).toBeVisible();
+  }
+  await page.locator('[data-layout-target=sheet]').click();
+  const canvas = surface.locator('canvas'), before = await canvas.evaluate((c) => c.toDataURL());
+  await showTab(page, 'Vorlage');
+  const color = page.locator('[data-cms-config=plakat_decoBgColor]');
+  await color.fill('#336699'); await color.dispatchEvent('change');
+  await expect.poll(async () => (await surface.locator('canvas').evaluate((c) => c.toDataURL())) !== before).toBe(true);
+  await saveDesign(page);
+  expect(state.writes.at(-1).layout.cms.config.plakat_decoBgColor).toBe('#336699');
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je Ziel', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const tools = page.locator('#an-inspector');
+  for (const target of ['card', 'single', 'sheet', 'scale']) {
+    await page.locator('[data-layout-target=' + target + ']').click();
+    await showTab(page, 'Element');
+    for (const name of ['+ Eigenes Bild', 'Ghost', 'Duplizieren']) await expect(tools.getByRole('button', { name, exact: true })).toBeVisible();
+    await expect(tools.locator('[data-element-prop=rotation][type=range]')).toBeVisible();
+  }
+  await page.locator('[data-layout-target=card]').click();
+  await showTab(page, 'Vorlage');
+  const color = page.locator('input[data-style=background]');
+  await color.fill('#336699'); await color.dispatchEvent('change');
+  await saveDesign(page);
+  expect(state.writes.at(-1).layout.target_styles.card.background).toBe('#336699');
+  expect(state.errors).toEqual([]);
 });

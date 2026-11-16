@@ -166,6 +166,93 @@ class AngeboteTests(unittest.TestCase):
             data["layout"]["target_styles"] = styles
             self.error(400, normalize, data)
 
+    def test_TC_F34_price_image_colors_survive_design_and_publication(self):
+        colors = {"color": "#1122aa", "price_background": "#aaff22",
+                  "price_outline_color": "#ddccff", "old_price_color": "#112233",
+                  "price_strike_color": "#ff44aa"}
+        settings = self.service.design()
+        settings["drinks"].update({"template": "price-image", **colors})
+        saved = self.service.save_design(0, settings)
+        data = draft()
+        data["layout"].update({**saved["drinks"], "pages": data["layout"]["pages"],
+                               "target_styles": {"card": {"template": "price-image", **colors}}})
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        public = self.service.public()[0]["data"]["layout"]
+        self.assertEqual(public["template"], "price-image")
+        for key, value in colors.items():
+            self.assertEqual(public[key], value)
+            self.assertEqual(public["target_styles"]["card"][key], value)
+        for key in ("price_outline_color", "old_price_color", "price_strike_color"):
+            invalid = draft()
+            invalid["layout"][key] = "keine-farbe"
+            self.error(400, normalize, invalid)
+            invalid = draft()
+            invalid["layout"]["target_styles"] = {"card": {key: "#12"}}
+            self.error(400, normalize, invalid)
+
+    def test_TC_F36_homepage_roundtrip_validation_and_namespace(self):
+        service = AngeboteService(MemoryStore())
+        raw = service.design()
+        raw["homepage"] = {"tagBg": "#123456", "showLeaf": True, "imgSize": 110}
+        saved = service.save_design(0, raw)
+        self.assertEqual(service.homepage()["tagBg"], "#123456")
+        older_client = copy.deepcopy(saved)
+        del older_client["homepage"]
+        service.save_design(1, older_client)
+        self.assertTrue(service.homepage()["showLeaf"])
+        self.assertEqual(AngeboteService(MemoryStore("other", service.store.data)).homepage()["tagBg"], "#a51d2d")
+        for invalid in ([], {"tagBg": "red"}, {"showLeaf": 1}, {"imgSize": 1000}, {"unknown": True}):
+            with self.subTest(invalid=invalid):
+                current = service.design()
+                current["homepage"] = invalid
+                with self.assertRaises(AngeboteFehler):
+                    service.save_design(current["version"], current)
+        with self.assertRaises(AngeboteFehler):
+            service.save_design(0, raw)
+        stored, etag = service.store.get("design/defaults.json")
+        stored["homepage"] = {"tagBg": "broken"}
+        service.store.replace("design/defaults.json", stored, etag)
+        with self.assertRaises(AngeboteFehler) as failure:
+            service.homepage()
+        self.assertEqual(failure.exception.status, 503)
+
+    def test_TC_F35_decoration_and_named_presets_roundtrip_and_validation(self):
+        decoration = {"show_leaf": True, "leaf_size": 40, "leaf_color": "#123456",
+                      "show_bag": True, "show_texture": True, "border_width": 4,
+                      "border_color": "#aa2244", "background_gradient": True,
+                      "background_color2": "#abcdef", "background_direction": "to right",
+                      "background_pct": 35, "price_radius": 9, "price_skew": 12,
+                      "price_scale": 110, "image_width_pct": 60, "image_dx": 8, "price_dy": 2}
+        data = draft()
+        data["layout"].update({"decoration": decoration, "price_shape": "ticket",
+                               "target_styles": {"card": {"decoration": decoration, "price_shape": "hexagon"}}})
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        public = self.service.public()[0]["data"]["layout"]
+        self.assertEqual(public["decoration"], decoration)
+        self.assertEqual(public["target_styles"]["card"]["decoration"], decoration)
+        settings = self.service.design()
+        settings["presets"] = [{"name": "Sommer", "layout": {"template": "price-image", "decoration": decoration}}]
+        saved = self.service.save_design(0, settings)
+        self.assertEqual(self.service.design()["presets"][0]["layout"]["decoration"], decoration)
+        legacy = copy.deepcopy(saved)
+        del legacy["presets"]
+        self.assertEqual(self.service.save_design(1, legacy)["presets"], saved["presets"])
+        for value in ({"show_leaf": "ja"}, {"leaf_color": "rot"}, {"leaf_size": 51},
+                      {"background_direction": "up"}, {"price_scale": 151}, {"unknown": True}, []):
+            invalid = draft()
+            invalid["layout"]["decoration"] = value
+            self.error(400, normalize, invalid)
+            invalid["layout"].pop("decoration")
+            invalid["layout"]["target_styles"] = {"card": {"decoration": value}}
+            self.error(400, normalize, invalid)
+        for presets in ([{"name": "", "layout": {}}], [{"name": "Test", "layout": {"template": "unknown"}}],
+                        [{"name": "Test", "layout": draft()["layout"]}], "invalid"):
+            invalid = self.service.design()
+            invalid["presets"] = presets
+            self.error(400, self.service.save_design, 2, invalid)
+
     def test_TC_F2_01_exact_base_price(self):
         self.assertEqual(base_cents(draft()["items"][0]), 125)
         self.assertEqual(base_cents({"units": 1, "volume_ml": 8000, "price_cents": 100}), 13)
@@ -214,7 +301,7 @@ class AngeboteTests(unittest.TestCase):
         self.assertEqual(self.service.get(head["id"])["draft"]["layout"]["pages"][0]["elements"][-1]["rotation"], 15)
 
     def test_TC_F13_original_templates_and_logo_roundtrip(self):
-        self.assertEqual(len(TEMPLATES), 17)
+        self.assertEqual(len(TEMPLATES), 18)
         for template in TEMPLATES:
             with self.subTest(template=template):
                 data = draft()
@@ -412,6 +499,17 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(self.call(auth=False).status_code, 401)
             self.assertEqual(self.call("POST", body={"data": draft()}, auth=False).status_code, 401)
         self.assertEqual(self.call("OPTIONS", auth=False).status_code, 204)
+
+    def test_TC_F36_public_homepage_projection_and_write_auth(self):
+        service = AngeboteService(self.store)
+        design = service.design()
+        design["homepage"] = {"cardBg": "#abcdef"}
+        service.save_design(0, design)
+        public = self.call(area="public", params={"view": "homepage"}, auth=False)
+        data = json.loads(public.get_body())
+        self.assertEqual(set(data), {"success", "homepage"})
+        self.assertEqual(data["homepage"]["cardBg"], "#abcdef")
+        self.assertEqual(self.call("PUT", params={"view": "design"}, body={"version": 1, "data": design}, auth=False).status_code, 401)
 
     def test_TC_F4_02_HTTP_contract(self):
         create = self.call("POST", body={"data": draft()})

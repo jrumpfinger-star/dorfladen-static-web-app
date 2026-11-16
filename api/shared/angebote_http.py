@@ -74,6 +74,8 @@ def handle(req, area, store_factory=BlobStore):
         if area == "public":
             if req.method != "GET":
                 raise AngeboteFehler(405, "Diese Aktion ist hier nicht möglich.")
+            if req.params.get("view") == "homepage":
+                return response({"success": True, "homepage": service.homepage()})
             return response({"success": True, "actions": service.public()})
         if area == "images":
             if req.method == "POST" and not action_id:

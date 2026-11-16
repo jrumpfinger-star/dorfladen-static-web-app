@@ -404,6 +404,19 @@ regel('U5b', 'Kartenköpfe vereinheitlichen', function (t) {
    Telefon) und ruft nichts in cms.js auf.
    ══════════════════════════════════════════════════════════════════════ */
 
+regel('U5c', 'Angebotsgestaltung im gemeinsamen Designerstil', function (t) {
+  const start = t.indexOf('<div id="cms-cfg-plakat"');
+  const end = t.indexOf('<!-- ============ SUB-TAB: HP-Sonderangebote', start);
+  if (start < 0 || end < 0) throw new Error('U5c: Angebotsdesign nicht gefunden');
+  const section = t.slice(start, end).replace(/(<div class="cms-card-header"[^>]*>)([^<]*)(<\/div>)/g, (_, before, title, after) => {
+    const label = /Template/.test(title) ? 'Vorlage' : /Farben/.test(title) ? 'Farben'
+      : /Preisschild-Form/.test(title) ? 'Preisschildform' : /Preisschild/.test(title) ? 'Preisschild und Marker'
+      : /Dekoration/.test(title) ? 'Dekoration' : title.replace(/&#\d+;\s*/g, '');
+    return before + label + after;
+  });
+  return { text: t.slice(0, start) + section + t.slice(end), info: 'Feldkennungen und Funktionen erhalten' };
+});
+
 regel('U6', 'Hilfeschicht einbinden', function (t) {
   const anker = '</body>';
   const i = t.lastIndexOf(anker);

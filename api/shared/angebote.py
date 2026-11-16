@@ -18,19 +18,82 @@ FONTS = ("Arial", "Georgia", "Verdana", "Trebuchet MS")
 TEMPLATES = ("land", "classic", "classic-red", "minimal-clean", "dark-modern",
              "organic-market", "bold-poster", "modern-magazine", "modern-mag-fresh",
              "modern-mag-bold", "modern-mag-xl", "half-red", "half-green", "half-blue",
-             "tag-red", "tag-green", "tag-blue")
+             "tag-red", "tag-green", "tag-blue", "price-image")
 WIDTH, HEIGHT = 794, 1123
 MAX_ITEMS, MAX_PAGES = 99, 99
 THEME_DEFAULTS = {
     "font": "Arial", "title_color": "#234c38", "text_color": "#24362d",
     "card_background": "#ffffff", "price_background": "#ffffff",
     "price_shape": "rect", "name_size": 24, "price_size": 58, "details_size": 17,
+    "price_outline_color": "#ffffff", "old_price_color": "#000000", "price_strike_color": "#ed1c24",
     "image_rotation": 0, "image_scale": 100,
     "marker_type": "starburst", "marker_palette": "harmonie", "marker_scale": 100,
 }
 MARKER_TYPES = ("starburst", "badge", "pill", "flag", "hexburst", "diamond", "shield", "ribbon", "explosion", "heart")
 MARKER_PALETTES = ("harmonie", "classic-red", "warm-copper", "berry-purple", "ocean-blue",
                    "sunset-orange", "fresh-lime", "deep-rose", "midnight-gold", "arctic-teal")
+PRICE_SHAPES = ("rect", "round", "ellipse", "rounded", "pill", "circle", "banner",
+                "star", "hexagon", "diamond", "ticket", "explosion", "trapez")
+DECORATION_FLAGS = {"show_leaf", "show_bag", "show_texture", "background_gradient", "image_gradient"}
+DECORATION_COLORS = {"leaf_color", "footer_color", "vorrat_color", "details_color",
+                     "card_border_color", "image_background", "border_color",
+                     "background_color2", "image_color2"}
+DECORATION_RANGES = {
+    "leaf_size": (16, 50), "border_width": (0, 20), "card_border_width": (0, 20),
+    "price_radius": (0, 40), "price_skew": (0, 30), "price_scale": (50, 150),
+    "image_width_pct": (20, 80), "image_dx": (-1000, 1000), "image_dy": (-1500, 1500),
+    "price_dx": (-1000, 1000), "price_dy": (-1500, 1500),
+    "background_pct": (10, 90), "image_pct": (10, 90),
+}
+HOMEPAGE_DEFAULTS = {
+    "gridBg": "#f4f1ea", "cardBg": "#ffffff", "cardBorder": "#d8dfd7",
+    "nameColor": "#1f2521", "detColor": "#555555", "tagBg": "#a51d2d",
+    "tagText": "#ffffff", "badgeBg": "#31704b", "stattColor": "#666666",
+    "tagSkew": -4, "tagRadius": 5, "headerBg": "#c62828", "headerText": "#ffffff",
+    "cardRadius": 10, "imgSize": 95, "showLeaf": False, "showBasket": False,
+}
+
+
+def _homepage(raw):
+    if not isinstance(raw, dict) or set(raw) - set(HOMEPAGE_DEFAULTS):
+        raise AngeboteFehler(400, "Bitte die Homepage-Gestaltung prüfen.")
+    result = copy.deepcopy(HOMEPAGE_DEFAULTS)
+    for key, value in raw.items():
+        if key in ("showLeaf", "showBasket"):
+            if type(value) is not bool:
+                raise AngeboteFehler(400, "Bitte die Homepage-Dekoration prüfen.")
+        elif key in ("tagSkew", "tagRadius", "cardRadius", "imgSize"):
+            limits = {"tagSkew": (-10, 10), "tagRadius": (0, 20),
+                      "cardRadius": (0, 30), "imgSize": (60, 140)}
+            value = _number(value, "die Homepage-Größen", *limits[key])
+        elif not isinstance(value, str) or not COLOR.fullmatch(value):
+            raise AngeboteFehler(400, "Bitte die Homepage-Farben prüfen.")
+        result[key] = value
+    return result
+
+
+def _decoration(raw):
+    if not isinstance(raw, dict):
+        raise AngeboteFehler(400, "Bitte die zusätzlichen Gestaltungsoptionen prüfen.")
+    result = {}
+    for key, value in raw.items():
+        if key in DECORATION_FLAGS:
+            if type(value) is not bool:
+                raise AngeboteFehler(400, "Bitte die Dekorationsauswahl prüfen.")
+        elif key in DECORATION_COLORS:
+            if not isinstance(value, str) or not COLOR.fullmatch(value):
+                raise AngeboteFehler(400, "Bitte die Dekorationsfarben prüfen.")
+        elif key in DECORATION_RANGES:
+            value = _number(value, "die zusätzlichen Gestaltungsoptionen", *DECORATION_RANGES[key])
+        elif key in ("background_direction", "image_direction"):
+            if value not in ("to bottom", "to right", "to bottom right", "135deg"):
+                raise AngeboteFehler(400, "Bitte die Verlaufsrichtung prüfen.")
+        else:
+            raise AngeboteFehler(400, "Bitte die zusätzlichen Gestaltungsoptionen prüfen.")
+        result[key] = value
+    return result
+
+
 CMS_CONFIG_KEYS = set((
     "bgColor tagColor leafColor titleColor decoFooterColor imgRotation imgFreistellen "
     "imgThreshold imgMaxScale priceFontFlyer priceFontPlakat stattColor tagSkew "
@@ -200,7 +263,7 @@ def _elements(source, known, seen, width, height):
         el["hidden"] = raw_el.get("hidden", False) is True
         if el["font"] not in FONTS or el["align"] not in ("left", "center", "right"):
             raise AngeboteFehler(400, "Bitte Schrift und Ausrichtung prüfen.")
-        if el["shape"] not in ("rect", "round", "ellipse"):
+        if el["shape"] not in PRICE_SHAPES:
             raise AngeboteFehler(400, "Bitte eine gültige Form wählen.")
         el["fill"] = raw_el.get("fill", "")
         if el["fill"] and not COLOR.fullmatch(str(el["fill"])):
@@ -229,7 +292,7 @@ def _theme_value(key, value):
             raise AngeboteFehler(400, "Bitte die Gestaltungsfarben prüfen.")
     elif key == "font" and value not in FONTS:
         raise AngeboteFehler(400, "Bitte eine gültige Schrift wählen.")
-    elif key == "price_shape" and value not in ("rect", "round", "ellipse"):
+    elif key == "price_shape" and value not in PRICE_SHAPES:
         raise AngeboteFehler(400, "Bitte eine gültige Preisform wählen.")
     elif key in ("name_size", "price_size", "details_size"):
         value = _number(value, "die Schriftgröße", 14, 100)
@@ -254,7 +317,7 @@ def _target_styles(raw):
         raise AngeboteFehler(400, "Bitte die Gestaltung der Ausgabeziele prüfen.")
     result = {}
     for target, style in raw.items():
-        if not isinstance(style, dict) or set(style) - set(THEME_DEFAULTS) - {"template", "color", "background"}:
+        if not isinstance(style, dict) or set(style) - set(THEME_DEFAULTS) - {"template", "color", "background", "decoration"}:
             raise AngeboteFehler(400, "Bitte die Gestaltung der Ausgabeziele prüfen.")
         checked = {}
         for key, value in style.items():
@@ -263,6 +326,8 @@ def _target_styles(raw):
             if key in ("color", "background"):
                 if not COLOR.fullmatch(str(value)):
                     raise AngeboteFehler(400, "Bitte eine gültige Farbe wählen.")
+            elif key == "decoration":
+                value = _decoration(value)
             elif key != "template":
                 value = _theme_value(key, value)
             checked[key] = value
@@ -326,9 +391,10 @@ def _layout(raw, items):
                                      ("scale", .2, 3), ("rotation", -180, 180))
         }
     cms = {"cms": _cms_design(raw["cms"], items)} if "cms" in raw else {}
+    decoration = {"decoration": _decoration(raw["decoration"])} if "decoration" in raw else {}
     return {"mode": mode, "template": template, "density": density,
             "color": color, "background": background, "pages": result,
-            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms,
+            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms, **decoration,
             **({"target_styles": target_styles} if target_styles else {})}
 
 
@@ -479,11 +545,37 @@ class AngeboteService:
             design[kind] = _layout(raw.get(kind), [])
             design[kind]["pages"] = []
             design[kind]["mode"] = "template"
+        if "homepage" in raw or (stored and "homepage" in stored):
+            design["homepage"] = _homepage(raw.get("homepage", (stored or {}).get("homepage", {})))
+        if "presets" in raw or (stored and "presets" in stored):
+            presets = raw.get("presets", stored.get("presets", []) if stored else [])
+            if not isinstance(presets, list) or len(presets) > MAX_ITEMS:
+                raise AngeboteFehler(400, "Bitte die eigenen Designvorlagen prüfen.")
+            design["presets"] = []
+            for preset in presets:
+                if not isinstance(preset, dict) or set(preset) != {"name", "layout"}:
+                    raise AngeboteFehler(400, "Bitte die eigene Designvorlage prüfen.")
+                name = _text(preset["name"], "den Vorlagennamen", 80)
+                if not name:
+                    raise AngeboteFehler(400, "Bitte der Vorlage einen Namen geben.")
+                layout = _layout(preset["layout"], [])
+                if layout["pages"] or any(layout["targets"].values()):
+                    raise AngeboteFehler(400, "Designvorlagen dürfen keine Artikeldaten enthalten.")
+                design["presets"].append({"name": name, "layout": layout})
         if stored is None:
             self.store.create("design/defaults.json", design)
         else:
             self.store.replace("design/defaults.json", design, etag)
         return design
+
+    def homepage(self):
+        try:
+            return _homepage(self.design().get("homepage", {}))
+        except AngeboteFehler as exc:
+            if exc.status != 400:
+                raise
+            logging.error("[angebote] Ungültige gespeicherte Homepage-Gestaltung")
+            raise AngeboteFehler(503, "Die gespeicherte Homepage-Gestaltung konnte nicht gelesen werden.") from exc
 
     def get(self, action_id):
         return self._head(action_id)[0]

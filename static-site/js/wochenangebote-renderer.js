@@ -1,5 +1,25 @@
 window.WochenangeboteRenderer = (function () {
   'use strict';
+  var TAG_PRESETS={
+    'classic-red-rect':{tagColor:'#a51d2d',tagShape:'rect',tagRadius:0},
+    'green-rounded':{tagColor:'#3d7a4a',tagShape:'rounded',tagRadius:16},
+    'dark-pill':{tagColor:'#1e293b',tagShape:'pill',tagRadius:0},
+    'gold-banner':{tagColor:'#b8860b',tagShape:'banner',tagRadius:0},
+    'blue-circle':{tagColor:'#1d4ed8',tagShape:'circle',tagRadius:0},
+    'orange-star':{tagColor:'#ea580c',tagShape:'star',tagRadius:0},
+    'purple-hexagon':{tagColor:'#7c3aed',tagShape:'hexagon',tagRadius:0},
+    'teal-ticket':{tagColor:'#0d9488',tagShape:'ticket',tagRadius:0},
+    'rose-diamond':{tagColor:'#e11d48',tagShape:'diamond',tagRadius:0},
+    'copper-explosion':{tagColor:'#b45309',tagShape:'explosion',tagRadius:0}
+  };
+  function drawLeafDecoration(ctx,x,y,size,color,lineWidth){
+    ctx.save();ctx.translate(x,y);ctx.rotate(-0.4);ctx.fillStyle=color;ctx.globalAlpha=1;
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.bezierCurveTo(size*0.3,-size*0.6,size*0.7,-size*0.6,size,0);
+    ctx.bezierCurveTo(size*0.7,size*0.6,size*0.3,size*0.6,0,0);ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=lineWidth||1;ctx.globalAlpha=0.6;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(size*0.9,0);ctx.stroke();ctx.restore();
+  }
   var CFG_DEFAULTS={
     bgColor:'#f4f1ea',tagColor:'#a51d2d',leafColor:'#4a7c3f',titleColor:'#a51d2d',decoFooterColor:'#8aad7e',
     imgRotation:15,imgFreistellen:true,imgThreshold:230,imgMaxScale:4,
@@ -573,13 +593,7 @@ window.WochenangeboteRenderer = (function () {
       }
       // ── Blatt-Deko ──
       function drawLeaf(lx,ly,sz){
-        ctx.save();ctx.globalAlpha=1.0;ctx.fillStyle=cfg.leafColor;
-        ctx.translate(lx,ly);ctx.rotate(-0.4);
-        ctx.beginPath();ctx.moveTo(0,0);
-        ctx.bezierCurveTo(sz*0.3,-sz*0.6,sz*0.7,-sz*0.6,sz,0);
-        ctx.bezierCurveTo(sz*0.7,sz*0.6,sz*0.3,sz*0.6,0,0);ctx.fill();
-        ctx.strokeStyle=cfg.leafColor;ctx.lineWidth=1;ctx.globalAlpha=0.6;
-        ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz*0.9,0);ctx.stroke();ctx.restore();
+        drawLeafDecoration(ctx,lx,ly,sz,cfg.leafColor,1);
       }
       var von=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
       var bis=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
@@ -1336,16 +1350,7 @@ window.WochenangeboteRenderer = (function () {
     }
     // ── Hilfsfunktion: Blatt-Deko ──
     function drawLeaf(lx,ly,sz){
-      ctx.save();ctx.globalAlpha=1.0;ctx.fillStyle=cfg.leafColor;
-      ctx.translate(lx,ly);ctx.rotate(-0.4);
-      ctx.beginPath();ctx.moveTo(0,0);
-      ctx.bezierCurveTo(sz*0.3,-sz*0.6,sz*0.7,-sz*0.6,sz,0);
-      ctx.bezierCurveTo(sz*0.7,sz*0.6,sz*0.3,sz*0.6,0,0);
-      ctx.fill();
-      // Blattader
-      ctx.strokeStyle=cfg.leafColor;ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
-      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz*0.9,0);ctx.stroke();
-      ctx.restore();
+      drawLeafDecoration(ctx,lx,ly,sz,cfg.leafColor,1.5);
     }
     // ── Produktkarten ──
     var _clCiPromises=[];
@@ -1549,6 +1554,8 @@ window.WochenangeboteRenderer = (function () {
   }
   return {
     create:create,
+    TAG_PRESETS:TAG_PRESETS,
+    drawLeafDecoration:drawLeafDecoration,
     CFG_DEFAULTS:CFG_DEFAULTS,
     PERSEC_COLORS:PERSEC_COLORS,
     PERSEC_RANGES:PERSEC_RANGES,
