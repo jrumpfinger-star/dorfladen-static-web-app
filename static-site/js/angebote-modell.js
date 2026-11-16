@@ -182,9 +182,9 @@ window.AngeboteModel = (function () {
       if (style.magazine) {
         elements.push(el('shape', 0, 0, W, 170, { fill: style.header }),
           el('shape', 0, 170, W, 3, { fill: style.accent }),
-          el('logo', 28, 30, 180, 76),
-          el('title', 222, 38, 300, 90, { font_size: 40, bold: true, fill: l.title_color, font: l.font }),
-          el('period', 542, 40, 220, 76, { font_size: 17, align: 'right', fill: l.title_color, font: l.font }));
+          el('logo', 28, 45, 185, 80),
+          el('title', 226, 60, 360, 50, { font_size: 40, bold: true, fill: l.title_color, font: l.font }),
+          el('period', 598, 67, 168, 36, { font_size: 15, align: 'right', fill: l.title_color, font: l.font }));
       } else {
         if (!style.original) elements.push(el('brand', 40, 28, 440, 30, { font_size: 18, bold: true, fill: l.title_color, font: l.font }));
         elements.push(el('logo', 518, 28, 236, 70),

@@ -619,6 +619,10 @@ Speichern/Öffnen erhalten Artikel und Layout ohne Änderungen anderer Ziele.
 - TC-F19-04: Original-Wochenvorschau mit derselben seitlichen Bedienung,
   direktem Drehgriff und Größenanfasser bearbeiten; Original-Overrides und
   bestehende Vorschau-/Kioskfunktionen erhalten.
+- TC-F19-05: Der Kopf der Magazinvorlagen richtet Logo, Titel und Zeitraum
+  auf einer gemeinsamen vertikalen Mittellinie aus. Der Titel „Getränkeangebote“
+  bleibt einzeilig ohne Umbruch mitten im Wort, Logo und Zeitraum haben denselben
+  seitlichen Rand und die Textfelder überlappen sich nicht.
 
 ## Verifikation und offene Fragen
 

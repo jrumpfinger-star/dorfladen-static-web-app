@@ -252,6 +252,37 @@ test('TC-F18-11: Meldungsfenster stehen im Kiosk mittig im sichtbaren Bereich', 
   expect(box.x + box.width).toBeLessThanOrEqual(view.width);
 });
 
+test('TC-F19-05: Magazinkopf richtet Logo, Titel und Zeitraum auf einer Mittellinie aus', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const result = await page.evaluate(async () => {
+    const M = window.AngeboteModel, out = [];
+    for (const template of ['modern-magazine', 'modern-mag-fresh', 'modern-mag-bold', 'modern-mag-xl']) {
+      const data = M.blank('drinks');
+      data.title = 'Getränkeangebote'; data.valid_from = '2026-11-23'; data.valid_to = '2026-11-28';
+      Object.assign(data.items[0] || (data.items[0] = M.item()), { name: 'Bier', price_cents: 999, units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310, deposit_free: false });
+      M.useTemplate ? M.useTemplate(data.layout, template) : (data.layout.template = template);
+      M.applyTemplate(data);
+      const header = Object.fromEntries(data.layout.pages[0].elements.filter((e) => ['logo', 'title', 'period'].includes(e.type)).map((e) => [e.type, e]));
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.font = 'bold ' + header.title.font_size + 'px "' + header.title.font + '"';
+      const rendered = await M.render(data, 0, 1);
+      out.push({ template, header, titleWidth: ctx.measureText(data.title).width, errors: rendered.errors });
+    }
+    return out;
+  });
+  for (const entry of result) {
+    const { logo, title, period } = entry.header, middle = (e) => e.y + e.h / 2;
+    expect(Math.abs(middle(logo) - middle(title)), entry.template).toBeLessThanOrEqual(2);
+    expect(Math.abs(middle(logo) - middle(period)), entry.template).toBeLessThanOrEqual(2);
+    expect(logo.x + logo.w).toBeLessThanOrEqual(title.x);
+    expect(title.x + title.w).toBeLessThanOrEqual(period.x);
+    expect(logo.x).toBe(794 - (period.x + period.w));
+    expect(entry.titleWidth, entry.template).toBeLessThanOrEqual(title.w * 1.12);
+    expect(entry.errors, entry.template).toEqual([]);
+  }
+});
+
 test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speicherung erhalten', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
