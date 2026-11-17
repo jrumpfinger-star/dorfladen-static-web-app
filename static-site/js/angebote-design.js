@@ -800,6 +800,31 @@ window.AngeboteDesign = (function () {
         + '<option value="fit">Einpassen</option><option value="1">100 %</option><option value="1.5">150 %</option><option value="2">200 %</option></select></label>'
         + '<div class="an-actions"><button type="button" data-picture-fit>Einpassen</button><button type="button" data-picture-fullscreen>Vollbild</button></div>';
       var zoom = toolbar.querySelector('select');
+      var zoombar = document.createElement('div'); zoombar.className = 'an-zoombar';
+      zoombar.innerHTML = '<button type="button" data-zoom-out aria-label="Vorschau verkleinern" title="Verkleinern">&minus;</button>'
+        + '<output aria-live="polite" aria-label="Aktuelle Vorschaugröße">100 %</output>'
+        + '<button type="button" data-zoom-in aria-label="Vorschau vergrößern" title="Vergrößern">+</button>'
+        + '<button type="button" data-zoom-fit aria-label="Vorschau einpassen" title="Vorschau an die Oberfläche anpassen">Einpassen</button>';
+      preview.insertBefore(zoombar, preview.firstElementChild);
+      var out = zoombar.querySelector('output');
+      var steps = [.25, .5, .75, 1, 1.25, 1.5, 2, 2.5, 3, 4];
+      function currentScale() {
+        var width = paper.offsetWidth, height = paper.offsetHeight;
+        if (!width || !height || !preview.clientWidth || !preview.clientHeight) return 1;
+        return zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - 16) / height, 1) : Number(zoom.value);
+      }
+      function step(direction) {
+        var scale = currentScale(), value = null;
+        if (direction > 0) {
+          for (var i = 0; i < steps.length; i++) if (steps[i] > scale + .005) { value = steps[i]; break; }
+        } else {
+          for (var n = steps.length - 1; n >= 0; n--) if (steps[n] < scale - .005) { value = steps[n]; break; }
+        }
+        if (value) { zoom.value = String(value); zoom.onchange(); }
+      }
+      zoombar.querySelector('[data-zoom-in]').onclick = function () { step(1); };
+      zoombar.querySelector('[data-zoom-out]').onclick = function () { step(-1); };
+      zoombar.querySelector('[data-zoom-fit]').onclick = function () { zoom.value = 'fit'; zoom.onchange(); };
       function size() {
         if (!preview.clientWidth || !preview.clientHeight) return;
         var width = paper.offsetWidth, height = paper.offsetHeight;
@@ -808,6 +833,7 @@ window.AngeboteDesign = (function () {
         paper.style.transform = 'scale(' + scale + ')';
         paper.style.setProperty('--an-picture-scale', scale);
         frame.style.width = width * scale + 'px'; frame.style.height = height * scale + 'px';
+        out.textContent = Math.round(scale * 100) + ' %';
       }
       zoom.onchange = function () { preview.scrollTop = 0; preview.scrollLeft = 0; size(); };
       toolbar.querySelector('[data-picture-fit]').onclick = function () { zoom.value = 'fit'; zoom.onchange(); };

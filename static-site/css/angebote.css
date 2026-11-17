@@ -618,6 +618,12 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-designer-help{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .an-designer-direct:empty,.an-designer-help:empty,.an-preview-options:empty{display:none}
 .an-picture-controls .an-actions{margin:4px 0}
+.an-designer-preview{flex-wrap:wrap}
+.an-zoombar{position:sticky;top:0;z-index:6;flex:1 0 100%;display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 8px}
+.an-zoombar output{min-width:56px;text-align:center;font-size:12px;font-weight:600;color:#1f2937;background:#fff;border:1px solid var(--an-line,#d7e0d7);border-radius:8px;padding:5px 8px}
+.an-zoombar button{font:inherit;font-size:13px;padding:6px 10px;min-height:30px;cursor:pointer;color:#1f2937;background:#fff;border:1px solid var(--an-line,#d7e0d7);border-radius:8px}
+.an-zoombar button:hover{background:#f3f7f3}
+.an-zoombar [data-zoom-out],.an-zoombar [data-zoom-in]{min-width:36px;font-weight:600}
 .an-designer-settings .an-element-actions{gap:4px;flex-wrap:wrap}
 .an-designer-settings .an-element-actions button{flex:1 1 36px;padding:4px;min-width:36px}
 .an-designer-settings .an-nudge{display:flex;gap:4px}
