@@ -259,6 +259,11 @@ async function setField(page, root, locator, value) {
   const act = async () => {
     if (await locator.evaluate((node) => node.tagName) === 'SELECT') await locator.selectOption(value);
     else if (await locator.evaluate((node) => node.type) === 'checkbox') await locator.setChecked(!!value);
+    else if (await locator.evaluate((node) => node.type) === 'range') await locator.evaluate((n, v) => {
+      n.value = String(v);
+      n.dispatchEvent(new Event('input', { bubbles: true }));
+      n.dispatchEvent(new Event('change', { bubbles: true }));
+    }, value);
     else { await locator.fill(String(value)); await locator.dispatchEvent('change'); }
   };
   if (await locator.isVisible()) { await act(); return; }
@@ -449,7 +454,7 @@ test('TC-F13-01/03..04: Logo bearbeiten und Vorlage nur auf das gewählte Ziel a
   const preserved = copy(state.actions.get(head.id).draft);
   await page.locator('[data-layout-target=card]').click();
   await templatePanel(page);
-  await page.locator('.an-template-picker > summary').click();
+  await page.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
   await page.locator('input[data-style=template][value=modern-mag-fresh]').check();
   await saveDraft(page);
   const changed = state.actions.get(head.id).draft;
@@ -519,7 +524,7 @@ for (const cmsMode of [true, false]) {
       await templatePanel(page);
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
-    await host.locator('.an-template-picker > summary').click();
+    await host.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
     await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const writes = state.log.filter((r) => !['GET', 'HEAD', 'OPTIONS'].includes(r.method)).length;
@@ -590,7 +595,7 @@ for (const cmsMode of [true, false]) {
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
     await expect(host.locator('.an-template-picker > summary')).toContainText('17 Vorlagen');
-    await host.locator('.an-template-picker > summary').click();
+    await host.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
     await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
     const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
     expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
@@ -673,7 +678,7 @@ for (const cmsMode of [true, false]) {
       await page.locator('[data-layout-target=sheet]').click();
       await templatePanel(page);
     }
-    await host.locator('.an-template-picker > summary').click();
+    await host.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
     await expect(host.getByRole('radio', { name: /Klassisch/ })).toBeChecked();
     await expect(host.getByRole('radio', { name: /6 · kompakt/ })).toBeChecked();
     expect(state.errors).toEqual([]);
@@ -734,11 +739,14 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   await hit.dispatchEvent('pointerdown', { pointerId: 71, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 71, pointerType: 'touch', clientX: box.x + 20, clientY: box.y + 15 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 71, pointerType: 'touch' });
-  await designerTool(page.locator('#an-design-root'), 1);
+  await designerTool(page.locator('#an-design-root'), 2);
   await page.locator('[data-style=marker_type]').selectOption('heart');
   await page.locator('[data-style=marker_palette]').selectOption('ocean-blue');
-  await designerTool(page.locator('#an-design-root'), 2);
-  await page.locator('[data-style=marker_scale]').fill('140'); await page.locator('[data-style=marker_scale]').blur();
+  await page.locator('[data-style=marker_scale]').evaluate((n) => {
+    n.value = '140';
+    n.dispatchEvent(new Event('input', { bubbles: true }));
+    n.dispatchEvent(new Event('change', { bubbles: true }));
+  });
   await page.locator('[data-design-save]').click();
   await expect(page.locator('[data-design-status]')).toContainText('gespeichert');
   expect(state.design.drinks.adjustments['sheet:0:image:0']).toMatchObject({ rotation: 15, scale: 1.1 });
@@ -2315,7 +2323,7 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   });
   await cms(page);
   await designTab(page, 'sec-flyer');
-  await page.locator('#cfg-sec-flyer .an-template-picker summary').click();
+  await page.locator('#cfg-sec-flyer .an-template-picker summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
   await page.locator('#cfg-flyerTemplate-preview [data-value=modern-mag-xl]').click();
   await page.clock.runFor(1000);
   await workspaceView(page.locator('[data-designer=flyer]'), 'split');
@@ -2324,6 +2332,41 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
     && entry.method === 'GET' && entry.params.artnrs === 'ART2001')).toBe(true);
   expect(await page.evaluate(() => window.__previewProductImages)).toBeGreaterThan(0);
   expect(state.errors).toEqual([]);
+});
+
+test('TEMP-SHOTS: Feinabstimmung', async ({ page }) => {
+  test.setTimeout(180000);
+  const state = await setup(page);
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await designerTool(root, 2);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'shots/feinabstimmung-plakat.png' });
+});
+
+test('TEMP-SHOTS: alle Designer-Tabs', async ({ page }) => {
+  test.setTimeout(300000);
+  const state = await setup(page);
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page);
+  const shoot = async (name) => { await page.waitForTimeout(400); await page.screenshot({ path: 'shots/' + name + '.png' }); };
+  await designTab(page, 'sec-plakat');
+  const plakat = page.locator('[data-designer=plakat]');
+  for (const [i, n] of [[0, 'plakat-stil'], [1, 'plakat-farben'], [2, 'plakat-fein'], [3, 'plakat-weiter'], [4, 'plakat-eigene']]) {
+    await designerTool(plakat, i); await shoot(n);
+  }
+  await designTab(page, 'sec-drinks');
+  const drinks = page.locator('[data-designer=drinks]');
+  for (const [i, n] of [[0, 'drinks-stil'], [1, 'drinks-farben'], [2, 'drinks-fein'], [3, 'drinks-weiter']]) {
+    await designerTool(drinks, i); await shoot(n);
+  }
+  await designTab(page, 'cfg-hpang');
+  const hp = page.locator('[data-designer=homepage]');
+  for (const [i, n] of [[0, 'hp-farben'], [1, 'hp-preistag'], [2, 'hp-layout']]) {
+    await designerTool(hp, i); await shoot(n);
+  }
 });
 
 test('TC-F57-02: Ersparnis-Marker und Stattpreis sind eigene, getrennt verschiebbare Vorschau-Elemente', async ({ page }) => {
@@ -2831,7 +2874,7 @@ test('TC-F49-03: Preisschildfarben und Geometrie ändern echte Magazin-Vorschaup
     await designTab(page, 'sec-' + kind);
     const root = page.locator('[data-designer=' + kind + ']'), canvas = root.locator('.an-designer-preview canvas:visible');
     await workspaceView(root, 'split');
-    await root.locator('.an-template-picker summary').click();
+    await root.locator('.an-template-picker summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
     await root.locator('#cfg-' + kind + 'Template-preview [data-value=modern-mag-xl]').click();
     await page.clock.runFor(500); await expect(canvas).toBeVisible();
     await root.locator('[data-object-properties=price]').click();
@@ -2963,7 +3006,7 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
       await expect(root.locator('[data-designer-panel="' + i + '"]')).toBeVisible();
     }
     await designerTool(root, 0);
-    await expect(root.locator('.an-template-picker').first()).not.toHaveAttribute('open');
+    await expect(root.locator('.an-template-picker').first()).toHaveAttribute('open');
     const previewHost = root.locator('.an-designer-preview');
     await workspaceView(root, 'split');
     await page.clock.runFor(500);
@@ -3010,7 +3053,7 @@ for (const section of ['plakat', 'flyer']) {
     }, { html: original, section });
     expect(await root.locator('.an-designer-settings input[id]:not([id^=cfg-live-auto]),.an-designer-settings select[id]').evaluateAll((nodes) => nodes.map((node) => node.id).sort())).toEqual(originalIds);
     await expect(root.locator('.cms-card')).toHaveCount(0);
-    await root.locator('.an-template-picker summary').click();
+    await root.locator('.an-template-picker summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
     await expect(root.locator('.cms-wp-preview.active')).toHaveCount(1);
     await expect(root.locator('.cms-wp-preview.active .an-choice-active')).toBeVisible();
     const left = page.locator('#cms-cfg-plakat .cfg-split-left');

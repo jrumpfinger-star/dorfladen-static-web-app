@@ -954,6 +954,8 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-designer-settings label.an-cfield{justify-content:flex-start}
 .an-cfield>input[type=color]{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important}
 .an-gradopts input[type=color]{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important}
+.an-designer-settings label.an-cfield{justify-content:flex-start!important}
+.an-designer-settings label.an-cfield>.an-cfield-lab{flex:0 1 auto!important;text-align:left!important;font-weight:400!important}
 .an-cfield-lab{flex:1;min-width:0;font-size:13px;font-weight:400;color:var(--an-ink,#24362d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .an-gradchk{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:400;color:var(--an-muted,#59695f);flex:none}
 .an-gradchk input{width:14px;height:14px}
@@ -965,6 +967,28 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-creset:hover{background:var(--an-btn-bg,#eef3ee)}
 .an-designer-settings fieldset{position:relative}
 .an-designer-settings legend .an-creset{position:absolute;top:-9px;right:10px}
+
+/* ── Slider-Zeilen: Kartenzeile Label · Slider · Wert ── */
+.an-srow{display:flex;align-items:center;gap:10px;min-height:36px;border:1px solid var(--an-line,#d8dfd7);border-radius:8px;padding:4px 10px;background:#fff;margin-bottom:8px}
+.an-srow .an-srow-lab{flex:0 0 190px;font-size:13px;font-weight:400;color:var(--an-ink,#24362d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-srow input[type=range]{flex:1;min-width:0;accent-color:var(--an-green,#234c38)}
+.an-srow .an-srow-slider{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.an-srow span[id$="-val"]{flex:0 0 52px;min-width:52px;text-align:right;font-size:13px!important;font-weight:400;color:var(--an-muted,#59695f);font-variant-numeric:tabular-nums}
+@media(pointer:coarse){.an-srow{min-height:44px}}
+
+/* ── Feld-Zeilen (Selects, Zahlen): Label links · Feld rechts ── */
+.an-designer-settings .an-fields,.an-designer-settings .an-fields.an-fields-3{grid-template-columns:1fr!important}
+.an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox])){display:flex;align-items:center;gap:10px;min-height:36px;border:1px solid var(--an-line,#d8dfd7);border-radius:8px;padding:4px 10px;background:#fff;margin-bottom:8px}
+.an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox]))>span{flex:0 0 190px;font-size:13px;font-weight:400!important;color:var(--an-ink,#24362d)}
+.an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox]))>select,
+.an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox]))>input:not([type=checkbox]){flex:1;min-width:0;min-height:36px!important;height:36px;border:1px solid var(--an-field-border,#7d8f84);border-radius:8px;background:#fff;color:var(--an-ink,#24362d)}
+.an-designer-settings label.an-field>input[type=color]{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important}
+.an-designer-settings label.an-field>output{flex:0 0 52px;text-align:right;font-size:13px;color:var(--an-muted,#59695f);font-variant-numeric:tabular-nums}
+
+/* ── Checkbox-Zeilen: Kästchen links, Label daneben ── */
+.an-designer-settings label.an-field:has(>input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:36px;border:0;background:none;padding:2px 4px;margin-bottom:4px}
+.an-designer-settings label.an-field:has(>input[type=checkbox])>span{flex:1;font-size:13px;font-weight:400;color:var(--an-ink,#24362d)}
+.an-designer-settings label.an-field:has(>input[type=checkbox])>input[type=checkbox]{width:18px;height:18px;accent-color:var(--an-green,#234c38);flex:none;margin:0}
 .an-designer-settings label:has(>input[type=color]){display:flex;align-items:center;justify-content:space-between;gap:8px}
 .an-designer-settings label>input[type=color]{width:32px!important;height:32px!important;
   padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important;flex:none}

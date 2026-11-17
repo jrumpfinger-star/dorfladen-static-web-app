@@ -127,11 +127,35 @@ window.AngeboteDesign = (function () {
         }).join('') + '</div>' + (isTemplate ? '</details>' : '') + '</fieldset>';
     }
     function fields(advanced) {
-      return '<div class="an-fields">' + definitions.filter(function (def) {
+      var defs = definitions.filter(function (def) {
         var extra = def[0].indexOf('decoration.') === 0 || def[0] === 'price_preset';
+        var marker = def[0].indexOf('marker_') === 0;
         return def[0] !== 'template' && def[0] !== 'density'
-          && (advanced === 'extra' ? extra : !extra && (def[2] === 'number') === advanced);
-      }).map(function (def) {
+          && (advanced === 'extra' ? extra : !extra && (advanced === true ? def[2] === 'number' || marker : def[2] === 'number' === advanced && !marker));
+      });
+      var order = ['marker_type', 'marker_palette', 'marker_scale', 'name_size', 'price_size', 'details_size', 'image_rotation', 'image_scale'];
+      if (advanced === true) defs.sort(function (a, b) {
+        var i = order.indexOf(a[0]), j = order.indexOf(b[0]);
+        return (i < 0 ? 99 : i) - (j < 0 ? 99 : j);
+      });
+      var out = [], lastSection = '';
+      var extraSections = { price_preset: 'Preisschild', 'decoration.price_radius': 'Preisschild', 'decoration.price_skew': 'Preisschild', 'decoration.price_scale': 'Preisschild', 'decoration.price_dx': 'Preisschild', 'decoration.price_dy': 'Preisschild', 'decoration.show_leaf': 'Deko', 'decoration.leaf_size': 'Deko', 'decoration.show_bag': 'Deko', 'decoration.show_texture': 'Deko', 'decoration.border_width': 'Deko', 'decoration.card_border_width': 'Deko', 'decoration.leaf_color': 'Deko-Farben', 'decoration.border_color': 'Deko-Farben', 'decoration.card_border_color': 'Deko-Farben', 'decoration.details_color': 'Deko-Farben', 'decoration.footer_color': 'Deko-Farben', 'decoration.vorrat_color': 'Deko-Farben', 'decoration.background_gradient': 'Hintergründe', 'decoration.background_color2': 'Hintergründe', 'decoration.background_direction': 'Hintergründe', 'decoration.background_pct': 'Hintergründe', 'decoration.image_background': 'Hintergründe', 'decoration.image_gradient': 'Hintergründe', 'decoration.image_color2': 'Hintergründe', 'decoration.image_direction': 'Hintergründe', 'decoration.image_pct': 'Hintergründe', 'decoration.image_width_pct': 'Hintergründe', 'decoration.image_dx': 'Hintergründe', 'decoration.image_dy': 'Hintergründe' };
+      function sectionIndex(def0) { var s = extraSections[def0]; return s === 'Preisschild' ? 0 : s === 'Deko' ? 1 : s === 'Deko-Farben' ? 2 : 3; }
+      if (advanced === 'extra') defs.sort(function (a, b) { return sectionIndex(a[0]) - sectionIndex(b[0]); });
+      defs.forEach(function (def) {
+        var section = advanced === true ? (def[0].indexOf('marker_') === 0 ? 'Ersparnis-Marker' : 'Größen')
+          : advanced === 'extra' ? (extraSections[def[0]] || '') : '';
+        if (section && section !== lastSection) { out.push({ heading: section }); lastSection = section; }
+        out.push({ html: row(def) });
+      });
+      for (var i = 0; i < out.length; i++) {
+        if (out[i].heading && (!out[i + 1] || out[i + 1].heading)) { out.splice(i, 1); i--; }
+      }
+      return '<div class="an-fields">' + out.map(function (part) {
+        return part.heading ? '<h3 class="an-settings-heading">' + part.heading + '</h3>' : part.html;
+      }).join('') + '</div>';
+    }
+    function row(def) {
         var decorationKey = def[0].split('.')[1];
         var value = def[0] === 'price_preset' ? (M.priceImage(layout) ? 'price-image' : layout.price_preset === 'manual' ? '' : layout.price_preset || '')
           : decorationKey ? Object.assign({}, M.decorationDefaults, layout.decoration)[decorationKey]
@@ -145,13 +169,15 @@ window.AngeboteDesign = (function () {
             var key = Array.isArray(option) ? option[0] : option, label = Array.isArray(option) ? option[1] : option;
             return '<option value="' + M.esc(key) + '"' + (String(value) === key ? ' selected' : '') + '>' + M.esc(label) + '</option>';
           }).join('') + '</select>';
+        } else if (def[2] === 'number') {
+          var unit = /%/.test(def[1]) ? ' %' : /Grad/.test(def[1]) ? '\u00b0' : /px|Breite|Radius|Größe/i.test(def[1]) ? ' px' : '';
+          html += '<input data-style="' + def[0] + '" type="range" min="' + def[3] + '" max="' + def[4] + '" value="' + M.esc(value) + '" aria-label="' + M.esc(def[1]) + '">'
+            + '<output data-style-value="' + def[0] + '" data-unit="' + unit + '">' + M.esc(value) + unit + '</output>';
         } else {
           html += '<input data-style="' + def[0] + '" type="' + def[2] + '" value="' + M.esc(value) + '"'
-            + (def[2] === 'checkbox' && value ? ' checked' : '')
-            + (def[2] === 'number' ? ' min="' + def[3] + '" max="' + def[4] + '"' : '') + '>';
+            + (def[2] === 'checkbox' && value ? ' checked' : '') + '>';
         }
         return html + '</label>';
-      }).join('') + '</div>';
     }
     return '<div data-side-panel="design">' + choices('template', '1 · Stil wählen', M.templateOptions)
       + choices('density', '2 · Artikel pro Seite', [['4', '4 · großzügig'], ['6', '6 · kompakt']])
@@ -282,12 +308,14 @@ window.AngeboteDesign = (function () {
       layout.decoration = Object.assign({}, layout.decoration, { price_radius: preset.tagRadius });
     } else if (key.indexOf('decoration.') === 0) {
       layout.decoration = Object.assign({}, layout.decoration);
-      layout.decoration[key.split('.')[1]] = target.type === 'checkbox' ? target.checked : target.type === 'number' ? Number(target.value) : target.value;
+      layout.decoration[key.split('.')[1]] = target.type === 'checkbox' ? target.checked : target.type === 'number' || target.type === 'range' ? Number(target.value) : target.value;
     } else {
-      layout[key] = target.type === 'number' || key === 'density' ? Number(target.value) : target.value;
+      layout[key] = target.type === 'number' || target.type === 'range' || key === 'density' ? Number(target.value) : target.value;
       if (key === 'price_shape') layout.price_preset = 'manual';
       if (key === 'color' && !layout.price_preset) layout.price_preset = 'manual';
     }
+    var out = target.parentElement && target.parentElement.querySelector('output[data-style-value="' + key + '"]');
+    if (out) out.textContent = target.value + (out.dataset.unit || '');
     return true;
   }
   function sample(layout, kind, products) {
@@ -411,13 +439,16 @@ window.AngeboteDesign = (function () {
         });
         function refresh() {
           if (active) return;
+          var displayOnly = !!root.dataset.designer;
           Object.keys(groups).forEach(function (group) { groups[group] = []; });
           root.querySelectorAll('input,select,textarea').forEach(function (control) {
             if (control.closest('.an-object-dialog')) return;
             var group = classify(control), field = control.closest('label');
             if (!group || !field || field.dataset.objectUnavailable === 'true' || field.querySelectorAll('input,select,textarea').length !== 1) return;
             if (field.hidden && !field.dataset.objectField) return;
-            field.dataset.objectField = group; field.hidden = true; groups[group].push(field);
+            field.dataset.objectField = group;
+            if (!displayOnly) field.hidden = true;
+            groups[group].push(field);
           });
           bar.querySelectorAll('[data-object-properties]').forEach(function (button) {
             var group = button.dataset.objectProperties, detail = describe(group);
@@ -633,7 +664,7 @@ window.AngeboteDesign = (function () {
     resize(); return root._splitView;
   }
   function expandGroups(root) {
-    root.querySelectorAll('details:not(.an-template-picker)').forEach(function (group) {
+    root.querySelectorAll('details').forEach(function (group) {
       if (group.dataset.groupReady) return;
       group.dataset.groupReady = 'true'; group.open = true;
     });
@@ -735,7 +766,61 @@ window.AngeboteDesign = (function () {
       left.prepend(controls); heading.remove(); pictureViewport(preview, controls);
     });
     restyleColorGrids(panel);
+    restyleColorRows(panel);
+    restyleSliderRows(panel);
+    restyleCheckRows(panel);
     compactDesignNavigation(panel);
+  }
+  // Checkbox-Zeilen: Kästchen nach vorn (links), Label daneben.
+  function restyleCheckRows(panel) {
+    panel.querySelectorAll('label.an-field>input[type=checkbox]').forEach(function (box) {
+      var label = box.parentElement;
+      if (label.dataset.chkrow) return;
+      label.dataset.chkrow = 'true';
+      label.classList.add('an-chkrow');
+      label.insertBefore(box, label.firstChild);
+    });
+  }
+  // Übrige Farb-Zeilen (HP, Wochenplan, …) ebenfalls auf Swatch-links-Zeilen umbauen.
+  function restyleColorRows(panel) {
+    panel.querySelectorAll('label>input[type=color],div>input[type=color]').forEach(function (input) {
+      var label = input.closest('label') || input.parentElement;
+      if (label.classList.contains('an-cfield') || label.dataset.crow) return;
+      if (label.closest('.an-gradopts,.cfg-tpl-grad-row,.an-object-dialog')) return;
+      label.dataset.crow = 'true';
+      label.classList.add('an-cfield');
+      var head = label.childNodes[0];
+      while (head && head.nodeType === 3 && !head.textContent.trim()) head = head.nextSibling;
+      if (head && head.nodeType === 3) {
+        var lab = document.createElement('span'); lab.className = 'an-cfield-lab'; lab.textContent = head.textContent.trim();
+        label.removeChild(head); label.appendChild(lab);
+      } else if (head && head.nodeType === 1 && (head.tagName === 'SPAN' || head.tagName === 'LABEL') && !head.classList.contains('an-cfield-lab')) {
+        head.classList.add('an-cfield-lab');
+        label.appendChild(head);
+      }
+    });
+  }
+  // Slider-Zeilen 1:1 nach Entwurf: Kartenzeile = Label links · Slider · Wert rechts.
+  function restyleSliderRows(panel) {
+    panel.querySelectorAll('input[type=range]').forEach(function (range) {
+      if (/pct/i.test(range.id || '')) return;
+      if (range.closest('.an-quickbar,.an-quick,.an-gradopts,.cfg-tpl-grad-opts,.an-image-tools,.an-nudge,.hcfg-grad-opts')) return;
+      var label = range.closest('label');
+      var row = label || range.parentElement;
+      if (row.dataset.srow) return;
+      if (row !== label && row.parentElement !== label && row !== range.parentElement) return;
+      row.dataset.srow = 'true';
+      row.classList.add('an-srow');
+      if (row !== label) row.classList.add('an-srow-slider');
+      var head = row.childNodes[0];
+      while (head && head.nodeType === 3 && !head.textContent.trim()) head = head.nextSibling;
+      if (head && head.nodeType === 3) {
+        var lab = document.createElement('span'); lab.className = 'an-srow-lab'; lab.textContent = head.textContent.trim();
+        row.removeChild(head); row.insertBefore(lab, row.firstChild);
+      } else if (head && head.nodeType === 1 && (head.tagName === 'SPAN' || head.tagName === 'LABEL') && !head.classList.contains('an-srow-lab')) {
+        head.classList.add('an-srow-lab');
+      }
+    });
   }
   // Farb-Karten (Plakat/Flyer) 1:1 nach Entwurf: Zeile = Swatch · Label · Verlauf,
   // Verlauf-Optionen als eingerückte Leiste mit zweiter Farbe, Reset in den Sektionskopf.
@@ -1035,6 +1120,9 @@ window.AngeboteDesign = (function () {
     compactHelp(root, help);
     select(0);
     expandGroups(root);
+    restyleColorRows(root);
+    restyleSliderRows(root);
+    restyleCheckRows(root);
     root._designerUi = { select: select, direct: direct, help: help, destroy: function () {
       splitter.destroy(); options.preview._pictureView.destroy();
     } };
