@@ -67,11 +67,16 @@ async function setup(page, options = {}) {
       if (req.postDataJSON().password !== 'test-cms-password') return fail(401, 'invalid password');
       return state.failLogin ? fail(503, 'Die CMS-Anmeldung ist gerade nicht erreichbar.') : json({ success: true, token: 'test-auth' });
     }
-    if (path === '/api/angebote') return json({ success: true, data: [{
+    if (path === '/api/angebote') return state.failOffers ? fail(503, 'Angebote nicht erreichbar') : json({ success: true, data: state.emptyOffers ? [] : [{
       dl_angeboteid: 'legacy-one', dl_produkt: 'Bisheriges Wochenangebot', dl_preis: 2.49, dl_statt_preis: 2.99,
       dl_aktion_id: 'legacy-action', dl_gueltig_von: '2026-11-15', dl_gueltig_bis: '2026-11-21',
-    }] });
+      dl_artikelnummer: options.legacyArticleNumber || '',
+    }, ...(state.previewOffers || [])] });
     if (path === '/api/preisliste') return json({ groups: { Getränke: state.catalog } });
+    if (path === '/api/werbebilder' && method === 'GET' && options.legacyArticleNumber) {
+      return json([{ dl_artikelnummer: options.legacyArticleNumber,
+        dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') }]);
+    }
     if (path === '/api/werbebilder' && method === 'POST') {
       if (!req.postDataJSON().articles) {
         entry.body = req.postDataJSON();
@@ -662,9 +667,10 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   await hit.dispatchEvent('pointerdown', { pointerId: 71, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 71, pointerType: 'touch', clientX: box.x + 20, clientY: box.y + 15 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 71, pointerType: 'touch' });
+  await page.locator('#an-design-root [data-designer-tab="1"]').click();
   await page.locator('[data-style=marker_type]').selectOption('heart');
   await page.locator('[data-style=marker_palette]').selectOption('ocean-blue');
-  await page.locator('#an-design-root .an-fine:not(.an-more-design) summary').click();
+  await page.locator('#an-design-root [data-designer-tab="2"]').click();
   await page.locator('[data-style=marker_scale]').fill('140'); await page.locator('[data-style=marker_scale]').blur();
   await page.locator('[data-design-save]').click();
   await expect(page.locator('[data-design-status]')).toContainText('gespeichert');
@@ -830,6 +836,7 @@ test('TC-F34-01: Preisbild auswählen, fünf Farben einstellen und Standards ern
     price_outline_color: ['#ffffff', '#ddccff'], old_price_color: ['#000000', '#112233'],
     price_strike_color: ['#ed1c24', '#ff44aa'],
   };
+  await root.locator('[data-designer-tab="1"]').click();
   await expect(root.getByText('Stattpreis-Streifen', { exact: true })).toBeVisible();
   for (const [key, [initial, custom]] of Object.entries(colors)) {
     const control = root.locator('[data-style="' + key + '"]');
@@ -858,7 +865,7 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
   const state = await setup(page);
   await cms(page);
   const root = page.locator('#an-design-root');
-  await root.locator('.an-more-design summary').click();
+  await root.locator('[data-designer-tab="3"]').click();
   const options = { show_leaf: true, show_bag: true, show_texture: true, leaf_color: '#123456',
     leaf_size: 26, border_width: 4, border_color: '#112233', card_border_width: 3, card_border_color: '#223344',
     details_color: '#334455', footer_color: '#445566', vorrat_color: '#556677', background_gradient: true,
@@ -871,7 +878,10 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
     else if (await control.evaluate((node) => node.tagName === 'SELECT')) await control.selectOption(value);
     else { await control.fill(String(value)); await control.dispatchEvent('change'); }
   }
+  await root.locator('[data-designer-tab="1"]').click();
   await root.locator('[data-style=price_shape]').selectOption('ticket');
+  await root.locator('[data-designer-tab="4"]').click();
+  await root.locator('.an-own-presets summary').click();
   await root.locator('[data-preset-name]').fill('Sommer <img src=x>');
   await root.locator('[data-preset-add]').click();
   await root.locator('[data-design-save]').click();
@@ -879,10 +889,13 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
   expect(state.design.drinks.decoration).toEqual(options);
   expect(state.design.presets[0].name).toBe('Sommer <img src=x>');
   await cms(page);
+  await root.locator('[data-designer-tab="4"]').click();
+  await root.locator('.an-own-presets summary').click();
   await root.locator('[data-preset-select]').selectOption('0');
   await root.locator('[data-preset-load]').click();
   await expect(root.locator('[data-style=price_shape]')).toHaveValue('ticket');
   expect(await root.locator('[data-preview-element] option[value*=":1:"]').count()).toBe(0);
+  await root.locator('[data-designer-tab="4"]').click();
   await root.locator('[data-preset-delete]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await expect(root.locator('[data-preset-select] option')).toHaveCount(2);
@@ -892,6 +905,8 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
   await root.locator('[data-design-discard]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
   await expect(root.locator('[data-preset-select] option')).toHaveCount(2);
+  await root.locator('[data-designer-tab="4"]').click();
+  await root.locator('.an-own-presets summary').click();
   await root.locator('[data-preset-select]').selectOption('0');
   await root.locator('[data-preset-delete]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Vorlage löschen', exact: true }).click();
@@ -944,9 +959,10 @@ test('TC-F36-01/02: zentraler Homepage-Designer wirkt in Kundensitzung, Flyer bl
   state.published.set(action.id, { id: action.id, data: copy(action.draft) });
   await cms(page);
   await page.locator('[data-id=cfg-hpang]').click();
-  await expect(page.locator('#hpang-preview .an-hp-card')).toHaveCount(4);
+  await expect(page.locator('#hpang-preview .an-hp-card')).toHaveCount(3);
   await page.locator('#hpang-cardBg').fill('#eeddcc');
   await page.locator('#hpang-cardBg').dispatchEvent('input');
+  await page.locator('#cms-cfg-hpang [data-designer-tab="2"]').click();
   await page.locator('#hpang-imgSize').fill('110');
   await page.locator('#hpang-imgSize').dispatchEvent('input');
   await page.locator('[data-action=hpangSave]').click();
@@ -957,6 +973,7 @@ test('TC-F36-01/02: zentraler Homepage-Designer wirkt in Kundensitzung, Flyer bl
   await expect(grid.locator('canvas')).toHaveCount(0);
   await expect(grid.locator('.an-product img')).toHaveCount(1);
   await expect.poll(() => grid.locator('.an-product img').evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+  await expect(grid.locator('.an-product img')).toHaveCSS('filter', 'none');
   await expect(grid.locator('.an-hp-card').first()).toHaveCSS('background-color', 'rgb(238, 221, 204)');
   await expect(grid).toContainText('Pfand');
   await expect(grid).toContainText('1 l =');
@@ -997,7 +1014,7 @@ test('TC-F36-04: Homepage-Konfigurations- und Bildfehler sind erneut ladbar', as
 test('TC-F36-04: HP-Speicherkonflikt erhält Eingaben, Verwerfen und Reset schreiben nicht', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page);
   await cms(page); await page.locator('[data-id=cfg-hpang]').click();
-  await expect(page.locator('#hpang-preview .an-hp-card')).toHaveCount(4);
+  await expect(page.locator('#hpang-preview .an-hp-card')).toHaveCount(1);
   await page.locator('#hpang-cardBg').fill('#112233');
   state.design.version++;
   await page.locator('[data-action=hpangSave]').click();
@@ -1075,6 +1092,8 @@ test('TC-F34-02: Preisbild rendert echte Beträge, Kontur und optionalen durchge
     expect(entry.bandPixels > 0).toBe(comparison);
     expect(entry.visibleOldFields).toBe(0);
     for (let i = 0; i < count; i++) {
+      expect(main[i].font).toContain('Anton');
+      expect(fraction[i].font).toContain('Anton');
       expect(parseFloat(fraction[i].font.match(/[\d.]+px/)[0])).toBeLessThan(parseFloat(main[i].font.match(/[\d.]+px/)[0]));
       expect(fraction[i].bottom).toBeLessThan(main[i].bottom);
       for (const text of [main[i], fraction[i]]) {
@@ -2193,23 +2212,100 @@ test('TC-F30-01: Designstandards übernehmen wirkt auf alle Artikel des Handy-Zi
   expect(state.errors).toEqual([]);
 });
 
+test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer und zeichnet es', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'ART2001' });
+  await page.addInitScript(() => {
+    const drawImage = CanvasRenderingContext2D.prototype.drawImage;
+    window.__previewProductImages = 0;
+    CanvasRenderingContext2D.prototype.drawImage = function (image, ...args) {
+      if (image instanceof HTMLImageElement && image.src.startsWith('data:image/png;base64,'))
+        window.__previewProductImages++;
+      return drawImage.call(this, image, ...args);
+    };
+  });
+  await cms(page);
+  await page.locator('[data-id=sec-flyer]').click();
+  await page.locator('#cfg-sec-flyer .an-template-picker summary').click();
+  await page.locator('#cfg-flyerTemplate-preview [data-value=modern-mag-xl]').click();
+  await page.clock.runFor(1000);
+  await expect(page.locator('#cfg-live-preview-flyer img')).toBeVisible();
+  expect(state.log.some((entry) => entry.path === '/api/werbebilder'
+    && entry.method === 'GET' && entry.params.artnrs === 'ART2001')).toBe(true);
+  expect(await page.evaluate(() => window.__previewProductImages)).toBeGreaterThan(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unabhängige Vorschau', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  for (const kind of ['plakat', 'flyer', 'drinks']) {
+    await page.locator('[data-id=sec-' + kind + ']').click();
+    const root = page.locator('[data-designer=' + kind + ']');
+    await expect(root).toBeVisible();
+    const tabs = root.locator('.an-designer-tabs [role=tab]');
+    await expect(tabs).toHaveText(['Stil', 'Farben', 'Feinabstimmung', 'Weitere Gestaltung', 'Eigene Vorlagen']);
+    for (let i = 0; i < 5; i++) {
+      await tabs.nth(i).click();
+      await expect(root.locator('[role=tabpanel]:visible')).toHaveCount(1);
+      await expect(root.locator('[data-designer-panel="' + i + '"]')).toBeVisible();
+    }
+    await tabs.first().click();
+    await expect(root.locator('.an-own-presets')).not.toHaveAttribute('open');
+    const previewHost = root.locator('.an-designer-preview');
+    await page.clock.runFor(500);
+    await expect(kind === 'drinks' ? root.locator('[data-design-preview] canvas')
+      : root.locator('#cfg-live-preview-' + kind + ' img')).toBeVisible();
+    await expect(previewHost).toHaveCSS('overflow-y', 'scroll');
+    await expect(previewHost).toHaveCSS('overscroll-behavior-y', 'contain');
+    await previewHost.scrollIntoViewIfNeeded();
+    await previewHost.evaluate((node) => { node.scrollTop = 0; });
+    const before = await root.evaluate((node) => ({
+      document: document.scrollingElement.scrollTop,
+      settings: node.querySelector('.an-designer-settings').scrollTop,
+      overflow: node.querySelector('.an-designer-preview').scrollHeight > node.querySelector('.an-designer-preview').clientHeight,
+    }));
+    await previewHost.hover({ position: { x: 30, y: 80 } });
+    await page.mouse.wheel(0, 250);
+    if (before.overflow) await expect.poll(() => previewHost.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(before.document);
+    expect(await root.locator('.an-designer-settings').evaluate((node) => node.scrollTop)).toBe(before.settings);
+    const preview = await root.locator('.an-designer-preview').boundingBox();
+    const settings = await root.locator('.an-designer-settings').boundingBox();
+    if (page.viewportSize().width <= 600) expect(preview.y + preview.height).toBeLessThanOrEqual(settings.y + 1);
+    else expect(preview.x + preview.width).toBeLessThanOrEqual(settings.x + 1);
+    await root.locator('.an-designer-save').scrollIntoViewIfNeeded();
+    await expect(root.locator('.an-designer-save button').first()).toBeInViewport();
+    await noOverflow(page, '#cms-cfg-plakat');
+    await page.screenshot({ path: test.info().outputPath('designer-' + kind + '.png') });
+  }
+  expect(state.errors).toEqual([]);
+});
+
 for (const section of ['plakat', 'flyer']) {
-  test('TC-F32-01/02: Reiter ' + section + ' im Stil des Getränkeflyers, Funktion unverändert', async ({ page }) => {
+  test('TC-F38-02: Reiter ' + section + ' erhält Eingabefelder und Speichervertrag', async ({ page }) => {
     const state = await setup(page);
     await cms(page);
     await page.locator('[data-id=sec-' + section + ']').click();
     const root = page.locator('#cfg-sec-' + section);
     await expect(root).toBeVisible();
-    const marks = await root.locator('.cms-card-header').evaluateAll((nodes) => nodes.slice(0, 3).map((node) => getComputedStyle(node, '::before').content));
-    expect(marks.every((mark) => mark.includes('counter(cfgstep)'))).toBe(true);
+    const original = await (await page.request.get(BASE + '/cms.html')).text();
+    const originalIds = await page.evaluate(({ html, section }) => {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return [...doc.querySelectorAll('#cfg-sec-' + section + ' input[id],#cfg-sec-' + section + ' select[id]')].map((node) => node.id).sort();
+    }, { html: original, section });
+    expect(await root.locator('.an-designer-settings input[id],.an-designer-settings select[id]').evaluateAll((nodes) => nodes.map((node) => node.id).sort())).toEqual(originalIds);
+    await expect(root.locator('.cms-card')).toHaveCount(0);
+    await root.locator('.an-template-picker summary').click();
     await expect(root.locator('.cms-wp-preview.active')).toHaveCount(1);
-    expect(await root.locator('.cms-wp-preview.active').evaluate((node) => getComputedStyle(node, '::after').content)).toBe('"✓ Aktiv"');
+    await expect(root.locator('.cms-wp-preview.active .an-choice-active')).toBeVisible();
     const left = page.locator('#cms-cfg-plakat .cfg-split-left');
     expect(await left.evaluate((node) => getComputedStyle(node).overflowY)).toBe('visible');
+    await page.locator('#cfg-plakat-save').scrollIntoViewIfNeeded();
     const save = await page.locator('#cfg-plakat-save').boundingBox(), view = page.viewportSize();
     expect(save.y).toBeGreaterThanOrEqual(0);
     expect(save.y + save.height).toBeLessThanOrEqual(view.height + 1);
-    const contrast = await root.locator('.cms-input').first().evaluate((node) => {
+    await root.locator('[data-designer-tab="3"]').click();
+    const contrast = await root.locator('#cfg-' + section + '-tagShape').evaluate((node) => {
       const parse = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number);
       const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
       const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
@@ -2221,9 +2317,11 @@ for (const section of ['plakat', 'flyer']) {
     await noOverflow(page, '#cms-cfg-plakat');
     await page.screenshot({ path: test.info().outputPath('design-' + section + '.png') });
     // Funktion: Vorlagenwechsel, Preisschildform, unveränderte Speicheranfrage
+    await root.locator('[data-designer-tab="0"]').click();
     await root.locator('[data-value=minimal-clean]').first().click();
     await expect(root.locator('.cms-wp-preview.active')).toHaveAttribute('data-value', 'minimal-clean');
     await expect(page.locator('#cfg-' + section + 'Template')).toHaveValue('minimal-clean');
+    await root.locator('[data-designer-tab="3"]').click();
     await page.locator('#cfg-' + section + '-tagShape').selectOption('pill');
     const request = page.waitForRequest((r) => r.url().includes('/api/cms-config') && r.method() !== 'GET');
     await page.locator('#cfg-plakat-save').click();
@@ -2234,3 +2332,389 @@ for (const section of ['plakat', 'flyer']) {
     expect(state.errors).toEqual([]);
   });
 }
+
+test('TC-F38-04: Rot/Gelb-Preisbild und fünf Farben für Plakat und Einzelflyer speichern und neu laden', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  const colors = { priceImageColor: '#1234aa', priceOutlineColor: '#ddccff', priceStripColor: '#aaff22',
+    priceOldColor: '#112233', priceStrikeColor: '#ff44aa' };
+  let saved;
+  for (const kind of ['plakat', 'flyer']) {
+    await page.locator('[data-id=sec-' + kind + ']').click();
+    const root = page.locator('#cfg-sec-' + kind);
+    await root.locator('[data-designer-tab="3"]').click();
+    await root.locator('#cfg-' + kind + '-tagPreset').selectOption('price-image');
+    await expect(root.locator('#cfg-' + kind + '-tagShape')).toHaveValue('price-image');
+    for (const [key, value] of Object.entries(colors)) {
+      const field = root.locator('#cfg-' + kind + '-' + key);
+      await expect(field).toBeVisible();
+      await field.fill(value); await field.dispatchEvent('change');
+    }
+    const request = page.waitForRequest((req) => req.url().includes('/api/cms-config')
+      && req.method() !== 'GET' && req.postDataJSON().name === 'design_config');
+    await page.locator('#cfg-plakat-save').click();
+    saved = (await request).postDataJSON().wert;
+  }
+  for (const kind of ['plakat', 'flyer']) {
+    expect(saved[kind + '_tagShape']).toBe('price-image');
+    for (const [key, value] of Object.entries(colors)) expect(saved[kind + '_' + key]).toBe(value);
+  }
+  state.cmsDesign.design_config = saved;
+  await cms(page);
+  for (const kind of ['plakat', 'flyer']) {
+    await page.locator('[data-id=sec-' + kind + ']').click();
+    const root = page.locator('#cfg-sec-' + kind);
+    await root.locator('[data-designer-tab="3"]').click();
+    await expect(root.locator('#cfg-' + kind + '-tagShape')).toHaveValue('price-image');
+    for (const [key, value] of Object.entries(colors)) await expect(root.locator('#cfg-' + kind + '-' + key)).toHaveValue(value);
+  }
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F38-04: Original- und Magazinrenderer zeichnen das gemeinsame Preisbild mit echtem Stattpreis', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  await expect(page.locator('[data-design-preview] canvas')).toBeVisible();
+  const output = await page.evaluate(async () => {
+    const W = window.WochenangeboteRenderer, proto = CanvasRenderingContext2D.prototype;
+    await W.loadPriceFont();
+    const original = proto.fillText, strokeText = proto.strokeText, stroke = proto.stroke;
+    let calls = [];
+    proto.fillText = function (text, ...args) { calls.push({ text, color: this.fillStyle }); return original.call(this, text, ...args); };
+    proto.strokeText = function (text, ...args) { calls.push({ outline: this.strokeStyle }); return strokeText.call(this, text, ...args); };
+    proto.stroke = function (...args) { calls.push({ line: this.strokeStyle }); return stroke.call(this, ...args); };
+    const output = [];
+    try {
+      for (const template of ['classic-red', 'modern-mag-xl']) for (const kind of ['plakat', 'flyer']) for (const old of [5.49, 2.99, null]) {
+        const cfg = { ...W.CFG_DEFAULTS, plakatTemplate: template, flyerTemplate: template,
+          [kind + '_tagShape']: 'price-image', [kind + '_priceImageColor']: '#1234aa',
+          [kind + '_priceOutlineColor']: '#ddccff', [kind + '_priceStripColor']: '#aaff22',
+          [kind + '_priceOldColor']: '#112233', [kind + '_priceStrikeColor']: '#ff44aa' };
+        const renderer = W.create({ cfgGet: () => cfg, flyerArtOverrideGet: () => null, plakatArtOverrideGet: () => null,
+          logo: '/Logo-sm-64.png' });
+        const item = { key: 'test', produkt: 'Testprodukt', preis: 2.99, statt_preis: old, bild_data: '' };
+        const data = { von: '2026-11-16', bis: '2026-11-22', items: [item] };
+        calls = [];
+        if (kind === 'flyer') await renderer.generateEinzelflyer(item, data, cfg);
+        else await new Promise((resolve) => renderer.drawAngebotPlakat(data, [item], [null], resolve, cfg, { returnCanvas: true }));
+        output.push({ template, kind, old, calls: [...calls] });
+      }
+    } finally { proto.fillText = original; proto.strokeText = strokeText; proto.stroke = stroke; }
+    return output;
+  });
+  for (const entry of output) {
+    expect(entry.calls.filter((call) => call.color === '#1234aa').map((call) => call.text)).toEqual(['2.', '99']);
+    expect(entry.calls.filter((call) => call.outline === '#ddccff')).toHaveLength(2);
+    expect(entry.calls.filter((call) => call.color === '#112233').map((call) => call.text)).toEqual(entry.old > 2.99 ? ['5,49 €'] : []);
+    expect(entry.calls.filter((call) => call.line === '#ff44aa')).toHaveLength(entry.old > 2.99 ? 1 : 0);
+  }
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F39-01/03: getrennte CMS-Verläufe mit Undo, Redo und ausdrücklichem Speichern', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  await expect(page.locator('[data-design-preview] canvas')).toBeVisible();
+  for (const kind of ['plakat', 'flyer']) {
+    await page.locator('[data-id=sec-' + kind + ']').click();
+    const root = page.locator('#cfg-sec-' + kind), undo = root.locator('[data-design-history=undo]'), redo = root.locator('[data-design-history=redo]');
+    await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
+    await root.locator('[data-designer-tab="3"]').click();
+    const shape = root.locator('#cfg-' + kind + '-tagShape');
+    await shape.selectOption('price-image');
+    await expect(undo).toBeEnabled(); await undo.click(); await expect(shape).toHaveValue('rect');
+    await expect(redo).toBeEnabled(); await redo.click(); await expect(shape).toHaveValue('price-image');
+    await undo.click(); await shape.selectOption('rounded'); await expect(redo).toBeDisabled();
+  }
+  await page.locator('[data-id=sec-plakat]').click();
+  await page.locator('#cfg-sec-plakat [data-design-history=undo]').click();
+  await expect(page.locator('#cfg-plakat-tagShape')).toHaveValue('rect');
+  await expect(page.locator('#cfg-flyer-tagShape')).toHaveValue('rounded');
+  expect(state.log.filter((r) => r.path === '/api/cms-config' && r.method !== 'GET')).toEqual([]);
+  const request = page.waitForRequest((r) => r.url().includes('/api/cms-config') && r.method() !== 'GET');
+  await page.locator('#cfg-plakat-save').click();
+  expect((await request).postDataJSON().wert).toMatchObject({ plakat_tagShape: 'rect', flyer_tagShape: 'rounded' });
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nativen Textkürzeln', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  const root = page.locator('#an-design-root'), host = root.locator('[data-design-preview]');
+  const undo = root.locator('[data-design-history=undo]'), redo = root.locator('[data-design-history=redo]');
+  await expect(host.locator('canvas')).toBeVisible(); await expect(undo).toBeDisabled();
+  await root.locator('[data-designer-tab="1"]').click();
+  const color = root.locator('[data-style=color]'), initial = await color.inputValue();
+  await color.fill('#1234aa'); await color.dispatchEvent('change');
+  await undo.click(); await expect(color).toHaveValue(initial);
+  await redo.click(); await expect(color).toHaveValue('#1234aa');
+  await undo.click(); await color.fill('#223344'); await color.dispatchEvent('change'); await expect(redo).toBeDisabled();
+  await root.locator('[data-designer-tab="0"]').click();
+  await host.locator('[data-preview-element]').selectOption('sheet:0:image:0');
+  const hit = host.locator('[data-preview-select="sheet:0:image:0"]'), box = await hit.boundingBox();
+  await hit.dispatchEvent('pointerdown', { pointerId: 81, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
+  for (const step of [10, 20, 30]) await page.dispatchEvent('body', 'pointermove', {
+    pointerId: 81, pointerType: 'touch', clientX: box.x + 5 + step, clientY: box.y + 15,
+  });
+  await page.dispatchEvent('body', 'pointerup', { pointerId: 81, pointerType: 'touch' });
+  await undo.click();
+  await root.locator('[data-design-save]').click();
+  await expect(root.locator('[data-design-status]')).toContainText('gespeichert');
+  expect(state.design.drinks.color).toBe('#223344');
+  expect(state.design.drinks.adjustments || {}).toEqual({});
+  await redo.click();
+  await root.locator('[data-design-save]').click();
+  await expect(root.locator('[data-design-status]')).toContainText('gespeichert');
+  expect(state.design.version).toBe(2);
+  expect(state.design.drinks.adjustments['sheet:0:image:0'].dx).toBeGreaterThan(0);
+  await root.locator('[data-designer-tab="4"]').click();
+  await root.locator('.an-own-presets summary').click();
+  const name = root.locator('[data-preset-name]');
+  await name.fill('Unabhängige Texteingabe');
+  const allowed = await name.evaluate((node) => node.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true })));
+  expect(allowed).toBe(true);
+  await undo.focus(); await page.keyboard.press('Control+z'); await expect(redo).toBeEnabled();
+  expect(state.design.version).toBe(2);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F38-07: Bild- und Preisposition nutzen breite Container nebeneinander', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  await page.locator('[data-id=sec-flyer]').click();
+  const root = page.locator('#cfg-sec-flyer');
+  await root.locator('[data-designer-tab="2"]').click();
+  const grid = root.locator('.cfg-anchor-grid'), groups = grid.locator('.cfg-anchor-group');
+  const check = async () => {
+    const [image, price, width] = await Promise.all([groups.nth(0).boundingBox(), groups.nth(1).boundingBox(), grid.evaluate((node) => node.clientWidth)]);
+    if (width - 24 >= 414) {
+      expect(Math.abs(image.y - price.y)).toBeLessThan(2);
+      expect(price.x).toBeGreaterThan(image.x + image.width - 1);
+    } else expect(price.y).toBeGreaterThanOrEqual(image.y + image.height);
+    await noOverflow(page, '#cfg-sec-flyer');
+  };
+  await check();
+  if (page.viewportSize().width >= 1200) {
+    await page.setViewportSize({ width: 1920, height: 1080 }); await check();
+    expect((await groups.nth(1).boundingBox()).y).toBe((await groups.nth(0).boundingBox()).y);
+  }
+  await groups.nth(0).locator('button[title="nach rechts"]').click();
+  await expect(page.locator('#cfg-flyer-imgAnchorX')).toHaveValue('20');
+  await root.locator('[data-design-history=undo]').click();
+  await expect(page.locator('#cfg-flyer-imgAnchorX')).toHaveValue('10');
+  await page.screenshot({ path: test.info().outputPath('positionen-kompakt.png') });
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F38-04: Preisbild wartet auf lokale Anton-Schrift und setzt Cent eng an', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page);
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  await page.route('**/fonts/Anton-Regular.ttf', async (route) => { await gate; await route.fallback(); });
+  const fontRequest = page.waitForRequest('**/fonts/Anton-Regular.ttf');
+  await page.evaluate(() => {
+    const M = window.AngeboteModel, layout = M.blank('drinks').layout;
+    M.useTemplate(layout, 'price-image');
+    const data = M.blank('drinks', layout);
+    data.items.push(Object.assign(M.item(), { name: 'Testprodukt', price_cents: 1249, old_price_cents: 1499,
+      units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 }));
+    M.applyTemplate(data); window.__fontDone = false;
+    window.__fontRender = M.render(data, 0, 1).then((result) => {
+      window.__fontDone = true;
+      const host = document.createElement('div'); host.id = 'font-result'; host.appendChild(result.canvas);
+      document.body.replaceChildren(host);
+    });
+  });
+  await fontRequest;
+  expect(await page.evaluate(() => window.__fontDone)).toBe(false);
+  release();
+  await page.evaluate(() => window.__fontRender);
+  const typography = await page.evaluate(() => {
+    const canvas = document.querySelector('#font-result canvas'), ctx = canvas.getContext('2d');
+    ctx.font = '160px Anton'; const narrow = ctx.measureText('12.49').width;
+    ctx.font = 'bold 160px Arial'; const wide = ctx.measureText('12.49').width;
+    const calls = [], original = ctx.fillText;
+    ctx.fillText = function (text, x, y) { calls.push({ text, x, y, width: this.measureText(text).width }); return original.call(this, text, x, y); };
+    window.WochenangeboteRenderer.drawPriceImage(ctx, { w: 400, h: 220, font: 'Arial', font_size: 160, align: 'left' },
+      { price_cents: 1249, old_price_cents: 1499 }, {});
+    return { loaded: document.fonts.check('160px Anton'), ratio: narrow / wide, main: calls[0], cents: calls[1] };
+  });
+  expect(typography.loaded).toBe(true);
+  expect(typography.ratio).toBeLessThan(0.92);
+  expect(typography.cents.x).toBeLessThan(typography.main.x + typography.main.width);
+  expect(typography.cents.y).toBeLessThan(typography.main.y);
+  await page.locator('#font-result canvas').screenshot({ path: test.info().outputPath('preisbild-schmalschrift.png') });
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reitern und Undo', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
+  const action = await seed(page, state, { count: 8, publish: true });
+  const id = uid(); state.images.set(id, PHOTO); state.published.get(action.id).data.items[0].image_id = id;
+  const before = copy(action);
+  await cms(page); await page.locator('[data-id=cfg-hpang]').click();
+  const root = page.locator('#cms-cfg-hpang'), preview = root.locator('.an-designer-preview'), settings = root.locator('.an-designer-settings');
+  await expect(root).toHaveAttribute('data-designer', 'homepage');
+  await expect(root.locator('[role=tab]')).toHaveText(['Farben', 'Preis-Tag', 'Layout']);
+  await expect(root.locator('#hpang-preview .an-hp-card')).toHaveCount(9);
+  await expect(root.locator('#hpang-preview .an-hp-card').first()).toContainText('Bisheriges Wochenangebot');
+  await expect(root.locator('#hpang-preview .an-hp-card').first().locator('img')).toBeVisible();
+  await expect(root.locator('#hpang-preview .an-hp-card').nth(1).locator('img')).toBeVisible();
+  expect(await root.locator('#hpang-preview img').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0))).toBe(true);
+  await expect(root.locator('#hpang-preview img').first()).toHaveCSS('filter', 'none');
+  const original = await (await page.request.get(BASE + '/cms.html')).text();
+  const ids = await page.evaluate((html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('#cms-cfg-hpang input')].map((node) => node.id).sort();
+  }, original);
+  expect(await root.locator('input').evaluateAll((nodes) => nodes.map((node) => node.id).sort())).toEqual(ids);
+  const undo = root.locator('[data-design-history=undo]'), redo = root.locator('[data-design-history=redo]');
+  await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
+  const color = root.locator('#hpang-cardBg');
+  await color.fill('#aabbcc'); await color.dispatchEvent('input');
+  await undo.click(); await expect(color).toHaveValue('#ffffff');
+  await redo.click(); await expect(color).toHaveValue('#aabbcc');
+  const [p, s] = await Promise.all([preview.boundingBox(), settings.boundingBox()]);
+  if (page.viewportSize().width <= 600) expect(p.y + p.height).toBeLessThanOrEqual(s.y + 1);
+  else expect(p.x + p.width).toBeLessThanOrEqual(s.x + 1);
+  await expect(preview).toHaveCSS('overflow-y', 'scroll');
+  await preview.scrollIntoViewIfNeeded();
+  const documentScroll = await page.evaluate(() => document.scrollingElement.scrollTop);
+  await preview.hover({ position: { x: 30, y: 80 } }); await page.mouse.wheel(0, 250);
+  await expect.poll(() => preview.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(documentScroll);
+  for (const [tab, field] of [[1, '#hpang-tagSkew'], [2, '#hpang-imgSize']]) {
+    await root.locator('[data-designer-tab="' + tab + '"]').click();
+    await expect(root.locator(field)).toBeVisible();
+  }
+  await root.locator('[data-action=hpangSave]').click();
+  await expect.poll(() => state.design.homepage?.cardBg).toBe('#aabbcc');
+  expect(state.actions.get(action.id)).toEqual(before);
+  await noOverflow(page, '#cms-cfg-hpang');
+  await page.screenshot({ path: test.info().outputPath('homepage-designer-echte-bilder.png') });
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F40-02/03: HP-Vorschau lädt Daten und Bilder nach Fehlern erneut und zeigt echte Leerzustände', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'LEGACY-RETRY' });
+  await cms(page);
+  await expect(page.locator('[data-design-preview] canvas')).toBeVisible();
+  state.failOffers = true;
+  await page.locator('[data-id=cfg-hpang]').click();
+  const root = page.locator('#cms-cfg-hpang');
+  await expect(root.locator('#hpang-preview [role=alert]')).toContainText('nicht geladen');
+  state.failOffers = false; state.failImageLookup = true;
+  await root.locator('[data-hpang-retry]').click();
+  await expect(root.locator('.an-hp-image')).toContainText('Bild nicht verfügbar');
+  state.failImageLookup = false;
+  await root.locator('.an-hp-image').getByRole('button', { name: 'Erneut laden' }).click();
+  await expect(root.locator('.an-hp-image img')).toBeVisible();
+  await root.locator('#hpang-cardBg').fill('#112233'); await root.locator('#hpang-cardBg').dispatchEvent('input');
+  await root.locator('[data-action=hpangRevert]').click();
+  await expect(root.locator('#hpang-cardBg')).toHaveValue('#ffffff');
+  await expect(root.locator('[data-design-history=undo]')).toBeDisabled();
+  expect(state.log.filter((r) => r.method !== 'GET' && !r.read_only_lookup && r.path.startsWith('/api/angebote'))).toEqual([]);
+  state.emptyOffers = true;
+  await cms(page); await page.locator('[data-id=cfg-hpang]').click();
+  await expect(root.locator('#hpang-preview')).toContainText('Aktuell keine Angebote');
+  await expect(root.locator('#hpang-preview .an-hp-card')).toHaveCount(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F40-04: Produktbilder bleiben in Originalflyern und allen Getränkezielen schattenfrei', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page); await cms(page);
+  const samples = await page.evaluate(async () => {
+    const W = window.WochenangeboteRenderer, M = window.AngeboteModel;
+    const source = document.createElement('canvas'); source.width = 64; source.height = 96;
+    source.getContext('2d').fillRect(8, 8, 48, 80);
+    const encoded = source.toDataURL(), img = new Image(); img.src = encoded; await img.decode();
+    const proto = CanvasRenderingContext2D.prototype, draw = proto.drawImage, calls = [];
+    proto.drawImage = function (image, ...args) {
+      if (image.width === 64 && image.height === 96) calls.push({ shadow: this.shadowColor.replace(/\s/g, ''), filter: this.filter });
+      return draw.call(this, image, ...args);
+    };
+    try {
+      for (const template of ['classic-red', 'modern-mag-xl']) for (const kind of ['plakat', 'flyer']) {
+        const cfg = { ...W.CFG_DEFAULTS, plakatTemplate: template, flyerTemplate: template };
+        const renderer = W.create({ cfgGet: () => cfg, flyerArtOverrideGet: () => null, plakatArtOverrideGet: () => null, logo: '/Logo-sm-64.png' });
+        const item = { key: 'shadow-test', produkt: 'Produkt', preis: 2.99, statt_preis: 3.99, bild_data: encoded };
+        const data = { von: '2026-11-16', bis: '2026-11-22', items: [item] };
+        if (kind === 'flyer') await renderer.generateEinzelflyer(item, data, cfg);
+        else await new Promise((resolve) => renderer.drawAngebotPlakat(data, [item], [img], resolve, cfg, { returnCanvas: true }));
+      }
+      M.registerImage('cms:shadow-test', encoded);
+      const data = M.blank('drinks');
+      data.items.push(Object.assign(M.item(), { name: 'Produkt', image_id: 'cms:shadow-test', price_cents: 299,
+        units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 }));
+      M.applyTemplate(data);
+      await M.render(data, 0, 1);
+      for (const target of ['card', 'single', 'scale']) await M.renderTarget(data, target, data.items[0].id, 1);
+    } finally { proto.drawImage = draw; }
+    return calls;
+  });
+  expect(samples.length).toBeGreaterThanOrEqual(8);
+  expect(samples.every((sample) => sample.shadow === 'rgba(0,0,0,0)' && sample.filter === 'none')).toBe(true);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F41-01/03: echte Getränkeproduktbilder in allen Vorschauformaten bleiben vom Design getrennt', async ({ page }) => {
+  const state = await setup(page);
+  state.previewOffers = [{ dl_angeboteid: uid(), dl_aktion_id: 'REAL-DRINKS', action_kind: 'drinks',
+    dl_produkt: 'Echter Getränkekasten', dl_details: 'Aus dem vorhandenen Angebot',
+    dl_preis: 12.49, dl_statt_preis: 14.99, dl_artikelnummer: '4001234567890',
+    dl_gueltig_von: '2026-11-16', dl_gueltig_bis: '2026-11-22',
+    units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 }];
+  const original = copy(state.previewOffers);
+  await page.addInitScript(() => {
+    const draw = CanvasRenderingContext2D.prototype.drawImage;
+    window.__productDraws = 0;
+    CanvasRenderingContext2D.prototype.drawImage = function (image, ...args) {
+      if (image.width === 1 && image.height === 1) window.__productDraws++;
+      return draw.call(this, image, ...args);
+    };
+  });
+  await cms(page);
+  const root = page.locator('#an-design-root');
+  await expect(root.locator('[data-design-products]')).toContainText('mit Produktbildern');
+  await expect.poll(() => page.evaluate(() => window.__productDraws)).toBeGreaterThan(0);
+  for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
+    await page.evaluate(() => { window.__productDraws = 0; });
+    await root.locator('[data-design-mode="' + mode + '"]').click();
+    await expect.poll(() => page.evaluate(() => window.__productDraws)).toBeGreaterThan(0);
+  }
+  expect(state.log.filter((r) => r.method !== 'GET' && !r.read_only_lookup && r.path.startsWith('/api/angebote'))).toEqual([]);
+  await root.locator('[data-designer-tab="1"]').click();
+  await root.locator('[data-style=color]').fill('#1234aa'); await root.locator('[data-style=color]').dispatchEvent('change');
+  await root.locator('[data-design-save]').click();
+  await expect(root.locator('[data-design-status]')).toContainText('gespeichert');
+  expect(state.design.drinks.color).toBe('#1234aa');
+  expect(JSON.stringify(state.design)).not.toContain('Echter Getränkekasten');
+  expect(JSON.stringify(state.design)).not.toContain('cms:');
+  expect(state.previewOffers).toEqual(original);
+  await root.locator('[data-design-preview]').screenshot({ path: test.info().outputPath('getraenkedesigner-produktbilder.png') });
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F41-02: Getränkevorschau meldet Bildfehler und fehlende Artikel ohne Gestaltungsverlust', async ({ page }) => {
+  const state = await setup(page);
+  state.previewOffers = [{ dl_angeboteid: uid(), dl_aktion_id: 'RETRY-DRINKS', action_kind: 'drinks',
+    dl_produkt: 'Getränk', dl_preis: 12.49, dl_artikelnummer: '4001234567890',
+    dl_gueltig_von: '2026-11-16', dl_gueltig_bis: '2026-11-22',
+    units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 }];
+  state.failImageLookup = true;
+  await cms(page);
+  const root = page.locator('#an-design-root');
+  await expect(root.locator('[data-design-products][role=alert]')).toContainText('Nicht alle Produktbilder');
+  await root.locator('[data-designer-tab="1"]').click();
+  await root.locator('[data-style=color]').fill('#445566'); await root.locator('[data-style=color]').dispatchEvent('change');
+  state.failImageLookup = false;
+  await root.locator('[data-design-products-retry]').click();
+  await expect(root.locator('[data-design-products]')).toContainText('mit Produktbildern');
+  await expect(root.locator('[data-style=color]')).toHaveValue('#445566');
+  expect(state.log.filter((r) => r.method === 'PUT')).toEqual([]);
+  state.previewOffers = [];
+  await cms(page);
+  await expect(root.locator('[data-design-products]')).toContainText('Keine Getränkeartikel vorhanden');
+  await expect(root.locator('[data-design-preview] canvas')).toBeVisible();
+  expect(state.errors).toEqual([]);
+});

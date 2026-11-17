@@ -120,6 +120,22 @@ class AngeboteTests(unittest.TestCase):
         data["kind"] = "drinks"
         self.error(400, normalize, data)
 
+    def test_TC_F38_04_weekly_price_image_colors_survive_publication(self):
+        data = draft("weekly")
+        config = {"plakatTemplate": "classic-red", "flyerTemplate": "modern-mag-xl"}
+        for kind in ("plakat", "flyer"):
+            config.update({f"{kind}_tagShape": "price-image", f"{kind}_tagPreset": "price-image"})
+            for key, color in (("priceImageColor", "#ed1c24"), ("priceOutlineColor", "#ffffff"),
+                               ("priceStripColor", "#fff000"), ("priceOldColor", "#000000"),
+                               ("priceStrikeColor", "#ed1c24")):
+                config[f"{kind}_{key}"] = color
+        data["layout"]["cms"] = {
+            "config": config, "plakat_article_overrides": {}, "flyer_article_overrides": {}
+        }
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        self.assertEqual(self.service.public()[0]["data"]["layout"]["cms"]["config"], config)
+
     def test_TC_F15_02_delete_requires_current_version_and_ends_publication(self):
         head = self.service.create(draft())
         head = self.service.publish(head["id"], head["version"])

@@ -10,6 +10,96 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F42: Der gemeinsame Capture-Controller verschiebt die bestehenden Eingaben
+und Bildaktionsknöpfe aus `CMSAngeboteForm.row()` in beschriftete Zeilen und
+ein natives Popover am Vorschaubild; der klassische Formularrenderer bleibt
+unverändert. Beschreibung und Getränkeangaben bilden eine dauerhaft sichtbare
+zweite Zeile. Kachelwahl zieht in die Metadatenzeile. Gemeinsames CSS mit
+Containerumbruch erhält breite Desktopspalten und schmale Touchbedienung.
+Artikeltreffer und Bildmenü verwenden die native Popover-Top-Layer innerhalb
+des modalen Dialogs, mit gemeinsamer fensterbegrenzter Positionierung am
+Auslöser, Aufwärtsöffnung und Neupositionierung bei Scroll/Resize. Vorhandene
+Zeilenbezüge und delegierte Bildaktionen bleiben erhalten; keine neuen APIs.
+Neue Fälle in `cms-angebote-ablauf.spec.js` decken Feldgeometrie, echte
+Such-/Upload-/Paste-Verträge und am unteren Dialogrand anklickbare Treffer
+auf vier Viewports ab. Bestehende Bildtests öffnen zuvor das neue Menü.
+Bedienhilfe aktualisieren, anschließend sämtliche offenen Designeränderungen
+gezielt abnehmen und zusammen ausschließlich auf PR #15 veröffentlichen.
+
+F41: Der Standarddesigner lädt höchstens sechs vorhandene Getränkeartikel
+über `AngeboteDataverse.load()` und die vorhandenen Bildhelfer rein lesend.
+Die Daten bleiben separat vom `design`-Objekt und seinem Undo-Verlauf.
+`sample()` akzeptiert optionale Vorschauartikel, vergibt für wiederholte
+Kacheln aber weiterhin eigene IDs. Eine sichtbare Hinweiszeile neben der
+Vorschau benennt Quelle, Leerzustand oder Bildfehler und bietet bei Fehlern
+erneutes Laden. Asynchrone Vorschaugeneration bleibt über vorhandene Tickets
+gegen Überholen geschützt. Keine neuen Speicherfelder oder Uploads.
+
+F40: `workspace()` akzeptiert optionale Reiternamen und richtet seine
+Tastaturnavigation nach deren Anzahl aus. Ein kleiner HP-Adapter verschiebt
+die vorhandenen vier Kartenkörper in die drei passenden Werkzeugreiter,
+ohne Eingabefelder zu duplizieren. Er verwendet dieselbe Vorschau-, Speicher-
+und Verlaufskomponente. `AngeboteKunden` stellt die aktuelle Wochenauswahl
+als Vorschauartikel und seinen bestehenden Bildpainter bereit. Der Painter
+kann zusätzlich vorhandene Artikelnummern über `AngeboteDataverse.findImage()`
+auflösen; das ist eine lesende Suche, kein Upload. Der CMS-Controller lädt die
+Vorschauartikel einmal mit sichtbarem Lade-/Fehler-/Leerzustand und rendert
+Farbänderungen weiter synchron mit `homepageCard()`. Keine fiktiven Bildlinks,
+keine zusätzlichen Datenmodelle oder neuen API-Verträge.
+Der zusätzliche `drop-shadow` der alten Produktbildklasse entfällt in
+`style.css`; die Homepage kapselt ihre Bilder zusätzlich mit `filter:none`.
+Canvas-Produktbilder bleiben schattenfrei, vorhandene Karten-/Tag-Schatten
+und ausdrücklich angelegte Bildkopien werden nicht verändert.
+
+F39: Ein gemeinsamer lokaler Snapshot-Verlauf in `AngeboteDesign` bindet
+Undo-/Redo-Buttons und zielgebundene Tastenkürzel. Er speichert maximal 30
+Schritte und gruppiert Vorschaugesten über optionale begin/end-Hooks des
+bestehenden Vorschaueditors. Im Getränkedesigner werden Designdaten ohne
+Serverversion erfasst und über bestehende Feld-/Vorschauhelfer restauriert.
+Der CMS-Adapter liest nur die betroffene Ausgabe aus `cfgReadUI()` und
+restauriert sie über `cfgApplyUI()`, unter Erhalt der anderen Ausgabe und
+deren Vorlagenfarben. Ereignisse werden nach bestehender Delegation erfasst;
+reine Navigationsaktionen ändern keinen Snapshot. Der Aktionseditor behält
+seinen vorhandenen Verlauf; Toolbar-Redo, Statusnachführung und scoped
+Tastenkürzel schließen die Erreichbarkeitslücke. Keine Serverhistorie.
+
+F38: `AngeboteDesign.workspace()` baut die gemeinsame Arbeitsfläche für alle
+Designer. Das Rot/Gelb-Preisbild erhält die unveränderte OFL-Schrift Anton
+als lokale Fontdatei mit Lizenz; ein gemeinsamer Promise-basierter Fontloader
+wartet in allen asynchronen Render-Einstiegen vor dem Zeichnen auf die Datei.
+Nur die großen Preisziffern wechseln die Schrift, die Cent rücken über den
+Dezimalpunkt. Die bisherige Schrift der übrigen Inhalte bleibt erhalten.
+Die Arbeitsfläche hat fünf Werkzeugreiter, Vorschau und Speicherleiste.
+Bild-/Preisanker werden als zusammengehörige Gruppen mit einem automatisch
+an der Containerbreite umbrechenden Raster angeordnet; bei genügend Platz
+stehen sie nebeneinander statt untereinander. Die Bildbreite nutzt beide Spalten.
+Der Getränkedesigner übergibt seine bestehenden Kontrollgruppen; der
+CMS-Adapter verschiebt die Original-Eingabeknoten von Plakat/Einzelflyer in
+dieselben Gruppen (keine Kopien oder neuen Datenmodelle). Die bisherige
+Kartenstruktur wird dabei entfernt. Die Original-IDs, Delegationsaktionen,
+Speicherwege und Renderer bleiben erhalten. Gemeinsame CSS-Regeln bestimmen
+Desktop-/Tabletspalten und mobile Reihenfolge. Der Generator markiert nur
+die moderne CMS-Fassung für diese Integration. `cfgSwitchSection()` aktiviert
+den jeweiligen Adapter und die passende Live-Vorschau. Bildnachladen der
+Einzelflyervorschauen verwendet einen gemeinsamen Helfer.
+Rot/Gelb wird zusätzlich als `tagPreset`/`tagShape` im Originalrenderer
+angeboten, nicht als Ersatz der neun Blattvorlagen. Fünf neue
+ausgabegetrennte Farben werden über die bestehenden PERSEC-Mechanismen
+gelesen/gespeichert und im Wochenaktions-Snapshot zugelassen.
+Die eigentliche Preisbild-Zeichenfunktion wird vom Getränkemodell in den
+gemeinsamen Wochenrenderer verlagert und von beiden Wegen wiederverwendet.
+Alle vier Original-/Magazin-Zeichenzweige berücksichtigen die neue Preisform.
+Der Vorlagenbereich erhält zusätzlich ein initial geschlossenes `details`
+mit „Eigene Designvorlagen“ als Summary, gemeinsam für alle drei Designer.
+Vorschau und Desktop-/Tabletwerkzeuge bekommen begrenzte Höhen,
+`overflow-y: scroll`, `scrollbar-gutter: stable` und
+`overscroll-behavior: contain`. Auf dem Handy begrenzt der Vorschaucontainer
+statt der Zeichenfläche die Höhe; das Motiv behält sein Seitenverhältnis.
+Ein echter Wheel-Test prüft Scrollpositionen von Vorschau und Dokument.
+Gezielte F38-Layoutfälle auf vier Ansichten, Speicher-/Bildregression am
+Desktop, Generatorabgleich und idempotente Erzeugung; ausschließlich
+Feature-Preview veröffentlichen und read-only nachprüfen.
+
 F31/F32: `cmsPreviewTools()` hängt `#an-design-options` direkt als Seitenpanel ein
 (kein `details`). `D.controls()` kennzeichnet Bereiche mit `data-side-panel`
 (`design`, `marker`); der Editor ergänzt Element/Artikel. Breite des CMS-Dialogs

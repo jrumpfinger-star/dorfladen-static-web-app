@@ -24,13 +24,22 @@ Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
    Name, Artikelnummer oder EAN suchen und den Treffer übernehmen. Der
    reguläre Stamm-VK bleibt vom separat einzugebenden Angebotspreis getrennt.
    Stattpreis und Details sind direkt bearbeitbar.
-4. Die Bildknöpfe an der Zeile dienen Bildsuche, Dateiauswahl, Zwischenablage
-   und Entfernen. Reihenfolge am Griff ändern; der Griff kann per Tastatur
+4. Das Produktbild bzw. **+ Bild** öffnet das gemeinsame Bildmenü:
+   **Bild im Bestand suchen**, **Bilddatei auswählen** (PNG/JPEG/WebP),
+   **Aus Zwischenablage einfügen** (Strg+V / Cmd+V) und bei vorhandenem Bild
+   **Bildzuordnung entfernen**. Die Dateivorschau bleibt bis zum Speichern
+   lokal; das Entfernen der Zuordnung löscht kein Stammbild.
+   Reihenfolge am Griff ändern; der Griff kann per Tastatur
    auch die Zeile nach oben bewegen. **+ Artikel** ergänzt weitere Zeilen.
 5. Bei Getränken Anzahl, Liter je Einheit, Gebindeart und Gesamtpfand oder
    ausdrücklich **Pfandfrei** ergänzen. Der Literpreis enthält kein Pfand.
    Komma und Punkt bei Literangaben sind möglich, bis zu drei Nachkommastellen
-   werden als ganze Milliliter erhalten.
+   werden als ganze Milliliter erhalten. Alle Werte bleiben immer direkt
+   editierbar, ohne Aufklappen. Desktop: ausgerichtete Haupt- und Zusatzzeile;
+   kleinere Geräte: Umbruch ohne horizontales Scrollen. Artikeltreffer und
+   Bildmenü öffnen bei Bedarf nach oben und werden nicht am Dialogrand
+   abgeschnitten. Pfeiltasten und Enter übernehmen einen Artikeltreffer;
+   Escape schließt die Auswahl.
 6. **Speichern** übernimmt die vollständige Aktion. Während ihres
    Gültigkeitszeitraums ist sie für Kunden sichtbar – **ohne zusätzliche
    Veröffentlichung**. Abbrechen verwirft ungespeicherte Eingaben erst nach
@@ -55,10 +64,72 @@ Sonderaktionen behalten ihre ursprüngliche Sechser-Erfassung und CMS-Vorlagen.
 
 ## Vorschau und Gestaltung
 
+### Gemeinsame Designer-Arbeitsfläche
+
+Unter **Design → Plakate & Flyer** verwenden **Plakat**, **Einzelflyer** und
+**Getränkeflyer** dieselbe Arbeitsfläche: Vorschau links, Einstellungen rechts;
+auf dem Handy steht die Vorschau über den Werkzeugen. Die Werkzeugreiter
+**Stil**, **Farben**, **Feinabstimmung**, **Weitere Gestaltung** und
+**Eigene Vorlagen** begrenzen die angezeigten Einstellungen. Eigene
+Designvorlagen sind zusätzlich standardmäßig eingeklappt. Speichern und
+Verwerfen bleiben am unteren Rand erreichbar.
+Die Live-Vorschau hat einen eigenen Scrollbalken. Auf Desktop und Tablet
+lassen sich Vorschau und Einstellungen unabhängig voneinander scrollen;
+auf dem Handy wird das vollständige Motiv innerhalb der Vorschau gescrollt.
+Bild- und Preisposition stehen bei ausreichender Containerbreite nebeneinander;
+nur auf schmalen Ansichten werden sie untereinander angeordnet.
+
+**Rückgängig** und **Wiederholen** sind in allen drei Designern erreichbar.
+Sie erfassen bis zu 30 Schritte, einschließlich Farben, Vorlagen und
+Vorschaubewegungen. Eine Ziehbewegung zählt als ein Schritt. Plakat und
+Einzelflyer haben getrennte Verläufe. Die Änderungen werden nicht automatisch
+gespeichert; Verwerfen/Neuladen leert den Verlauf. Auch im Aktionsdesigner
+stehen beide Aktionen in der Werkzeugleiste. Strg/Cmd+Z und
+Strg/Cmd+Umschalt+Z (alternativ Strg/Cmd+Y) bedienen den fokussierten
+Designer; innerhalb von Eingabefeldern bleibt das native Text-Undo erhalten.
+
+Bei Plakat und Einzelflyer bleiben alle bisherigen Einstellungen und
+Speicherwege erhalten. Unter **Weitere Gestaltung → Preisschildform** steht
+**Preisbild · Rot/Gelb** sowohl als Preisschild-Vorlage als auch als Form zur
+Auswahl. Preisfarbe, weiße Kontur, gelber Stattpreis-Streifen, schwarzer
+Stattpreistext und rote Durchstreichung sind je Ausgabe separat einstellbar.
+Der Streifen erscheint nur bei einem höheren Stattpreis. Bestehende
+Blattvorlagen werden dadurch nicht ersetzt.
+Die großen Preisziffern verwenden lokal **Anton**, eine kräftige Schmalschrift,
+mit eng anliegenden hochgestellten Cent. Vorschau und Export warten auf die
+Schrift; andere Inhalte und Vorlagen behalten ihre Schriftart.
+Die unveränderte Schrift stammt aus
+[Google Fonts / Anton](https://github.com/google/fonts/tree/main/ofl/anton)
+und wird unter der [SIL Open Font License](../static-site/fonts/OFL-Anton.txt)
+mitgeliefert. Zur Laufzeit werden keine externen Schriftserver angesprochen.
+
+Die automatische Live-Vorschau unter **Design → Einzelflyer** lädt das
+Produktbild über die Artikelnummer nach, genau wie die separat geöffnete
+Vorschau. Dafür muss ein Produktbild zur Artikelnummer hinterlegt sein.
+
 ### Einheitliche Kacheln im Designstandard-Designer
 
+**HP-Sonderangebote** nutzt ebenfalls die gemeinsame Arbeitsfläche mit
+separat scrollbarerer Vorschau und den kompakten Reitern **Farben**,
+**Preis-Tag** und **Layout**, einschließlich Rückgängig/Wiederholen.
+Die Vorschau zeigt echte Angebote der aktuellen Homepage-Woche und lädt
+deren Produktbilder über vorhandene Bildreferenzen oder die lesende
+Artikelbildsuche. Ohne Bestand erscheint ein Leerzustand statt fiktiver
+Musterprodukte. Ladefehler können erneut geladen werden.
+Produktbilder haben auf Homepage und in Flyern keinen zusätzlichen
+Schlagschatten mehr. Bereits in der Bilddatei enthaltene Schatten und
+bewusst angelegte Ghost-Kopien bleiben unverändert.
+
 Unter **Design → Getränkeflyer** ist ausschließlich die **erste Kachel als
-Musterkachel** bearbeitbar. Verschieben, Drehen und Größenänderungen eines
+Musterkachel** bearbeitbar. Die große Live-Vorschau lädt vorhandene
+Getränkeartikel und deren Produktbilder rein lesend aus dem CMS. Bei weniger
+Artikeln werden diese für die übrigen Musterkacheln wiederholt. Die
+Vorschauartikel werden nicht in den Designstandards gespeichert.
+Ohne Getränkeartikel bleiben beschriftete Beispieldaten mit entsprechendem
+Hinweis sichtbar. Bildfehler können über **Produktbilder erneut laden**
+erneut versucht werden, ohne die Gestaltung zu verlieren.
+
+Verschieben, Drehen und Größenänderungen eines
 Elements werden sofort auf die entsprechenden Elemente aller Kacheln der
 gewählten Ausgabe übertragen. Das gilt bei vier und sechs Kacheln sowie auf
 Folgeseiten neuer Aktionen. Die anderen Kacheln zeigen das Ergebnis, sind aber

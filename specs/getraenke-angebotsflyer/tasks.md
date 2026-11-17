@@ -5,6 +5,15 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 
 | ID | Arbeit | Abhängigkeit | Testfälle |
 |---|---|---|---|
+| GF73 | Gemeinsame Designer-Arbeitsfläche mit fünf Werkzeugreitern und verlustfreien CMS-Adaptern integrieren | GF72 | TC-F38-01..02 |
+| GF76 | Lokales Undo/Redo in alle Standarddesigner integrieren und Aktionsdesigner-Toolbar vervollständigen; Gesten und getrennte Ausgaben testen | GF73 | TC-F39-01..04 |
+| GF77 | Preisbildziffern mit lokal lizenzierter Schmalschrift und engeren Cent originalnäher rendern; Fontbereitschaft und Ausgaben prüfen | GF73 | TC-F38-04 |
+| GF78 | Bild-/Preisposition abhängig vom verfügbaren Platz kompakt nebeneinander anordnen; breite und schmale Container prüfen | GF73 | TC-F38-07 |
+| GF79 | HP-Sonderangebote auf gemeinsame Arbeitsfläche übertragen, echte Artikel-/Bildvorschau anbinden und zusätzliche Produktbildschatten entfernen | GF76 | TC-F40-01..04 |
+| GF80 | Getränkedesigner mit echten Vorschauartikeln und Produktbildern samt Fehler-/Leerzustand ergänzen; Designspeicherung getrennt halten | GF73 | TC-F41-01..03 |
+| GF81 | Freigegebenen gemeinsamen Erfassungsdialog mit dauerhaft sichtbaren Werten, Bildmenü und unverdeckter Artikelauswahl integrieren; Bildverträge und vier Viewports abnehmen | GF80 | TC-F42-01..03 |
+| GF74 | Einzelflyer-Bildnachladen, Rot/Gelb-Preisbild mit fünf Farben, initial eingeklappte Vorlagen und unabhängiges Vorschau-Scrollen; Reiter-/Speicherregression und Vieransichtenlayout abnehmen; Hilfe und Generator prüfen | GF73 | TC-F38-01..06 |
+| GF75 | Änderungen committen, PR aktualisieren und ausschließlich Feature-Preview deployen; live read-only prüfen | GF74, GF76, GF77, GF78, GF79, GF80, GF81 | TC-F38-01..07, TC-F39-01..04, TC-F40-01..04, TC-F41-01..03, TC-F42-01..03, Preview-Smoke |
 | GF0 | Feature-Branch/Worktree, main unverändert | keine | Ausgangsstand geprüft |
 | GF1 | SDD und konkrete Daten-/Integrationsverträge abschließen | GF0 | F1-F9 Traceability |
 | GF2 | Private Dokumente/Bilder, API, Validierung und atomare Freigabe | GF1 | TC-F2-01..03, TC-F4-01..04, TC-F8-01 |

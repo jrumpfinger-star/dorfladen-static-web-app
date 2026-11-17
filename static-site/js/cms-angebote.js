@@ -126,15 +126,53 @@ window.CMSAngebote = (function () {
         + '<div class="an-capture-body"><div class="an-capture-meta">'
         + '<label class="an-field"><span>Titel</span><input data-meta="title" value="' + M.esc(draft.title) + '" maxlength="120"></label>'
         + '<label class="an-field"><span>Gültig von</span><input type="date" data-meta="valid_from" value="' + draft.valid_from + '"></label>'
-        + '<label class="an-field"><span>Gültig bis</span><input type="date" data-meta="valid_to" value="' + draft.valid_to + '"></label></div>'
+        + '<label class="an-field"><span>Gültig bis</span><input type="date" data-meta="valid_to" value="' + draft.valid_to + '"></label>'
         + (drinks ? '<label class="an-field an-density-field"><span>Kacheln je Sammelflyer-Seite</span><select data-density><option value="4"'
           + (draft.layout.density === 4 ? ' selected' : '') + '>4 Kacheln (2×2)</option><option value="6"'
-          + (draft.layout.density === 6 ? ' selected' : '') + '>6 Kacheln (2×3)</option></select></label>' : '')
+          + (draft.layout.density === 6 ? ' selected' : '') + '>6 Kacheln (2×3)</option></select></label>' : '') + '</div>'
         + '<div class="an-overview-toolbar"><strong>Artikel</strong><button data-add>+ Artikel</button></div>'
         + '<div class="an-capture-items"></div><p class="an-muted" data-capture-status role="status">Angebotspreis separat eingeben. Speichern übernimmt die Aktion für den gewählten Gültigkeitszeitraum.</p></div>';
       var host = dlg.querySelector('.an-capture-items'), status = dlg.querySelector('[data-capture-status]');
       var states = new Map(), pending = new Map(), imageTasks = new Set(), imageRequests = new WeakMap();
+      var layerAnchors = new Map();
       var sequence = 0, dragRow = null, pasteRow = null, saving = false, resetApproved = false;
+      dlg.classList.toggle('an-capture-drinks', drinks);
+      function hideLayer(layer) {
+        layer.classList.remove('open');
+        layerAnchors.delete(layer);
+        if (layer.matches(':popover-open')) layer.hidePopover();
+      }
+      function positionLayer(layer, anchor) {
+        var r = anchor.getBoundingClientRect(), body = dlg.querySelector('.an-capture-body').getBoundingClientRect();
+        if (r.bottom <= body.top || r.top >= body.bottom || !anchor.isConnected) { hideLayer(layer); return; }
+        var gap = 6, margin = 12, below = Math.max(0, innerHeight - r.bottom - margin - gap);
+        var above = Math.max(0, r.top - margin - gap), desired = layer.classList.contains('cms-art-dd') ? 280 : 400;
+        var up = below < desired && above > below, available = up ? above : below;
+        layer.style.width = Math.min(innerWidth - 2 * margin, Math.max(r.width, 320)) + 'px';
+        layer.style.maxHeight = Math.min(desired, available) + 'px';
+        var height = layer.getBoundingClientRect().height, width = layer.getBoundingClientRect().width;
+        layer.style.left = Math.max(margin, Math.min(r.left, innerWidth - width - margin)) + 'px';
+        layer.style.top = (up ? r.top - height - gap : r.bottom + gap) + 'px';
+      }
+      function showLayer(layer, anchor) {
+        layer.classList.add('open');
+        layerAnchors.set(layer, anchor);
+        if (!layer.matches(':popover-open')) layer.showPopover();
+        positionLayer(layer, anchor);
+      }
+      function updateLayers() { layerAnchors.forEach(function (anchor, layer) { positionLayer(layer, anchor); }); }
+      function prepareLayer(layer) {
+        layer.setAttribute('popover', 'auto');
+        layer.addEventListener('toggle', function (event) {
+          if (event.newState === 'closed') {
+            layer.classList.remove('open'); layerAnchors.delete(layer);
+          }
+        });
+      }
+      function imagePresence(row, present) {
+        row.querySelector('.an-image-trigger').classList.toggle('an-has-image', present);
+        row.querySelector('.cms-bild-clear').style.display = present ? '' : 'none';
+      }
       function invalidateImage(row) {
         var token = (imageRequests.get(row) || 0) + 1; imageRequests.set(row, token); return token;
       }
@@ -155,7 +193,7 @@ window.CMSAngebote = (function () {
         canvas.width = Math.max(1, img.width * factor); canvas.height = Math.max(1, img.height * factor);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         var preview = row.querySelector('.cms-bild-preview'); preview.src = canvas.toDataURL(); preview.style.display = '';
-        row.querySelector('.cms-bild-clear').style.display = '';
+        imagePresence(row, true);
         imageStatus(row, '', false);
       }
       function rowItem(row) {
@@ -182,15 +220,65 @@ window.CMSAngebote = (function () {
           statt_preis: item.old_price_cents == null ? null : item.old_price_cents / 100, artikelnummer: item.barcode }, ++sequence);
         row.id = 'cms-offer-row-' + sequence;
         row.querySelectorAll('[data-action]').forEach(function (el) { el.dataset.offerAction = el.dataset.action; delete el.dataset.action; });
+        var imageBox = row.querySelector('.cms-ang-row-img'), preview = imageBox.querySelector('img');
+        var imageMenu = document.createElement('div'); imageMenu.className = 'an-capture-image-menu';
+        imageMenu.id = row.id + '-images'; imageMenu.setAttribute('role', 'group'); imageMenu.setAttribute('aria-label', 'Produktbild bearbeiten');
+        imageMenu.innerHTML = '<div class="an-image-menu-head"><strong>Produktbild bearbeiten</strong><button type="button" data-image-close aria-label="Bildmenü schließen">×</button></div>';
+        var labels = {
+          loadBildSharePoint: ['Bild im Bestand suchen', 'Zum Strichcode oder zur Artikelnummer'],
+          uploadBildSP: ['Bilddatei auswählen', 'PNG, JPEG oder WebP · Upload beim Speichern'],
+          pasteBildSP: ['Aus Zwischenablage einfügen', 'Bild mit Strg+V / Cmd+V einfügen'],
+          clearBild: ['Bildzuordnung entfernen', 'Artikel und Stammbild bleiben erhalten']
+        };
+        ['loadBildSharePoint', 'uploadBildSP', 'pasteBildSP', 'clearBild'].forEach(function (cmd) {
+          var button = imageBox.querySelector('[data-offer-action="' + cmd + '"]');
+          button.innerHTML = '<strong>' + labels[cmd][0] + '</strong><small>' + labels[cmd][1] + '</small>';
+          imageMenu.appendChild(button);
+        });
+        var trigger = document.createElement('button'); trigger.type = 'button'; trigger.className = 'an-image-trigger';
+        trigger.setAttribute('aria-label', 'Produktbild bearbeiten'); trigger.setAttribute('aria-expanded', 'false');
+        trigger.setAttribute('aria-controls', imageMenu.id);
+        trigger.appendChild(preview);
+        var placeholder = document.createElement('span'); placeholder.className = 'an-image-placeholder'; placeholder.textContent = '+ Bild';
+        trigger.appendChild(placeholder);
+        imageBox.appendChild(trigger); row.appendChild(imageMenu);
+        prepareLayer(imageMenu);
+        imageMenu.addEventListener('toggle', function (event) { trigger.setAttribute('aria-expanded', String(event.newState === 'open')); });
+        trigger.onclick = function () {
+          if (imageMenu.matches(':popover-open')) hideLayer(imageMenu);
+          else {
+            showLayer(imageMenu, trigger);
+            imageMenu.querySelector('[data-offer-action]:not([disabled])').focus({ preventScroll: true });
+          }
+        };
+        row.querySelector('[data-image-close]').onclick = function () { hideLayer(imageMenu); trigger.focus(); };
+        imageMenu.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape') {
+            event.preventDefault(); event.stopPropagation(); hideLayer(imageMenu); trigger.focus();
+          }
+        });
+        var dd = row.querySelector('.cms-art-dd'); prepareLayer(dd);
+        function labelField(node, text, className) {
+          var label = document.createElement('label'); label.className = 'an-field ' + (className || '');
+          var caption = document.createElement('span'); caption.textContent = text; label.appendChild(caption);
+          node.parentNode.insertBefore(label, node); label.appendChild(node); return label;
+        }
+        labelField(row.querySelector('.cms-art-wrap'), 'Produkt', 'an-capture-product');
+        labelField(input(row, 'preis'), 'Angebot €', 'an-capture-price');
+        labelField(input(row, 'statt_preis'), 'Statt €', 'an-capture-old');
+        labelField(input(row, 'artikelnummer'), 'Strichcode', 'an-capture-barcode');
+        var details = labelField(input(row, 'details'), 'Details / Beschreibung', 'an-capture-description');
+        var extra = document.createElement('div'); extra.className = 'an-capture-extra';
+        extra.appendChild(details); row.appendChild(extra);
         var note = document.createElement('span'); note.dataset.imageStatus = ''; note.className = 'an-image-status';
         note.setAttribute('role', 'status'); row.appendChild(note);
         states.set(row, item);
         if (drinks) {
-          var extra = document.createElement('div'); extra.className = 'an-drinks-fields';
+          extra.classList.add('an-drinks-fields');
           function field(name, label, value, attrs) {
             return '<label class="an-field"><span>' + label + '</span><input data-f="' + name + '" value="' + M.esc(value == null ? '' : value) + '" ' + (attrs || '') + '></label>';
           }
-          extra.innerHTML = field('units', 'Anzahl', item.units, 'type="number" min="1" step="1"')
+          extra.insertAdjacentHTML('beforeend', field('units', 'Anzahl', item.units, 'type="number" min="1" step="1"')
             + field('volume_ml', 'Liter je Einheit', M.litres(item.volume_ml), 'inputmode="decimal"')
             + '<label class="an-field"><span>Gebinde</span><select data-f="packaging"><option value="">Bitte wählen</option>'
             + ['Mehrweg', 'Einweg', 'Dose', 'Flasche', 'Karton', 'Fass'].map(function (value) { return '<option' + (item.packaging === value ? ' selected' : '') + '>' + value + '</option>'; }).join('')
@@ -198,8 +286,7 @@ window.CMSAngebote = (function () {
             + '<option value="yes"' + (!item.deposit_free && item.deposit_cents > 0 ? ' selected' : '') + '>Mit Pfand</option>'
             + '<option value="no"' + (item.deposit_free ? ' selected' : '') + '>Pfandfrei</option></select></label>'
             + field('deposit_cents', 'Gesamtpfand €', item.deposit_cents == null ? '' : M.money(item.deposit_cents), 'inputmode="decimal"' + (item.deposit_free ? ' disabled' : ''))
-            + '<output class="an-muted" data-base-price></output>';
-          row.appendChild(extra);
+            + '<output class="an-muted" data-base-price></output>');
         }
         var handle = row.querySelector('.cms-ang-drag');
         handle.setAttribute('role', 'button'); handle.tabIndex = 0; handle.setAttribute('aria-label', 'Artikel nach oben verschieben');
@@ -251,7 +338,7 @@ window.CMSAngebote = (function () {
         reader.onload = function () {
           if (!row.isConnected || imageRequests.get(row) !== token) return;
           var preview = row.querySelector('.cms-bild-preview'); preview.src = reader.result; preview.style.display = '';
-          row.querySelector('.cms-bild-clear').style.display = '';
+          imagePresence(row, true);
         };
         reader.onerror = function () { M.error(M.problem('Das Bild konnte nicht gelesen werden.')); };
         reader.readAsDataURL(file);
@@ -267,6 +354,8 @@ window.CMSAngebote = (function () {
       if (isNew) while (host.children.length < draft.layout.density) add();
       function close() {
         document.removeEventListener('paste', onPaste);
+        window.removeEventListener('resize', updateLayers);
+        layerAnchors.forEach(function (anchor, layer) { hideLayer(layer); });
         dlg.close(); dlg.remove(); activeDialog = null; dirty = false;
       }
       async function cancel() {
@@ -313,13 +402,15 @@ window.CMSAngebote = (function () {
         if (event.target.dataset.f !== 'produkt') return;
         var inp = event.target, row = inp.closest('.cms-ang-row'), dd = row.querySelector('.cms-art-dd'), query = inp.value.trim().toLocaleLowerCase('de');
         dd.replaceChildren();
-        if (!query) { dd.classList.remove('open'); return; }
+        if (!query) { hideLayer(dd); return; }
         catalog().then(function (items) {
           if (!row.isConnected || inp.value.trim().toLocaleLowerCase('de') !== query) return;
           dd.replaceChildren();
           items.filter(function (it) { return [it.bezeichnung, it.artikelnummer, it.strichcode].join(' ').toLocaleLowerCase('de').includes(query); }).slice(0, 12).forEach(function (source) {
             var b = document.createElement('button'); b.type = 'button'; b.className = 'cms-art-opt';
-            b.textContent = source.bezeichnung + ' · ' + (source.artikelnummer || '') + ' · ' + (source.strichcode || '') + ' · VK ' + M.money(M.cents(source.vk)) + ' €';
+            var name = document.createElement('strong'); name.textContent = source.bezeichnung;
+            var detail = document.createElement('small'); detail.textContent = (source.artikelnummer || '') + ' · ' + (source.strichcode || '') + ' · Stamm-VK ' + M.money(M.cents(source.vk)) + ' €';
+            b.append(name, detail);
             b.onmousedown = function (e) { e.preventDefault(); };
             b.onclick = function (e) {
               e.stopPropagation();
@@ -329,7 +420,7 @@ window.CMSAngebote = (function () {
               it.image_id = ''; it.werbebild_id = ''; pending.delete(row);
               invalidateImage(row);
               row.querySelector('.cms-bild-preview').style.display = 'none';
-              row.querySelector('.cms-bild-clear').style.display = 'none';
+              imagePresence(row, false);
               it.article_number = String(source.artikelnummer || ''); it.retail_price_cents = M.cents(source.vk);
               if (!input(row, 'statt_preis').value && it.retail_price_cents) input(row, 'statt_preis').value = M.money(it.retail_price_cents);
               if (drinks) {
@@ -339,19 +430,29 @@ window.CMSAngebote = (function () {
                   input(row, 'volume_ml').value = M.litres(Math.round(Number(match[2].replace(',', '.')) * (/^ml$/i.test(match[3]) ? 1 : /^cl$/i.test(match[3]) ? 10 : 1000)));
                 }
               }
-              dd.classList.remove('open'); mark(); inp.focus();
+              hideLayer(dd); mark(); inp.focus();
               find(row).catch(M.error);
             };
             dd.appendChild(b);
           });
-          dd.classList.toggle('open', !!dd.children.length);
+          if (dd.children.length && document.activeElement === inp) showLayer(dd, inp);
+          else hideLayer(dd);
         }).catch(M.error);
       });
       host.addEventListener('keydown', function (event) {
         var dd = event.target.closest('.cms-art-wrap')?.querySelector('.cms-art-dd');
         if (!dd || !dd.classList.contains('open')) return;
-        if (event.key === 'ArrowDown') { event.preventDefault(); var next = event.target.matches('.cms-art-opt') ? event.target.nextElementSibling : dd.firstElementChild; if (next) next.focus(); }
-        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dd.classList.remove('open'); }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          var option = event.target.matches('.cms-art-opt'), forward = event.key === 'ArrowDown';
+          var next = option ? (forward ? event.target.nextElementSibling : event.target.previousElementSibling) : null;
+          (next || (forward ? dd.firstElementChild : dd.lastElementChild))?.focus();
+        }
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); hideLayer(dd); input(event.target.closest('.cms-ang-row'), 'produkt').focus(); }
+      });
+      host.addEventListener('focusout', function (event) {
+        var wrap = event.target.closest('.cms-art-wrap');
+        if (wrap && !wrap.contains(event.relatedTarget)) hideLayer(wrap.querySelector('.cms-art-dd'));
       });
       host.addEventListener('dragstart', function (event) { dragRow = event.target.closest('.cms-ang-row'); if (dragRow) event.dataTransfer.setData('text/plain', dragRow.id); });
       host.addEventListener('dragover', function (event) { if (dragRow) event.preventDefault(); });
@@ -366,21 +467,27 @@ window.CMSAngebote = (function () {
         if (b.hasAttribute('data-cancel')) { cancel().catch(M.error); return; }
         if (b.hasAttribute('data-add')) { add(); changedRows = true; mark(); return; }
         var row = b.closest('.cms-ang-row'), cmd = b.dataset.offerAction;
-        if (cmd === 'removeAngRow') { pending.delete(row); states.delete(row); row.remove(); changedRows = true; mark(); renumber(); }
+        if (cmd === 'removeAngRow') {
+          row.querySelectorAll('[popover]').forEach(hideLayer);
+          if (pasteRow === row) pasteRow = null;
+          pending.delete(row); states.delete(row); row.remove(); changedRows = true; mark(); renumber();
+        }
+        if (['clearBild', 'loadBildSharePoint', 'uploadBildSP', 'pasteBildSP'].includes(cmd)) hideLayer(row.querySelector('.an-capture-image-menu'));
         if (cmd === 'clearBild') {
           invalidateImage(row);
           imageStatus(row, '', false);
           Object.assign(states.get(row), { image_id: '', werbebild_id: '' }); pending.delete(row);
-          row.querySelector('.cms-bild-preview').style.display = 'none'; b.style.display = 'none'; mark();
+          row.querySelector('.cms-bild-preview').style.display = 'none'; imagePresence(row, false); mark();
         }
         if (cmd === 'loadBildSharePoint') find(row).catch(M.error);
         if (cmd === 'uploadBildSP') {
           var fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = 'image/png,image/jpeg,image/webp';
-          fileInput.onchange = function () { try { setFile(row, fileInput.files[0]); } catch (error) { M.error(error); } }; fileInput.click();
+          fileInput.onchange = function () { if (!fileInput.files.length) return; try { setFile(row, fileInput.files[0]); } catch (error) { M.error(error); } }; fileInput.click();
         }
         if (cmd === 'pasteBildSP') {
           pasteRow = row;
           status.textContent = 'Zwischenablage für diese Zeile aktiv: Bild mit Strg+V einfügen.';
+          imageStatus(row, 'Bild mit Strg+V oder Cmd+V für diesen Artikel einfügen.', false);
           if (navigator.clipboard && navigator.clipboard.read) {
             navigator.clipboard.read().then(async function (entries) {
               var found = entries.find(function (entry) { return entry.types.some(function (type) { return type.startsWith('image/'); }); });
@@ -425,6 +532,8 @@ window.CMSAngebote = (function () {
           })();
         }
       };
+      dlg.addEventListener('scroll', updateLayers, true);
+      window.addEventListener('resize', updateLayers);
       activeDialog = dlg; document.addEventListener('paste', onPaste);
       document.body.appendChild(dlg); dlg.showModal();
     }

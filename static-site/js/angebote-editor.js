@@ -37,6 +37,7 @@
     var status = $('an-state');
     if (status) status.textContent = cmsAction ? 'Gestaltung geändert · noch nicht gespeichert' : 'Entwurf geändert · noch nicht gespeichert oder veröffentlicht';
     root.querySelectorAll('[data-history="undo"]').forEach(function (button) { button.disabled = !undo.length; });
+    root.querySelectorAll('[data-history="redo"]').forEach(function (button) { button.disabled = !redo.length; });
   }
   function checkpoint() { undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
   function edit(fn, free) {
@@ -586,6 +587,7 @@
     root.innerHTML = header(data.title || 'Dein Angebotsflyer')
       + '<div class="an-row an-preview-head an-toolbar"><span class="an-badge" id="an-state">' + (dirty ? 'Entwurf geändert · noch nicht gespeichert' : record && record.published_revision ? 'Gespeicherter Entwurf · veröffentlichte Fassung bleibt getrennt' : 'Gespeicherter Entwurf · nicht veröffentlicht')
       + '</span><div class="an-actions"><button data-history="undo"' + (undo.length ? '' : ' disabled') + '>Rückgängig</button>'
+      + '<button data-history="redo"' + (redo.length ? '' : ' disabled') + '>Wiederholen</button>'
       + '<button id="an-reload-saved"' + (!record ? ' disabled' : '') + '>Gespeicherten Stand laden</button>'
       + '<button id="an-overview">Zur Übersicht</button><button id="an-save" class="an-primary">Entwurf speichern</button></div></div>'
       + '<div class="an-layout"><section class="an-card an-work-panel"><nav class="an-tabs an-steps" aria-label="Bearbeitung"><button data-step="articles">1 · Artikel und Bilder</button><button data-step="design">2 · Frei gestalten</button><button data-step="output">3 · Ausgeben</button></nav>'
@@ -1091,6 +1093,10 @@
     renderInspector();
   }
   function bind() {
+    root.onkeydown = function (event) {
+      var undoButton = root.querySelector('[data-history=undo]'), redoButton = root.querySelector('[data-history=redo]');
+      if (undoButton && redoButton) D.historyShortcut(event, function () { undoButton.click(); }, function () { redoButton.click(); });
+    };
     $('an-overview').onclick = function () { run(overview); };
     $('an-reload-saved').onclick = function () { if (record) run(async function () { if (await discard()) await open(record.id); }); };
     $('an-save').onclick = function () { run(save); };

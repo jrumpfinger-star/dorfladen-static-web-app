@@ -1,6 +1,6 @@
 window.AngeboteKunden = (function () {
   'use strict';
-  var M = window.AngeboteModel, loaded = null, pending = null, states = new Map(), currentViewer = null;
+  var M = window.AngeboteModel, loaded = null, pending = null, states = new Map(), currentViewer = null, imageLookups = new Map();
   var homepageDefaults = {
     gridBg: '#f4f1ea', cardBg: '#ffffff', cardBorder: '#d8dfd7', nameColor: '#1f2521', detColor: '#555555',
     tagBg: '#a51d2d', tagText: '#ffffff', badgeBg: '#31704b', stattColor: '#666666',
@@ -33,8 +33,17 @@ window.AngeboteKunden = (function () {
     host.classList.toggle('an-hp-baskets', c.showBasket);
   }
   async function paintHomepage(host) {
-    await Promise.all(Array.from(host.querySelectorAll('[data-hp-image]')).map(async function (box) {
+    await Promise.all(Array.from(host.querySelectorAll('[data-hp-image],[data-hp-lookup]')).map(async function (box) {
       try {
+        if (!box.dataset.hpImage && box.dataset.hpLookup) {
+          var key = box.dataset.hpLookup;
+          if (!imageLookups.has(key)) imageLookups.set(key,
+            window.AngeboteDataverse.findImage(JSON.parse(key)).catch(function (error) { imageLookups.delete(key); throw error; }));
+          var found = await imageLookups.get(key);
+          if (!box.isConnected) return;
+          if (!found) { box.textContent = 'Kein Produktbild hinterlegt'; return; }
+          box.dataset.hpImage = found.image_id;
+        }
         var image = await M.image(box.dataset.hpImage);
         if (!box.isConnected) return;
         var canvas = document.createElement('canvas');
@@ -42,7 +51,7 @@ window.AngeboteKunden = (function () {
         canvas.getContext('2d').drawImage(image, 0, 0);
         var copy = new Image(); copy.alt = box.closest('article').querySelector('h3').textContent;
         copy.src = canvas.toDataURL(); await copy.decode();
-        if (box.isConnected) box.replaceChildren(copy);
+        if (box.isConnected) { box.replaceChildren(copy); box.classList.add('loaded'); }
       } catch (e) {
         console.error('[Angebote] Homepage-Bild', e);
         if (!box.isConnected) return;
@@ -94,6 +103,17 @@ window.AngeboteKunden = (function () {
       return overlaps(a.data.valid_from, a.data.valid_to, r);
     });
     return { legacy: legacy, actions: actions, range: r };
+  }
+  async function homepagePreviewItems(force) {
+    if (force) imageLookups.clear();
+    await load(force);
+    var result = selected({ week: 'this' });
+    return result.legacy.map(function (a) {
+      return { kind: 'weekly', item: { name: a.produkt, description: a.details, article_number: a.artnr,
+        price_cents: Math.round(a.preis * 100), old_price_cents: Math.round(a.statt * 100) } };
+    }).concat(result.actions.flatMap(function (action) {
+      return action.data.items.map(function (it) { return { kind: action.data.kind, item: it }; });
+    }));
   }
   function legacyHTML(a) {
     var pct = a.statt > a.preis && a.preis > 0 ? Math.round((a.statt - a.preis) / a.statt * 100) : 0;
@@ -239,5 +259,5 @@ window.AngeboteKunden = (function () {
   setInterval(refresh, 60000);
   document.addEventListener('visibilitychange', refresh);
   return { mount: mount, refresh: refresh, viewer: viewer, homepageDefaults: homepageDefaults,
-    homepageCard: homepageCard, applyHomepage: applyHomepage };
+    homepageCard: homepageCard, applyHomepage: applyHomepage, homepagePreviewItems: homepagePreviewItems, paintHomepage: paintHomepage };
 })();

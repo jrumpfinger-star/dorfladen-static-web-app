@@ -86,6 +86,154 @@ async function fillDrink(row, index) {
   await row.locator('[data-f=deposit_cents]').fill('3,10');
 }
 
+for (const kind of ['drinks', 'weekly']) {
+  test(`TC-F42-01: direkt editierbare ausgerichtete Erfassung mit erhaltenen Werten (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
+    for (let i = 0; i < 2; i++) {
+      const row = rows.nth(i);
+      if (kind === 'drinks') {
+        await fillDrink(row, i + 1);
+        await row.locator('[data-f=units]').fill(i ? '12' : '20');
+        await row.locator('[data-f=deposit_cents]').fill(i ? '2,00' : '3,10');
+      } else {
+        await row.locator('[data-f=produkt]').fill('Sonderartikel ' + i);
+        await row.locator('[data-f=preis]').fill(i ? '2,99' : '1,49');
+        await row.locator('[data-f=details]').fill('Beschreibung ' + i);
+      }
+      for (const field of await row.locator('.an-capture-extra input,.an-capture-extra select').all()) {
+        await expect(field).toBeEditable();
+        await expect(field).toBeVisible();
+      }
+    }
+    await expect(dlg.locator('.an-capture-items details')).toHaveCount(0);
+    const geometry = await dlg.evaluate(el => {
+      const b = el.getBoundingClientRect();
+      return [...el.querySelectorAll('input:not([type=hidden]),select,.an-image-trigger')].map(field => {
+        const r = field.getBoundingClientRect();
+        return { left: r.left - b.left, right: b.right - r.right, height: r.height };
+      });
+    });
+    expect(geometry.every(b => b.left >= 0 && b.right >= -1 && b.height >= 40)).toBe(true);
+    if (page.viewportSize().width >= 1100) {
+      const fields = await rows.first().locator('.an-capture-extra input,.an-capture-extra select').evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().bottom));
+      expect(new Set(fields.map(Math.round)).size).toBe(1);
+      expect((await rows.first().boundingBox()).height).toBeLessThan(160);
+    }
+    await page.screenshot({ path: test.info().outputPath('gemeinsame-erfassung-' + kind + '.png') });
+    await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(dlg).toHaveCount(0);
+    expect(state.writes).toHaveLength(1);
+    const original = structuredClone(state.writes[0].items);
+    if (kind === 'drinks') expect(original.map(it => [it.units, it.deposit_cents])).toEqual([[20, 310], [12, 200]]);
+    await page.locator('#an-overview').click();
+    await page.getByRole('button', { name: 'Alle', exact: true }).click();
+    await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+    const reopened = page.getByRole('dialog', { name: kind === 'drinks' ? 'Getränkeaktion erfassen' : 'Sonderaktion erfassen', exact: true });
+    await expect(reopened.locator('.cms-ang-row')).toHaveCount(2);
+    if (kind === 'drinks') await expect(reopened.locator('[data-f=deposit_cents]').last()).toHaveValue('2,00');
+    await reopened.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(reopened).toHaveCount(0);
+    expect(state.writes[1].items).toEqual(original);
+    expect(state.errors).toEqual([]);
+  });
+
+  test(`TC-F42-02: gemeinsames Bildmenü mit echter Suche, Datei, Paste und Entfernen (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { read: async () => [] } }));
+    await page.goto(BASE + '/angebote.html');
+    const dlg = await create(page, kind), row = dlg.locator('.cms-ang-row').first();
+    if (kind === 'drinks') await fillDrink(row, 1);
+    else { await row.locator('[data-f=produkt]').fill('Sonderartikel'); await row.locator('[data-f=preis]').fill('2,99'); }
+    const trigger = row.getByRole('button', { name: 'Produktbild bearbeiten', exact: true });
+    await trigger.click();
+    await expect(row.locator('.an-capture-image-menu')).toBeVisible();
+    await expect(row.locator('[data-offer-action=loadBildSharePoint]')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+    await expect(dlg).toBeVisible();
+    await trigger.click();
+    await row.locator('[data-offer-action=loadBildSharePoint]').click();
+    await expect(row.locator('.cms-bild-preview')).toBeVisible();
+    expect(state.imageLookups).toHaveLength(1);
+    await trigger.click();
+    const chooser = page.waitForEvent('filechooser');
+    await row.locator('[data-offer-action=uploadBildSP]').click();
+    await (await chooser).setFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
+    await expect(row.locator('.cms-bild-preview')).toBeVisible();
+    expect(state.images).toBe(0);
+    await trigger.click();
+    await row.locator('[data-offer-action=clearBild]').click();
+    await expect(row.locator('.cms-bild-preview')).toBeHidden();
+    await trigger.click();
+    await row.locator('[data-offer-action=pasteBildSP]').click();
+    await row.evaluate((el, source) => {
+      const bytes = Uint8Array.from(atob(source.split(',')[1]), c => c.charCodeAt(0)), data = new DataTransfer();
+      data.items.add(new File([bytes], 'zwischenablage.png', { type: 'image/png' }));
+      el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true }));
+    }, PHOTO);
+    await expect(row.locator('.cms-bild-preview')).toBeVisible();
+    expect(state.writes).toHaveLength(0);
+    expect(state.images).toBe(0);
+    await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(dlg).toHaveCount(0);
+    expect(state.images).toBe(1);
+    expect(state.writes[0].items[0].werbebild_id).toBe('11111111-1111-4111-8111-111111111111');
+    expect(state.errors).toEqual([]);
+  });
+
+  test(`TC-F42-03: unverdeckte Auswahl am Dialogende mit Tastatur und ohne verwaiste Ebenen (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.route('**/api/preisliste?all=1', route => route.fulfill({ json: { groups: { Artikel: Array.from({ length: 12 }, (_, i) => ({
+      bezeichnung: 'Testgetränk ' + (i + 1), artikelnummer: 'ART1-' + i, strichcode: '4001234567890', vk: 14.99, menge: '20x0,5 l'
+    })) } } }));
+    await page.goto(BASE + '/kiosk.html');
+    await page.evaluate(() => window.K.switchTab('angebote'));
+    const dlg = await create(page, kind), row = dlg.locator('.cms-ang-row').last(), input = row.locator('[data-f=produkt]'), dd = row.locator('.cms-art-dd');
+    await input.fill('ART1');
+    await expect(dd.locator('button')).toHaveCount(12);
+    await input.evaluate(el => {
+      const body = el.closest('.an-capture-body');
+      body.scrollTop += el.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 14;
+    });
+    await expect(dd).toBeVisible();
+    await expect.poll(async () => {
+      const b = await dd.boundingBox(), anchor = await input.boundingBox();
+      return !!b && b.y >= 0 && b.y + b.height <= anchor.y;
+    }).toBe(true);
+    const hit = await dd.locator('button').first().evaluate(el => {
+      const r = el.getBoundingClientRect();
+      return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+    });
+    expect(hit).toBe(true);
+    await page.screenshot({ path: test.info().outputPath('artikelauswahl-dialogende.png') });
+    await input.press('ArrowDown');
+    await expect(dd.locator('button').first()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(dd).toBeHidden();
+    await expect(dlg).toBeVisible();
+    await input.fill('ART1-0');
+    await expect(dd).toBeVisible();
+    await dd.locator('button').first().click();
+    await expect(input).toHaveValue('Testgetränk 1');
+    await expect(dd).toBeHidden();
+    await row.getByRole('button', { name: 'Produktbild bearbeiten', exact: true }).click();
+    const menu = row.locator('.an-capture-image-menu'), menuId = await menu.getAttribute('id'), b = await menu.boundingBox();
+    expect(b.y).toBeGreaterThanOrEqual(0);
+    expect(b.y + b.height).toBeLessThanOrEqual(page.viewportSize().height);
+    expect(b.x + b.width).toBeLessThanOrEqual(page.viewportSize().width);
+    await page.screenshot({ path: test.info().outputPath('bildmenue-dialogende.png') });
+    await row.locator('[data-offer-action=removeAngRow]').click();
+    await expect(dlg.locator('#' + menuId)).toHaveCount(0);
+    await dlg.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await page.getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
+    await expect(page.locator(':popover-open')).toHaveCount(0);
+    expect(state.writes).toHaveLength(0);
+    expect(state.errors).toEqual([]);
+  });
+}
+
 test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artikelverlust', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
@@ -399,6 +547,7 @@ test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speich
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
   await fillDrink(row, 1);
+  await row.getByRole('button', { name: 'Produktbild bearbeiten', exact: true }).click();
   const chooser = page.waitForEvent('filechooser');
   await row.locator('[data-offer-action=uploadBildSP]').click();
   await (await chooser).setFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
@@ -452,6 +601,7 @@ test('TC-F18-01/03: gefundene CMS-Bilder mit Produktnamen bleiben nach dem Speic
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
   await fillDrink(row, 1);
+  await row.getByRole('button', { name: 'Produktbild bearbeiten', exact: true }).click();
   await row.locator('[data-offer-action=loadBildSharePoint]').click();
   await expect(row.locator('.cms-bild-preview')).toBeVisible();
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -533,6 +683,7 @@ async function openPreview(page, kind, count, withImage) {
     await rows.nth(i).locator('[data-f=preis]').fill('1,99');
   }
   if (withImage) {
+    await rows.first().getByRole('button', { name: 'Produktbild bearbeiten', exact: true }).click();
     const chooser = page.waitForEvent('filechooser');
     await rows.first().locator('[data-offer-action=uploadBildSP]').click();
     await (await chooser).setFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
@@ -619,10 +770,13 @@ test('TC-F19-02: Werkzeuge stehen neben bzw. unter dem fest sichtbaren Motiv', a
   await page.screenshot({ path: test.info().outputPath('vorschau-mit-seitlichen-werkzeugen.png') });
 });
 
-test('TC-F19-03: Artikel, Farbe und Rückgängig in der Vorschau bearbeiten und speichern', async ({ page }) => {
+test('TC-F19-03/TC-F39-04: Artikel, Farbe und Undo/Redo in der Vorschau bearbeiten und speichern', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
+  const undo = page.locator('.an-toolbar [data-history=undo]'), redo = page.locator('.an-toolbar [data-history=redo]');
+  await expect(undo).toBeVisible(); await expect(redo).toBeVisible();
+  await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
   const name = page.locator('[data-cms-article=name]'), price = page.locator('[data-cms-article=price_cents]');
   await showTab(page, 'Artikel');
   await name.fill('Geändertes Bier'); await name.dispatchEvent('change');
@@ -633,9 +787,19 @@ test('TC-F19-03: Artikel, Farbe und Rückgängig in der Vorschau bearbeiten und 
   const fill = page.locator('[data-element-prop=fill]'), original = await fill.inputValue();
   await fill.fill('#ff0000');
   await expect(fill).toHaveValue('#ff0000');
-  await page.locator('#an-inspector [data-history=undo]').click();
+  await expect(undo).toBeEnabled();
+  const writes = state.writes.length;
+  await undo.click();
   await expect(page.locator('[data-element-prop=fill]')).toHaveValue(original);
+  await expect(redo).toBeEnabled(); await redo.click();
+  await expect(page.locator('[data-element-prop=fill]')).toHaveValue('#ff0000');
+  await undo.focus(); await page.keyboard.press('Control+z');
+  await expect(page.locator('[data-element-prop=fill]')).toHaveValue(original);
+  await redo.focus(); await page.keyboard.press('Control+Shift+z');
+  await expect(page.locator('[data-element-prop=fill]')).toHaveValue('#ff0000');
+  expect(state.writes).toHaveLength(writes);
   await page.locator('[data-element-prop=fill]').fill('#00aa00');
+  await expect(redo).toBeDisabled();
   await saveDesign(page);
   const write = state.writes.at(-1);
   expect(write.items[0].name).toBe('Geändertes Bier');

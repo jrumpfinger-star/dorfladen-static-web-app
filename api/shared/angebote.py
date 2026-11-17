@@ -106,7 +106,8 @@ CMS_CONFIG_KEYS.update(
         "tagPreset tagShape tagRadius tagSkew tagScale decoLeafColor decoTitleColor "
         "decoBgColor decoFooterColor vorratColor showLeaf leafSize showBag "
         "showTexture imgScale borderWidth borderColor imgAnchorX imgAnchorY "
-        "priceAnchorX priceAnchorY imgWidthPct"
+        "priceAnchorX priceAnchorY imgWidthPct priceImageColor priceOutlineColor "
+        "priceStripColor priceOldColor priceStrikeColor"
     ).split()
 )
 

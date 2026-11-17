@@ -175,19 +175,21 @@ window.AngeboteVorschauEditor = (function () {
       if (nudge && current()) {
         var step = nudge.dataset.previewNudge.split(',').map(Number);
         if (options.begin) options.begin();
-        change({ dx: step[0], dy: step[1] }); return;
+        change({ dx: step[0], dy: step[1] }); if (options.end) options.end(); return;
       }
       var button = event.target.closest('[data-preview-transform]'); if (!button || !current()) return;
       if (options.begin) options.begin();
       var action = button.dataset.previewTransform;
       change(action === 'left' || action === 'right' ? { rotation: action === 'right' ? 15 : -15 }
         : { scale: action === 'larger' ? 1.1 : 1 / 1.1 });
+      if (options.end) options.end();
     };
     stage.onkeydown = function (event) {
       var delta = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
       if (!delta || !current()) return;
       event.preventDefault(); if (options.begin) options.begin();
       change({ dx: delta[0] * (event.shiftKey ? 10 : 1), dy: delta[1] * (event.shiftKey ? 10 : 1) });
+      if (options.end) options.end();
     };
     stage.onpointerdown = function (event) {
       var hit = event.target.closest('[data-preview-select],[data-preview-resize],[data-preview-rotate]');
@@ -217,6 +219,7 @@ window.AngeboteVorschauEditor = (function () {
       endDrag = function (ev) {
         if (ev && ev.pointerId !== event.pointerId) return;
         document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', endDrag); document.removeEventListener('pointercancel', endDrag); endDrag = null;
+        if (options.end) options.end();
       };
       document.addEventListener('pointermove', move); document.addEventListener('pointerup', endDrag); document.addEventListener('pointercancel', endDrag);
     };

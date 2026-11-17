@@ -790,7 +790,128 @@ Touch-Ziele sind auf dem Handy mindestens 44 px hoch.
 - TC-F31-02: In allen vier Ausgabezielen wirken Farb-/Vorlagenänderungen sofort
   und Ghost, Duplikat, Eigenes Bild, Drehung und Zurücksetzen bleiben erreichbar.
 
-**F32:** Die Einstellungsreiter „Plakat“ und „Einzelflyer“ unter Design →
+**F38 (ersetzt die reine Stilangleichung aus F32):** Plakat, Einzelflyer und
+Getränkeflyer verwenden dieselbe Designer-Arbeitsfläche: Vorschau links,
+Werkzeuge rechts, auf dem Handy Vorschau oben und Werkzeuge darunter.
+Die gemeinsamen Werkzeugreiter heißen „Stil“, „Farben“, „Feinabstimmung“,
+„Weitere Gestaltung“ und „Eigene Vorlagen“. Vorlagenwahl, Felder, Buttons und
+Speicherleiste verwenden dieselben Komponenten statt der bisherigen
+Plakat-/Einzelflyer-Karten. Nur die Werkzeuge des aktiven Reiters sind sichtbar.
+Alle bisherigen Einstellungen einschließlich Verläufen, Dekoration,
+Bild-/Preisposition, benannten Vorlagen und eigenen Standards bleiben erreichbar.
+Originalrenderer und Speicherverträge bleiben unverändert; Ausgabeziele, die
+nur der Getränkeflyer unterstützt, werden nicht für Wochenangebote erfunden.
+Die automatische Einzelflyervorschau lädt hinterlegte Produktbilder wie die
+separat geöffnete Vorschau nach. Die klassische CMS-Fassung bleibt erhalten.
+
+- TC-F38-01: Alle drei Reiter verwenden dieselbe Arbeitsfläche und dieselben
+  fünf Werkzeugreiter; Handy oben/unten, andere Zielansichten nebeneinander,
+  kein Überlauf, Vorschau und Speichern erreichbar auf vier Ansichten.
+- TC-F38-02: Sämtliche ursprünglichen Eingabekennungen und Werte bleiben beim
+  Umstellen erhalten. Vorlagen-/Farb-/Formänderung, Wechsel der Reiter,
+  Verwerfen und Speichern funktionieren mit unverändertem Speichervertrag.
+- TC-F38-03: Automatische Einzelflyervorschau lädt und zeichnet ein nur über
+  die Artikelnummer referenziertes Produktbild; Aktualisierung und separate
+  Vorschau verwenden denselben Bildladeweg.
+- TC-F38-04: Plakat und Einzelflyer bieten zusätzlich unter Preisschild-Vorlage
+  und Preisschild-Form „Preisbild · Rot/Gelb“. Fünf Farben (Preis, Kontur,
+  Stattpreis-Streifen, Stattpreistext und Durchstreichung) sind unabhängig je
+  Ausgabe konfigurierbar und speicherbar. Original- und Magazinvorlagen zeichnen
+  dieselbe Preisgrafik wie der Getränkeflyer: große Euroziffern, hochgestellte
+  Cent und nur bei höherem Stattpreis einen durchgestrichenen gelben Streifen.
+  Bereits vorhandene Vorlagen und Farbwerte bleiben unverändert.
+  Als originalnähere Standardschrift des Preisbilds wird eine lokal
+  mitgelieferte, kräftige Schmalschrift verwendet; Euroziffern und
+  hochgestellte Cent stehen enger zusammen. Vorschau und Export warten auf
+  die Schrift, ohne externe Schriftabrufe zur Laufzeit. Andere Vorlagen
+  behalten ihre bisherige Schrift.
+- TC-F38-05: „Eigene Designvorlagen“ ist beim Öffnen und erneuten Laden
+  standardmäßig eingeklappt. Anlegen, Laden und Löschen bleiben nach dem
+  bewussten Aufklappen erreichbar; Feinabstimmung und weitere Gestaltung
+  werden initial ebenfalls nicht ausgeklappt angezeigt.
+- TC-F38-06: Die Live-Vorschau hat in allen drei Designern einen eigenen,
+  höhenbegrenzten vertikalen Scrollbereich mit sichtbarem Scrollbalken.
+  Scrollen darin bewegt weder die Einstellungsseite noch deren Felder.
+  Auf Desktop/Tablet sind auch die Einstellungen unabhängig scrollbar;
+  auf dem Handy bleibt die Vorschau separat scrollbar, ohne das Motiv
+  durch eine falsche Seitenverhältnis-Begrenzung abzuschneiden.
+- TC-F38-07: Bild- und Preisposition im Einzelflyer stehen bei ausreichender
+  verfügbarer Breite nebeneinander, bei schmalen Containern untereinander.
+  Bildbreite bleibt darüber über beide Spalten bedienbar. Keine horizontalen
+  Überläufe; Bedienflächen und unabhängige Vorschau bleiben erhalten.
+
+**F41:** Die Live-Vorschau der Getränkedesignstandards lädt vorhandene
+Getränkeartikel aus dem CMS samt Produktbildern. Fehlende Bildreferenzen
+werden über die bestehende lesende Artikelbildsuche aufgelöst. Die erste
+Musterkachel und die Folgekacheln verwenden diese Artikel in allen
+Vorschauformaten; bei weniger Artikeln als Kacheln werden die Vorschauartikel
+wiederholt. Dies verändert weder Angebote noch gespeicherte Designstandards.
+Die eingebauten Vorlagenminiaturen bleiben neutrale Muster.
+Ohne vorhandene Getränkeartikel bleiben beschriftete Beispieldaten sichtbar,
+mit ausdrücklichem Hinweis auf den fehlenden Artikelbestand. Bildladefehler
+werden sichtbar gemeldet und können erneut geladen werden.
+
+- TC-F41-01: Vorhandene Getränkeartikel und echte Produktbilder erscheinen
+  auf A4, Kacheln und beiden Waagenformaten; die reine Vorschau schreibt nicht.
+- TC-F41-02: Bildsuche-/Bildladefehler und fehlende Artikel sind sichtbar;
+  erneuter Ladeversuch gelingt ohne Verlust der eingestellten Gestaltung.
+- TC-F41-03: Speichern sichert ausschließlich die Designstandards, nicht
+  die geladenen Vorschauartikel und deren Bildreferenzen.
+
+**F40:** „HP-Sonderangebote“ verwendet dieselbe kompakte Arbeitsfläche wie
+„Plakate & Flyer“: links eine unabhängig scrollbare Live-Vorschau, rechts
+Werkzeugreiter, darunter die erreichbare Speicherleiste; mobil untereinander.
+Alle bisherigen Einstellungs-IDs und der isolierte Homepage-Speichervertrag
+bleiben erhalten. Die Reiter sind auf die vorhandenen Optionen begrenzt:
+„Farben“, „Preis-Tag“ und „Layout“. Auch hier gibt es lokales Undo/Redo.
+Die Vorschau zeigt tatsächliche Angebote der aktuellen Homepage-Woche und
+dieselben Kundenkarten statt fiktiver Produkte ohne Bilder. Bildreferenzen
+werden über den gemeinsamen Bildrenderer geladen, fehlende Referenzen über
+die bestehende rein lesende Artikelbildsuche aufgelöst. Nicht hinterlegte Bilder
+werden ausdrücklich benannt; Ladefehler haben einen Wiederholungsweg.
+Ohne Angebote erscheint ein Leerzustand, bei Ladefehlern ein sichtbarer Fehler
+mit erneutem Ladeversuch. Designänderungen beeinflussen nur die Vorschau,
+nicht die Artikel und nicht automatisch den gespeicherten Homepage-Stil.
+
+- TC-F40-01: HP-Arbeitsfläche, vollständiger Erhalt der Eingabefelder,
+  Tab-/Scrollgeometrie, Undo/Redo und expliziter Speichervertrag auf vier Ansichten.
+- TC-F40-02: Tatsächliche Artikeltexte und geladene Bilder aus Referenzen und
+  lesender Bildsuche; ohne Bestand leer statt erfundener Musterprodukte.
+- TC-F40-03: Bild-/Datenfehler sichtbar und erneut ladbar; Verwerfen/Reset
+  speichern nicht und verändern weder Aktionen noch die anderen Designer.
+- TC-F40-04: Homepage-Produktbilder und die Designer-Vorschau erhalten keinen
+  zusätzlichen CSS-Schlagschatten aus der alten `.ang-img`-Darstellung.
+  Weiße Bildränder werfen daher keinen künstlichen rechteckigen Schatten.
+  Das gilt auch für Flyer-Produktdarstellungen und Canvas-Ausgaben von
+  Plakat, Einzelflyer und Getränkeflyer. Karten-/Preisschildschatten und die
+  unveränderten Quelldateien bleiben erhalten.
+
+**F39:** Alle drei Designstandard-Designer bieten „Rückgängig“ und
+„Wiederholen“ für einzelne Änderungen an Farben, Vorlagen, Größen,
+Dekoration und Vorschauelementen. Eigene Designvorlagen im Getränkedesigner
+werden ebenfalls berücksichtigt. Der Verlauf bleibt lokal im geöffneten
+Designer, umfasst wie der Aktionseditor höchstens 30 Schritte und schreibt
+nicht automatisch auf den Server. Speichern bleibt ein eigener Vorgang;
+Versionsstände werden durch Undo nicht zurückgesetzt. Verwerfen/Neuladen
+beginnt mit dem gespeicherten Stand und leerem Verlauf. Eine neue Änderung
+nach Undo verwirft den Wiederholen-Zweig. Reine Reiter-/Zielwechsel erzeugen
+keinen Schritt; eine Ziehbewegung zählt als ein Schritt. Plakat und Einzelflyer
+haben getrennte Verläufe und überschreiben beim Undo nicht die jeweils andere
+Ausgabe. Auch der Aktionsdesigner zeigt beide vorhandenen Verlaufsaktionen
+ständig in seiner Werkzeugleiste und aktualisiert ihre Verfügbarkeit.
+Strg/Cmd+Z, Strg/Cmd+Umschalt+Z und Strg/Cmd+Y bedienen den fokussierten
+Designer; innerhalb von Texteingaben bleibt das native Text-Undo erhalten.
+
+- TC-F39-01: Farbe/Vorlage ändern, rückgängig machen, wiederholen und nach
+  erneutem Ändern den Redo-Zweig verlieren; Buttons initial deaktiviert.
+- TC-F39-02: Musterkachel verschieben/drehen, als einen Schritt zurücknehmen
+  und wiederholen; synchronisierte Kacheln folgen mit.
+- TC-F39-03: Plakat-/Einzelflyerverläufe isoliert; Undo speichert nicht,
+  rückgängig gemachte Werte werden erst durch Speichern übernommen.
+- TC-F39-04: Aktionsdesigner bietet aktivierte Undo-/Redo-Buttons für
+  Gestaltungsänderungen; Tastenkürzel wirken nur außerhalb von Eingabefeldern.
+
+**F32 (historisch; durch F38 erweitert):** Die Einstellungsreiter „Plakat“ und „Einzelflyer“ unter Design →
 Plakate & Flyer folgen im Stil dem Getränkeflyer: nummerierte Bereiche statt
 grüner Kartenbalken, kontrastreiche Felder (Rand mindestens 3:1, Text
 mindestens 4,5:1), Vorlagenkacheln mit „✓ Aktiv“ und ein Einstellungsbereich
@@ -933,6 +1054,46 @@ nach Abschluss einschließlich Fehlerfällen beendet.
   und Gitfehler wählen nachvollziehbar passende Tests oder melden einen Fehler.
 - TC-F37-02: Lokaler Server antwortet während des Testlaufs; dessen Exitcode
   wird weitergegeben und der selbst gestartete Server danach aufgeräumt.
+
+## F42: Gemeinsame, direkt editierbare Angebotserfassung
+
+Der freigegebene Dialogentwurf vereinheitlicht Getränke- und Sonderaktionen.
+Produkt, Angebots-/Stattpreis und Strichcode stehen in ausgerichteten Spalten;
+Beschreibung sowie sämtliche Getränke-, Gebinde- und Pfandwerte sind immer
+direkt editierbar, nicht hinter einer Zusammenfassung oder einem Aufklapper.
+Auf dem Desktop stehen die Artikelwerte in zwei kompakten Eingabezeilen;
+auf schmalen Geräten brechen sie ohne horizontalen Überlauf um.
+Titel, Zeitraum und Getränke-Kachelwahl teilen sich bei genügend Platz eine
+Kopfzeile. Gültige bestehende Werte, Reihenfolge, Datenmodell und Speichern
+bleiben erhalten. Diese freigegebene Erfassungsdarstellung ersetzt insoweit
+die optische Bestandserhaltung aus F18-09; die Aktionsübersicht bleibt gleich.
+
+Ein Klick auf das Produktbild öffnet ein platzsparendes Bildmenü, identisch
+für beide Aktionsarten: Bestandssuche zum Artikel/Strichcode, Dateiauswahl
+(PNG/JPEG/WebP), Zwischenablage und Entfernen der Bildzuordnung.
+Die bisherigen realen Such-, Upload- und Speicherwege bleiben erhalten.
+Dateien werden erst beim expliziten Speichern hochgeladen; das Entfernen
+einer Zuordnung löscht kein Stammbild. Status und Fehler bleiben sichtbar.
+Drag-and-drop von Bilddateien ist nicht Bestandteil dieser Änderung.
+
+Artikeltreffer und Bildmenü liegen oberhalb des scrollenden Dialoginhalts.
+Ihre Breite/Höhe bleibt im Fenster; bei Platzmangel unter dem Feld öffnen
+sie nach oben. Lange Treffer zeigen Produkt, Nummer und Stamm-VK lesbar.
+Scrollen, Größenänderung, Escape, Klick außerhalb, Auswahl und Schließen
+hinterlassen keine abgetrennten oder unsichtbar offenen Menüs.
+
+- TC-F42-01: Beide Dialogarten zeigen alle zugehörigen Felder ohne Aufklappen,
+  ausgerichtete Desktopzeilen und auf vier Viewports keine abgeschnittenen
+  Eingaben. Verschiedene Gebinde-/Pfandwerte lassen sich direkt ändern und
+  nach Speichern/Öffnen unverändert wiederfinden.
+- TC-F42-02: Bildmenü in beiden Arten mit Suche, Dateiauswahl, Zwischenablage
+  und Entfernen bedienen; automatische Bildsuche, lokale Vorschau, verzögerter
+  Upload und Wiederholung nach Uploadfehler erhalten. Keine ungefragten
+  Stammbildlöschungen oder impliziten Aktionsspeicherungen.
+- TC-F42-03: Artikelsuche am unteren Dialogrand bleibt innerhalb des Fensters
+  tatsächlich sichtbar und anklickbar, auch nach Scrollen/Größenänderung;
+  Tastaturauswahl und Escape funktionieren. Bildmenü ebenso unverdeckt.
+  Keine verwaisten Ebenen nach Zeilenentfernung oder Dialogschließen.
 
 ## Verifikation und offene Fragen
 

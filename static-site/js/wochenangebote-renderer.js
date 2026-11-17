@@ -1,5 +1,16 @@
 window.WochenangeboteRenderer = (function () {
   'use strict';
+  var priceFontPromise;
+  function loadPriceFont() {
+    if (!priceFontPromise) {
+      priceFontPromise = new FontFace('Anton', 'url("/fonts/Anton-Regular.ttf")').load().then(function (font) {
+        document.fonts.add(font);
+      }, function (error) {
+        priceFontPromise = null; throw error;
+      });
+    }
+    return priceFontPromise;
+  }
   var TAG_PRESETS={
     'classic-red-rect':{tagColor:'#a51d2d',tagShape:'rect',tagRadius:0},
     'green-rounded':{tagColor:'#3d7a4a',tagShape:'rounded',tagRadius:16},
@@ -10,8 +21,56 @@ window.WochenangeboteRenderer = (function () {
     'purple-hexagon':{tagColor:'#7c3aed',tagShape:'hexagon',tagRadius:0},
     'teal-ticket':{tagColor:'#0d9488',tagShape:'ticket',tagRadius:0},
     'rose-diamond':{tagColor:'#e11d48',tagShape:'diamond',tagRadius:0},
-    'copper-explosion':{tagColor:'#b45309',tagShape:'explosion',tagRadius:0}
+    'copper-explosion':{tagColor:'#b45309',tagShape:'explosion',tagRadius:0},
+    'price-image':{tagColor:'#ed1c24',tagShape:'price-image',tagRadius:0}
   };
+  function drawPriceImage(ctx, element, item, layout) {
+    var euros = Math.floor(item.price_cents / 100) + '.', cents = String(item.price_cents % 100).padStart(2, '0');
+    var comparison = item.old_price_cents > item.price_cents;
+    var font = '"Anton"';
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
+    ctx.font = '160px ' + font;
+    var euroWidth = ctx.measureText(euros).width;
+    ctx.font = '82px ' + font;
+    var centsX = euroWidth - 4;
+    var width = centsX + ctx.measureText(cents).width + 16, height = comparison ? 218 : 164;
+    var fit = Math.min(element.w / width, element.h / height, element.font_size / 160);
+    var left = element.align === 'right' ? element.w - width * fit : element.align === 'center' ? (element.w - width * fit) / 2 : 0;
+    ctx.translate(left, (element.h - height * fit) / 2); ctx.scale(fit, fit);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = layout.price_outline_color || '#ffffff'; ctx.lineWidth = 10;
+    ctx.fillStyle = layout.color || '#ed1c24';
+    ctx.font = '160px ' + font;
+    ctx.strokeText(euros, 8, 150); ctx.fillText(euros, 8, 150);
+    ctx.font = '82px ' + font;
+    ctx.strokeText(cents, centsX, 84); ctx.fillText(cents, centsX, 84);
+    if (comparison) {
+      ctx.fillStyle = layout.price_background || '#fff000';
+      ctx.beginPath(); ctx.moveTo(12, 174); ctx.lineTo(width - 4, 168);
+      ctx.lineTo(width - 12, 212); ctx.lineTo(4, 218); ctx.closePath(); ctx.fill();
+      var old = (item.old_price_cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+      font = '"' + element.font + '"';
+      ctx.font = 'bold 32px ' + font;
+      var oldSize = Math.min(32, 32 * (width - 36) / ctx.measureText(old).width);
+      ctx.font = 'bold ' + oldSize + 'px ' + font; ctx.textAlign = 'center';
+      ctx.fillStyle = layout.old_price_color || '#000000';
+      ctx.fillText(old, width / 2, 204);
+      ctx.strokeStyle = layout.price_strike_color || '#ed1c24'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(18, 182); ctx.lineTo(width - 18, 210); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawCmsPriceImage(ctx,item,cfg,x,y,w,h,rotation){
+    if(cfg.tagShape!=='price-image')return false;
+    ctx.save();ctx.translate(x+w/2,y+h/2);ctx.rotate((rotation||0)*Math.PI/180);ctx.translate(-w/2,-h/2);
+    drawPriceImage(ctx,{w:w,h:h,font:'Arial',font_size:160,align:'center'},{
+      price_cents:Math.round(Number(item.preis)*100),old_price_cents:Math.round(Number(item.statt_preis)*100)
+    },{
+      color:cfg.priceImageColor,price_outline_color:cfg.priceOutlineColor,
+      price_background:cfg.priceStripColor,old_price_color:cfg.priceOldColor,price_strike_color:cfg.priceStrikeColor
+    });
+    ctx.restore();return true;
+  }
   function drawLeafDecoration(ctx,x,y,size,color,lineWidth){
     ctx.save();ctx.translate(x,y);ctx.rotate(-0.4);ctx.fillStyle=color;ctx.globalAlpha=1;
     ctx.beginPath();ctx.moveTo(0,0);
@@ -29,9 +88,11 @@ window.WochenangeboteRenderer = (function () {
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
     plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
+    plakat_priceImageColor:'#ed1c24',plakat_priceOutlineColor:'#ffffff',plakat_priceStripColor:'#fff000',plakat_priceOldColor:'#000000',plakat_priceStrikeColor:'#ed1c24',
     plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',plakat_vorratColor:'#888888',
     plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,plakat_imgScale:100,
     flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
+    flyer_priceImageColor:'#ed1c24',flyer_priceOutlineColor:'#ffffff',flyer_priceStripColor:'#fff000',flyer_priceOldColor:'#000000',flyer_priceStrikeColor:'#ed1c24',
     flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',flyer_vorratColor:'#888888',
     flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100,
     flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10,
@@ -40,7 +101,8 @@ window.WochenangeboteRenderer = (function () {
     flyer_borderWidth:0,flyer_borderColor:'#2e7d32'
   };
 
-  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','vorratColor','borderColor'];
+  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','vorratColor','borderColor',
+    'priceImageColor','priceOutlineColor','priceStripColor','priceOldColor','priceStrikeColor'];
 
   var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct','borderWidth'];
 
@@ -568,7 +630,8 @@ window.WochenangeboteRenderer = (function () {
     ctx.restore();
   }
 
-  function generateEinzelflyer(item,data,cfgOverride,opts){
+  async function generateEinzelflyer(item,data,cfgOverride,opts){
+    if(cfgForKind(cfgOverride||cfgGet(),'flyer').tagShape==='price-image')await loadPriceFont();
     return new Promise(function(resolve){
       var S=(opts&&opts.scale)||1;
       var W=794,H=1123;
@@ -788,11 +851,13 @@ window.WochenangeboteRenderer = (function () {
           ctx.save();ctx.translate(priceBarX+(cardMW-48)/2,priceBarY+36);
           ctx.rotate((artOv.priceRot||0)*Math.PI/180);ctx.scale(priceScale,priceScale);
           ctx.translate(-priceBarX-(cardMW-48)/2,-priceBarY-36);
-          ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.fill();
-          ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.stroke();
+          if(cfg.tagShape!=='price-image'){
+            ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.fill();
+            ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.stroke();
+          }
           _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:priceBarX+(cardMW-48)*(1-priceScale)/2,y:priceBarY+36*(1-priceScale),w:(cardMW-48)*priceScale,h:72*priceScale,ovKey:'price'});
 
-          if(item.preis){
+          if(item.preis&&!drawCmsPriceImage(ctx,item,cfg,priceBarX,priceBarY,cardMW-48,72)){
             var pp=Number(item.preis).toFixed(2).split('.');
             ctx.fillStyle=theme.tagColor;ctx.font='900 52px Arial Black, Arial, sans-serif';
             ctx.fillText(pp[0]+','+pp[1],priceBarX+16,priceBarY+52);
@@ -800,7 +865,7 @@ window.WochenangeboteRenderer = (function () {
             ctx.font='700 30px Arial, sans-serif';
             ctx.fillText('\u20AC',priceBarX+16+mw+6,priceBarY+48);
           }
-          if(item.statt_preis){
+          if(item.statt_preis&&cfg.tagShape!=='price-image'){
             var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
             var stc=theme.stattColor||'#8a9e80';
             ctx.textAlign='right';ctx.fillStyle=stc;ctx.font='600 24px Arial, sans-serif';
@@ -953,7 +1018,12 @@ window.WochenangeboteRenderer = (function () {
       }else{imgPromise=Promise.resolve();}
       // Price block OVER the image (anchored top-right in image area)
       imgPromise.then(function(){
-      if(item.preis){
+      if(item.preis&&cfg.tagShape==='price-image'){
+        drawCmsPriceImage(ctx,item,cfg,tagCX-tagW/2,tagCY-tagH/2,tagW,tagH,artOv.priceRot);
+        _elMeta.push({id:'price',label:'Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
+        var imageSavings=getSavingsPercent(item);
+        if(imageSavings)drawSavingsBurst(ctx,tagCX-tagW/2,tagCY-tagH/2-14,36,22,'-'+imageSavings+'%','flyer');
+      }else if(item.preis){
         var savingsPct=getSavingsPercent(item);
         var preisStr=Number(item.preis).toFixed(2).split('.');
         var skewVal=cfg.tagSkew/100;
@@ -1275,6 +1345,7 @@ window.WochenangeboteRenderer = (function () {
             c._elMeta.push({id:'price',itemKey:it.key,label:'Preis',x:priceX+priceWidth*(1-priceScale)/2,y:priceTop+23*(1-priceScale),w:priceWidth*priceScale,h:46*priceScale,ovKey:'price'});
             ctx.save();ctx.translate(priceX+priceWidth/2,priceTop+23);ctx.rotate((pOv.priceRot||0)*Math.PI/180);
             ctx.scale(priceScale,priceScale);ctx.translate(-priceX-priceWidth/2,-priceTop-23);
+            if(!drawCmsPriceImage(ctx,it,cfg,priceX,priceTop,priceWidth,46)){
             // Price tag area
             ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgRRect(cx+cardPadI-4+ppDx,priceY-42+ppDy,mgCellW-cardPadI*2+8,46,10);ctx.fill();
             ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4+ppDx,priceY-42+ppDy,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
@@ -1295,6 +1366,7 @@ window.WochenangeboteRenderer = (function () {
               ctx.strokeStyle=stcP;ctx.lineWidth=1.5;
               ctx.beginPath();ctx.moveTo(cx+mgCellW-cardPadI-uvpW+ppDx,priceY-23+ppDy);ctx.lineTo(cx+mgCellW-cardPadI+ppDx,priceY-23+ppDy);ctx.stroke();
               ctx.textAlign='left';
+            }
             }
             ctx.restore();
           }
@@ -1462,6 +1534,7 @@ window.WochenangeboteRenderer = (function () {
         var tagCX=cx+cellW-cardPad-tagW/2-10+clPDx;
         var tagCY=imgAreaTop+imgAreaH*0.4+clPDy;
         c._elMeta.push({id:'price',itemKey:item.key,label:'Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
+        if(!drawCmsPriceImage(ctx,item,cfg,tagCX-tagW/2,tagCY-tagH/2,tagW,tagH,pOv.priceRot)){
         ctx.save();
         ctx.translate(tagCX,tagCY);
         var pSkew=cfg.tagSkew/100;
@@ -1511,6 +1584,7 @@ window.WochenangeboteRenderer = (function () {
           ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1.5;ctx.beginPath();
           ctx.moveTo(stattX-stW/2-2,stattY-Math.round(5*tagSc));ctx.lineTo(stattX+stW/2+2,stattY-Math.round(5*tagSc));ctx.stroke();
         }
+        }
         if(cardSavingsPct){
           drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,Math.round(24*tagSc),Math.round(15*tagSc),'-'+cardSavingsPct+'%','plakat');
         }
@@ -1526,6 +1600,8 @@ window.WochenangeboteRenderer = (function () {
   }
 
     return {
+      drawPriceImage:drawPriceImage,
+      loadPriceFont:loadPriceFont,
       cfgForKind:cfgForKind,
       getOfferTemplate:getOfferTemplate,
       getTplColors:getTplColors,
@@ -1554,6 +1630,8 @@ window.WochenangeboteRenderer = (function () {
   }
   return {
     create:create,
+    drawPriceImage:drawPriceImage,
+    loadPriceFont:loadPriceFont,
     TAG_PRESETS:TAG_PRESETS,
     drawLeafDecoration:drawLeafDecoration,
     CFG_DEFAULTS:CFG_DEFAULTS,

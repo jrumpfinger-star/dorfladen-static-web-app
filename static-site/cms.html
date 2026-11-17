@@ -1701,7 +1701,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div><!-- /cfg-split (WP) -->
     </div>
     <!-- ============ SUB-TAB: Plakate & Flyer (REDESIGNED) ============ -->
-    <div id="cms-cfg-plakat" style="display:none">
+    <div data-offer-workspaces id="cms-cfg-plakat" style="display:none">
       <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0 0 10px">&Auml;nderungen werden erst nach Klick auf &bdquo;Speichern&ldquo; &uuml;bernommen.</p>
       <!-- Hidden fields for backward compat -->
       <input type="hidden" id="cfg-bgColor" value="#f4f1ea">
@@ -1850,6 +1850,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Vorlage
                 <select id="cfg-plakat-tagPreset" class="cms-input cfg-persec-ctl" data-sec="plakat" style="margin-top:4px">
                   <option value="">— Manuell —</option>
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="classic-red-rect">Classic Rot (Rechteck)</option>
                   <option value="green-rounded">Naturgr&uuml;n (Abgerundet)</option>
                   <option value="dark-pill">Dark Elegance (Pill)</option>
@@ -1864,6 +1865,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               </label>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Form
                 <select id="cfg-plakat-tagShape" class="cms-input cfg-persec-ctl" data-sec="plakat" style="margin-top:4px">
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="rect">Rechteck</option>
                   <option value="rounded">Abgerundet</option>
                   <option value="pill">Pill / Oval</option>
@@ -1877,6 +1879,16 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <option value="trapez">Trapez</option>
                 </select>
               </label>
+              <fieldset class="an-price-image-colors">
+                <legend>Preisbild &middot; Rot/Gelb</legend>
+                <div class="an-fields">
+                  <label class="an-field"><span>Preisbild &middot; Preisfarbe</span><input type="color" id="cfg-plakat-priceImageColor" class="cfg-persec-ctl" data-sec="plakat" value="#ed1c24"></label>
+                  <label class="an-field"><span>Preisbild &middot; Konturfarbe</span><input type="color" id="cfg-plakat-priceOutlineColor" class="cfg-persec-ctl" data-sec="plakat" value="#ffffff"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreis-Streifen</span><input type="color" id="cfg-plakat-priceStripColor" class="cfg-persec-ctl" data-sec="plakat" value="#fff000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreisfarbe</span><input type="color" id="cfg-plakat-priceOldColor" class="cfg-persec-ctl" data-sec="plakat" value="#000000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Durchstreichungsfarbe</span><input type="color" id="cfg-plakat-priceStrikeColor" class="cfg-persec-ctl" data-sec="plakat" value="#ed1c24"></label>
+                </div>
+              </fieldset>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ecken-Rundung
                 <div style="display:flex;align-items:center;gap:8px">
                   <input type="range" id="cfg-plakat-tagRadius" min="0" max="40" value="0" class="cfg-persec-ctl" data-sec="plakat" style="flex:1">
@@ -2087,6 +2099,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Vorlage
                 <select id="cfg-flyer-tagPreset" class="cms-input cfg-persec-ctl" data-sec="flyer" style="margin-top:4px">
                   <option value="">— Manuell —</option>
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="classic-red-rect">Classic Rot (Rechteck)</option>
                   <option value="green-rounded">Naturgr&uuml;n (Abgerundet)</option>
                   <option value="dark-pill">Dark Elegance (Pill)</option>
@@ -2101,6 +2114,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               </label>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Form
                 <select id="cfg-flyer-tagShape" class="cms-input cfg-persec-ctl" data-sec="flyer" style="margin-top:4px">
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="rect">Rechteck</option>
                   <option value="rounded">Abgerundet</option>
                   <option value="pill">Pill / Oval</option>
@@ -2114,6 +2128,16 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <option value="trapez">Trapez</option>
                 </select>
               </label>
+              <fieldset class="an-price-image-colors">
+                <legend>Preisbild &middot; Rot/Gelb</legend>
+                <div class="an-fields">
+                  <label class="an-field"><span>Preisbild &middot; Preisfarbe</span><input type="color" id="cfg-flyer-priceImageColor" class="cfg-persec-ctl" data-sec="flyer" value="#ed1c24"></label>
+                  <label class="an-field"><span>Preisbild &middot; Konturfarbe</span><input type="color" id="cfg-flyer-priceOutlineColor" class="cfg-persec-ctl" data-sec="flyer" value="#ffffff"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreis-Streifen</span><input type="color" id="cfg-flyer-priceStripColor" class="cfg-persec-ctl" data-sec="flyer" value="#fff000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreisfarbe</span><input type="color" id="cfg-flyer-priceOldColor" class="cfg-persec-ctl" data-sec="flyer" value="#000000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Durchstreichungsfarbe</span><input type="color" id="cfg-flyer-priceStrikeColor" class="cfg-persec-ctl" data-sec="flyer" value="#ed1c24"></label>
+                </div>
+              </fieldset>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ecken-Rundung
                 <div style="display:flex;align-items:center;gap:8px">
                   <input type="range" id="cfg-flyer-tagRadius" min="0" max="40" value="0" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
@@ -2144,7 +2168,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <!-- Flyer Bild- & Preis-Anker -->
           <div class="cms-card" style="margin-bottom:8px">
             <div class="cms-card-header" style="background:var(--gr)">Bild- &amp; Preis-Position</div>
-            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="cms-card-body cfg-anchor-grid">
               <!-- Image width -->
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Bildbreite
                 <div style="display:flex;align-items:center;gap:8px">
@@ -2152,8 +2176,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <span id="cfg-flyer-imgWidthPct-val" style="font-size:var(--schrift-normal);min-width:32px;text-align:right">50%</span>
                 </div>
               </label>
-              <hr style="border:none;border-top:1px solid var(--line);margin:2px 0">
               <!-- Image anchor (bottom-left) -->
+              <div class="cfg-anchor-group">
               <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);margin-bottom:2px">&#128444;&#65039; Bild-Position <span style="font-weight:400;font-size:var(--schrift-klein);color:var(--mut)">(Anker: unten links)</span></div>
               <div class="anchor-pad">
                 <div class="anchor-cross">
@@ -2174,8 +2198,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                 <input type="hidden" id="cfg-flyer-imgAnchorX" value="10" class="cfg-persec-ctl" data-sec="flyer">
                 <input type="hidden" id="cfg-flyer-imgAnchorY" value="10" class="cfg-persec-ctl" data-sec="flyer">
               </div>
-              <hr style="border:none;border-top:1px solid var(--line);margin:2px 0">
+              </div>
               <!-- Price block anchor (top-right) -->
+              <div class="cfg-anchor-group">
               <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);margin-bottom:2px">&#128176; Preis-Position <span style="font-weight:400;font-size:var(--schrift-klein);color:var(--mut)">(Anker: oben rechts)</span></div>
               <div class="anchor-pad">
                 <div class="anchor-cross">
@@ -2195,6 +2220,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                 </div>
                 <input type="hidden" id="cfg-flyer-priceAnchorX" value="10" class="cfg-persec-ctl" data-sec="flyer">
                 <input type="hidden" id="cfg-flyer-priceAnchorY" value="10" class="cfg-persec-ctl" data-sec="flyer">
+              </div>
               </div>
             </div>
           </div>

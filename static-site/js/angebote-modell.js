@@ -689,6 +689,8 @@ window.AngeboteModel = (function () {
   async function weeklyRender(data, pageNumber, scale, itemId, card, light) {
     var R = window.WochenangeboteRenderer, snapshot = weeklySnapshot(data);
     snapshot.config = Object.assign({}, R.CFG_DEFAULTS, snapshot.config);
+    var outputKind = itemId && !card ? 'flyer' : 'plakat';
+    if (snapshot.config[outputKind + '_tagShape'] === 'price-image') await R.loadPriceFont();
     var items = itemId ? data.items.filter(function (it) { return it.id === itemId; }) : data.items.slice(pageNumber * 6, pageNumber * 6 + 6);
     var logo = await image('logo'), logoCanvas = document.createElement('canvas');
     logoCanvas.width = logo.width; logoCanvas.height = logo.height; logoCanvas.getContext('2d').drawImage(logo, 0, 0);
@@ -838,38 +840,7 @@ window.AngeboteModel = (function () {
     return { lines: result, size: size, fits: size >= 12 && result.length * size * 1.18 <= element.h };
   }
   function drawPriceImage(ctx, element, item, layout) {
-    var euros = Math.floor(item.price_cents / 100) + '.', cents = String(item.price_cents % 100).padStart(2, '0');
-    var comparison = item.old_price_cents > item.price_cents;
-    var font = '"' + element.font + '"';
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
-    ctx.font = 'bold 160px ' + font;
-    var euroWidth = ctx.measureText(euros).width;
-    ctx.font = 'bold 82px ' + font;
-    var width = euroWidth + ctx.measureText(cents).width + 20, height = comparison ? 218 : 164;
-    var fit = Math.min(element.w / width, element.h / height, element.font_size / 160);
-    var left = element.align === 'right' ? element.w - width * fit : element.align === 'center' ? (element.w - width * fit) / 2 : 0;
-    ctx.translate(left, (element.h - height * fit) / 2); ctx.scale(fit, fit);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
-    ctx.strokeStyle = layout.price_outline_color || theme.price_outline_color; ctx.lineWidth = 10;
-    ctx.fillStyle = layout.color;
-    ctx.font = 'bold 160px ' + font;
-    ctx.strokeText(euros, 8, 150); ctx.fillText(euros, 8, 150);
-    ctx.font = 'bold 82px ' + font;
-    ctx.strokeText(cents, euroWidth + 8, 84); ctx.fillText(cents, euroWidth + 8, 84);
-    if (comparison) {
-      ctx.fillStyle = layout.price_background;
-      ctx.beginPath(); ctx.moveTo(12, 174); ctx.lineTo(width - 4, 168);
-      ctx.lineTo(width - 12, 212); ctx.lineTo(4, 218); ctx.closePath(); ctx.fill();
-      var old = money(item.old_price_cents) + ' €';
-      ctx.font = 'bold 32px ' + font;
-      var oldSize = Math.min(32, 32 * (width - 36) / ctx.measureText(old).width);
-      ctx.font = 'bold ' + oldSize + 'px ' + font; ctx.textAlign = 'center';
-      ctx.fillStyle = layout.old_price_color || theme.old_price_color;
-      ctx.fillText(old, width / 2, 204);
-      ctx.strokeStyle = layout.price_strike_color || theme.price_strike_color; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(18, 182); ctx.lineTo(width - 18, 210); ctx.stroke();
-    }
-    ctx.restore();
+    window.WochenangeboteRenderer.drawPriceImage(ctx, element, item, layout);
   }
   function decorationFill(ctx, decoration, key, color, width, height) {
     return window.WochenangeboteRenderer.create({}).tplGradFill(ctx, {
@@ -879,6 +850,7 @@ window.AngeboteModel = (function () {
     }, 'bgColor', 0, 0, width, height);
   }
   async function renderElements(data, elements, width, height, background, scale, pageNumber, light, style) {
+    if (templateStyle((style || data.layout).template).priceImage) await window.WochenangeboteRenderer.loadPriceFont();
     var canvas = document.createElement('canvas'), factor = scale || 1;
     canvas.width = Math.round(width * factor); canvas.height = Math.round(height * factor);
     var ctx = canvas.getContext('2d');

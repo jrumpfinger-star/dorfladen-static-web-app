@@ -1178,6 +1178,8 @@
     // Auto-trigger live preview when switching to Plakate & Flyer tab
     if(id==='cfg-plakat'){
       var sec=_activeCfgSection?_activeCfgSection():null;
+      var workspaceNav=document.querySelector('[data-offer-workspaces] .cfg-section-btn.active');
+      if(workspaceNav)cfgSwitchSection(workspaceNav.getAttribute('data-id'));
       if(sec)_scheduleAutoPreview('cfg-subtab',function(){cfgLivePreview(sec);},300);
     }
   };
@@ -1328,6 +1330,7 @@
   var PERSEC_COLOR_MAP=window.WochenangeboteRenderer.PERSEC_COLOR_MAP;
   var cfgForKind=_weeklyRenderer.cfgForKind;
   var _cfgCurrent=null;
+  var _offerHistories={};
   function cfgGet(){
     if(_cfgCurrent){var r2={};for(var k2 in CFG_DEFAULTS)r2[k2]=_cfgCurrent.hasOwnProperty(k2)?_cfgCurrent[k2]:CFG_DEFAULTS[k2];
       if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;return r2;}
@@ -1396,6 +1399,7 @@
           if(dvCfg.tplColors)merged.tplColors=dvCfg.tplColors;
           _cfgCurrent=merged;
           cfgApplyUI(merged);
+          Object.keys(_offerHistories).forEach(function(kind){_offerHistories[kind].reset();});
         }
         // Pre-load HP design config (Wochenplan colors) so previews work without opening Design tab
         var dvHpDef=res.data['hp_design_config_defaults'];
@@ -1443,7 +1447,7 @@
     var pt=document.getElementById('cfg-plakatTemplate');if(pt)pt.value=c.plakatTemplate||'classic-red';
     var ft=document.getElementById('cfg-flyerTemplate');if(ft)ft.value=c.flyerTemplate||'classic-red';
     cfgSyncOfferTplPreviews();
-    cfgSyncAllTplColors();
+    cfgSyncAllTplColors(c);
     // Sync global tagColor from the active flyer template tagColor
     var _ftcEl=document.getElementById('cfg-tpl-flyer-tagColor');
     var _gtcEl=document.getElementById('cfg-tagColor');
@@ -1469,6 +1473,7 @@
         var el=document.getElementById('cfg-'+sec+'-'+sk);if(el)el.value=c[sec+'_'+sk]||'';
       });
     });
+    cfgSyncPriceImageFields();
   }
   function cfgUpdateVal(k,v){
     var el=document.getElementById('cfg-'+k+'-val');if(!el)return;
@@ -1562,7 +1567,13 @@
       var sel=document.getElementById(selId);if(!sel)return;
       var v=(sel.value||'classic-red').toLowerCase();
       var btns=document.querySelectorAll('#'+boxId+' .cms-wp-preview');
-      btns.forEach(function(b){b.classList.toggle('active',((b.getAttribute('data-value')||'').toLowerCase()===v));});
+      btns.forEach(function(b){
+        var active=(b.getAttribute('data-value')||'').toLowerCase()===v;
+        b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));
+      });
+      var picker=document.getElementById(boxId);
+      var label=picker&&picker.parentElement.querySelector('[data-template-label]');
+      if(label)label.textContent=sel.options[sel.selectedIndex].textContent;
     }
     sync('cfg-plakatTemplate','cfg-plakatTemplate-preview');
     sync('cfg-flyerTemplate','cfg-flyerTemplate-preview');
@@ -1582,12 +1593,12 @@
     var c1=c1El.value,c2=c2El.value,dir=dirEl?dirEl.value:'to bottom',pct=pctEl?pctEl.value:50;
     prev.style.background='linear-gradient('+dir+','+c1+' 0%,'+c1+' '+pct+'%,'+c2+' 100%)';
   }
-  function cfgSyncTplColors(kind){
+  function cfgSyncTplColors(kind,cfg){
     // kind = 'plakat' or 'flyer'
     var selId=kind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
     var sel=document.getElementById(selId);if(!sel)return;
     var tpl=sel.value||'classic-red';
-    var cfg=cfgGet();
+    cfg=cfg||cfgGet();
     var colors=getTplColors(tpl,cfg,kind);
     TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
@@ -1604,7 +1615,7 @@
       if(isGrad)cfgTplUpdateGradPreview(kind,gk);
     });
   }
-  function cfgSyncAllTplColors(){cfgSyncTplColors('plakat');cfgSyncTplColors('flyer');}
+  function cfgSyncAllTplColors(cfg){cfgSyncTplColors('plakat',cfg);cfgSyncTplColors('flyer',cfg);}
   function cfgRenderSavingsPreview(){
     var cv=document.getElementById('cfg-savingsPreviewCanvas');if(!cv)return;
     var ctx=cv.getContext('2d');if(!ctx)return;
@@ -1674,7 +1685,52 @@
   };
 
   // ── Section Navigation (Plakat / Flyer / Gemeinsam) ──
+  var _offerWorkspacePreview=null;
+  function cfgOfferHistory(kind){
+    if(_offerHistories[kind])return _offerHistories[kind];
+    var root=document.getElementById('cfg-sec-'+kind);
+    var suffix=kind==='plakat'?'Plakat':'Flyer';
+    var changes=window.AngeboteDesign.history(function(){
+      var config=cfgReadUI(),values={},colors={};
+      Object.keys(config).forEach(function(key){
+        if(key.indexOf(kind+'_')===0||key===kind+'Template'||key==='priceFont'+suffix||key==='savingsScale'+suffix)values[key]=config[key];
+      });
+      Object.keys(config.tplColors).forEach(function(key){if(key.indexOf(kind+':')===0)colors[key]=config.tplColors[key];});
+      return {values:values,colors:colors,presets:cfgPresetsGet()[kind]||[]};
+    },function(state){
+      var config=cfgReadUI();
+      Object.assign(config,state.values);
+      Object.keys(config.tplColors).forEach(function(key){if(key.indexOf(kind+':')===0)delete config.tplColors[key];});
+      Object.assign(config.tplColors,state.colors);
+      cfgApplyUI(config);
+      var presets=cfgPresetsGet();presets[kind]=state.presets;cfgPresetsSave(presets);cfgPresetsRenderAll();
+      _triggerCfgAutoPreview();
+    });
+    ['input','change','click'].forEach(function(type){
+      document.addEventListener(type,function(event){
+        if(root.contains(event.target))changes.record();
+      });
+    });
+    root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))changes.begin();});
+    document.addEventListener('pointerup',changes.end);
+    document.addEventListener('pointercancel',changes.end);
+    _offerHistories[kind]=changes;return changes;
+  }
   window.cfgSwitchSection=function(secId){
+    var modern=document.querySelector('[data-offer-workspaces]');
+    if(modern&&window.AngeboteDesign){
+      var right=modern.querySelector('#cfg-offer-legacy>.cfg-split-right');
+      if(!_offerWorkspacePreview)_offerWorkspacePreview=right.querySelector('.cfg-lp-inner');
+      if(secId==='sec-plakat'||secId==='sec-flyer'){
+        var kind=secId==='sec-flyer'?'flyer':'plakat';
+        window.AngeboteDesign.mountCms(document.getElementById('cfg-'+secId),_offerWorkspacePreview,
+          document.getElementById('cfg-offer-legacy-save'),kind,cfgOfferHistory(kind));
+      }else if(secId==='sec-shared'){
+        right.appendChild(_offerWorkspacePreview);
+        modern.appendChild(document.getElementById('cfg-offer-legacy-save'));
+      }
+      right.hidden=secId!=='sec-shared';
+    }
     ['sec-plakat','sec-flyer','sec-shared','sec-drinks'].forEach(function(s){
       var panel=document.getElementById('cfg-'+s);
       if(panel)panel.style.display=s===secId?'':'none';
@@ -1754,6 +1810,7 @@
   window.cfgRevertUnsaved=function(){
     var saved=cfgGet();
     cfgApplyUI(saved);
+    Object.keys(_offerHistories).forEach(function(kind){_offerHistories[kind].reset();});
     toast('\u00c4nderungen verworfen \u2013 gespeicherter Stand wiederhergestellt','ok');
   };
 
@@ -1775,6 +1832,7 @@
     all[section].push({name:name.trim(),data:_clone(c),ts:Date.now()});
     cfgPresetsSave(all);
     cfgPresetsRenderAll();
+    if(_offerHistories[section])_offerHistories[section].record();
     toast('Vorlage "'+name.trim()+'" gespeichert','ok');
   };
   window.cfgPresetLoad=function(section,idx){
@@ -1868,6 +1926,13 @@
   // ── Live Preview System (Angebote + Wochenplan) ──
   var _livePreviewTimers={};
   var _livePreviewGen=0;
+  function loadOfferPreviewImage(sample){
+    var key=(sample.artikelnummer||'').trim();
+    if(sample.bild_data||!key)return Promise.resolve();
+    return loadImageFromSharePoint(key,key).then(function(b64){
+      if(b64)sample.bild_data=b64;
+    });
+  }
   function cfgLivePreview(target){
     target=(target||'plakat').toLowerCase();
     var container=document.getElementById('cfg-live-preview-'+target);
@@ -1891,20 +1956,30 @@
       var data={von:now.toISOString().slice(0,10),bis:plus6.toISOString().slice(0,10),items:previewItems};
       if(target==='flyer'){
         var sample=data.items[0]||fallback[0];
-        generateEinzelflyer(sample,data,cfg).then(function(canvas){
+        loadOfferPreviewImage(sample).then(function(){
+          if(gen!==_livePreviewGen)return;
+          return generateEinzelflyer(sample,data,cfg);
+        }).then(function(canvas){
+          if(!canvas)return;
           if(gen!==_livePreviewGen)return;
           canvas.toBlob(function(blob){
             if(!blob||gen!==_livePreviewGen)return;
             var url=URL.createObjectURL(blob);
             container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Flyer-Vorschau">';
           },'image/png');
-        }).catch(function(){container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--red)">Fehler</span>';});
+        }).catch(function(error){
+          console.error('Einzelflyer-Vorschau konnte nicht geladen werden',error);
+          if(gen===_livePreviewGen)container.innerHTML='<span role="alert" style="font-size:var(--schrift-klein);color:var(--red)">Einzelflyer-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
+        });
       }else{
         generateAngebotPlakat(data,function(blob){
           if(!blob||gen!==_livePreviewGen)return;
           var url=URL.createObjectURL(blob);
           container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Plakat-Vorschau">';
-        },cfg);
+        },cfg).catch(function(error){
+          console.error('Plakat-Vorschau konnte nicht geladen werden',error);
+          if(gen===_livePreviewGen)container.innerHTML='<span role="alert">Plakat-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
+        });
       }
     });
   }
@@ -1933,8 +2008,16 @@
     return null;
   }
 
+  function cfgSyncPriceImageFields(){
+    ['plakat','flyer'].forEach(function(kind){
+      var shape=document.getElementById('cfg-'+kind+'-tagShape');
+      var colors=document.querySelector('#cfg-sec-'+kind+' .an-price-image-colors');
+      if(colors&&shape)colors.hidden=shape.value!=='price-image';
+    });
+  }
   // Auto-trigger for Angebote design panel
   function _triggerCfgAutoPreview(){
+    cfgSyncPriceImageFields();
     var sec=_activeCfgSection();
     if(!sec)return;
     if(!_autoCheckEnabled('cfg-live-auto-'+sec))return;
@@ -1990,15 +2073,20 @@
   var _hpangViewMode='desktop';
 
   var _hpangCurrent=null, _hpangDocument=null;
+  var _hpangPreviewItems=null, _hpangPreviewError=null, _hpangHistory=null;
   function hpangGet(){
     if(_hpangCurrent){var r2={};for(var k2 in HPANG_DEFAULTS)r2[k2]=_hpangCurrent[k2]!=null?_hpangCurrent[k2]:HPANG_DEFAULTS[k2];return r2;}
     return _clone(HPANG_DEFAULTS);
   }
   async function hpangLoad(){
-    var result=await window.AngeboteModel.request('/api/angebote-verwaltung?view=design');
+    _hpangPreviewItems=null;_hpangPreviewError=null;hpangRenderPreview();
+    var results=await Promise.all([window.AngeboteModel.request('/api/angebote-verwaltung?view=design'),
+      window.AngeboteKunden.homepagePreviewItems(true)]);
+    var result=results[0];_hpangPreviewItems=results[1];
     _hpangDocument=result.design;
     _hpangCurrent=Object.assign({},HPANG_DEFAULTS,result.design.homepage);
     hpangApplyUI(hpangGet());
+    if(_hpangHistory)_hpangHistory.reset();
   }
   async function hpangSave(cfg){
     if(!_hpangDocument)throw window.AngeboteModel.problem('Bitte die Homepage-Gestaltung zuerst erneut öffnen.');
@@ -2036,14 +2124,6 @@
     hpangRenderPreview();
   }
 
-  // Sample data for the live preview
-  var HPANG_SAMPLES=[
-    {produkt:'Bio Alpenmilch 3,5%',details:'1L Packung',preis:1.89,statt:2.49,artnr:'12345'},
-    {produkt:'Bauernbrot Vollkorn',details:'750g',preis:3.49,statt:4.29,artnr:'23456'},
-    {produkt:'Freiland-Eier 10er',details:'Gr\u00f6\u00dfe M',preis:3.29,statt:3.99,artnr:'34567'},
-    {produkt:'Bergk\u00e4se W\u00fcrzig',details:'200g',preis:4.49,statt:5.79,artnr:'45678'}
-  ];
-
   function hpangRenderPreview(){
     var wrap=document.getElementById('hpang-preview-wrap');
     var container=document.getElementById('hpang-preview');
@@ -2051,9 +2131,23 @@
     var c=hpangReadUI(), K=window.AngeboteKunden;
     container.style.maxWidth=_hpangViewMode==='mobile'?'375px':'100%';
     K.applyHomepage(container,c);
+    if(_hpangPreviewError){
+      container.innerHTML='<p class="an-status an-error" role="alert">Die Homepage-Vorschau konnte nicht geladen werden.</p><button type="button" data-hpang-retry>Erneut laden</button>';
+      container.querySelector('[data-hpang-retry]').onclick=function(){window.cmsCfgSubTab('cfg-hpang');};
+      return;
+    }
+    if(!_hpangPreviewItems){container.innerHTML='<p class="an-status" role="status">Homepage-Angebote werden geladen …</p>';return;}
     container.innerHTML='<div class="ang-header" style="padding:12px;font-weight:600">Sonderangebote</div><div class="an-customer-grid">'
-      +HPANG_SAMPLES.map(function(a){return K.homepageCard({name:a.produkt,description:a.details,
-        price_cents:Math.round(a.preis*100),old_price_cents:Math.round(a.statt*100)},'weekly');}).join('')+'</div>';
+      +_hpangPreviewItems.map(function(entry){return K.homepageCard(entry.item,entry.kind);}).join('')
+      +(_hpangPreviewItems.length?'':'<p class="an-status">Aktuell keine Angebote in diesem Zeitraum.</p>')+'</div>';
+    container.querySelectorAll('.an-hp-image').forEach(function(box,index){
+      var item=_hpangPreviewItems[index].item;
+      if(!item.image_id){
+        if(item.barcode||item.article_number)box.dataset.hpLookup=JSON.stringify({barcode:item.barcode,article_number:item.article_number});
+        else box.textContent='Kein Produktbild hinterlegt';
+      }
+    });
+    K.paintHomepage(container).catch(window.AngeboteModel.error);
   }
 
   function adjustColor(hex,amt){
@@ -2081,10 +2175,12 @@
   };
   window.hpangRevert=function(){
     hpangApplyUI(hpangGet());
+    if(_hpangHistory)_hpangHistory.reset();
     toast('\u00c4nderungen verworfen','ok');
   };
   window.hpangReset=function(){
     hpangApplyUI(_clone(HPANG_DEFAULTS));
+    if(_hpangHistory)_hpangHistory.record();
     toast('Standardwerte eingestellt. Zum Übernehmen bitte speichern.','ok');
   };
 
@@ -2099,9 +2195,12 @@
       valEl.textContent=e.target.value+(u[k]||'');
     }
     hpangRenderPreview();
+    if(_hpangHistory)_hpangHistory.record();
   });
   document.addEventListener('change',function(e){
-    if(e.target.classList.contains('hpang-ctl'))hpangRenderPreview();
+    if(e.target.classList.contains('hpang-ctl')){
+      hpangRenderPreview();if(_hpangHistory)_hpangHistory.record();
+    }
   });
 
   // Load on tab switch
@@ -2110,8 +2209,18 @@
   window.cmsCfgSubTab=function(id){
     _origCmsCfgSubTab(id);
     if(id==='cfg-hpang'&&!_hpangLoaded){
+      var root=document.getElementById('cms-cfg-hpang');
+      if(window.AngeboteDesign&&!root.dataset.designer){
+        _hpangHistory=window.AngeboteDesign.history(hpangReadUI,hpangApplyUI);
+        window.AngeboteDesign.mountHomepage(root,_hpangHistory);
+        root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))_hpangHistory.begin();});
+        document.addEventListener('pointerup',_hpangHistory.end);
+        document.addEventListener('pointercancel',_hpangHistory.end);
+      }
       _hpangLoaded=true;
-      hpangLoad().catch(function(e){_hpangLoaded=false;window.AngeboteModel.error(e);});
+      hpangLoad().catch(function(e){
+        _hpangLoaded=false;_hpangPreviewError=e;hpangRenderPreview();console.error('Homepage-Vorschau konnte nicht geladen werden',e);
+      });
     }
   };
 
@@ -6607,7 +6716,9 @@
         if(b64) it.bild_data=b64;
       }).catch(function(){});
     });
-    Promise.all(fetchPromises).then(function(){
+    var fontReady=cfgForKind(cfgOverride||cfgGet(),'plakat').tagShape==='price-image'
+      ?window.WochenangeboteRenderer.loadPriceFont():Promise.resolve();
+    return fontReady.then(function(){return Promise.all(fetchPromises);}).then(function(){
       // Pre-load all images into Image objects for canvas drawing
       var imgPromises=items.map(function(it){return loadItemImage(it.bild_data);});
       return Promise.all(imgPromises);
@@ -6617,6 +6728,10 @@
   }
 
   var drawAngebotPlakat=_weeklyRenderer.drawAngebotPlakat;
+  function reportOfferRenderError(error){
+    console.error('Plakat konnte nicht erzeugt werden',error);
+    toast('Plakat konnte nicht erzeugt werden. Bitte erneut versuchen.','error');
+  }
 
   window.cmsShareAktion=function(aktId){
     var ak=aktionen.find(function(a){return a.aktion_id===aktId;});
@@ -6628,7 +6743,7 @@
     // Generate plakat image + share directly
     generateAngebotPlakat(ak,function(blob){
       shareBlob(blob,'Angebot_'+(ak.von||'aktuell')+'.png',msg);
-    },undefined,{scale:HD_FAKTOR});
+    },undefined,{scale:HD_FAKTOR}).catch(reportOfferRenderError);
   };
 
   var _currentPreviewAktion=null;
@@ -6638,7 +6753,7 @@
     _currentPreviewAktion=ak;
     generateAngebotPlakat(ak,function(blob){
       showSharePreview(blob,'Angebot_'+(ak.von||'aktuell')+'.png',{showEinzelflyer:true,waage:'aktion'});
-    },undefined,{scale:HD_FAKTOR});
+    },undefined,{scale:HD_FAKTOR}).catch(reportOfferRenderError);
   };
 
   // ══════════════════════════════════════════════════════════════
@@ -7100,12 +7215,7 @@
       };
       var sample=data.items[0]||fallback[0];
       if(target==='flyer'){
-        var p=Promise.resolve();
-        if(!sample.bild_data){
-          var key=(sample.artikelnummer||'').trim();
-          if(key) p=loadImageFromSharePoint(key,key).then(function(b64){if(b64)sample.bild_data=b64;});
-        }
-        p.then(function(){
+        loadOfferPreviewImage(sample).then(function(){
           return generateEinzelflyer(sample,data,cfg).then(function(canvas){
             canvas.toBlob(function(blob){
               if(!blob){toast('Vorschau konnte nicht erzeugt werden','error');return;}
@@ -7117,7 +7227,7 @@
       }
       generateAngebotPlakat(data,function(blob){
         showSharePreview(blob,'Template-Vorschau-Plakat.png');
-      },cfg);
+      },cfg).catch(reportOfferRenderError);
     });
   };
 
@@ -7373,6 +7483,7 @@
         if(preset){
           var ts=document.getElementById('cfg-'+sec+'-tagShape');if(ts)ts.value=preset.tagShape;
           var tr=document.getElementById('cfg-'+sec+'-tagRadius');if(tr){tr.value=preset.tagRadius;cfgUpdateVal(sec+'-tagRadius',preset.tagRadius);}
+          cfgSyncPriceImageFields();
         }
       }
     });
@@ -7394,7 +7505,7 @@
   // Close autocomplete dropdowns on outside click
   document.addEventListener('click',function(e){
     if(!e.target.closest('.cms-art-wrap') && !e.target.closest('.cms-art-dd')){
-      document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
+      document.querySelectorAll('.cms-art-dd.open:not([popover])').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
     }
   },true);
 
@@ -7402,7 +7513,7 @@
   // But ignore scroll events originating from inside the dropdown itself
   document.addEventListener('scroll',function(e){
     if(e.target && (e.target.classList && e.target.classList.contains('cms-art-dd') || e.target.closest && e.target.closest('.cms-art-dd'))) return;
-    document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
+    document.querySelectorAll('.cms-art-dd.open:not([popover])').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
   },true);
 
   // --- Force German locale for date/time pickers ---
