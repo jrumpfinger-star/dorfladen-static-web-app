@@ -64,6 +64,11 @@ Sonderaktionen behalten ihre ursprüngliche Sechser-Erfassung und CMS-Vorlagen.
 
 ## Vorschau und Gestaltung
 
+Auch in der **Vorschau einer gespeicherten Aktion** stehen die Werkzeuge auf
+Desktop und Tablet links und das Motiv rechts. Das gilt für **Homepage / Kiosk**,
+**Einzelflyer**, **Sammelflyer** und **Waage**, beim Einstieg über CMS, Kiosk
+oder Angebotsseite. Auf dem Handy steht das Motiv weiterhin über den Werkzeugen.
+
 ### Gemeinsame Designer-Arbeitsfläche
 
 Unter **Design → Plakate & Flyer** verwenden **Plakat**, **Einzelflyer** und

@@ -742,14 +742,14 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', asy
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F19-02: Werkzeuge stehen neben bzw. unter dem fest sichtbaren Motiv', async ({ page }) => {
+test('TC-F19-02: Werkzeuge stehen links bzw. unter dem fest sichtbaren Motiv', async ({ page }) => {
   await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
   const modal = page.locator('.an-cms-preview-modal'), canvas = page.locator('.an-cms-canvas'), side = page.locator('.an-cms-side');
   const view = page.viewportSize(), dialogBox = await modal.boundingBox();
   const canvasBox = await canvas.boundingBox(), sideBox = await side.boundingBox();
-  if (dialogBox.width >= 640) expect(canvasBox.x + canvasBox.width).toBeLessThanOrEqual(sideBox.x + 2);
+  if (dialogBox.width >= 640) expect(sideBox.x + sideBox.width).toBeLessThanOrEqual(canvasBox.x + 2);
   else expect(canvasBox.y + canvasBox.height).toBeLessThanOrEqual(sideBox.y + 2);
   if (dialogBox.width >= 1000) expect(canvasBox.width).toBeGreaterThanOrEqual((canvasBox.width + sideBox.width) * .49);
   else expect((await page.locator('#an-stage').boundingBox()).width).toBeGreaterThanOrEqual(view.width * (dialogBox.width >= 640 ? .35 : .5));
@@ -818,9 +818,9 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   const surface = page.locator('.an-weekly-surface');
   await expect(surface.locator('canvas')).toBeVisible();
   const stageBox = await surface.locator('.an-stage').boundingBox(), toolsBox = await surface.locator('.an-direct-tools').boundingBox();
-  const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 1000;
-  if (stacked) expect(stageBox.y + stageBox.height).toBeLessThanOrEqual(toolsBox.y + 2);
-  else expect(stageBox.x + stageBox.width).toBeLessThanOrEqual(toolsBox.x + 2);
+  const phone = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 640;
+  if (phone) expect(stageBox.y + stageBox.height).toBeLessThanOrEqual(toolsBox.y + 2);
+  else expect(toolsBox.x + toolsBox.width).toBeLessThanOrEqual(stageBox.x + 2);
   const turn = await middle(surface.locator('[data-preview-rotate]')), center = await middle(surface.locator('.an-selected'));
   await drag(page, turn, { x: center.x + 80, y: center.y });
   await saveDesign(page);
@@ -834,6 +834,45 @@ const SURFACES = [['angebote', '/angebote.html'], ['kiosk', '/kiosk.html'], ['cm
 async function openSurface(page, path) {
   await page.goto(BASE + path);
   if (path.startsWith('/kiosk')) await page.evaluate(() => window.K.switchTab('angebote'));
+}
+
+for (const [surface, path] of SURFACES) {
+  test(`TC-F45-01/02: alle Aktionsvorschauen rechts und ohne Schreibvorgang (${surface})`, async ({ page }) => {
+    const state = await setup(page);
+    await openSurface(page, path);
+    for (const kind of ['weekly', 'drinks']) {
+      await openPreview(page, kind, 2);
+      const modal = page.locator('.an-cms-preview-modal');
+      const stage = page.locator(kind === 'weekly' ? '.an-weekly-surface .an-stage' : '#an-stage');
+      const writes = state.writes.length;
+      for (const target of ['card', 'single', 'sheet', 'scale']) {
+        await page.locator('[data-layout-target=' + target + ']').click();
+        await showTab(page, 'Element');
+        await expect(stage.locator('canvas')).toBeVisible();
+        await modal.evaluate((node) => { node.scrollTop = 0; });
+        const picture = await stage.boundingBox(), dialog = await modal.boundingBox();
+        const tools = kind === 'weekly' ? page.locator('.an-weekly-surface .an-direct-tools') : page.locator('.an-cms-side');
+        const fields = await tools.boundingBox();
+        if (dialog.width >= 640) {
+          expect(fields.x + fields.width).toBeLessThanOrEqual(picture.x + 2);
+          const styles = page.locator('.an-cms-style-options');
+          if (await styles.isVisible()) {
+            const box = await styles.boundingBox();
+            expect(box.x + box.width).toBeLessThanOrEqual(picture.x + 2);
+          }
+        } else expect(picture.y + picture.height).toBeLessThanOrEqual(fields.y + 2);
+        await expect(page.locator('[data-layout-target]')).toHaveCount(4);
+        for (const tab of await page.locator('[data-layout-target]').all()) await expect(tab).toBeVisible();
+        expect(await modal.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
+        expect(state.writes).toHaveLength(writes);
+      }
+      await page.locator('[data-layout-target=sheet]').click();
+      await page.screenshot({ path: test.info().outputPath('aktionsvorschau-rechts-' + kind + '.png') });
+      await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+      await expect(modal).toHaveCount(0);
+    }
+    expect(state.errors).toEqual([]);
+  });
 }
 
 for (const [surface, path] of SURFACES) {
@@ -996,9 +1035,9 @@ for (const kind of ['weekly', 'drinks']) {
     if (dialog.width >= 1000) {
       await expect(panel).toBeVisible();
       const s = await stage.boundingBox(), p = await panel.boundingBox();
-      expect(s.x + s.width).toBeLessThanOrEqual(p.x + 2);
+      expect(p.x + p.width).toBeLessThanOrEqual(s.x + 2);
       const previewWidth = kind === 'weekly'
-        ? await page.locator('#an-inspector').evaluate((node) => parseFloat(getComputedStyle(node).gridTemplateColumns))
+        ? await page.locator('#an-inspector').evaluate((node) => parseFloat(getComputedStyle(node).gridTemplateColumns.split(' ').at(-1)))
         : await page.locator('.an-cms-canvas').evaluate((node) => node.clientWidth);
       expect(previewWidth).toBeGreaterThanOrEqual(dialog.width * .4);
       await expect(page.locator('.an-cms-tabbar')).toBeHidden();

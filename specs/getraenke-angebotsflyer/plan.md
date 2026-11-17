@@ -10,6 +10,15 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F45: Die bestehenden CSS-Raster des Aktionsvorschaudialogs spiegeln:
+bei freier Gestaltung Element-/Artikelbereich und Gestaltung links,
+Motiv rechts; bei Original-Wochenvorlagen zusätzlich das innere
+Inspektorraster spiegeln. Explizite Spaltenzuordnungen für Desktop und
+schmale Tablets konsistent ändern, mobile Vertikalanordnung beibehalten.
+DOM, Vorschaucontroller, Renderer und Speicherwege bleiben unverändert.
+Bestehende Geometrieverträge auf die rechte Bildspalte aktualisieren;
+echte Motiv-/Werkzeugrechtecke über alle Ausgabeziele und Einstiege messen.
+
 F44: Plakat-/Einzelflyervorschau erhält den vorhandenen Vorschaueditor mit
 echten `_elMeta`-Geometrien des Originalrenderers statt eines statischen
 PNG-Bildes. Ausgabeweite Inline-Anpassungen werden als zwei getrennte

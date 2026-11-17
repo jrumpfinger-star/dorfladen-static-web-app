@@ -5,6 +5,7 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 
 | ID | Arbeit | Abhängigkeit | Testfälle |
 |---|---|---|---|
+| GF85 | Aktionsvorschau-Raster für alle Ausgabeziele rechts anordnen; Desktop-/Tabletzuordnungen und mobilen Bestand mit tatsächlicher Geometrie, Werkzeug- und Speicherregression prüfen; Bedienhilfe aktualisieren | GF83 | TC-F45-01..02, TC-F19-01..04, TC-F31-01..02 |
 | GF82 | Feste Designnavigation für alle Reiter, bildreine rechte Vorschau, linke Werkzeuge mit eigenem Aktionsbereich, Einpassen/Zoom/Vollbild und kompakte erreichbare Infohilfen integrieren | GF81 | TC-F43-01..04 |
 | GF84 | Direkten Vorschaueditor für Plakat/Einzelflyer mit echten Renderer-Geometrien, getrennten Standardanpassungen und unverändertem explizitem Speichern anbinden | GF82 | TC-F44-01..03 |
 | GF83 | Vieransichten-Geometrie und echte Werkzeug-/Speicherregression abnehmen, Generator/Parität und Bedienhilfe prüfen | GF82, GF84 | TC-F43-01..04, TC-F44-01..03, TC-F38-02, TC-F39-01..04, TC-F40-01..03 |

@@ -1168,6 +1168,25 @@ Vorhandene artikelbezogene Sonderanpassungen bleiben erhalten.
 - TC-F44-03: Originalrenderer und CMS-Snapshot übernehmen Standardanpassungen
   mit identischer Wirkung; Altbestand ohne Anpassungen bleibt unverändert.
 
+## F45: Rechte Vorschau auch im Aktionsdialog
+
+**F45:** Der Vorschaudialog gespeicherter Wochen- und Getränkeaktionen
+ordnet das Motiv auf Desktop und beiden Tabletansichten rechts an.
+Element-, Artikel- und Gestaltungseinstellungen stehen links davon.
+Dies gilt für alle Ausgabeziele **Homepage / Kiosk**, **Einzelflyer**,
+**Sammelflyer** und **Waage**, unabhängig vom Einstieg über CMS, Kiosk
+oder Angebotsseite. Auf dem Handy bleibt das Motiv über den Werkzeugen.
+Vorhandene Werkzeugreiter, Elementbedienung, Scrollbarkeit, Speichern,
+Undo/Redo und getrennte Ausgabeanpassungen bleiben unverändert.
+Keine Änderungen an Renderer, Daten oder APIs.
+
+- TC-F45-01: Für Wochen- und Getränkeaktionen stehen sichtbare
+  Werkzeuggruppen auf Desktop/Tablet links vom tatsächlichen Motiv,
+  mobil darunter; alle vier Ausgabeziele und drei Einstiege prüfen.
+- TC-F45-02: Kein horizontaler Überlauf, vollständige Zielauswahl und
+  unveränderte Schreibanzahl beim Reiterwechsel auf vier Ansichten.
+  Vorhandene Zieh-, Dreh-, Farb-, Werkzeugreiter- und Speicherfälle bestehen.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800
