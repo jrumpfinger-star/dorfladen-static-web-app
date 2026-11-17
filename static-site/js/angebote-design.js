@@ -739,53 +739,81 @@ window.AngeboteDesign = (function () {
   function compactDesignNavigation(panel) {
     var header = panel.querySelector('.an-design-header'), toolbar = header.firstElementChild, nav = header.children[1];
     nav.classList.add('an-design-nav');
-    var location = document.createElement('label'), select = document.createElement('select'), destinations = new Map();
-    location.className = 'an-design-location'; select.setAttribute('aria-label', 'Designbereich');
-    location.appendChild(select); toolbar.insertBefore(location, toolbar.children[1]);
+    var location = document.createElement('div'), button = document.createElement('button'), popup = document.createElement('div'), destinations = new Map();
+    location.className = 'an-design-location';
+    button.type = 'button'; button.className = 'an-design-location-btn';
+    button.setAttribute('aria-haspopup', 'listbox');
+    popup.className = 'an-action-popover an-design-locations'; popup.popover = 'auto'; popup.id = 'an-design-locations-' + (++helpId);
+    popup.setAttribute('role', 'listbox'); popup.setAttribute('aria-label', 'Designbereich');
+    button.setAttribute('popovertarget', popup.id);
+    button.innerHTML = '<span></span><svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+    button.querySelector('span').textContent = 'Designbereich';
+    location.appendChild(button); toolbar.insertBefore(location, toolbar.children[1]); header.appendChild(popup);
     var observer = new MutationObserver(sync);
     observer.observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
     nav.querySelectorAll('[data-id]').forEach(function (top) {
       var section = panel.querySelector('#cms-' + top.dataset.id), subnav = section && section.querySelector(':scope>.cfg-section-nav');
-      var group = document.createElement('optgroup');
-      group.label = top.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim();
-      select.appendChild(group);
+      var group = document.createElement('div');
+      group.className = 'an-loc-group';
+      group.setAttribute('role', 'group');
+      var groupLabel = top.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+      group.setAttribute('aria-label', groupLabel);
+      group.textContent = groupLabel;
+      popup.appendChild(group);
       if (subnav) observer.observe(subnav, { subtree: true, attributes: true, attributeFilter: ['class'] });
       var children = subnav ? Array.from(subnav.querySelectorAll('button[data-id]')) : [null];
       children.forEach(function (sub) {
-        var option = document.createElement('option'), key = top.dataset.id + (sub ? '/' + sub.dataset.id : '');
-        option.value = key;
-        option.textContent = 'Vorgabe: ' + (sub ? sub.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim() : group.label);
-        group.appendChild(option); destinations.set(key, { top: top, sub: sub });
+        var item = document.createElement('button'), key = top.dataset.id + (sub ? '/' + sub.dataset.id : '');
+        item.type = 'button'; item.className = 'an-loc-item'; item.dataset.value = key;
+        item.setAttribute('role', 'option');
+        item.textContent = 'Vorgabe: ' + (sub ? sub.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim() : group.textContent);
+        var check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        check.setAttribute('viewBox', '0 0 24 24'); check.setAttribute('width', '14'); check.setAttribute('height', '14');
+        check.setAttribute('fill', 'none'); check.setAttribute('stroke', 'currentColor'); check.setAttribute('stroke-width', '3');
+        check.setAttribute('aria-hidden', 'true'); check.style.visibility = 'hidden'; check.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
+        item.appendChild(check);
+        var entry = { top: top, sub: sub, item: item, check: check };
+        item.onclick = function () {
+          popup.hidePopover(); entry.top.click(); if (entry.sub) entry.sub.click();
+        };
+        popup.appendChild(item); destinations.set(key, entry);
       });
     });
     function sync() {
+      var current = null;
       destinations.forEach(function (entry, key) {
-        if (entry.top.classList.contains('active') && (!entry.sub || entry.sub.classList.contains('active'))) select.value = key;
+        var active = entry.top.classList.contains('active') && (!entry.sub || entry.sub.classList.contains('active'));
+        entry.item.classList.toggle('active', active);
+        entry.item.setAttribute('aria-selected', String(active));
+        entry.check.style.visibility = active ? 'visible' : 'hidden';
+        if (active) current = entry.item.textContent;
       });
+      if (current) button.querySelector('span').textContent = current;
     }
-    select.onchange = function () {
-      var entry = destinations.get(select.value);
-      entry.top.click(); if (entry.sub) entry.sub.click();
-    };
-    var button = document.createElement('button'), popup = document.createElement('div');
-    button.type = 'button'; button.className = 'an-icon-action an-design-options-toggle'; iconButton(button, 'more');
-    button.setAttribute('aria-label', 'Designoptionen und Hilfe'); button.title = 'Designoptionen und Hilfe';
-    popup.className = 'an-action-popover an-design-options'; popup.popover = 'auto'; popup.id = 'an-design-options-' + (++helpId);
-    button.setAttribute('popovertarget', popup.id);
+    popup.addEventListener('toggle', function () {
+      var open = popup.matches(':popover-open');
+      button.setAttribute('aria-expanded', String(open));
+      if (open) placePopover(button, popup);
+    });
+    var optionsButton = document.createElement('button'), optionsPopup = document.createElement('div');
+    optionsButton.type = 'button'; optionsButton.className = 'an-icon-action an-design-options-toggle'; iconButton(optionsButton, 'more');
+    optionsButton.setAttribute('aria-label', 'Designoptionen und Hilfe'); optionsButton.title = 'Designoptionen und Hilfe';
+    optionsPopup.className = 'an-action-popover an-design-options'; optionsPopup.popover = 'auto'; optionsPopup.id = 'an-design-options-' + (++helpId);
+    optionsButton.setAttribute('popovertarget', optionsPopup.id);
     var compact = toolbar.querySelector('.cms-switch'), generalHelp = toolbar.querySelector('.an-header-help');
-    if (compact) popup.appendChild(compact);
+    if (compact) optionsPopup.appendChild(compact);
     if (generalHelp) {
       generalHelp.querySelectorAll('.an-help-button').forEach(function (help) { help.textContent = help.getAttribute('aria-label').replace(/^Hinweis:\s*/, ''); });
-      popup.appendChild(generalHelp);
+      optionsPopup.appendChild(generalHelp);
     }
     var oldHelp = toolbar.querySelector('h3>span');
     if (oldHelp) {
       var help = document.createElement('button'); help.type = 'button'; help.textContent = 'Hilfe zum Designeditor';
-      help.onclick = function () { popup.hidePopover(); oldHelp.click(); };
-      oldHelp.hidden = true; popup.appendChild(help);
+      help.onclick = function () { optionsPopup.hidePopover(); oldHelp.click(); };
+      oldHelp.hidden = true; optionsPopup.appendChild(help);
     }
-    toolbar.insertBefore(button, toolbar.querySelector('[data-workspace-fullscreen]')); header.appendChild(popup);
-    popup.addEventListener('toggle', function () { if (popup.matches(':popover-open')) placePopover(button, popup); });
+    toolbar.insertBefore(optionsButton, toolbar.querySelector('[data-workspace-fullscreen]')); header.appendChild(optionsPopup);
+    optionsPopup.addEventListener('toggle', function () { if (optionsPopup.matches(':popover-open')) placePopover(optionsButton, optionsPopup); });
     var size = new ResizeObserver(function () { if (panel.clientWidth) panel.classList.toggle('an-design-narrow', panel.clientWidth < 612); });
     size.observe(panel); sync();
   }

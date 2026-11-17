@@ -214,10 +214,12 @@ async function cms(page, tab = 'cfg&flyer=drinks') {
 }
 
 async function designTab(page, id) {
-  const select = page.getByRole('combobox', { name: 'Designbereich', exact: true });
-  if (await select.isVisible()) {
-    const option = select.locator('option[value="' + id + '"],option[value$="/' + id + '"],option[value^="' + id + '/"]').first();
-    await select.selectOption(await option.getAttribute('value'));
+  const trigger = page.locator('.an-design-location-btn');
+  if (await trigger.isVisible()) {
+    await trigger.click();
+    const popup = page.locator('.an-design-locations').locator('visible=true').first();
+    const items = popup.locator('.an-loc-item[data-value="' + id + '"], [data-value$="/' + id + '"], [data-value^="' + id + '/"]');
+    await items.first().click();
   } else await page.locator('[data-id="' + id + '"]').click();
 }
 
@@ -2321,6 +2323,38 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F57-01: Designvorgaben erreichen die Live-Vorschau (Marker-Typ, Footer-Farbe)', async ({ page }) => {
+  test.setTimeout(180000);
+  const state = await setup(page);
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await expect(root).toBeVisible();
+  const canvas = page.locator('.an-designer-preview canvas:visible').first();
+  await expect(canvas).toBeVisible({ timeout: 20000 });
+  const hash = () => page.locator('.an-designer-preview canvas:visible').first().evaluate((c) => { const d = c.toDataURL(); let h = 0; for (let i = 0; i < d.length; i += 13) h = (h * 31 + d.charCodeAt(i)) | 0; return d.length + ':' + h; });
+  const setValue = async (scope, sel, value) => scope.locator(sel).evaluate((n, v) => {
+    if (n.type === 'checkbox') n.checked = !!v;
+    else n.value = String(v);
+    n.dispatchEvent(new Event('input', { bubbles: true }));
+    n.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+
+  // Marker-Typ (Gemeinsame Einstellungen) muss die Plakat-Vorschau sofort verändern
+  await expect.poll(hash, { timeout: 20000 }).not.toMatch(/^0:/);
+  const beforeMarker = await hash();
+  await setValue(page.locator('#cfg-sec-shared'), '#cfg-savingsMarkerType', 'heart');
+  await expect.poll(hash, { timeout: 15000 }).not.toBe(beforeMarker);
+
+  // Footer-Farbe wirkt in den Mag-Vorlagen (dort wird eine Fußzeile gezeichnet)
+  await setValue(root, '#cfg-plakatTemplate', 'modern-magazine');
+  await expect.poll(hash, { timeout: 20000 }).not.toMatch(/^0:/);
+  const beforeFooter = await hash();
+  await setValue(root, '#cfg-plakat-decoFooterColor', '#00ff88');
+  await expect.poll(hash, { timeout: 15000 }).not.toBe(beforeFooter);
+});
+
 test('TC-F43-01/02/03 TC-F46-01/02/04: bildreine Vorschau, mindestens halbe Feldfläche und Splitter in allen Designern', async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   await seed(page, state, { count: 8, publish: true });
@@ -2499,7 +2533,7 @@ test('TC-F52-05: Mausaktionen sind tatsächlich 32 px hoch, Touchziele bleiben e
     root.locator('[data-design-save]'), root.locator('[data-design-history=undo]'),
     root.locator('[data-more-actions]'), root.locator('[data-object-properties=text]'),
     root.locator('.an-template-picker>summary'), root.locator('.an-density-choice .an-choice').first(),
-    root.locator('.an-designer-tool-select'), page.getByRole('combobox', { name: 'Designbereich', exact: true }),
+    root.locator('.an-designer-tool-select'), page.locator('.an-design-location-btn').first(),
     page.getByRole('button', { name: 'Designoptionen und Hilfe', exact: true }),
     page.locator('.an-design-header [data-workspace-fullscreen]'),
   ];

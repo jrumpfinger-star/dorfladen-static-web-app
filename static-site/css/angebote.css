@@ -902,3 +902,71 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-quality h3{font-size:14px;margin:8px 0 2px}
 .an-transfer fieldset{display:flex;flex-wrap:wrap;gap:4px 16px;margin:6px 0;border:1px solid var(--an-line,#d6ded8);border-radius:6px}
 .an-transfer .an-check{display:inline-flex;align-items:center;gap:6px;min-height:var(--an-button-height,44px)}
+
+/* ════════════════════════════════════════════════════════════════════
+   Designer-Einheitslook (Entwurf: designer-seiten-entwurf.html)
+   Ein Typo-Maß, eine Swatch-Optik, ein Akzentgrün – für alle Designer
+   (Plakat, Einzelflyer, Getränkeflyer, Homepage, Wochenplan) und Dialoge.
+   Überschreibt konkurrierende Inline-Styles aus den CMS-Karten.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Kopf: Designbereich als Pille ── */
+.an-design-location{min-width:0}
+.an-design-location-btn{display:inline-flex;align-items:center;gap:7px;max-width:100%;min-width:0;height:32px;min-height:32px;
+  padding:0 11px;border:1px solid var(--an-btn-border,#6b7f72);border-radius:999px;background:var(--an-surface,#fff);
+  color:var(--an-ink,#24362d);font-size:12px;font-weight:600;cursor:pointer;box-shadow:none}
+.an-design-location-btn:hover{background-color:var(--an-btn-hover,#dfeadf)}
+.an-design-location-btn>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-design-location-btn>svg{flex:none;color:var(--an-muted,#59695f)}
+.an-design-location-btn:focus-visible{outline:3px solid #c69b24;outline-offset:2px}
+.an-design-locations{width:min(340px,calc(100vw - 24px));max-height:min(70dvh,480px);overflow:auto;padding:6px;
+  border:1px solid var(--an-line,#d8dfd7);border-radius:12px;background:var(--an-surface,#fff);
+  box-shadow:0 12px 40px rgba(0,0,0,.18);font-family:inherit}
+.an-design-locations .an-loc-group{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--an-muted,#59695f);padding:10px 10px 4px}
+.an-design-locations .an-loc-item{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;
+  min-height:36px;text-align:left;font-size:13px;font-weight:400;color:var(--an-ink,#24362d);
+  background:none;border:0;border-radius:8px;padding:8px 10px;cursor:pointer;box-shadow:none}
+.an-design-locations .an-loc-item:hover{background:var(--an-btn-bg,#eef3ee)}
+.an-design-locations .an-loc-item.active{background:var(--an-btn-bg,#eef3ee);color:var(--an-green,#234c38);font-weight:600}
+.an-design-locations .an-loc-item svg{flex:none;color:var(--an-green,#234c38)}
+.an-design-header :is(.an-design-options-toggle,[data-workspace-fullscreen]){border-radius:999px}
+.an-design-header h3{font-size:15px}
+
+/* ── Reiter als Pillen ── */
+.an-designer-tabs button,.an-tabs.an-preview-tabs button{border-radius:999px;font-weight:600}
+.an-designer-tabs button[aria-selected=true]{background:var(--an-green,#234c38);border-color:var(--an-green,#234c38);color:#fff}
+
+/* ── Sektionen: ruhige Überschriften statt schwere Karten ── */
+.an-designer-settings fieldset{border-radius:12px}
+.an-designer-settings legend{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--an-muted,#59695f)}
+.an-designer-settings label{font-weight:400!important;color:var(--an-ink,#24362d)!important}
+.an-designer-settings label>span,.an-designer-settings .an-field>span{font-weight:400}
+
+/* ── Farb-Swatches: eine Optik überall ── */
+.an-designer-settings input[type=color],.an-object-grid input[type=color]{width:32px!important;height:32px!important;
+  padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important;flex:none}
+.an-designer-settings input[type=checkbox],.an-object-grid input[type=checkbox]{width:18px;height:18px;accent-color:var(--an-green,#234c38);flex:none}
+
+/* ── Slider: Wert rechtsbündig, ruhige Labels ── */
+.an-designer-settings input[type=range]{accent-color:var(--an-green,#234c38)}
+
+/* ── Buttons in Panels: kompakte Pillen, keine Riesenflächen ── */
+.an-designer-settings .cms-btn,.an-object-grid .cms-btn,.an-designer-settings .an-actions button{min-height:36px;min-width:36px;
+  padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;width:auto;flex:0 0 auto;justify-self:start;align-self:center;white-space:nowrap}
+.an-designer-settings .cms-switch{font-size:13px;font-weight:400}
+.an-designer-settings .cms-switch input[type=checkbox]{accent-color:var(--an-green,#234c38)}
+
+/* ── Objekt-Dialoge: normale Proportionen ── */
+.an-object-dialog{border-radius:14px;background:var(--an-surface,#fff)}
+.an-object-dialog header{padding:10px 14px}
+.an-object-dialog h2{font-size:15px}
+.an-object-dialog footer{padding:10px 14px;background:var(--an-bg,#f7f5ed)}
+.an-object-dialog footer button{flex:0 0 auto;min-height:40px;padding:8px 16px;border-radius:8px;font-size:13px}
+.an-object-dialog .an-object-preview{margin:0 0 4px}
+.an-object-dialog .an-object-preview figure{margin:0}
+@media(pointer:coarse){
+  .an-designer-settings .cms-btn,.an-object-dialog footer button{min-height:44px}
+  .an-design-location-btn{height:44px;min-height:44px}
+  .an-design-locations .an-loc-item{min-height:44px}
+}

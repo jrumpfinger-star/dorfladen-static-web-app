@@ -213,7 +213,7 @@ window.WochenangeboteRenderer = (function () {
       cardRadius:kind==='flyer'?32:28,
       textColor:colors.textColor,
       detailsColor:colors.detailsColor,
-      footerColor:'#1a1a1a',
+      footerColor:cfg.decoFooterColor||'#1a1a1a',
       tagColor:colors.tagColor,
       imgBg:colors.imgBg||colors.cardBg,
       bgColor_grad:colors.bgColor_grad,bgColor_c2:colors.bgColor_c2,bgColor_dir:colors.bgColor_dir,bgColor_pct:colors.bgColor_pct,
@@ -898,7 +898,7 @@ window.WochenangeboteRenderer = (function () {
           }
 
           // Footer
-          ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
+          ctx.fillStyle=theme.footerColor||theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
           ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
           ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
           ctx.textAlign='left';
@@ -1036,7 +1036,7 @@ window.WochenangeboteRenderer = (function () {
         drawCmsPriceImage(ctx,item,cfg,tagCX-tagW/2,tagCY-tagH/2,tagW,tagH,artOv.priceRot);
         _elMeta.push({id:'price',label:'Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
         var imageSavings=getSavingsPercent(item);
-        if(imageSavings)drawSavingsBurst(ctx,tagCX-tagW/2,tagCY-tagH/2-14,36,22,'-'+imageSavings+'%','flyer');
+        if(imageSavings)drawSavingsBurst(ctx,tagCX-tagW/2,tagCY-tagH/2-14,36,22,'-'+imageSavings+'%','flyer',cfg);
       }else if(item.preis){
         var savingsPct=getSavingsPercent(item);
         var preisStr=Number(item.preis).toFixed(2).split('.');
@@ -1088,7 +1088,7 @@ window.WochenangeboteRenderer = (function () {
           // Savings burst: top-left of the price tag, clamped inside image area
           var burstX=tagCX-tagW/2+8;
           var burstY=Math.max(tagCY-tagH/2-Math.round(14*tagSc), imgAreaTop+Math.round(16*tagSc));
-          drawSavingsBurst(ctx,burstX,burstY,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer');
+          drawSavingsBurst(ctx,burstX,burstY,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer',cfg);
         }
       }
         ctx.textAlign='left';
@@ -1376,7 +1376,7 @@ window.WochenangeboteRenderer = (function () {
       }
 
       // Footer
-      ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
+      ctx.fillStyle=theme.footerColor||theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
       ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
       ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
       ctx.textAlign='left';
@@ -1583,7 +1583,7 @@ window.WochenangeboteRenderer = (function () {
         }
         }
         if(cardSavingsPct){
-          drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,Math.round(24*tagSc),Math.round(15*tagSc),'-'+cardSavingsPct+'%','plakat');
+          drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,Math.round(24*tagSc),Math.round(15*tagSc),'-'+cardSavingsPct+'%','plakat',cfg);
         }
       }
       // Einkaufstaschen-Deko unten rechts
