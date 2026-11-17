@@ -797,7 +797,9 @@ window.AngeboteDesign = (function () {
       frame.appendChild(paper); preview.appendChild(frame);
       var toolbar = document.createElement('div'); toolbar.className = 'an-picture-controls';
       toolbar.innerHTML = '<label class="an-field"><span>Vorschaugröße</span><select data-picture-zoom aria-label="Vorschaugröße">'
-        + '<option value="fit">Einpassen</option><option value="1">100 %</option><option value="1.5">150 %</option><option value="2">200 %</option></select></label>'
+        + '<option value="fit">Einpassen</option><option value="0.25">25 %</option><option value="0.5">50 %</option><option value="0.75">75 %</option>'
+        + '<option value="1">100 %</option><option value="1.25">125 %</option><option value="1.5">150 %</option><option value="2">200 %</option>'
+        + '<option value="2.5">250 %</option><option value="3">300 %</option><option value="4">400 %</option></select></label>'
         + '<div class="an-actions"><button type="button" data-picture-fit>Einpassen</button><button type="button" data-picture-fullscreen>Vollbild</button></div>';
       var zoom = toolbar.querySelector('select');
       var zoombar = document.createElement('div'); zoombar.className = 'an-zoombar';
@@ -824,7 +826,9 @@ window.AngeboteDesign = (function () {
         } else {
           for (var n = steps.length - 1; n >= 0; n--) if (steps[n] < scale - .005) { value = steps[n]; break; }
         }
-        if (value) { zoom.value = String(value); zoom.onchange(); }
+        if (value && Array.prototype.some.call(zoom.options, function (option) { return option.value === String(value); })) {
+          zoom.value = String(value); zoom.onchange();
+        }
       }
       zoombar.querySelector('[data-zoom-in]').onclick = function () { step(1); };
       zoombar.querySelector('[data-zoom-out]').onclick = function () { step(-1); };
@@ -833,7 +837,7 @@ window.AngeboteDesign = (function () {
         if (!preview.clientWidth || !preview.clientHeight) return;
         var width = paper.offsetWidth, height = paper.offsetHeight;
         if (!width || !height) return;
-        var scale = zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - fitPad()) / height, 1) : Number(zoom.value);
+        var scale = zoom.value === 'fit' || !zoom.value ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - fitPad()) / height, 1) : Number(zoom.value);
         paper.style.transform = 'scale(' + scale + ')';
         paper.style.setProperty('--an-picture-scale', scale);
         frame.style.width = width * scale + 'px'; frame.style.height = height * scale + 'px';
