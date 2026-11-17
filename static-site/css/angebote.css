@@ -944,10 +944,27 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-designer-settings label>span,.an-designer-settings .an-field>span{font-weight:400}
 
 /* ── Farb-Swatches: eine Optik überall ──
-   Zwei Feldtypen in den CMS-Karten, getrennt behandelt:
-   a) Label-Zeilen („Karte", „Titel", …): Text links, Swatch 32 px rechts.
-   b) Verlauf-Streifen (Hintergrund/Bild-HG): bleiben in voller Breite
-      (inline bereits einheitlich gestylt, brauchen kein Override). */
+   a) tpl-Farb-Karten (Plakat/Flyer): per JS zu Mockup-Zeilen umgebaut
+      (.an-cfield = Swatch 32 px · Label · Verlauf; .an-gradopts = eingerückte Leiste).
+   b) Übrige Karten (HP/Wochenplan/Dialoge): Fallback-Zeile Text links, Swatch rechts. */
+.an-designer-settings .cfg-tpl-grad-row{grid-column:1/-1;display:grid;gap:6px}
+.an-cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.an-cfield{display:flex;align-items:center;gap:10px;min-height:36px;border:1px solid var(--an-line,#d8dfd7);border-radius:8px;padding:4px 8px;background:#fff}
+.an-cfield:hover{border-color:var(--an-field-border,#7d8f84)}
+.an-designer-settings label.an-cfield{justify-content:flex-start}
+.an-cfield>input[type=color]{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important}
+.an-gradopts input[type=color]{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important}
+.an-cfield-lab{flex:1;min-width:0;font-size:13px;font-weight:400;color:var(--an-ink,#24362d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-gradchk{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:400;color:var(--an-muted,#59695f);flex:none}
+.an-gradchk input{width:14px;height:14px}
+.an-gradopts{display:flex;align-items:center;gap:10px;background:var(--an-btn-bg,#eef3ee)!important;border-radius:8px!important;padding:6px 10px!important;margin:0!important;font-size:12px;color:var(--an-muted,#59695f)}
+.an-gradopts select{font-size:12px!important;padding:3px 6px!important;min-height:30px!important;height:30px}
+.an-gradopts input[type=range]{accent-color:var(--an-green,#234c38);width:90px!important}
+.an-gradopts .cfg-tpl-grad-preview{flex:1;height:14px!important;border-radius:4px!important;margin-top:0!important}
+.an-creset{font-size:12px;font-weight:600;color:var(--an-green,#234c38);background:var(--an-surface,#fff);border:0;cursor:pointer;padding:2px 8px;border-radius:6px;min-height:28px;box-shadow:none;white-space:nowrap}
+.an-creset:hover{background:var(--an-btn-bg,#eef3ee)}
+.an-designer-settings fieldset{position:relative}
+.an-designer-settings legend .an-creset{position:absolute;top:-9px;right:10px}
 .an-designer-settings label:has(>input[type=color]){display:flex;align-items:center;justify-content:space-between;gap:8px}
 .an-designer-settings label>input[type=color]{width:32px!important;height:32px!important;
   padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important;flex:none}

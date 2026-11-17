@@ -734,7 +734,58 @@ window.AngeboteDesign = (function () {
       controls.className = 'an-preview-options'; controls.appendChild(actions);
       left.prepend(controls); heading.remove(); pictureViewport(preview, controls);
     });
+    restyleColorGrids(panel);
     compactDesignNavigation(panel);
+  }
+  // Farb-Karten (Plakat/Flyer) 1:1 nach Entwurf: Zeile = Swatch · Label · Verlauf,
+  // Verlauf-Optionen als eingerückte Leiste mit zweiter Farbe, Reset in den Sektionskopf.
+  function restyleColorGrids(panel) {
+    panel.querySelectorAll('#cfg-tpl-plakat-colors>div,#cfg-tpl-flyer-colors>div').forEach(function (grid) {
+      if (grid.dataset.restyled) return;
+      grid.dataset.restyled = 'true';
+      grid.classList.add('an-cgrid');
+      Array.prototype.slice.call(grid.children).forEach(function (node) {
+        if (node.matches('label') && node.querySelector('input[type=color]')) {
+          var head = node.childNodes[0];
+          if (head && head.nodeType === 3) {
+            var lab = document.createElement('span'); lab.className = 'an-cfield-lab'; lab.textContent = head.textContent.trim();
+            node.removeChild(head); node.appendChild(lab);
+          }
+          node.classList.add('an-cfield');
+          var toggle = node.querySelector('.cfg-tpl-grad-toggle');
+          if (toggle) toggle.closest('label').classList.add('an-gradchk');
+        } else if (node.classList.contains('cfg-tpl-grad-row')) {
+          var headRow = node.querySelector(':scope>div');
+          var strip = headRow && headRow.nextElementSibling;
+          var opts = node.querySelector('.cfg-tpl-grad-opts');
+          if (!headRow || !strip) return;
+          var input = strip.querySelector('input[type=color]:not(.cfg-tpl-grad-c2)');
+          var c2 = strip.querySelector('.cfg-tpl-grad-c2');
+          var gradLabel = headRow.querySelector('label');
+          var labText = headRow.querySelector('span') ? headRow.querySelector('span').textContent.trim() : '';
+          var line = document.createElement('div'); line.className = 'an-cfield';
+          if (input) line.appendChild(input);
+          var lab = document.createElement('span'); lab.className = 'an-cfield-lab'; lab.textContent = labText;
+          line.appendChild(lab);
+          if (gradLabel) { gradLabel.classList.add('an-gradchk'); line.appendChild(gradLabel); }
+          if (opts) {
+            opts.classList.add('an-gradopts');
+            if (c2) opts.insertBefore(c2, opts.firstChild);
+            node.replaceChildren(line, opts);
+          } else node.replaceChildren(line);
+        } else if (node.matches('button')) {
+          node.classList.add('an-creset');
+        }
+      });
+    });
+  }
+  function moveColorResets(root) {
+    root.querySelectorAll('.an-creset').forEach(function (button) {
+      var fieldset = button.closest('fieldset');
+      if (!fieldset) return;
+      var legend = fieldset.querySelector(':scope>legend');
+      if (legend && button.parentElement !== legend) legend.appendChild(button);
+    });
   }
   function compactDesignNavigation(panel) {
     var header = panel.querySelector('.an-design-header'), toolbar = header.firstElementChild, nav = header.children[1];
@@ -996,6 +1047,7 @@ window.AngeboteDesign = (function () {
       pictureViewport(preview, root.querySelector('.an-designer-controls'));
       root.querySelector('.an-designer-settings').appendChild(actions);
       history.bind(actions, root);
+      moveColorResets(root);
       return;
     }
     var original = root.firstElementChild, groups = [[], [], [], [], []];
@@ -1041,6 +1093,7 @@ window.AngeboteDesign = (function () {
     workspace(root, { kind: kind, title: kind === 'plakat' ? 'Plakat-Design' : 'Einzelflyer-Design',
       groups: groups, preview: preview, actions: actions });
     history.bind(actions, root);
+    moveColorResets(root);
   }
   function mountHomepage(root, changes) {
     if (root.dataset.designer) return;
