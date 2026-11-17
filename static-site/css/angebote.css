@@ -943,9 +943,15 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-designer-settings label{font-weight:400!important;color:var(--an-ink,#24362d)!important}
 .an-designer-settings label>span,.an-designer-settings .an-field>span{font-weight:400}
 
-/* ── Farb-Swatches: eine Optik überall ── */
-.an-designer-settings input[type=color],.an-object-grid input[type=color]{width:32px!important;height:32px!important;
+/* ── Farb-Swatches: eine Optik überall ──
+   Zwei Feldtypen in den CMS-Karten, getrennt behandelt:
+   a) Label-Zeilen („Karte", „Titel", …): Text links, Swatch 32 px rechts.
+   b) Verlauf-Streifen (Hintergrund/Bild-HG): bleiben in voller Breite
+      (inline bereits einheitlich gestylt, brauchen kein Override). */
+.an-designer-settings label:has(>input[type=color]){display:flex;align-items:center;justify-content:space-between;gap:8px}
+.an-designer-settings label>input[type=color]{width:32px!important;height:32px!important;
   padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important;flex:none}
+.an-object-grid input[type=color]{width:32px!important;height:32px!important;padding:2px!important;border-radius:8px!important}
 .an-designer-settings input[type=checkbox],.an-object-grid input[type=checkbox]{width:18px;height:18px;accent-color:var(--an-green,#234c38);flex:none}
 
 /* ── Slider: Wert rechtsbündig, ruhige Labels ── */

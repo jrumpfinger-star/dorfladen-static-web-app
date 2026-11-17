@@ -2326,6 +2326,36 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F57-02: Ersparnis-Marker und Stattpreis sind eigene, getrennt verschiebbare Vorschau-Elemente', async ({ page }) => {
+  test.setTimeout(180000);
+  const state = await setup(page);
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await expect(root).toBeVisible();
+  await workspaceView(root, 'split');
+  await designerTool(root, 'tools');
+  const select = root.locator('[data-preview-element]');
+  await expect(select).toBeVisible({ timeout: 15000 });
+  await expect(select.locator('option[value=discount]')).toHaveCount(1);
+  await expect(select.locator('option[value=old_price]')).toHaveCount(1);
+  const hash = () => page.locator('.an-designer-preview canvas:visible').first().evaluate((c) => { const d = c.toDataURL(); let h = 0; for (let i = 0; i < d.length; i += 13) h = (h * 31 + d.charCodeAt(i)) | 0; return d.length + ':' + h; });
+  await expect.poll(hash, { timeout: 20000 }).not.toMatch(/^0:/);
+  // Marker verschieben → Vorschau regeneriert sofort mit neuem Offset
+  await select.selectOption('discount');
+  const beforeMarker = await hash();
+  const nudge = root.locator('[data-preview-nudge="2,0"]');
+  for (let i = 0; i < 12; i++) await nudge.click();
+  await expect.poll(hash, { timeout: 15000 }).not.toBe(beforeMarker);
+  // Stattpreis verschieben → ebenfalls sofort
+  await select.selectOption('old_price');
+  const beforeOld = await hash();
+  const nudgeDown = root.locator('[data-preview-nudge="0,2"]');
+  for (let i = 0; i < 12; i++) await nudgeDown.click();
+  await expect.poll(hash, { timeout: 15000 }).not.toBe(beforeOld);
+});
+
 test('TC-F57-01: Designvorgaben erreichen die Live-Vorschau (Marker-Typ, Footer-Farbe)', async ({ page }) => {
   test.setTimeout(180000);
   const state = await setup(page);

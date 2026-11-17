@@ -401,11 +401,11 @@ window.WochenangeboteRenderer = (function () {
   }
 
   function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:150,ghostDy:-120,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-150,dupDy:100,dupOn:false,dupScale:100,dupRot:0,copies:[],customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,discountDx:0,discountDy:0,discountScale:100,discountRot:0,old_priceDx:0,old_priceDy:0,old_priceScale:100,old_priceRot:0,ghostMode:'auto',ghostDx:150,ghostDy:-120,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-150,dupDy:100,dupOn:false,dupScale:100,dupRot:0,copies:[],customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
   }
 
   function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0,copies:[]};
+    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,discountDx:0,discountDy:0,discountScale:100,discountRot:0,old_priceDx:0,old_priceDy:0,old_priceScale:100,old_priceRot:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0,copies:[]};
   }
 
   function drawExtraCopies(ctx,copies,ofc,imgX,imgY,iw,ih,baseRotRad,clipFn){
@@ -847,11 +847,16 @@ window.WochenangeboteRenderer = (function () {
         }
 
         Promise.all([mgImgPromise,ciPromise]).then(function(){
-          // Savings badge top-right
+          // Savings badge top-right (eigenes Element: Position/Größe/Drehung)
           var savePct=getSavingsPercent(item);
           if(savePct){
             var bR=34;
-            drawSavingsBurst(ctx,cardMX+cardMW-28-bR,cardMY+28+bR,bR,bR*.62,'-'+savePct+'%','flyer',cfg);
+            var dScF=(artOv.discountScale||100)/100;
+            var dXF=cardMX+cardMW-28-bR+(artOv.discountDx||0),dYF=cardMY+28+bR+(artOv.discountDy||0);
+            var dRF=Math.round(bR*dScF),dRiF=Math.round(bR*.62*dScF);
+            _elMeta.push({id:'marker',label:'Ersparnis-Marker',x:dXF-dRF*1.2,y:dYF-dRF*1.2,w:dRF*2.4,h:dRF*2.4,ovKey:'discount'});
+            if(artOv.discountRot){ctx.save();ctx.translate(dXF,dYF);ctx.rotate(artOv.discountRot*Math.PI/180);drawSavingsBurst(ctx,0,0,dRF,dRiF,'-'+savePct+'%','flyer',cfg);ctx.restore();}
+            else drawSavingsBurst(ctx,dXF,dYF,dRF,dRiF,'-'+savePct+'%','flyer',cfg);
             ctx.textAlign='left';
           }
 
@@ -889,12 +894,18 @@ window.WochenangeboteRenderer = (function () {
           if(item.statt_preis&&cfg.tagShape!=='price-image'){
             var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
             var stc=cfg.priceOldColor;
+            var oldScF=(artOv.old_priceScale||100)/100;
+            var oldXF=cardMX+cardMW-40+pDx+(artOv.old_priceDx||0),oldYF=priceBarY+48+(artOv.old_priceDy||0);
+            ctx.save();
+            ctx.translate(oldXF,oldYF);ctx.rotate((artOv.old_priceRot||0)*Math.PI/180);ctx.scale((artOv.old_priceScale||100)/100,(artOv.old_priceScale||100)/100);
             ctx.textAlign='right';ctx.fillStyle=stc;ctx.font='600 24px Arial, sans-serif';
-            ctx.fillText(uvp,cardMX+cardMW-40+pDx,priceBarY+48);
+            ctx.fillText(uvp,0,0);
             var uvpW=ctx.measureText(uvp).width;
             ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=2;
-            ctx.beginPath();ctx.moveTo(cardMX+cardMW-40+pDx-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40+pDx,priceBarY+40);ctx.stroke();
+            ctx.beginPath();ctx.moveTo(-uvpW,-8);ctx.lineTo(0,-8);ctx.stroke();
+            ctx.restore();
             ctx.textAlign='left';
+            _elMeta.push({id:'oldprice',label:'Stattpreis',x:oldXF-uvpW*oldScF,y:oldYF-24*oldScF,w:uvpW*oldScF,h:28*oldScF,ovKey:'old_price'});
           }
 
           // Footer
@@ -1036,7 +1047,14 @@ window.WochenangeboteRenderer = (function () {
         drawCmsPriceImage(ctx,item,cfg,tagCX-tagW/2,tagCY-tagH/2,tagW,tagH,artOv.priceRot);
         _elMeta.push({id:'price',label:'Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
         var imageSavings=getSavingsPercent(item);
-        if(imageSavings)drawSavingsBurst(ctx,tagCX-tagW/2,tagCY-tagH/2-14,36,22,'-'+imageSavings+'%','flyer',cfg);
+        if(imageSavings){
+          var dScI=(artOv.discountScale||100)/100;
+          var dXI=tagCX-tagW/2+(artOv.discountDx||0),dYI=tagCY-tagH/2-14+(artOv.discountDy||0);
+          var dRI=Math.round(36*dScI),dRiI=Math.round(22*dScI);
+          _elMeta.push({id:'marker',label:'Ersparnis-Marker',x:dXI-dRI*1.2,y:dYI-dRI*1.2,w:dRI*2.4,h:dRI*2.4,ovKey:'discount'});
+          if(artOv.discountRot){ctx.save();ctx.translate(dXI,dYI);ctx.rotate(artOv.discountRot*Math.PI/180);drawSavingsBurst(ctx,0,0,dRI,dRiI,'-'+imageSavings+'%','flyer',cfg);ctx.restore();}
+          else drawSavingsBurst(ctx,dXI,dYI,dRI,dRiI,'-'+imageSavings+'%','flyer',cfg);
+        }
       }else if(item.preis){
         var savingsPct=getSavingsPercent(item);
         var preisStr=Number(item.preis).toFixed(2).split('.');
@@ -1072,23 +1090,34 @@ window.WochenangeboteRenderer = (function () {
         ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+mw+cw+4,py-fs*0.28);
         ctx.restore();
         _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
-        // Statt-Preis unter dem Tag
+        // Statt-Preis unter dem Tag (eigenes Element: Position/Größe/Drehung)
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-          var stFs=Math.round(26*tagSc);
-          ctx.fillStyle=cfg.priceOldColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
           var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
-          var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(42*tagSc);
-          ctx.fillText(stattStr,stattX,stattY);
-          var stW=ctx.measureText(stattStr).width;
-          ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=2.5;ctx.beginPath();
-          ctx.moveTo(stattX-stW/2-4,stattY-Math.round(7*tagSc));ctx.lineTo(stattX+stW/2+4,stattY-Math.round(7*tagSc));ctx.stroke();
+          var oldSc2=(artOv.old_priceScale||100)/100;
+          var stFs2=Math.round(26*tagSc*oldSc2);
+          var oldX2=tagCX+(artOv.old_priceDx||0),oldY2=tagCY+tagBottom+Math.round(42*tagSc)+(artOv.old_priceDy||0);
+          ctx.save();
+          ctx.translate(oldX2,oldY2);ctx.rotate((artOv.old_priceRot||0)*Math.PI/180);
+          ctx.fillStyle=cfg.priceOldColor;ctx.font='bold '+stFs2+'px Arial, sans-serif';ctx.textAlign='center';
+          ctx.fillText(stattStr,0,0);
+          var stW2=ctx.measureText(stattStr).width;
+          ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=2.5;
+          ctx.beginPath();ctx.moveTo(-stW2/2-4,-Math.round(7*tagSc*oldSc2));ctx.lineTo(stW2/2+4,-Math.round(7*tagSc*oldSc2));ctx.stroke();
+          ctx.restore();
+          ctx.textAlign='center';
+          _elMeta.push({id:'oldprice',label:'Stattpreis',x:oldX2-stW2/2,y:oldY2-stFs2,w:stW2,h:stFs2*1.5,ovKey:'old_price'});
         }
         if(savingsPct){
           // Savings burst: top-left of the price tag, clamped inside image area
           var burstX=tagCX-tagW/2+8;
           var burstY=Math.max(tagCY-tagH/2-Math.round(14*tagSc), imgAreaTop+Math.round(16*tagSc));
-          drawSavingsBurst(ctx,burstX,burstY,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer',cfg);
+          var dSc2=(artOv.discountScale||100)/100;
+          var dX2=burstX+(artOv.discountDx||0),dY2=burstY+(artOv.discountDy||0);
+          var dR2=Math.round(36*tagSc*dSc2),dRi2=Math.round(22*tagSc*dSc2);
+          _elMeta.push({id:'marker',label:'Ersparnis-Marker',x:dX2-dR2*1.2,y:dY2-dR2*1.2,w:dR2*2.4,h:dR2*2.4,ovKey:'discount'});
+          if(artOv.discountRot){ctx.save();ctx.translate(dX2,dY2);ctx.rotate(artOv.discountRot*Math.PI/180);drawSavingsBurst(ctx,0,0,dR2,dRi2,'-'+savingsPct+'%','flyer',cfg);ctx.restore();}
+          else drawSavingsBurst(ctx,dX2,dY2,dR2,dRi2,'-'+savingsPct+'%','flyer',cfg);
         }
       }
         ctx.textAlign='left';
@@ -1323,11 +1352,16 @@ window.WochenangeboteRenderer = (function () {
           }
         }
 
-        // Savings badge top-right
+        // Savings badge top-right (eigenes Element: Position/Größe/Drehung)
         var sp=getSavingsPercent(it);
         if(sp){
           var badgeR=22;
-          drawSavingsBurst(ctx,cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR-4,badgeR,badgeR*.62,'-'+sp+'%','plakat',cfg);
+          var dScM=(pOv.discountScale||100)/100;
+          var dXM=cx+mgCellW-cardPadI-badgeR+4+(pOv.discountDx||0),dYM=cy+cardPadI+badgeR-4+(pOv.discountDy||0);
+          var dRM=Math.round(badgeR*dScM),dRiM=Math.round(badgeR*.62*dScM);
+          c._elMeta.push({id:'marker',itemKey:it.key,label:'Ersparnis-Marker',x:dXM-dRM*1.2,y:dYM-dRM*1.2,w:dRM*2.4,h:dRM*2.4,ovKey:'discount'});
+          if(pOv.discountRot){ctx.save();ctx.translate(dXM,dYM);ctx.rotate(pOv.discountRot*Math.PI/180);drawSavingsBurst(ctx,0,0,dRM,dRiM,'-'+sp+'%','plakat',cfg);ctx.restore();}
+          else drawSavingsBurst(ctx,dXM,dYM,dRM,dRiM,'-'+sp+'%','plakat',cfg);
           ctx.textAlign='left';
         }
 
@@ -1357,17 +1391,22 @@ window.WochenangeboteRenderer = (function () {
             ctx.font='700 20px Arial, sans-serif';
             var mw=ctx.measureText(pp[0]+','+pp[1]).width;
             ctx.fillText('\u20AC',cx+cardPadI+4+mw+4+ppDx,priceY-8+ppDy);
-            // Statt-Preis right-aligned
+            // Statt-Preis right-aligned (eigenes Element: Position/Größe/Drehung)
             if(it.statt_preis!=null){
               var uvp=Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
               var stcP=cfg.priceOldColor;
+              var oldScP=(pOv.old_priceScale||100)/100*(pOv.priceScale||100)/100;
+              var oldXP=cx+mgCellW-cardPadI+(pOv.old_priceDx||0),oldYP=priceY-18+ppDy+(pOv.old_priceDy||0);
+              ctx.save();
+              ctx.translate(oldXP,oldYP);ctx.rotate((pOv.old_priceRot||0)*Math.PI/180);ctx.scale((pOv.old_priceScale||100)/100,(pOv.old_priceScale||100)/100);
               ctx.textAlign='right';ctx.fillStyle=stcP;ctx.font='600 17px Arial, sans-serif';
-              ctx.fillText('statt '+uvp,cx+mgCellW-cardPadI+ppDx,priceY-18+ppDy);
-              // Strikethrough
+              ctx.fillText('statt '+uvp,0,0);
               var uvpW=ctx.measureText('statt '+uvp).width;
               ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=1.5;
-              ctx.beginPath();ctx.moveTo(cx+mgCellW-cardPadI-uvpW+ppDx,priceY-23+ppDy);ctx.lineTo(cx+mgCellW-cardPadI+ppDx,priceY-23+ppDy);ctx.stroke();
+              ctx.beginPath();ctx.moveTo(-uvpW,-5);ctx.lineTo(0,-5);ctx.stroke();
+              ctx.restore();
               ctx.textAlign='left';
+              c._elMeta.push({id:'oldprice',itemKey:it.key,label:'Stattpreis',x:oldXP-uvpW*oldScP,y:oldYP-17*oldScP,w:uvpW*oldScP,h:22*oldScP,ovKey:'old_price'});
             }
             }
             ctx.restore();
@@ -1569,21 +1608,32 @@ window.WochenangeboteRenderer = (function () {
         ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';ctx.fillText(centStr,px+mw+2,py-fs*0.3);
         ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+mw+cw+3,py-fs*0.28);
         ctx.restore();
-        // Statt-Preis unter dem Tag
+        // Statt-Preis unter dem Tag (eigenes Element: Position/Größe/Drehung)
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-          var stFs=Math.round(16*tagSc);
-          ctx.fillStyle=cfg.priceOldColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
           var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
-          var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(30*tagSc);
-          ctx.fillText(stattStr,stattX,stattY);
+          var oldSc=(pOv.old_priceScale||100)/100;
+          var stFs=Math.round(16*tagSc*oldSc);
+          var oldX=tagCX+(pOv.old_priceDx||0),oldY=tagCY+tagBottom+Math.round(30*tagSc)+(pOv.old_priceDy||0);
+          ctx.save();
+          ctx.translate(oldX,oldY);ctx.rotate((pOv.old_priceRot||0)*Math.PI/180);
+          ctx.fillStyle=cfg.priceOldColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
+          ctx.fillText(stattStr,0,0);
           var stW=ctx.measureText(stattStr).width;
           ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1.5;ctx.beginPath();
-          ctx.moveTo(stattX-stW/2-2,stattY-Math.round(5*tagSc));ctx.lineTo(stattX+stW/2+2,stattY-Math.round(5*tagSc));ctx.stroke();
+          ctx.moveTo(-stW/2-2,-Math.round(5*tagSc*oldSc));ctx.lineTo(stW/2+2,-Math.round(5*tagSc*oldSc));ctx.stroke();
+          ctx.restore();
+          ctx.textAlign='center';
+          c._elMeta.push({id:'oldprice',itemKey:item.key,label:'Stattpreis',x:oldX-stW/2,y:oldY-stFs,w:stW,h:stFs*1.5,ovKey:'old_price'});
         }
         }
         if(cardSavingsPct){
-          drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,Math.round(24*tagSc),Math.round(15*tagSc),'-'+cardSavingsPct+'%','plakat',cfg);
+          var dSc=(pOv.discountScale||100)/100;
+          var dX=tagCX-tagW/2+6+(pOv.discountDx||0),dY=tagCY-tagH/2-12+(pOv.discountDy||0);
+          var dR=Math.round(24*tagSc*dSc),dRi=Math.round(15*tagSc*dSc);
+          c._elMeta.push({id:'marker',itemKey:item.key,label:'Ersparnis-Marker',x:dX-dR*1.2,y:dY-dR*1.2,w:dR*2.4,h:dR*2.4,ovKey:'discount'});
+          if(pOv.discountRot){ctx.save();ctx.translate(dX,dY);ctx.rotate(pOv.discountRot*Math.PI/180);drawSavingsBurst(ctx,0,0,dR,dRi,'-'+cardSavingsPct+'%','plakat',cfg);ctx.restore();}
+          else drawSavingsBurst(ctx,dX,dY,dR,dRi,'-'+cardSavingsPct+'%','plakat',cfg);
         }
       }
       // Einkaufstaschen-Deko unten rechts

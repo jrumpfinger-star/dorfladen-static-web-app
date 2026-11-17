@@ -1970,7 +1970,8 @@
     if(surface.host.parentNode!==container)container.replaceChildren(surface.host);
     var magazine=/^modern-mag/.test(cfgReadUI()[target+'Template']),values=_cfgInline[target];
     var elements=(canvas._elMeta||[]).filter(function(element){
-      return (element.ovKey==='img'||element.ovKey==='price'||element.ovKey==='name')&&(!element.itemKey||element.itemKey===firstKey);
+      return (element.ovKey==='img'||element.ovKey==='price'||element.ovKey==='name'
+        ||element.ovKey==='discount'||element.ovKey==='old_price')&&(!element.itemKey||element.itemKey===firstKey);
     }).map(function(element){
       var sign=!magazine&&element.ovKey==='img'?-1:1;
       var base=!magazine&&element.ovKey==='img'?-cfgReadUI().imgRotation*(target==='plakat'?.85:1):0;
