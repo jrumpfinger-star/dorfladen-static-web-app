@@ -99,7 +99,7 @@ CMS_CONFIG_KEYS = set((
     "imgThreshold imgMaxScale priceFontFlyer priceFontPlakat stattColor tagSkew "
     "tagShape tagRadius tagPreset showLeaf leafSize showBag showTexture "
     "savingsMarkerType savingsPalette savingsScalePlakat savingsScaleFlyer "
-    "plakatTemplate flyerTemplate tplColors"
+    "plakatTemplate flyerTemplate tplColors plakat_inline flyer_inline"
 ).split())
 CMS_CONFIG_KEYS.update(
     f"{kind}_{key}" for kind in ("plakat", "flyer") for key in (
@@ -121,6 +121,19 @@ def _cms_design(raw, items):
     for key in ("plakatTemplate", "flyerTemplate"):
         if raw["config"].get(key) not in TEMPLATES[2:]:
             raise AngeboteFehler(400, "Bitte eine gültige CMS-Wochenvorlage wählen.")
+    for kind in ("plakat", "flyer"):
+        inline = raw["config"].get(f"{kind}_inline", {})
+        limits = {"imgDx": (-1000, 1000), "imgDy": (-1500, 1500),
+                  "priceDx": (-1000, 1000), "priceDy": (-1500, 1500),
+                  "imgScale": (20, 200), "priceScale": (20, 200),
+                  "imgRot": (-180, 180), "priceRot": (-180, 180)}
+        if not isinstance(inline, dict) or set(inline) - limits.keys():
+            raise AngeboteFehler(400, "Bitte die direkten Standardanpassungen prüfen.")
+        for key, value in inline.items():
+            minimum, maximum = limits[key]
+            if (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or not minimum <= value <= maximum):
+                raise AngeboteFehler(400, "Bitte die direkten Standardanpassungen prüfen.")
     count = 0
 
     def check(value, depth=0):

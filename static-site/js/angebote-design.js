@@ -350,6 +350,141 @@ window.AngeboteDesign = (function () {
     };
     return api;
   }
+  var helpId = 0;
+  function compactHelp(root, target) {
+    var notes = Array.from(root.querySelectorAll('p.an-note,p.an-muted,p[style*="font-size"]'));
+    if (root.matches && root.matches('p')) notes.unshift(root);
+    notes.forEach(function (note) {
+      if (note.id || note.hasAttribute('role') || Object.keys(note.dataset).length
+        || note.closest('.an-help-popover') || note.querySelector('button,input,select,a') || !note.textContent.trim()) return;
+      var owner = note.closest('fieldset'), destination = owner ? owner.querySelector('legend') : target;
+      if (!destination) return;
+      var wrap = document.createElement('span'), button = document.createElement('button'), popup = document.createElement('div');
+      wrap.className = 'an-help';
+      button.type = 'button'; button.className = 'an-help-button'; button.textContent = 'ⓘ';
+      button.setAttribute('aria-label', 'Hinweis: ' + note.textContent.trim().split(/[.!]/)[0]);
+      popup.id = 'an-design-help-' + (++helpId); popup.className = 'an-help-popover'; popup.popover = 'auto';
+      popup.setAttribute('role', 'tooltip'); button.setAttribute('aria-controls', popup.id); button.setAttribute('aria-expanded', 'false');
+      var text = document.createElement('div'); text.appendChild(note);
+      var close = document.createElement('button'); close.type = 'button'; close.textContent = 'Schließen';
+      var returning = false;
+      function hide(restore) {
+        if (popup.matches(':popover-open')) popup.hidePopover();
+        popup.classList.remove('an-help-pinned');
+        if (restore) { returning = true; button.focus(); returning = false; }
+      }
+      function show() {
+        if (returning || popup.matches(':popover-open')) return;
+        popup.showPopover();
+        var rect = button.getBoundingClientRect(), width = popup.offsetWidth, height = popup.offsetHeight;
+        popup.style.left = Math.max(12, Math.min(window.innerWidth - width - 12, rect.left)) + 'px';
+        popup.style.top = Math.max(12, Math.min(window.innerHeight - height - 12, rect.bottom + 5)) + 'px';
+      }
+      close.onclick = function () { hide(true); };
+      button.onclick = function () { popup.classList.add('an-help-pinned'); show(); }; button.onfocus = show;
+      button.onpointerenter = function (event) { if (event.pointerType === 'mouse') show(); };
+      wrap.onpointerleave = function (event) {
+        if (!wrap.contains(document.activeElement) && !wrap.contains(event.relatedTarget)) hide(false);
+      };
+      wrap.onfocusout = function (event) { if (!wrap.contains(event.relatedTarget)) hide(false); };
+      wrap.onkeydown = function (event) {
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); hide(true); }
+      };
+      popup.addEventListener('toggle', function () {
+        var open = popup.matches(':popover-open'); button.setAttribute('aria-expanded', String(open));
+        if (!open) popup.classList.remove('an-help-pinned');
+      });
+      popup.append(text, close); wrap.append(button, popup); destination.appendChild(wrap);
+    });
+  }
+  function prepareCms(panel) {
+    if (!document.querySelector('[data-offer-workspaces]')) return;
+    if (panel.classList.contains('an-design-shell')) return;
+    if (!panel.querySelector(':scope>.an-design-header')) {
+      var header = document.createElement('header');
+      header.className = 'an-design-header';
+      header.append(panel.children[0], panel.children[1]);
+      panel.prepend(header);
+      panel.classList.add('an-design-shell');
+    }
+    var generalHelp = document.createElement('span'); generalHelp.className = 'an-header-help';
+    panel.querySelector('.an-design-header>div').appendChild(generalHelp);
+    panel.querySelectorAll(':scope>div').forEach(function (section) {
+      var hint = document.createElement('span'); hint.className = 'an-tab-help';
+      var nav = section.querySelector(':scope>.cfg-section-nav');
+      (nav || generalHelp).appendChild(hint);
+      Array.from(section.children).filter(function (node) { return node.tagName === 'P'; }).forEach(function (node) {
+        if (!node.querySelector('a')) compactHelp(node, hint);
+      });
+    });
+    panel.querySelectorAll('#cms-cfg-wp .cfg-split-right .cfg-lp-inner').forEach(function (preview) {
+      if (preview.dataset.pictureOnly) return;
+      preview.dataset.pictureOnly = 'true';
+      var heading = preview.firstElementChild, actions = preview.lastElementChild, controls = document.createElement('div');
+      var left = preview.closest('.cfg-split').querySelector('.cfg-split-left');
+      controls.className = 'an-preview-options'; controls.appendChild(actions);
+      left.prepend(controls); heading.remove(); pictureViewport(preview, controls);
+    });
+  }
+  function pictureViewport(preview, controls) {
+    if (!preview._pictureView) {
+      var frame = document.createElement('div'), paper = document.createElement('div');
+      frame.className = 'an-designer-frame'; paper.className = 'an-designer-paper';
+      while (preview.firstChild) paper.appendChild(preview.firstChild);
+      frame.appendChild(paper); preview.appendChild(frame);
+      var toolbar = document.createElement('div'); toolbar.className = 'an-picture-controls';
+      toolbar.innerHTML = '<label class="an-field"><span>Vorschaugröße</span><select data-picture-zoom aria-label="Vorschaugröße">'
+        + '<option value="fit">Einpassen</option><option value="1">100 %</option><option value="1.5">150 %</option><option value="2">200 %</option></select></label>'
+        + '<div class="an-actions"><button type="button" data-picture-fit>Einpassen</button><button type="button" data-picture-fullscreen>Vollbild</button></div>';
+      var zoom = toolbar.querySelector('select');
+      function size() {
+        if (!preview.clientWidth || !preview.clientHeight) return;
+        var width = paper.offsetWidth, height = paper.offsetHeight;
+        if (!width || !height) return;
+        var scale = zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - 16) / height, 1) : Number(zoom.value);
+        paper.style.transform = 'scale(' + scale + ')';
+        paper.style.setProperty('--an-picture-scale', scale);
+        frame.style.width = width * scale + 'px'; frame.style.height = height * scale + 'px';
+      }
+      zoom.onchange = function () { preview.scrollTop = 0; preview.scrollLeft = 0; size(); };
+      toolbar.querySelector('[data-picture-fit]').onclick = function () { zoom.value = 'fit'; zoom.onchange(); };
+      toolbar.querySelector('[data-picture-fullscreen]').onclick = async function () {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else await preview.closest('.an-designer-workspace,.cfg-split').requestFullscreen();
+        } catch (error) {
+          M.error(error);
+        }
+      };
+      var observer = new ResizeObserver(size); observer.observe(preview); observer.observe(paper);
+      preview._pictureView = { toolbar: toolbar, size: size };
+    }
+    controls.appendChild(preview._pictureView.toolbar);
+    preview.classList.add('an-preview', 'an-designer-preview');
+    preview.tabIndex = 0; preview.setAttribute('aria-label', 'Live-Vorschau · unabhängig scrollen');
+    return preview._pictureView;
+  }
+  function previewTools(preview) {
+    if (!preview._workspaceTools) {
+      var tools = document.createElement('div'); tools.className = 'an-preview-options';
+      Array.from(preview.children).forEach(function (node) {
+        if (node.classList.contains('an-preview-head') || /Live-Vorschau/.test(node.textContent) && !node.querySelector('button,img,canvas')) node.remove();
+        else if (node.matches('.an-tabs,p,button') || node.querySelector('.hpang-view-btn,#cfg-lp-refresh-btn')) tools.appendChild(node);
+      });
+      preview._workspaceTools = tools;
+    }
+    return preview._workspaceTools;
+  }
+  function mountShared(root, preview, actions) {
+    var body = root.querySelector('.an-shared-body');
+    if (!body) {
+      body = document.createElement('div'); body.className = 'an-shared-body';
+      while (root.firstChild) body.appendChild(root.firstChild);
+      root.appendChild(body); root.classList.add('an-shared-settings');
+    }
+    body.prepend(previewTools(preview)); pictureViewport(preview, body);
+    root.appendChild(actions);
+  }
   function workspace(root, options) {
     root.classList.add('an-design');
     root.dataset.designer = options.kind;
@@ -357,9 +492,13 @@ window.AngeboteDesign = (function () {
     layout.className = 'an-design-layout an-designer-workspace';
     settings.className = 'an-card an-designer-settings';
     settings.innerHTML = '<h2>' + M.esc(options.title) + '</h2><div class="an-tabs an-designer-tabs" role="tablist" aria-label="Gestaltungswerkzeuge"></div>';
-    var tabs = settings.querySelector('[role=tablist]'), panels = document.createElement('div');
+    var tabs = settings.querySelector('[role=tablist]'), panels = document.createElement('div'), body = document.createElement('div');
+    body.className = 'an-designer-body';
+    var controls = document.createElement('section'), direct = document.createElement('div'), help = document.createElement('div');
+    controls.className = 'an-designer-controls'; direct.className = 'an-designer-direct'; help.className = 'an-designer-help';
+    controls.setAttribute('aria-label', 'Vorschauwerkzeuge'); controls.append(help, direct);
     panels.dataset.designFields = '';
-    settings.appendChild(panels);
+    body.append(controls, panels); settings.appendChild(body);
     var names = options.tabs || ['Stil', 'Farben', 'Feinabstimmung', 'Weitere Gestaltung', 'Eigene Vorlagen'];
     names.forEach(function (name, index) {
       var button = document.createElement('button'), panel = document.createElement('div');
@@ -399,19 +538,22 @@ window.AngeboteDesign = (function () {
       select(event.key === 'Home' ? 0 : event.key === 'End' ? names.length - 1
         : (index + (event.key === 'ArrowRight' ? 1 : names.length - 1)) % names.length, true);
     });
-    options.preview.classList.add('an-preview', 'an-designer-preview');
-    options.preview.tabIndex = 0;
-    options.preview.setAttribute('aria-label', 'Live-Vorschau · unabhängig scrollen');
+    controls.appendChild(previewTools(options.preview));
+    pictureViewport(options.preview, controls);
     options.actions.classList.add('an-actions', 'an-designer-save');
-    layout.append(options.preview, settings);
-    root.replaceChildren(layout, options.actions);
+    settings.appendChild(options.actions);
+    layout.append(settings, options.preview);
+    root.replaceChildren(layout);
+    compactHelp(root, help);
     select(0);
-    return { select: select };
+    return { select: select, direct: direct, help: help };
   }
   function mountCms(root, preview, actions, kind, history) {
     if (root.dataset.designer) {
-      root.querySelector('.an-designer-workspace').prepend(preview);
-      root.appendChild(actions);
+      root.querySelector('.an-designer-workspace').appendChild(preview);
+      root.querySelector('.an-designer-controls').appendChild(preview._workspaceTools);
+      pictureViewport(preview, root.querySelector('.an-designer-controls'));
+      root.querySelector('.an-designer-settings').appendChild(actions);
       history.bind(actions, root);
       return;
     }
@@ -579,10 +721,12 @@ window.AngeboteDesign = (function () {
         var actions = settings.querySelector(':scope>.an-actions'), status = settings.querySelector('[data-design-status]');
         actions.appendChild(status);
         var note = root.querySelector(':scope>.an-note');
-        workspace(root, { kind: kind, title: 'Getränkeflyer-Design', groups: groups,
+        var workspaceUi = workspace(root, { kind: kind, title: 'Getränkeflyer-Design', groups: groups,
           preview: root.querySelector('.an-preview'), actions: actions });
         changes.bind(actions, root);
-        root.prepend(note);
+        workspaceUi.help.appendChild(note); compactHelp(workspaceUi.help, workspaceUi.help);
+        var link = root.parentElement.querySelector(':scope>p');
+        if (link) workspaceUi.help.appendChild(link);
         productStatus();
         preview().catch(M.error);
       }
@@ -597,6 +741,7 @@ window.AngeboteDesign = (function () {
         if (current !== ticket) return;
         if (!surface) {
           surface = window.AngeboteVorschauEditor.mount(host, {
+            toolsHost: root.querySelector('.an-designer-direct'),
             begin: changes.begin, end: changes.end,
             change: function (element, delta) {
               if (delta.dx) delta.dx /= element.unitScale;
@@ -607,6 +752,7 @@ window.AngeboteDesign = (function () {
               changes.record();
             }
           });
+          compactHelp(root.querySelector('.an-designer-direct'), root.querySelector('.an-designer-help'));
         }
         var canvas = rendered.canvas, width = canvas.width, height = canvas.height, ratio = 1, offsetX = 0, offsetY = 0;
         if (mode === 'scale-small') {
@@ -714,7 +860,8 @@ window.AngeboteDesign = (function () {
       await M.error(e);
     }
   }
-  return { mount: mount, mountCms: mountCms, mountHomepage: mountHomepage, history: history, historyShortcut: historyShortcut,
+  return { mount: mount, mountCms: mountCms, mountHomepage: mountHomepage, mountShared: mountShared, prepareCms: prepareCms, compactHelp: compactHelp,
+    pictureViewport: pictureViewport, history: history, historyShortcut: historyShortcut,
     controls: controls, change: change, previewChoices: previewChoices,
     previewTabs: previewTabs, selectPreview: selectPreview, outputPreview: outputPreview, cards: cards };
 })();

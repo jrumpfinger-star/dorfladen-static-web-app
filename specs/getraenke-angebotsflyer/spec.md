@@ -1095,6 +1095,79 @@ hinterlassen keine abgetrennten oder unsichtbar offenen Menüs.
   Tastaturauswahl und Escape funktionieren. Bildmenü ebenso unverdeckt.
   Keine verwaisten Ebenen nach Zeilenentfernung oder Dialogschließen.
 
+## F43: Bildreine Vorschau rechts und feste Design-Navigation
+
+**F43 (präzisiert F38/F40):** Alle Design-Reiter verwenden eine feste,
+kompakte Kopf- und Reiternavigation außerhalb ihrer Scrollbereiche.
+Plakat, Einzelflyer, Getränkeflyer und HP-Sonderangebote zeigen rechts
+ausschließlich das Ausgabebild beziehungsweise die gerenderten Angebotskarten.
+Elementauswahl, Ausgabeformat, Vorschauaktionen und Bearbeitungswerkzeuge
+liegen links; die Vorschau hat weder Überschriften noch Erklärungskästen
+oder darüberliegende Aktionsleisten. Auswahlrahmen und direkte
+Bearbeitungsanfasser bleiben erlaubt.
+
+Die linke Werkzeugspalte scrollt unabhängig. Rückgängig/Wiederholen,
+Speichern, Verwerfen und Zurücksetzen erhalten links einen eigenen
+reservierten Bereich und überlagern die Vorschau niemals. Desktop erhält
+ungefähr ein Drittel Werkzeuge und zwei Drittel Vorschau. Auf schmalen
+Geräten bleibt die eingepasste Vorschau oberhalb der separat scrollbareren
+Werkzeuge sichtbar; Navigation und Aktionen bleiben bedienbar.
+Die Vorschau startet vollständig eingepasst. Links sind Zoom, Einpassen
+und Vollbild erreichbar; beim Vergrößern scrollt ausschließlich die
+Bildfläche, ohne das Dokument oder die andere Spalte mitzubewegen.
+
+Statische Hilfetexte werden zu platzsparenden Info-Auslösern, deren
+Erklärung per Maus, Tastaturfokus oder Antippen erreichbar ist.
+Escape schließt die Erklärung, der Fokus bleibt sinnvoll erhalten.
+Feldbezeichnungen, Lade-/Leerzustände, Speicherstatus und Fehler bleiben
+sichtbar. Homepage-, Wochenplan- und gemeinsame Design-Einstellungen
+erhalten ebenfalls die feste Navigation und kompakte Hilfen; bestehende
+Wochenplan-/gemeinsame Vorschauen bleiben rechts ohne Bedienknöpfe.
+Bestehende IDs, Werte, Speicherverträge, Vorlagen und Undo bleiben erhalten.
+Keine Änderungen an Angebotsdaten, Renderer-Ausgaben oder APIs.
+
+- TC-F43-01: Alle Haupt- und Ausgabereiter behalten sichtbare Kopf- und
+  Reiternavigation beim Scrollen. Desktopwerkzeuge liegen links und die
+  Vorschau rechts, mobil oberhalb; alle vier Viewports ohne Überlauf.
+- TC-F43-02: Alle vier Designer zeigen rechts nur Ausgabe und direkte
+  Anfasser; sämtliche Vorschauwerkzeuge und Aktionen liegen außerhalb.
+  Eingepasstes Bild vollständig sichtbar, Aktionsrechtecke überschneiden
+  sich nicht mit der Vorschau. Zoom erzeugt unabhängiges Bildscrollen;
+  Einpassen und Vollbild funktionieren auch nach Reiterwechseln.
+- TC-F43-03: Statische Erklärungen verbrauchen keine Hinweisblöcke mehr;
+  Info-Inhalt ist per Fokus, Maus und Klick erreichbar, im Fenster,
+  per Escape schließbar. Dynamische Zustände/Fehler bleiben sichtbar.
+- TC-F43-04: Plakat-/Flyer-Reiterwechsel, Getränkeformatwechsel,
+  direkte Elementbearbeitung, HP-Ansicht und Save/Undo/Redo bewahren ihre
+  bestehenden Werte und Speicherwege nach dem Verschieben der Controls.
+
+## F44: Gleiche direkte Bedienung für alle Flyerdesigner
+
+**F44:** Plakat, Einzelflyer und Getränkeflyer verwenden denselben direkten
+Vorschaueditor: Elementauswahl im Bild oder Auswahlfeld, Ziehen, Pfeiltasten,
+Feinverschiebung, Vergrößern/Verkleinern sowie Drehknöpfe und Drehanfasser.
+Bearbeitbar sind die vom jeweiligen Renderer tatsächlich ausgewiesenen
+Elemente; keine nur optischen Anfasser ohne Wirkung auf die Ausgabe.
+Die Originalvorlagen von Plakat und Einzelflyer bleiben erhalten.
+Ihre Standardanpassungen gelten für die Musterkacheln der jeweiligen
+Ausgabe, nicht als Änderungen echter Angebote oder Artikelbilder.
+
+Anpassungen bleiben zunächst lokal, sind je Designer rückgängig/wiederholbar
+und werden erst mit dem vorhandenen expliziten Speichern dauerhaft.
+Reiterwechsel bewahrt ungespeicherte Anpassungen. Verwerfen/Zurücksetzen
+und erneutes Laden stellen den zugehörigen Stand wieder her.
+Gespeicherte Ausgabeanpassungen müssen auch in tatsächlichen Originalausgaben
+und übernommenen CMS-Snapshots wirken, nicht nur in der Designeranzeige.
+Vorhandene artikelbezogene Sonderanpassungen bleiben erhalten.
+
+- TC-F44-01: Plakat/Einzelflyer zeigen dieselben Direktwerkzeuge wie Getränke;
+  Elementauswahl und Verschieben/Skalieren/Drehen verändern die tatsächliche
+  Rendergeometrie auf allen vier Ansichten, ohne implizite Schreibanfrage.
+- TC-F44-02: Getrenntes Undo/Redo, Reiterwechsel, explizites Speichern,
+  Verwerfen und Neuöffnen erhalten die richtigen Standardanpassungen.
+- TC-F44-03: Originalrenderer und CMS-Snapshot übernehmen Standardanpassungen
+  mit identischer Wirkung; Altbestand ohne Anpassungen bleibt unverändert.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

@@ -10,6 +10,42 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+F44: Plakat-/Einzelflyervorschau erhält den vorhandenen Vorschaueditor mit
+echten `_elMeta`-Geometrien des Originalrenderers statt eines statischen
+PNG-Bildes. Ausgabeweite Inline-Anpassungen werden als zwei getrennte
+Objekte im bestehenden `design_config` gespeichert und vom gemeinsamen
+Renderer vor vorhandenen Artikel-Overrides angewendet. CMS-UI-Lesen,
+Anwenden, bestehende getrennte Historien und Snapshotvalidierung nehmen
+die Objekte auf; weder neue Dataverse-Spalten noch Artikel-Override-Writes.
+Vorschau-Rendertickets verhindern Überholen bei Gesten und Reiterwechseln.
+Bestehende Bildnachlade-/Fehlerwege bleiben erhalten. Tests prüfen echte
+Rendergeometrien, persistierte und verworfene Zustände sowie Altbestand.
+
+F43: Gemeinsame `workspace()`-Hülle erhält links einen scrollbaren
+Werkzeugkörper und einen separaten Aktionsbereich, rechts einen reinen
+Bildviewport mit skalierbarem Inhalt. Bestehende Controls werden verschoben,
+nicht kopiert; der Vorschaueditor bindet seine Werkzeugereignisse direkt
+am Werkzeugknoten statt am gemeinsamen Bildhost. Geteilte CMS-Vorschauen
+werden beim Reiterwechsel samt Werkzeugen und aktuellem Viewportadapter
+in den passenden Designer übernommen. ResizeObserver passt Bildrahmen bei
+Inhalts-, Fenster- und Reitergrößenänderungen ein; Zoom ist rein visuell
+und verändert weder Design noch Undo. Vollbild verwendet die Workspace-Hülle
+mit erreichbaren Werkzeugen und behandelt Fehler sichtbar.
+
+Die gemeinsame CMS-Laufzeithülle gruppiert die vorhandene Designnavigation
+in einer eigenen Kopfzeile, ohne Generatorquelle oder Feldkennungen zu ändern;
+alle Haupt-/Unterreiter bekommen begrenzte Inhaltsbereiche mit korrektem
+`min-height:0`. Statische Hilfen werden über einen gemeinsamen Helfer in
+native, fensterbegrenzte Info-Popover umgewandelt; dynamische Status-/Fehler-
+und Retryelemente bleiben links sichtbar. Wochenplan und gemeinsame
+Einstellungen behalten ihre vorhandenen DOM-/Speicherwege, erhalten aber
+ebenfalls bildreine rechte Vorschauflächen. CSS verwendet den tatsächlich
+verfügbaren Bereich statt pauschal 220px abzuziehen. Mobile Anordnung mit
+sichtbarer oberer Vorschau und darunter scrollbareren Werkzeugen.
+Gezielte F43-Geometrie-, Tooltip- und Bedienregressionen sowie angepasste
+F38/F40-Layoutverträge auf allen vier Ansichten; Generator-/Paritätsprüfung
+und direkt zugehörige Bedienhilfe aktualisieren.
+
 F42: Der gemeinsame Capture-Controller verschiebt die bestehenden Eingaben
 und Bildaktionsknöpfe aus `CMSAngeboteForm.row()` in beschriftete Zeilen und
 ein natives Popover am Vorschaubild; der klassische Formularrenderer bleibt

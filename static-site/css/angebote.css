@@ -542,12 +542,63 @@ body.an-body{margin:0;background:#f7f5ed}
 /* Shared workspace for all three CMS designers. */
 [data-offer-workspaces] #cfg-offer-legacy{height:auto;min-height:0}
 [data-offer-workspaces] .cfg-split-left{overflow:visible;padding:0}
-.an-designer-workspace{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
-.an-designer-workspace .an-designer-preview{position:sticky;top:80px;width:100%;margin:0;padding:12px;border:1px solid var(--an-line);border-radius:16px;background:#fff;box-shadow:none;max-height:calc(100dvh - 220px);overflow-y:scroll;overscroll-behavior:contain;scrollbar-gutter:stable}
-.an-designer-settings{padding:16px;max-height:calc(100dvh - 220px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
-.an-designer-settings h2{font-size:20px;font-weight:600}
+.cmsneu-app:has(#cms-panel-cfg:not([style*="none"])){height:100dvh;overflow:hidden}
+.cmsneu-inhalt:has(>#cms-panel-cfg:not([style*="none"])){overflow:hidden}
+#cms-panel-cfg.an-design-shell{height:100%;max-width:none;min-height:0}
+#cms-panel-cfg.an-design-shell:not([style*="none"]){display:flex!important;flex-direction:column;gap:6px}
+.an-design-header{flex:none;background:var(--an-bg,#f7f5ed)}
+.an-design-header>div{margin-bottom:4px!important;align-items:center}
+.an-design-header>.cms-flex{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;gap:4px 8px}
+.an-design-header h3{flex:1}
+.an-header-help{display:inline-flex;align-items:center;gap:2px}
+.an-design-header>div:last-child{flex-wrap:nowrap!important;overflow-x:auto;margin:0!important}
+#cms-panel-cfg .an-design-header .cms-subtab{padding:6px 10px!important;min-height:40px;white-space:nowrap;font-size:11px!important}
+#cms-panel-cfg.an-design-shell>div:not([style*="none"]){min-height:0;flex:1;overflow:auto;overscroll-behavior:contain}
+#cms-panel-cfg.an-design-shell>#cms-cfg-plakat:not([style*="none"]),#cms-panel-cfg.an-design-shell>#cms-cfg-wp:not([style*="none"]){display:flex!important;flex-direction:column;overflow:hidden}
+#cms-cfg-plakat>.cfg-section-nav,#cms-cfg-wp>.cfg-section-nav{flex:none;flex-wrap:nowrap!important;overflow-x:auto;margin:0 0 6px!important}
+#cms-panel-cfg .cfg-section-btn{flex:none;padding:6px 9px!important;min-height:40px;white-space:nowrap;font-size:10px!important}
+#cms-cfg-plakat>#cfg-sec-drinks,#cfg-sec-drinks>#an-design-root,#cms-cfg-hpang.an-design{min-height:0;height:100%}
+#cms-cfg-plakat>#cfg-sec-drinks{flex:1}
+#cms-cfg-plakat #cfg-offer-legacy{flex:1;min-height:0;height:100%;margin:0;align-items:stretch;flex-direction:row}
+#cfg-offer-legacy>.cfg-split-left{display:flex;flex-direction:column;min-height:0;min-width:0}
+#cfg-offer-legacy>.cfg-split-left>[data-designer]:not([style*="none"]){height:100%;min-height:0;flex:1}
+.an-designer-workspace{grid-template-columns:minmax(250px,1fr) minmax(0,2fr);gap:12px;align-items:stretch;height:100%;min-height:0}
+.an-designer-workspace .an-designer-preview,.cfg-split-right .an-designer-preview{position:relative;top:auto;width:100%;height:100%;min-height:0;margin:0;padding:8px;border:1px solid var(--an-line);border-radius:12px;background:#eef3ee;box-shadow:none;max-height:none;overflow:auto;overscroll-behavior:contain;display:flex}
+.an-designer-frame{position:relative;flex:none;margin:auto}
+.an-designer-paper{position:absolute;left:0;top:0;width:800px;transform-origin:top left;display:flow-root}
+.an-designer-paper [id^=cfg-live-preview] img,.an-designer-paper [id$=live-preview] img{display:block;width:100%;max-height:none!important;object-fit:contain}
+.an-designer-paper #hpang-preview-wrap{padding:0!important}
+.an-designer-paper>[data-design-preview]{width:100%}
+.an-designer-paper .an-stage{margin:0;max-height:none!important}
+.an-designer-paper{--an-handle-edge:calc(22px / var(--an-picture-scale,1))}
+.an-designer-paper .an-hit-layer button:is(.an-resize-handle,.an-rotate-handle){width:calc(44px / var(--an-picture-scale,1));height:calc(44px / var(--an-picture-scale,1));min-width:0;min-height:0;font-size:calc(22px / var(--an-picture-scale,1))}
+.an-designer-paper .an-hit-layer button:not(.an-resize-handle):not(.an-rotate-handle){box-shadow:none}
+.an-designer-settings{display:flex;flex-direction:column;min-width:0;min-height:0;padding:10px;max-height:none;overflow:hidden;margin:0}
+.an-designer-settings h2{flex:none;font-size:15px;font-weight:600;margin:0 0 6px}
+.an-designer-body,.an-shared-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.an-designer-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.an-designer-help{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.an-designer-direct:empty,.an-designer-help:empty,.an-preview-options:empty{display:none}
+.an-picture-controls .an-actions{margin:4px 0}
+.an-designer-settings .an-element-actions{gap:4px;flex-wrap:wrap}
+.an-designer-settings .an-element-actions button{flex:1 1 36px;padding:4px;min-width:36px}
+.an-designer-settings .an-nudge{display:flex;gap:4px}
+.an-designer-tabs{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.an-designer-workspace:fullscreen,.cfg-split:fullscreen{height:100dvh;padding:8px;background:var(--an-bg)}
+.an-help{display:inline-flex;vertical-align:middle}
+#cms-panel-cfg .an-help-button{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:2px;border:0;border-radius:50%;background:transparent;color:var(--an-green);font:20px/1 system-ui;cursor:help;box-shadow:none}
+.an-help-popover{position:fixed;inset:auto;margin:0;box-sizing:border-box;width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:12px;border:1px solid #6b7f72;border-radius:10px;background:#fff;color:#24362d;box-shadow:0 8px 26px #0003;font:14px/1.5 system-ui;pointer-events:none}
+.an-help-popover.an-help-pinned{pointer-events:auto}
+.an-help-popover:not(.an-help-pinned)>button{display:none}
+.an-help-popover p{margin:0 0 8px!important;padding:0!important;background:none!important;border:0!important;font-size:14px!important}
+.an-help-popover:not(:popover-open){display:none}
+.an-shared-settings{display:flex;flex-direction:column;min-height:0;height:100%}
+#cms-cfg-wp>.cfg-split,#cfg-offer-legacy:has(#cfg-sec-shared:not([style*="none"])){display:grid;grid-template-columns:minmax(250px,1fr) minmax(0,2fr);gap:12px;min-height:0}
+#cms-cfg-wp>.cfg-split{flex:1;height:auto}
+#cms-cfg-wp .cfg-split-left{min-height:0;overflow:auto;overscroll-behavior:contain}
+#cms-cfg-wp .cfg-split-right,#cfg-offer-legacy>.cfg-split-right{width:auto;min-width:0;min-height:0;overflow:hidden}
 .an-designer-tabs{gap:4px;margin-bottom:12px}
-.an-designer-tabs button{flex:1 1 100px;font-size:12px;padding:7px;min-height:44px}
+.an-designer-tabs button{flex:1 1 100px;font-size:12px;padding:7px;min-height:44px;overflow-wrap:anywhere;hyphens:auto}
 .an-designer-settings [hidden]{display:none!important}
 .an-designer-settings fieldset{min-width:0;margin:0 0 12px;padding:12px;border:1px solid var(--an-line);border-radius:10px}
 .an-designer-settings legend{font-size:14px;font-weight:600;padding:0 6px}
@@ -563,18 +614,30 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-designer-settings .cms-wp-preview[aria-pressed=true]{border:2px solid var(--an-green);background:#edf3e8}
 .an-designer-settings .cms-wp-preview[aria-pressed=true] .an-choice-active{visibility:visible}
 .an-designer-preview [id^=cfg-live-preview] img{width:100%;max-height:65vh;object-fit:contain}
-.an-design>.an-designer-save{position:sticky;bottom:0;z-index:7;margin:8px 0 0!important;padding:10px;background:#f7f5ed;border:1px solid var(--an-line);border-radius:10px}
+.an-designer-settings>.an-designer-save,.an-shared-settings>.an-designer-save{position:static;flex:none;margin:8px 0 0!important;padding:8px 0 0;background:#f7f5ed;border:0;border-top:1px solid var(--an-line);border-radius:0;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
 .an-designer-save button{font-size:12px;min-height:44px}
-.an-designer-save [role=status]{flex-basis:100%;font-size:12px;margin:0}
+.an-designer-save>.an-design-history{display:contents}
+.an-designer-save [role=status]{grid-column:1/-1;flex-basis:100%;font-size:12px;line-height:1.3;margin:0}
 .an-designer-save [role=status]:empty{display:none}
 @media(max-width:600px){
-  .an-designer-workspace{grid-template-columns:minmax(0,1fr);gap:8px}
-  .an-designer-workspace .an-designer-preview{position:static;max-width:none;max-height:50dvh}
+  .an-designer-workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(100px,.8fr) minmax(0,1.2fr);gap:6px}
+  .an-designer-workspace .an-designer-preview{grid-row:1;position:relative;max-width:none;max-height:none}
+  .an-designer-settings{grid-row:2}
   .an-designer-preview [id^=cfg-live-preview] img{max-height:none}
   .an-designer-workspace .an-stage{max-height:none!important}
-  .an-designer-settings{padding:10px;max-height:none;overflow-y:visible;scrollbar-gutter:auto}
+  .an-designer-settings{padding:6px;max-height:none;overflow:hidden;scrollbar-gutter:auto}
   .an-designer-settings .an-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
   .an-designer-settings .an-template-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
   .an-designer-save{gap:4px}
   .an-designer-save button{flex:1 1 90px;padding:6px}
+  .an-designer-settings>.an-designer-save{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:4px!important;padding-top:4px}
+  .an-designer-settings>.an-designer-save button{font-size:10px;padding:4px;min-height:36px}
+  .an-designer-settings h2{font-size:13px;margin:0 0 3px}
+  .an-designer-tabs{margin-bottom:4px;gap:2px;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .an-designer-tabs:has(>[data-designer-tab="4"]){grid-template-columns:repeat(5,minmax(0,1fr))}
+  .an-designer-tabs button{font-size:10px;padding:3px;min-height:36px;overflow-wrap:anywhere}
+  .an-design-header h3{font-size:13px!important}
+  .an-design-header .cms-switch{font-size:10px}
+  #cms-cfg-wp>.cfg-split,#cfg-offer-legacy:has(#cfg-sec-shared:not([style*="none"])){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(120px,1fr) minmax(0,1fr)}
+  #cms-cfg-wp .cfg-split-right,#cfg-offer-legacy>.cfg-split-right{grid-row:1}
 }

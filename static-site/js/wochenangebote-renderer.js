@@ -87,6 +87,7 @@ window.WochenangeboteRenderer = (function () {
     savingsMarkerType:'starburst',savingsPalette:'harmonie',
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
+    plakat_inline:{},flyer_inline:{},
     plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
     plakat_priceImageColor:'#ed1c24',plakat_priceOutlineColor:'#ffffff',plakat_priceStripColor:'#fff000',plakat_priceOldColor:'#000000',plakat_priceStrikeColor:'#ed1c24',
     plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',plakat_vorratColor:'#888888',
@@ -670,7 +671,7 @@ window.WochenangeboteRenderer = (function () {
           ctx.strokeRect(bw/2,bw/2,W-bw,H-bw);ctx.restore();
         }
       }
-      var artOv=flyerArtOverrideGet(item)||flyerArtOverrideDefault();
+      var artOv=Object.assign({},flyerArtOverrideDefault(),cfg.flyer_inline,flyerArtOverrideGet(item));
       var isMagLayout=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
       if(isMagLayout){
         // ── Modern Magazine Einzelflyer: clean centered card layout ──
@@ -938,7 +939,7 @@ window.WochenangeboteRenderer = (function () {
       ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
       // ── Anchor-based layout: image bottom-left, price block top-right ──
-      var artOv=flyerArtOverrideGet(item)||flyerArtOverrideDefault();
+      var artOv=Object.assign({},flyerArtOverrideDefault(),cfg.flyer_inline,flyerArtOverrideGet(item));
       var imgAncX=cfg.imgAnchorX||10, imgAncY=cfg.imgAnchorY||10;
       var priceAncX=cfg.priceAnchorX||10, priceAncY=cfg.priceAnchorY||10;
       var imgAreaBot=imgAreaTop+imgAreaH;
@@ -1236,7 +1237,7 @@ window.WochenangeboteRenderer = (function () {
         ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
         ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,cy,mgCellW,imgAreaH);ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
         // Per-card overrides
-        var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
+        var pOv=Object.assign({},plakatArtOverrideDefault(),cfg.plakat_inline,plakatArtOverrideGet(it));
         console.log('[drawAngebotPlakat] card',ci,it.produkt,'pOv.customImg:',pOv.customImg?'YES ('+pOv.customImg.length+' chars)':'NO','keys:',Object.keys(pOv).join(','));
         if(img){
           var ofc=_freistellCanvas(img,cfg);
@@ -1459,7 +1460,7 @@ window.WochenangeboteRenderer = (function () {
       ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
       // Per-card overrides
-      var pOv=plakatArtOverrideGet(item)||plakatArtOverrideDefault();
+      var pOv=Object.assign({},plakatArtOverrideDefault(),cfg.plakat_inline,plakatArtOverrideGet(item));
       if(img){
         var pImgSc=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
         var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;

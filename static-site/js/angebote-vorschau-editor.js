@@ -43,8 +43,13 @@ window.AngeboteVorschauEditor = (function () {
         + '<label class="an-quick" data-x-row="image"><span>Bild Deckkraft</span><input type="range" min="10" max="100" data-x-prop="customImgAlpha" aria-label="Eigenes Bild Deckkraft"></label></div>'
         + '<div class="an-element-actions"><button type="button" data-x-reset="element">Element zurücksetzen</button><button type="button" data-x-reset="all">Alles zurücksetzen</button></div>';
       host.querySelector('.an-direct-tools').appendChild(extrasHost);
-    }    var stage = host.querySelector('.an-stage'), layer = host.querySelector('.an-hit-layer');
-    var select = host.querySelector('select'), entries = [], chosen = '', width = 1, height = 1, endDrag = null;
+    }
+    var tools = host.querySelector('.an-direct-tools');
+    if (options.toolsHost) {
+      options.toolsHost.replaceChildren(tools, host.querySelector(':scope>p'));
+    }
+    var stage = host.querySelector('.an-stage'), layer = host.querySelector('.an-hit-layer');
+    var select = tools.querySelector('select'), entries = [], chosen = '', width = 1, height = 1, endDrag = null;
     function current() { return entries.find(function (entry) { return entry.id === chosen; }); }
     function overlay() {
       layer.replaceChildren();
@@ -61,16 +66,16 @@ window.AngeboteVorschauEditor = (function () {
         var points = handlePoints(selected, width, height);
         var handle = document.createElement('button'); handle.type = 'button'; handle.className = 'an-resize-handle';
         handle.dataset.previewResize = chosen; handle.textContent = '↘'; handle.setAttribute('aria-label', 'Vorschauelementgröße ziehen');
-        handle.style.left = 'clamp(22px,' + points.resize.x + '%,calc(100% - 22px))';
-        handle.style.top = 'clamp(22px,' + points.resize.y + '%,calc(100% - 22px))'; layer.appendChild(handle);
+        handle.style.left = 'clamp(var(--an-handle-edge,22px),' + points.resize.x + '%,calc(100% - var(--an-handle-edge,22px)))';
+        handle.style.top = 'clamp(var(--an-handle-edge,22px),' + points.resize.y + '%,calc(100% - var(--an-handle-edge,22px)))'; layer.appendChild(handle);
         var turn = document.createElement('button'); turn.type = 'button'; turn.className = 'an-rotate-handle';
         turn.dataset.previewRotate = chosen; turn.textContent = '↻'; turn.setAttribute('aria-label', 'Vorschauelement frei drehen');
         turn.title = 'Ziehen zum Drehen';
-        turn.style.left = 'clamp(22px,' + points.rotate.x + '%,calc(100% - 22px))';
-        turn.style.top = 'clamp(22px,' + points.rotate.y + '%,calc(100% - 22px))'; layer.appendChild(turn);
+        turn.style.left = 'clamp(var(--an-handle-edge,22px),' + points.rotate.x + '%,calc(100% - var(--an-handle-edge,22px)))';
+        turn.style.top = 'clamp(var(--an-handle-edge,22px),' + points.rotate.y + '%,calc(100% - var(--an-handle-edge,22px)))'; layer.appendChild(turn);
       }
       select.value = chosen;
-      host.querySelectorAll('[data-preview-transform],[data-preview-nudge]').forEach(function (button) { button.disabled = !selected; });
+      tools.querySelectorAll('[data-preview-transform],[data-preview-nudge]').forEach(function (button) { button.disabled = !selected; });
       if (typeof refreshExtras === 'function') refreshExtras();
     }
     function change(delta) {
@@ -170,7 +175,7 @@ window.AngeboteVorschauEditor = (function () {
       });
     }
     select.onchange = function () { chosen = select.value; overlay(); };
-    host.onclick = function (event) {
+    tools.onclick = function (event) {
       var nudge = event.target.closest('[data-preview-nudge]');
       if (nudge && current()) {
         var step = nudge.dataset.previewNudge.split(',').map(Number);
@@ -229,7 +234,7 @@ window.AngeboteVorschauEditor = (function () {
         if (pending && elements.some(function (entry) { return entry.id === pending; })) { chosen = pending; pending = ''; }
         if (!entries.some(function (entry) { return entry.id === chosen; })) {
           var first = entries.find(function (entry) { return entry.type === 'image' || entry.ovKey === 'img'; }) || entries[0];
-          chosen = first ? first.id : '';
+          chosen = first && !options.toolsHost ? first.id : '';
         }
         if (canvas.isConnected) {
           var displayed = document.createElement('canvas'); displayed.width = canvas.width; displayed.height = canvas.height;
@@ -238,6 +243,10 @@ window.AngeboteVorschauEditor = (function () {
         var previous = stage.querySelector('canvas'); if (previous) previous.remove();
         stage.prepend(canvas); stage.style.aspectRatio = width + ' / ' + height; stage.style.setProperty('--an-ratio', width / height);
         select.replaceChildren();
+        if (options.toolsHost) {
+          var placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Element auswählen …';
+          select.appendChild(placeholder);
+        }
         entries.forEach(function (entry) { var option = document.createElement('option'); option.value = entry.id; option.textContent = entry.label; select.appendChild(option); });
         overlay();
       },

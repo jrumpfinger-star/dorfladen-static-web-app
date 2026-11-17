@@ -727,7 +727,8 @@ window.AngeboteModel = (function () {
       canvas._weeklyElements = (canvas._elMeta || []).map(function (meta) {
         var it = itemId ? items[0] : items.find(function (it) { return weeklyKey(it) === meta.itemKey; });
         if (!it) return null;
-        var override = snapshot[group][weeklyKey(it)] || {}, sign = !magazine && meta.ovKey === 'img' ? -1 : 1;
+        var override = Object.assign({}, snapshot.config[outputKind + '_inline'], snapshot[group][weeklyKey(it)]),
+          sign = !magazine && meta.ovKey === 'img' ? -1 : 1;
         var rot = meta.ovKey === 'copy' ? ((override.copies || [])[meta.copyIdx] || {}).rot : override[meta.ovKey + 'Rot'];
         var baseRotation = !magazine && meta.ovKey === 'img' ? -snapshot.config.imgRotation * (group === 'plakat_article_overrides' ? .85 : 1) : 0;
         return Object.assign({}, meta, { id: it.id + ':' + meta.id, itemId: it.id, label: meta.label + ' · ' + it.name,

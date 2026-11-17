@@ -75,7 +75,7 @@ async function setup(page, options = {}) {
     if (path === '/api/preisliste') return json({ groups: { Getränke: state.catalog } });
     if (path === '/api/werbebilder' && method === 'GET' && options.legacyArticleNumber) {
       return json([{ dl_artikelnummer: options.legacyArticleNumber,
-        dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') }]);
+        dl_bild_base64: 'data:image/png;base64,' + (state.previewImage || PHOTO).toString('base64') }]);
     }
     if (path === '/api/werbebilder' && method === 'POST') {
       if (!req.postDataJSON().articles) {
@@ -89,7 +89,7 @@ async function setup(page, options = {}) {
       entry.articles = articles;
       if (state.failImageLookup) return fail(503, 'Die Bildsuche ist gerade nicht erreichbar.');
       return json(articles.filter((a) => a.artikelnummer && !state.missingImageKeys.has(a.artikelnummer)).flatMap((article) => [{ dl_artikelnummer: article.artikelnummer, dl_bild_base64: '' }, { dl_artikelnummer: article.artikelnummer,
-        dl_bild_base64: 'data:image/png;base64,' + PHOTO.toString('base64') }]));
+        dl_bild_base64: 'data:image/png;base64,' + (state.previewImage || PHOTO).toString('base64') }]));
     }
     if (path === '/api/getraenke-artikel') return fail(410, 'Der Bestellkatalog ist für Angebotsflyer nicht vorgesehen.');
     if (path === '/api/angebote-flyer' && url.searchParams.get('view') === 'homepage') return state.failRead || state.failHomepage
@@ -658,11 +658,11 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   const state = await setup(page), existing = await seed(page, state);
   const before = copy(existing);
   await cms(page);
-  const host = page.locator('[data-design-preview]');
+  const host = page.locator('[data-design-preview]'), tools = page.locator('#an-design-root .an-direct-tools');
   await expect(host.locator('canvas')).toBeVisible();
-  await host.locator('[data-preview-element]').selectOption('sheet:0:image:0');
-  await host.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
-  await host.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
+  await tools.locator('[data-preview-element]').selectOption('sheet:0:image:0');
+  await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
+  await tools.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
   const hit = host.locator('[data-preview-select="sheet:0:image:0"]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 71, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 71, pointerType: 'touch', clientX: box.x + 20, clientY: box.y + 15 });
@@ -704,11 +704,11 @@ for (const density of [4, 6]) {
     state.design.drinks.density = density;
     const existing = await seed(page, state), before = copy(existing);
     await cms(page);
-    await expect(page.getByText('Nur die erste Kachel ist als Musterkachel bearbeitbar.', { exact: false })).toBeVisible();
-    const host = page.locator('[data-design-preview]');
+    await expect(page.getByRole('button', { name: /Hinweis: Nur die erste Kachel ist als Musterkachel bearbeitbar/ })).toBeVisible();
+    const host = page.locator('[data-design-preview]'), tools = page.locator('#an-design-root .an-direct-tools');
     for (const [mode, target] of [['paper', 'sheet'], ['cards', 'card'], ['scale-large', 'scale'], ['scale-small', 'scale']]) {
       await page.locator('[data-design-mode="' + mode + '"]').click();
-      const select = host.locator('[data-preview-element]'), imageId = target + ':0:image:0';
+      const select = tools.locator('[data-preview-element]'), imageId = target + ':0:image:0';
       await expect(select.locator('option[value="' + imageId + '"]')).toHaveCount(1);
       if (mode === 'paper') await expect(select.locator('option[value="sheet:page:title:0"]')).toHaveCount(1);
       expect(await select.locator('option').evaluateAll((options) =>
@@ -718,13 +718,13 @@ for (const density of [4, 6]) {
       await select.selectOption(imageId);
       const image = host.locator('[data-preview-select="' + imageId + '"]');
       const rotation = await image.evaluate((node) => node.style.transform);
-      await host.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
+      await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
       await expect.poll(() => image.evaluate((node) => node.style.transform)).not.toBe(rotation);
       const width = await image.evaluate((node) => parseFloat(node.style.width));
-      await host.getByRole('button', { name: 'Vorschauelement verkleinern', exact: true }).click();
+      await tools.getByRole('button', { name: 'Vorschauelement verkleinern', exact: true }).click();
       await expect.poll(() => image.evaluate((node) => parseFloat(node.style.width))).toBeLessThan(width);
       const imageY = await image.evaluate((node) => parseFloat(node.style.top));
-      await host.getByRole('button', { name: 'Vorschauelement nach unten', exact: true }).click();
+      await tools.getByRole('button', { name: 'Vorschauelement nach unten', exact: true }).click();
       await expect.poll(() => image.evaluate((node) => parseFloat(node.style.top))).toBeGreaterThan(imageY);
       await select.selectOption(target + ':0:price:0');
       const price = host.locator('[data-preview-select="' + target + ':0:price:0"]');
@@ -2228,10 +2228,164 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   await page.locator('#cfg-sec-flyer .an-template-picker summary').click();
   await page.locator('#cfg-flyerTemplate-preview [data-value=modern-mag-xl]').click();
   await page.clock.runFor(1000);
-  await expect(page.locator('#cfg-live-preview-flyer img')).toBeVisible();
+  await expect(page.locator('#cfg-live-preview-flyer canvas')).toBeVisible();
   expect(state.log.some((entry) => entry.path === '/api/werbebilder'
     && entry.method === 'GET' && entry.params.artnrs === 'ART2001')).toBe(true);
   expect(await page.evaluate(() => window.__previewProductImages)).toBeGreaterThan(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F43-01/02/03: bildreine Vorschau rechts, feste Navigation und erreichbare Hilfen in allen Designern', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page);
+  for (const kind of ['plakat', 'flyer', 'drinks', 'homepage']) {
+    if (kind === 'homepage') await page.locator('[data-id=cfg-hpang]').click();
+    else await page.locator('[data-id=sec-' + kind + ']').click();
+    const root = page.locator('[data-designer=' + kind + ']');
+    const preview = root.locator('.an-designer-preview'), body = root.locator('.an-designer-body');
+    await expect(preview.locator(kind === 'homepage' ? '#hpang-preview .an-hp-card' : 'canvas:visible').first()).toBeVisible();
+    await expect(preview.locator('h2,.an-note,select,.an-direct-tools,.an-designer-save,[data-action]')).toHaveCount(0);
+    await expect(preview.locator('.an-selected,.an-resize-handle,.an-rotate-handle')).toHaveCount(0);
+    expect(await body.evaluate((node) => node.clientHeight)).toBeGreaterThanOrEqual(44);
+    await expect(root.locator('[data-picture-zoom]')).toHaveValue('fit');
+    await expect.poll(() => preview.evaluate((node) => {
+      const frame = node.querySelector('.an-designer-frame').getBoundingClientRect(), r = node.getBoundingClientRect();
+      return frame.width > 0 && frame.height > 0 && frame.top >= r.top && frame.bottom <= r.bottom + 1
+        && frame.left >= r.left && frame.right <= r.right + 1;
+    })).toBe(true);
+    const geometry = await root.evaluate((node) => {
+      const rect = (selector) => { const r = node.querySelector(selector).getBoundingClientRect(); return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
+      return { p: rect('.an-designer-preview'), s: rect('.an-designer-settings'), a: rect('.an-designer-save') };
+    });
+    const { p, s, a } = geometry;
+    if (page.viewportSize().width <= 600) expect(p.bottom).toBeLessThanOrEqual(s.y + 1);
+    else { expect(s.right).toBeLessThanOrEqual(p.x + 1); expect(p.width).toBeGreaterThan(s.width); }
+    expect(a.right <= p.x || a.y >= p.bottom || a.bottom <= p.y).toBe(true);
+    expect(p.bottom).toBeLessThanOrEqual(page.viewportSize().height + 1);
+    await expect(root.locator('.an-designer-save button').first()).toBeInViewport();
+    const header = page.locator('.an-design-header'), before = await header.boundingBox();
+    await body.evaluate((node) => { node.scrollTop = node.scrollHeight; });
+    expect((await header.boundingBox()).y).toBe(before.y);
+    expect((await preview.boundingBox()).y).toBe(p.y);
+    await root.locator('[data-picture-zoom]').selectOption('2');
+    expect(await preview.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
+    const documentScroll = await page.evaluate(() => document.scrollingElement.scrollTop);
+    await preview.hover({ position: { x: 25, y: 25 } }); await page.mouse.wheel(0, 200);
+    await expect.poll(() => preview.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(documentScroll);
+    await root.locator('[data-picture-fit]').click();
+    await expect(root.locator('[data-picture-zoom]')).toHaveValue('fit');
+    if (kind === 'drinks') {
+      await root.locator('[data-picture-fullscreen]').click();
+      await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+      await root.locator('[data-picture-fullscreen]').click();
+      await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(false);
+    }
+    await noOverflow(page, '#cms-panel-cfg');
+    await page.screenshot({ path: test.info().outputPath('bildreiner-designer-' + kind + '.png') });
+  }
+  for (const tab of ['cfg-hp', 'cfg-wp', 'cfg-plakat', 'cfg-hpang']) {
+    await page.locator('[data-id=' + tab + ']').click();
+    await expect(page.locator('.an-design-header')).toBeInViewport();
+    const help = page.locator('.an-design-header .an-help-button').first();
+    await help.focus();
+    const popup = page.locator('#' + await help.getAttribute('aria-controls'));
+    await expect(popup).toBeVisible(); await expect(popup).toBeInViewport();
+    await help.press('Escape'); await expect(popup).not.toBeVisible();
+    await help.click(); await expect(popup).toBeVisible();
+    await popup.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(help).toBeFocused();
+  }
+  expect(state.errors).toEqual([]);
+});
+
+for (const kind of ['plakat', 'flyer']) {
+  test('TC-F44-01/02: identische Direktwerkzeuge, echtes Rendern, Undo und explizites Speichern ' + kind, async ({ page }) => {
+    const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
+    state.previewImage = Buffer.from(await page.evaluate(() => {
+      const canvas = document.createElement('canvas'); canvas.width = 200; canvas.height = 300;
+      const ctx = canvas.getContext('2d'); ctx.fillStyle = '#224488'; ctx.fillRect(0, 0, 200, 300);
+      return canvas.toDataURL('image/png').split(',')[1];
+    }), 'base64');
+    await cms(page); await page.locator('[data-id=sec-' + kind + ']').click(); await page.clock.runFor(500);
+    const root = page.locator('[data-designer=' + kind + ']'), preview = root.locator('.an-designer-preview');
+    const select = root.locator('[data-preview-element]'), canvas = preview.locator('canvas:visible');
+    await expect(select).toBeVisible(); await expect(canvas).toBeVisible();
+    await select.selectOption('img');
+    const meta = () => canvas.evaluate((node) => node._elMeta.find((entry) => entry.ovKey === 'img'));
+    const before = await meta(), writes = state.log.filter((entry) => entry.path === '/api/cms-config' && entry.method !== 'GET').length;
+    await root.locator('[data-preview-nudge="2,0"]').click(); await page.clock.runFor(500);
+    await expect.poll(async () => (await meta()).x).toBeGreaterThan(before.x);
+    await root.locator('[data-design-history=undo]').click(); await page.clock.runFor(500);
+    await expect.poll(async () => (await meta()).x).toBeCloseTo(before.x, 3);
+    await root.locator('[data-design-history=redo]').click(); await page.clock.runFor(500);
+    await root.locator('[data-preview-transform=larger]').click(); await page.clock.runFor(500);
+    await expect.poll(async () => (await meta()).w).toBeGreaterThan(before.w);
+    await root.locator('[data-preview-transform=right]').click(); await page.clock.runFor(500);
+    const handle = await preview.locator('.an-rotate-handle:visible').boundingBox();
+    expect(handle.width).toBeGreaterThanOrEqual(40);
+    expect(state.log.filter((entry) => entry.path === '/api/cms-config' && entry.method !== 'GET')).toHaveLength(writes);
+    await page.locator('[data-id=sec-drinks]').click();
+    await page.locator('[data-id=sec-' + kind + ']').click(); await page.clock.runFor(500);
+    const savedRequest = page.waitForRequest((request) => request.url().includes('/api/cms-config') && request.method() !== 'GET');
+    await root.locator('#cfg-plakat-save').click();
+    state.cmsDesign.design_config = (await savedRequest).postDataJSON().wert;
+    expect(state.cmsDesign.design_config[kind + '_inline']?.imgDx).toBe(2);
+    expect(state.cmsDesign.design_config[kind + '_inline'].imgScale).toBeCloseTo(110);
+    expect(Math.abs(state.cmsDesign.design_config[kind + '_inline'].imgRot)).toBe(15);
+    const savedMeta = await meta();
+    await root.locator('[data-preview-nudge="2,0"]').click(); await page.clock.runFor(500);
+    await expect.poll(async () => (await meta()).x).toBeGreaterThan(savedMeta.x);
+    await root.locator('[data-action=cfgRevertUnsaved]').click(); await page.clock.runFor(500);
+    await expect.poll(async () => (await meta()).x).toBeCloseTo(savedMeta.x, 3);
+    await page.reload(); await page.clock.runFor(500);
+    await page.locator('[data-id=sec-' + kind + ']').click(); await page.clock.runFor(500);
+    await expect(canvas).toBeVisible();
+    await expect(root.locator('[data-design-history=undo]')).toBeDisabled();
+    await page.evaluate((kind) => {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (...args) {
+        HTMLCanvasElement.prototype.getContext = getContext;
+        throw new Error('Absichtlicher einmaliger Renderfehler');
+      };
+      window.cfgLivePreview(kind);
+    }, kind);
+    await page.clock.runFor(500);
+    await expect(preview.getByRole('alert')).toContainText('konnte nicht geladen werden');
+    await page.evaluate((kind) => window.cfgLivePreview(kind), kind); await page.clock.runFor(500);
+    await expect(canvas).toBeVisible();
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F44-03: Inline-Standards verändern Originalausgaben und werden identisch in CMS-Snapshots übernommen', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page), imageId = uid(); state.images.set(imageId, PHOTO);
+  state.cmsDesign.design_config = { plakat_showTexture: false, flyer_showTexture: false,
+    plakat_inline: { imgDx: 12, priceDy: -7, priceRot: 15 },
+    flyer_inline: { imgDx: -9, priceDy: 13, priceRot: -15 } };
+  const result = await page.evaluate(async (imageId) => {
+    const M = window.AngeboteModel, R = window.WochenangeboteRenderer, data = M.blank('weekly');
+    const item = Object.assign(M.item(), { name: 'Testprodukt', price_cents: 249, image_id: imageId });
+    data.items.push(item); await M.adoptWeekly(data);
+    const encode = (image) => { const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d').drawImage(image, 0, 0); return canvas.toDataURL(); };
+    const photo = await M.image(imageId), logo = encode(await M.image('logo')), cfg = data.layout.cms.config;
+    const renderer = R.create({ cfgGet: () => cfg, logo, flyerArtOverrideGet: () => null, plakatArtOverrideGet: () => null });
+    const original = { produkt: item.name, preis: 2.49, bild_data: encode(photo) };
+    const action = { von: data.valid_from, bis: data.valid_to, items: [original] };
+    const poster = (config) => new Promise((resolve) => renderer.drawAngebotPlakat(action, [original], [photo], resolve, config, { scale: 1, returnCanvas: true }));
+    const base = { ...cfg, plakat_inline: {}, flyer_inline: {} };
+    const beforePoster = await poster(base), afterPoster = await poster(cfg);
+    const beforeSingle = await renderer.generateEinzelflyer(original, action, base);
+    const afterSingle = await renderer.generateEinzelflyer(original, action, cfg);
+    const adapted = await M.render(data, 0, 1), adaptedSingle = await M.renderTarget(data, 'single', item.id, 1);
+    const delta = (a, b, key, field) => b._elMeta.find((entry) => entry.ovKey === key)[field] - a._elMeta.find((entry) => entry.ovKey === key)[field];
+    return { posterDx: delta(beforePoster, afterPoster, 'img', 'x'), posterDy: delta(beforePoster, afterPoster, 'price', 'y'),
+      singleDx: delta(beforeSingle, afterSingle, 'img', 'x'), singleDy: delta(beforeSingle, afterSingle, 'price', 'y'),
+      posterSame: afterPoster.toDataURL() === adapted.canvas.toDataURL(),
+      singleSame: afterSingle.toDataURL() === adaptedSingle.canvas.toDataURL() };
+  }, imageId);
+  expect(result).toMatchObject({ posterDx: 12, posterDy: -7, singleDx: -9, singleDy: 13, posterSame: true, singleSame: true });
   expect(state.errors).toEqual([]);
 });
 
@@ -2254,8 +2408,8 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
     const previewHost = root.locator('.an-designer-preview');
     await page.clock.runFor(500);
     await expect(kind === 'drinks' ? root.locator('[data-design-preview] canvas')
-      : root.locator('#cfg-live-preview-' + kind + ' img')).toBeVisible();
-    await expect(previewHost).toHaveCSS('overflow-y', 'scroll');
+      : root.locator('#cfg-live-preview-' + kind + ' canvas')).toBeVisible();
+    await expect(previewHost).toHaveCSS('overflow-y', 'auto');
     await expect(previewHost).toHaveCSS('overscroll-behavior-y', 'contain');
     await previewHost.scrollIntoViewIfNeeded();
     await previewHost.evaluate((node) => { node.scrollTop = 0; });
@@ -2272,7 +2426,7 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
     const preview = await root.locator('.an-designer-preview').boundingBox();
     const settings = await root.locator('.an-designer-settings').boundingBox();
     if (page.viewportSize().width <= 600) expect(preview.y + preview.height).toBeLessThanOrEqual(settings.y + 1);
-    else expect(preview.x + preview.width).toBeLessThanOrEqual(settings.x + 1);
+    else expect(settings.x + settings.width).toBeLessThanOrEqual(preview.x + 1);
     await root.locator('.an-designer-save').scrollIntoViewIfNeeded();
     await expect(root.locator('.an-designer-save button').first()).toBeInViewport();
     await noOverflow(page, '#cms-cfg-plakat');
@@ -2293,7 +2447,7 @@ for (const section of ['plakat', 'flyer']) {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       return [...doc.querySelectorAll('#cfg-sec-' + section + ' input[id],#cfg-sec-' + section + ' select[id]')].map((node) => node.id).sort();
     }, { html: original, section });
-    expect(await root.locator('.an-designer-settings input[id],.an-designer-settings select[id]').evaluateAll((nodes) => nodes.map((node) => node.id).sort())).toEqual(originalIds);
+    expect(await root.locator('.an-designer-settings input[id]:not([id^=cfg-live-auto]),.an-designer-settings select[id]').evaluateAll((nodes) => nodes.map((node) => node.id).sort())).toEqual(originalIds);
     await expect(root.locator('.cms-card')).toHaveCount(0);
     await root.locator('.an-template-picker summary').click();
     await expect(root.locator('.cms-wp-preview.active')).toHaveCount(1);
@@ -2450,7 +2604,7 @@ test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nati
   await redo.click(); await expect(color).toHaveValue('#1234aa');
   await undo.click(); await color.fill('#223344'); await color.dispatchEvent('change'); await expect(redo).toBeDisabled();
   await root.locator('[data-designer-tab="0"]').click();
-  await host.locator('[data-preview-element]').selectOption('sheet:0:image:0');
+  await root.locator('[data-preview-element]').selectOption('sheet:0:image:0');
   const hit = host.locator('[data-preview-select="sheet:0:image:0"]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 81, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   for (const step of [10, 20, 30]) await page.dispatchEvent('body', 'pointermove', {
@@ -2576,8 +2730,9 @@ test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reite
   await redo.click(); await expect(color).toHaveValue('#aabbcc');
   const [p, s] = await Promise.all([preview.boundingBox(), settings.boundingBox()]);
   if (page.viewportSize().width <= 600) expect(p.y + p.height).toBeLessThanOrEqual(s.y + 1);
-  else expect(p.x + p.width).toBeLessThanOrEqual(s.x + 1);
-  await expect(preview).toHaveCSS('overflow-y', 'scroll');
+  else expect(s.x + s.width).toBeLessThanOrEqual(p.x + 1);
+  await expect(preview).toHaveCSS('overflow-y', 'auto');
+  await root.locator('[data-picture-zoom]').selectOption('2');
   await preview.scrollIntoViewIfNeeded();
   const documentScroll = await page.evaluate(() => document.scrollingElement.scrollTop);
   await preview.hover({ position: { x: 30, y: 80 } }); await page.mouse.wheel(0, 250);

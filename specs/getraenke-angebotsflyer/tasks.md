@@ -5,6 +5,9 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 
 | ID | Arbeit | Abhängigkeit | Testfälle |
 |---|---|---|---|
+| GF82 | Feste Designnavigation für alle Reiter, bildreine rechte Vorschau, linke Werkzeuge mit eigenem Aktionsbereich, Einpassen/Zoom/Vollbild und kompakte erreichbare Infohilfen integrieren | GF81 | TC-F43-01..04 |
+| GF84 | Direkten Vorschaueditor für Plakat/Einzelflyer mit echten Renderer-Geometrien, getrennten Standardanpassungen und unverändertem explizitem Speichern anbinden | GF82 | TC-F44-01..03 |
+| GF83 | Vieransichten-Geometrie und echte Werkzeug-/Speicherregression abnehmen, Generator/Parität und Bedienhilfe prüfen | GF82, GF84 | TC-F43-01..04, TC-F44-01..03, TC-F38-02, TC-F39-01..04, TC-F40-01..03 |
 | GF73 | Gemeinsame Designer-Arbeitsfläche mit fünf Werkzeugreitern und verlustfreien CMS-Adaptern integrieren | GF72 | TC-F38-01..02 |
 | GF76 | Lokales Undo/Redo in alle Standarddesigner integrieren und Aktionsdesigner-Toolbar vervollständigen; Gesten und getrennte Ausgaben testen | GF73 | TC-F39-01..04 |
 | GF77 | Preisbildziffern mit lokal lizenzierter Schmalschrift und engeren Cent originalnäher rendern; Fontbereitschaft und Ausgaben prüfen | GF73 | TC-F38-04 |

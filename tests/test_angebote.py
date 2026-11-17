@@ -136,6 +136,23 @@ class AngeboteTests(unittest.TestCase):
         self.service.publish(head["id"], head["version"])
         self.assertEqual(self.service.public()[0]["data"]["layout"]["cms"]["config"], config)
 
+    def test_TC_F44_03_inline_standards_survive_snapshot_and_reject_invalid_values(self):
+        data = draft("weekly")
+        config = {"plakatTemplate": "classic-red", "flyerTemplate": "modern-mag-xl",
+                  "plakat_inline": {"imgDx": 12, "imgScale": 110, "priceRot": -15},
+                  "flyer_inline": {"priceDy": -12, "priceScale": 90}}
+        data["layout"]["cms"] = {
+            "config": config, "plakat_article_overrides": {}, "flyer_article_overrides": {}
+        }
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        self.assertEqual(self.service.public()[0]["data"]["layout"]["cms"]["config"], config)
+        for invalid in ([], {"imgDx": True}, {"imgScale": 0}, {"priceRot": 181},
+                        {"imgDx": float("inf")}, {"customImg": "no"}):
+            with self.subTest(invalid=invalid):
+                data["layout"]["cms"]["config"]["plakat_inline"] = invalid
+                self.error(400, normalize, data)
+
     def test_TC_F15_02_delete_requires_current_version_and_ends_publication(self):
         head = self.service.create(draft())
         head = self.service.publish(head["id"], head["version"])

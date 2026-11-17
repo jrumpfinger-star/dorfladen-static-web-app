@@ -67,17 +67,33 @@ Sonderaktionen behalten ihre ursprüngliche Sechser-Erfassung und CMS-Vorlagen.
 ### Gemeinsame Designer-Arbeitsfläche
 
 Unter **Design → Plakate & Flyer** verwenden **Plakat**, **Einzelflyer** und
-**Getränkeflyer** dieselbe Arbeitsfläche: Vorschau links, Einstellungen rechts;
-auf dem Handy steht die Vorschau über den Werkzeugen. Die Werkzeugreiter
+**Getränkeflyer** dieselbe Arbeitsfläche: Einstellungen links, bildreine
+Vorschau rechts; auf dem Handy steht die Vorschau über den Werkzeugen.
+Kopfzeile und Reiternavigation scrollen nicht mit. Die Werkzeugreiter
 **Stil**, **Farben**, **Feinabstimmung**, **Weitere Gestaltung** und
 **Eigene Vorlagen** begrenzen die angezeigten Einstellungen. Eigene
 Designvorlagen sind zusätzlich standardmäßig eingeklappt. Speichern und
-Verwerfen bleiben am unteren Rand erreichbar.
-Die Live-Vorschau hat einen eigenen Scrollbalken. Auf Desktop und Tablet
-lassen sich Vorschau und Einstellungen unabhängig voneinander scrollen;
-auf dem Handy wird das vollständige Motiv innerhalb der Vorschau gescrollt.
+Verwerfen erhalten links einen eigenen, dauerhaft erreichbaren Bereich
+und verdecken die Vorschau nicht. Erklärungstexte sind über **ⓘ** per Maus,
+Tastatur oder Antippen erreichbar; **Escape** schließt die Erklärung.
+Fehler und aktuelle Statusmeldungen bleiben sichtbar.
+Die Live-Vorschau zeigt zunächst ausschließlich die Ausgabe. Erst nach
+Elementauswahl erscheinen die zugehörigen Bearbeitungsanfasser.
+Format, Elementauswahl und Bildwerkzeuge stehen links.
+**Einpassen** zeigt zunächst das ganze Motiv; **Vorschaugröße** vergrößert
+es, **Vollbild** nutzt den Bildschirm mit weiterhin erreichbaren Werkzeugen.
+Nur bei vergrößerter Ausgabe wird die Bildfläche unabhängig gescrollt.
+Auf Desktop und Tablet scrollen Werkzeuge und Vorschau getrennt;
+auf dem Handy bleibt die obere Vorschau beim Scrollen der Werkzeuge sichtbar.
 Bild- und Preisposition stehen bei ausreichender Containerbreite nebeneinander;
 nur auf schmalen Ansichten werden sie untereinander angeordnet.
+
+Auch Plakat und Einzelflyer erlauben nun direkte Elementauswahl,
+Verschieben, Skalieren und Drehen mit denselben Werkzeugen wie Getränke.
+Die vom Originalrenderer ausgewiesenen Bild-/Preiselemente der Musterkachel
+ändern die Ausgabe-Standards, nicht die tatsächlichen Angebotsartikel.
+Erst **Speichern** übernimmt diese Anpassungen dauerhaft. Ausgabeweite
+Standards und vorhandene artikelbezogene Sonderanpassungen bleiben getrennt.
 
 **Rückgängig** und **Wiederholen** sind in allen drei Designern erreichbar.
 Sie erfassen bis zu 30 Schritte, einschließlich Farben, Vorlagen und
