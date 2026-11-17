@@ -811,7 +811,11 @@ window.AngeboteDesign = (function () {
       function currentScale() {
         var width = paper.offsetWidth, height = paper.offsetHeight;
         if (!width || !height || !preview.clientWidth || !preview.clientHeight) return 1;
-        return zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - 16) / height, 1) : Number(zoom.value);
+        return zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - fitPad()) / height, 1) : Number(zoom.value);
+      }
+      function fitPad() {
+        var box = zoombar.getBoundingClientRect();
+        return 16 + (box.height ? box.height + 8 : 0);
       }
       function step(direction) {
         var scale = currentScale(), value = null;
@@ -829,7 +833,7 @@ window.AngeboteDesign = (function () {
         if (!preview.clientWidth || !preview.clientHeight) return;
         var width = paper.offsetWidth, height = paper.offsetHeight;
         if (!width || !height) return;
-        var scale = zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - 16) / height, 1) : Number(zoom.value);
+        var scale = zoom.value === 'fit' ? Math.min((preview.clientWidth - 16) / width, (preview.clientHeight - fitPad()) / height, 1) : Number(zoom.value);
         paper.style.transform = 'scale(' + scale + ')';
         paper.style.setProperty('--an-picture-scale', scale);
         frame.style.width = width * scale + 'px'; frame.style.height = height * scale + 'px';
