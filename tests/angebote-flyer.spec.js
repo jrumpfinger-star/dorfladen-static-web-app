@@ -226,6 +226,9 @@ async function designTab(page, id) {
 async function designerTool(root, index) {
   const select = root.getByRole('combobox', { name: 'Gestaltungswerkzeuge', exact: true });
   const tab = index === 'tools' ? await root.locator('[data-designer-tools]').getAttribute('data-designer-tab') : String(index);
+  // Auf schmalen Viewports erscheint das Werkzeuge-Select erst mit dem Layout (ResizeObserver);
+  // bis dahin ist auch der Reiter-Button versteckt. Auf eines von beiden warten.
+  await expect(select.or(root.locator('[data-designer-tab="' + tab + '"]')).first()).toBeVisible({ timeout: 15000 });
   if (await select.isVisible()) await select.selectOption(tab);
   else await root.locator('[data-designer-tab="' + tab + '"]').click();
 }
@@ -2331,6 +2334,7 @@ test('TC-F57-01: Designvorgaben erreichen die Live-Vorschau (Marker-Typ, Footer-
   await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
   await expect(root).toBeVisible();
+  await workspaceView(root, 'split');
   const canvas = page.locator('.an-designer-preview canvas:visible').first();
   await expect(canvas).toBeVisible({ timeout: 20000 });
   const hash = () => page.locator('.an-designer-preview canvas:visible').first().evaluate((c) => { const d = c.toDataURL(); let h = 0; for (let i = 0; i < d.length; i += 13) h = (h * 31 + d.charCodeAt(i)) | 0; return d.length + ':' + h; });
