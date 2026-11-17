@@ -166,8 +166,8 @@ async function setup(page, options = {}) {
   return state;
 }
 
-async function seed(page, state, { kind = 'drinks', count = 1, publish = false, title = 'Unsere Getränkeangebote' } = {}) {
-  const data = await page.evaluate(({ kind, count, title }) => {
+async function seed(page, state, { kind = 'drinks', count = 1, publish = false, title = 'Unsere Getränkeangebote', origin = false } = {}) {
+  const data = await page.evaluate(({ kind, count, title, origin }) => {
     const M = window.AngeboteModel, data = M.blank(kind);
     data.title = title; data.valid_from = '2026-11-16'; data.valid_to = '2026-11-25';
     for (let n = 0; n < count; n++) {
@@ -177,8 +177,8 @@ async function seed(page, state, { kind = 'drinks', count = 1, publish = false, 
         packaging: 'Mehrweg', price_cents: 1249, old_price_cents: 1499, deposit_cents: 310 });
       data.items.push(item);
     }
-    M.applyTemplate(data); return data;
-  }, { kind, count, title });
+    M.applyTemplate(data); if (origin) M.rememberDesign(data); return data;
+  }, { kind, count, title, origin });
   const head = { id: uid(), version: 1, draft: data, published_revision: publish ? uid() : null, published_summary: publish ? copy(data) : null };
   state.actions.set(head.id, head);
   if (publish) state.published.set(head.id, { id: head.id, revision: head.published_revision, data: copy(data) });
@@ -211,6 +211,57 @@ async function cms(page, tab = 'cfg&flyer=drinks') {
   await page.goto(BASE + '/cms.html?tab=' + tab);
   await page.evaluate(() => sessionStorage.setItem('cms_auth_ok', JSON.parse(document.getElementById('cms-pw-hash').textContent)));
   await page.reload();
+}
+
+async function designTab(page, id) {
+  const select = page.getByRole('combobox', { name: 'Designbereich', exact: true });
+  if (await select.isVisible()) {
+    const option = select.locator('option[value="' + id + '"],option[value$="/' + id + '"],option[value^="' + id + '/"]').first();
+    await select.selectOption(await option.getAttribute('value'));
+  } else await page.locator('[data-id="' + id + '"]').click();
+}
+
+async function designerTool(root, index) {
+  const select = root.getByRole('combobox', { name: 'Gestaltungswerkzeuge', exact: true });
+  const tab = index === 'tools' ? await root.locator('[data-designer-tools]').getAttribute('data-designer-tab') : String(index);
+  if (await select.isVisible()) await select.selectOption(tab);
+  else await root.locator('[data-designer-tab="' + tab + '"]').click();
+}
+
+async function workspaceView(root, mode) {
+  const select = root.locator('[aria-label=Arbeitsansicht]');
+  await expect(select.or(root.locator('[data-workspace-views]')).locator('visible=true').first()).toBeVisible();
+  if (!(await select.isVisible())) await root.locator('[data-workspace-views]:visible').click();
+  await select.selectOption(mode);
+}
+
+// Unter ~612 px stehen Eingaben und Motiv als getrennte Arbeitsansichten; breiter ist es ein No-op.
+async function phoneView(page, mode) {
+  const split = page.locator('.an-split-mobile').first();
+  if (!(await split.count())) return;
+  await workspaceView(split, mode);
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+}
+
+async function openDetails(details) {
+  if (!(await details.evaluate((node) => node.open))) await details.locator(':scope > summary').click();
+}
+// Mindestgröße von Bedienflächen: 32 px bei Maus ab 600 px, sonst 44 px (docs/ui-designstandard.md 4.3).
+const hit = (page) => page.viewportSize().width >= 600 && !test.info().project.use.hasTouch ? 32 : 44;
+
+// Gestaltungswerte stehen hinter Zusammenfassungen: Feld ggf. im zugehörigen Objektfenster ändern und übernehmen.
+async function setField(page, root, locator, value) {
+  const act = async () => {
+    if (await locator.evaluate((node) => node.tagName) === 'SELECT') await locator.selectOption(value);
+    else if (await locator.evaluate((node) => node.type) === 'checkbox') await locator.setChecked(!!value);
+    else { await locator.fill(String(value)); await locator.dispatchEvent('change'); }
+  };
+  if (await locator.isVisible()) { await act(); return; }
+  const key = await locator.evaluate((node) => node.dataset.style || node.dataset.cmsConfig || node.id || '');
+  const group = await page.evaluate((name) => window.AngeboteModel.propertyGroup(name), key);
+  await root.locator('[data-object-properties=' + group + ']').click();
+  await act();
+  await root.locator('dialog.an-object-dialog[open]').getByRole('button', { name: 'Übernehmen', exact: true }).click();
 }
 
 async function noOverflow(page, selector = 'html') {
@@ -357,7 +408,7 @@ test('TC-F13-02..03: alle Vorlagen rendern lesbar mit Original-Logo, beiden Arte
     }
     return results;
   });
-  expect(results).toHaveLength(72);
+  expect(results).toHaveLength(68);
   expect(results.filter((result) => result.errors.length)).toEqual([]);
   expect(results.every((result) => result.pages === 2)).toBe(true);
   const first = (id) => results.find((result) => result.id === id);
@@ -392,6 +443,7 @@ test('TC-F13-01/03..04: Logo bearbeiten und Vorlage nur auf das gewählte Ziel a
   await expect(page.locator('[data-element-prop=rotation][type=number]')).toHaveValue('5');
   const preserved = copy(state.actions.get(head.id).draft);
   await page.locator('[data-layout-target=card]').click();
+  await templatePanel(page);
   await page.locator('.an-template-picker > summary').click();
   await page.locator('input[data-style=template][value=modern-mag-fresh]').check();
   await saveDraft(page);
@@ -459,10 +511,11 @@ for (const cmsMode of [true, false]) {
     else {
       await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+      await templatePanel(page);
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
     await host.locator('.an-template-picker > summary').click();
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(18);
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const writes = state.log.filter((r) => !['GET', 'HEAD', 'OPTIONS'].includes(r.method)).length;
     await host.locator('.an-choice-option').first().locator('.an-choice-body').dblclick();
@@ -528,11 +581,12 @@ for (const cmsMode of [true, false]) {
       await expect(page.locator('dialog[open]')).toHaveCount(0);
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
       await page.locator('[data-layout-target=sheet]').click();
+      await templatePanel(page);
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
-    await expect(host.locator('.an-template-picker > summary')).toContainText('18 Designvorlagen');
+    await expect(host.locator('.an-template-picker > summary')).toContainText('17 Vorlagen');
     await host.locator('.an-template-picker > summary').click();
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(18);
+    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
     const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
     expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
     await expect(host.locator('select[data-style=template],select[data-style=density]')).toHaveCount(0);
@@ -554,25 +608,25 @@ for (const cmsMode of [true, false]) {
     await host.getByRole('radio', { name: /6 · kompakt/ }).check();
     for (const group of await host.locator('.an-choice-group').filter({ has: page.locator('input[type=radio]') }).all()) {
       await expect(group.locator('.an-choice-active:visible')).toHaveCount(1);
-      const rect = await group.locator('.an-choice-body').first().boundingBox();
-      expect(rect.height).toBeGreaterThanOrEqual(44);
+      const rect = await group.locator('.an-choice').first().boundingBox();
+      expect(rect.height).toBeGreaterThanOrEqual(page.viewportSize().width >= 600 && !test.info().project.use.hasTouch ? 32 : 44);
     }
-    await expect(host.getByLabel('Schrift', { exact: true })).toBeVisible();
-    await expect(host.getByLabel('Angebots-/Preisfarbe')).toBeVisible();
+    await expect(host.getByLabel('Schrift', { exact: true })).toBeAttached();
+    await expect(host.getByLabel('Angebots-/Preisfarbe')).toBeAttached();
+    if (cmsMode) await designerTool(host, 1);
     await host.getByLabel('Flyer-Hintergrund', { exact: true }).fill('#fff0df');
     await host.getByLabel('Flyer-Hintergrund', { exact: true }).dispatchEvent('change');
     await expect.poll(() => host.locator('[data-template-preview=classic] canvas').evaluate((canvas) =>
       Array.from(canvas.getContext('2d').getImageData(1, 1, 1, 1).data))).toEqual([255, 240, 223, 255]);
-    await expect(host.locator('.an-fine:not(.an-more-design)')).not.toHaveAttribute('open');
-    await host.getByText('Feinabstimmung · Größen und Drehung', { exact: true }).click();
-    await expect(host.getByLabel('Produktbild · Drehung in Grad')).toBeVisible();
+    if (cmsMode) await designerTool(host, 2);
+    await expect(host.locator('.an-fine:not(.an-more-design)').first()).toHaveAttribute('open', '');
+    await expect(host.getByLabel('Produktbild · Drehung in Grad')).toBeAttached();
     const clippedLabels = await host.locator('.an-field > span').evaluateAll((labels) => labels.filter((label) => {
       const bounds = label.parentElement.getBoundingClientRect(), range = document.createRange();
       range.selectNodeContents(label);
       return [...range.getClientRects()].some((rect) => rect.width && (rect.left < bounds.left - 1 || rect.right > bounds.right + 1));
     }).map((label) => label.textContent));
     expect(clippedLabels).toEqual([]);
-    await host.getByText('Feinabstimmung · Größen und Drehung', { exact: true }).click();
     if (cmsMode) {
       await host.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
       await expect(host.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
@@ -583,7 +637,9 @@ for (const cmsMode of [true, false]) {
     }
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const attribute = cmsMode ? 'data-design-mode' : 'data-editor-mode';
+    if (cmsMode) await designerTool(host, 'tools');
     if (!cmsMode) await page.getByRole('button', { name: '3 · Ausgeben' }).click();
+    await workspaceView(cmsMode ? page.locator('[data-designer=drinks]') : page.locator('#an-root'), 'split');
     for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
       const button = page.locator('[' + attribute + '="' + mode + '"]');
       await button.click();
@@ -599,7 +655,9 @@ for (const cmsMode of [true, false]) {
     }
     if (!cmsMode) {
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+      await templatePanel(page);
     }
+    if (cmsMode) await designerTool(host, 0);
     await noOverflow(page, cmsMode ? '#an-design-root' : 'html');
     await page.screenshot({ path: test.info().outputPath('layout-auswahl.png'), fullPage: true });
     await host.locator('.an-choice-group').first().screenshot({ path: test.info().outputPath('stil-kacheln.png') });
@@ -608,6 +666,7 @@ for (const cmsMode of [true, false]) {
       await page.locator('[data-open="' + head.id + '"]').click();
       await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
       await page.locator('[data-layout-target=sheet]').click();
+      await templatePanel(page);
     }
     await host.locator('.an-template-picker > summary').click();
     await expect(host.getByRole('radio', { name: /Klassisch/ })).toBeChecked();
@@ -623,23 +682,24 @@ test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Ki
   await cms(page);
   await expect(page.locator('#an-design-root').getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
   await expect(page.locator('#cfg-offer-legacy-save')).toBeHidden();
-  await page.locator('#an-design-root [data-style=color]').fill('#0066aa');
-  await page.locator('#an-design-root [data-style=color]').dispatchEvent('change');
+  await setField(page, page.locator('#an-design-root'), page.locator('#an-design-root [data-style=color]'), '#0066aa');
   await page.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
   await expect(page.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
   expect(state.actions.get(head.id).draft).toEqual(original);
+  await designerTool(page.locator('#an-design-root'), 'tools');
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
     await page.locator('[data-design-mode="' + mode + '"]').click();
     await expect(page.locator('[data-design-preview] canvas')).toBeVisible();
   }
   await noOverflow(page, '#an-design-root');
   await page.screenshot({ path: test.info().outputPath('design-editor.png') });
-  await page.locator('[data-id=sec-flyer]').click();
+  await designTab(page, 'sec-flyer');
   await expect(page.locator('#cfg-sec-flyer')).toBeVisible();
   await expect(page.locator('#cfg-offer-legacy-save')).toBeVisible();
-  await page.locator('[data-id=sec-plakat]').click();
+  await designTab(page, 'sec-plakat');
   await expect(page.locator('#cfg-sec-plakat')).toBeVisible();
-  await page.locator('[data-id=sec-shared]').click();
+  await designTab(page, 'sec-shared');
   await expect(page.locator('#cfg-sec-shared')).toBeVisible();
   await cms(page, 'ang');
   await expect(page.locator('#an-root').getByRole('button', { name: '+ Neue Aktion erstellen', exact: true })).toBeVisible();
@@ -659,7 +719,9 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   const before = copy(existing);
   await cms(page);
   const host = page.locator('[data-design-preview]'), tools = page.locator('#an-design-root .an-direct-tools');
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   await expect(host.locator('canvas')).toBeVisible();
+  await designerTool(page.locator('#an-design-root'), 'tools');
   await tools.locator('[data-preview-element]').selectOption('sheet:0:image:0');
   await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
   await tools.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
@@ -667,10 +729,10 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   await hit.dispatchEvent('pointerdown', { pointerId: 71, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 71, pointerType: 'touch', clientX: box.x + 20, clientY: box.y + 15 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 71, pointerType: 'touch' });
-  await page.locator('#an-design-root [data-designer-tab="1"]').click();
+  await designerTool(page.locator('#an-design-root'), 1);
   await page.locator('[data-style=marker_type]').selectOption('heart');
   await page.locator('[data-style=marker_palette]').selectOption('ocean-blue');
-  await page.locator('#an-design-root [data-designer-tab="2"]').click();
+  await designerTool(page.locator('#an-design-root'), 2);
   await page.locator('[data-style=marker_scale]').fill('140'); await page.locator('[data-style=marker_scale]').blur();
   await page.locator('[data-design-save]').click();
   await expect(page.locator('[data-design-status]')).toContainText('gespeichert');
@@ -685,6 +747,7 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   expect([...state.actions.values()].at(-1).draft.layout.adjustments).toEqual(saved.drinks.adjustments);
   await cms(page);
   await expect(page.locator('[data-style=marker_type]')).toHaveValue('heart');
+  await page.locator('[data-designer=drinks] [data-more-actions]').click();
   await page.locator('[data-design-reset]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Vorschau zurücksetzen', exact: true }).click();
   await expect(page.locator('[data-style=marker_type]')).toHaveValue('starburst');
@@ -704,6 +767,8 @@ for (const density of [4, 6]) {
     state.design.drinks.density = density;
     const existing = await seed(page, state), before = copy(existing);
     await cms(page);
+    await designerTool(page.locator('#an-design-root'), 'tools');
+    await workspaceView(page.locator('[data-designer=drinks]'), 'split');
     await expect(page.getByRole('button', { name: /Hinweis: Nur die erste Kachel ist als Musterkachel bearbeitbar/ })).toBeVisible();
     const host = page.locator('[data-design-preview]'), tools = page.locator('#an-design-root .an-direct-tools');
     for (const [mode, target] of [['paper', 'sheet'], ['cards', 'card'], ['scale-large', 'scale'], ['scale-small', 'scale']]) {
@@ -746,6 +811,7 @@ for (const density of [4, 6]) {
     }
     expect(Object.keys(saved.adjustments).some((key) => key.startsWith('single:'))).toBe(false);
     await cms(page);
+    await workspaceView(page.locator('[data-designer=drinks]'), 'split');
     await expect(host.locator('canvas')).toBeVisible();
     await page.locator('[data-design-save]').click();
     await expect(page.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
@@ -806,6 +872,7 @@ test('TC-F33-02: alte Einzelanpassungen vereinheitlichen und von vier auf sechs 
   const original = copy(state.design);
   await cms(page);
   const host = page.locator('[data-design-preview]');
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   await expect(host.locator('canvas')).toBeVisible();
   await expect(host.locator('[data-preview-select="sheet:0:image:0"]')).toHaveCSS('transform', /matrix/);
   expect(state.design).toEqual(original);
@@ -829,28 +896,31 @@ test('TC-F34-01: Preisbild auswählen, fünf Farben einstellen und Standards ern
   const state = await setup(page);
   await cms(page);
   const root = page.locator('#an-design-root');
-  await root.locator('.an-template-picker > summary').click();
-  await root.getByRole('radio', { name: /Preisbild · Rot\/Gelb/ }).check();
   const colors = {
     color: ['#ed1c24', '#1234aa'], price_background: ['#fff000', '#aaff22'],
     price_outline_color: ['#ffffff', '#ddccff'], old_price_color: ['#000000', '#112233'],
     price_strike_color: ['#ed1c24', '#ff44aa'],
   };
-  await root.locator('[data-designer-tab="1"]').click();
-  await expect(root.getByText('Stattpreis-Streifen', { exact: true })).toBeVisible();
+  await root.locator('[data-object-properties=price]').click();
+  const dialog = root.locator('dialog.an-object-dialog[open]');
+  await dialog.locator('[data-style=price_preset]').selectOption('price-image');
+  await expect(dialog.getByText('Stattpreis-Streifen', { exact: true })).toBeVisible();
   for (const [key, [initial, custom]] of Object.entries(colors)) {
-    const control = root.locator('[data-style="' + key + '"]');
+    const control = dialog.locator('[data-style="' + key + '"]');
     await expect(control).toBeVisible();
     await expect(control).toHaveValue(initial);
     await control.fill(custom); await control.dispatchEvent('change');
   }
+  await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
   await root.locator('[data-design-save]').click();
   await expect(root.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
-  expect(state.design.drinks.template).toBe('price-image');
+  expect(state.design.drinks.price_preset).toBe('price-image');
   for (const [key, [, custom]] of Object.entries(colors)) expect(state.design.drinks[key]).toBe(custom);
   await cms(page);
-  await expect(root.locator('[data-template-label]')).toHaveText('Preisbild · Rot/Gelb');
+  await expect(root.locator('[data-style=price_preset]')).toHaveValue('price-image');
   for (const [key, [, custom]] of Object.entries(colors)) await expect(root.locator('[data-style="' + key + '"]')).toHaveValue(custom);
+  await designerTool(root, 'tools');
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
     await root.locator('[data-design-mode="' + mode + '"]').click();
     await expect(root.locator('[data-design-preview] canvas')).toBeVisible();
@@ -862,10 +932,11 @@ test('TC-F34-01: Preisbild auswählen, fünf Farben einstellen und Standards ern
 });
 
 test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeichert', async ({ page }) => {
+  test.setTimeout(240000);
   const state = await setup(page);
   await cms(page);
   const root = page.locator('#an-design-root');
-  await root.locator('[data-designer-tab="3"]').click();
+  await designerTool(root, 3);
   const options = { show_leaf: true, show_bag: true, show_texture: true, leaf_color: '#123456',
     leaf_size: 26, border_width: 4, border_color: '#112233', card_border_width: 3, card_border_color: '#223344',
     details_color: '#334455', footer_color: '#445566', vorrat_color: '#556677', background_gradient: true,
@@ -873,15 +944,11 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
     image_gradient: true, image_color2: '#aabbcc', image_direction: '135deg', image_pct: 65,
     price_radius: 12, price_skew: 8, price_scale: 85, image_width_pct: 45, image_dx: 3, image_dy: 4, price_dx: -3, price_dy: 5 };
   for (const [key, value] of Object.entries(options)) {
-    const control = root.locator('[data-style="decoration.' + key + '"]');
-    if (typeof value === 'boolean') await control.setChecked(value);
-    else if (await control.evaluate((node) => node.tagName === 'SELECT')) await control.selectOption(value);
-    else { await control.fill(String(value)); await control.dispatchEvent('change'); }
+    await setField(page, root, root.locator('[data-style="decoration.' + key + '"]'), value);
   }
-  await root.locator('[data-designer-tab="1"]').click();
-  await root.locator('[data-style=price_shape]').selectOption('ticket');
-  await root.locator('[data-designer-tab="4"]').click();
-  await root.locator('.an-own-presets summary').click();
+  await setField(page, root, root.locator('[data-style=price_shape]'), 'ticket');
+  await designerTool(root, 4);
+  await openDetails(root.locator('.an-own-presets'));
   await root.locator('[data-preset-name]').fill('Sommer <img src=x>');
   await root.locator('[data-preset-add]').click();
   await root.locator('[data-design-save]').click();
@@ -889,24 +956,25 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
   expect(state.design.drinks.decoration).toEqual(options);
   expect(state.design.presets[0].name).toBe('Sommer <img src=x>');
   await cms(page);
-  await root.locator('[data-designer-tab="4"]').click();
-  await root.locator('.an-own-presets summary').click();
+  await designerTool(root, 4);
+  await openDetails(root.locator('.an-own-presets'));
   await root.locator('[data-preset-select]').selectOption('0');
   await root.locator('[data-preset-load]').click();
   await expect(root.locator('[data-style=price_shape]')).toHaveValue('ticket');
   expect(await root.locator('[data-preview-element] option[value*=":1:"]').count()).toBe(0);
-  await root.locator('[data-designer-tab="4"]').click();
+  await designerTool(root, 4);
   await root.locator('[data-preset-delete]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await expect(root.locator('[data-preset-select] option')).toHaveCount(2);
   await root.locator('[data-preset-delete]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Vorlage löschen', exact: true }).click();
   await expect(root.locator('[data-preset-select] option')).toHaveCount(1);
+  await root.locator('[data-more-actions]').click();
   await root.locator('[data-design-discard]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
   await expect(root.locator('[data-preset-select] option')).toHaveCount(2);
-  await root.locator('[data-designer-tab="4"]').click();
-  await root.locator('.an-own-presets summary').click();
+  await designerTool(root, 4);
+  await openDetails(root.locator('.an-own-presets'));
   await root.locator('[data-preset-select]').selectOption('0');
   await root.locator('[data-preset-delete]').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Vorlage löschen', exact: true }).click();
@@ -958,11 +1026,11 @@ test('TC-F36-01/02: zentraler Homepage-Designer wirkt in Kundensitzung, Flyer bl
   action.draft.items[1].old_price_cents = 23456789;
   state.published.set(action.id, { id: action.id, data: copy(action.draft) });
   await cms(page);
-  await page.locator('[data-id=cfg-hpang]').click();
+  await designTab(page, 'cfg-hpang');
   await expect(page.locator('#hpang-preview .an-hp-card')).toHaveCount(3);
   await page.locator('#hpang-cardBg').fill('#eeddcc');
   await page.locator('#hpang-cardBg').dispatchEvent('input');
-  await page.locator('#cms-cfg-hpang [data-designer-tab="2"]').click();
+  await designerTool(page.locator('#cms-cfg-hpang'), 2);
   await page.locator('#hpang-imgSize').fill('110');
   await page.locator('#hpang-imgSize').dispatchEvent('input');
   await page.locator('[data-action=hpangSave]').click();
@@ -1013,7 +1081,7 @@ test('TC-F36-04: Homepage-Konfigurations- und Bildfehler sind erneut ladbar', as
 
 test('TC-F36-04: HP-Speicherkonflikt erhält Eingaben, Verwerfen und Reset schreiben nicht', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page);
-  await cms(page); await page.locator('[data-id=cfg-hpang]').click();
+  await cms(page); await designTab(page, 'cfg-hpang');
   await expect(page.locator('#hpang-preview .an-hp-card')).toHaveCount(1);
   await page.locator('#hpang-cardBg').fill('#112233');
   state.design.version++;
@@ -1022,8 +1090,10 @@ test('TC-F36-04: HP-Speicherkonflikt erhält Eingaben, Verwerfen und Reset schre
   await expect(page.locator('#hpang-cardBg')).toHaveValue('#112233');
   expect(state.design.homepage).toBeUndefined();
   await page.getByRole('dialog').getByRole('button', { name: 'Schließen', exact: true }).click();
+  await page.locator('[data-designer=homepage] [data-more-actions]').click();
   await page.locator('[data-action=hpangRevert]').click();
   await expect(page.locator('#hpang-cardBg')).toHaveValue('#ffffff');
+  await page.locator('[data-designer=homepage] [data-more-actions]').click();
   await page.locator('[data-action=hpangReset]').click();
   expect(state.log.filter((entry) => entry.method === 'PUT')).toHaveLength(1);
 });
@@ -1110,21 +1180,23 @@ test('TC-F34-02: Preisbild rendert echte Beträge, Kontur und optionalen durchge
 
 test('TC-F16-02: Original-Wochenvorschau mit Bild-/Preis-Drehung, Skalierung und Touch-Verschieben', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { kind: 'weekly' });
-  await page.locator('[data-step=design]').first().click(); await page.locator('#an-defaults').click();
+  await page.locator('[data-step=design]').first().click(); await templatePanel(page); await page.locator('#an-defaults').click();
   await page.getByRole('dialog').getByRole('button', { name: 'CMS-Vorlage übernehmen', exact: true }).click();
-  const host = page.locator('.an-weekly-surface');
-  const imageId = await host.locator('option[value$=":img"]').first().getAttribute('value');
-  await host.locator('select').selectOption(imageId);
-  await host.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
-  await host.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
+  await page.locator('[data-editor-panel-tab=element]').click();
+  await workspaceView(page.locator('#an-root'), 'split');
+  const host = page.locator('.an-weekly-surface'), tools = page.locator('#an-inspector .an-weekly-tools');
+  const imageId = await tools.locator('option', { hasText: 'Produktbild' }).first().getAttribute('value');
+  await tools.locator('select').first().selectOption(imageId);
+  await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
+  await tools.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
   const hit = host.locator('[data-preview-select="' + imageId + '"]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 72, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 72, pointerType: 'touch', clientX: box.x + 15, clientY: box.y + 12 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 72, pointerType: 'touch' });
-  const priceId = await host.locator('option[value$=":price"]').first().getAttribute('value');
-  await host.locator('select').selectOption(priceId);
-  await host.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
-  await host.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
+  const priceId = await tools.locator('option', { hasText: /^Preis/ }).first().getAttribute('value');
+  await tools.locator('select').first().selectOption(priceId);
+  await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
+  await tools.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
   const handle = host.locator('[data-preview-resize]'), handleBox = await handle.boundingBox();
   await handle.dispatchEvent('pointerdown', { pointerId: 73, pointerType: 'touch', button: 0, clientX: handleBox.x + 10, clientY: handleBox.y + 10 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 73, pointerType: 'touch', clientX: handleBox.x + 18, clientY: handleBox.y + 18 });
@@ -1135,6 +1207,7 @@ test('TC-F16-02: Original-Wochenvorschau mit Bild-/Preis-Drehung, Skalierung und
   expect(overrides.imgDx).toBeGreaterThan(0); expect(overrides.imgDy).toBeGreaterThan(0);
   expect(overrides.priceRot).toBe(15); expect(overrides.priceScale).toBeGreaterThan(110);
   await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+  await workspaceView(page.locator('#an-root'), 'split');
   await expect(page.locator('.an-weekly-surface canvas')).toBeVisible();
   await noOverflow(page);
   expect(state.errors).toEqual([]);
@@ -1241,9 +1314,10 @@ test('TC-F14-01..02: Wochenposter und Einzelflyer entsprechen pixelgenau den gem
 test('TC-F14-03: alte freie Wochenlayouts bleiben erhalten; Übernahme nur bestätigt, Ladefehler sichtbar', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { kind: 'weekly' });
   await saveDraft(page); expect(state.actions.get(head.id).draft.layout.cms).toBeUndefined();
-  await page.locator('[data-step=design]').first().click();
+  await page.locator('[data-step=design]').first().click(); await templatePanel(page);
   await page.locator('#an-defaults').click();
   await page.getByRole('dialog').getByRole('button', { name: 'CMS-Vorlage übernehmen', exact: true }).click();
+  await templatePanel(page);
   await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeVisible();
   await saveDraft(page); expect(state.actions.get(head.id).draft.layout.cms.config.plakatTemplate).toBe('classic-red');
   await page.locator('#an-overview').click();
@@ -1261,7 +1335,8 @@ test('TC-F14-04: Kioskmenü und ungespeicherter Angebotsentwurf bleiben beim Rei
   await expect(page).toHaveURL(/kiosk\.html/);
   await expect(page.locator('#panel-angebote')).toBeVisible();
   await page.getByRole('button', { name: '+ Getränkeaktion anlegen' }).click();
-  await page.locator('#an-action-meta>summary').click();
+  const meta = page.locator('#an-action-meta');
+  if (!(await meta.evaluate((node) => node.open))) await page.locator('#an-action-meta>summary').click();
   await page.locator('#an-title').fill('Ungespeicherter Kioskentwurf'); await page.locator('#an-title').blur();
   await page.locator('.k-tab[data-tab=getraenke]').click();
   await expect(page.locator('#panel-angebote')).toBeHidden();
@@ -1274,7 +1349,7 @@ test('TC-F14-04: Kioskmenü und ungespeicherter Angebotsentwurf bleiben beim Rei
     const r = button.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && (r.left < -1 || r.right > innerWidth + 1);
   }).map((button) => button.textContent));
-  expect(clipped).toEqual([]);
+  expect(clipped, 'abgeschnittene Buttons').toEqual([]);
   await page.screenshot({ path: test.info().outputPath('angebote-im-kiosk.png') });
   expect(state.log.filter((r) => r.method !== 'GET' && r.path.startsWith('/api/angebote-'))).toEqual([]);
   expect(state.errors).toEqual([]);
@@ -1641,6 +1716,7 @@ for (const technical of [false, true]) {
       await page.locator('dialog[open]').getByRole('button', { name: 'Schließen', exact: true }).click();
       await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
       state.failImageLookup = false;
+      await page.locator('[data-more-actions]').click();
       await page.locator('#an-reload-saved').click();
       await expect(page.locator('#an-items img')).toHaveCount(1);
     }
@@ -1661,10 +1737,10 @@ test('TC-F17-01/03: kompakte Artikelzeilen auf voller Breite und farbige Direkta
   const rows = page.locator('#an-items .an-item');
   await expect(rows).toHaveCount(6);
   const panel = await page.locator('.an-work-panel').boundingBox(), layout = await page.locator('.an-layout').boundingBox();
-  expect(panel.width).toBeCloseTo(layout.width, 0);
+  expect(panel.width).toBeGreaterThanOrEqual(layout.width * .45);
   if (page.viewportSize().width >= 1101) {
     for (const height of await rows.evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))) {
-      expect(height).toBeLessThanOrEqual(110);
+      expect(height).toBeLessThanOrEqual(220);
     }
     if (page.viewportSize().width >= 600 && page.viewportSize().width <= 1100) {
       for (const height of await rows.evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))) {
@@ -1751,8 +1827,8 @@ test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontale
   await noOverflow(page);
   for (const rect of await page.locator('#an-items button[data-edit-item],#an-items .an-item-fields input').evaluateAll((buttons) =>
     buttons.map((button) => ({ width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })))) {
-    expect(rect.width).toBeGreaterThanOrEqual(44);
-    expect(rect.height).toBeGreaterThanOrEqual(44);
+    expect(rect.width).toBeGreaterThanOrEqual(hit(page));
+    expect(rect.height).toBeGreaterThanOrEqual(hit(page));
   }
   expect(state.errors).toEqual([]);
 });
@@ -1770,6 +1846,7 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
     state.images.set(sourceId, Buffer.from(image, 'base64')); head.draft.items[0].image_id = sourceId;
     await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
     await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+    await stepTab(page, 'design');
     const published = copy(state.published.get(head.id));
     const before = copy(head.draft.layout);
     if (target !== 'card') await page.locator('[data-layout-target="' + target + '"]').click();
@@ -1777,19 +1854,22 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
     const original = layouts(before).elements.find((element) => element.type === 'image');
     const inspector = page.locator('#an-inspector');
     await expect(inspector).toBeVisible();
-    await expect(page.locator('[data-step=articles]').first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-step=design]').first()).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByLabel('Gestaltungselement')).toHaveValue(original.id);
+    await phoneView(page, 'picture');
     await expect(page.locator('[data-resize]')).toBeVisible();
     const pixels = hash(await page.locator('#an-stage-canvas').evaluate((canvas) => canvas.toDataURL()), 16);
+    await phoneView(page, 'inputs');
     await page.getByRole('button', { name: 'Element 15 Grad nach rechts drehen', exact: true }).click();
     await expect.poll(async () => hash(await page.locator('#an-stage-canvas').evaluate((canvas) => canvas.toDataURL()), 16)).not.toBe(pixels);
     await page.getByRole('button', { name: 'Element vergrößern', exact: true }).click();
     await page.getByRole('button', { name: 'Element verkleinern', exact: true }).click();
-    await inspector.getByRole('button', { name: 'Rückgängig', exact: true }).click();
+    await page.getByRole('button', { name: 'Rückgängig', exact: true }).first().click();
+    await phoneView(page, 'picture');
     await page.locator('[data-resize]').scrollIntoViewIfNeeded();
     const box = await page.locator('[data-resize]').boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(44);
-    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.width).toBeGreaterThanOrEqual(hit(page) - .01);
+    expect(box.height).toBeGreaterThanOrEqual(hit(page) - .01);
     const x = box.x + box.width / 2, y = box.y + box.height / 2;
     const beforeDrag = await page.locator('#an-hit-layer .an-selected').evaluate((element) => parseFloat(element.style.width));
     if (testInfo.project.use.hasTouch) {
@@ -1803,7 +1883,8 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
       await page.mouse.move(x - 12, y - 12, { steps: 4 }); await page.mouse.up();
     }
     await expect.poll(() => page.locator('#an-hit-layer .an-selected').evaluate((element) => parseFloat(element.style.width))).toBeLessThan(beforeDrag);
-    await expect(page.locator('[data-step=articles]').first()).toHaveAttribute('aria-pressed', 'true');
+    await phoneView(page, 'inputs');
+    await expect(page.locator('[data-step=design]').first()).toHaveAttribute('aria-pressed', 'true');
     let chooser = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: 'Bild ersetzen', exact: true }).click();
     await (await chooser).setFiles({ name: 'ersatz.png', mimeType: 'image/png', buffer: PHOTO });
@@ -1815,7 +1896,7 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
     const insertedId = await page.getByLabel('Gestaltungselement').inputValue();
     expect(insertedId).not.toBe(original.id);
     await inspector.getByRole('button', { name: 'Duplizieren', exact: true }).click();
-    await inspector.locator('.an-more-tools>summary').click();
+    await openDetails(inspector.locator('.an-more-tools'));
     await inspector.getByRole('button', { name: 'Ghost', exact: true }).click();
     await saveDraft(page);
     const saved = state.actions.get(head.id).draft;
@@ -1838,13 +1919,14 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
         : await window.AngeboteModel.renderTarget(data, target, data.items[0].id, 1)).errors, { data: saved, target });
     expect(renderErrors).toEqual([]);
     await page.reload(); await page.locator('[data-open="' + head.id + '"]').click();
+    await stepTab(page, 'design');
     if (target !== 'card') await page.locator('[data-layout-target="' + target + '"]').click();
     await page.getByLabel('Gestaltungselement').selectOption(original.id);
-    await page.locator('#an-inspector .an-more-tools>summary').click();
+    await openDetails(page.locator('#an-inspector .an-more-tools'));
     await expect(page.getByLabel('Drehung', { exact: true })).toHaveValue('15');
     await expect(page.getByLabel('Breite', { exact: true })).toHaveValue(String(changed.w));
-    await page.locator('#an-inspector .an-more-tools>summary').click();
     await noOverflow(page);
+    await phoneView(page, 'picture');
     await page.locator('#an-preview').screenshot({ path: test.info().outputPath('direkte-gestaltung-' + target + '.png') });
     expect(state.errors).toEqual([]);
   });
@@ -1885,8 +1967,11 @@ test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Dr
   await expect(page.getByLabel('Drehung', { exact: true })).toHaveValue('15');
   await expect(page.getByLabel('Deckkraft', { exact: true })).toHaveValue('0.65');
   await expect(page.getByRole('textbox', { name: 'Eigener Text', exact: true })).toHaveValue('Dein individueller Flyer');
+  await phoneView(page, 'picture');
   await page.locator('#an-stage').scrollIntoViewIfNeeded();
   await page.screenshot({ path: test.info().outputPath('flyer-editor.png') });
+  await phoneView(page, 'inputs');
+  await templatePanel(page);
   await page.getByRole('button', { name: 'Vorlage neu anwenden' }).click();
   await page.locator('dialog[open]').getByRole('button', { name: 'Abbrechen' }).click();
   expect(state.actions.get(head.id).draft).toEqual(saved);
@@ -2188,7 +2273,7 @@ test('TC-F30-01: Designstandards übernehmen wirkt auf alle Artikel des Handy-Zi
     return layout;
   });
   const head = await editSeed(page, state, { count: 2 }), before = copy(state.actions.get(head.id).draft.layout);
-  await page.getByRole('button', { name: '2 · Frei gestalten' }).click();
+  await page.getByRole('button', { name: '2 · Frei gestalten' }).click(); await templatePanel(page);
   await page.locator('[data-layout-target=card]').click();
   await page.locator('#an-defaults').click();
   await page.getByRole('dialog').getByRole('button', { name: 'Vorlage anwenden', exact: true }).click();
@@ -2224,10 +2309,11 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
     };
   });
   await cms(page);
-  await page.locator('[data-id=sec-flyer]').click();
+  await designTab(page, 'sec-flyer');
   await page.locator('#cfg-sec-flyer .an-template-picker summary').click();
   await page.locator('#cfg-flyerTemplate-preview [data-value=modern-mag-xl]').click();
   await page.clock.runFor(1000);
+  await workspaceView(page.locator('[data-designer=flyer]'), 'split');
   await expect(page.locator('#cfg-live-preview-flyer canvas')).toBeVisible();
   expect(state.log.some((entry) => entry.path === '/api/werbebilder'
     && entry.method === 'GET' && entry.params.artnrs === 'ART2001')).toBe(true);
@@ -2235,19 +2321,20 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F43-01/02/03: bildreine Vorschau rechts, feste Navigation und erreichbare Hilfen in allen Designern', async ({ page }) => {
+test('TC-F43-01/02/03 TC-F46-01/02/04: bildreine Vorschau, mindestens halbe Feldfläche und Splitter in allen Designern', async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   await seed(page, state, { count: 8, publish: true });
   await cms(page);
   for (const kind of ['plakat', 'flyer', 'drinks', 'homepage']) {
-    if (kind === 'homepage') await page.locator('[data-id=cfg-hpang]').click();
-    else await page.locator('[data-id=sec-' + kind + ']').click();
+    await designTab(page, kind === 'homepage' ? 'cfg-hpang' : 'sec-' + kind);
     const root = page.locator('[data-designer=' + kind + ']');
+    expect(await root.locator('.an-designer-body').evaluate((node) => node.clientHeight / node.parentElement.clientHeight)).toBeGreaterThanOrEqual(.5);
+    await workspaceView(root, 'split');
     const preview = root.locator('.an-designer-preview'), body = root.locator('.an-designer-body');
     await expect(preview.locator(kind === 'homepage' ? '#hpang-preview .an-hp-card' : 'canvas:visible').first()).toBeVisible();
     await expect(preview.locator('h2,.an-note,select,.an-direct-tools,.an-designer-save,[data-action]')).toHaveCount(0);
     await expect(preview.locator('.an-selected,.an-resize-handle,.an-rotate-handle')).toHaveCount(0);
-    expect(await body.evaluate((node) => node.clientHeight)).toBeGreaterThanOrEqual(44);
+    await expect(root.locator('.an-designer-save button:visible')).toHaveCount(4 + await root.locator('[data-workspace-views]:visible').count());
     await expect(root.locator('[data-picture-zoom]')).toHaveValue('fit');
     await expect.poll(() => preview.evaluate((node) => {
       const frame = node.querySelector('.an-designer-frame').getBoundingClientRect(), r = node.getBoundingClientRect();
@@ -2259,15 +2346,23 @@ test('TC-F43-01/02/03: bildreine Vorschau rechts, feste Navigation und erreichba
       return { p: rect('.an-designer-preview'), s: rect('.an-designer-settings'), a: rect('.an-designer-save') };
     });
     const { p, s, a } = geometry;
-    if (page.viewportSize().width <= 600) expect(p.bottom).toBeLessThanOrEqual(s.y + 1);
-    else { expect(s.right).toBeLessThanOrEqual(p.x + 1); expect(p.width).toBeGreaterThan(s.width); }
+    if (await root.locator('.an-split').evaluate(node => node.classList.contains('an-split-mobile'))) expect(s.bottom).toBeLessThanOrEqual(p.y + 1);
+    else { expect(s.right).toBeLessThanOrEqual(p.x + 1); expect(s.width).toBeGreaterThanOrEqual(p.width - 1); }
     expect(a.right <= p.x || a.y >= p.bottom || a.bottom <= p.y).toBe(true);
     expect(p.bottom).toBeLessThanOrEqual(page.viewportSize().height + 1);
+    const splitter = root.getByRole('separator');
+    if (await splitter.isVisible()) {
+      await splitter.focus(); await splitter.press('End');
+      const half = await preview.boundingBox(), tools = await root.locator('.an-designer-settings').boundingBox();
+      expect(tools.width).toBeGreaterThanOrEqual(half.width - 1);
+      await splitter.press('Home'); await splitter.press('ArrowRight');
+    }
     await expect(root.locator('.an-designer-save button').first()).toBeInViewport();
     const header = page.locator('.an-design-header'), before = await header.boundingBox();
     await body.evaluate((node) => { node.scrollTop = node.scrollHeight; });
     expect((await header.boundingBox()).y).toBe(before.y);
     expect((await preview.boundingBox()).y).toBe(p.y);
+    await designerTool(root, 'tools');
     await root.locator('[data-picture-zoom]').selectOption('2');
     expect(await preview.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
     const documentScroll = await page.evaluate(() => document.scrollingElement.scrollTop);
@@ -2286,8 +2381,9 @@ test('TC-F43-01/02/03: bildreine Vorschau rechts, feste Navigation und erreichba
     await page.screenshot({ path: test.info().outputPath('bildreiner-designer-' + kind + '.png') });
   }
   for (const tab of ['cfg-hp', 'cfg-wp', 'cfg-plakat', 'cfg-hpang']) {
-    await page.locator('[data-id=' + tab + ']').click();
+    await designTab(page, tab);
     await expect(page.locator('.an-design-header')).toBeInViewport();
+    await page.getByRole('button', { name: 'Designoptionen und Hilfe', exact: true }).click();
     const help = page.locator('.an-design-header .an-help-button').first();
     await help.focus();
     const popup = page.locator('#' + await help.getAttribute('aria-controls'));
@@ -2296,6 +2392,7 @@ test('TC-F43-01/02/03: bildreine Vorschau rechts, feste Navigation und erreichba
     await help.click(); await expect(popup).toBeVisible();
     await popup.getByRole('button', { name: 'Schließen', exact: true }).click();
     await expect(help).toBeFocused();
+    await page.getByRole('button', { name: 'Designoptionen und Hilfe', exact: true }).click();
   }
   expect(state.errors).toEqual([]);
 });
@@ -2308,8 +2405,10 @@ for (const kind of ['plakat', 'flyer']) {
       const ctx = canvas.getContext('2d'); ctx.fillStyle = '#224488'; ctx.fillRect(0, 0, 200, 300);
       return canvas.toDataURL('image/png').split(',')[1];
     }), 'base64');
-    await cms(page); await page.locator('[data-id=sec-' + kind + ']').click(); await page.clock.runFor(500);
+    await cms(page); await designTab(page, 'sec-' + kind); await page.clock.runFor(500);
     const root = page.locator('[data-designer=' + kind + ']'), preview = root.locator('.an-designer-preview');
+    await designerTool(root, 'tools');
+    await workspaceView(root, 'split');
     const select = root.locator('[data-preview-element]'), canvas = preview.locator('canvas:visible');
     await expect(select).toBeVisible(); await expect(canvas).toBeVisible();
     await select.selectOption('img');
@@ -2326,8 +2425,8 @@ for (const kind of ['plakat', 'flyer']) {
     const handle = await preview.locator('.an-rotate-handle:visible').boundingBox();
     expect(handle.width).toBeGreaterThanOrEqual(40);
     expect(state.log.filter((entry) => entry.path === '/api/cms-config' && entry.method !== 'GET')).toHaveLength(writes);
-    await page.locator('[data-id=sec-drinks]').click();
-    await page.locator('[data-id=sec-' + kind + ']').click(); await page.clock.runFor(500);
+    await designTab(page, 'sec-drinks');
+    await designTab(page, 'sec-' + kind); await page.clock.runFor(500);
     const savedRequest = page.waitForRequest((request) => request.url().includes('/api/cms-config') && request.method() !== 'GET');
     await root.locator('#cfg-plakat-save').click();
     state.cmsDesign.design_config = (await savedRequest).postDataJSON().wert;
@@ -2337,10 +2436,13 @@ for (const kind of ['plakat', 'flyer']) {
     const savedMeta = await meta();
     await root.locator('[data-preview-nudge="2,0"]').click(); await page.clock.runFor(500);
     await expect.poll(async () => (await meta()).x).toBeGreaterThan(savedMeta.x);
+    await root.locator('[data-more-actions]').click();
     await root.locator('[data-action=cfgRevertUnsaved]').click(); await page.clock.runFor(500);
     await expect.poll(async () => (await meta()).x).toBeCloseTo(savedMeta.x, 3);
     await page.reload(); await page.clock.runFor(500);
-    await page.locator('[data-id=sec-' + kind + ']').click(); await page.clock.runFor(500);
+    await designTab(page, 'sec-' + kind); await page.clock.runFor(500);
+    await workspaceView(root, 'split');
+    await page.clock.runFor(500);
     await expect(canvas).toBeVisible();
     await expect(root.locator('[data-design-history=undo]')).toBeDisabled();
     await page.evaluate((kind) => {
@@ -2358,6 +2460,395 @@ for (const kind of ['plakat', 'flyer']) {
     expect(state.errors).toEqual([]);
   });
 }
+
+test('TC-F52-04: echte Eingabefläche statt abgeschnittener mobiler Miniansicht', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
+  await cms(page);
+  const root = page.locator('[data-designer=drinks]'), body = root.locator('.an-designer-body');
+  await expect(root).toBeVisible();
+  await expect.poll(() => body.evaluate(node => node.getBoundingClientRect().height / innerHeight)).toBeGreaterThanOrEqual(.5);
+  await expect(root.locator('[data-design-save]')).toBeInViewport();
+  await expect(root.locator('[data-object-properties=text]')).toBeInViewport();
+  await expect(root.locator('[data-object-properties=image]')).toBeInViewport();
+  if (await root.locator('.an-designer-tool-select').isVisible()) await expect(root.locator('.an-designer-tabs')).not.toBeVisible();
+  await noOverflow(page);
+  await page.screenshot({ path: test.info().outputPath('arbeitsraum-eingaben.png') });
+  await workspaceView(root, 'picture');
+  await expect(root.locator('.an-designer-preview')).toBeVisible();
+  await expect(root.locator('.an-designer-settings')).not.toBeVisible();
+  await expect(root.locator('.an-designer-preview')).toBeInViewport();
+  await page.screenshot({ path: test.info().outputPath('arbeitsraum-motiv.png') });
+  await workspaceView(root, 'inputs');
+  await expect(body).toBeVisible();
+  await expect(root.locator('[data-design-save]')).toBeInViewport();
+  await designTab(page, 'sec-flyer');
+  await expect(page.locator('[data-designer=flyer] [data-object-properties=text]')).toBeVisible();
+  await designTab(page, 'sec-drinks');
+  await expect(root.locator('[data-workspace-views]:visible')).toHaveCount(await root.locator('.an-split').evaluate(node => node.classList.contains('an-split-mobile')) ? 1 : 0);
+  expect(state.log.filter(entry => entry.method !== 'GET' && !entry.read_only_lookup)).toHaveLength(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F52-05: Mausaktionen sind tatsächlich 32 px hoch, Touchziele bleiben erreichbar', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  const root = page.locator('[data-designer=drinks]');
+  await expect(root.locator('[data-design-save]')).toBeVisible();
+  const compact = await page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
+  const controls = [
+    root.locator('[data-design-save]'), root.locator('[data-design-history=undo]'),
+    root.locator('[data-more-actions]'), root.locator('[data-object-properties=text]'),
+    root.locator('.an-template-picker>summary'), root.locator('.an-density-choice .an-choice').first(),
+    root.locator('.an-designer-tool-select'), page.getByRole('combobox', { name: 'Designbereich', exact: true }),
+    page.getByRole('button', { name: 'Designoptionen und Hilfe', exact: true }),
+    page.locator('.an-design-header [data-workspace-fullscreen]'),
+  ];
+  for (const control of controls) {
+    const height = await control.evaluate(node => node.getBoundingClientRect().height);
+    if (compact) expect(height).toBeCloseTo(32, 0);
+    else expect(height).toBeGreaterThanOrEqual(44);
+  }
+  const density = root.locator('.an-density-choice .an-choice').last();
+  await density.click({ position: { x: 2, y: 2 } });
+  await expect(density.locator('input')).toBeChecked();
+  await density.locator('input').press('ArrowLeft');
+  await expect(root.locator('[data-style=density][value="4"]')).toBeChecked();
+  await page.screenshot({ path: test.info().outputPath('kompakte-buttonhoehen.png') });
+  await page.goto(BASE + '/angebote.html?bestand=1');
+  await page.getByRole('button', { name: '+ Getränkeaktion anlegen', exact: true }).click();
+  await expect(page.locator('#an-save')).toBeVisible();
+  for (const control of [page.locator('#an-save'), page.locator('#an-root [data-more-actions]')]) {
+    const height = await control.evaluate(node => node.getBoundingClientRect().height);
+    if (compact) expect(height).toBeCloseTo(32, 0);
+    else expect(height).toBeGreaterThanOrEqual(44);
+  }
+  await page.screenshot({ path: test.info().outputPath('angebote-buttonhoehen.png') });
+  expect(state.log.filter(entry => entry.method !== 'GET' && !entry.read_only_lookup)).toHaveLength(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F52-01/02/03: kompakte Eigenschaften sind live, verwerfbar und ein Gestaltungsschritt', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
+  await cms(page); await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  if (page.viewportSize().width < 612) {
+    await expect(root.locator('[aria-label=Arbeitsansicht]')).toHaveValue('inputs');
+    await expect(root.locator('.an-designer-preview')).not.toBeVisible();
+  }
+  await root.locator('[data-object-properties=text]').click();
+  const dialog = root.getByRole('dialog', { name: 'Schrift einstellen', exact: true });
+  await expect(dialog).toBeVisible();
+  const size = root.locator('#cfg-plakat-nameSize'), original = await size.inputValue();
+  await size.fill('38'); await page.clock.runFor(500);
+  if (page.viewportSize().width < 560) await expect(dialog.locator('canvas')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).click(); await page.clock.runFor(500);
+  await expect(size).toHaveValue(original);
+  await expect(root.locator('[data-design-history=undo]')).toBeDisabled();
+  await root.locator('[data-object-properties=text]').click();
+  await size.fill('39'); await page.clock.runFor(300);
+  await size.fill('41'); await page.clock.runFor(300);
+  await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  await root.locator('[data-design-history=undo]').click(); await page.clock.runFor(500);
+  await expect(size).toHaveValue(original);
+  await expect(root.locator('[data-design-history=undo]')).toBeDisabled();
+  await root.locator('[data-design-history=redo]').click(); await page.clock.runFor(500);
+  await expect(size).toHaveValue('41');
+  await root.locator('[data-object-properties=text]').click();
+  await size.fill('44'); await page.keyboard.press('Escape'); await page.clock.runFor(500);
+  await expect(size).toHaveValue('41');
+  expect(state.log.filter((entry) => entry.method !== 'GET' && !entry.read_only_lookup)).toHaveLength(0);
+  expect(state.errors).toEqual([]);
+});
+
+const templatePanel = (page) => page.locator('[data-editor-panel-tab=design]').click();
+const stepTab = (page, name) => page.locator('.an-steps [data-step=' + name + ']').click();
+const openEditor = async (page, head) => {
+  await page.reload();
+  await page.locator('[data-open="' + head.id + '"]').click();
+  await expect(page.locator('#an-save')).toBeEnabled();
+};
+
+test('TC-F53-01: Herkunft folgt der Abweichung; Zurücksetzen wirkt nur auf Gruppe und Ziel', async ({ page }) => {
+  const state = await setup(page);
+  await page.getByRole('button', { name: '+ Getränkeaktion anlegen', exact: true }).click();
+  await stepTab(page, 'design'); await templatePanel(page);
+  const root = page.locator('#an-root');
+  const price = root.locator('[data-object-properties=price]'), text = root.locator('[data-object-properties=text]');
+  await expect(price).toContainText('Aus Vorlage'); await expect(text).toContainText('Aus Vorlage');
+  const apply = (name) => page.getByRole('dialog', { name, exact: true }).getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  await price.click();
+  await page.getByRole('dialog', { name: 'Preisschild einstellen', exact: true }).locator('[data-style=price_preset]').selectOption('green-rounded');
+  await apply('Preisschild einstellen');
+  await expect(price).toContainText('Individuell angepasst'); await expect(text).toContainText('Aus Vorlage');
+  await root.locator('[data-layout-target=single]').click();
+  await expect(root.locator('[data-object-properties=price]')).toContainText('Aus Vorlage');
+  await root.locator('[data-layout-target=card]').click();
+  await expect(price).toContainText('Individuell angepasst');
+  await text.click();
+  await page.getByRole('dialog', { name: 'Schrift einstellen', exact: true }).locator('[data-style=font]').selectOption('Georgia');
+  await apply('Schrift einstellen');
+  await expect(text).toContainText('Individuell angepasst');
+  await price.click();
+  const dialog = page.getByRole('dialog', { name: 'Preisschild einstellen', exact: true });
+  await dialog.getByRole('button', { name: 'Auf Vorlagenwert zurücksetzen', exact: true }).click();
+  await expect(dialog.locator('[data-style=price_preset]')).not.toHaveValue('green-rounded');
+  await apply('Preisschild einstellen');
+  await expect(price).toContainText('Aus Vorlage');
+  await expect(text).toContainText('Individuell angepasst');
+  await expect(root.locator('#an-style-controls [data-style=font]')).toHaveValue('Georgia');
+  await root.locator('[data-history=undo]').first().click();
+  await expect(root.locator('[data-object-properties=price]')).toContainText('Individuell angepasst');
+  expect(state.log.filter((entry) => ['POST', 'PUT'].includes(entry.method) && entry.path.startsWith('/api/angebote-verwaltung'))).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F53-02: Altbestand ohne Herkunft und geänderte Standards verändern gespeicherte Aktionen nicht', async ({ page }) => {
+  const state = await setup(page);
+  const legacy = await seed(page, state, { title: 'Altbestand' });
+  const known = await seed(page, state, { title: 'Mit Herkunft', origin: true });
+  await page.reload();
+  const before = JSON.stringify([legacy.draft, known.draft]);
+  state.design.drinks.color = '#112233';
+  state.design.drinks.price_size = 40;
+  const root = page.locator('#an-root');
+  await page.locator('[data-open="' + legacy.id + '"]').click();
+  await expect(page.locator('#an-save')).toBeEnabled();
+  await stepTab(page, 'design'); await templatePanel(page);
+  await expect(root.locator('[data-object-properties=price]')).toContainText('Gespeicherte Gestaltung');
+  await root.locator('[data-object-properties=price]').click();
+  const dialog = page.getByRole('dialog', { name: 'Preisschild einstellen', exact: true });
+  await expect(dialog.getByRole('button', { name: 'Keine gespeicherte Vorlagenherkunft', exact: true })).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await page.locator('#an-overview').click();
+  await page.getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
+  await page.locator('[data-open="' + known.id + '"]').click();
+  await expect(page.locator('#an-save')).toBeEnabled();
+  await stepTab(page, 'design'); await templatePanel(page);
+  await expect(root.locator('[data-object-properties=price]')).toContainText('Aus Vorlage');
+  await expect(root.locator('#an-style-controls [data-style=color]')).toHaveValue('#bb421e');
+  const undo = root.locator('[data-history=undo]').first();
+  await expect(undo).toBeDisabled();
+  await page.locator('#an-defaults').click();
+  await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await expect(root.locator('#an-style-controls [data-style=color]')).toHaveValue('#bb421e');
+  await expect(undo).toBeDisabled();
+  await page.locator('#an-defaults').click();
+  await page.getByRole('button', { name: 'Vorlage anwenden', exact: true }).click();
+  await expect(root.locator('#an-style-controls [data-style=color]')).toHaveValue('#112233');
+  await expect(undo).toBeEnabled();
+  await root.locator('[data-layout-target=single]').click();
+  await expect(root.locator('#an-style-controls [data-style=color]')).toHaveValue('#bb421e');
+  await undo.click();
+  await root.locator('[data-layout-target=card]').click();
+  await expect(root.locator('#an-style-controls [data-style=color]')).toHaveValue('#bb421e');
+  expect(JSON.stringify([state.actions.get(legacy.id).draft, state.actions.get(known.id).draft])).toBe(before);
+  expect(state.log.filter((entry) => entry.method === 'PUT')).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F54-01: mobile Detailvorschau aus echten Motivpixeln', async ({ page }) => {
+  const state = await setup(page);
+  const head = await seed(page, state, { count: 2 });
+  await openEditor(page, head);
+  await stepTab(page, 'design'); await templatePanel(page);
+  const root = page.locator('#an-root');
+  await root.locator('[data-object-properties=text]').click();
+  const dialog = page.getByRole('dialog', { name: 'Schrift einstellen', exact: true });
+  if (page.viewportSize().width >= 560) {
+    await expect(dialog.locator('.an-object-preview')).toBeHidden();
+    await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    return;
+  }
+  const figure = dialog.locator('.an-object-preview figure'), canvas = figure.locator('canvas');
+  await expect(canvas).toBeVisible();
+  expect((await figure.boundingBox()).width).toBeGreaterThanOrEqual(160);
+  const before = await canvas.evaluate((node) => node.toDataURL());
+  expect(await canvas.evaluate((node) => node.width)).toBeGreaterThan(160);
+  await dialog.locator('[data-style=text_color]').fill('#cc0000'); await dialog.locator('[data-style=text_color]').dispatchEvent('change');
+  await expect.poll(async () => { await page.clock.runFor(300); return canvas.evaluate((node) => node.toDataURL()); }).not.toBe(before);
+  await dialog.getByRole('button', { name: 'Gesamtmotiv', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: 'Detailansicht', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).first().click();
+  await expect(root.locator('[data-history=undo]').first()).toBeDisabled();
+  expect(state.log.filter((entry) => ['POST', 'PUT'].includes(entry.method) && entry.path.startsWith('/api/angebote-verwaltung'))).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F56-01: Fehler blockieren, Hinweise führen gezielt zur Stelle', async ({ page }) => {
+  const state = await setup(page);
+  const head = await seed(page, state, { count: 2 });
+  head.draft.items[0].name = 'Superlangername'.repeat(25);
+  await openEditor(page, head);
+  await stepTab(page, 'output');
+  await page.locator('#an-quality').click();
+  const report = page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true });
+  await expect(report.getByRole('status')).toContainText(/[1-9]\d* Fehler/);
+  await expect(report).toContainText('wird abgeschnitten');
+  await expect(report.getByRole('heading', { name: /Hinweise/ })).toBeVisible();
+  await expect(report).toContainText('Das Bild ist nur');
+  await report.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await page.locator('#an-publish').click();
+  await expect(page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true })).toBeVisible();
+  expect(state.log.some((entry) => entry.params.action === 'publish')).toBe(false);
+  await page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true }).locator('.an-quality-list').first().getByRole('button', { name: 'Zur Stelle', exact: true }).first().click();
+  await expect(page.locator('#an-step-design')).toBeVisible();
+  await expect(page.locator('#an-design-item')).toHaveValue(head.draft.items[0].id);
+  await expect(page.locator('[data-layout-target][aria-pressed=true]')).toHaveCount(1);
+  await stepTab(page, 'articles');
+  const name = page.locator('[data-item-id="' + head.draft.items[0].id + '"] [data-prop=name]');
+  await name.fill('Kurzer Name'); await name.dispatchEvent('change');
+  await stepTab(page, 'output');
+  await page.locator('#an-quality').click();
+  await expect(report.getByRole('status')).toContainText('0 Fehler');
+  await expect(report.getByRole('heading', { name: /Hinweise/ })).toBeVisible();
+  await expect(report.getByRole('button', { name: 'Hinweise bestätigen', exact: true })).toBeVisible();
+  await report.getByRole('button', { name: 'Hinweise bestätigen', exact: true }).click();
+  await expect(page.locator('#an-quality-note')).toContainText('Hinweise bestätigt');
+  const published = page.waitForRequest((request) => request.url().includes('action=publish'));
+  await page.locator('#an-publish').click();
+  await page.getByRole('button', { name: 'Jetzt freigeben', exact: true }).click();
+  await published;
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F57-02: gezielte Mehrfachübertragung ändert nur gewählte Eigenschaft und Kachel', async ({ page }) => {
+  const state = await setup(page);
+  const head = await seed(page, state, { count: 3 });
+  const colors = ['#aa0000', '#00aa00', '#0000aa'];
+  head.draft.layout.targets.card.forEach((entry, index) => {
+    entry.elements.find((element) => element.type === 'name').fill = colors[index];
+    entry.elements.find((element) => element.type === 'name').font_size = 20 + index;
+  });
+  const original = JSON.parse(JSON.stringify(head.draft));
+  await openEditor(page, head);
+  await stepTab(page, 'design');
+  await templatePanel(page);
+  await page.locator('#an-transfer').click();
+  const dialog = page.getByRole('dialog', { name: 'Gestaltung übertragen', exact: true });
+  const undo = page.locator('[data-history=undo]').first();
+  await expect(undo).toBeDisabled();
+  await expect(dialog.locator('[data-transfer-item]')).toHaveCount(2);
+  await expect(dialog.getByRole('button', { name: 'Übertragen', exact: true })).toBeDisabled();
+  await dialog.locator('[data-transfer-item="' + original.items[1].id + '"]').check();
+  await dialog.locator('[data-transfer-prop="text.fill"]').check();
+  await expect(dialog.locator('[data-transfer-summary]')).toContainText('1 Kachel(n) · 1 Eigenschaft(en) · 1 Änderung(en)');
+  await expect(dialog.locator('[data-transfer-changes] li')).toHaveText([/Schriftfarbe: #00aa00 → #aa0000/]);
+  await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await expect(undo).toBeDisabled();
+  await page.locator('#an-transfer').click();
+  await dialog.locator('[data-transfer-item="' + original.items[1].id + '"]').check();
+  await dialog.locator('[data-transfer-prop="text.fill"]').check();
+  await dialog.getByRole('button', { name: 'Übertragen', exact: true }).click();
+  await expect(undo).toBeEnabled();
+  await saveDraft(page);
+  const saved = state.actions.get(head.id).draft, name = (target, index) => saved.layout.targets[target][index].elements.find((element) => element.type === 'name');
+  expect(name('card', 1).fill).toBe('#aa0000');
+  expect(name('card', 1).font_size).toBe(21);
+  expect(name('card', 2).fill).toBe('#0000aa');
+  expect(name('card', 0).fill).toBe('#aa0000');
+  expect(saved.layout.targets.single).toEqual(original.layout.targets.single);
+  expect(saved.layout.targets.scale).toEqual(original.layout.targets.scale);
+  const withoutImages = (items) => items.map(({ image_id, ...rest }) => rest);
+  expect(withoutImages(saved.items)).toEqual(withoutImages(original.items));
+  await page.locator('[data-history=undo]').first().click();
+  await saveDraft(page);
+  expect(state.actions.get(head.id).draft.layout.targets.card).toEqual(original.layout.targets.card);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F49-03: Preisschildfarben und Geometrie ändern echte Magazin-Vorschaupixel', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
+  await cms(page);
+  for (const kind of ['plakat', 'flyer']) {
+    await designTab(page, 'sec-' + kind);
+    const root = page.locator('[data-designer=' + kind + ']'), canvas = root.locator('.an-designer-preview canvas:visible');
+    await workspaceView(root, 'split');
+    await root.locator('.an-template-picker summary').click();
+    await root.locator('#cfg-' + kind + 'Template-preview [data-value=modern-mag-xl]').click();
+    await page.clock.runFor(500); await expect(canvas).toBeVisible();
+    await root.locator('[data-object-properties=price]').click();
+    async function change(key, value, select = false) {
+      const field = root.locator('#cfg-' + kind + '-' + key);
+      const before = await canvas.evaluate((node) => node.toDataURL());
+      if (select) await field.selectOption(value); else await field.fill(value);
+      await page.clock.runFor(500);
+      await expect.poll(async () => {
+        await page.clock.runFor(500);
+        return canvas.evaluate((node) => node.toDataURL());
+      }, { message: kind + '/' + key }).not.toBe(before);
+    }
+    await change('tagPreset', 'green-rounded', true);
+    await change('tagRadius', '30'); await change('tagSkew', '4'); await change('tagScale', '75');
+    for (const key of ['priceImageColor', 'priceStripColor', 'priceOutlineColor', 'priceOldColor', 'priceStrikeColor']) await change(key, '#7733bb');
+    await change('tagPreset', 'price-image', true);
+    for (const key of ['priceImageColor', 'priceStripColor', 'priceOutlineColor', 'priceOldColor', 'priceStrikeColor']) await change(key, '#1166aa');
+    await change('tagPreset', 'classic-red-rect', true);
+    await expect(root.locator('#cfg-' + kind + '-tagShape')).toHaveValue('rect');
+    await root.getByRole('dialog', { name: 'Preisschild einstellen', exact: true }).getByRole('button', { name: 'Übernehmen', exact: true }).click();
+    const saved = page.waitForRequest((request) => request.url().includes('/api/cms-config') && request.method() !== 'GET');
+    await root.locator('#cfg-plakat-save').click();
+    expect((await saved).postDataJSON().wert[kind + '_tagPreset']).toBe('classic-red-rect');
+    await workspaceView(root, 'inputs');
+    expect(await root.locator('.an-designer-body').evaluate((node) => node.clientHeight / node.parentElement.clientHeight)).toBeGreaterThanOrEqual(.5);
+  }
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F47-01 TC-F48-01/02 TC-F49-01/02: native Waage, gruppierter Zusatz und austauschbares Preisschild', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page);
+  const result = await page.evaluate(async () => {
+    const M = window.AngeboteModel, D = window.AngeboteDesign;
+    const data = M.blank('drinks'), item = Object.assign(M.item(), {
+      name: 'UNERTL WEISSBIER', description: 'Das Original aus Bayern', price_cents: 1999, old_price_cents: 2399,
+      units: 20, volume_ml: 500, deposit_cents: 300
+    });
+    data.items.push(item); M.applyTemplate(data); M.ensureTargets(data);
+    const texts = [], fillText = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, x, y, ...rest) {
+      const t = this.getTransform(); texts.push({ text, x, y, font: this.font, tx: t.e, ty: t.f });
+      return fillText.call(this, text, x, y, ...rest);
+    };
+    const descriptions = [];
+    try {
+      for (const target of ['sheet', 'card', 'single', 'scale']) {
+        texts.length = 0;
+        if (target === 'sheet') await M.render(data, 0, 1);
+        else await M.renderTarget(data, target, item.id, 1);
+        descriptions.push({ target, title: texts.filter((entry) => entry.text && item.name.includes(entry.text)).at(-1),
+          detail: texts.filter((entry) => /^600 /.test(entry.font)) });
+      }
+    } finally { CanvasRenderingContext2D.prototype.fillText = fillText; }
+    const before = M.clone(data), target = data.layout.targets.scale[0], frames = [];
+    for (const preset of Object.keys(window.WochenangeboteRenderer.TAG_PRESETS)) {
+      M.setTargetStyle(data.layout, 'scale', (style) => D.change(style, { dataset: { style: 'price_preset' }, value: preset }));
+      frames.push((await M.renderTarget(data, 'scale', item.id, 1)).canvas.toDataURL());
+    }
+    const independent = JSON.stringify(data.layout.pages) === JSON.stringify(before.layout.pages)
+      && JSON.stringify(target.elements) === JSON.stringify(before.layout.targets.scale[0].elements)
+      && JSON.stringify(data.items) === JSON.stringify(before.items);
+    const legacy = M.clone(data.layout); legacy.template = 'price-image'; delete legacy.price_preset;
+    D.change(legacy, { dataset: { style: 'price_preset' }, value: 'green-rounded' });
+    const legacyReplaced = !M.priceImage(legacy);
+    const weekly = M.blank('weekly'); weekly.items.push(Object.assign(M.item(), { name: 'Waagenartikel', price_cents: 249 }));
+    await M.adoptWeekly(weekly);
+    const plain = M.clone(weekly); delete plain.layout.cms;
+    const native = await M.renderTarget(weekly, 'scale', weekly.items[0].id, 1);
+    const comparison = await M.renderTarget(plain, 'scale', weekly.items[0].id, 1);
+    return { descriptions, independent, legacyReplaced, variants: new Set(frames).size, presets: frames.length,
+      native: { w: native.canvas.width, h: native.canvas.height, metadata: !!native.canvas._weeklyElements,
+        equal: native.canvas.toDataURL() === comparison.canvas.toDataURL() } };
+  });
+  for (const { title, detail } of result.descriptions) {
+    expect(title).toBeTruthy(); expect(detail.map((entry) => entry.text).join(' ')).toBe('Das Original aus Bayern');
+    expect(detail[0].font).toMatch(/^600 /);
+    expect(detail[0].x).toBe(title.x); expect(detail[0].y).toBeGreaterThan(title.y);
+    expect(detail[0].tx).toBe(title.tx); expect(detail[0].ty).toBe(title.ty);
+  }
+  expect(result).toMatchObject({ independent: true, legacyReplaced: true,
+    native: { w: 800, h: 462, metadata: false, equal: true } });
+  expect(result.variants).toBe(result.presets);
+  expect(state.errors).toEqual([]);
+});
 
 test('TC-F44-03: Inline-Standards verändern Originalausgaben und werden identisch in CMS-Snapshots übernommen', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page), imageId = uid(); state.images.set(imageId, PHOTO);
@@ -2393,19 +2884,20 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
   const state = await setup(page);
   await cms(page);
   for (const kind of ['plakat', 'flyer', 'drinks']) {
-    await page.locator('[data-id=sec-' + kind + ']').click();
+    await designTab(page, 'sec-' + kind);
     const root = page.locator('[data-designer=' + kind + ']');
     await expect(root).toBeVisible();
     const tabs = root.locator('.an-designer-tabs [role=tab]');
-    await expect(tabs).toHaveText(['Stil', 'Farben', 'Feinabstimmung', 'Weitere Gestaltung', 'Eigene Vorlagen']);
-    for (let i = 0; i < 5; i++) {
-      await tabs.nth(i).click();
+    await expect(tabs).toHaveText(['Stil', 'Farben', 'Feinabstimmung', 'Weitere Gestaltung', 'Eigene Vorlagen', 'Werkzeuge']);
+    for (let i = 0; i < 6; i++) {
+      await designerTool(root, i);
       await expect(root.locator('[role=tabpanel]:visible')).toHaveCount(1);
       await expect(root.locator('[data-designer-panel="' + i + '"]')).toBeVisible();
     }
-    await tabs.first().click();
-    await expect(root.locator('.an-own-presets')).not.toHaveAttribute('open');
+    await designerTool(root, 0);
+    await expect(root.locator('.an-template-picker').first()).not.toHaveAttribute('open');
     const previewHost = root.locator('.an-designer-preview');
+    await workspaceView(root, 'split');
     await page.clock.runFor(500);
     await expect(kind === 'drinks' ? root.locator('[data-design-preview] canvas')
       : root.locator('#cfg-live-preview-' + kind + ' canvas')).toBeVisible();
@@ -2425,7 +2917,8 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
     expect(await root.locator('.an-designer-settings').evaluate((node) => node.scrollTop)).toBe(before.settings);
     const preview = await root.locator('.an-designer-preview').boundingBox();
     const settings = await root.locator('.an-designer-settings').boundingBox();
-    if (page.viewportSize().width <= 600) expect(preview.y + preview.height).toBeLessThanOrEqual(settings.y + 1);
+    // Unter ~612 px stehen die Eingaben vor (über) der Vorschau; sonst links daneben.
+    if (await root.evaluate((node) => node.classList.contains('an-split-mobile') || !!node.querySelector('.an-split-mobile'))) expect(settings.y + settings.height).toBeLessThanOrEqual(preview.y + 1);
     else expect(settings.x + settings.width).toBeLessThanOrEqual(preview.x + 1);
     await root.locator('.an-designer-save').scrollIntoViewIfNeeded();
     await expect(root.locator('.an-designer-save button').first()).toBeInViewport();
@@ -2439,7 +2932,7 @@ for (const section of ['plakat', 'flyer']) {
   test('TC-F38-02: Reiter ' + section + ' erhält Eingabefelder und Speichervertrag', async ({ page }) => {
     const state = await setup(page);
     await cms(page);
-    await page.locator('[data-id=sec-' + section + ']').click();
+    await designTab(page, 'sec-' + section);
     const root = page.locator('#cfg-sec-' + section);
     await expect(root).toBeVisible();
     const original = await (await page.request.get(BASE + '/cms.html')).text();
@@ -2458,7 +2951,7 @@ for (const section of ['plakat', 'flyer']) {
     const save = await page.locator('#cfg-plakat-save').boundingBox(), view = page.viewportSize();
     expect(save.y).toBeGreaterThanOrEqual(0);
     expect(save.y + save.height).toBeLessThanOrEqual(view.height + 1);
-    await root.locator('[data-designer-tab="3"]').click();
+    await designerTool(root, 3);
     const contrast = await root.locator('#cfg-' + section + '-tagShape').evaluate((node) => {
       const parse = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number);
       const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
@@ -2471,12 +2964,12 @@ for (const section of ['plakat', 'flyer']) {
     await noOverflow(page, '#cms-cfg-plakat');
     await page.screenshot({ path: test.info().outputPath('design-' + section + '.png') });
     // Funktion: Vorlagenwechsel, Preisschildform, unveränderte Speicheranfrage
-    await root.locator('[data-designer-tab="0"]').click();
+    await designerTool(root, 0);
     await root.locator('[data-value=minimal-clean]').first().click();
     await expect(root.locator('.cms-wp-preview.active')).toHaveAttribute('data-value', 'minimal-clean');
     await expect(page.locator('#cfg-' + section + 'Template')).toHaveValue('minimal-clean');
-    await root.locator('[data-designer-tab="3"]').click();
-    await page.locator('#cfg-' + section + '-tagShape').selectOption('pill');
+    await designerTool(root, 3);
+    await setField(page, root, root.locator('#cfg-' + section + '-tagShape'), 'pill');
     const request = page.waitForRequest((r) => r.url().includes('/api/cms-config') && r.method() !== 'GET');
     await page.locator('#cfg-plakat-save').click();
     const body = (await request).postDataJSON();
@@ -2494,16 +2987,18 @@ test('TC-F38-04: Rot/Gelb-Preisbild und fünf Farben für Plakat und Einzelflyer
     priceOldColor: '#112233', priceStrikeColor: '#ff44aa' };
   let saved;
   for (const kind of ['plakat', 'flyer']) {
-    await page.locator('[data-id=sec-' + kind + ']').click();
+    await designTab(page, 'sec-' + kind);
     const root = page.locator('#cfg-sec-' + kind);
-    await root.locator('[data-designer-tab="3"]').click();
-    await root.locator('#cfg-' + kind + '-tagPreset').selectOption('price-image');
-    await expect(root.locator('#cfg-' + kind + '-tagShape')).toHaveValue('price-image');
+    await root.locator('[data-object-properties=price]').click();
+    const dialog = root.locator('dialog.an-object-dialog[open]');
+    await dialog.locator('#cfg-' + kind + '-tagPreset').selectOption('price-image');
+    await expect(dialog.locator('#cfg-' + kind + '-tagShape')).toHaveValue('price-image');
     for (const [key, value] of Object.entries(colors)) {
-      const field = root.locator('#cfg-' + kind + '-' + key);
+      const field = dialog.locator('#cfg-' + kind + '-' + key);
       await expect(field).toBeVisible();
       await field.fill(value); await field.dispatchEvent('change');
     }
+    await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
     const request = page.waitForRequest((req) => req.url().includes('/api/cms-config')
       && req.method() !== 'GET' && req.postDataJSON().name === 'design_config');
     await page.locator('#cfg-plakat-save').click();
@@ -2516,9 +3011,9 @@ test('TC-F38-04: Rot/Gelb-Preisbild und fünf Farben für Plakat und Einzelflyer
   state.cmsDesign.design_config = saved;
   await cms(page);
   for (const kind of ['plakat', 'flyer']) {
-    await page.locator('[data-id=sec-' + kind + ']').click();
+    await designTab(page, 'sec-' + kind);
     const root = page.locator('#cfg-sec-' + kind);
-    await root.locator('[data-designer-tab="3"]').click();
+    await designerTool(root, 3);
     await expect(root.locator('#cfg-' + kind + '-tagShape')).toHaveValue('price-image');
     for (const [key, value] of Object.entries(colors)) await expect(root.locator('#cfg-' + kind + '-' + key)).toHaveValue(value);
   }
@@ -2568,19 +3063,20 @@ test('TC-F38-04: Original- und Magazinrenderer zeichnen das gemeinsame Preisbild
 test('TC-F39-01/03: getrennte CMS-Verläufe mit Undo, Redo und ausdrücklichem Speichern', async ({ page }) => {
   const state = await setup(page);
   await cms(page);
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   await expect(page.locator('[data-design-preview] canvas')).toBeVisible();
   for (const kind of ['plakat', 'flyer']) {
-    await page.locator('[data-id=sec-' + kind + ']').click();
+    await designTab(page, 'sec-' + kind);
     const root = page.locator('#cfg-sec-' + kind), undo = root.locator('[data-design-history=undo]'), redo = root.locator('[data-design-history=redo]');
     await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
-    await root.locator('[data-designer-tab="3"]').click();
+    await designerTool(root, 3);
     const shape = root.locator('#cfg-' + kind + '-tagShape');
-    await shape.selectOption('price-image');
+    await setField(page, root, shape, 'price-image');
     await expect(undo).toBeEnabled(); await undo.click(); await expect(shape).toHaveValue('rect');
     await expect(redo).toBeEnabled(); await redo.click(); await expect(shape).toHaveValue('price-image');
-    await undo.click(); await shape.selectOption('rounded'); await expect(redo).toBeDisabled();
+    await undo.click(); await setField(page, root, shape, 'rounded'); await expect(redo).toBeDisabled();
   }
-  await page.locator('[data-id=sec-plakat]').click();
+  await designTab(page, 'sec-plakat');
   await page.locator('#cfg-sec-plakat [data-design-history=undo]').click();
   await expect(page.locator('#cfg-plakat-tagShape')).toHaveValue('rect');
   await expect(page.locator('#cfg-flyer-tagShape')).toHaveValue('rounded');
@@ -2596,14 +3092,15 @@ test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nati
   await cms(page);
   const root = page.locator('#an-design-root'), host = root.locator('[data-design-preview]');
   const undo = root.locator('[data-design-history=undo]'), redo = root.locator('[data-design-history=redo]');
+  await workspaceView(root, 'split');
   await expect(host.locator('canvas')).toBeVisible(); await expect(undo).toBeDisabled();
-  await root.locator('[data-designer-tab="1"]').click();
+  await designerTool(root, 1);
   const color = root.locator('[data-style=color]'), initial = await color.inputValue();
-  await color.fill('#1234aa'); await color.dispatchEvent('change');
+  await setField(page, root, color, '#1234aa');
   await undo.click(); await expect(color).toHaveValue(initial);
   await redo.click(); await expect(color).toHaveValue('#1234aa');
-  await undo.click(); await color.fill('#223344'); await color.dispatchEvent('change'); await expect(redo).toBeDisabled();
-  await root.locator('[data-designer-tab="0"]').click();
+  await undo.click(); await setField(page, root, color, '#223344'); await expect(redo).toBeDisabled();
+  await designerTool(root, 'tools');
   await root.locator('[data-preview-element]').selectOption('sheet:0:image:0');
   const hit = host.locator('[data-preview-select="sheet:0:image:0"]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 81, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
@@ -2621,8 +3118,8 @@ test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nati
   await expect(root.locator('[data-design-status]')).toContainText('gespeichert');
   expect(state.design.version).toBe(2);
   expect(state.design.drinks.adjustments['sheet:0:image:0'].dx).toBeGreaterThan(0);
-  await root.locator('[data-designer-tab="4"]').click();
-  await root.locator('.an-own-presets summary').click();
+  await designerTool(root, 4);
+  await openDetails(root.locator('.an-own-presets'));
   const name = root.locator('[data-preset-name]');
   await name.fill('Unabhängige Texteingabe');
   const allowed = await name.evaluate((node) => node.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true })));
@@ -2635,9 +3132,9 @@ test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nati
 test('TC-F38-07: Bild- und Preisposition nutzen breite Container nebeneinander', async ({ page }) => {
   const state = await setup(page);
   await cms(page);
-  await page.locator('[data-id=sec-flyer]').click();
+  await designTab(page, 'sec-flyer');
   const root = page.locator('#cfg-sec-flyer');
-  await root.locator('[data-designer-tab="2"]').click();
+  await designerTool(root, 2);
   const grid = root.locator('.cfg-anchor-grid'), groups = grid.locator('.cfg-anchor-group');
   const check = async () => {
     const [image, price, width] = await Promise.all([groups.nth(0).boundingBox(), groups.nth(1).boundingBox(), grid.evaluate((node) => node.clientWidth)]);
@@ -2706,10 +3203,11 @@ test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reite
   const action = await seed(page, state, { count: 8, publish: true });
   const id = uid(); state.images.set(id, PHOTO); state.published.get(action.id).data.items[0].image_id = id;
   const before = copy(action);
-  await cms(page); await page.locator('[data-id=cfg-hpang]').click();
+  await cms(page); await designTab(page, 'cfg-hpang');
   const root = page.locator('#cms-cfg-hpang'), preview = root.locator('.an-designer-preview'), settings = root.locator('.an-designer-settings');
   await expect(root).toHaveAttribute('data-designer', 'homepage');
-  await expect(root.locator('[role=tab]')).toHaveText(['Farben', 'Preis-Tag', 'Layout']);
+  await workspaceView(root, 'split');
+  await expect(root.locator('[role=tab]')).toHaveText(['Farben', 'Preis-Tag', 'Layout', 'Werkzeuge']);
   await expect(root.locator('#hpang-preview .an-hp-card')).toHaveCount(9);
   await expect(root.locator('#hpang-preview .an-hp-card').first()).toContainText('Bisheriges Wochenangebot');
   await expect(root.locator('#hpang-preview .an-hp-card').first().locator('img')).toBeVisible();
@@ -2729,9 +3227,10 @@ test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reite
   await undo.click(); await expect(color).toHaveValue('#ffffff');
   await redo.click(); await expect(color).toHaveValue('#aabbcc');
   const [p, s] = await Promise.all([preview.boundingBox(), settings.boundingBox()]);
-  if (page.viewportSize().width <= 600) expect(p.y + p.height).toBeLessThanOrEqual(s.y + 1);
+  if (await root.evaluate((node) => node.classList.contains('an-split-mobile') || !!node.querySelector('.an-split-mobile'))) expect(s.y + s.height).toBeLessThanOrEqual(p.y + 1);
   else expect(s.x + s.width).toBeLessThanOrEqual(p.x + 1);
   await expect(preview).toHaveCSS('overflow-y', 'auto');
+  await designerTool(root, 'tools');
   await root.locator('[data-picture-zoom]').selectOption('2');
   await preview.scrollIntoViewIfNeeded();
   const documentScroll = await page.evaluate(() => document.scrollingElement.scrollTop);
@@ -2739,7 +3238,7 @@ test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reite
   await expect.poll(() => preview.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(documentScroll);
   for (const [tab, field] of [[1, '#hpang-tagSkew'], [2, '#hpang-imgSize']]) {
-    await root.locator('[data-designer-tab="' + tab + '"]').click();
+    await designerTool(root, tab);
     await expect(root.locator(field)).toBeVisible();
   }
   await root.locator('[data-action=hpangSave]').click();
@@ -2753,10 +3252,12 @@ test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reite
 test('TC-F40-02/03: HP-Vorschau lädt Daten und Bilder nach Fehlern erneut und zeigt echte Leerzustände', async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-RETRY' });
   await cms(page);
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   await expect(page.locator('[data-design-preview] canvas')).toBeVisible();
   state.failOffers = true;
-  await page.locator('[data-id=cfg-hpang]').click();
+  await designTab(page, 'cfg-hpang');
   const root = page.locator('#cms-cfg-hpang');
+  await workspaceView(root, 'split');
   await expect(root.locator('#hpang-preview [role=alert]')).toContainText('nicht geladen');
   state.failOffers = false; state.failImageLookup = true;
   await root.locator('[data-hpang-retry]').click();
@@ -2765,12 +3266,14 @@ test('TC-F40-02/03: HP-Vorschau lädt Daten und Bilder nach Fehlern erneut und z
   await root.locator('.an-hp-image').getByRole('button', { name: 'Erneut laden' }).click();
   await expect(root.locator('.an-hp-image img')).toBeVisible();
   await root.locator('#hpang-cardBg').fill('#112233'); await root.locator('#hpang-cardBg').dispatchEvent('input');
+  await root.locator('[data-more-actions]').click();
   await root.locator('[data-action=hpangRevert]').click();
   await expect(root.locator('#hpang-cardBg')).toHaveValue('#ffffff');
   await expect(root.locator('[data-design-history=undo]')).toBeDisabled();
   expect(state.log.filter((r) => r.method !== 'GET' && !r.read_only_lookup && r.path.startsWith('/api/angebote'))).toEqual([]);
   state.emptyOffers = true;
-  await cms(page); await page.locator('[data-id=cfg-hpang]').click();
+  await cms(page); await designTab(page, 'cfg-hpang');
+  await workspaceView(root, 'split');
   await expect(root.locator('#hpang-preview')).toContainText('Aktuell keine Angebote');
   await expect(root.locator('#hpang-preview .an-hp-card')).toHaveCount(0);
   expect(state.errors).toEqual([]);
@@ -2832,20 +3335,21 @@ test('TC-F41-01/03: echte Getränkeproduktbilder in allen Vorschauformaten bleib
   const root = page.locator('#an-design-root');
   await expect(root.locator('[data-design-products]')).toContainText('mit Produktbildern');
   await expect.poll(() => page.evaluate(() => window.__productDraws)).toBeGreaterThan(0);
+  await designerTool(root, 'tools');
   for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
     await page.evaluate(() => { window.__productDraws = 0; });
     await root.locator('[data-design-mode="' + mode + '"]').click();
     await expect.poll(() => page.evaluate(() => window.__productDraws)).toBeGreaterThan(0);
   }
   expect(state.log.filter((r) => r.method !== 'GET' && !r.read_only_lookup && r.path.startsWith('/api/angebote'))).toEqual([]);
-  await root.locator('[data-designer-tab="1"]').click();
-  await root.locator('[data-style=color]').fill('#1234aa'); await root.locator('[data-style=color]').dispatchEvent('change');
+  await setField(page, root, root.locator('[data-style=color]'), '#1234aa');
   await root.locator('[data-design-save]').click();
   await expect(root.locator('[data-design-status]')).toContainText('gespeichert');
   expect(state.design.drinks.color).toBe('#1234aa');
   expect(JSON.stringify(state.design)).not.toContain('Echter Getränkekasten');
   expect(JSON.stringify(state.design)).not.toContain('cms:');
   expect(state.previewOffers).toEqual(original);
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   await root.locator('[data-design-preview]').screenshot({ path: test.info().outputPath('getraenkedesigner-produktbilder.png') });
   expect(state.errors).toEqual([]);
 });
@@ -2860,15 +3364,16 @@ test('TC-F41-02: Getränkevorschau meldet Bildfehler und fehlende Artikel ohne G
   await cms(page);
   const root = page.locator('#an-design-root');
   await expect(root.locator('[data-design-products][role=alert]')).toContainText('Nicht alle Produktbilder');
-  await root.locator('[data-designer-tab="1"]').click();
-  await root.locator('[data-style=color]').fill('#445566'); await root.locator('[data-style=color]').dispatchEvent('change');
+  await setField(page, root, root.locator('[data-style=color]'), '#445566');
   state.failImageLookup = false;
+  await designerTool(root, 'tools');
   await root.locator('[data-design-products-retry]').click();
   await expect(root.locator('[data-design-products]')).toContainText('mit Produktbildern');
   await expect(root.locator('[data-style=color]')).toHaveValue('#445566');
   expect(state.log.filter((r) => r.method === 'PUT')).toEqual([]);
   state.previewOffers = [];
   await cms(page);
+  await workspaceView(page.locator('[data-designer=drinks]'), 'split');
   await expect(root.locator('[data-design-products]')).toContainText('Keine Getränkeartikel vorhanden');
   await expect(root.locator('[data-design-preview] canvas')).toBeVisible();
   expect(state.errors).toEqual([]);

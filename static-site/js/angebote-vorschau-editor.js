@@ -86,7 +86,7 @@ window.AngeboteVorschauEditor = (function () {
     function refreshExtras() {
       if (!extrasHost) return;
       var entry = current(), disabled = !entry;
-      extrasHost.hidden = false;
+      extrasHost.hidden = !!entry && entry.ovKey === 'name';
       extrasHost.querySelectorAll('button,input').forEach(function (control) { control.disabled = disabled; });
       if (disabled) return;
       var ov = options.override(entry), fields = options.fields(ov, entry);
@@ -201,6 +201,7 @@ window.AngeboteVorschauEditor = (function () {
       if (!hit || event.button !== 0) return;
       event.preventDefault(); chosen = hit.dataset.previewSelect || hit.dataset.previewResize || hit.dataset.previewRotate; overlay();
       var entry = current(); if (!entry) return;
+      if (options.select) options.select(entry);
       if (options.begin) options.begin();
       stage.focus({ preventScroll: true });
       var lastX = event.clientX, lastY = event.clientY, resizing = !!hit.dataset.previewResize, turning = !!hit.dataset.previewRotate;
@@ -234,12 +235,13 @@ window.AngeboteVorschauEditor = (function () {
         if (pending && elements.some(function (entry) { return entry.id === pending; })) { chosen = pending; pending = ''; }
         if (!entries.some(function (entry) { return entry.id === chosen; })) {
           var first = entries.find(function (entry) { return entry.type === 'image' || entry.ovKey === 'img'; }) || entries[0];
-          chosen = first && !options.toolsHost ? first.id : '';
+          chosen = first && (!options.toolsHost || options.selectFirst) ? first.id : '';
         }
         if (canvas.isConnected) {
           var displayed = document.createElement('canvas'); displayed.width = canvas.width; displayed.height = canvas.height;
           displayed.getContext('2d').drawImage(canvas, 0, 0); canvas = displayed;
         }
+        canvas._offerElements = elements; canvas._offerWidth = logicalWidth;
         var previous = stage.querySelector('canvas'); if (previous) previous.remove();
         stage.prepend(canvas); stage.style.aspectRatio = width + ' / ' + height; stage.style.setProperty('--an-ratio', width / height);
         select.replaceChildren();

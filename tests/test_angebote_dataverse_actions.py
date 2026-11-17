@@ -193,6 +193,7 @@ class DataverseActionsTests(unittest.TestCase):
         }
         request = body([item()])
         request.update(aktion_id=action_id, original_ids=[row_id])
+        request["revision"] = angebote._action_revision([legacy_row], None)
         request["items"][0]["id"] = row_id
         request["layout"]["image_refs"] = {row_id: "cms:ANG-abc123"}
         responses = [
@@ -369,6 +370,9 @@ class DataverseActionsTests(unittest.TestCase):
                 "dl_seiteninhaltid": layout_id, "@odata.etag": 'W/"layout"'
             }]}),
         ]
+        revision = angebote._action_revision(
+            requests[0].json()["value"], requests[1].json()["value"][0]
+        )
         with patch.object(angebote.requests, "get", side_effect=requests), \
                 patch.object(angebote.requests, "post",
                              return_value=batch_response([
@@ -377,6 +381,7 @@ class DataverseActionsTests(unittest.TestCase):
                              ])) as post:
             result = angebote._delete_action(self.base_url, self.headers, {
                 "aktion_id": "a" * 32, "original_ids": [row_id],
+                "revision": revision,
             })
         self.assertTrue(result["success"])
         transaction = post.call_args.kwargs["data"].decode("utf-8")
@@ -401,6 +406,7 @@ class DataverseActionsTests(unittest.TestCase):
         rows = Response(200, {"value": [
             {
                 "dl_angeboteid": "1" * 32,
+                "@odata.etag": 'W/"admin-row"',
                 "dl_aktion_id": action_id,
                 "dl_artikelnummer": "BARCODE-1",
                 "dl_gueltig_von": "2020-01-01",
@@ -503,6 +509,7 @@ class DataverseActionsTests(unittest.TestCase):
         )
         rows = Response(200, {"value": [{
             "dl_angeboteid": "1" * 32,
+            "@odata.etag": 'W/"admin-row"',
             "dl_aktion_id": "a" * 32,
             "dl_aktionsart": "drinks",
             "dl_gueltig_von": "2099-01-01",
@@ -526,6 +533,41 @@ class DataverseActionsTests(unittest.TestCase):
             result["config"]["scale_scope"],
             hashlib.sha256(b"production").hexdigest()[:6],
         )
+
+    def test_same_ids_changed_content_and_layout_conflict_before_writes(self):
+        row = {"dl_angeboteid": str(uuid.UUID(item()["id"])), "@odata.etag": 'W/"1"'}
+        layout = {"dl_seiteninhaltid": str(uuid.uuid4()), "@odata.etag": 'W/"layout-1"'}
+        revision = angebote._action_revision([row], layout)
+        for changed_row, changed_layout in (
+                ({**row, "@odata.etag": 'W/"2"'}, layout),
+                (row, {**layout, "@odata.etag": 'W/"layout-2"'})):
+            with self.subTest(row=changed_row, layout=changed_layout), \
+                    patch.object(angebote, "_check_action_schema"), \
+                    patch.object(angebote, "_read_action_rows", return_value=[changed_row]), \
+                    patch.object(angebote, "_read_action_layout", return_value=changed_layout), \
+                    patch.object(angebote, "_run_action_batch") as batch:
+                request = body()
+                request.update(original_ids=[row["dl_angeboteid"]], revision=revision)
+                with self.assertRaises(angebote.ActionRequestError) as error:
+                    angebote._save_action(self.base_url, self.headers, request)
+                self.assertEqual(error.exception.status, 409)
+                with self.assertRaises(angebote.ActionRequestError) as error:
+                    angebote._delete_action(self.base_url, self.headers, request)
+                self.assertEqual(error.exception.status, 409)
+                batch.assert_not_called()
+
+    def test_missing_revision_cannot_overwrite_existing_action(self):
+        row = {"dl_angeboteid": str(uuid.UUID(item()["id"])), "@odata.etag": 'W/"1"'}
+        with patch.object(angebote, "_check_action_schema"), \
+                patch.object(angebote, "_read_action_rows", return_value=[row]), \
+                patch.object(angebote, "_read_action_layout", return_value=None), \
+                patch.object(angebote, "_run_action_batch") as batch:
+            request = body()
+            request["original_ids"] = [row["dl_angeboteid"]]
+            with self.assertRaises(angebote.ActionRequestError) as error:
+                angebote._save_action(self.base_url, self.headers, request)
+            self.assertEqual(error.exception.status, 409)
+            batch.assert_not_called()
 
     def test_runtime_config_does_not_require_blob_namespace(self):
         from azure.functions import HttpRequest

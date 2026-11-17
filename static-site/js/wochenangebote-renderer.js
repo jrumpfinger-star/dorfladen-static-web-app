@@ -29,6 +29,9 @@ window.WochenangeboteRenderer = (function () {
     var comparison = item.old_price_cents > item.price_cents;
     var font = '"Anton"';
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
+    var decoration=layout.decoration||{},skew=(decoration.price_skew||0)/100;
+    ctx.translate(element.w/2,element.h/2);ctx.scale(element.w/(element.w+Math.abs(skew)*element.h),1);
+    ctx.transform(1,0,-skew,1,0,0);ctx.translate(-element.w/2,-element.h/2);
     ctx.font = '160px ' + font;
     var euroWidth = ctx.measureText(euros).width;
     ctx.font = '82px ' + font;
@@ -46,8 +49,10 @@ window.WochenangeboteRenderer = (function () {
     ctx.strokeText(cents, centsX, 84); ctx.fillText(cents, centsX, 84);
     if (comparison) {
       ctx.fillStyle = layout.price_background || '#fff000';
-      ctx.beginPath(); ctx.moveTo(12, 174); ctx.lineTo(width - 4, 168);
-      ctx.lineTo(width - 12, 212); ctx.lineTo(4, 218); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      if(decoration.price_radius)ctx.roundRect(4,168,width-8,50,Math.min(25,decoration.price_radius));
+      else {ctx.moveTo(12,174);ctx.lineTo(width-4,168);ctx.lineTo(width-12,212);ctx.lineTo(4,218);ctx.closePath();}
+      ctx.fill();
       var old = (item.old_price_cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
       font = '"' + element.font + '"';
       ctx.font = 'bold 32px ' + font;
@@ -67,7 +72,8 @@ window.WochenangeboteRenderer = (function () {
       price_cents:Math.round(Number(item.preis)*100),old_price_cents:Math.round(Number(item.statt_preis)*100)
     },{
       color:cfg.priceImageColor,price_outline_color:cfg.priceOutlineColor,
-      price_background:cfg.priceStripColor,old_price_color:cfg.priceOldColor,price_strike_color:cfg.priceStrikeColor
+      price_background:cfg.priceStripColor,old_price_color:cfg.priceOldColor,price_strike_color:cfg.priceStrikeColor,
+      decoration:{price_skew:cfg.tagSkew,price_radius:cfg.tagRadius}
     });
     ctx.restore();return true;
   }
@@ -88,6 +94,8 @@ window.WochenangeboteRenderer = (function () {
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
     plakat_inline:{},flyer_inline:{},
+    plakat_nameFont:'Arial',plakat_nameSize:0,plakat_nameColor:'#1a1a1a',
+    flyer_nameFont:'Arial',flyer_nameSize:0,flyer_nameColor:'#1a1a1a',
     plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
     plakat_priceImageColor:'#ed1c24',plakat_priceOutlineColor:'#ffffff',plakat_priceStripColor:'#fff000',plakat_priceOldColor:'#000000',plakat_priceStrikeColor:'#ed1c24',
     plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',plakat_vorratColor:'#888888',
@@ -103,13 +111,13 @@ window.WochenangeboteRenderer = (function () {
   };
 
   var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','vorratColor','borderColor',
-    'priceImageColor','priceOutlineColor','priceStripColor','priceOldColor','priceStrikeColor'];
+    'priceImageColor','priceOutlineColor','priceStripColor','priceOldColor','priceStrikeColor','nameColor'];
 
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct','borderWidth'];
+  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct','borderWidth','nameSize'];
 
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
 
-  var PERSEC_SELECTS=['tagPreset','tagShape'];
+  var PERSEC_SELECTS=['tagPreset','tagShape','nameFont'];
 
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
 
@@ -289,6 +297,24 @@ window.WochenangeboteRenderer = (function () {
     if(line)lines.push(line);return lines;
   }
 
+  function drawNameGroup(ctx,item,cfg,x,y,w,fontSize,detailSize,override,metadata){
+    var ov=override||{},size=cfg.nameSize||fontSize,font='"'+(cfg.nameFont||'Arial')+'"',step=size*1.2;
+    ctx.save();ctx.font='900 '+size+'px '+font;
+    var names=wrapTextCMS(ctx,item.produkt||'Produkt',w);
+    ctx.font='600 '+detailSize+'px '+font;
+    var details=item.details?wrapTextCMS(ctx,item.details,w):[];
+    var h=names.length*step+(details.length?4+details.length*detailSize*1.2:0),top=y-size;
+    var scale=(ov.nameScale||100)/100,dx=ov.nameDx||0,dy=ov.nameDy||0;
+    ctx.translate(x+w/2+dx,top+h/2+dy);ctx.rotate((ov.nameRot||0)*Math.PI/180);ctx.scale(scale,scale);ctx.translate(-w/2,-h/2);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle=cfg.nameColor||'#1a1a1a';ctx.font='900 '+size+'px '+font;
+    names.forEach(function(line,index){ctx.fillText(line,0,size+index*step);});
+    ctx.font='600 '+detailSize+'px '+font;
+    details.forEach(function(line,index){ctx.fillText(line,0,names.length*step+4+detailSize+index*detailSize*1.2);});
+    ctx.restore();
+    metadata.push({id:'name',itemKey:item.key,label:'Bezeichnung und Zusatztext',ovKey:'name',
+      x:x+dx+w*(1-scale)/2,y:top+dy+h*(1-scale)/2,w:w*scale,h:h*scale});
+    return y+h;
+  }
   function drawTagShapePath(ctx,w,h,shape,radius){
     var hw=w/2,hh=h/2,r=Math.min(radius,hw,hh);
     ctx.beginPath();
@@ -339,7 +365,7 @@ window.WochenangeboteRenderer = (function () {
       var tInset=hw*0.22;
       ctx.moveTo(-hw,-hh);ctx.lineTo(hw,-hh);ctx.lineTo(hw-tInset,hh);ctx.lineTo(-hw+tInset,hh);
     }else if(shape==='rounded'||r>0){
-      var rr=shape==='rounded'?Math.min(16,hw,hh):r;
+      var rr=shape==='rounded'?Math.min(radius||16,hw,hh):r;
       ctx.moveTo(-hw+rr,-hh);ctx.lineTo(hw-rr,-hh);ctx.quadraticCurveTo(hw,-hh,hw,-hh+rr);
       ctx.lineTo(hw,hh-rr);ctx.quadraticCurveTo(hw,hh,hw-rr,hh);
       ctx.lineTo(-hw+rr,hh);ctx.quadraticCurveTo(-hw,hh,-hw,hh-rr);
@@ -353,6 +379,13 @@ window.WochenangeboteRenderer = (function () {
   function fillTagShape(ctx,w,h,cfg){
     drawTagShapePath(ctx,w,h,cfg.tagShape||'rect',cfg.tagRadius||0);
     ctx.fill();
+  }
+  function drawPriceBackground(ctx,cfg,x,y,w,h){
+    var skew=(cfg.tagSkew||0)/100;
+    ctx.save();ctx.translate(x+w/2,y+h/2);ctx.scale(w/(w+Math.abs(skew)*h),1);ctx.transform(1,0,-skew,1,0,0);
+    ctx.fillStyle=cfg.priceStripColor;ctx.strokeStyle=cfg.priceOutlineColor;ctx.lineWidth=1;
+    var square=['circle','star','explosion'].indexOf(cfg.tagShape)>=0,side=Math.min(w,h);
+    drawTagShapePath(ctx,square?side:w,square?side:h,cfg.tagShape,cfg.tagRadius);ctx.fill();ctx.stroke();ctx.restore();
   }
 
   function _freistellCanvas(imgEl, cfg){
@@ -830,37 +863,24 @@ window.WochenangeboteRenderer = (function () {
           // Text area
           var tPad=32, tY=divY+36;
 
-          // Product name
-          ctx.fillStyle=theme.textColor;ctx.font='900 42px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-          var pName=(item.produkt||'Produkt').trim();
-          var pLines=wrapTextCMS(ctx,pName,cardMW-tPad*2).slice(0,2);
-          pLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=50;});
-
-          // Details
-          if(item.details){
-            tY+=4;
-            ctx.fillStyle=theme.detailsColor;ctx.font='600 24px Arial, sans-serif';
-            var dLines=wrapTextCMS(ctx,item.details,cardMW-tPad*2).slice(0,2);
-            dLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=30;});
-          }
+          tY=drawNameGroup(ctx,item,cfg,cardMX+tPad,tY,cardMW-tPad*2,42,24,artOv,_elMeta);
 
           // Price section at bottom of card
           var pDx=artOv.priceDx||0, pDy=artOv.priceDy||0;
           var priceBarY=cardMY+cardMH-100+pDy;
           var priceBarX=cardMX+24+pDx;
-          var priceScale=(artOv.priceScale||100)/100;
+          var priceScale=(artOv.priceScale||100)/100*(cfg.tagScale||100)/100;
           ctx.save();ctx.translate(priceBarX+(cardMW-48)/2,priceBarY+36);
           ctx.rotate((artOv.priceRot||0)*Math.PI/180);ctx.scale(priceScale,priceScale);
           ctx.translate(-priceBarX-(cardMW-48)/2,-priceBarY-36);
           if(cfg.tagShape!=='price-image'){
-            ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.fill();
-            ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.stroke();
+            drawPriceBackground(ctx,cfg,priceBarX,priceBarY,cardMW-48,72);
           }
           _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:priceBarX+(cardMW-48)*(1-priceScale)/2,y:priceBarY+36*(1-priceScale),w:(cardMW-48)*priceScale,h:72*priceScale,ovKey:'price'});
 
           if(item.preis&&!drawCmsPriceImage(ctx,item,cfg,priceBarX,priceBarY,cardMW-48,72)){
             var pp=Number(item.preis).toFixed(2).split('.');
-            ctx.fillStyle=theme.tagColor;ctx.font='900 52px Arial Black, Arial, sans-serif';
+            ctx.fillStyle=cfg.priceImageColor;ctx.font='900 52px Arial Black, Arial, sans-serif';
             ctx.fillText(pp[0]+','+pp[1],priceBarX+16,priceBarY+52);
             var mw=ctx.measureText(pp[0]+','+pp[1]).width;
             ctx.font='700 30px Arial, sans-serif';
@@ -868,11 +888,11 @@ window.WochenangeboteRenderer = (function () {
           }
           if(item.statt_preis&&cfg.tagShape!=='price-image'){
             var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-            var stc=theme.stattColor||'#8a9e80';
+            var stc=cfg.priceOldColor;
             ctx.textAlign='right';ctx.fillStyle=stc;ctx.font='600 24px Arial, sans-serif';
             ctx.fillText(uvp,cardMX+cardMW-40+pDx,priceBarY+48);
             var uvpW=ctx.measureText(uvp).width;
-            ctx.strokeStyle=stc;ctx.lineWidth=2;
+            ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=2;
             ctx.beginPath();ctx.moveTo(cardMX+cardMW-40+pDx-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40+pDx,priceBarY+40);ctx.stroke();
             ctx.textAlign='left';
           }
@@ -921,14 +941,7 @@ window.WochenangeboteRenderer = (function () {
       // ── Produktname + Details auf Karte ──
       var pad=36;
       var textY=cardY+pad+28;
-      ctx.fillStyle=theme.textColor;ctx.font='900 48px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-      var prodLines=wrapTextCMS(ctx,item.produkt||'',cardW-pad*2-40);
-      prodLines.forEach(function(line){ctx.fillText(line,cardX+pad,textY);textY+=56;});
-      if(item.details){
-        ctx.fillStyle=theme.detailsColor;ctx.font='28px Arial, sans-serif';
-        var detLines=wrapTextCMS(ctx,item.details,cardW-pad*2);
-        textY+=4;detLines.forEach(function(line){ctx.fillText(line,cardX+pad,textY);textY+=34;});
-      }
+      textY=drawNameGroup(ctx,item,cfg,cardX+pad,textY,cardW-pad*2-40,48,28,artOv,_elMeta);
       // ── Bild + Preisschild: Bild zuerst (volle Fläche), dann Tag darüber ──
       var imgAreaTop=textY+6;
       var imgAreaH=cardH-(imgAreaTop-cardY)-pad-10;
@@ -1032,7 +1045,7 @@ window.WochenangeboteRenderer = (function () {
         ctx.translate(tagCX,tagCY);
         ctx.rotate(-0.05+(artOv.priceRot||0)*Math.PI/180);ctx.transform(1,-skewVal,0,1,0,0);
         ctx.shadowColor='rgba(100,0,0,0.4)';ctx.shadowBlur=3;ctx.shadowOffsetX=8;ctx.shadowOffsetY=8;
-        ctx.fillStyle=theme.tagColor;fillTagShape(ctx,tagW,tagH,cfg);
+        ctx.fillStyle=cfg.priceStripColor;fillTagShape(ctx,tagW,tagH,cfg);
         ctx.restore();
         // Glanz + Preis-Text
         ctx.save();
@@ -1041,7 +1054,7 @@ window.WochenangeboteRenderer = (function () {
         var glanz=ctx.createLinearGradient(-tagW/2,-tagH/2,tagW/2,tagH/2);
         glanz.addColorStop(0,'rgba(255,255,255,0.12)');glanz.addColorStop(0.5,'rgba(255,255,255,0)');
         ctx.fillStyle=glanz;fillTagShape(ctx,tagW,tagH,cfg);
-        ctx.fillStyle='#ffffff';ctx.textAlign='left';
+        ctx.fillStyle=cfg.priceImageColor;ctx.textAlign='left';
         ctx.transform(1,skewVal,0,1,0,0);
         var fs=cfg.priceFontFlyer*((artOv.priceScale||100)/100),cs=Math.round(fs*0.55),es=Math.round(fs*0.35);
         var mainStr=preisStr[0]+',';var centStr=preisStr[1];
@@ -1063,12 +1076,12 @@ window.WochenangeboteRenderer = (function () {
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
           var stFs=Math.round(26*tagSc);
-          ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
+          ctx.fillStyle=cfg.priceOldColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
           var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
           var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(42*tagSc);
           ctx.fillText(stattStr,stattX,stattY);
           var stW=ctx.measureText(stattStr).width;
-          ctx.strokeStyle=theme.tagColor;ctx.lineWidth=2.5;ctx.beginPath();
+          ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=2.5;ctx.beginPath();
           ctx.moveTo(stattX-stW/2-4,stattY-Math.round(7*tagSc));ctx.lineTo(stattX+stW/2+4,stattY-Math.round(7*tagSc));ctx.stroke();
         }
         if(savingsPct){
@@ -1321,18 +1334,7 @@ window.WochenangeboteRenderer = (function () {
         // Text area (bottom half)
         var textTop=cy+imgAreaH+8;
 
-        // Product name
-        ctx.fillStyle=theme.textColor;ctx.font='700 20px Arial, sans-serif';
-        var nameLines=wrapTextCMS(ctx,(it&&it.produkt)||'Produkt',mgCellW-cardPadI*2).slice(0,2);
-        var ny=textTop+20;
-        nameLines.forEach(function(l){ctx.fillText(l,cx+cardPadI,ny);ny+=24;});
-
-        // Details
-        if(it&&it.details){
-          ctx.fillStyle=theme.detailsColor;ctx.font='600 15px Arial, sans-serif';
-          ctx.fillText(truncText(ctx,it.details,mgCellW-cardPadI*2),cx+cardPadI,ny+2);
-          ny+=22;
-        }
+        drawNameGroup(ctx,it,cfg,cx+cardPadI,textTop+20,mgCellW-cardPadI*2,20,15,pOv,c._elMeta);
 
         // Price area at bottom of card (with override offsets)
         var ppDx=pOv.priceDx||0,ppDy=pOv.priceDy||0;
@@ -1341,17 +1343,16 @@ window.WochenangeboteRenderer = (function () {
           var p=Number(it.preis);
           if(isFinite(p)){
             var pp=p.toFixed(2).split('.');
-            var priceScale=(pOv.priceScale||100)/100, priceWidth=mgCellW-cardPadI*2+8;
+            var priceScale=(pOv.priceScale||100)/100*(cfg.tagScale||100)/100, priceWidth=mgCellW-cardPadI*2+8;
             var priceX=cx+cardPadI-4+ppDx,priceTop=priceY-42+ppDy;
             c._elMeta.push({id:'price',itemKey:it.key,label:'Preis',x:priceX+priceWidth*(1-priceScale)/2,y:priceTop+23*(1-priceScale),w:priceWidth*priceScale,h:46*priceScale,ovKey:'price'});
             ctx.save();ctx.translate(priceX+priceWidth/2,priceTop+23);ctx.rotate((pOv.priceRot||0)*Math.PI/180);
             ctx.scale(priceScale,priceScale);ctx.translate(-priceX-priceWidth/2,-priceTop-23);
             if(!drawCmsPriceImage(ctx,it,cfg,priceX,priceTop,priceWidth,46)){
             // Price tag area
-            ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgRRect(cx+cardPadI-4+ppDx,priceY-42+ppDy,mgCellW-cardPadI*2+8,46,10);ctx.fill();
-            ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4+ppDx,priceY-42+ppDy,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
+            drawPriceBackground(ctx,cfg,priceX,priceTop,priceWidth,46);
             // Main price
-            ctx.fillStyle=theme.tagColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
+            ctx.fillStyle=cfg.priceImageColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
             ctx.fillText(pp[0]+','+pp[1],cx+cardPadI+4+ppDx,priceY-6+ppDy);
             ctx.font='700 20px Arial, sans-serif';
             var mw=ctx.measureText(pp[0]+','+pp[1]).width;
@@ -1359,12 +1360,12 @@ window.WochenangeboteRenderer = (function () {
             // Statt-Preis right-aligned
             if(it.statt_preis!=null){
               var uvp=Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-              var stcP=theme.stattColor||'#8a9e80';
+              var stcP=cfg.priceOldColor;
               ctx.textAlign='right';ctx.fillStyle=stcP;ctx.font='600 17px Arial, sans-serif';
               ctx.fillText('statt '+uvp,cx+mgCellW-cardPadI+ppDx,priceY-18+ppDy);
               // Strikethrough
               var uvpW=ctx.measureText('statt '+uvp).width;
-              ctx.strokeStyle=stcP;ctx.lineWidth=1.5;
+              ctx.strokeStyle=cfg.priceStrikeColor;ctx.lineWidth=1.5;
               ctx.beginPath();ctx.moveTo(cx+mgCellW-cardPadI-uvpW+ppDx,priceY-23+ppDy);ctx.lineTo(cx+mgCellW-cardPadI+ppDx,priceY-23+ppDy);ctx.stroke();
               ctx.textAlign='left';
             }
@@ -1445,13 +1446,9 @@ window.WochenangeboteRenderer = (function () {
       // ── Produktname + Details oben (fixed height: 2 lines name + 1 line details) ──
       var textX=cx+cardPad,textY=cy+cardPad+20;
       var fixedTextH=28*2+26; // 2 name lines (28px each) + 1 detail line (26px)
-      ctx.fillStyle=theme.textColor;ctx.font='900 24px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-      var nameLines=wrapTextCMS(ctx,item.produkt||'',cellW-cardPad*2-30).slice(0,2);
-      nameLines.forEach(function(ln){ctx.fillText(ln,textX,textY);textY+=28;});
-      if(item.details){
-        ctx.fillStyle=theme.detailsColor;ctx.font='16px Arial, sans-serif';
-        ctx.fillText(truncText(ctx,item.details,cellW-cardPad*2),textX,textY+4);
-      }
+      var pOv=Object.assign({},plakatArtOverrideDefault(),cfg.plakat_inline,plakatArtOverrideGet(item));
+      var nameBottom=drawNameGroup(ctx,item,cfg,textX,textY,cellW-cardPad*2-30,24,16,pOv,c._elMeta);
+      fixedTextH=Math.max(fixedTextH,nameBottom-(cy+cardPad));
       // ── Bild links (freigestellt, gedreht, geclippt) ──
       var img=images[i];
       var imgAreaTop=cy+cardPad+fixedTextH+8;
@@ -1460,7 +1457,6 @@ window.WochenangeboteRenderer = (function () {
       ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
       ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
       // Per-card overrides
-      var pOv=Object.assign({},plakatArtOverrideDefault(),cfg.plakat_inline,plakatArtOverrideGet(item));
       if(img){
         var pImgSc=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
         var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;
@@ -1542,7 +1538,7 @@ window.WochenangeboteRenderer = (function () {
         ctx.rotate(-0.05+(pOv.priceRot||0)*Math.PI/180);ctx.transform(1,-pSkew,0,1,0,0);
         // Dunkler Schatten
         ctx.shadowColor='rgba(100,0,0,0.4)';ctx.shadowBlur=2;ctx.shadowOffsetX=6;ctx.shadowOffsetY=6;
-        ctx.fillStyle=theme.tagColor;
+        ctx.fillStyle=cfg.priceStripColor;
         fillTagShape(ctx,tagW,tagH,cfg);
         ctx.restore();
         // Glanz-Overlay
@@ -1553,7 +1549,7 @@ window.WochenangeboteRenderer = (function () {
         glanz.addColorStop(0,'rgba(255,255,255,0.12)');glanz.addColorStop(0.5,'rgba(255,255,255,0)');
         ctx.fillStyle=glanz;fillTagShape(ctx,tagW,tagH,cfg);
         // Preis-Text im gedrehten Kontext
-        ctx.fillStyle='#ffffff';ctx.textAlign='left';
+        ctx.fillStyle=cfg.priceImageColor;ctx.textAlign='left';
         // Skew rückgängig für lesbaren Text
         ctx.transform(1,pSkew,0,1,0,0);
         var fs=cfg.priceFontPlakat*((pOv.priceScale||100)/100),cs=Math.round(fs*0.55),es=Math.round(fs*0.35);
@@ -1577,7 +1573,7 @@ window.WochenangeboteRenderer = (function () {
         if(item.statt_preis){
           var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
           var stFs=Math.round(16*tagSc);
-          ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
+          ctx.fillStyle=cfg.priceOldColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
           var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
           var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(30*tagSc);
           ctx.fillText(stattStr,stattX,stattY);

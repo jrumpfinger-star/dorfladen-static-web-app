@@ -5,6 +5,22 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 
 | ID | Arbeit | Abhängigkeit | Testfälle |
 |---|---|---|---|
+| GF94 | Kompakte Hülle, adaptive Typografie, Eingabenpriorität, vollständige Navigation und Ansichtswahl integrieren; echte 32-px-Mausaktionen und 44-px-Touchziele ohne Breitenersatz messen | GF86, GF87 | TC-F52-02, TC-F52-04..05 |
+| GF95 | Vollständige transaktionale Schrift-/Preisschild-/Bildfenster mit echter mobiler Kachelvorschau und unverändertem Dirty-/Undo-/Redo-Zustand bei Abbruch integrieren | GF94 | TC-F52-01, TC-F54-01 |
+| GF96 | Begrenzte Herkunftsbasis, Kontextanzeige, gezieltes Rücksetzen und ausdrücklich bestätigte aktuelle Vorgaben ergänzen | GF95 | TC-F53-01..02 |
+| GF97 | Geladenen Dataverse-Revisionsstand serverseitig vergleichen; eindeutige Status-/Konflikt-/Verlassensmeldungen in beiden Speicherwegen anbinden | GF94 | TC-F55-01..02 |
+| GF98 | Daten-/Rendererprüfung mit getrennten Hinweisen und direkter Auswahl der Fehlerstelle integrieren | GF95, GF96 | TC-F56-01 |
+| GF99 | Dataverse-Aktion ohne Write duplizieren und ausgewählte Gestaltungseigenschaften auf ausdrücklich gewählte Kacheln übertragen | GF96 | TC-F57-01..02 |
+| GF100 | Funktionsübernahmematrix, F46–F51 und vollständigen Roundtrip beider Arten auf vier Ansichten abnehmen; Anwenderhilfe nachführen | GF92, GF93, GF95, GF96, GF97, GF98, GF99 | TC-F58-01, TC-F46-01..TC-F57-02 |
+| GF101 | Geprüften vollständigen Stand normal committen/pushen; PR-Preview-Deployment und schreibfreie Erreichbarkeit verifizieren | GF100 | TC-F59-01 |
+| GF89 | Waage auf native Zielgestaltung statt A4-Einzelflyer umstellen und Bearbeitungsgruppen standardmäßig öffnen | GF87 | TC-F47-01..02 |
+| GF86 | Gemeinsame kompakte Aktionen, echte Hinweishilfen, kontrastreiche Arbeitsbereiche und zugänglichen Splitter für Standarddesigner integrieren | GF85 | TC-F46-01..02, TC-F46-04 |
+| GF87 | Gespeicherte Aktionsvorschau und Angebotserstellung auf denselben Arbeitsrahmen mit ausgelagerten Werkzeugen und rechter Bildfläche übertragen; weitere Design-/Erfassungsseiten prüfen | GF86 | TC-F46-03..04 |
+| GF92 | Erste echte Plakatkachel direkt bedienen und Namensgruppe mit Schrift, Größe und Farbe in Originalvorlagen konfigurieren | GF90 | TC-F50-01..02 |
+| GF93 | Reiterunabhängiges Vollbild in Designhülle und Angebots-Arbeitsbereichen sichtbar anbieten | GF87 | TC-F51-01 |
+| GF91 | Zentrale Preisschildvorgaben einschließlich Rot/Gelb unabhängig von Gesamtvorlage auswählen, austauschen und speichern | GF89 | TC-F49-01..03 |
+| GF90 | Zusatztext unter Bezeichnung gruppieren, normalgroß und semibold; alle Ziele sowie Vorschau/Export prüfen | GF89 | TC-F48-01..02 |
+| GF88 | Tatsächliche 50-%-Arbeitsflächen, Splitter, Kontraste und Speicher-/Bilderregression auf vier Ansichten abnehmen und Feature-Preview veröffentlichen | GF86, GF87, GF89, GF90, GF91, GF92, GF93, GF100 | TC-F46-01..04, TC-F47-01..02, TC-F48-01..02, TC-F49-01..03, TC-F50-01..02, TC-F51-01 |
 | GF85 | Aktionsvorschau-Raster für alle Ausgabeziele rechts anordnen; Desktop-/Tabletzuordnungen und mobilen Bestand mit tatsächlicher Geometrie, Werkzeug- und Speicherregression prüfen; Bedienhilfe aktualisieren | GF83 | TC-F45-01..02, TC-F19-01..04, TC-F31-01..02 |
 | GF82 | Feste Designnavigation für alle Reiter, bildreine rechte Vorschau, linke Werkzeuge mit eigenem Aktionsbereich, Einpassen/Zoom/Vollbild und kompakte erreichbare Infohilfen integrieren | GF81 | TC-F43-01..04 |
 | GF84 | Direkten Vorschaueditor für Plakat/Einzelflyer mit echten Renderer-Geometrien, getrennten Standardanpassungen und unverändertem explizitem Speichern anbinden | GF82 | TC-F44-01..03 |

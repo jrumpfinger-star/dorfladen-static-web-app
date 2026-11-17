@@ -63,6 +63,9 @@ window.AngeboteModel = (function () {
     return style;
   }
   function useTemplate(layout, id) { Object.assign(layout, templateStyle(id).settings, { template: id }); }
+  function priceImage(layout) {
+    return layout.price_preset ? layout.price_preset === 'price-image' : layout.template === 'price-image';
+  }
   function preserveBackgrounds(data) {
     data.layout.pages.forEach(function (page) { if (!page.background) page.background = data.layout.background; });
     Object.values(data.layout.targets || {}).forEach(function (targets) {
@@ -74,6 +77,7 @@ window.AngeboteModel = (function () {
     return Math.round((1 - item.price_cents / item.old_price_cents) * 100) || null;
   }
   function priceColor(layout) {
+    if (layout.price_preset) return layout.color;
     var value = layout.price_background.slice(1);
     var lightness = parseInt(value.slice(0, 2), 16) * 299 + parseInt(value.slice(2, 4), 16) * 587 + parseInt(value.slice(4, 6), 16) * 114;
     return lightness >= 160000 ? layout.color : '#ffffff';
@@ -183,7 +187,8 @@ window.AngeboteModel = (function () {
         var message = 'Die Angebote konnten nicht geladen oder gespeichert werden.';
         if (action) {
           console.error('[Angebote] Aktion', r.status, data.error);
-          message = r.status === 409 ? 'Die Aktion wurde zwischenzeitlich geändert. Bitte erneut öffnen.'
+          message = r.status === 409 ? (/action=delete/.test(url) ? 'Die Aktion wurde zwischenzeitlich geändert und deshalb nicht gelöscht. Die Liste wird neu geladen; bitte den aktuellen Stand prüfen.'
+            : 'Die Aktion wurde zwischenzeitlich geändert. Es wurde nichts überschrieben. Deine Eingaben bleiben offen; mit „Gespeicherten Stand laden“ holst du den aktuellen Stand (ungespeicherte Änderungen gehen dabei verloren).')
             : r.status === 400 ? 'Die Aktion enthält ungültige Angaben. Bitte Artikel, Preise und Zeitraum prüfen.'
             : r.status === 401 || r.status === 403 ? 'Bitte erneut im CMS anmelden, um Angebote zu speichern.'
             : 'Die Aktion konnte gerade nicht gespeichert werden. Bitte später erneut versuchen.';
@@ -202,7 +207,7 @@ window.AngeboteModel = (function () {
       fill: '', text: '', item_id: '', image_id: '', image_scale: 100, shape: 'rect' }, extra);
   }
   function templates(data) {
-    var l = data.layout, density = l.density, compact = density === 6, pages = [], style = templateStyle(l.template);
+    var l = data.layout, density = l.density, compact = density === 6, pages = [], style = Object.assign({}, templateStyle(l.template), { priceImage: priceImage(l) });
     for (var start = 0; start < Math.max(1, data.items.length); start += density) {
       var elements = [];
       if (style.magazine) {
@@ -294,7 +299,7 @@ window.AngeboteModel = (function () {
   }
   var targetSizes = { card: { w: 420, h: 480 }, single: { w: 800, h: 1130 }, scale: { w: 800, h: 462 } };
   var STYLE_KEYS = ['template', 'color', 'background', 'font', 'title_color', 'text_color', 'card_background', 'price_background',
-    'price_shape', 'price_outline_color', 'old_price_color', 'price_strike_color', 'decoration',
+    'price_shape', 'price_preset', 'price_outline_color', 'old_price_color', 'price_strike_color', 'decoration',
     'name_size', 'price_size', 'details_size', 'image_rotation', 'image_scale', 'marker_type', 'marker_palette', 'marker_scale'];
   // Wirksamer Stil eines Ausgabeziels: globale Werte, überlagert vom Zielstil (alte Aktionen haben keinen).
   function styleFor(layout, target) {
@@ -312,7 +317,7 @@ window.AngeboteModel = (function () {
     apply(style); layout.target_styles[target] = style;
   }
   function targetTemplate(data, target, item) {
-    var l = styleFor(data.layout, target), id = item.id, elements = [], size = targetSizes[target], style = templateStyle(l.template);
+    var l = styleFor(data.layout, target), id = item.id, elements = [], size = targetSizes[target], style = Object.assign({}, templateStyle(l.template), { priceImage: priceImage(l) });
     function add(type, x, y, w, h, fontSize, extra) {
       elements.push(el(type, x, y, w, h, Object.assign({ item_id: id, font_size: fontSize, hidden: !!style.priceImage && type === 'old_price',
         font: l.font, fill: l.text_color }, extra || {})));
@@ -614,8 +619,24 @@ window.AngeboteModel = (function () {
     data.layout.template = config.plakatTemplate; data.layout.density = 6;
     applyTemplate(data);
   }
-  function weeklySnapshot(data) {
-    var snapshot = clone(data.layout.cms);
+  function cmsFor(data, target, editing) {
+    var base = data.layout.cms;
+    function snapshot(kind) {
+      return { config: clone(base.config),
+        plakat_article_overrides: kind === 'card' ? clone(base.plakat_article_overrides) : {},
+        flyer_article_overrides: kind === 'single' ? clone(base.flyer_article_overrides) : {} };
+    }
+    if (editing) {
+      if (!base.targets) base.targets = {};
+      if (target === 'sheet') {
+        ['card', 'single'].forEach(function (kind) { if (!base.targets[kind]) base.targets[kind] = snapshot(kind); });
+      } else if (target !== 'scale' && !base.targets[target]) base.targets[target] = snapshot(target);
+    }
+    return target !== 'sheet' && base.targets && base.targets[target] || base;
+  }
+  function weeklySnapshot(data, target) {
+    var snapshot = clone(cmsFor(data, target || 'sheet'));
+    delete snapshot.targets;
     ['plakat_article_overrides', 'flyer_article_overrides'].forEach(function (key) {
       var selected = {};
       data.items.forEach(function (item) { var id = weeklyKey(item); if (snapshot[key][id]) selected[id] = snapshot[key][id]; });
@@ -624,10 +645,10 @@ window.AngeboteModel = (function () {
     return snapshot;
   }
   // Zugriff auf die Original-CMS-Overrides (Ghost, Duplikat, Kopien, Eigenes Bild) eines Artikels.
-  function weeklyOverride(data, itemId, group) {
+  function weeklyOverride(data, itemId, group, target) {
     var item = data.items.find(function (it) { return it.id === itemId; });
     if (!item) throw problem('Dieser Artikel ist nicht mehr vorhanden. Bitte die Vorschau erneut öffnen.');
-    var key = weeklyKey(item), overrides = data.layout.cms[group], renderer = window.WochenangeboteRenderer.create({});
+    var key = weeklyKey(item), overrides = cmsFor(data, target || 'sheet', true)[group], renderer = window.WochenangeboteRenderer.create({});
     var defaults = group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault();
     overrides[key] = Object.assign(defaults, overrides[key] || {});
     if (!Array.isArray(overrides[key].copies)) overrides[key].copies = [];
@@ -668,9 +689,9 @@ window.AngeboteModel = (function () {
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', .85);
   }
-  function changeWeekly(data, element, delta) {
+  function changeWeekly(data, element, delta, target) {
     var item = data.items.find(function (it) { return it.id === element.itemId; });
-    var key = weeklyKey(item), overrides = data.layout.cms[element.group];
+    var key = weeklyKey(item), overrides = cmsFor(data, target || 'sheet', true)[element.group];
     var renderer = window.WochenangeboteRenderer.create({});
     var defaults = element.group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault();
     var value = Object.assign(defaults, overrides[key] || {}), prefix = element.ovKey;
@@ -687,7 +708,7 @@ window.AngeboteModel = (function () {
     else overrides[key].copies[element.copyIdx] = value;
   }
   async function weeklyRender(data, pageNumber, scale, itemId, card, light) {
-    var R = window.WochenangeboteRenderer, snapshot = weeklySnapshot(data);
+    var R = window.WochenangeboteRenderer, snapshot = weeklySnapshot(data, itemId ? card ? 'card' : 'single' : 'sheet');
     snapshot.config = Object.assign({}, R.CFG_DEFAULTS, snapshot.config);
     var outputKind = itemId && !card ? 'flyer' : 'plakat';
     if (snapshot.config[outputKind + '_tagShape'] === 'price-image') await R.loadPriceFont();
@@ -818,6 +839,7 @@ window.AngeboteModel = (function () {
   var LIGHT_STACK = '"Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif';
   // Startseite: halbfett statt fett wirkt filigraner.
   function fontFor(element, size, light) {
+    if (element.type === 'description') return '600 ' + size + 'px "' + element.font + '"';
     if (!light) return (element.bold ? 'bold ' : '') + size + 'px "' + element.font + '"';
     return (element.bold ? '600 ' : '') + size + 'px ' + (element.font === 'Arial' ? LIGHT_STACK : '"' + element.font + '"');
   }
@@ -843,6 +865,32 @@ window.AngeboteModel = (function () {
   function drawPriceImage(ctx, element, item, layout) {
     window.WochenangeboteRenderer.drawPriceImage(ctx, element, item, layout);
   }
+  function groupedElements(data, elements, layout) {
+    var ctx = document.createElement('canvas').getContext('2d'), groups = new Map();
+    var result = elements.filter(function (element) {
+      return element.type !== 'description' || !elements.some(function (name) { return name.type === 'name' && name.item_id === element.item_id; });
+    }).map(function (element) {
+      if (element.type !== 'name') return element;
+      var item = data.items.find(function (item) { return item.id === element.item_id; });
+      if (!item || !item.description) return element;
+      var old = elements.find(function (entry) { return entry.type === 'description' && entry.item_id === item.id; });
+      var details = Object.assign({}, element, { type: 'description', font_size: old ? old.font_size : layout.details_size });
+      ctx.font = fontFor(details, details.font_size);
+      var detailLines = lines(ctx, item.description, element.w), detailHeight = detailLines.length * details.font_size * 1.18;
+      // Zusatz steht unter der Bezeichnung; diese behält ihre volle Höhe, nachfolgende Packangaben rücken nach.
+      var group = Object.assign({}, element, { h: element.h + detailHeight + 4,
+        _details: { element: details, lines: detailLines, height: detailHeight } });
+      groups.set(element.item_id, group); return group;
+    });
+    return result.map(function (element) {
+      var group = groups.get(element.item_id);
+      if (element.type === 'pack' && group && element.y >= group.y && element.y < group.y + group.h + 4
+          && element.x < group.x + group.w && element.x + element.w > group.x) {
+        return Object.assign({}, element, { y: group.y + group.h + 4 });
+      }
+      return element;
+    });
+  }
   function decorationFill(ctx, decoration, key, color, width, height) {
     return window.WochenangeboteRenderer.create({}).tplGradFill(ctx, {
       bgColor: color, bgColor_grad: !!decoration[key + '_gradient'],
@@ -851,7 +899,7 @@ window.AngeboteModel = (function () {
     }, 'bgColor', 0, 0, width, height);
   }
   async function renderElements(data, elements, width, height, background, scale, pageNumber, light, style) {
-    if (templateStyle((style || data.layout).template).priceImage) await window.WochenangeboteRenderer.loadPriceFont();
+    if (priceImage(style || data.layout)) await window.WochenangeboteRenderer.loadPriceFont();
     var canvas = document.createElement('canvas'), factor = scale || 1;
     canvas.width = Math.round(width * factor); canvas.height = Math.round(height * factor);
     var ctx = canvas.getContext('2d');
@@ -865,9 +913,21 @@ window.AngeboteModel = (function () {
       }
       ctx.restore();
     }
-    var errors = [];
-    for (var element of elements) {
-      if (element.hidden) continue;
+    var errors = [], issues = [], shapes = [], backgroundKnown = typeof background === 'string' && /^#[0-9a-f]{6}$/i.test(background) && !decoration.background_gradient;
+    var typeNames = { name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis', old_price: 'Stattpreis', deposit: 'Pfand', base: 'Literpreis',
+      title: 'Überschrift', period: 'Zeitraum', brand: 'Marke', footer: 'Fußzeile', text: 'Text', image: 'Bild', discount: 'Rabatt' };
+    function issue(severity, code, element, message) {
+      issues.push({ severity: severity, code: code, item_id: element.item_id || '', element_id: element.id, field: element.type,
+        message: (typeNames[element.type] || 'Element') + ': ' + message });
+    }
+    for (var element of groupedElements(data, elements, layout)) {
+      var priceBackground = element.type === 'shape' && priceShape(elements, element);
+      var pricePart = priceBackground || element.type === 'old_price';
+      if (element.hidden && !(layout.price_preset && pricePart && !priceImage(layout))) continue;
+      if (priceImage(layout) && pricePart) continue;
+      if (layout.price_preset && priceBackground) element = Object.assign({}, element, { fill: layout.price_background, shape: layout.price_shape });
+      if (layout.price_preset && element.type === 'price') element = Object.assign({}, element, { fill: priceColor(layout) });
+      if (element.type === 'old_price') element = Object.assign({}, element, { fill: layout.old_price_color });
       ctx.save();
       ctx.globalAlpha = element.opacity;
       ctx.translate(element.x + element.w / 2, element.y + element.h / 2);
@@ -883,13 +943,14 @@ window.AngeboteModel = (function () {
       if (element.x + element.w / 2 - halfW < -1 || element.y + element.h / 2 - halfH < -1
           || element.x + element.w / 2 + halfW > width + 1 || element.y + element.h / 2 + halfH > height + 1) {
         errors.push('Ein Element ragt über die Seite hinaus.');
+        issue('error', 'outside', element, 'ragt über die Ausgabe hinaus.');
       }
       if (element.type === 'shape') {
         ctx.beginPath();
-        if (priceShape(elements, element) && (decoration.price_radius || decoration.price_skew)
+        if (priceBackground && (decoration.price_radius || decoration.price_skew)
             || ['rect', 'round', 'ellipse'].indexOf(element.shape) < 0) {
           ctx.save(); ctx.translate(element.w / 2, element.h / 2);
-          var skew = priceShape(elements, element) ? (decoration.price_skew || 0) / 100 : 0;
+          var skew = priceBackground ? (decoration.price_skew || 0) / 100 : 0;
           ctx.scale(element.w / (element.w + skew * element.h), 1); ctx.transform(1, 0, -skew, 1, 0, 0);
           var square = ['circle', 'star', 'explosion'].indexOf(element.shape) >= 0, side = Math.min(element.w, element.h);
           window.WochenangeboteRenderer.create({}).drawTagShapePath(ctx, square ? side : element.w, square ? side : element.h,
@@ -899,6 +960,10 @@ window.AngeboteModel = (function () {
         else if (element.shape === 'round') ctx.roundRect(0, 0, element.w, element.h, Math.min(16, element.w / 2, element.h / 2));
         else ctx.rect(0, 0, element.w, element.h);
         ctx.fill();
+        if (typeof element.fill === 'string') shapes.push({ x: element.x, y: element.y, w: element.w, h: element.h, fill: element.fill });
+        if (priceBackground) {
+          ctx.save(); ctx.strokeStyle = layout.price_outline_color; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+        }
         var card = element.item_id && elements.find(function (entry) { return entry.item_id === element.item_id && entry.type === 'shape'; }) === element;
         if (card) {
           if (decoration.card_border_width) {
@@ -922,9 +987,14 @@ window.AngeboteModel = (function () {
         var id = element.type === 'logo' ? 'logo' : imageFor(element, data);
         if (id) {
           var img = await image(id), ratio = Math.min(element.w / img.width, element.h / img.height) * (element.image_scale || 100) / 100;
+          if (element.type === 'image' && ratio > 1.43) {
+            issue('hint', 'low-resolution', element, 'Das Bild ist nur ' + img.width + ' × ' + img.height + ' px groß und wird auf etwa '
+              + Math.round(ratio * 100) + ' % vergrößert. Ein größeres Bild wirkt schärfer.');
+          }
           ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
           ctx.drawImage(img, (element.w - img.width * ratio) / 2, (element.h - img.height * ratio) / 2, img.width * ratio, img.height * ratio);
         } else {
+          if (element.type === 'image') issue('hint', 'no-image', element, 'Es ist noch kein Produktbild zugeordnet. Ausgegeben wird der Platzhalter „Produktbild“.');
           ctx.fillStyle = decorationFill(ctx, decoration, 'image', decoration.image_background || '#e8ede7', element.w, element.h);
           ctx.fillRect(0, 0, element.w, element.h);
           ctx.fillStyle = '#53644f'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
@@ -938,19 +1008,41 @@ window.AngeboteModel = (function () {
           marker.drawSavingsBurst(ctx, element.w / 2, element.h / 2, radius, radius * .62, discount, 'plakat',
             { savingsMarkerType: (style || data.layout).marker_type || 'starburst', savingsPalette: (style || data.layout).marker_palette || 'harmonie', savingsScalePlakat: 100 });
         }
-      } else if (element.type === 'price' && templateStyle((style || data.layout).template).priceImage
+      } else if (element.type === 'price' && priceImage(style || data.layout)
           && data.items.some(function (item) { return item.id === element.item_id && item.price_cents != null; })) {
         drawPriceImage(ctx, element, data.items.find(function (item) { return item.id === element.item_id; }), style || data.layout);
       } else {
         var value = textFor(element, data, pageNumber);
-        var fit = fitted(ctx, element, value, light);
-        if (!fit.fits) errors.push('Der Text „' + value.slice(0, 35) + '“ passt nicht vollständig. Bitte das Textfeld vergrößern.');
+        var textBox = element._details ? Object.assign({}, element, { h: element.h - element._details.height - 4 }) : element;
+        var fit = fitted(ctx, textBox, value, light);
+        if (!fit.fits) {
+          errors.push('Der Text „' + value.slice(0, 35) + '“ passt nicht vollständig. Bitte das Textfeld vergrößern.');
+          issue('error', 'clipped', element, 'Der Text „' + value.slice(0, 35) + '“ wird abgeschnitten. Bitte Text kürzen oder das Textfeld vergrößern.');
+        }
+        if (value && element.type !== 'shape' && !element.hidden && (element.opacity == null || element.opacity >= .5)) {
+          var cx = element.x + element.w / 2, cy = element.y + element.h / 2, under = null;
+          shapes.forEach(function (shape) { if (cx >= shape.x && cx <= shape.x + shape.w && cy >= shape.y && cy <= shape.y + shape.h) under = shape; });
+          var ground = under ? under.fill : backgroundKnown ? background : null, ratio = typeof ctx.fillStyle === 'string' && ground ? contrast(ctx.fillStyle, ground) : null;
+          if (ratio == null) {
+            if (!under && !issues.some(function (entry) { return entry.code === 'contrast-unchecked'; })) {
+              issues.push({ severity: 'unchecked', code: 'contrast-unchecked', item_id: '', element_id: '', field: '', message: 'Der Kontrast auf Verlauf oder nicht eindeutig bestimmbarem Hintergrund wurde nicht geprüft.' });
+            }
+          } else if (ratio < 3) {
+            issue('hint', 'low-contrast', element, 'Geringer Kontrast (' + ratio.toFixed(1).replace('.', ',') + ' : 1) zwischen Schrift und Hintergrund. Empfohlen sind mindestens 3 : 1.');
+          }
+        }
         ctx.beginPath(); ctx.rect(0, 0, element.w, element.h); ctx.clip();
         ctx.textBaseline = 'top'; ctx.textAlign = element.align;
         var tx = element.align === 'center' ? element.w / 2 : element.align === 'right' ? element.w : 0;
         fit.lines.forEach(function (line, i) { ctx.fillText(line, tx, i * fit.size * 1.18); });
+        if (element._details) {
+          var details = element._details, detailY = fit.lines.length * fit.size * 1.18 + 4;
+          ctx.font = fontFor(details.element, details.element.font_size, light);
+          ctx.fillStyle = decoration.details_color || element.fill || layout.text_color;
+          details.lines.forEach(function (line, i) { ctx.fillText(line, tx, detailY + i * details.element.font_size * 1.18); });
+        }
         if (element.type === 'old_price') {
-          ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = Math.max(1, fit.size / 16);
+          ctx.strokeStyle = layout.price_strike_color || ctx.fillStyle; ctx.lineWidth = Math.max(1, fit.size / 16);
           fit.lines.forEach(function (line, i) {
             var lineWidth = ctx.measureText(line).width, left = element.align === 'center' ? (element.w - lineWidth) / 2 : element.align === 'right' ? element.w - lineWidth : 0;
             ctx.beginPath(); ctx.moveTo(left, i * fit.size * 1.18 + fit.size * .5);
@@ -965,7 +1057,7 @@ window.AngeboteModel = (function () {
       var inset = decoration.border_width / 2;
       ctx.strokeRect(inset, inset, width - decoration.border_width, height - decoration.border_width); ctx.restore();
     }
-    return { canvas: canvas, errors: errors };
+    return { canvas: canvas, errors: errors, issues: issues };
   }
   async function render(data, pageNumber, scale) {
     var page = data.layout.pages[pageNumber];
@@ -977,13 +1069,13 @@ window.AngeboteModel = (function () {
     var size = targetSizes[target], targets = data.layout.targets && data.layout.targets[target] || [];
     var selected = targets.find(function (entry) { return entry.item_id === itemId; });
     if (!size || !selected) throw problem('Diese Zielgestaltung ist nicht vorhanden.');
-    if (data.kind === 'weekly' && data.layout.cms) {
+    if (data.kind === 'weekly' && data.layout.cms && target !== 'scale') {
       var rendered = await weeklyRender(data, 0, scale, itemId, target === 'card', light);
       if (target === 'single') return rendered;
       var source = rendered.canvas, output = document.createElement('canvas'), factor = scale || 1;
       output.width = Math.round(size.w * factor); output.height = Math.round(size.h * factor);
       var ctx = output.getContext('2d');
-      ctx.fillStyle = data.layout.cms.config.flyer_decoBgColor; ctx.fillRect(0, 0, output.width, output.height);
+      ctx.fillStyle = cmsFor(data, target).config.flyer_decoBgColor; ctx.fillRect(0, 0, output.width, output.height);
       if (target === 'card') {
         var rect = source._offerCards[0], fit = Math.min(output.width / rect.w, output.height / rect.h);
         ctx.drawImage(source, rect.x * factor, rect.y * factor, rect.w * factor, rect.h * factor,
@@ -992,13 +1084,6 @@ window.AngeboteModel = (function () {
           var ratio = fit / factor;
           return Object.assign({}, entry, { x: (entry.x - rect.x) * ratio + (size.w - rect.w * ratio) / 2,
             y: (entry.y - rect.y) * ratio + (size.h - rect.h * ratio) / 2, w: entry.w * ratio, h: entry.h * ratio, unitScale: ratio });
-        });
-      } else {
-        var ratio = Math.min(output.width / source.width, output.height / source.height);
-        ctx.drawImage(source, (output.width - source.width * ratio) / 2, (output.height - source.height * ratio) / 2, source.width * ratio, source.height * ratio);
-        output._weeklyElements = source._weeklyElements.map(function (entry) {
-          return Object.assign({}, entry, { x: entry.x * ratio + (size.w - W * ratio) / 2,
-            y: entry.y * ratio + (size.h - H * ratio) / 2, w: entry.w * ratio, h: entry.h * ratio, unitScale: ratio });
         });
       }
       output._weeklyWidth = size.w; output._weeklyHeight = size.h;
@@ -1015,23 +1100,181 @@ window.AngeboteModel = (function () {
       if (canvas.isConnected) canvas.replaceWith(result.canvas);
     }
   }
-  function validate(data) {
+  function savedState(data, unsaved) {
+    if (unsaved) return 'Ungespeicherte Änderungen';
+    var day = today();
+    return 'Gespeichert · ' + (data.valid_from > day ? 'Geplant' : data.valid_to < day ? 'Abgelaufen' : 'Aktiv');
+  }
+  function propertyGroup(key) {
+    if (/(?:name(?:Font|Size|Color|Dx|Dy|Scale|Rot)|(?:^|[-_])font$|name_size|details_size|text_color)/i.test(key)) return 'text';
+    if (/(?:^color$|price|old_price|tag(?:Preset|Shape|Color|Radius|Skew|Scale|Bg|Text)|stattColor)/i.test(key)) return 'price';
+    if (/(?:image_|decoration\.image|img(?:Scale|Rot|Dx|Dy|Width|Height))/i.test(key)) return 'image';
+    return '';
+  }
+  function objectValues(data, target) {
+    var result = {};
+    if (data.layout.cms && target !== 'scale') {
+      var config = cmsFor(data, target).config;
+      Object.keys(config).forEach(function (key) {
+        if (/_inline$/.test(key)) Object.keys(config[key] || {}).forEach(function (prop) { if (propertyGroup(prop)) result['cms.' + key + '.' + prop] = config[key][prop]; });
+        else if (propertyGroup(key) && (config[key] == null || typeof config[key] !== 'object')) result['cms.' + key] = config[key];
+      });
+    } else {
+      var style = styleFor(data.layout, target);
+      Object.keys(theme).forEach(function (key) { if (propertyGroup(key)) result[key] = style[key] == null ? theme[key] : style[key]; });
+      var decoration = Object.assign({}, decorationDefaults, style.decoration);
+      Object.keys(decoration).forEach(function (key) { if (propertyGroup('decoration.' + key)) result['decoration.' + key] = decoration[key]; });
+    }
+    return result;
+  }
+  function rememberDesign(data, selectedTarget) {
+    if (!selectedTarget || !data.layout.design_origin) data.layout.design_origin = { schema: 1, targets: {} };
+    (selectedTarget ? [selectedTarget] : ['sheet', 'card', 'single', 'scale']).forEach(function (target) { data.layout.design_origin.targets[target] = objectValues(data, target); });
+  }
+  function originStatus(data, target, group) {
+    var source = data.layout.design_origin?.targets[target];
+    if (!source) return 'Gespeicherte Gestaltung';
+    var current = objectValues(data, target);
+    return Object.keys(current).filter(function (key) { return !group || propertyGroup(key) === group; })
+      .every(function (key) { return JSON.stringify(current[key]) === JSON.stringify(source[key]); }) ? 'Aus Vorlage' : 'Individuell angepasst';
+  }
+  function resetObject(data, target, group, supplied) {
+    var source = supplied || data.layout.design_origin?.targets[target];
+    if (!source) throw problem('Für diese gespeicherte Gestaltung ist keine verlässliche Vorlagenherkunft vorhanden.');
+    var current = objectValues(data, target), values = {}, removed = [];
+    Object.keys(current).forEach(function (key) {
+      if (propertyGroup(key) !== group) return;
+      if (Object.prototype.hasOwnProperty.call(source, key)) values[key] = clone(source[key]);
+      else removed.push(key);
+    });
+    if (data.layout.cms && target !== 'scale') {
+      var config = cmsFor(data, target, true).config;
+      Object.keys(values).forEach(function (key) {
+        var path = key.split('.').slice(1);
+        if (path.length === 2) { if (!config[path[0]]) config[path[0]] = {}; config[path[0]][path[1]] = values[key]; }
+        else config[path[0]] = values[key];
+      });
+    } else {
+      var style = target === 'sheet' ? data.layout : (data.layout.target_styles || (data.layout.target_styles = {}))[target]
+        || (data.layout.target_styles[target] = {});
+      Object.keys(values).forEach(function (key) {
+        if (key.startsWith('decoration.')) { if (!style.decoration) style.decoration = {}; style.decoration[key.slice(11)] = values[key]; }
+        else style[key] = values[key];
+      });
+      removed.forEach(function (key) {
+        if (key.startsWith('decoration.')) { if (style.decoration) delete style.decoration[key.slice(11)]; }
+        else delete style[key];
+      });
+      var all = target === 'sheet' ? data.layout.pages : data.layout.targets[target];
+      (all || []).forEach(function (entry) { entry.elements.forEach(function (element) {
+        if (group === 'text') {
+          if (values.font != null) element.font = values.font;
+          if (element.type === 'name' && values.name_size != null) element.font_size = values.name_size;
+          if (['description', 'pack', 'deposit', 'base'].includes(element.type) && values.details_size != null) element.font_size = values.details_size;
+          if (!['image', 'price', 'old_price', 'shape'].includes(element.type) && values.text_color) element.fill = values.text_color;
+        }
+        if (group === 'price' && element.type === 'price') {
+          if (values.price_size != null) element.font_size = values.price_size;
+          if (values.color) element.fill = priceColor(styleFor(data.layout, target));
+        }
+      }); });
+    }
+  }
+  function transferCatalog(data, target) {
+    if (data.layout.cms && target !== 'scale') {
+      return [['text.scale', 'Namensgröße', 'name', 'nameScale', 100], ['text.rot', 'Namensdrehung', 'name', 'nameRot', 0],
+        ['price.scale', 'Preisschildgröße', 'price', 'priceScale', 100], ['price.rot', 'Preisschilddrehung', 'price', 'priceRot', 0],
+        ['image.scale', 'Bildgröße', 'image', 'imgScale', 100], ['image.rot', 'Bilddrehung', 'image', 'imgRot', 0]];
+    }
+    return [['text.font', 'Schriftart', 'name', 'font', 'Arial'], ['text.size', 'Schriftgröße', 'name', 'font_size', null], ['text.fill', 'Schriftfarbe', 'name', 'fill', null],
+      ['price.size', 'Preisgröße', 'price', 'font_size', null], ['price.fill', 'Preisfarbe', 'price', 'fill', null],
+      ['image.scale', 'Bildgröße', 'image', 'image_scale', 100], ['image.rot', 'Bilddrehung', 'image', 'rotation', 0]]
+      .map(function (entry) { return entry; });
+  }
+  function transferOptions(data, target) {
+    return transferCatalog(data, target).map(function (entry) { return { id: entry[0], label: entry[1], group: entry[2] }; });
+  }
+  function transferElements(data, target, itemId) {
+    var lists = target === 'sheet' ? data.layout.pages : (data.layout.targets && data.layout.targets[target] || []).filter(function (entry) { return entry.item_id === itemId; });
+    return [].concat.apply([], lists.map(function (entry) { return entry.elements.filter(function (element) { return element.item_id === itemId; }); }));
+  }
+  function transferValue(data, target, itemId, entry) {
+    var item = data.items.find(function (it) { return it.id === itemId; });
+    if (data.layout.cms && target !== 'scale') {
+      var group = target === 'single' ? 'flyer_article_overrides' : 'plakat_article_overrides';
+      var overrides = cmsFor(data, target)[group] || {}, current = overrides[weeklyKey(item)];
+      return current && current[entry[3]] != null ? current[entry[3]] : entry[4];
+    }
+    var element = transferElements(data, target, itemId).find(function (candidate) { return candidate.type === entry[2]; });
+    if (!element) return undefined;
+    var value = element[entry[3]];
+    if (value != null) return value;
+    return entry[3] === 'fill' ? styleFor(data.layout, target).text_color || data.layout.text_color : entry[4];
+  }
+  function transferPlan(data, target, sourceId, targetIds, ids) {
+    var catalog = transferCatalog(data, target).filter(function (entry) { return ids.indexOf(entry[0]) >= 0; });
+    return targetIds.filter(function (id) { return id !== sourceId; }).map(function (itemId) {
+      var item = data.items.find(function (it) { return it.id === itemId; });
+      return { item_id: itemId, item_name: item ? item.name : '', changes: catalog.map(function (entry) {
+        var to = transferValue(data, target, sourceId, entry), from = transferValue(data, target, itemId, entry);
+        return { id: entry[0], label: entry[1], from: from, to: to };
+      }).filter(function (change) { return change.to !== undefined && JSON.stringify(change.from) !== JSON.stringify(change.to); }) };
+    });
+  }
+  function transferApply(data, target, sourceId, targetIds, ids) {
+    var catalog = transferCatalog(data, target).filter(function (entry) { return ids.indexOf(entry[0]) >= 0; }), count = 0;
+    transferPlan(data, target, sourceId, targetIds, ids).forEach(function (plan) {
+      plan.changes.forEach(function (change) {
+        var entry = catalog.find(function (candidate) { return candidate[0] === change.id; });
+        if (data.layout.cms && target !== 'scale') {
+          weeklyOverride(data, plan.item_id, target === 'single' ? 'flyer_article_overrides' : 'plakat_article_overrides', target)[entry[3]] = clone(change.to);
+        } else {
+          transferElements(data, target, plan.item_id).filter(function (element) { return element.type === entry[2]; }).forEach(function (element) { element[entry[3]] = clone(change.to); });
+        }
+        count++;
+      });
+    });
+    return count;
+  }
+  function duplicateAction(source) {
+    var copy = clone(source), ids = new Map();
+    copy.items.forEach(function (item) { ids.set(item.id, uid()); if (item.layout_key) ids.set(item.layout_key, ids.get(item.id)); });
+    function remap(value) {
+      if (Array.isArray(value)) return value.map(remap);
+      if (!value || typeof value !== 'object') return value;
+      var result = {};
+      Object.keys(value).forEach(function (key) {
+        var target = ids.get(key) || key, entry = value[key];
+        result[target] = ['id', 'item_id', 'layout_key'].includes(key) && ids.has(entry) ? ids.get(entry) : remap(entry);
+      });
+      if (result.type && result.id) result.id = uid();
+      return result;
+    }
+    copy = remap(copy); copy.title = copy.title.slice(0, 112) + ' · Kopie';
+    return copy;
+  }
+  var targetNames = { sheet: 'Sammelflyer', card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv' };
+  function dataIssues(data) {
+    var issues = [];
+    function add(message, item, target, field) {
+      issues.push({ severity: 'error', code: 'data', message: message, item_id: item ? item.id : '', item_name: item ? item.name : '', target: target || '', field: field || '' });
+    }
     if (!data.title.trim() || !data.items.length || !data.valid_from || !data.valid_to || data.valid_from > data.valid_to) {
-      throw problem('Bitte Überschrift, mindestens einen Artikel und einen gültigen Zeitraum eintragen.');
+      add('Bitte Überschrift, mindestens einen Artikel und einen gültigen Zeitraum eintragen.', null, '', 'meta');
     }
     data.items.forEach(function (it) {
-      if (!it.name.trim() || !Number.isInteger(it.price_cents) || it.price_cents <= 0) throw problem('Jeder Artikel benötigt einen Namen und einen gültigen Angebotspreis.');
-      if (it.old_price_cents != null && it.old_price_cents <= it.price_cents) throw problem('Der Stattpreis muss über dem Angebotspreis liegen oder leer bleiben.');
+      if (!it.name.trim() || !Number.isInteger(it.price_cents) || it.price_cents <= 0) add('Jeder Artikel benötigt einen Namen und einen gültigen Angebotspreis.', it, '', 'name');
+      else if (it.old_price_cents != null && it.old_price_cents <= it.price_cents) add('Der Stattpreis muss über dem Angebotspreis liegen oder leer bleiben.', it, '', 'old_price');
       if (data.kind === 'drinks' && (!Number.isInteger(it.units) || it.units <= 0 || !Number.isInteger(it.volume_ml) || it.volume_ml <= 0 || !it.packaging)) {
-        throw problem('Bitte Anzahl, Literinhalt und Gebindeart für jedes Getränk ergänzen.');
+        add('Bitte Anzahl, Literinhalt und Gebindeart für jedes Getränk ergänzen.', it, '', 'units');
       }
       if (data.kind === 'drinks' && (!Number.isInteger(it.deposit_cents) || (it.deposit_free ? it.deposit_cents !== 0 : it.deposit_cents <= 0))) {
-        throw problem('Bitte das Gesamtpfand eintragen oder ausdrücklich „pfandfrei“ wählen.');
+        add('Bitte das Gesamtpfand eintragen oder ausdrücklich „pfandfrei“ wählen.', it, '', 'deposit');
       }
       var required = ['name', 'price'].concat(data.kind === 'drinks' ? ['pack', 'deposit', 'base'] : []);
       required.forEach(function (role) {
         if (!data.layout.pages.some(function (p) { return p.elements.some(function (e) { return e.type === role && e.item_id === it.id && !e.hidden && e.opacity >= .5; }); })) {
-          throw problem('Ein Pflichtfeld für Artikel, Preis, Pfand oder Grundpreis fehlt in der Gestaltung.');
+          add('Ein Pflichtfeld für Artikel, Preis, Pfand oder Grundpreis fehlt in der Gestaltung.', it, 'sheet', role);
         }
       });
     });
@@ -1041,17 +1284,123 @@ window.AngeboteModel = (function () {
         var layouts = targets[target] || [];
         if (layouts.length !== data.items.length || data.items.some(function (it) {
           return !layouts.some(function (entry) { return entry.item_id === it.id; });
-        })) throw problem('Bitte für jeden Artikel alle vier Ausgaben gestalten.');
+        })) add('Bitte für jeden Artikel alle vier Ausgaben gestalten.', null, target, 'targets');
         layouts.forEach(function (entry) {
           var required = ['name', 'price'].concat(data.kind === 'drinks' ? ['pack', 'deposit', 'base'] : []);
           required.forEach(function (role) {
             if (!entry.elements.some(function (e) { return e.type === role && e.item_id === entry.item_id && !e.hidden && e.opacity >= .5; })) {
-              throw problem('In einer Ausgabe fehlt ein Pflichtfeld. Bitte die Gestaltung prüfen.');
+              add('In einer Ausgabe fehlt ein Pflichtfeld. Bitte die Gestaltung prüfen.', data.items.find(function (it) { return it.id === entry.item_id; }), target, role);
             }
           });
         });
       });
     }
+    return issues;
+  }
+  function validate(data) {
+    var issues = dataIssues(data);
+    if (issues.length) throw problem(issues[0].message);
+  }
+  function luminance(color) {
+    var match = /^#([0-9a-f]{6})$/i.exec(color) || null, rgba = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color), channels;
+    if (match) channels = [0, 2, 4].map(function (n) { return parseInt(match[1].slice(n, n + 2), 16); });
+    else if (rgba) channels = [rgba[1], rgba[2], rgba[3]].map(Number);
+    else return null;
+    var linear = channels.map(function (value) { value /= 255; return value <= .03928 ? value / 12.92 : Math.pow((value + .055) / 1.055, 2.4); });
+    return .2126 * linear[0] + .7152 * linear[1] + .0722 * linear[2];
+  }
+  function contrast(foreground, background) {
+    var a = luminance(foreground), b = luminance(background);
+    if (a == null || b == null) return null;
+    return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+  }
+  function qualityKind(issue) {
+    return issue.severity === 'error' ? 'errors' : issue.severity === 'hint' ? 'hints' : 'unchecked';
+  }
+  async function quality(data) {
+    var result = { errors: [], hints: [], unchecked: [] }, seen = new Set();
+    function put(issue) {
+      var key = [issue.severity, issue.code, issue.item_id, issue.target, issue.element_id, issue.page].join('|');
+      if (seen.has(key)) return;
+      seen.add(key); result[qualityKind(issue)].push(issue);
+    }
+    dataIssues(data).forEach(put);
+    if (result.errors.length) return result;
+    var cms = data.kind === 'weekly' && data.layout.cms;
+    function named(issue, target, item, extra) {
+      return Object.assign({ target: target, item_id: item ? item.id : '', item_name: item ? item.name : '' }, issue, extra);
+    }
+    async function check(target, itemId, page) {
+      var item = data.items.find(function (it) { return it.id === itemId; });
+      var rendered = target === 'sheet' ? await render(data, page, 1) : await renderTarget(data, target, itemId, 1);
+      (rendered.issues || []).forEach(function (issue) { put(named(issue, target, data.items.find(function (it) { return it.id === issue.item_id; }) || item, { page: page })); });
+      if (!(rendered.issues) && !cms) put(named({ severity: 'unchecked', code: 'unchecked', message: 'Dieses Ziel wurde nicht vollständig geprüft.' }, target, item, { page: page }));
+      if (cms && target !== 'scale') {
+        var width = rendered.canvas._weeklyWidth || rendered.canvas.width, height = rendered.canvas._weeklyHeight || rendered.canvas.height;
+        (rendered.canvas._weeklyElements || []).forEach(function (meta) {
+          var owner = data.items.find(function (it) { return it.id === meta.itemId; }) || item;
+          if ((meta.ovKey === 'name' || meta.ovKey === 'price') && (meta.x < -1 || meta.y < -1 || meta.x + meta.w > width + 1 || meta.y + meta.h > height + 1)) {
+            put(named({ severity: 'error', code: 'outside', message: (meta.ovKey === 'price' ? 'Der Preis' : 'Der Artikelname') + ' liegt außerhalb der Ausgabe.', element_id: meta.id }, target, owner, { page: page }));
+          }
+        });
+      }
+    }
+    for (var p = 0; p < data.layout.pages.length; p++) await check('sheet', '', p);
+    var targets = data.layout.targets || {};
+    if (Object.keys(targets).some(function (key) { return targets[key] && targets[key].length; })) {
+      for (var target of Object.keys(targetSizes)) {
+        for (var layout of targets[target] || []) await check(target, layout.item_id, 0);
+      }
+    }
+    if (cms) {
+      put({ severity: 'unchecked', code: 'weekly-render', target: '', item_id: '', item_name: '',
+        message: 'Textabschnitt und Kontrast der originalen Wochenvorlage werden vom bestehenden Renderer nicht gemeldet und deshalb nicht als bestanden ausgewiesen.' });
+    }
+    return result;
+  }
+  function qualityDialog(result, options) {
+    options = options || {};
+    return new Promise(function (resolve) {
+      var previous = document.activeElement, dlg = document.createElement('dialog'), all = result.errors.concat(result.hints, result.unchecked);
+      dlg.className = 'an-dialog an-quality'; dlg.setAttribute('aria-label', 'Qualitätsprüfung');
+      var h = document.createElement('h2'); h.textContent = 'Qualitätsprüfung';
+      var summary = document.createElement('p'); summary.setAttribute('role', 'status');
+      summary.textContent = result.errors.length + ' Fehler · ' + result.hints.length + ' Hinweise · ' + result.unchecked.length + ' nicht geprüft';
+      dlg.append(h, summary);
+      if (!all.length) {
+        var ok = document.createElement('p'); ok.textContent = 'Keine Auffälligkeiten gefunden.'; dlg.appendChild(ok);
+      }
+      [['errors', 'Fehler · blockieren die Ausgabe'], ['hints', 'Hinweise · bewusst bestätigen möglich'], ['unchecked', 'Nicht geprüft']].forEach(function (group) {
+        if (!result[group[0]].length) return;
+        var section = document.createElement('section'), title = document.createElement('h3'), list = document.createElement('ul');
+        title.textContent = group[1]; section.append(title, list); list.className = 'an-quality-list';
+        result[group[0]].forEach(function (issue) {
+          var row = document.createElement('li'), text = document.createElement('span');
+          text.textContent = [issue.item_name && 'Artikel „' + (issue.item_name.length > 48 ? issue.item_name.slice(0, 48) + '…' : issue.item_name) + '“', issue.target && targetNames[issue.target], issue.message].filter(Boolean).join(' · ');
+          row.appendChild(text);
+          if (options.goto && (issue.item_id || issue.field || issue.target)) {
+            var go = document.createElement('button'); go.type = 'button'; go.dataset.qualityGoto = String(all.indexOf(issue));
+            go.textContent = 'Zur Stelle'; row.appendChild(go);
+          }
+          list.appendChild(row);
+        });
+        dlg.appendChild(section);
+      });
+      var actions = document.createElement('div'); actions.className = 'an-actions';
+      function finish(value) { dlg.close(); dlg.remove(); if (previous && previous.isConnected) previous.focus(); resolve(value); }
+      var close = document.createElement('button'); close.type = 'button'; close.textContent = options.confirm && !result.errors.length && result.hints.length ? 'Abbrechen' : 'Schließen';
+      close.onclick = function () { finish(null); }; actions.appendChild(close);
+      if (options.confirm && !result.errors.length && result.hints.length) {
+        var confirm = document.createElement('button'); confirm.type = 'button'; confirm.className = 'an-primary'; confirm.dataset.qualityConfirm = '';
+        confirm.textContent = 'Hinweise bestätigen'; confirm.onclick = function () { finish('confirmed'); }; actions.appendChild(confirm);
+      }
+      dlg.appendChild(actions);
+      dlg.addEventListener('click', function (event) {
+        var go = event.target.closest('[data-quality-goto]'); if (go) finish({ goto: all[Number(go.dataset.qualityGoto)] });
+      });
+      dlg.addEventListener('cancel', function (event) { event.preventDefault(); finish(null); });
+      document.body.appendChild(dlg); dlg.showModal();
+    });
   }
   async function preflight(data) {
     validate(data);
@@ -1149,11 +1498,15 @@ window.AngeboteModel = (function () {
     litres: litres, millilitres: millilitres, base: base, pack: pack, date: date,
     today: today, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
     ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,
-    render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate,
+    render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate, quality: quality, qualityDialog: qualityDialog, dataIssues: dataIssues,
     preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor, registerImage: registerImage,
+    savedState: savedState, duplicateAction: duplicateAction, cmsFor: cmsFor,
+    transferOptions: transferOptions, transferPlan: transferPlan, transferApply: transferApply,
+    propertyGroup: propertyGroup, objectValues: objectValues, rememberDesign: rememberDesign, originStatus: originStatus, resetObject: resetObject,
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
     decorationDefaults: decorationDefaults,
-    templateOptions: templateStyles.map(function (style) { return [style.id, style.label]; }),
+    priceImage: priceImage, groupedElements: groupedElements,
+    templateOptions: templateStyles.filter(function (style) { return style.id !== 'price-image'; }).map(function (style) { return [style.id, style.label]; }),
     cmsTemplateOptions: templateStyles.filter(function (style) { return style.original && !style.half && !style.tag; }).map(function (style) { return [style.id, style.label]; }),
     weeklyOverride: weeklyOverride, weeklyDefaults: weeklyDefaults, weeklyNewCopy: weeklyNewCopy, weeklyFields: weeklyFields, weeklyCompress: weeklyCompress, templateStyle: templateStyle, styleFor: styleFor, styleOf: styleOf, setTargetStyle: setTargetStyle, applyTargetStyleToAll: applyTargetStyleToAll, targetCustomized: targetCustomized, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
 })();

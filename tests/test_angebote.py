@@ -224,6 +224,20 @@ class AngeboteTests(unittest.TestCase):
             invalid["layout"]["target_styles"] = {"card": {key: "#12"}}
             self.error(400, normalize, invalid)
 
+    def test_TC_F49_price_presets_survive_target_styles_and_publication(self):
+        data = draft()
+        data["layout"].update({"price_preset": "price-image",
+                               "target_styles": {"scale": {"price_preset": "green-rounded"}}})
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        public = self.service.public()[0]["data"]["layout"]
+        self.assertEqual(public["price_preset"], "price-image")
+        self.assertEqual(public["target_styles"]["scale"]["price_preset"], "green-rounded")
+        for value in ("unknown", None, [], 42):
+            invalid = draft()
+            invalid["layout"]["price_preset"] = value
+            self.error(400, normalize, invalid)
+
     def test_TC_F36_homepage_roundtrip_validation_and_namespace(self):
         service = AngeboteService(MemoryStore())
         raw = service.design()

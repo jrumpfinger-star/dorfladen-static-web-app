@@ -24,9 +24,9 @@ window.AngeboteDesign = (function () {
     ['color', 'Angebots-/Preisfarbe', 'color'], ['background', 'Flyer-Hintergrund', 'color'],
     ['title_color', 'Markenfarbe', 'color'], ['text_color', 'Textfarbe', 'color'],
     ['card_background', 'Karten-Hintergrund', 'color'], ['price_background', 'Preis-Hintergrund', 'color'],
-    ['price_outline_color', 'Preisbild · Konturfarbe', 'color'],
-    ['old_price_color', 'Preisbild · Stattpreisfarbe', 'color'],
-    ['price_strike_color', 'Preisbild · Durchstreichungsfarbe', 'color'],
+    ['price_outline_color', 'Preisschild · Konturfarbe', 'color'],
+    ['old_price_color', 'Preisschild · Stattpreisfarbe', 'color'],
+    ['price_strike_color', 'Preisschild · Durchstreichungsfarbe', 'color'],
     ['name_size', 'Artikelname · Schriftgröße', 'number', 14, 100],
     ['price_size', 'Preis · Schriftgröße', 'number', 14, 100],
     ['details_size', 'Gebinde / Pfand / Literpreis · Schriftgröße', 'number', 14, 100],
@@ -39,7 +39,8 @@ window.AngeboteDesign = (function () {
     ['price_preset', 'Preisschild-Farbvorlage', [['', 'Manuell'], ['classic-red-rect', 'Classic Rot'],
       ['green-rounded', 'Naturgrün'], ['dark-pill', 'Dark Elegance'], ['gold-banner', 'Gold Banner'],
       ['blue-circle', 'Ocean Badge'], ['orange-star', 'Sunrise Stern'], ['purple-hexagon', 'Berry Hexagon'],
-      ['teal-ticket', 'Teal Coupon'], ['rose-diamond', 'Rosé Diamant'], ['copper-explosion', 'Copper Burst']]],
+      ['teal-ticket', 'Teal Coupon'], ['rose-diamond', 'Rosé Diamant'], ['copper-explosion', 'Copper Burst'],
+      ['price-image', 'Rot/Gelb']]],
     ['decoration.price_radius', 'Preisschild · Eckenradius', 'number', 0, 40],
     ['decoration.price_skew', 'Preisschild · Neigung %', 'number', 0, 30],
     ['decoration.price_scale', 'Preisschild · Größe %', 'number', 50, 150],
@@ -89,11 +90,14 @@ window.AngeboteDesign = (function () {
           var label = kind === 'plakat' ? 'Sammelflyer / Kachel' : 'Einzelflyer / Waage';
           return '<fieldset class="an-compact-group"><legend>' + label + '</legend><div class="an-fields">'
             + select(kind + 'Template', label, 'Originalvorlage', M.cmsTemplateOptions)
+            + select(kind + '_tagPreset', label, 'Preisschild-Vorlage', definitions.find(function (def) { return def[0] === 'price_preset'; })[2])
             + select(kind + '_tagShape', label, 'Preisschildform', shapeLabels)
-            + [['decoBgColor', 'Hintergrund'], ['decoTitleColor', 'Überschrift'],
-              ['priceImageColor', 'Preisbild · Preisfarbe'], ['priceOutlineColor', 'Preisbild · Konturfarbe'],
-              ['priceStripColor', 'Preisbild · Stattpreis-Streifen'], ['priceOldColor', 'Preisbild · Stattpreisfarbe'],
-              ['priceStrikeColor', 'Preisbild · Durchstreichungsfarbe']].map(function (field) {
+            + select(kind + '_nameFont', label, 'Bezeichnung · Schrift', ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS'].map(function (font) { return [font, font]; }))
+            + number(kind + '_nameSize', 'Bezeichnung · Größe (0 = Vorlage)', 0, 100)
+            + [['decoBgColor', 'Hintergrund'], ['decoTitleColor', 'Überschrift'], ['nameColor', 'Bezeichnung · Farbe'],
+              ['priceImageColor', 'Preisfarbe'], ['priceOutlineColor', 'Konturfarbe'],
+              ['priceStripColor', 'Hintergrund / Stattpreis-Streifen'], ['priceOldColor', 'Stattpreisfarbe'],
+              ['priceStrikeColor', 'Durchstreichungsfarbe']].map(function (field) {
               return '<label class="an-field"><span>' + field[1] + '</span><input type="color" aria-label="' + label + ' · ' + field[1] + '" data-cms-config="' + kind + '_' + field[0] + '" value="' + M.esc(cfg[kind + '_' + field[0]]) + '"></label>';
             }).join('') + '</div></fieldset>';
         }).join('')
@@ -109,9 +113,9 @@ window.AngeboteDesign = (function () {
     var id = ++controlId;
     function choices(key, title, options) {
       var isTemplate = key === 'template';
-      return '<fieldset class="an-choice-group"><legend>' + title + '</legend>'
+      return '<fieldset class="an-choice-group' + (key === 'density' ? ' an-density-choice' : '') + '"><legend>' + title + '</legend>'
         + (isTemplate ? '<details class="an-template-picker"><summary><span class="an-template-current" data-current-template="' + M.esc(layout.template) + '"></span><span><strong data-template-label>'
-          + M.esc(M.templateStyle(layout.template).label) + '</strong><small>' + options.length + ' Designvorlagen · Auswahl öffnen</small></span></summary>' : '')
+          + M.esc(M.templateStyle(layout.template).label) + '</strong><small>' + options.length + ' Vorlagen</small></span></summary>' : '')
         + '<div class="an-choices' + (isTemplate ? ' an-template-gallery' : '') + '">'
         + options.map(function (option) {
           return (isTemplate ? '<div class="an-choice-option">' : '') + '<label class="an-choice"><input type="radio" name="an-' + key + '-' + id + '" data-style="' + key
@@ -129,12 +133,13 @@ window.AngeboteDesign = (function () {
           && (advanced === 'extra' ? extra : !extra && (def[2] === 'number') === advanced);
       }).map(function (def) {
         var decorationKey = def[0].split('.')[1];
-        var value = decorationKey ? Object.assign({}, M.decorationDefaults, layout.decoration)[decorationKey]
+        var value = def[0] === 'price_preset' ? (M.priceImage(layout) ? 'price-image' : layout.price_preset === 'manual' ? '' : layout.price_preset || '')
+          : decorationKey ? Object.assign({}, M.decorationDefaults, layout.decoration)[decorationKey]
           : layout[def[0]] == null ? M.theme[def[0]] : layout[def[0]];
         var imageColor = ['price_outline_color', 'old_price_color', 'price_strike_color'].indexOf(def[0]) >= 0;
-        var html = '<label class="an-field"' + (imageColor ? ' data-price-image-color' + (layout.template !== 'price-image' ? ' hidden' : '') : '')
+        var html = '<label class="an-field"' + (imageColor ? ' data-price-image-color' : '')
           + '><span' + (def[0] === 'price_background' ? ' data-price-background-label' : '') + '>'
-          + (def[0] === 'price_background' && layout.template === 'price-image' ? 'Stattpreis-Streifen' : def[1]) + '</span>';
+          + (def[0] === 'price_background' && M.priceImage(layout) ? 'Stattpreis-Streifen' : def[1]) + '</span>';
         if (Array.isArray(def[2])) {
           html += '<select aria-label="' + M.esc(def[1]) + '" data-style="' + def[0] + '">' + def[2].map(function (option) {
             var key = Array.isArray(option) ? option[0] : option, label = Array.isArray(option) ? option[1] : option;
@@ -171,9 +176,9 @@ window.AngeboteDesign = (function () {
     }
     choiceState.set(host, { layout: M.clone(layout), kind: kind });
     var ticket = (choicePaint.get(host) || 0) + 1; choicePaint.set(host, ticket);
-    host.querySelectorAll('[data-price-image-color]').forEach(function (field) { field.hidden = layout.template !== 'price-image'; });
+    host.querySelectorAll('[data-price-image-color]').forEach(function (field) { field.hidden = false; });
     host.querySelectorAll('[data-price-background-label]').forEach(function (label) {
-      label.textContent = layout.template === 'price-image' ? 'Stattpreis-Streifen' : 'Preis-Hintergrund';
+      label.textContent = M.priceImage(layout) ? 'Stattpreis-Streifen' : 'Preis-Hintergrund';
     });
     host.querySelectorAll('[data-style]').forEach(function (control) {
       var key = control.dataset.style, decorationKey = key.split('.')[1];
@@ -265,15 +270,24 @@ window.AngeboteDesign = (function () {
     if (!key || !definitions.some(function (d) { return d[0] === key; })) return false;
     if (key === 'template') {
       M.useTemplate(layout, target.value);
+      layout.price_preset = '';
     } else if (key === 'price_preset') {
+      if (!target.value) { layout.price_preset = 'manual'; return true; }
       var preset = window.WochenangeboteRenderer.TAG_PRESETS[target.value];
       if (!preset) return false;
-      layout.price_shape = preset.tagShape; layout.price_background = preset.tagColor; layout.color = '#ffffff';
+      layout.price_preset = target.value;
+      layout.price_shape = preset.tagShape === 'price-image' ? 'rect' : preset.tagShape;
+      layout.price_background = target.value === 'price-image' ? '#fff000' : preset.tagColor;
+      layout.color = target.value === 'price-image' ? preset.tagColor : '#ffffff';
       layout.decoration = Object.assign({}, layout.decoration, { price_radius: preset.tagRadius });
     } else if (key.indexOf('decoration.') === 0) {
       layout.decoration = Object.assign({}, layout.decoration);
       layout.decoration[key.split('.')[1]] = target.type === 'checkbox' ? target.checked : target.type === 'number' ? Number(target.value) : target.value;
-    } else layout[key] = target.type === 'number' || key === 'density' ? Number(target.value) : target.value;
+    } else {
+      layout[key] = target.type === 'number' || key === 'density' ? Number(target.value) : target.value;
+      if (key === 'price_shape') layout.price_preset = 'manual';
+      if (key === 'color' && !layout.price_preset) layout.price_preset = 'manual';
+    }
     return true;
   }
   function sample(layout, kind, products) {
@@ -311,19 +325,21 @@ window.AngeboteDesign = (function () {
     if (key === 'y' || event.shiftKey) redo(); else undo();
   }
   function history(read, restore) {
-    var current = M.clone(read()), past = [], future = [], grouped = false, recorded = false, toolbar = null;
+    var current = M.clone(read()), past = [], future = [], grouped = false, recorded = false, toolbar = null, transaction = null;
     function update() {
       if (!toolbar) return;
       toolbar.querySelector('[data-design-history=undo]').disabled = !past.length;
       toolbar.querySelector('[data-design-history=redo]').disabled = !future.length;
     }
     function record() {
+      if (transaction) return;
       var value = M.clone(read());
       if (JSON.stringify(value) === JSON.stringify(current)) return;
       if (!grouped || !recorded) { past.push(current); if (past.length > 30) past.shift(); }
       current = value; future = []; recorded = true; update();
     }
     function travel(source, destination) {
+      if (transaction) return;
       if (!source.length) return;
       grouped = false; recorded = false;
       destination.push(M.clone(read()));
@@ -331,6 +347,19 @@ window.AngeboteDesign = (function () {
     }
     var api = {
       record: record,
+      transaction: function (commit) {
+        if (typeof commit !== 'boolean') {
+          record();
+          transaction = M.clone(read());
+          return;
+        }
+        var before = transaction;
+        if (!before) return;
+        if (!commit) restore(M.clone(before));
+        transaction = null;
+        if (commit) record();
+        update();
+      },
       begin: function () { grouped = true; recorded = false; },
       end: function () { grouped = false; recorded = false; },
       reset: function () { current = M.clone(read()); past = []; future = []; grouped = false; update(); },
@@ -346,19 +375,300 @@ window.AngeboteDesign = (function () {
         toolbar.querySelector('[data-design-history=redo]').onclick = api.redo;
         root.onkeydown = function (event) { historyShortcut(event, api.undo, api.redo); };
         update();
+        compactActions(host);
+        objectProperties(root, { history: api });
       }
     };
     return api;
   }
+      function objectProperties(root, options) {
+        if (root._objectProperties) { root._objectProperties.refresh(); return root._objectProperties; }
+        var groups = { text: [], price: [], image: [] }, labels = { text: 'Schrift', price: 'Preisschild', image: 'Bild' };
+        var bar = document.createElement('div'), active = null;
+        bar.className = 'an-object-summaries';
+        function classify(control) {
+          var key = control.dataset.style || control.dataset.cmsConfig || control.id || '';
+          return M.propertyGroup(key);
+        }
+        function describe(group) {
+          var controls = groups[group].map(function (field) { return field.querySelector('input,select,textarea'); });
+          function find(pattern) { return controls.find(function (control) { return pattern.test(control.dataset.style || control.dataset.cmsConfig || control.id || ''); }); }
+          function label(control) { return !control ? '' : control.tagName === 'SELECT' ? control.selectedOptions[0]?.textContent : control.value; }
+          if (group === 'text') {
+            var font = find(/(?:nameFont|(?:^|[-_])font)$/i), size = find(/(?:nameSize|name_size)$/i);
+            return [label(font), size ? Number(size.value) ? size.value + ' px' : 'Automatische Größe' : ''].filter(Boolean).join(' · ');
+          }
+          if (group === 'price') return label(find(/(?:tagPreset|price_preset)$/i)) || label(find(/(?:tagShape|price_shape)$/i));
+          var scale = find(/(?:imgScale|image_scale)$/i), rotation = find(/(?:imgRot|image_rotation)$/i);
+          return [scale ? scale.value + ' %' : '', rotation ? rotation.value + '°' : ''].filter(Boolean).join(' · ');
+        }
+        Object.keys(groups).forEach(function (group) {
+          var button = document.createElement('button'); button.type = 'button';
+          button.dataset.objectProperties = group; button.setAttribute('aria-haspopup', 'dialog');
+          button.setAttribute('aria-label', labels[group] + ': Eigenschaften öffnen');
+          button.innerHTML = '<strong>' + labels[group] + '</strong><small></small>';
+          button.onclick = function () { open(group, button); }; bar.appendChild(button);
+        });
+        function refresh() {
+          if (active) return;
+          Object.keys(groups).forEach(function (group) { groups[group] = []; });
+          root.querySelectorAll('input,select,textarea').forEach(function (control) {
+            if (control.closest('.an-object-dialog')) return;
+            var group = classify(control), field = control.closest('label');
+            if (!group || !field || field.dataset.objectUnavailable === 'true' || field.querySelectorAll('input,select,textarea').length !== 1) return;
+            if (field.hidden && !field.dataset.objectField) return;
+            field.dataset.objectField = group; field.hidden = true; groups[group].push(field);
+          });
+          bar.querySelectorAll('[data-object-properties]').forEach(function (button) {
+            var group = button.dataset.objectProperties, detail = describe(group);
+            button.hidden = !groups[group].length; button.querySelector('small').textContent = (options.origin ? options.origin(group) + ' · ' : '') + detail;
+            button.title = labels[group] + ': ' + detail;
+          });
+          var host = root.querySelector('.an-designer-body,#an-style-controls');
+          if (host && !bar.isConnected) host.prepend(bar);
+        }
+        function open(group, opener) {
+          if (active) return;
+          var nodes = groups[group].filter(function (field) { return field.isConnected && field.dataset.objectUnavailable !== 'true'; });
+          if (!nodes.length) return;
+          var dialog = document.createElement('dialog'), positions = [], statuses = [];
+          dialog.className = 'an-dialog an-object-dialog';
+          dialog.setAttribute('aria-label', labels[group] + ' einstellen');
+          dialog.innerHTML = '<form><header><h2>' + labels[group] + ' einstellen</h2>'
+            + '<button type="button" data-object-cancel aria-label="Eigenschaften schließen und Änderungen verwerfen">×</button></header>'
+            + '<div class="an-object-preview"><figure tabindex="0" aria-label="Vorschauausschnitt, bei Bedarf scrollen"><canvas aria-label="Live-Detailvorschau"></canvas></figure><div><small>Live-Vorschau · noch nicht gespeichert</small><button type="button" data-object-view>Gesamtmotiv</button></div></div>'
+            + '<div class="an-object-body"><div class="an-object-grid"></div></div><footer><button type="button" data-object-cancel>Abbrechen</button>'
+            + '<button type="submit" class="an-primary">Übernehmen</button></footer></form>';
+          root.querySelectorAll('[role=status],[data-design-status]').forEach(function (node) { statuses.push([node, node.textContent]); });
+          if (options.history) options.history.transaction();
+          if (options.begin) options.begin();
+          nodes.forEach(function (field) {
+            var marker = document.createComment('object-field'); field.replaceWith(marker);
+            positions.push([marker, field]); field.hidden = false;
+            dialog.querySelector('.an-object-grid').appendChild(field);
+          });
+          root.appendChild(dialog); active = dialog;
+          if (options.reset) {
+            var reset = document.createElement('button'); reset.type = 'button';
+            reset.textContent = options.canReset() ? 'Auf Vorlagenwert zurücksetzen' : 'Keine gespeicherte Vorlagenherkunft';
+            reset.disabled = !options.canReset();
+            reset.onclick = function () {
+              options.reset(group);
+              var values = options.values();
+              dialog.querySelectorAll('input,select').forEach(function (control) {
+                var key = control.dataset.cmsConfig ? 'cms.' + control.dataset.cmsConfig : control.dataset.style;
+                if (!Object.prototype.hasOwnProperty.call(values, key)) {
+                  if (control.type === 'checkbox') control.checked = false;
+                  else if (control.type !== 'radio' && !control.dataset.cmsConfig) control.value = '';
+                  return;
+                }
+                if (control.type === 'checkbox') control.checked = values[key]; else control.value = values[key];
+              });
+            };
+            dialog.querySelector('.an-object-body').appendChild(reset);
+          }
+          function close(commit) {
+            if (commit && !dialog.querySelector('form').reportValidity()) return;
+            clearInterval(timer);
+            positions.forEach(function (entry) { entry[1].hidden = true; entry[0].replaceWith(entry[1]); });
+            dialog.close(); dialog.remove(); active = null;
+            if (options.history) options.history.transaction(commit);
+            if (options.end) options.end(commit);
+            if (!commit) statuses.forEach(function (entry) { if (entry[0].isConnected) entry[0].textContent = entry[1]; });
+            refresh(); (opener.isConnected ? opener : bar.querySelector('[data-object-properties="' + group + '"]'))?.focus();
+          }
+          var whole = false;
+          function preview() {
+            if (!matchMedia('(max-width:559px)').matches) return;
+            var source = options.canvas ? options.canvas() : root.querySelector('.an-designer-paper canvas,#an-stage-canvas');
+            if (!source || !source.width || !source.height) return;
+            drawDetail(dialog.querySelector('canvas'), source, whole ? '' : group, options.item && options.item());
+          }
+          dialog.querySelector('[data-object-view]').onclick = function (event) {
+            whole = !whole; event.currentTarget.textContent = whole ? 'Detailansicht' : 'Gesamtmotiv'; preview();
+          };
+          dialog.querySelector('form').onsubmit = function (event) { event.preventDefault(); close(true); };
+          dialog.querySelectorAll('[data-object-cancel]').forEach(function (button) { button.onclick = function () { close(false); }; });
+          dialog.addEventListener('cancel', function (event) { event.preventDefault(); event.stopPropagation(); close(false); });
+          var timer = setInterval(preview, 150);
+          dialog.showModal(); preview();
+        }
+  function drawDetail(target, source, group, itemId) {
+    var elements = source._weeklyElements || source._elMeta || source._offerElements || [];
+    var roles = group === 'text' ? ['name', 'description'] : group === 'image' ? ['img', 'image'] : ['price', 'old_price'];
+    function identity(element) { return element.item_id || element.itemId || element.itemKey; }
+    var relevant = group ? elements.filter(function (element) { return roles.includes(element.ovKey || element.type || element.id); }) : [];
+    var id = itemId || (relevant[0] && identity(relevant[0]));
+    relevant = relevant.filter(function (element) { return identity(element) === id; });
+    var x = 0, y = 0, w = source.width, h = source.height;
+    if (relevant.length) {
+        var boxes = relevant.map(function (element) {
+          var angle = (element.rotation || 0) * Math.PI / 180;
+          var bw = Math.abs(Math.cos(angle)) * element.w + Math.abs(Math.sin(angle)) * element.h;
+          var bh = Math.abs(Math.sin(angle)) * element.w + Math.abs(Math.cos(angle)) * element.h;
+          return { x: element.x + (element.w - bw) / 2, y: element.y + (element.h - bh) / 2, w: bw, h: bh };
+        });
+        var scale = source.width / (source._weeklyWidth || source._offerWidth || M.W);
+        x = Math.max(0, Math.min.apply(null, boxes.map(function (e) { return e.x; })) * scale - 8);
+        y = Math.max(0, Math.min.apply(null, boxes.map(function (e) { return e.y; })) * scale - 8);
+        w = Math.max(1, Math.min(source.width - x, Math.max.apply(null, boxes.map(function (e) { return e.x + e.w; })) * scale - x + 8));
+        h = Math.max(1, Math.min(source.height - y, Math.max.apply(null, boxes.map(function (e) { return e.y + e.h; })) * scale - y + 8));
+    }
+    target.width = Math.max(1, Math.round(w)); target.height = Math.max(1, Math.round(h));
+    target.getContext('2d').drawImage(source, x, y, w, h, 0, 0, target.width, target.height);
+  }
+        root._objectProperties = { refresh: refresh };
+        refresh(); return root._objectProperties;
+      }
   var helpId = 0;
+  function placePopover(button, popup) {
+    var rect = button.getBoundingClientRect();
+    popup.style.left = Math.max(12, Math.min(innerWidth - popup.offsetWidth - 12, rect.left)) + 'px';
+    popup.style.top = Math.max(12, Math.min(innerHeight - popup.offsetHeight - 12, rect.bottom + 5)) + 'px';
+  }
+  function iconButton(button, name) {
+    var label = button.getAttribute('aria-label') || button.textContent.trim();
+    var paths = name === 'undo' ? '<path d="M3 10h11a6 6 0 0 1 0 12M3 10l5-5M3 10l5 5"/>'
+      : name === 'redo' ? '<path d="M21 10H10a6 6 0 0 0 0 12M21 10l-5-5m5 5-5 5"/>'
+      : '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>';
+    button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+    button.setAttribute('aria-label', label); button.title = label; button.classList.add('an-icon-action');
+  }
+  function compactActions(host) {
+    host.classList.add('an-compact-actions');
+    host.querySelectorAll('[data-design-history],[data-history]').forEach(function (button) {
+      iconButton(button, button.dataset.designHistory || button.dataset.history);
+    });
+    var save = host.querySelector('[data-design-save],#cfg-plakat-save,[data-action=hpangSave],#an-save');
+    if (save) {
+      if (!save.hasAttribute('aria-label')) save.setAttribute('aria-label', save.textContent.trim());
+      save.textContent = 'Speichern';
+    }
+    var popup = host.querySelector('.an-action-popover'), menu = host.querySelector('[data-more-actions]');
+    var extras = Array.from(host.querySelectorAll(':scope>button')).filter(function (button) {
+      return button !== save && !button.matches('[data-history],[data-more-actions],[data-workspace-views],#an-overview');
+    });
+    if (extras.length && !popup) {
+      popup = document.createElement('div'); popup.className = 'an-action-popover'; popup.popover = 'auto';
+      popup.id = 'an-actions-' + (++helpId);
+      menu = document.createElement('button'); menu.type = 'button'; menu.dataset.moreActions = '';
+      menu.textContent = 'Weitere Aktionen'; iconButton(menu, 'more');
+      menu.setAttribute('popovertarget', popup.id); host.append(menu, popup);
+      popup.addEventListener('toggle', function () { if (popup.matches(':popover-open')) placePopover(menu, popup); });
+      popup.addEventListener('click', function (event) {
+        if (event.target.closest('button')) popup.hidePopover();
+      });
+    }
+    if (popup) extras.forEach(function (button) { popup.appendChild(button); });
+  }
+  function split(root, left, right) {
+    if (root._splitView) return root._splitView;
+    root.classList.add('an-split'); left.classList.add('an-split-tools'); right.classList.add('an-split-picture');
+    var handle = document.createElement('div'), ratio = .6, dragging = false, explicitView = false;
+    var viewbar = document.createElement('div');
+    viewbar.className = 'an-workspace-view';
+    viewbar.innerHTML = '<span class="an-workspace-context"></span><select aria-label="Arbeitsansicht">'
+      + '<option value="split">Geteilt</option><option value="inputs">Nur Eingaben</option><option value="picture">Nur Motiv</option></select>';
+    var view = viewbar.querySelector('select');
+    var pictureStatus = document.createElement('span'); pictureStatus.className = 'an-workspace-picture-status';
+    pictureStatus.textContent = 'Nur Motiv · Eingaben ausgeblendet'; viewbar.prepend(pictureStatus);
+    root.prepend(viewbar);
+    var viewButton = document.createElement('button'), viewPopup = document.createElement('div'), viewLabel = document.createElement('label');
+    viewButton.type = 'button'; viewButton.dataset.workspaceViews = ''; viewButton.className = 'an-icon-action an-workspace-views';
+    viewButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>';
+    viewPopup.className = 'an-action-popover an-workspace-choices'; viewPopup.popover = 'auto'; viewPopup.id = 'an-workspace-views-' + (++helpId);
+    viewButton.setAttribute('popovertarget', viewPopup.id);
+    viewLabel.textContent = 'Arbeitsansicht'; viewPopup.appendChild(viewLabel);
+    var actions = left.querySelector('.an-designer-save,.an-compact-actions');
+    root.classList.toggle('an-mobile-views', !!actions);
+    if (actions) { actions.appendChild(viewButton); root.appendChild(viewPopup); }
+    viewPopup.addEventListener('toggle', function () { if (viewPopup.matches(':popover-open')) placePopover(viewButton, viewPopup); });
+    view.onchange = function () { explicitView = true; viewPopup.hidePopover(); resize(); };
+    handle.className = 'an-split-handle'; handle.tabIndex = 0;
+    handle.setAttribute('role', 'separator'); handle.setAttribute('aria-orientation', 'vertical');
+    handle.setAttribute('aria-label', 'Breite von Werkzeugen und Vorschau');
+    handle.title = 'Trennlinie ziehen · Pfeiltasten zum Verstellen';
+    root.insertBefore(handle, right);
+    function resize() {
+      var width = root.clientWidth;
+      if (!width) { viewButton.hidden = true; return; }
+      var mobile = width < 612;
+      root.classList.toggle('an-split-mobile', mobile);
+      if (!explicitView) view.value = mobile ? 'inputs' : 'split';
+      root.dataset.workspaceView = view.value;
+      viewButton.hidden = !mobile || !actions;
+      viewButton.setAttribute('aria-label', 'Arbeitsansicht: ' + view.selectedOptions[0].textContent);
+      viewButton.title = 'Arbeitsansicht: ' + view.selectedOptions[0].textContent;
+      if (actions) (mobile && view.value === 'picture' ? viewbar : actions).appendChild(viewButton);
+      if (mobile && actions) viewLabel.appendChild(view);
+      else if (view.parentElement !== viewbar) { viewPopup.hidePopover(); viewbar.appendChild(view); }
+      handle.hidden = mobile || view.value !== 'split';
+      if (mobile || !width) return;
+      var minimum = (width - 12) / 2, maximum = Math.max(minimum, width - 262);
+      var tools = Math.max(minimum, Math.min(maximum, (width - 12) * ratio));
+      root.style.setProperty('--an-tools-width', tools + 'px');
+      handle.setAttribute('aria-valuemin', Math.round(minimum));
+      handle.setAttribute('aria-valuemax', Math.round(maximum));
+      handle.setAttribute('aria-valuenow', Math.round(tools));
+    }
+    handle.onpointerdown = function (event) {
+      if (event.button !== 0) return;
+      event.preventDefault(); dragging = true; handle.setPointerCapture(event.pointerId); handle.focus();
+    };
+    handle.onpointermove = function (event) {
+      if (!dragging) return;
+      var box = root.getBoundingClientRect(); ratio = (event.clientX - box.left) / (box.width - 12);
+      resize();
+    };
+    handle.onpointerup = handle.onpointercancel = function () { dragging = false; };
+    handle.onkeydown = function (event) {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      ratio = event.key === 'Home' ? .5 : event.key === 'End' ? 1
+        : (Number(handle.getAttribute('aria-valuenow')) + (event.key === 'ArrowRight' ? 20 : -20)) / (root.clientWidth - 12);
+      resize();
+    };
+    var observer = new ResizeObserver(resize); observer.observe(root);
+    root._splitView = { destroy: function () { observer.disconnect(); viewbar.remove(); viewButton.remove(); viewPopup.remove(); }, resize: resize };
+    resize(); return root._splitView;
+  }
+  function expandGroups(root) {
+    root.querySelectorAll('details:not(.an-template-picker)').forEach(function (group) {
+      if (group.dataset.groupReady) return;
+      group.dataset.groupReady = 'true'; group.open = true;
+    });
+  }
+  function fullscreen(root, host) {
+    var button = document.createElement('button'); button.type = 'button'; button.dataset.workspaceFullscreen = '';
+    button.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5"/></svg>';
+    function update() {
+      var label = document.fullscreenElement ? 'Vollbild beenden' : 'Vollbild';
+      button.setAttribute('aria-label', label); button.title = label;
+    }
+    button.onclick = async function () {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else if (root.requestFullscreen) await root.requestFullscreen();
+        else throw M.problem('Dieser Browser unterstützt keinen Vollbildmodus. Bitte einen Browser mit Vollbildunterstützung verwenden.');
+      } catch (error) { M.error(error); }
+    };
+    document.addEventListener('fullscreenchange', update); host.appendChild(button); update();
+    return { destroy: function () { document.removeEventListener('fullscreenchange', update); } };
+  }
   function compactHelp(root, target) {
-    var notes = Array.from(root.querySelectorAll('p.an-note,p.an-muted,p[style*="font-size"]'));
-    if (root.matches && root.matches('p')) notes.unshift(root);
+    var notes = Array.from(root.querySelectorAll('.an-note,.an-muted,p[style*="font-size"]'));
+    if (root.matches && root.matches('p,.an-note,.an-muted')) notes.unshift(root);
     notes.forEach(function (note) {
       if (note.id || note.hasAttribute('role') || Object.keys(note.dataset).length
         || note.closest('.an-help-popover') || note.querySelector('button,input,select,a') || !note.textContent.trim()) return;
       var owner = note.closest('fieldset'), destination = owner ? owner.querySelector('legend') : target;
       if (!destination) return;
+      var existing = destination.querySelector(':scope>.an-help .an-help-popover>div');
+      if (existing) {
+        if (Array.from(existing.children).some(function (node) { return node.textContent === note.textContent; })) note.remove();
+        else existing.appendChild(note);
+        return;
+      }
       var wrap = document.createElement('span'), button = document.createElement('button'), popup = document.createElement('div');
       wrap.className = 'an-help';
       button.type = 'button'; button.className = 'an-help-button'; button.textContent = 'ⓘ';
@@ -376,9 +686,7 @@ window.AngeboteDesign = (function () {
       function show() {
         if (returning || popup.matches(':popover-open')) return;
         popup.showPopover();
-        var rect = button.getBoundingClientRect(), width = popup.offsetWidth, height = popup.offsetHeight;
-        popup.style.left = Math.max(12, Math.min(window.innerWidth - width - 12, rect.left)) + 'px';
-        popup.style.top = Math.max(12, Math.min(window.innerHeight - height - 12, rect.bottom + 5)) + 'px';
+        placePopover(button, popup);
       }
       close.onclick = function () { hide(true); };
       button.onclick = function () { popup.classList.add('an-help-pinned'); show(); }; button.onfocus = show;
@@ -406,6 +714,7 @@ window.AngeboteDesign = (function () {
       header.append(panel.children[0], panel.children[1]);
       panel.prepend(header);
       panel.classList.add('an-design-shell');
+      fullscreen(panel, header.querySelector('div'));
     }
     var generalHelp = document.createElement('span'); generalHelp.className = 'an-header-help';
     panel.querySelector('.an-design-header>div').appendChild(generalHelp);
@@ -425,6 +734,60 @@ window.AngeboteDesign = (function () {
       controls.className = 'an-preview-options'; controls.appendChild(actions);
       left.prepend(controls); heading.remove(); pictureViewport(preview, controls);
     });
+    compactDesignNavigation(panel);
+  }
+  function compactDesignNavigation(panel) {
+    var header = panel.querySelector('.an-design-header'), toolbar = header.firstElementChild, nav = header.children[1];
+    nav.classList.add('an-design-nav');
+    var location = document.createElement('label'), select = document.createElement('select'), destinations = new Map();
+    location.className = 'an-design-location'; select.setAttribute('aria-label', 'Designbereich');
+    location.appendChild(select); toolbar.insertBefore(location, toolbar.children[1]);
+    var observer = new MutationObserver(sync);
+    observer.observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    nav.querySelectorAll('[data-id]').forEach(function (top) {
+      var section = panel.querySelector('#cms-' + top.dataset.id), subnav = section && section.querySelector(':scope>.cfg-section-nav');
+      var group = document.createElement('optgroup');
+      group.label = top.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+      select.appendChild(group);
+      if (subnav) observer.observe(subnav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+      var children = subnav ? Array.from(subnav.querySelectorAll('button[data-id]')) : [null];
+      children.forEach(function (sub) {
+        var option = document.createElement('option'), key = top.dataset.id + (sub ? '/' + sub.dataset.id : '');
+        option.value = key;
+        option.textContent = 'Vorgabe: ' + (sub ? sub.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim() : group.label);
+        group.appendChild(option); destinations.set(key, { top: top, sub: sub });
+      });
+    });
+    function sync() {
+      destinations.forEach(function (entry, key) {
+        if (entry.top.classList.contains('active') && (!entry.sub || entry.sub.classList.contains('active'))) select.value = key;
+      });
+    }
+    select.onchange = function () {
+      var entry = destinations.get(select.value);
+      entry.top.click(); if (entry.sub) entry.sub.click();
+    };
+    var button = document.createElement('button'), popup = document.createElement('div');
+    button.type = 'button'; button.className = 'an-icon-action an-design-options-toggle'; iconButton(button, 'more');
+    button.setAttribute('aria-label', 'Designoptionen und Hilfe'); button.title = 'Designoptionen und Hilfe';
+    popup.className = 'an-action-popover an-design-options'; popup.popover = 'auto'; popup.id = 'an-design-options-' + (++helpId);
+    button.setAttribute('popovertarget', popup.id);
+    var compact = toolbar.querySelector('.cms-switch'), generalHelp = toolbar.querySelector('.an-header-help');
+    if (compact) popup.appendChild(compact);
+    if (generalHelp) {
+      generalHelp.querySelectorAll('.an-help-button').forEach(function (help) { help.textContent = help.getAttribute('aria-label').replace(/^Hinweis:\s*/, ''); });
+      popup.appendChild(generalHelp);
+    }
+    var oldHelp = toolbar.querySelector('h3>span');
+    if (oldHelp) {
+      var help = document.createElement('button'); help.type = 'button'; help.textContent = 'Hilfe zum Designeditor';
+      help.onclick = function () { popup.hidePopover(); oldHelp.click(); };
+      oldHelp.hidden = true; popup.appendChild(help);
+    }
+    toolbar.insertBefore(button, toolbar.querySelector('[data-workspace-fullscreen]')); header.appendChild(popup);
+    popup.addEventListener('toggle', function () { if (popup.matches(':popover-open')) placePopover(button, popup); });
+    var size = new ResizeObserver(function () { if (panel.clientWidth) panel.classList.toggle('an-design-narrow', panel.clientWidth < 612); });
+    size.observe(panel); sync();
   }
   function pictureViewport(preview, controls) {
     if (!preview._pictureView) {
@@ -451,13 +814,17 @@ window.AngeboteDesign = (function () {
       toolbar.querySelector('[data-picture-fullscreen]').onclick = async function () {
         try {
           if (document.fullscreenElement) await document.exitFullscreen();
-          else await preview.closest('.an-designer-workspace,.cfg-split').requestFullscreen();
+          else {
+            var workspace = preview.closest('.an-task-editor,.an-designer-workspace,.cfg-split');
+            if (!workspace || !workspace.requestFullscreen) throw M.problem('Dieser Browser unterstützt keinen Vollbildmodus.');
+            await workspace.requestFullscreen();
+          }
         } catch (error) {
           M.error(error);
         }
       };
       var observer = new ResizeObserver(size); observer.observe(preview); observer.observe(paper);
-      preview._pictureView = { toolbar: toolbar, size: size };
+      preview._pictureView = { toolbar: toolbar, size: size, destroy: function () { observer.disconnect(); } };
     }
     controls.appendChild(preview._pictureView.toolbar);
     preview.classList.add('an-preview', 'an-designer-preview');
@@ -491,16 +858,19 @@ window.AngeboteDesign = (function () {
     var layout = document.createElement('div'), settings = document.createElement('section');
     layout.className = 'an-design-layout an-designer-workspace';
     settings.className = 'an-card an-designer-settings';
-    settings.innerHTML = '<h2>' + M.esc(options.title) + '</h2><div class="an-tabs an-designer-tabs" role="tablist" aria-label="Gestaltungswerkzeuge"></div>';
+    settings.innerHTML = '<h2>' + M.esc(options.title) + '</h2><small class="an-designer-scope">Designvorgabe · alle Kacheln</small><div class="an-tabs an-designer-tabs" role="tablist" aria-label="Gestaltungswerkzeuge"></div>';
     var tabs = settings.querySelector('[role=tablist]'), panels = document.createElement('div'), body = document.createElement('div');
+    var tools = document.createElement('select'); tools.className = 'an-designer-tool-select'; tools.setAttribute('aria-label', 'Gestaltungswerkzeuge');
+    tabs.before(tools);
     body.className = 'an-designer-body';
     var controls = document.createElement('section'), direct = document.createElement('div'), help = document.createElement('div');
     controls.className = 'an-designer-controls'; direct.className = 'an-designer-direct'; help.className = 'an-designer-help';
     controls.setAttribute('aria-label', 'Vorschauwerkzeuge'); controls.append(help, direct);
     panels.dataset.designFields = '';
     body.append(controls, panels); settings.appendChild(body);
-    var names = options.tabs || ['Stil', 'Farben', 'Feinabstimmung', 'Weitere Gestaltung', 'Eigene Vorlagen'];
+    var names = (options.tabs || ['Stil', 'Farben', 'Feinabstimmung', 'Weitere Gestaltung', 'Eigene Vorlagen']).concat(['Werkzeuge']);
     names.forEach(function (name, index) {
+      var option = document.createElement('option'); option.value = index; option.textContent = name; tools.appendChild(option);
       var button = document.createElement('button'), panel = document.createElement('div');
       button.type = 'button'; button.textContent = name; button.dataset.designerTab = index;
       button.id = 'an-designer-' + options.kind + '-tab-' + index;
@@ -510,6 +880,7 @@ window.AngeboteDesign = (function () {
       panel.setAttribute('aria-labelledby', button.id);
       button.setAttribute('aria-controls', panel.id);
       var content = panel;
+      if (index === names.length - 1) { button.dataset.designerTools = ''; panel.appendChild(controls); }
       if (index === 4) {
         content = document.createElement('details'); content.className = 'an-fine an-own-presets';
         var summary = document.createElement('summary'); summary.textContent = 'Eigene Designvorlagen';
@@ -519,6 +890,7 @@ window.AngeboteDesign = (function () {
       tabs.appendChild(button); panels.appendChild(panel);
     });
     function select(index, focus) {
+      tools.value = index;
       tabs.querySelectorAll('button').forEach(function (button, n) {
         button.setAttribute('aria-selected', String(n === index));
         button.setAttribute('aria-pressed', String(n === index)); button.tabIndex = n === index ? 0 : -1;
@@ -526,6 +898,7 @@ window.AngeboteDesign = (function () {
       });
       settings.querySelectorAll('[data-designer-panel]').forEach(function (panel, n) { panel.hidden = n !== index; });
     }
+    tools.onchange = function () { select(Number(tools.value)); };
     tabs.addEventListener('click', function (event) {
       var button = event.target.closest('[data-designer-tab]');
       if (button) select(Number(button.dataset.designerTab));
@@ -543,10 +916,16 @@ window.AngeboteDesign = (function () {
     options.actions.classList.add('an-actions', 'an-designer-save');
     settings.appendChild(options.actions);
     layout.append(settings, options.preview);
+    var splitter = split(layout, settings, options.preview);
+    layout.querySelector('.an-workspace-context').textContent = 'Designvorgabe · ' + options.title + ' · alle Kacheln';
     root.replaceChildren(layout);
     compactHelp(root, help);
     select(0);
-    return { select: select, direct: direct, help: help };
+    expandGroups(root);
+    root._designerUi = { select: select, direct: direct, help: help, destroy: function () {
+      splitter.destroy(); options.preview._pictureView.destroy();
+    } };
+    return root._designerUi;
   }
   function mountCms(root, preview, actions, kind, history) {
     if (root.dataset.designer) {
@@ -568,7 +947,7 @@ window.AngeboteDesign = (function () {
         section.appendChild(legend);
         while (body.firstChild) section.appendChild(body.firstChild);
         var index = /Vorlage/.test(title) ? 0 : /Farben/.test(title) ? 1
-          : /Preisschild und Marker|Position/.test(title) ? 2 : 3;
+          : /Preisschild und Marker|Position|Bezeichnung/.test(title) ? 2 : 3;
         groups[index].push(section);
       } else if (node.querySelector('[data-action=cfgPresetSave]') || node.querySelector('[onclick*="cmsSaveAsDefault"]')) {
         groups[4].push(node);
@@ -689,8 +1068,10 @@ window.AngeboteDesign = (function () {
           root.querySelector('[data-designer-panel="' + index + '"]').replaceChildren.apply(
             root.querySelector('[data-designer-panel="' + index + '"]'), nodes);
         });
+        if (root._objectProperties) root._objectProperties.refresh();
       }
       function html() {
+        if (root._designerUi) root._designerUi.destroy();
         if (surface) surface.destroy();
         surface = null;
         root.innerHTML = '<div class="an-note">Speichern ersetzt den bisherigen Startstandard für neue Getränkeaktionen – nicht die eingebauten Vorlagen. Bestehende Flyer und veröffentlichte Angebote bleiben unverändert. Für eine bestehende Aktion: Aktion öffnen, Gestaltung → Ausgabeziel wählen → „Designstandards übernehmen“, dann speichern und veröffentlichen.</div>'
@@ -862,6 +1243,9 @@ window.AngeboteDesign = (function () {
   }
   return { mount: mount, mountCms: mountCms, mountHomepage: mountHomepage, mountShared: mountShared, prepareCms: prepareCms, compactHelp: compactHelp,
     pictureViewport: pictureViewport, history: history, historyShortcut: historyShortcut,
+    split: split, compactActions: compactActions, objectProperties: objectProperties,
+    expandGroups: expandGroups,
+    fullscreen: fullscreen,
     controls: controls, change: change, previewChoices: previewChoices,
     previewTabs: previewTabs, selectPreview: selectPreview, outputPreview: outputPreview, cards: cards };
 })();

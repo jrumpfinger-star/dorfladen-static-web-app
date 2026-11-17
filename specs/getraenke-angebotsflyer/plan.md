@@ -10,6 +10,176 @@ Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
 ## Entscheidungen
 
+## Produktverbesserungen F52–F59
+
+### Constitution Check
+
+Spezifikation ohne offene Klärungsmarker, bestehende Vanilla-JS-/Python-
+Architektur, keine neuen Dienste/Secrets/Dataverse-Tabellen. Vier Zielansichten,
+isolierte Schreibtests und ausschließlich PR-Preview. Benutzer hat den Erhalt
+der Sichtbarkeitslogik sowie die kompakte Anwendungsübernahme bestätigt.
+
+### Technical Approach und Architektur
+
+Gemeinsame Komponenten in `angebote-design.js` statt parallelem UI-System:
+Ansichtswahl/Splitter, kompakte Objekt-Zusammenfassungen und native modale
+Eigenschaften. Vorhandene Controls samt IDs und Listenern verschieben statt
+kopieren. Dialoge bleiben im zuständigen Root und damit im Vollbildcontainer.
+Während einer Transaktion bestehende Preview-Ereignisse weiterreichen, aber
+Historien-/Dirty-Änderungen bis zur Bestätigung puffern; bei Abbruch den
+gesamten vorherigen fachlichen und Historienstand restaurieren.
+
+Die erneute Layoutkorrektur fasst die vorhandene Bereichsnavigation über
+native Auswahlen zusammen, behält die ursprünglichen Handler und sämtliche
+Ziele bei und stellt mobil die Eingaben ohne Miniatur-Split in den Vordergrund.
+Die Aktionsleiste bleibt erreichbar; die separate Motivansicht bietet immer
+einen Rückweg. Werkzeugauswahl orientiert sich an der tatsächlichen Spaltenbreite.
+Für präzise Mausbedienung ab 600 CSS-px erhalten einzeilige Arbeitsaktionen
+und kompakte Auswahlzeilen eine tatsächliche Höhe von 32 px; gemeinsame
+CSS-Dichtetokens steuern auch ihre Zeilen. Telefone und Grobzeiger behalten
+44 px Trefferhöhe. Native Radios ersetzen die großen 4/6-Kacheln, während
+die Auswahlsemantik und Bedienung vollständig erhalten bleiben.
+Abnahme: TC-F52-04/05, einschließlich tatsächlicher Rechtecke statt
+einer bloß kleineren Buttonfüllung.
+
+Das Modell kapselt eingefrorene Herkunftsbasen, gezielte Objektübertragung,
+Duplizieren mit neuer ID-Zuordnung und Qualitätsbefunde. Herkunftsbasis enthält
+nur Gestaltung, keine zweite Kopie von Produktbildern oder Artikeldaten.
+Bestehende Layouts ohne Basis werden explizit als gespeicherte Gestaltung
+bezeichnet. Aktuelle Vorgaben nur auf ausdrückliche Anforderung laden.
+
+Dataverse behält seine bestehenden atomaren Changesets und If-Matchs.
+Zusätzlicher Revisionsvergleich zwischen gelesenem und aktuellem Stand
+schließt die bisherige Lücke vor dem Changeset: gleiche Artikel-IDs allein
+erkennen zwischenzeitliche Inhaltsänderungen nicht. Verglichen werden alle
+Artikel und der zugehörige Layoutstand. Kein automatischer Konflikt-Retry.
+
+### Key Decisions
+
+| Entscheidung | Wahl und Grund |
+| --- | --- |
+| Speicher-/Publikationslogik | Bestehende Dataverse-/Feature-Verträge getrennt erhalten; keine zusätzliche Freigabe erfinden |
+| Vorschau | Echte vorhandene Canvas-Ausgabe plus Kachelausschnitt, kein zweiter vereinfachter Renderer |
+| Modalität | Native Dialoge mit transaktionalen Historienadaptern und festen Footeraktionen |
+| Vorlagen | Eingefrorene Gestaltungsbasis; Altbestand ohne fingierte Vererbung |
+| Mehrfachübertragung | Explizite Eigenschaften und Zielartikel, ein Undo-Schritt; keine Preise oder Bildzuordnungen |
+| Qualitätscheck | Bestehende Pflichtdaten-/Rendererfehler wiederverwenden, optionale Bild-/Kontrasthinweise getrennt |
+
+### File-Level Change Map
+
+| Pfad | Änderung | Zweck |
+| --- | --- | --- |
+| `static-site/js/angebote-design.js` | ergänzen | Gemeinsame kompakte Hülle, Sichtbarkeit/Ansichten, Objektfenster, Transaktionen |
+| `static-site/css/angebote.css` | ergänzen | Systemtypografie, dichte Felder, responsive Raster und Dialoge nach gemeinsamem Schema |
+| `static-site/js/angebote-modell.js` | ergänzen | Quellenbasis, Übertragung/Duplizierung, gezielte Qualitätsbefunde und gleiche Ausgabe |
+| `static-site/js/angebote-dataverse.js` | ergänzen | Revisionsstand und korrekter gespeicherter Status; keine geänderte Sichtbarkeitslogik |
+| `static-site/js/cms-angebote.js` | ergänzen | Duplizieren ohne Write, Erfassungsstatus, Verlassensschutz und Fehlerfokus |
+| `static-site/js/angebote-editor.js` | ergänzen | Kontext, Herkunft, Dialogadapter, Mehrfachübertragung, Qualitätsprüfung, Speicherstatus |
+| `static-site/cms.js` | ergänzen | Getrennte Standarddesigner-Adapter, Dirty-/Historienrestaurierung |
+| `api/angebote/__init__.py` | ergänzen | Geladenen Revisionsstand liefern und vor atomaren Änderungen vergleichen |
+| `api/shared/angebote.py` | ergänzen | Begrenzter rückwärtskompatibler Herkunftsvertrag |
+| `tests/cms-angebote-ablauf.spec.js` | ergänzen | Isolierter Roundtrip, Kopien, Zustände, Konflikte |
+| `tests/angebote-flyer.spec.js` | ergänzen | Echte Renderer-/Fenster-/Ziel-/Historienparität |
+| `tests/test_angebote_dataverse_actions.py` | ergänzen | Same-ID-Inhaltskonflikte ohne echten Datenzugriff |
+| `tests/test_angebote.py` | ergänzen | Herkunftsvalidierung und Roundtrip |
+| `docs/ui-designstandard.md` und vorhandene Anwenderhilfe | nachführen | Freigegebene Bedienung und korrekte Speichersemantik |
+| CMS-Generatorquellen/-ausgaben | bei nötiger Markupänderung generieren | Keine manuellen Abweichungen zwischen CMS-Varianten |
+
+### Vorher-/Nachher-Übernahmematrix
+
+| Vorhandene Funktion/Eigenschaften | Erhaltener Zielort | Prüfung |
+| --- | --- | --- |
+| Name, Zusatz, Preise, Menge/Gebinde/Pfand, Kennungen | Direkte Artikelzeilen/Erfassung | F42, TC-F58-01 |
+| Artikelsuche, Stamm-VK, EAN, Bildsuche/Datei/Paste/Entfernen | Erfassung und bestehendes Bildmenü | F42, TC-F57-01, TC-F58-01 |
+| Gesamtvorlagen, Dichte, eigene Vorlagen, Hintergründe/Dekoration | Vorlagen-/Weitere-Gestaltung-Reiter | F35/F38, TC-F52-01 |
+| Schriftart/-größe/-farbe, Namen/Zusatz, Textausrichtung | Objektfenster Schrift; übrige Textwerte erhalten | F48/F50, TC-F52-01 |
+| Preisschildvorgaben inkl. Rot/Gelb, alle Farben/Form/Rundung/Neigung/Größe | Objektfenster Preisschild | F49, TC-F52-01 |
+| Bildposition/Skalierung/Drehung, Ghost, Duplikat/Kopien, eigenes Bild und Reset | Bildobjektfenster und vorhandene Direktwerkzeuge | F27/F44, TC-F52-01 |
+| Freie Texte/Flächen/Logo, Ebenen, Sichtbarkeit, Transparenz, genaue Positionen | Vorhandene Element-/Weitere-Gestaltung-Werkzeuge | F3/F27, TC-F58-01 |
+| Erste echte Musterkachel, Ziehen/Skalieren/Drehen, Tastatur-/Touchäquivalente | Tatsächliche Motivfläche plus Eigenschaften | F44/F50, TC-F58-01 |
+| Vier getrennte Zielgestaltungen, native Waage | Zielwahl, jeweilige echte Vorschau/Export | F23/F47, TC-F58-01 |
+| Undo/Redo, Speichern, Verwerfen, Standards übernehmen | Gemeinsame feste Aktionen; Objektübernahme ersetzt Speichern nicht | F39/F55, TC-F52-01 |
+| Einpassen/Zoom/Splitter/Vollbild | Ansichtssteuerung, sichtbarer Vollbildknopf | F43/F51, TC-F52-02 |
+| Druck/Teilen/Waage, Ausgabeprofile, Fehlerrückmeldung | Bestehender Ausgabereiter plus Qualitätsprüfung | F6/F56, TC-F58-01 |
+| Alte Feature-Entwürfe/Freigaben, Dataverse-Aktionen, Kundenansicht | Bestehende getrennte Datenwege | F4/F18/F55, TC-F58-01 |
+
+### Test Strategy
+
+- Unit: Vorhandenes `unittest` für Angebots- und Dataverse-Verträge; Ausgangsbasis
+  76 Tests erfolgreich. Kein zusätzliches pytest erforderlich.
+- Integration: Vorhandene Playwright-Specs mit vollständig abgefangenen
+  API-Schreibwegen und lokalem Static-Server; alle vier Viewports.
+- TC-F52-01/02 und TC-F54-01: tatsächliche Dialog-/Feld-/Canvas-Geometrie,
+  Tastatur/Fokus, Live-Pixel, Cancel/Apply/Undo/Redo und Vollbild.
+- TC-F53-01/02: Quellenbasis, Altbestand, getrennte Ziele und Wiederöffnung.
+- TC-F55-01/02: tatsächliche Statusübergänge und zwei geladene Revisionen;
+  API-Prüfung vor Changeset und UI-Erhalt nach 409.
+- TC-F56-01: konkrete Daten-/Renderfehler sowie getrennte Hinweise/Fehlerfokus.
+- TC-F57-01/02: Kopie ohne Write, ID-/Layoutzuordnung und selektive Übertragung.
+- TC-F58-01: vollständiger Erfassungs-/Gestaltungs-/Speicher-/Ausgaberoundtrip
+  plus Regression der offenen F46–F51 und Übernahmematrix.
+- TC-F59-01: normale Branchveröffentlichung, Workflowerfolg und schreibfreie
+  Previewprüfung des tatsächlichen Commitstands.
+
+### Risks & Mitigations
+
+| Risiko | Gegenmaßnahme |
+| --- | --- |
+| Preview teilt produktives Dataverse | Tests lokal mit Mocks; live ausschließlich lesen |
+| Verschobene Controls verlieren Listener | Vorhandene Nodes und Rootdelegation erhalten; Matrix-/Ereignistests |
+| Popup-Abbruch beschädigt Redo/Dirty | Ganze Transaktion sichern und exakt restaurieren |
+| Vorlagenherkunft im Altbestand unbekannt | Ehrlicher Zustand ohne erfundene Basis oder automatische Migration |
+| Neue Revisionsprüfung vs. alte Clients | Vertrag und alle abhängigen Aufrufer/isolierten Testdoubles gemeinsam ändern |
+
+### Rollout
+
+SDD zuerst, danach geordnete Umsetzung und gezielte Prüfungen. Keine
+Veröffentlichung eines nur teilweise grünen Stands. Vorhandene Änderungen
+F46–F51 erhalten und mitprüfen. Normaler Commit/Push auf bestehenden
+Featurebranch, PR-Preview abwarten; keine Produktion und kein main-Merge.
+
+F50: Bezeichnung/Zusatz in einem Originalrenderer-Helfer zeichnen und
+echte Gruppenmetadaten liefern. Namensschrift, -größe, -farbe und direkte
+Namens-Overrides in bestehende Konfigurations-/Snapshot-Verträge aufnehmen.
+Native Zeigerbedienung der ersten Plakatkachel ausdrücklich prüfen.
+
+F51: Vollbildschaltfläche außerhalb der scrollenden Werkzeugfelder
+anbringen; vorhandene Fullscreen-API und explizite Fehleranzeige verwenden.
+Gemeinsame Designhülle und Angebotswerkzeugleiste behalten ihre Zustände.
+
+F49: Zentralen TAG_PRESETS-Vertrag wiederverwenden. Eigenständige,
+validierte Preisschildwahl im Zielstil speichern; Altentwürfe mit
+Gesamtvorlage `price-image` weiter lesen, explizite Vorgaben haben Vorrang.
+Preisbild-Darstellung von der Gesamtvorlagenkennung entkoppeln;
+keine neue Gesamtvorlage ergänzen. Backend-Vertrag und Roundtrip testen.
+
+F48: Bezeichnung und Zusatztext gemeinsam im Namensbereich rendern,
+normale Detailgröße mit Gewicht 600. Ein bisher separat gespeichertes
+Beschreibungselement liefert nur die Detailtypografie, nicht eine
+unabhängige Position. Renderer und Editor verwenden dieselbe Gruppen-
+Geometrie; ursprüngliche Artikeldaten und Ausgabeziele erhalten.
+Originalrenderer und kompakte Ausgaben entsprechend abgleichen.
+
+F47: CMS-Originalrendering bleibt für Sammelflyer/Karte/Einzelflyer erhalten.
+Das Waagenziel verwendet stattdessen den vorhandenen nativen Zielrenderer
+und seine getrennten Elemente/Stile. Editor-Auswahl, Inspector und
+Stiländerungen unterscheiden echte CMS-Ziele vom freien Waagenziel.
+Bearbeitungsgruppen einmalig pro DOM-Knoten öffnen; Auswahl-/Aktionsmenüs
+ausnehmen. Pixelvergleich gegen native Zielgestaltung und UI-Roundtrip prüfen.
+
+F46: Gemeinsame, ansichtsbezogene Splitter-/Aktionsleistenhelfer in
+`angebote-design.js` verwenden; keine zusätzliche Bibliothek oder
+Persistenz. Bestehende DOM-Controls verschieben, IDs/Ereignisse erhalten.
+Standarddesigner zeigen allgemeine Werkzeuge in einem eigenen Reiter,
+nicht vor jedem aktiven Feldpanel. Speichern/Undo/Redo plus Aktionsmenü
+ersetzen mehrzeilige Fußleisten. Der Hilfekonverter erfasst auch statische
+`div.an-note`, lässt Status-/Fehler-/interaktive Inhalte intakt.
+Vorschaudialog und freier Ersteller erhalten denselben zweispaltigen
+Arbeitsrahmen; der wöchentliche Vorschaueditor trennt Bildhost und Tools
+über den bestehenden `toolsHost`-Vertrag. ResizeObserver passt Motive
+an verfügbare Fläche und verstellte Breite an. Messbare Mindestflächen
+und Kontraste prüfen, statt nur DOM-Sichtbarkeit als UX-Nachweis zu nehmen.
+
 F45: Die bestehenden CSS-Raster des Aktionsvorschaudialogs spiegeln:
 bei freier Gestaltung Element-/Artikelbereich und Gestaltung links,
 Motiv rechts; bei Original-Wochenvorlagen zusätzlich das innere

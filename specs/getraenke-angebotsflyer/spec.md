@@ -1187,6 +1187,523 @@ Keine Änderungen an Renderer, Daten oder APIs.
   unveränderte Schreibanzahl beim Reiterwechsel auf vier Ansichten.
   Vorhandene Zieh-, Dreh-, Farb-, Werkzeugreiter- und Speicherfälle bestehen.
 
+## F46: Arbeitsraum statt dauerhaft sichtbarer Werkzeugblöcke
+
+**F46:** Standarddesigner (Plakat, Einzelflyer, Getränke, HP-Sonderangebote),
+Aktionsvorschauen und Angebotserstellung verwenden links die Erfassung/
+Gestaltung und rechts das Motiv. Die tatsächlichen aktiven Eingabefelder
+erhalten mindestens 50 % der Höhe ihrer Werkzeugspalte, auch nach
+Speichermeldungen und Reiterwechseln. Navigation, allgemeine Werkzeuge
+und Aktionen dürfen diesen Platz nicht verdrängen.
+
+Die Eingaben belegen auf Desktop/Tablet standardmäßig etwa 60 Prozent,
+mindestens die Hälfte der verfügbaren Workspacebreite. Eine erkennbare,
+per Maus/Touch und Tastatur verstellbare Trennlinie verändert die Breite
+innerhalb dieser Grenzen. Die Aufteilung ist nur Ansichtszustand:
+keine Design-, Artikel- oder API-Schreibvorgänge. Mobil bleibt die
+Eingabe im Vordergrund; Motiv und geteilte Ansicht bleiben direkt wählbar.
+
+Speichern bleibt dauerhaft erreichbar. Undo/Redo werden beschriftete
+Symbolschaltflächen mit Hilfe; seltene Aktionen sind über „Weitere Aktionen“
+erreichbar. Element-, Format-, Zoom- und Ausgabeaktionen verdrängen nicht
+die Eingaben anderer Werkzeugreiter. Lange statische Hinweise einschließlich
+des Getränke-Startstandardtextes sind ausschließlich über Infohilfen
+erreichbar; echte Fehler/Status und Wiederholungsaktionen bleiben sichtbar.
+Schriftgrößen und Bedienflächen werden nicht zur Platzgewinnung verkleinert.
+Werkzeugbereich, Eingabefelder, aktive Reiter und Bildfläche sind deutlich
+getrennt: Textkontrast mindestens 4,5:1, relevante Grenzen mindestens 3:1;
+Tastaturfokus und erzwungene Systemfarben bleiben erkennbar.
+
+Der gleiche Aufbau gilt bei neuer Angebotserstellung und bei gespeicherten
+Aktionen, für alle vier Ausgabeziele und CMS-/Kiosk-/Angebotseinstiege.
+Die weiteren Designreiter (Homepage, Wochenplan, gemeinsame Einstellungen)
+und Erfassungsdialoge werden auf gleiche Platz-/Hinweisprobleme geprüft.
+Dateneingaben, Pflichtwerte, Bilderfassung, Historie, Renderer und
+ausdrückliche Speicher-/Freigabewege bleiben erhalten.
+
+- TC-F46-01: Alle vier Standarddesigner: echte aktive Feldfläche mindestens
+  50 % der Werkzeugspaltenhöhe, keine dauerhaft davorliegenden allgemeinen
+  Werkzeugblöcke; auch nach Statusanzeige. Hinweise nur in erreichbarer Hilfe.
+- TC-F46-02: Splitter per Ziehen und Pfeiltasten bedienbar; Eingaben bleiben
+  mindestens 50 % breit, Grenzen, Größenwechsel und mobile Anordnung stimmen.
+  Keine Mutation, kein verlorener Gestaltungsstand oder Fokus.
+- TC-F46-03: Aktionsvorschau und Angebotserstellung behalten tatsächliche
+  Eingaben, Ausgabeziele, Bilder, Undo/Redo und explizites Speichern;
+  Hauptarbeitsraum und Bildreinheit erfüllen dieselben Grenzen.
+- TC-F46-04: Sichtbare Bereichs-/Feldgrenzen mindestens 3:1, kritischer Text
+  mindestens 4,5:1, lesbare Schrift und Systemkontrast auf vier Ansichten.
+
+## F47: Echtes Waagenziel und offene Bearbeitungsgruppen
+
+**F47:** „Waage“ zeigt und bearbeitet auch bei Original-Wochenangeboten
+das eigenständige Waagenlayout (800 × 462), keinen eingepassten A4-Flyer.
+Vorschau und tatsächlicher Waagenexport verwenden dieselbe Zielgestaltung.
+Andere Ausgaben und vorhandene Artikel-/Preisdaten bleiben unverändert.
+Bearbeitungsgruppen starten aufgeklappt; manuelles Einklappen bleibt möglich.
+Aktionsmenüs und explizite Vorlagenauswahldialoge sind keine Feldgruppen.
+
+- TC-F47-01: Original-Wochenangebot im Waagenziel entspricht pixelgenau
+  der nativen gespeicherten Waagen-Zielgestaltung, hat Querformat und
+  echte Waagen-Elemente statt A4-Metadaten. Zieländerung bleibt getrennt.
+- TC-F47-02: Bearbeitungsgruppen sind beim Öffnen expandiert, auch nach
+  Ausgabe-/Werkzeugwechsel; Aktionsmenüs bleiben geschlossen.
+
+## F48: Zusatztext gehört zur Bezeichnung
+
+**F48:** Ein vorhandener Zusatztext steht unmittelbar unter der
+Artikelbezeichnung, in normaler Detail-Schriftgröße und Semibold (600).
+Er ist kein unabhängiger Textblock unter Preis oder Gebinde. Bezeichnung
+und Zusatztext bilden beim Verschieben und Skalieren eine gemeinsame
+Gruppe. Dies gilt für alle Ausgabeziele, Originalvorlagen, Vorschau und
+Export. Ohne Zusatztext entsteht keine Leerzeile; lange Texte umbrechen
+innerhalb des gemeinsamen Bereichs ohne Überschneidung mit Preis/Gebinde.
+Artikelinhalt, Preise und getrennte Zielgestaltung bleiben erhalten.
+
+- TC-F48-01: „Das Original aus Bayern“ steht bei Getränke-/Wochenangeboten
+  direkt unter dem Namen, genau einmal und mit Schriftgewicht 600;
+  alle vier Ziele, Vorschau und Export verwenden dieselbe Anordnung.
+- TC-F48-02: Lange/mehrzeilige und leere Zusatztexte, bestehende
+  Gestaltung, Verschieben/Skalieren und Speichern/Neuladen bleiben korrekt.
+
+## F49: Preisschild unabhängig von der Gesamtvorlage wechseln
+
+**F49:** Die vorhandene Preisschild-Vorgabenauswahl enthält auch Rot/Gelb
+und verwendet dieselben zentralen Preisschildvorgaben wie die CMS-
+Standardgestaltung. Jede Vorgabe kann gegen jede andere getauscht werden,
+auch in bestehenden Rot/Gelb-Entwürfen. Der Austausch betrifft nur das
+Preisschild, nicht Gesamtvorlage, Bilder, Bezeichnung oder Artikelpreise.
+Rot/Gelb wird nicht als zusätzliche neue Gesamtvorlage angeboten;
+bereits so gespeicherte Entwürfe bleiben lesbar und austauschbar.
+Speichern/Neuladen, Zieltrennung, Undo/Redo, Vorschau und Export erhalten
+die gewählte Vorgabe einschließlich der Rot/Gelb-Farbanpassungen.
+
+- TC-F49-01: Rot/Gelb in bestehender Preisschildauswahl wählen und durch
+  jede andere Vorgabe ersetzen; Gesamtgestaltung und Artikeldaten erhalten.
+- TC-F49-02: Alte Rot/Gelb-Entwürfe, getrennte Ziele, Farben,
+  Undo/Redo und expliziter Speicherrücklauf funktionieren.
+- TC-F49-03: Preisfarbe, Hintergrund/Stattpreis-Streifen, Kontur,
+  Stattpreis und Durchstreichung sind einstellbar. Jede anwendbare
+  Änderung an diesen Farben, Form, Rundung, Neigung und Größe verändert
+  unmittelbar die tatsächlichen Vorschaupixel, auch bei Magazinvorlagen.
+  Originalrenderer, gespeicherter Stand und Export stimmen überein.
+
+## F50: Erste Plakatkachel direkt und Bezeichnung konfigurierbar
+
+**F50:** Im Plakat-Standarddesigner sind Bild, Preis und Bezeichnung
+der ersten Kachel direkt im tatsächlichen Motiv auswählbar, verschiebbar,
+skalierbar und drehbar. Die Auswahl öffnet die passenden Eingaben, ohne
+die Bildfläche zu verdrängen. Bezeichnung und zugehöriger Zusatz bleiben
+eine gemeinsame Gruppe. Schriftart, Schriftgröße und Farbe der
+Bezeichnung sind in Plakat-/Einzelflyervorlagen einstellbar und verändern
+die Vorschau unmittelbar. Standards gelten für alle Kacheln des Ziels;
+die erste ist die Musterkachel. Getrennte Ziele, Historie, explizites
+Speichern und identischer Originalexport bleiben erhalten.
+
+- TC-F50-01: Erste echte Plakatkachel per Zeiger auswählen und ziehen,
+  nicht nur über eine Auswahlliste; echte Metadaten/Pixel ändern sich.
+- TC-F50-02: Namensschrift, Größe und Farbe verändern Original- und
+  Magazinvorlagen; Zusatztext bleibt zugeordnet, Speicherrücklauf besteht.
+
+## F51: Vollbild dauerhaft erreichbar
+
+**F51:** Alle Designbereiche und Angebots-Arbeitsbereiche bieten eine
+sichtbare, vom aktiven Werkzeugreiter unabhängige Vollbildschaltfläche.
+Vollbild umfasst Eingaben und Motiv, bleibt auf allen Reitern bedienbar
+und kann per Schaltfläche oder Escape verlassen werden. Entwurf,
+Auswahl, Historie und Speicherstatus bleiben erhalten; kein automatisches
+Speichern. Nicht unterstützte Browser zeigen einen verständlichen Hinweis.
+
+- TC-F51-01: Vollbild aus Stil/Farben und Angebotsbearbeitung öffnen,
+  Reiter wechseln und wieder verlassen; Zustand und Schreibanzahl erhalten.
+
+## Ergänzung: Produktverbesserungen und kompakte Arbeitsoberfläche
+
+Status: Umsetzung in der Anwendung und Veröffentlichung ausschließlich in der
+PR-Preview ausdrücklich freigegeben. Der Nutzer bestätigt den Erhalt der
+bestehenden Speicher-/Sichtbarkeitslogik und die Übernahme des kompakten
+Mockup-Stils. Dieser Abschnitt konkretisiert F46 und ergänzt F52–F59.
+
+### Overview
+
+Bestehende Vanilla-JS-Designer und Angebotserfassung erhalten einen gemeinsamen
+kompakten Bedienrahmen, ohne ihre Fachseiten, Speicherwege oder Funktionen zu
+verschmelzen. Änderungen sollen verständlich, rücknehmbar und nach erneutem
+Öffnen in allen Ausgaben identisch sein. Vorhandene Funktionen werden
+wiederverwendet; bereits begonnene F46–F51 gehören zur Abnahme.
+
+### Goals
+
+- Weniger Scrollen bei gut lesbaren Feldern und mindestens 44-px-Bedienflächen.
+- Eindeutige Reichweite, Herkunft und Speicherzustände ohne überraschende Writes.
+- Verlässlicher Gesamtablauf von Artikelauswahl bis tatsächlicher Ausgabe.
+- Isolierte automatische Prüfung auf den vier verbindlichen Zielansichten.
+
+### Non-Goals
+
+- Keine gemeinsame Design-/Angebotsfachseite, keine verlorenen Eigenschaften.
+- Kein neuer Veröffentlichungsknopf für Dataverse-Aktionen, keine Änderung
+  ihrer zeitabhängigen Sichtbarkeit; Feature-Altbestand behält seine Freigabe.
+- Keine Produktion, echten Testaktionen oder automatischen Waagensendungen.
+- Kein stilles Überschreiben konkurrierender Änderungen, kein Autosave.
+- Keine fachlichen Entfernungen oder Zusammenlegungen ohne Einzelfreigabe.
+
+### F52: Kompakter Arbeitsrahmen mit vollständigen Objekt-Eigenschaften
+
+#### F52 Description
+
+Der freigegebene Mockup-Stil und der
+[UI-Designstandard](../../docs/ui-designstandard.md) gelten für die echten
+Design- und Angebotsarbeitsbereiche. Design und Angebote bleiben getrennt.
+
+#### F52 Inputs
+
+Bestehende Inhalte, Ziele und Gestaltungseigenschaften; aktuelle Containergröße,
+Bedienart, Auswahl und lokaler ungespeicherter Entwurf.
+
+#### F52 Behaviour / Acceptance
+
+- Häufige Artikel-/Preis-/Pfandeingaben bleiben direkt bearbeitbar.
+- Schrift, Preisschild und Bilddarstellung erhalten beschriftete kompakte
+  Zustandszusammenfassungen und vollständige Eigenschaftenfenster.
+- Änderungen werden live gezeigt. Übernehmen bildet genau einen Undo-Schritt;
+  Abbrechen, Schließen und Escape stellen den vorherigen Entwurf samt
+  Speicherstatus und Undo/Redo wieder her. Kein implizites Speichern.
+- Native modale Bearbeitung sperrt Hintergrundaktionen. Fokus kehrt zurück;
+  Außenklick übernimmt oder verwirft nichts. Vollbild bleibt kompatibel.
+- Eigenschaftenraster nutzen je tatsächlicher Breite 1–3 Spalten. Keine
+  abgeschnittenen Labels; kompakte Feldrahmen in mindestens 44-px-Trefferflächen.
+- Linke Eingaben erhalten standardmäßig etwa 60 Prozent, mindestens die Hälfte
+  der geteilten Breite; die Vorschau bleibt sinnvoll nutzbar. Ansichten
+  „Geteilt“, „Nur Eingaben“ und „Nur Motiv“ sind erreichbar; mobil Eingaben zuerst.
+- Plattform-Systemschrift, adaptive Größen, UI-Gewichte maximal 600.
+- Die Designnavigation wird ohne Funktionsverlust in einer Bereichsauswahl
+  zusammengefasst. Schmale Werkzeugspalten zeigen eine vollständige Auswahl
+  statt angeschnittener Reiter. Mobil stehen zunächst Eingaben und eine
+  dauerhaft erreichbare Aktionsleiste im Vordergrund; Motiv bleibt separat
+  groß erreichbar.
+- Einzeilige Arbeitsbuttons und kompakte Auswahlzeilen sind bei präziser
+  Mausbedienung ab 600 CSS-px tatsächlich 32 px hoch. Touch-/Grobzeiger und
+  Telefone behalten mindestens 44 px Trefferhöhe. Keine reine Verkleinerung
+  der Füllung in unverändert hohen Maus-Zeilen und keine Breitenänderung.
+- Alle bisherigen Eigenschaften, Sonderfälle, Speicher- und Bildwege erhalten
+  eine überprüfbare Vorher-/Nachher-Zuordnung.
+
+#### F52 Test Cases
+
+**TC-F52-01: Vollständige transaktionale Objektfenster**
+- Setup: Bereits geänderter ungespeicherter Entwurf, vorhandene Undo-/Redo-Schritte.
+- Action: Schrift, Preisschild und Bild ändern; abbrechen und danach übernehmen.
+- Expected: Abbruch erhält exakt den vorherigen Stand; Übernahme erzeugt einen
+  Undo-Schritt; unveränderte Übernahme keinen. Fokus, Validierung und alle
+  bisherigen Eigenschaften bleiben erreichbar; keine API-Schreibvorgänge.
+
+**TC-F52-02: Tatsächlich kompakter responsiver Arbeitsrahmen**
+- Setup: Vier Zielansichten, kurze Höhe und durch Splitter verengte Spalte.
+- Action: Reiter/Ansicht wechseln, Fenster skalieren und Vollbild verwenden.
+- Expected: Kein horizontaler Überlauf, 32-px-Mausaktionen beziehungsweise
+  mindestens 44-px-Touchflächen gemäß TC-F52-05,
+  passende 1–3 Spalten und erreichbare Aktionen. Sichtbare Eingaben erfüllen
+  die Platzbudgets; Motiv zählt nicht als Eingabefläche. Ansicht ändert keine Daten.
+
+**TC-F52-04: Eingaben statt abgeschnittener mobiler Miniansicht**
+- Setup: Vier Zielansichten mit echten Standarddesignern.
+- Action: Bereich, Werkzeug und Arbeitsansicht wechseln; Motiv öffnen und
+  wieder zu den Eingaben zurückkehren.
+- Expected: Aktive Feldfläche mindestens halbe Fensterhöhe, Speichern und
+  Eigenschaften erreichbar, keine abgeschnittenen Navigationen oder Writes.
+
+**TC-F52-05: Tatsächlich niedrigere Maus-Buttons**
+- Setup: Getrennte Design- und Angebotsseiten mit Maus, Telefon und echtem Touchkontext.
+- Action: Aktionshöhe, Vorlagenzusammenfassung, 4/6-Auswahl und
+  Eigenschaften messen; 4/6 per Randklick und Tastatur wechseln.
+- Expected: Einzeilige Maus-Kontrollen tatsächlich 32 px hoch, Touchziele
+  mindestens 44 px. Beschriftung, Auswahl und Fokus bleiben vollständig;
+  Buttonbreiten werden nicht zur vermeintlichen Höhenkorrektur verändert.
+
+### F53: Verständliche Reichweite und sichere Vorlagenherkunft
+
+#### F53 Description
+
+Nutzer erkennen, ob sie eine Designvorgabe oder eine konkrete Aktion bearbeiten,
+welches Ausgabeziel und welche Kachel beziehungsweise Objekte betroffen sind.
+Bereits gespeicherte Angebote behalten ihre Gestaltung unabhängig von späteren
+Änderungen an Standards.
+
+#### F53 Inputs
+
+Vorhandene Zielgestaltung, eingefrorene Standardwerte bei Erstellung und
+ausdrückliche Auswahl der zurückzusetzenden Objektgruppe.
+
+#### F53 Behaviour / Acceptance
+
+- Kompakter Kontext nennt „Designvorgabe“ oder Aktionsname, Ziel und Reichweite.
+- Neue Angebote speichern eine begrenzte Herkunftsbasis ihrer übernommenen
+  Gestaltung. Objektgruppen unterscheiden „Aus Vorlage“ und „Individuell angepasst“.
+- Altbestand ohne verlässliche Herkunft zeigt „Gespeicherte Gestaltung“ und
+  behauptet keine Vererbung. Es werden keine Werte rückwirkend geraten.
+- „Auf Vorlagenwert zurücksetzen“ wirkt nur auf die bezeichnete Objektgruppe
+  und das gewählte Ziel. Artikeldaten und andere Ziele bleiben unverändert.
+- Aktuelle Standards werden nur durch bewusstes Laden und bestätigtes
+  Übernehmen angewendet. Abbruch und Undo erhalten den vorherigen Entwurf.
+- Standardänderungen verändern bestehende Angebote beim Laden nicht automatisch.
+
+#### F53 Test Cases
+
+**TC-F53-01: Herkunft, Reichweite und gezieltes Rücksetzen**
+- Setup: Angebot mit übernommenen Standardwerten und unabhängigem Waagenziel.
+- Action: Preisschild anpassen und auf Vorlagenwert zurücksetzen.
+- Expected: Herkunftsanzeige folgt der tatsächlichen Abweichung; nur die
+  gewählte Gruppe/Zielgestaltung ändert sich, Undo/Redo und Roundtrip bestehen.
+
+**TC-F53-02: Kein überraschendes Aktualisieren**
+- Setup: Gespeicherte Aktion und Altaktion ohne Herkunft; Standards danach ändern.
+- Action: Beide erneut öffnen; aktuelle Vorgabe ausdrücklich laden/abbrechen.
+- Expected: Bestehende Gestaltung bleibt erhalten, Altbestand wird korrekt
+  bezeichnet; erst bestätigtes Übernehmen aktualisiert den gewählten Umfang.
+
+### F54: Lesbare mobile Detailvorschau
+
+#### F54 Description
+
+Ein Eigenschaftenfenster zeigt bei verdecktem Hauptmotiv das tatsächlich
+bearbeitete Objekt beziehungsweise die ausgewählte Kachel ausreichend groß,
+nicht lediglich einen unlesbaren vollständigen Flyer.
+
+#### F54 Inputs
+
+Aktuelle echte Renderausgabe, Auswahl-/Kachelgeometrie und Fensterbreite.
+
+#### F54 Behaviour / Acceptance
+
+- Dieselbe Renderausgabe liefert einen eingepassten Ausschnitt ohne neue
+  Beispieldaten oder abweichende Motivdarstellung.
+- Mindestens 160 CSS-px nutzbare Ausschnittbreite bei 375-px-Fensterbreite;
+  aktuelle Schrift-/Preis-/Bildänderungen sind unmittelbar sichtbar.
+- Gesamtmotiv bleibt erreichbar. Ausschnitt, Zoom und Ansicht verändern weder
+  Gestaltung noch Speicherstatus; Eingaben und Footer bleiben erreichbar.
+
+#### F54 Test Cases
+
+**TC-F54-01: Echte Detailansicht statt Miniatur**
+- Setup: Mobiler Angebots-/Designerbereich mit ausgewählter erster Kachel.
+- Action: Eigenschaften öffnen, Farbe/Größe ändern, Gesamtmotiv ansehen.
+- Expected: Ausschnitt mindestens 160 px breit und aus denselben aktuellen
+  Motivpixeln; Änderung sichtbar, kein Write oder zusätzlicher Undo-Schritt.
+
+### F55: Eindeutige Zustände und Schutz vor Datenverlust
+
+#### F55 Description
+
+Speicherstatus ist wahrheitsgemäß und unabhängig von rein visuellen Änderungen.
+Bestehende Dataverse-/Feature-Speicherlogik bleibt ausdrücklich erhalten.
+
+#### F55 Inputs
+
+Dirty-/Busy-Zustand, gespeicherter Stand, Berliner Tagesdatum, Gültigkeitszeitraum,
+vorhandene Feature-Freigabe und geladener Versionsstand.
+
+#### F55 Behaviour / Acceptance
+
+- Dataverse: „Ungespeichert“, „Wird gespeichert“, „Gespeichert · Geplant/Aktiv/
+  Abgelaufen“ beziehungsweise sichtbarer Speicherfehler. Hinweis, dass Speichern
+  die bestehende Sichtbarkeit im Gültigkeitszeitraum steuert.
+- Feature-Bestand: Entwurf und vorhandene Freigabe bleiben getrennt bezeichnet.
+  Keine falsche Behauptung, ein gespeicherter Dataverse-Stand sei privat.
+- Eigenschaften-Übernahme ersetzt Seitenspeichern nicht. Ansichtswechsel sind
+  keine Änderungen. Verlassen geänderter Eingaben erfordert Bestätigung;
+  Browsernavigation erhält den nativen Schutz bei ungespeicherten Änderungen.
+- Gleichzeitige Bearbeitung wird anhand des beim Lesen erhaltenen Standes
+  serverseitig geprüft. Konflikte überschreiben nichts; Entwurf bleibt offen
+  und bietet bewusstes Neuladen nach Verwerfbestätigung, kein blindes Retry.
+- Auch unveränderte Artikel-IDs dürfen keinen inzwischen geänderten Inhalt
+  überschreiben. Löschungen verwenden denselben Konfliktschutz.
+
+#### F55 Test Cases
+
+**TC-F55-01: Wahrheitsgemäßer Status und fehlgeschlagenes Speichern**
+- Setup: Geplante/aktive/abgelaufene Dataverse-Aktionen und Feature-Entwurf.
+- Action: Ändern, Popup abbrechen/übernehmen, Speichern erfolgreich/fehlgeschlagen.
+- Expected: Richtige getrennte Status, kein Erfolg bei Fehler; Entwurf bleibt
+  erhalten. Verlassen warnt nur bei echten ungespeicherten Änderungen.
+
+**TC-F55-02: Zwei Bearbeitungen desselben Inhalts**
+- Setup: Zwei Clients laden denselben Stand mit identischen Artikel-IDs.
+- Action: Client A speichert; Client B versucht Speichern oder Löschen.
+- Expected: B erhält verständlichen Konflikt ohne Teiländerungen; sein Entwurf
+  bleibt offen. Bewusst neu geladener Stand kann wieder gespeichert werden.
+
+### F56: Qualitätsprüfung mit direktem Weg zur Fehlerstelle
+
+#### F56 Description
+
+Vor tatsächlicher Ausgabe prüft die Anwendung Daten und die echte
+Zielrenderausgabe. Eine kompakte erreichbare Prüfung trennt Fehler und Hinweise.
+
+#### F56 Inputs
+
+Angebotsdaten, Ausgabeziel, Bilddimensionen und tatsächliche Rendergeometrien.
+
+#### F56 Behaviour / Acceptance
+
+- Bestehende Pflichtdaten-/Zeitraum-/Preis-/Pfandprüfungen bleiben blockierend.
+- Abgeschnittene oder außerhalb der Ausgabe liegende Pflichttexte werden
+  blockierend gemeldet; Bildfehler bei zugeordnetem Bild ebenfalls.
+- Fehlendes optionales Bild, geringe effektive Bildauflösung und gemessener
+  geringer Text-/Hintergrundkontrast sind erkennbare Hinweise, kein pauschales
+  Speicherverbot. Hinweise dürfen bewusst bestätigt werden.
+- Meldungen nennen Artikel, Ziel und Grund in verständlichem Deutsch und bieten
+  eine direkte Auswahl der betroffenen Kachel/Eigenschaft beziehungsweise Zeile.
+- Keine Scheinergebnisse: nicht sicher prüfbare Kriterien nicht als bestanden
+  ausweisen. Vorschau, Prüfung und tatsächliche Ausgabe verwenden denselben Renderer.
+- Umsetzung: „Qualität prüfen“ steht in Erfassung, Ausgabeschritt und Vorschau
+  bereit. Vor Veröffentlichen, Drucken/PDF, Download, Waagenvorbereitung und
+  Speichern einer Dataverse-Aktion blockieren ausschließlich Fehler. Hinweise
+  werden getrennt aufgeführt und über „Hinweise bestätigen“ bewusst bestätigt.
+- Schwellen: Bild über etwa 143 % vergrößert (effektive Dichte unter 70 %) und
+  Schrift/Hintergrund unter 3 : 1 sind Hinweise. Kontrast wird nur gegen eindeutig
+  bestimmbare Flächen- oder Seitenfarben gemessen; Verläufe und die Originalwochen-
+  vorlage erscheinen unter „Nicht geprüft“, nicht als bestanden.
+
+#### F56 Test Cases
+
+**TC-F56-01: Fehler blockieren, Hinweise führen gezielt**
+- Setup: Ungültiger Zeitraum/Pfand, abgeschnittener Pflichttext und kleineres Bild.
+- Action: Prüfung öffnen und tatsächliche Ausgabe starten; Meldung auswählen.
+- Expected: Nur Fehler blockieren; Hinweise bleiben erkennbar. Gewählte Meldung
+  führt zur richtigen Stelle; Korrektur aktualisiert das tatsächliche Ergebnis.
+
+### F57: Schnellere wiederkehrende Arbeit ohne Überraschungen
+
+#### F57 Description
+
+Vorhandene Artikelsuche und Bildwiederverwendung werden erhalten; neue
+Dataverse-Aktionen können ohne sofortigen Write dupliziert und gezielte
+Gestaltungseigenschaften auf ausgewählte Kacheln übertragen werden.
+
+#### F57 Inputs
+
+Quellaktion, neue Gültigkeit, Suchbegriff, ausgewählte Kacheln und ausdrücklich
+ausgewählte Gestaltungseigenschaften.
+
+#### F57 Behaviour / Acceptance
+
+- „Duplizieren“ öffnet eine neue ungespeicherte Aktion mit neuen Artikel-IDs
+  und neuen Aktionsbezügen; bestehende Bilder werden wiederverwendet.
+- Daten und Gestaltung bleiben vollständig erhalten, neue Gültigkeit ist
+  sichtbar zu prüfen. Duplizieren übernimmt keine Veröffentlichung oder
+  Waagenaufträge und verändert die Quelle nicht.
+- Artikelsuche bleibt über Name, Artikelnummer und Strichcode erreichbar;
+  kein fremder Preis wird ungefragt zum Angebotspreis.
+- Mehrfachübertragung bietet konkrete Zielkacheln und auswählbare Schrift-,
+  Preisschild- oder Bilddarstellungswerte mit Vorschau und Bestätigung von
+  Umfang/Anzahl. Keine Artikel-/Preiswerte oder Bildzuordnungen mitkopieren.
+- Andere Ausgabeziele bleiben erhalten; eine Übernahme bildet einen
+  rücknehmbaren Schritt. Abbruch und leere Auswahl ändern nichts.
+- Übertragbar sind im aktuellen Ausgabeziel Schriftart, -größe und -farbe, Preisgröße
+  und -farbe sowie Bildgröße und -drehung freier Gestaltungen; bei der
+  Originalwochenvorlage Namens-, Preisschild- und Bildgröße sowie Drehung. Der Dialog
+  „Gestaltung übertragen“ zeigt je Kachel „alt → neu“ und überträgt nur tatsächliche
+  Unterschiede.
+
+#### F57 Test Cases
+
+**TC-F57-01: Neue Kopie ohne Nebenwirkung**
+- Setup: Gespeicherte Aktion mit Gestaltung, Bildern und mindestens zwei Artikeln.
+- Action: Duplizieren, verändern und abbrechen beziehungsweise bewusst speichern.
+- Expected: Vor Speichern kein Write; neue Kennungen, unveränderte Quelle,
+  vollständige Bild-/Gestaltungszuordnung und neue eigenständige Aktion.
+
+**TC-F57-02: Gezielte Mehrfachübertragung**
+- Setup: Drei unterschiedlich gestaltete Kacheln und getrenntes Waagenziel.
+- Action: Nur Schriftfarbe auf Kachel zwei übertragen, abbrechen/übernehmen/Undo.
+- Expected: Bestätigung nennt genau eine Zielkachel und Schriftfarbe; ausschließlich
+  diese Eigenschaft ändert sich. Andere Werte/Ziele und Artikelpreise bleiben gleich.
+
+### F58: Vollständiger Funktionserhalt und reproduzierbare Ausgabe
+
+#### F58 Description
+
+Der gesamte Arbeitsablauf wird vor Veröffentlichung mit echten UI-Eingaben und
+isolierter Speicherung automatisch geprüft. Bereits begonnene F46–F51 werden
+zusammen mit der kompakten Übernahme abgeschlossen, nicht als Altlast versteckt.
+
+#### F58 Inputs
+
+Beide Angebotsarten, vier Ausgabeziele, Original-/freie Vorlagen und alle
+vorhandenen Eigenschaften gemäß Übernahmematrix im Implementierungsplan.
+
+#### F58 Behaviour / Acceptance
+
+- Artikel auswählen, Angebot erfassen, gestalten, speichern, erneut öffnen
+  und ausgeben erhält Daten, Bilder und Gestaltung.
+- Derselbe Zielrenderer liefert Vorschau und Export; Waage bleibt nativ,
+  Name/Zusatz zusammen, Rot/Gelb austauschbar und alle angebotenen Farben wirksam.
+- Direkte erste Kachel, Tastatur-/Touchbedienung, Vollbild, Splitter und Historie
+  bleiben auf allen vier Zielansichten bedienbar.
+- Jede bisherige Eigenschaft/Funktion hat im Plan einen erhaltenen Zielort und
+  passende Prüfung; keine unbeauftragte Entfernung oder Vereinfachung.
+
+#### F58 Test Cases
+
+**TC-F58-01: Vollständiger Roundtrip**
+- Setup: Isolierter API-/Dataverse-Ersatz, beide Angebotsarten und vier Ansichten.
+- Action: Den vollständigen Ablauf einschließlich Bild, direkter Gestaltung,
+  Neuöffnung und Ausgabe ausführen.
+- Expected: Persistierte Werte und echte Ausgabe stimmen überein; F46–F57 und
+  die Vorher-/Nachher-Matrix sind ohne versteckte Funktionsverluste erfüllt.
+
+### F59: Ausschließlich geprüfte PR-Preview veröffentlichen
+
+#### F59 Description
+
+Nach bestandenen Prüfungen normale Commits und Push auf den bestehenden
+Featurebranch; Preview-Deployment und schreibfreie Erreichbarkeit verifizieren.
+
+#### F59 Inputs
+
+Geprüfter Featurestand, vorhandene PR und deren bestehender Deploymentworkflow.
+
+#### F59 Behaviour / Acceptance
+
+- Keine Produktion, kein main-Merge, kein Force-Push, keine echten Testwrites.
+- Keine Erfolgsmeldung bei ausstehenden/fehlgeschlagenen Checks.
+- Produktive Dataverse-Daten der Preview dürfen durch Tests nicht verändert
+  werden; alle Schreib-/Lösch-/Konfliktfälle laufen mit isolierten Testdaten.
+
+#### F59 Test Cases
+
+**TC-F59-01: Geprüfte Preview**
+- Setup: Alle zugehörigen lokalen Verträge grün.
+- Action: Normal veröffentlichen, Actions abwarten, Preview lesend prüfen.
+- Expected: Richtiger Commit erfolgreich deployed, Oberfläche erreichbar und
+  keine Teständerungen an produktiven Daten.
+
+### Data & Contracts
+
+Bestehende Speicher-/Sichtbarkeitsverträge bleiben erhalten. Neue optionale
+Herkunftsmetadaten sind beschränkt und rückwärtskompatibel; alte Layouts bleiben
+ohne fingierte Herkunft lesbar. Dataverse-Schreib-/Löschverträge erhalten einen
+beim Lesen ausgegebenen Vergleichsstand zusätzlich zu ihren atomaren
+If-Match-Operationen. Keine neue Dataverse-Tabelle oder Pflichtmigration.
+
+### Open Questions
+
+Keine offenen fachlichen Klärungsmarker. Bestehende Sichtbarkeitslogik und
+Übernahme des kompakten Mockup-Stils wurden ausdrücklich bestätigt.
+
+### Traceability
+
+| Requirement | Test Cases | Plan section | Tasks |
+| --- | --- | --- | --- |
+| F52 | TC-F52-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
+| F53 | TC-F53-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
+| F54 | TC-F54-01 | Produktverbesserungen | Folgt im Planungsschritt |
+| F55 | TC-F55-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
+| F56 | TC-F56-01 | Produktverbesserungen | Folgt im Planungsschritt |
+| F57 | TC-F57-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
+| F58 | TC-F58-01 | Produktverbesserungen | Folgt im Planungsschritt |
+| F59 | TC-F59-01 | Produktverbesserungen | Folgt im Planungsschritt |
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

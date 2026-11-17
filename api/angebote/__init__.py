@@ -1,5 +1,6 @@
 import azure.functions as func
 import json
+import hashlib
 import os
 import re
 import uuid
@@ -117,6 +118,12 @@ def _validate_layout(layout):
             raise ActionRequestError(400, "layout numbers must be finite")
 
     check(layout)
+    if "design_origin" in layout:
+        from shared.angebote import _design_origin, AngeboteFehler
+        try:
+            _design_origin(layout["design_origin"])
+        except AngeboteFehler as error:
+            raise ActionRequestError(error.status, error.text) from error
     pages = layout.get("pages")
     if pages is not None:
         if not isinstance(pages, list):
@@ -468,6 +475,28 @@ def _record_etag(record, label):
     return etag
 
 
+def _action_revision(rows, layout):
+    versions = sorted(
+        (_guid(row.get("dl_angeboteid"), "offer item"),
+         _record_etag(row, "offer item")) for row in rows
+    )
+    layout_version = (
+        [layout.get("dl_seiteninhaltid"), _record_etag(layout, "offer layout")]
+        if layout else None
+    )
+    encoded = json.dumps([versions, layout_version], separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _check_action_revision(body, rows, layout):
+    expected = body.get("revision")
+    if expected is None and not rows and not layout:
+        return
+    if (not isinstance(expected, str) or not re.fullmatch(r"[a-f0-9]{64}", expected)
+            or expected != _action_revision(rows, layout)):
+        raise ActionRequestError(409, "Offer action changed; reload before saving")
+
+
 def _row_payload(action, item, sort_order):
     payload = {
         "dl_produkt": item["name"],
@@ -636,6 +665,7 @@ def _save_action(base_url, headers, body):
     if current_ids != set(action["original_ids"]):
         raise ActionRequestError(409, "Offer action changed; reload before saving")
     current_layout = _read_action_layout(base_url, headers, action["aktion_id"])
+    _check_action_revision(body, current_rows, current_layout)
 
     operations = []
     saved_items = []
@@ -728,6 +758,7 @@ def _delete_action(base_url, headers, body):
     layout = _read_action_layout(base_url, headers, action_id)
     if not current_by_id and not layout:
         raise ActionRequestError(404, "Offer action not found")
+    _check_action_revision(body, rows, layout)
 
     operations = [{
         "method": "DELETE", "path": f"{ENTITY_SET}({row_id})",
@@ -743,13 +774,13 @@ def _delete_action(base_url, headers, body):
     return {"success": True, "aktion_id": action_id}
 
 
-def _read_action_layouts_for_public(base_url, headers, action_ids):
+def _read_action_layouts_for_public(base_url, headers, action_ids, revisions=None):
     if not action_ids:
         return {}
     prefix = ACTION_LAYOUT_PREFIX.replace("'", "''")
     url = (_dataverse_url(base_url, CMS_ENTITY_SET) +
            f"?$filter=startswith(dl_schluessel,'{prefix}')"
-           "&$select=dl_schluessel,dl_wert")
+           "&$select=dl_schluessel,dl_wert,dl_seiteninhaltid")
     response = requests.get(url, headers=headers, timeout=30)
     if response.status_code != 200:
         raise ActionRequestError(
@@ -769,6 +800,8 @@ def _read_action_layouts_for_public(base_url, headers, action_ids):
             layouts[key] = json.loads(config.get("dl_wert") or "null")
         except (ValueError, TypeError):
             raise ActionRequestError(503, "Stored offer action layout is invalid JSON")
+        if revisions is not None:
+            revisions[key] = config
     return layouts
 
 
@@ -944,11 +977,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         "werbebild_id": wb.get("dl_werbebildid", "") or item.get("_dl_werbebildid_value", ""),
                     })
                 action_ids = {
-                    _layout_action_id(item.get("aktion_id"))
+                    _layout_action_id(item.get("aktion_id") or _legacy_action_identifier(item))
                     for item in angebote_list
-                    if item.get("aktion_id")
                 }
-                layouts = _read_action_layouts_for_public(base_url, headers, action_ids)
+                layout_revisions = {}
+                layouts = _read_action_layouts_for_public(base_url, headers, action_ids, layout_revisions)
                 for item in angebote_list:
                     layout_key = _action_layout_key(
                         _layout_action_id(item.get("aktion_id", ""))
@@ -957,6 +990,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         item["action_layout"] = layouts[layout_key]
                 from shared.auth import token_valid
                 is_admin = token_valid(req)
+                if is_admin:
+                    grouped_rows = {}
+                    for row in data.get("value", []):
+                        identifier = row.get("dl_aktion_id") or _legacy_action_identifier(row)
+                        grouped_rows.setdefault(identifier, []).append(row)
+                    for item in angebote_list:
+                        identifier = item.get("aktion_id") or _legacy_action_identifier(item)
+                        key = _action_layout_key(_layout_action_id(identifier))
+                        item["action_revision"] = _action_revision(grouped_rows[identifier], layout_revisions.get(key))
                 if not is_admin:
                     for item in angebote_list:
                         item.pop("retail_price_cents", None)

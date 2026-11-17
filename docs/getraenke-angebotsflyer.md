@@ -290,6 +290,44 @@ Ziels. Danach Entwurf speichern und veröffentlichen, damit Kunden es sehen.
 **Vorlage auf Original zurücksetzen** setzt erst die Vorschau zurück;
 dauerhaft wird dies erst nach separatem Speichern.
 
+### Herkunft, Zurücksetzen und Übertragen
+
+Neu angelegte Aktionen merken sich die übernommene Gestaltung begrenzt als
+Herkunft. In den Zusammenfassungen **Schrift**, **Preisschild** und **Bild**
+steht dann „Aus Vorlage“ oder „Individuell angepasst“. Ältere Aktionen zeigen
+„Gespeicherte Gestaltung“; ihre Herkunft wird nicht erraten. Im Eigenschaftenfenster
+setzt **Auf Vorlagenwert zurücksetzen** nur diese Gruppe im gewählten Ausgabeziel
+zurück. Änderungen an den Designstandards wirken nie automatisch auf gespeicherte
+Aktionen.
+
+**Auf andere Kacheln übertragen** (Gestaltung → Vorlage) überträgt ausgewählte
+Eigenschaften einer Kachel auf ausdrücklich gewählte andere Kacheln desselben
+Ausgabeziels. Der Dialog zeigt je Kachel „alt → neu“. Artikel, Preise,
+Bildzuordnungen und andere Ausgabeziele bleiben unverändert; die Übernahme ist
+ein einziger Rückgängig-Schritt. **Duplizieren** in der Aktionsübersicht öffnet
+eine ungespeicherte Kopie mit neuen Kennungen und denselben Bildern; erst
+**Speichern** legt sie an.
+
+### Qualität prüfen
+
+**Qualität prüfen** meldet getrennt Fehler, Hinweise und „Nicht geprüft“.
+Fehler (zum Beispiel abgeschnittene Pflichttexte, Elemente außerhalb der Ausgabe
+oder fehlende Pflichtangaben) blockieren Speichern einer CMS-Aktion,
+Veröffentlichen, Drucken, Download und Waagenvorbereitung. Hinweise
+(fehlendes oder zu kleines Bild, geringer Kontrast unter 3 : 1) blockieren nicht
+und können bewusst bestätigt werden. **Zur Stelle** wählt die betroffene Zeile
+beziehungsweise Kachel.
+
+### Speicherstatus und gleichzeitige Bearbeitung
+
+CMS-Aktionen zeigen „Ungespeicherte Änderungen“, „Wird gespeichert …“ und nach
+dem Speichern „Gespeichert · Geplant/Aktiv/Abgelaufen“. Speichern steuert
+weiterhin die Sichtbarkeit im Gültigkeitszeitraum. Hat jemand dieselbe Aktion
+inzwischen geändert (auch bei gleichen Artikeln), wird nichts überschrieben: Ihre
+Eingaben bleiben offen, **Gespeicherten Stand laden** holt die aktuelle Fassung.
+Gleiches gilt fürs Löschen. Wurde eine neue Aktion gespeichert, der Stand aber
+nicht lesbar, legt ein erneutes Speichern sie nicht doppelt an.
+
 ## Bestehende Daten
 
 Bestehende CMS-Aktionen bleiben in Dataverse und ohne Konvertierung nutzbar.

@@ -1952,6 +1952,7 @@
       var host=document.createElement('div');host.dataset.cfgInline=target;container.replaceChildren(host);
       surface=window.AngeboteVorschauEditor.mount(host,{
         toolsHost:root.querySelector('.an-designer-direct'),begin:changes.begin,end:changes.end,
+        select:function(element){root._designerUi.select(element.ovKey==='name'?2:root.querySelectorAll('[data-designer-tab]').length-1);},
         change:function(element,delta){
           var prefix=element.ovKey,values=_cfgInline[target];
           values[prefix+'Dx']=Math.max(-1000,Math.min(1000,(values[prefix+'Dx']||0)+(delta.dx||0)));
@@ -1969,11 +1970,11 @@
     if(surface.host.parentNode!==container)container.replaceChildren(surface.host);
     var magazine=/^modern-mag/.test(cfgReadUI()[target+'Template']),values=_cfgInline[target];
     var elements=(canvas._elMeta||[]).filter(function(element){
-      return (element.ovKey==='img'||element.ovKey==='price')&&(!element.itemKey||element.itemKey===firstKey);
+      return (element.ovKey==='img'||element.ovKey==='price'||element.ovKey==='name')&&(!element.itemKey||element.itemKey===firstKey);
     }).map(function(element){
       var sign=!magazine&&element.ovKey==='img'?-1:1;
       var base=!magazine&&element.ovKey==='img'?-cfgReadUI().imgRotation*(target==='plakat'?.85:1):0;
-      return Object.assign({},element,{id:element.ovKey,type:element.ovKey==='img'?'image':'price',
+      return Object.assign({},element,{id:element.ovKey,type:element.ovKey==='img'?'image':element.ovKey,
         rotation:base+(values[element.ovKey+'Rot']||0)*sign,rotationSign:sign});
     });
     surface.update(canvas,elements,794,1123);
@@ -2052,7 +2053,12 @@
     ['plakat','flyer'].forEach(function(kind){
       var shape=document.getElementById('cfg-'+kind+'-tagShape');
       var colors=document.querySelector('#cfg-sec-'+kind+' .an-price-image-colors');
-      if(colors&&shape)colors.hidden=shape.value!=='price-image';
+      if(colors&&shape){
+        colors.hidden=false;
+        colors.querySelector('legend').textContent='Preisschild-Farben';
+        var labels=['Preisfarbe','Konturfarbe','Hintergrund / Stattpreis-Streifen','Stattpreisfarbe','Durchstreichungsfarbe'];
+        colors.querySelectorAll('label>span').forEach(function(label,index){label.textContent=labels[index];});
+      }
     });
   }
   // Auto-trigger for Angebote design panel
@@ -7523,6 +7529,8 @@
         if(preset){
           var ts=document.getElementById('cfg-'+sec+'-tagShape');if(ts)ts.value=preset.tagShape;
           var tr=document.getElementById('cfg-'+sec+'-tagRadius');if(tr){tr.value=preset.tagRadius;cfgUpdateVal(sec+'-tagRadius',preset.tagRadius);}
+          var bg=document.getElementById('cfg-'+sec+'-priceStripColor');if(bg)bg.value=preset.tagShape==='price-image'?'#fff000':preset.tagColor;
+          var ink=document.getElementById('cfg-'+sec+'-priceImageColor');if(ink)ink.value=preset.tagShape==='price-image'?preset.tagColor:'#ffffff';
           cfgSyncPriceImageFields();
         }
       }

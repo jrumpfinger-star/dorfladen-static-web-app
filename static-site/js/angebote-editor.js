@@ -9,12 +9,21 @@
   var previewMode = 'paper';
   var overviewFilter = 'all';
   var weeklySurface = null;
+  var taskFrame = null;
+  var objectTransaction = null;
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
   var $ = function (id) { return document.getElementById(id); };
+  function weeklyTarget() { return !!data.layout.cms && designTarget !== 'scale'; }
+  function controlLayout() {
+    var layout = M.clone(data.layout);
+    if (layout.cms && designTarget !== 'scale') layout.cms = M.clone(M.cmsFor(data, designTarget));
+    if (designTarget === 'scale') delete layout.cms;
+    return designTarget !== 'sheet' && !weeklyTarget() ? Object.assign(layout, M.styleOf(layout, designTarget)) : layout;
+  }
   function header(title) {
     return '<header class="an-head"><div><small>DORFLADEN · WOCHEN- UND GETRÄNKEANGEBOTE</small><h1>Angebote gestalten</h1></div>'
       + '</header>' + (config && !config.scale_enabled ? '<p class="an-note">'
@@ -30,7 +39,10 @@
   async function run(fn) {
     if (busy) return;
     lock(true);
-    try { await fn(); } catch (e) { await M.error(e); } finally { lock(false); }
+    try { await fn(); } catch (e) {
+      if (data && $('an-state')) $('an-state').textContent = dirty ? 'Nicht gespeichert · Änderungen bleiben erhalten' : 'Vorgang nicht abgeschlossen · gespeicherter Stand bleibt erhalten';
+      await M.error(e);
+    } finally { lock(false); }
   }
   function changed() {
     dirty = true;
@@ -39,7 +51,7 @@
     root.querySelectorAll('[data-history="undo"]').forEach(function (button) { button.disabled = !undo.length; });
     root.querySelectorAll('[data-history="redo"]').forEach(function (button) { button.disabled = !redo.length; });
   }
-  function checkpoint() { undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
+  function checkpoint() { if (objectTransaction) return; undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
   function edit(fn, free) {
     checkpoint(); fn(); if (free && designTarget === 'sheet') data.layout.mode = 'free'; changed(); preview().catch(M.error);
   }
@@ -48,6 +60,8 @@
   }
   async function overview() {
     if (!(await discard())) return;
+    if (taskFrame) { taskFrame.destroy(); taskFrame = null; }
+    root.classList.remove('an-task-editor'); root.style.removeProperty('height');
     data = null; record = null; dirty = false; paint++;
     root.innerHTML = header('Angebote. Gemeinsam gestalten.') + '<p role="status">Die Angebote werden geladen …</p>';
     var result = await M.request('/api/angebote-verwaltung');
@@ -143,6 +157,7 @@
     var response = await M.request('/api/angebote-verwaltung?view=design'); design = response.design;
     record = null; data = M.blank(kind, design[kind]); M.applyTemplate(data);
     if (kind === 'weekly') await M.adoptWeekly(data);
+    M.rememberDesign(data);
     dirty = true; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; designTarget = 'card'; designItemId = '';
     if (kind === 'weekly') designTarget = 'sheet';
     pendingImages.clear(); pendingImageUrls.clear(); previewMode = 'paper'; renderEditor();
@@ -324,7 +339,7 @@
   }
   function renderCmsArticle() {
     var host = $('an-cms-article'); if (!host || !data) return;
-    var current = !data.layout.cms && selection();
+    var current = !weeklyTarget() && selection();
     var id = (current && current.item_id) || designItemId || (data.items[0] && data.items[0].id);
     var item = data.items.find(function (entry) { return entry.id === id; });
     if (!item) { host.replaceChildren(); return; }
@@ -336,28 +351,26 @@
   }
   function renderInspector() {
     renderInspectorBody(); renderCmsArticle(); cmsLayout();
+    if (taskFrame) {
+      D.compactHelp($('an-inspector'), taskFrame.help);
+      D.expandGroups($('an-inspector'));
+      $('an-inspector').querySelectorAll('[data-history]').forEach(function (button) { button.parentElement.remove(); });
+    }
   }
   function cmsLayout() {
     if (!cmsAction || !cmsDialog) return;
     var narrow = cmsDialog.clientWidth < 1000;
-    root.classList.toggle('an-cms-stacked', narrow);
+    root.classList.add('an-cms-stacked');
     root.classList.toggle('an-cms-phone', cmsDialog.clientWidth < 640);
     var workspace = root.querySelector('.an-cms-workspace');
     if (!workspace || !cmsPanel || !cmsTabbar) return;
-    var inspector = $('an-inspector');
-    if (narrow) {
-      if (cmsPanel.parentNode !== inspector) inspector.appendChild(cmsPanel);
-      if (data.layout.cms) { if (cmsTabbar.parentNode !== inspector) inspector.prepend(cmsTabbar); }
-      else {
-        var side = workspace.querySelector('.an-cms-side'), anchor = $('an-cms-article');
-        if (anchor && cmsTabbar.nextElementSibling !== anchor) side.insertBefore(cmsTabbar, anchor);
-      }
-    } else if (cmsPanel.parentNode !== workspace) workspace.appendChild(cmsPanel);
+    workspace.classList.toggle('an-cms-weekly', weeklyTarget());
     cmsTabs();
     cmsNarrow = narrow;
   }
   function cmsTabs() {
-    var tabs = [['element', 'Element'], ['article', 'Artikel'], ['design', 'Vorlage']].concat(data.layout.cms ? [['marker', 'Marker']] : []);
+    var tabs = [['element', 'Element'], ['article', 'Artikel'], ['design', 'Vorlage']]
+      .concat(weeklyTarget() ? [['marker', 'Marker']] : []).concat([['view', 'Ansicht'], ['output', 'Ausgabe']]);
     if (!tabs.some(function (tab) { return tab[0] === cmsTab; })) cmsTab = 'element';
     var wanted = tabs.map(function (tab) { return tab[0]; }).join();
     if (cmsTabbar.dataset.tabs !== wanted) {
@@ -366,18 +379,23 @@
     }
     cmsTabbar.querySelectorAll('button').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.cmsTab === cmsTab)); });
     root.querySelector('.an-cms-workspace').dataset.anTab = cmsTab;
+    root.querySelectorAll('[data-task-panel]').forEach(function (panel) {
+      panel.hidden = panel.dataset.taskPanel !== cmsTab;
+    });
   }
   function renderInspectorBody() {
     var host = $('an-inspector'); if (!host) return;
     if (weeklySurface) { weeklySurface.destroy(); weeklySurface = null; }
-    if (data.layout.cms) {
+    var picture = root.querySelector('.an-weekly-picture');
+    if (picture) picture.hidden = !weeklyTarget();
+    if (weeklyTarget()) {
       var itemId = designItemId || (data.items[0] && data.items[0].id);
       var currentItem = data.items.find(function (item) { return item.id === itemId; });
       var key = currentItem && M.weeklyKey(currentItem);
       var group = designTarget === 'sheet' || designTarget === 'card' ? 'plakat_article_overrides' : 'flyer_article_overrides';
       var renderer = window.WochenangeboteRenderer.create({});
-      var values = key && data.layout.cms[group][key] || (group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault());
-      host.innerHTML = '<div class="an-weekly-surface"></div><div id="an-cms-article"></div><details><summary>Exakte CMS-Artikelpositionen</summary>'
+      var values = key && M.cmsFor(data, designTarget)[group][key] || (group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault());
+      host.innerHTML = '<div class="an-weekly-tools"></div><div id="an-cms-article"></div><details open><summary>Exakte CMS-Artikelpositionen</summary>'
         + (currentItem ? '<label class="an-field"><span>Artikelpositionen bearbeiten</span><select id="an-cms-item">'
           + data.items.map(function (item) { return '<option value="' + item.id + '"' + (item.id === itemId ? ' selected' : '') + '>' + M.esc(item.name || 'Neuer Artikel') + '</option>'; }).join('') + '</select></label>'
           + '<div class="an-fields">' + [['imgDx', 'Bild X', -800, 800], ['imgDy', 'Bild Y', -1130, 1130],
@@ -385,22 +403,29 @@
             ['priceDx', 'Preis X', -800, 800], ['priceDy', 'Preis Y', -1130, 1130]].map(function (field) {
               return '<label class="an-field"><span>' + field[1] + '</span><input type="number" data-cms-override="' + field[0] + '" data-cms-group="' + group + '" data-cms-item="' + itemId + '" value="' + values[field[0]] + '" min="' + field[2] + '" max="' + field[3] + '"></label>';
             }).join('') + '</div>' : '') + '</details>';
-      weeklySurface = window.AngeboteVorschauEditor.mount(host.querySelector('.an-weekly-surface'), {
+      if (!picture) { picture = document.createElement('div'); picture.className = 'an-weekly-picture an-weekly-surface'; $('an-stage').after(picture); }
+      picture.hidden = false;
+      weeklySurface = window.AngeboteVorschauEditor.mount(picture, {
+        toolsHost: host.querySelector('.an-weekly-tools'), selectFirst: true,
+        select: function (entry) {
+          if (entry.itemId) designItemId = entry.itemId;
+          if (cmsAction) { cmsTab = 'element'; cmsTabs(); renderCmsArticle(); }
+        },
         begin: checkpoint,
-        change: function (element, delta) { M.changeWeekly(data, element, delta); changed(); preview().catch(M.error); },
-        override: function (entry) { return M.weeklyOverride(data, entry.itemId, entry.group); },
+        change: function (element, delta) { M.changeWeekly(data, element, delta, designTarget); changed(); preview().catch(M.error); },
+        override: function (entry) { return M.weeklyOverride(data, entry.itemId, entry.group, designTarget); },
         fields: M.weeklyFields, newCopy: M.weeklyNewCopy,
         mutate: function (entry, fn, quiet) {
           if (!quiet) checkpoint();
-          var id = fn(M.weeklyOverride(data, entry.itemId, entry.group));
+          var id = fn(M.weeklyOverride(data, entry.itemId, entry.group, designTarget));
           changed(); preview().catch(M.error); return id;
         },
         reset: function (entry, scope) {
           run(async function () {
             if (scope === 'all' && !(await M.dialog('Alle Anpassungen zurücksetzen?', 'Position, Größe, Drehung, Ghost, Duplikate, Kopien und das eigene Bild dieses Artikels werden zurückgesetzt. Andere Artikel bleiben unverändert.', 'Zurücksetzen'))) return;
             checkpoint();
-            var ov = M.weeklyOverride(data, entry.itemId, entry.group), defaults = M.weeklyDefaults(entry.group), key = Object.keys(data.layout.cms[entry.group]).find(function (k) { return data.layout.cms[entry.group][k] === ov; });
-            if (scope === 'all') data.layout.cms[entry.group][key] = defaults;
+            var ov = M.weeklyOverride(data, entry.itemId, entry.group, designTarget), defaults = M.weeklyDefaults(entry.group), overrides = M.cmsFor(data, designTarget, true)[entry.group], key = Object.keys(overrides).find(function (k) { return overrides[k] === ov; });
+            if (scope === 'all') overrides[key] = defaults;
             else {
               var fields = M.weeklyFields(ov, entry);
               if (fields) ['dx', 'dy', 'scale', 'rot'].forEach(function (name) {
@@ -414,7 +439,7 @@
           run(async function () {
             var url = await M.weeklyCompress(file);
             checkpoint();
-            var ov = M.weeklyOverride(data, entry.itemId, entry.group);
+            var ov = M.weeklyOverride(data, entry.itemId, entry.group, designTarget);
             ov.customImg = url; ov.customImgDx = 0; ov.customImgDy = 0; ov.customImgScale = 100; ov.customImgRot = 0;
             if (ov.customImgAlpha == null) ov.customImgAlpha = 100;
             changed(); await preview();
@@ -432,7 +457,7 @@
     var size = activeSize();
     host.innerHTML = '<fieldset class="an-direct-tools"' + (designTarget !== 'sheet' && !designItemId ? ' disabled' : '') + '><legend>Gestalten</legend>'
       + '<label class="an-field"><span>Gestaltungselement</span><select id="an-select-element"><option value="">Bitte auswählen</option>'
-      + elements().map(function (e, i) { return '<option value="' + e.id + '"' + (e.id === selected ? ' selected' : '') + '>'
+      + M.groupedElements(data, elements(), controlLayout()).map(function (e, i) { return '<option value="' + e.id + '"' + (e.id === selected ? ' selected' : '') + '>'
         + (i + 1) + ' · ' + roleNames[e.type] + (e.hidden ? ' (ausgeblendet)' : '') + '</option>'; }).join('') + '</select></label>'
       + '<div class="an-element-actions"><button data-add-element="image">+ Eigenes Bild</button>'
       + (current && current.type === 'image' ? '<button data-replace-image>Bild ersetzen</button>' : '')
@@ -467,14 +492,15 @@
   }
   function overlay() {
     var host = $('an-hit-layer'); if (!host) return;
-    if (data.layout.cms) { host.replaceChildren(); return; }
+    if (weeklyTarget()) { host.replaceChildren(); return; }
     var size = activeSize();
-    host.innerHTML = elements().filter(function (e) { return !e.hidden; }).map(function (e) {
+    var visible = M.groupedElements(data, elements(), controlLayout());
+    host.innerHTML = visible.filter(function (e) { return !e.hidden; }).map(function (e) {
       return '<button type="button" data-select="' + e.id + '" class="' + (selected === e.id ? 'an-selected' : '') + '" aria-label="Element auswählen: ' + roleNames[e.type]
         + '" style="left:' + e.x / size.w * 100 + '%;top:' + e.y / size.h * 100 + '%;width:' + e.w / size.w * 100 + '%;height:' + e.h / size.h * 100
         + '%;transform:rotate(' + e.rotation + 'deg)"></button>';
     }).join('');
-    var current = selection();
+    var current = visible.find(function (element) { return element.id === selected; });
     if (current && !current.hidden) {
       var points = window.AngeboteVorschauEditor.handlePoints(current, size.w, size.h);
       host.insertAdjacentHTML('beforeend', '<button type="button" class="an-resize-handle" data-resize="' + current.id
@@ -488,13 +514,15 @@
   async function preview() {
     if (!data || !$('an-stage-canvas')) return;
     var ticket = ++paint, draft = M.clone(data), n = page;
-    var ownStyle = designTarget !== 'sheet' && !draft.layout.cms;
-    await D.previewChoices($('an-style-controls'), ownStyle ? Object.assign(M.clone(draft.layout), M.styleOf(draft.layout, designTarget)) : draft.layout, draft.kind);
-    if (draft.layout.cms) {
+    var ownStyle = designTarget !== 'sheet' && !weeklyTarget();
+    await D.previewChoices($('an-style-controls'), controlLayout(), draft.kind);
+    if (weeklyTarget()) {
       var group = designTarget === 'sheet' || designTarget === 'card' ? 'plakat' : 'flyer';
       $('an-style-controls').querySelectorAll('[data-cms-config]').forEach(function (control) {
         var key = control.dataset.cmsConfig, owner = /plakat/i.test(key) ? 'plakat' : /flyer/i.test(key) ? 'flyer' : '';
-        control.closest('.an-field').hidden = !!owner && owner !== group;
+        var field = control.closest('.an-field'), unavailable = !!owner && owner !== group;
+        field.dataset.objectUnavailable = String(unavailable);
+        field.hidden = unavailable || (!!field.dataset.objectField && !field.closest('.an-object-dialog'));
       });
       $('an-style-controls').querySelectorAll('[data-side-panel=design]>.an-compact-group').forEach(function (fieldset) {
         fieldset.hidden = !fieldset.querySelector('.an-field:not([hidden])');
@@ -511,10 +539,14 @@
       ? await M.render(draft, n, 1.5)
       : await M.renderTarget(draft, designTarget, designItemId, 1.5);
     if (ticket !== paint || !data || !$('an-stage-canvas')) return;
+    if (root._objectProperties) root._objectProperties.refresh();
     var canvas = result.canvas; canvas.id = 'an-stage-canvas'; canvas.setAttribute('aria-label', 'Live-Vorschau des Angebotsflyers');
+    canvas._offerElements = elements(); canvas._offerWidth = activeSize().w;
     $('an-stage-canvas').replaceWith(canvas);
-    if (data.layout.cms && weeklySurface) weeklySurface.update(canvas, canvas._weeklyElements || [], canvas._weeklyWidth || activeSize().w, canvas._weeklyHeight || activeSize().h);
+    if (weeklyTarget() && weeklySurface) weeklySurface.update(canvas, canvas._weeklyElements || [], canvas._weeklyWidth || activeSize().w, canvas._weeklyHeight || activeSize().h);
     var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv', sheet: 'Sammelflyer' };
+    var context = root.querySelector('.an-workspace-context');
+    if (context) context.textContent = 'Aktion „' + data.title + '“ · ' + names[designTarget] + ' · Gestaltung dieser Ausgabe';
     var size = activeSize();
     $('an-stage').style.aspectRatio = size.w + ' / ' + size.h;
     var canvasColumn = cmsAction && root.querySelector('.an-cms-canvas');
@@ -533,8 +565,9 @@
     $('an-stage').style.width = stageWidth + 'px';
     $('an-stage').style.height = stageWidth * size.h / size.w + 'px';
     $('an-stage').style.marginInline = 'auto';
+    if (taskFrame) { $('an-stage').style.width = '100%'; $('an-stage').style.height = 'auto'; }
     if (canvasColumn) root.style.setProperty('--an-canvas-height', canvasColumn.offsetHeight + 'px');
-    if (cmsAction && !cmsScrolled && root.classList.contains('an-cms-stacked')) {
+    if (cmsAction && !taskFrame && !cmsScrolled && root.classList.contains('an-cms-stacked')) {
       cmsScrolled = true;
       var pinned = data.layout.cms ? root.querySelector('.an-weekly-surface .an-stage') : canvasColumn;
       if (pinned) pinned.scrollIntoView({ block: 'start' });
@@ -555,11 +588,11 @@
     root.querySelectorAll('[data-layout-target]').forEach(function (button) {
       button.setAttribute('aria-pressed', String(button.dataset.layoutTarget === designTarget));
     });
-    $('an-stage').hidden = previewMode !== 'paper' || !!data.layout.cms;
+    $('an-stage').hidden = previewMode !== 'paper' || weeklyTarget();
     $('an-inspector').hidden = previewMode !== 'paper';
     $('an-other-preview').hidden = previewMode === 'paper';
-    $('an-preview-hint').textContent = data.layout.cms ? 'Originale CMS-Wochenvorlage' : previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
-    $('an-stage-help').hidden = !!data.layout.cms;
+    $('an-preview-hint').textContent = weeklyTarget() ? 'Originale CMS-Wochenvorlage' : previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
+    $('an-stage-help').hidden = weeklyTarget();
     if (previewMode !== 'paper') {
       var host = $('an-other-preview');
       if (!draft.items.length) host.innerHTML = '<p class="an-status">Füge einen Artikel hinzu, um diese Ausgabe anzusehen.</p>';
@@ -584,11 +617,12 @@
     renderInspector();
   }
   function renderEditor() {
+    if (taskFrame) { taskFrame.destroy(); taskFrame = null; }
     root.innerHTML = header(data.title || 'Dein Angebotsflyer')
       + '<div class="an-row an-preview-head an-toolbar"><span class="an-badge" id="an-state">' + (dirty ? 'Entwurf geändert · noch nicht gespeichert' : record && record.published_revision ? 'Gespeicherter Entwurf · veröffentlichte Fassung bleibt getrennt' : 'Gespeicherter Entwurf · nicht veröffentlicht')
       + '</span><div class="an-actions"><button data-history="undo"' + (undo.length ? '' : ' disabled') + '>Rückgängig</button>'
       + '<button data-history="redo"' + (redo.length ? '' : ' disabled') + '>Wiederholen</button>'
-      + '<button id="an-reload-saved"' + (!record ? ' disabled' : '') + '>Gespeicherten Stand laden</button>'
+      + '<button id="an-reload-saved"' + (!record && !cmsAction ? ' disabled' : '') + '>Gespeicherten Stand laden</button>'
       + '<button id="an-overview">Zur Übersicht</button><button id="an-save" class="an-primary">Entwurf speichern</button></div></div>'
       + '<div class="an-layout"><section class="an-card an-work-panel"><nav class="an-tabs an-steps" aria-label="Bearbeitung"><button data-step="articles">1 · Artikel und Bilder</button><button data-step="design">2 · Frei gestalten</button><button data-step="output">3 · Ausgeben</button></nav>'
       + '<section id="an-step-articles"><details id="an-action-meta"><summary id="an-action-summary"></summary><div class="an-fields">'
@@ -599,14 +633,15 @@
       + '<p class="an-muted">Artikeldaten direkt ändern · „Bild“ öffnet die optionalen Bildwerkzeuge.</p><div id="an-items"></div><p id="an-image-status" class="an-muted" role="status"></p><p class="an-note">Angebotspreis, Pfand und Veröffentlichung bleiben vom Stamm getrennt. Eigene Produktbilder mit Strichcode werden zusätzlich in StrichcodeBilder gespeichert.</p>'
       + '<button data-step="design" class="an-primary">Weiter · Kachel / Flyer gestalten</button></section>'
       + '<section id="an-step-design" hidden><h2>Die vertraute freie Gestaltung</h2><p class="an-muted">Bild, Preis und Texte antippen und ziehen – oder mit Zahlen und Pfeilen bearbeiten. Jedes Ausgabeziel bleibt separat gespeichert.</p>'
-      + '<section id="an-design-options"><h3>Vorlagen, Farben und Schrift</h3><div id="an-style-controls">' + D.controls(data.layout) + '</div>'
-      + '<p class="an-note">Eine Vorlage ersetzt freie Positionen erst nach deiner Bestätigung – nur für das aktuelle Ausgabeziel und den gewählten Artikel.</p><div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Designstandards übernehmen</button></div></section>'
+      + '<section id="an-design-options"><h3>Vorlagen, Farben und Schrift</h3><div id="an-style-controls">' + D.controls(controlLayout()) + '</div>'
+      + '<p class="an-note">Eine Vorlage ersetzt freie Positionen erst nach deiner Bestätigung – nur für das aktuelle Ausgabeziel und den gewählten Artikel.</p><div class="an-actions"><button id="an-template">Vorlage neu anwenden</button><button id="an-defaults">Designstandards übernehmen</button><button id="an-transfer">Auf andere Kacheln übertragen</button></div></section>'
       + '<div class="an-actions"><button id="an-add-page">+ Seite</button><button id="an-remove-page">Seite entfernen</button></div>'
       + '<button data-step="output" class="an-primary">Weiter · Ausgeben</button></section>'
       + '<section id="an-step-output" hidden><h2>Wie bei den bisherigen Angeboten ausgeben</h2><div id="an-output-previews">'
       + D.previewTabs(previewMode, 'data-editor-mode') + '</div><p>Speichern, Veröffentlichen, Drucken und Waagenversand sind getrennte Aktionen.</p>'
       + '<p class="an-status" id="an-output-status">' + (record && record.published_revision ? 'Eine veröffentlichte Fassung ist vorhanden. Änderungen bleiben bis zur nächsten Freigabe intern.' : 'Noch nicht veröffentlicht.') + '</p>'
-      + '<div class="an-publish-actions"><button id="an-publish" class="an-primary">Für Homepage veröffentlichen</button><button id="an-print-single">Einzelflyer drucken / PDF</button><button id="an-print-action">Sammelflyer A4 drucken / PDF</button><button id="an-scale">Für Waage vorbereiten</button></div>'
+      + '<p class="an-muted" id="an-quality-note" role="status">Qualitätsprüfung noch nicht ausgeführt.</p>'
+      + '<div class="an-publish-actions"><button id="an-quality">Qualität prüfen</button><button id="an-publish" class="an-primary">Für Homepage veröffentlichen</button><button id="an-print-single">Einzelflyer drucken / PDF</button><button id="an-print-action">Sammelflyer A4 drucken / PDF</button><button id="an-scale">Für Waage vorbereiten</button></div>'
       + '<p class="an-note">Freigabe gilt im gewählten Zeitraum (Europe/Berlin). Die Waage wird nur nach eigenem Versand aktualisiert.</p></section></section>'
       + '<section class="an-preview an-card" id="an-preview"><div class="an-preview-head"><h2>Gestaltbare Homepage-/Kioskansicht</h2><span class="an-muted" id="an-preview-hint">Element antippen oder ziehen</span></div>'
       + '<nav class="an-tabs an-target-tabs" aria-label="Gestaltungsziel">'
@@ -628,6 +663,7 @@
       }
     }
     if (cmsAction) cmsPreviewTools();
+    else editorWorkspace();
     if (busy) lock(true);
   }
   async function cmsPreview(action, mode, onClose) {
@@ -678,6 +714,8 @@
   }
   function cmsCleanup() {
     if (cmsObserver) { cmsObserver.disconnect(); cmsObserver = null; }
+    if (taskFrame) { taskFrame.destroy(); taskFrame = null; }
+    root.classList.remove('an-task-editor'); root.style.removeProperty('height');
     cmsPanel = null; cmsTabbar = null; cmsNarrow = null;
   }
   async function closeCmsPreview() {
@@ -689,11 +727,69 @@
     cmsDialog.close(); cmsDialog.remove(); cmsDialog = null;
     await cmsReturn();
   }
+  function finishTaskFrame(layout, left, picture, view) {
+    root.classList.add('an-task-editor');
+    root.style.height = cmsAction ? '100%' : 'calc(100dvh - ' + Math.max(0, root.getBoundingClientRect().top) + 'px)';
+    var cardTab = root.querySelector('[data-layout-target=card]');
+    cardTab.setAttribute('aria-label', 'Homepage / Kiosk'); cardTab.title = 'Homepage / Kiosk'; cardTab.textContent = 'Kachel';
+    left.classList.add('an-task-tools'); picture.classList.add('an-task-picture');
+    var title = document.createElement('h2'), help = document.createElement('span');
+    title.textContent = 'Bearbeiten'; help.className = 'an-designer-help'; title.appendChild(help); left.prepend(title);
+    var toolbar = root.querySelector('.an-toolbar'), actions = toolbar.querySelector('.an-actions');
+    var full = D.fullscreen(root, toolbar);
+    toolbar.appendChild($('an-overview')); left.appendChild(actions);
+    actions.appendChild($('an-stage-info'));
+    D.compactActions(actions); D.compactHelp(root, help); D.expandGroups(root);
+    var splitter = D.split(layout, left, picture), viewport = D.pictureViewport(picture, view);
+    D.objectProperties(root, {
+      canvas: function () { return $('an-stage-canvas'); },
+      item: function () { return selection()?.item_id || designItemId; },
+      origin: function (group) { return M.originStatus(data, designTarget, group); },
+      canReset: function () { return !!data.layout.design_origin?.targets[designTarget]; },
+      reset: function (group) { M.resetObject(data, designTarget, group); changed(); preview().catch(M.error); },
+      values: function () { return M.objectValues(data, designTarget); },
+      begin: function () { objectTransaction = { data: M.clone(data), dirty: dirty, undo: undo.slice(), redo: redo.slice() }; },
+      end: function (commit) {
+        var before = objectTransaction; objectTransaction = null;
+        var modified = JSON.stringify(data) !== JSON.stringify(before.data);
+        undo = before.undo; redo = before.redo;
+        if (commit && modified) { undo.push(before.data); if (undo.length > 30) undo.shift(); redo = []; changed(); }
+        else {
+          data = before.data; dirty = before.dirty;
+          $('an-style-controls').innerHTML = D.controls(controlLayout());
+          root._objectProperties.refresh(); renderInspector(); preview().catch(M.error);
+        }
+      }
+    });
+    taskFrame = { help: help, destroy: function () { splitter.destroy(); viewport.destroy(); full.destroy(); } };
+  }
+  function editorWorkspace() {
+    var layout = root.querySelector('.an-layout'), left = root.querySelector('.an-work-panel'), picture = $('an-preview');
+    var steps = left.querySelector('.an-steps'), fields = document.createElement('div');
+    fields.className = 'an-task-fields';
+    ['articles', 'design', 'output'].forEach(function (name) { fields.appendChild($('an-step-' + name)); });
+    left.appendChild(fields); steps.classList.add('an-task-tabs');
+    var targetTabs = picture.querySelector('.an-target-tabs'); layout.before(targetTabs);
+    var designFields = $('an-step-design'), tools = document.createElement('div'), styles = document.createElement('div'), view = document.createElement('div');
+    tools.dataset.editorPanel = 'element'; styles.dataset.editorPanel = 'design'; view.dataset.editorPanel = 'view';
+    tools.append($('an-design-item-wrap'), $('an-inspector'));
+    styles.appendChild($('an-design-options'));
+    view.append(picture.querySelector('.an-preview-head'), $('an-page-tools'), $('an-stage-help'));
+    var tabs = document.createElement('nav'); tabs.className = 'an-task-tabs'; tabs.setAttribute('aria-label', 'Gestaltungswerkzeuge');
+    tabs.innerHTML = '<button type="button" data-editor-panel-tab="element">Element</button><button type="button" data-editor-panel-tab="design">Vorlage</button><button type="button" data-editor-panel-tab="view">Ansicht</button>';
+    function select(name) {
+      [tools, styles, view].forEach(function (panel) { panel.hidden = panel.dataset.editorPanel !== name; });
+      tabs.querySelectorAll('button').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.editorPanelTab === name)); });
+    }
+    tabs.onclick = function (event) { var button = event.target.closest('button'); if (button) select(button.dataset.editorPanelTab); };
+    designFields.prepend(tabs, tools, styles, view); select('element');
+    finishTaskFrame(layout, left, picture, view);
+  }
   function cmsPreviewTools() {
     root.classList.add('an-cms-preview');
-    $('an-state').textContent = dirty ? 'Gestaltung geändert · noch nicht gespeichert' : 'Vorschau · gespeicherte Aktion';
+    $('an-state').textContent = M.savedState(data, dirty);
     $('an-save').textContent = 'Gestaltung speichern';
-    $('an-reload-saved').hidden = true;
+    $('an-reload-saved').hidden = false;
     $('an-overview').textContent = 'Schließen';
     $('an-overview').onclick = function () { run(closeCmsPreview); };
     var panel = root.querySelector('.an-work-panel');
@@ -702,11 +798,11 @@
     previewPanel.querySelector('h2').textContent = 'Vorschau';
     var actions = document.createElement('div'); actions.className = 'an-actions an-cms-output';
     actions.innerHTML = '<button data-cms-download>Download</button><button data-cms-print>Drucken / PDF</button>'
-      + '<button data-cms-scale>Auf die Waage</button><button data-cms-singles>Alle Einzelflyer</button>';
+      + '<button data-cms-scale>Auf die Waage</button><button data-cms-singles>Alle Einzelflyer</button><button data-cms-quality>Qualität prüfen</button>';
     cmsPanel = document.createElement('section'); cmsPanel.className = 'an-cms-style-options';
     cmsPanel.setAttribute('aria-label', 'Vorlage und Gestaltung');
     cmsPanel.appendChild($('an-design-options'));
-    cmsTabbar = document.createElement('nav'); cmsTabbar.className = 'an-tabs an-cms-tabbar'; cmsTabbar.setAttribute('aria-label', 'Gestaltungsbereich');
+    cmsTabbar = document.createElement('nav'); cmsTabbar.className = 'an-tabs an-cms-tabbar an-task-tabs'; cmsTabbar.setAttribute('aria-label', 'Gestaltungsbereich');
     cmsTabbar.onclick = function (event) {
       var button = event.target.closest('[data-cms-tab]'); if (!button) return;
       cmsTab = button.dataset.cmsTab; cmsTabs();
@@ -715,16 +811,23 @@
     var canvasColumn = document.createElement('div'); canvasColumn.className = 'an-cms-canvas';
     var sideColumn = document.createElement('div'); sideColumn.className = 'an-cms-side';
     var article = document.createElement('div'); article.id = 'an-cms-article';
-    var stagebar = document.createElement('div'); stagebar.className = 'an-cms-stagebar';
+    var fields = document.createElement('div'); fields.className = 'an-task-fields';
+    var view = document.createElement('div'); view.dataset.taskPanel = 'view';
+    var output = document.createElement('div'); output.dataset.taskPanel = 'output'; output.append(actions, $('an-quality-note'));
     var tabs = previewPanel.querySelector('.an-target-tabs');
-    tabs.after(workspace); workspace.append(canvasColumn, sideColumn);
-    stagebar.append($('an-stage-info'), $('an-page-tools'));
-    canvasColumn.append(tabs, $('an-other-preview'), $('an-stage'), stagebar, $('an-stage-help'));
-    sideColumn.append(actions, $('an-design-item-wrap'), $('an-inspector'));
-    if (!data.layout.cms) $('an-inspector').before(article);
+    tabs.after(workspace); workspace.append(sideColumn, canvasColumn);
+    canvasColumn.append($('an-other-preview'), $('an-stage'));
+    var weeklyPicture = root.querySelector('.an-weekly-picture');
+    if (weeklyPicture) canvasColumn.appendChild(weeklyPicture);
+    view.append($('an-page-tools'), $('an-stage-help'));
+    fields.append($('an-design-item-wrap'), $('an-inspector'), cmsPanel, view, output);
+    sideColumn.append(cmsTabbar, fields);
+    if (!weeklyTarget()) $('an-inspector').before(article);
+    finishTaskFrame(workspace, sideColumn, canvasColumn, view);
     renderCmsArticle(); cmsLayout();
     actions.querySelector('[data-cms-download]').onclick = function () {
       run(async function () {
+        if (!(await qualityGate())) return;
         var canvases;
         if (designTarget === 'single') {
           canvases = [];
@@ -745,6 +848,7 @@
     };
     actions.querySelector('[data-cms-print]').onclick = function () { run(designTarget === 'single' ? printSingles : print); };
     actions.querySelector('[data-cms-scale]').onclick = function () { run(scale); };
+    actions.querySelector('[data-cms-quality]').onclick = function () { run(function () { return qualityGate(true); }); };
     actions.querySelector('[data-cms-singles]').onclick = function () {
       designTarget = 'single'; designItemId = data.items[0] ? data.items[0].id : '';
       selected = ''; renderInspector(); preview().catch(M.error);
@@ -1002,6 +1106,7 @@
     if (existingImage) loadThumbnail(existingImage);
   }
   async function save() {
+    $('an-state').textContent = 'Wird gespeichert …';
     if (cmsAction) {
       cmsAction = await window.AngeboteDataverse.save(cmsAction, data);
       dirty = false; renderEditor(); return;
@@ -1011,7 +1116,77 @@
     record = response.action; data = M.clone(record.draft); config = response.config; dirty = false;
     renderEditor(); $('an-state').textContent = 'Entwurf gespeichert · Veröffentlichung bleibt getrennt';
   }
+  async function qualityGate(explicit) {
+    var result = await M.quality(data), status = $('an-quality-note');
+    if (status) status.textContent = 'Qualitätsprüfung: ' + result.errors.length + ' Fehler · ' + result.hints.length + ' Hinweise · ' + result.unchecked.length + ' nicht geprüft';
+    if (!explicit && !result.errors.length) return true;
+    var choice = await M.qualityDialog(result, { goto: true, confirm: explicit });
+    if (choice && choice.goto) setTimeout(function () { goToIssue(choice.goto); }, 0);
+    if (choice === 'confirmed' && status) status.textContent += ' · Hinweise bestätigt';
+    return !result.errors.length && !explicit;
+  }
+  function goToIssue(issue) {
+    var item = data.items.find(function (it) { return it.id === issue.item_id; });
+    if (issue.field === 'meta') { if (!cmsAction) { setStep('articles'); $('an-action-meta').open = true; $('an-title').focus(); } return; }
+    if (item && ['no-image', 'low-resolution'].includes(issue.code) || issue.code === 'data' && item && ['name', 'old_price', 'units', 'deposit'].includes(issue.field)) {
+      if (!cmsAction) setStep('articles');
+      openItemDialog(item.id); return;
+    }
+    if (!cmsAction) setStep('design');
+    var tab = root.querySelector('[data-layout-target="' + (issue.target || 'sheet') + '"]');
+    if (tab) tab.click();
+    if (item) designItemId = item.id;
+    page = Math.max(0, Math.min(issue.page || 0, data.layout.pages.length - 1));
+    selected = !weeklyTarget() && elements().some(function (e) { return e.id === issue.element_id; }) ? issue.element_id : '';
+    if ($('an-design-item')) $('an-design-item').value = designItemId;
+    renderInspector(); preview().catch(M.error);
+    var stage = $('an-stage'); if (stage && !stage.hidden) stage.scrollIntoView({ block: 'nearest' });
+  }
+  async function transfer() {
+    var target = designTarget, current = !weeklyTarget() && selection();
+    var sourceId = current && current.item_id || designItemId, source = data.items.find(function (it) { return it.id === sourceId; });
+    if (!source) throw M.problem('Bitte zuerst einen Artikel als Quelle wählen.');
+    var others = data.items.filter(function (it) { return it.id !== sourceId; }), options = M.transferOptions(data, target);
+    if (!others.length) throw M.problem('Zum Übertragen werden mindestens zwei Artikel benötigt.');
+    var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', sheet: 'Sammelflyer', scale: 'Waagenmotiv' };
+    var dlg = document.createElement('dialog'); dlg.className = 'an-dialog an-transfer'; dlg.setAttribute('aria-label', 'Gestaltung übertragen');
+    dlg.innerHTML = '<form method="dialog"><h2>Gestaltung übertragen</h2><p>Quelle: Artikel „' + M.esc(source.name) + '“ · Ziel: ' + names[target]
+      + '. Artikeldaten, Preise und Bildzuordnungen sowie andere Ausgabeziele bleiben unverändert.</p>'
+      + '<fieldset><legend>Zielkacheln</legend>' + others.map(function (it) {
+        return '<label class="an-check"><input type="checkbox" data-transfer-item="' + it.id + '"> ' + M.esc(it.name || 'Neuer Artikel') + '</label>'; }).join('') + '</fieldset>'
+      + '<fieldset><legend>Eigenschaften</legend>' + options.map(function (option) {
+        return '<label class="an-check"><input type="checkbox" data-transfer-prop="' + option.id + '"> ' + option.label + '</label>'; }).join('') + '</fieldset>'
+      + '<p role="status" data-transfer-summary>Bitte Zielkacheln und Eigenschaften auswählen.</p><ul class="an-quality-list" data-transfer-changes></ul>'
+      + '<div class="an-actions"><button type="button" data-transfer-cancel>Abbrechen</button><button type="submit" class="an-primary" data-transfer-apply disabled>Übertragen</button></div></form>';
+    var previous = document.activeElement;
+    function chosen(name) { return Array.from(dlg.querySelectorAll('[data-transfer-' + name + ']:checked'), function (box) { return box.dataset['transfer' + name[0].toUpperCase() + name.slice(1)]; }); }
+    function swatch(value) { return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : String(value); }
+    function update() {
+      var items = chosen('item'), props = chosen('prop'), list = dlg.querySelector('[data-transfer-changes]'), total = 0;
+      list.replaceChildren();
+      M.transferPlan(data, target, sourceId, items, props).forEach(function (plan) {
+        plan.changes.forEach(function (change) {
+          total++; var row = document.createElement('li');
+          row.textContent = plan.item_name + ' · ' + change.label + ': ' + swatch(change.from) + ' → ' + swatch(change.to); list.appendChild(row);
+        });
+      });
+      dlg.querySelector('[data-transfer-summary]').textContent = !items.length || !props.length ? 'Bitte Zielkacheln und Eigenschaften auswählen.'
+        : total ? items.length + ' Kachel(n) · ' + props.length + ' Eigenschaft(en) · ' + total + ' Änderung(en)' : 'Die gewählten Kacheln haben bereits diese Werte. Es wird nichts geändert.';
+      dlg.querySelector('[data-transfer-apply]').disabled = !total;
+    }
+    function close() { dlg.close(); dlg.remove(); if (previous && previous.isConnected) previous.focus(); }
+    dlg.addEventListener('change', update);
+    dlg.querySelector('[data-transfer-cancel]').onclick = close;
+    dlg.addEventListener('cancel', function (event) { event.preventDefault(); close(); });
+    dlg.querySelector('form').onsubmit = function (event) {
+      event.preventDefault();
+      var items = chosen('item'), props = chosen('prop');
+      close(); edit(function () { M.transferApply(data, target, sourceId, items, props); }, true); renderInspector();
+    };
+    document.body.appendChild(dlg); dlg.showModal();
+  }
   async function publish() {
+    if (!(await qualityGate())) return;
     await M.preflight(data);
     if (!(await M.dialog('Für Kunden veröffentlichen?', data.items.length + ' Angebote · ' + M.date(data.valid_from) + ' bis ' + M.date(data.valid_to)
         + '. Die bisherige Kundenfassung wird ersetzt. Druck und Waage werden nicht ausgelöst.', 'Jetzt freigeben'))) return;
@@ -1032,9 +1207,11 @@
     document.body.classList.add('an-printing'); window.print();
   }
   async function print() {
+    if (!(await qualityGate())) return;
     await printCanvases(await M.preflight(data), data.layout.pages.map(function () { return data.title; }));
   }
   async function printSingles() {
+    if (!(await qualityGate())) return;
     M.validate(data);
     var layouts = data.layout.targets && data.layout.targets.single;
     if (!Array.isArray(layouts) || layouts.length !== data.items.length) {
@@ -1050,6 +1227,7 @@
   }
   window.addEventListener('afterprint', function () { document.body.classList.remove('an-printing'); });
   async function scale() {
+    if (!(await qualityGate())) return;
     await M.preflight(data);
     if (dirty || !record) await save();
     var dlg = document.createElement('dialog'); dlg.className = 'an-dialog';
@@ -1098,7 +1276,15 @@
       if (undoButton && redoButton) D.historyShortcut(event, function () { undoButton.click(); }, function () { redoButton.click(); });
     };
     $('an-overview').onclick = function () { run(overview); };
-    $('an-reload-saved').onclick = function () { if (record) run(async function () { if (await discard()) await open(record.id); }); };
+    $('an-reload-saved').onclick = function () { if (record || cmsAction) run(async function () {
+      if (!(await discard())) return;
+      if (cmsAction) {
+        var fresh = (await window.AngeboteDataverse.load()).find(function (entry) { return entry.id === cmsAction.id; });
+        if (!fresh) throw M.problem('Diese Aktion ist nicht mehr vorhanden. Bitte die Übersicht erneut öffnen.');
+        cmsAction = fresh; data = M.clone(fresh.data); dirty = false; selected = '';
+        designItemId = data.items[0]?.id || ''; undo = []; redo = []; renderEditor();
+      } else await open(record.id);
+    }); };
     $('an-save').onclick = function () { run(save); };
     $('an-add-manual').onclick = function () { var item = M.item(); addItem(item); openItemDialog(item.id); };
     if ($('an-add-catalog')) $('an-add-catalog').onclick = function () { run(picker); };
@@ -1106,6 +1292,8 @@
     $('an-page-next').onclick = function () { page++; selected = ''; renderInspector(); preview().catch(M.error); };
     $('an-publish').onclick = function () { run(publish); }; $('an-print-single').onclick = function () { run(printSingles); };
     $('an-print-action').onclick = function () { run(print); }; $('an-scale').onclick = function () { run(scale); };
+    $('an-quality').onclick = function () { run(function () { return qualityGate(true); }); };
+    $('an-transfer').onclick = function () { run(transfer); };
     root.onclick = async function (event) {
       var b = event.target.closest('button');
       if (!b || b.disabled || busy) return;
@@ -1115,6 +1303,14 @@
       }
       if (b.dataset.layoutTarget) {
         designTarget = b.dataset.layoutTarget; designItemId = data.items[0] ? data.items[0].id : '';
+        if (root.querySelector('.an-object-dialog[open]')) {
+          root.querySelectorAll('[data-cms-config]').forEach(function (control) {
+            var value = cfg[control.dataset.cmsConfig];
+            if (value != null) control.value = value;
+          });
+        } else {
+          $('an-style-controls').innerHTML = D.controls(controlLayout()); D.expandGroups($('an-style-controls'));
+        }
         selected = ''; previewMode = 'paper'; renderInspector(); preview().catch(M.error); return;
       }
       if (b.dataset.editItem) { openItemDialog(b.dataset.editItem); return; }
@@ -1191,11 +1387,24 @@
         if (source.length) { dest.push(M.clone(data)); data = source.pop(); page = Math.min(page, data.layout.pages.length - 1); changed(); renderEditor(); }
       }
       if (b.id === 'an-template' || b.id === 'an-defaults') {
-        if (b.id === 'an-defaults' && data.kind === 'weekly') {
-          if (!(await M.dialog('CMS-Wochenvorlage übernehmen?', 'Die aktuell im CMS gespeicherten Plakat- und Einzelflyervorlagen ersetzen die Gestaltung aller Ausgaben dieser Aktion. Artikel, Preise und veröffentlichte Fassungen bleiben erhalten.', 'CMS-Vorlage übernehmen'))) return;
+        if (b.id === 'an-defaults' && data.kind === 'weekly' && (!data.layout.cms || designTarget !== 'scale')) {
+          if (!(await M.dialog('CMS-Wochenvorlage übernehmen?', 'Die aktuelle CMS-Vorlage ersetzt nur die Gestaltung des gewählten Ausgabeziels. Andere Ausgaben, Artikel und Preise bleiben erhalten. Alte freie Wochenlayouts werden dabei insgesamt auf die CMS-Vorlage umgestellt.', 'CMS-Vorlage übernehmen'))) return;
           run(async function () {
             var updated = M.clone(data); await M.adoptWeekly(updated);
-            checkpoint(); data = updated; page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor();
+            checkpoint();
+            if (!data.layout.cms) {
+              data = updated; M.rememberDesign(data); page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor(); return;
+            }
+            if (designTarget === 'sheet') {
+              M.cmsFor(data, 'sheet', true);
+              var keptTargets = data.layout.cms.targets;
+              data.layout.cms = M.clone(updated.layout.cms); data.layout.cms.targets = keptTargets;
+              data.layout.template = updated.layout.template; data.layout.pages = updated.layout.pages;
+            } else {
+              M.cmsFor(data, designTarget, true);
+              data.layout.cms.targets[designTarget] = M.clone(updated.layout.cms);
+            }
+            M.rememberDesign(data, designTarget); page = 0; selected = ''; changed(); renderEditor();
           });
           return;
         }
@@ -1209,11 +1418,20 @@
           edit(function () {
             M.preserveBackgrounds(data);
             if (b.id === 'an-defaults') {
-              var targets = data.layout.targets, pages = data.layout.pages, mode = data.layout.mode, kept = {};
+              var targets = data.layout.targets, pages = data.layout.pages, mode = data.layout.mode, kept = {}, oldLayout = data.layout;
               Object.keys(data.layout.adjustments || {}).forEach(function (key) {
                 if (key.split(':')[0] !== designTarget) kept[key] = data.layout.adjustments[key];
               });
-              data.layout = M.clone(layout); data.layout.targets = targets; data.layout.pages = pages; data.layout.mode = mode;
+              if (designTarget === 'sheet') {
+                data.layout = M.clone(layout); data.layout.targets = targets; data.layout.pages = pages; data.layout.mode = mode;
+                data.layout.design_origin = oldLayout.design_origin;
+                data.layout.target_styles = {};
+                ['card', 'single', 'scale'].forEach(function (target) {
+                  var style = M.styleOf(oldLayout, target); delete style.density; data.layout.target_styles[target] = style;
+                });
+              } else {
+                M.setTargetStyle(data.layout, designTarget, function (style) { Object.assign(style, M.styleOf(layout, designTarget)); delete style.density; });
+              }
               Object.keys(layout.adjustments || {}).forEach(function (key) {
                 if (key.split(':')[0] === designTarget) kept[key] = M.clone(layout.adjustments[key]);
               });
@@ -1222,6 +1440,7 @@
             if (designTarget === 'sheet') { M.applyTemplate(data); page = 0; }
             else if (standards) M.applyTargetStyleToAll(data, designTarget);
             else M.applyTargetTemplate(data, designTarget, designItemId);
+            if (b.id === 'an-defaults') M.rememberDesign(data, designTarget);
             selected = '';
           });
           renderEditor();
@@ -1245,7 +1464,17 @@
       if (target.dataset.cmsConfig) {
         if (!target.reportValidity()) return;
         edit(function () {
-          data.layout.cms.config[target.dataset.cmsConfig] = target.type === 'number' ? Number(target.value) : target.value;
+          var currentConfig = M.cmsFor(data, designTarget, true).config;
+          currentConfig[target.dataset.cmsConfig] = target.type === 'number' ? Number(target.value) : target.value;
+          if (target.dataset.cmsConfig.endsWith('_tagPreset')) {
+            var prefix = target.dataset.cmsConfig.split('_')[0], preset = window.WochenangeboteRenderer.TAG_PRESETS[target.value], cfg = currentConfig;
+            if (preset) {
+              cfg[prefix + '_tagShape'] = preset.tagShape; cfg[prefix + '_tagRadius'] = preset.tagRadius;
+              cfg[prefix + '_priceStripColor'] = preset.tagShape === 'price-image' ? '#fff000' : preset.tagColor;
+              cfg[prefix + '_priceImageColor'] = preset.tagShape === 'price-image' ? preset.tagColor : '#ffffff';
+              $('an-style-controls').innerHTML = D.controls(controlLayout()); D.expandGroups($('an-style-controls'));
+            }
+          }
           if (target.dataset.cmsConfig === 'plakatTemplate') data.layout.template = target.value;
         });
       }
@@ -1254,7 +1483,7 @@
         if (!target.reportValidity()) return;
         edit(function () {
           var item = data.items.find(function (it) { return it.id === target.dataset.cmsItem; });
-          var key = M.weeklyKey(item), overrides = data.layout.cms[target.dataset.cmsGroup];
+          var key = M.weeklyKey(item), overrides = M.cmsFor(data, designTarget, true)[target.dataset.cmsGroup];
           if (!overrides[key]) overrides[key] = {};
           overrides[key][target.dataset.cmsOverride] = Number(target.value);
         });
@@ -1281,7 +1510,12 @@
         edit(function () { data[target.dataset.actionProp] = target.value; });
         $('an-action-summary').textContent = data.title + ' · ' + M.date(data.valid_from) + ' – ' + M.date(data.valid_to);
       }
-      if (target.dataset.style && (designTarget === 'sheet' || data.layout.cms)) {
+      if (target.dataset.style === 'price_preset') {
+        edit(function () {
+          if (designTarget === 'sheet') D.change(data.layout, target);
+          else M.setTargetStyle(data.layout, designTarget, function (style) { D.change(style, target); });
+        });
+      } else if (target.dataset.style && (designTarget === 'sheet' || weeklyTarget())) {
         edit(function () { M.preserveBackgrounds(data); D.change(data.layout, target); if (data.layout.mode === 'template' && designTarget === 'sheet') M.applyTemplate(data); });
       } else if (target.dataset.style) {
         var applyStyle = function () { edit(function () { M.setTargetStyle(data.layout, designTarget, function (style) { D.change(style, target); }); M.applyTargetStyleToAll(data, designTarget); }); };

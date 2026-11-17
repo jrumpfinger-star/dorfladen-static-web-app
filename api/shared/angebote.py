@@ -26,6 +26,7 @@ THEME_DEFAULTS = {
     "card_background": "#ffffff", "price_background": "#ffffff",
     "price_shape": "rect", "name_size": 24, "price_size": 58, "details_size": 17,
     "price_outline_color": "#ffffff", "old_price_color": "#000000", "price_strike_color": "#ed1c24",
+    "price_preset": "",
     "image_rotation": 0, "image_scale": 100,
     "marker_type": "starburst", "marker_palette": "harmonie", "marker_scale": 100,
 }
@@ -34,6 +35,9 @@ MARKER_PALETTES = ("harmonie", "classic-red", "warm-copper", "berry-purple", "oc
                    "sunset-orange", "fresh-lime", "deep-rose", "midnight-gold", "arctic-teal")
 PRICE_SHAPES = ("rect", "round", "ellipse", "rounded", "pill", "circle", "banner",
                 "star", "hexagon", "diamond", "ticket", "explosion", "trapez")
+PRICE_PRESETS = ("", "manual", "classic-red-rect", "green-rounded", "dark-pill", "gold-banner",
+                 "blue-circle", "orange-star", "purple-hexagon", "teal-ticket",
+                 "rose-diamond", "copper-explosion", "price-image")
 DECORATION_FLAGS = {"show_leaf", "show_bag", "show_texture", "background_gradient", "image_gradient"}
 DECORATION_COLORS = {"leaf_color", "footer_color", "vorrat_color", "details_color",
                      "card_border_color", "image_background", "border_color",
@@ -107,17 +111,23 @@ CMS_CONFIG_KEYS.update(
         "decoBgColor decoFooterColor vorratColor showLeaf leafSize showBag "
         "showTexture imgScale borderWidth borderColor imgAnchorX imgAnchorY "
         "priceAnchorX priceAnchorY imgWidthPct priceImageColor priceOutlineColor "
-        "priceStripColor priceOldColor priceStrikeColor"
+        "priceStripColor priceOldColor priceStrikeColor nameFont nameSize nameColor"
     ).split()
 )
 
 
 def _cms_design(raw, items):
     if (not isinstance(raw, dict)
-            or set(raw) != {"config", "plakat_article_overrides", "flyer_article_overrides"}
+            or not {"config", "plakat_article_overrides", "flyer_article_overrides"} <= set(raw)
+            or set(raw) - {"config", "plakat_article_overrides", "flyer_article_overrides", "targets"}
             or not isinstance(raw["config"], dict)
             or set(raw["config"]) - CMS_CONFIG_KEYS):
         raise AngeboteFehler(400, "Bitte die gespeicherte Wochenvorlage prüfen.")
+    targets = raw.get("targets", {})
+    if (not isinstance(targets, dict) or set(targets) - {"card", "single"}
+            or any(not isinstance(value, dict) or "targets" in value for value in targets.values())):
+        raise AngeboteFehler(400, "Bitte die getrennten Wochenvorlagen prüfen.")
+    validated_targets = {key: _cms_design(value, items) for key, value in targets.items()}
     for key in ("plakatTemplate", "flyerTemplate"):
         if raw["config"].get(key) not in TEMPLATES[2:]:
             raise AngeboteFehler(400, "Bitte eine gültige CMS-Wochenvorlage wählen.")
@@ -126,9 +136,16 @@ def _cms_design(raw, items):
         limits = {"imgDx": (-1000, 1000), "imgDy": (-1500, 1500),
                   "priceDx": (-1000, 1000), "priceDy": (-1500, 1500),
                   "imgScale": (20, 200), "priceScale": (20, 200),
-                  "imgRot": (-180, 180), "priceRot": (-180, 180)}
+                  "imgRot": (-180, 180), "priceRot": (-180, 180),
+                  "nameDx": (-1000, 1000), "nameDy": (-1500, 1500),
+                  "nameScale": (20, 200), "nameRot": (-180, 180)}
         if not isinstance(inline, dict) or set(inline) - limits.keys():
             raise AngeboteFehler(400, "Bitte die direkten Standardanpassungen prüfen.")
+        if raw["config"].get(f"{kind}_nameFont", "Arial") not in FONTS:
+            raise AngeboteFehler(400, "Bitte die Schrift der Bezeichnung prüfen.")
+        if not COLOR.fullmatch(str(raw["config"].get(f"{kind}_nameColor", "#1a1a1a"))):
+            raise AngeboteFehler(400, "Bitte die Farbe der Bezeichnung prüfen.")
+        _number(raw["config"].get(f"{kind}_nameSize", 0), "die Schriftgröße der Bezeichnung", 0, 100)
         for key, value in inline.items():
             minimum, maximum = limits[key]
             if (isinstance(value, bool) or not isinstance(value, (int, float))
@@ -167,6 +184,8 @@ def _cms_design(raw, items):
     if len(json.dumps(raw, ensure_ascii=False).encode("utf-8")) > 1000000:
         raise AngeboteFehler(413, "Die Wochenvorlage ist zu umfangreich. Bitte weniger Zusatzbilder verwenden.")
     result = copy.deepcopy(raw)
+    if "targets" in raw:
+        result["targets"] = validated_targets
     known = {re.sub(r"\s+", "_", item["name"].strip().lower()) for item in items}
     for key in ("plakat_article_overrides", "flyer_article_overrides"):
         if not isinstance(result[key], dict):
@@ -308,6 +327,8 @@ def _theme_value(key, value):
         raise AngeboteFehler(400, "Bitte eine gültige Schrift wählen.")
     elif key == "price_shape" and value not in PRICE_SHAPES:
         raise AngeboteFehler(400, "Bitte eine gültige Preisform wählen.")
+    elif key == "price_preset" and value not in PRICE_PRESETS:
+        raise AngeboteFehler(400, "Bitte eine gültige Preisschildvorlage wählen.")
     elif key in ("name_size", "price_size", "details_size"):
         value = _number(value, "die Schriftgröße", 14, 100)
     elif key == "image_rotation":
@@ -347,6 +368,25 @@ def _target_styles(raw):
             checked[key] = value
         result[target] = checked
     return result
+
+
+def _design_origin(raw):
+    if (not isinstance(raw, dict) or set(raw) != {"schema", "targets"}
+            or type(raw.get("schema")) is not int or raw["schema"] != 1
+            or not isinstance(raw["targets"], dict)
+            or set(raw["targets"]) - {"sheet", "card", "single", "scale"}):
+        raise AngeboteFehler(400, "Bitte die gespeicherte Vorlagenherkunft prüfen.")
+    for values in raw["targets"].values():
+        if not isinstance(values, dict) or len(values) > 300:
+            raise AngeboteFehler(400, "Die Vorlagenherkunft ist zu umfangreich.")
+        for key, value in values.items():
+            if not isinstance(key, str) or not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_.]{0,100}", key):
+                raise AngeboteFehler(400, "Bitte die Vorlageneigenschaften prüfen.")
+            if (value is not None and not isinstance(value, bool)
+                    and not (isinstance(value, str) and len(value) <= 200)
+                    and not (isinstance(value, (int, float)) and math.isfinite(value) and abs(value) <= 100000000)):
+                raise AngeboteFehler(400, "Bitte die Werte der Vorlagenherkunft prüfen.")
+    return copy.deepcopy(raw)
 
 
 def _layout(raw, items):
@@ -406,9 +446,10 @@ def _layout(raw, items):
         }
     cms = {"cms": _cms_design(raw["cms"], items)} if "cms" in raw else {}
     decoration = {"decoration": _decoration(raw["decoration"])} if "decoration" in raw else {}
+    origin = {"design_origin": _design_origin(raw["design_origin"])} if "design_origin" in raw else {}
     return {"mode": mode, "template": template, "density": density,
             "color": color, "background": background, "pages": result,
-            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms, **decoration,
+            "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms, **decoration, **origin,
             **({"target_styles": target_styles} if target_styles else {})}
 
 

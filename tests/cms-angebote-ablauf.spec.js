@@ -3,7 +3,7 @@ const BASE = process.env.TEST_URL || 'http://127.0.0.1:8818';
 const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6hywAAAAASUVORK5CYII=';
 
 async function setup(page) {
-  const state = { actions: new Map(), writes: [], errors: [], offerReads: [], imageLookups: [], failSave: false, images: 0 };
+  const state = { actions: new Map(), revisions: new Map(), writes: [], errors: [], offerReads: [], imageLookups: [], failSave: false, failReads: false, images: 0 };
   await page.clock.install({ time: new Date('2026-11-18T12:00:00Z') });
   await page.addInitScript((hash) => {
     if (window !== window.top) return;
@@ -35,6 +35,7 @@ async function setup(page) {
     }
     if (path === '/api/angebote') {
       if (req.method() === 'GET') {
+        if (state.failReads) return json({ success: false, error: 'Dataverse nicht erreichbar' }, 503);
         const token = req.headers()['x-cms-auth'] || '';
         state.offerReads.push(token);
         const visible = [...state.actions.values()].filter((action) => token === 'test-cms-session'
@@ -48,17 +49,25 @@ async function setup(page) {
             dl_artikelnummer: it.barcode, dl_werbebildid: it.werbebild_id, image_key: it.image_id?.slice(4),
             bild_data: it.image_id ? PHOTO : '', action_kind: action.kind, action_layout: action.layout,
             units: it.units, volume_ml: it.volume_ml, packaging: it.packaging,
-            deposit_cents: it.deposit_cents, deposit_free: it.deposit_free, article_number: it.article_number
+            deposit_cents: it.deposit_cents, deposit_free: it.deposit_free, article_number: it.article_number,
+            action_revision: 'rev-' + (state.revisions.get(action.aktion_id) || 1)
           }))) });
       }
       const body = req.postDataJSON(); state.writes.push(body);
       if (state.failSave) return json({ success: false, error: 'Offer action changed; reload before saving' }, 409);
-      if (url.searchParams.get('action') === 'delete') { state.actions.delete(body.aktion_id); return json({ success: true }); }
+      if (url.searchParams.get('action') === 'delete') {
+        if (state.actions.has(body.aktion_id) && body.revision !== 'rev-' + (state.revisions.get(body.aktion_id) || 1)) {
+          return json({ success: false, error: 'Offer action changed; reload before deleting' }, 409);
+        }
+        state.actions.delete(body.aktion_id); return json({ success: true });
+      }
       const canonical = (id) => id.replace(/-/g, '').toLowerCase().replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
       const existing = state.actions.get(body.aktion_id);
-      if (existing && existing.items.map((it) => canonical(it.id)).sort().join() !== body.original_ids.map(canonical).sort().join()) {
+      if (existing && (existing.items.map((it) => canonical(it.id)).sort().join() !== body.original_ids.map(canonical).sort().join()
+        || body.revision !== 'rev-' + (state.revisions.get(body.aktion_id) || 1))) {
         return json({ success: false, error: 'Offer action changed; reload before saving' }, 409);
       }
+      state.revisions.set(body.aktion_id, (state.revisions.get(body.aktion_id) || 0) + 1);
       state.actions.set(body.aktion_id, structuredClone(body));
       return json({ success: true, aktion_id: body.aktion_id, items: body.items.map((it) => ({ id: canonical(it.id), client_id: it.id })) });
     }
@@ -252,15 +261,18 @@ test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artik
   expect(saved.items.map((it) => it.name)).toEqual(Array.from({ length: 6 }, (_, i) => 'Getränk ' + (i + 1)));
   expect(saved.items.every((it) => it.units === 20 && it.volume_ml === 500 && it.deposit_cents === 310)).toBe(true);
   expect(saved.layout.pages.map((p) => p.elements.filter((e) => e.type === 'name').length)).toEqual([4, 2]);
+  await showTab(page, 'Ansicht');
   await expect(page.locator('#an-page-label')).toHaveText('Seite 1 / 2');
   await page.getByRole('button', { name: 'Nächste Flyerseite', exact: true }).click();
   await expect(page.locator('#an-page-label')).toHaveText('Seite 2 / 2');
   await expect(page.locator('#an-stage-info')).not.toHaveClass(/an-error/);
+  await showTab(page, 'Ausgabe');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download', exact: true }).click();
   expect((await download).suggestedFilename()).toBe('Angebot-1.png');
   await page.screenshot({ path: test.info().outputPath('getraenke-vorschau.png') });
   await page.getByRole('button', { name: 'Alle Einzelflyer', exact: true }).click();
+  await showTab(page, 'Element');
   await expect(page.locator('#an-design-item option')).toHaveCount(6);
   await page.locator('#an-overview').click();
   await page.getByRole('button', { name: 'Alle', exact: true }).click();
@@ -577,7 +589,8 @@ test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dlg).toHaveCount(0);
   await showTab(page, 'Artikel');
-  await page.getByText('Exakte CMS-Artikelpositionen', { exact: true }).click();
+  const positions = page.locator('details', { hasText: 'Exakte CMS-Artikelpositionen' }).last();
+  if (!(await positions.evaluate((node) => node.open))) await positions.locator('> summary').click();
   await page.locator('[data-cms-override=imgDx]').fill('13');
   await page.locator('[data-cms-override=imgDx]').dispatchEvent('change');
   await page.getByRole('button', { name: 'Gestaltung speichern', exact: true }).click();
@@ -706,16 +719,27 @@ const showTab = async (page, name) => {
   const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
   if (await tab.isVisible()) await tab.click();
 };
+// Mausbedienung ab 600 px: 32 px hohe Kontrollen; Touch und Telefone behalten mindestens 44 px.
+const compactMouse = (page) => page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
+async function workspaceView(root, mode) {
+  const select = root.locator('[aria-label=Arbeitsansicht]');
+  if (!(await select.isVisible())) await root.locator('[data-workspace-views]:visible').click();
+  await select.selectOption(mode);
+}
 
 test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
-  const stage = page.locator('#an-stage'), selected = page.locator('#an-hit-layer .an-selected');
+  const stage = page.locator('#an-stage'), selected = page.locator('#an-hit-layer .an-selected'), workspace = page.locator('.an-cms-workspace');
+  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  // Mobil sind Eingaben und Motiv getrennte Arbeitsansichten; verborgene Felder sind weiterhin lesbar.
+  const numeric = async (prop) => Number(await page.locator('[data-element-prop=' + prop + ']').first().inputValue());
+  if (mobile) await workspaceView(workspace, 'picture');
   await expect(selected).toBeVisible();
-  const stageBefore = await stage.boundingBox(), before = await selected.boundingBox();
+  const stageBefore = await stage.boundingBox();
   const id = await page.locator('#an-select-element').inputValue();
-  const xBefore = Number(await page.locator('[data-element-prop=x]').inputValue());
+  const xBefore = await numeric('x');
   const start = await selected.evaluate((element) => {
     const box = element.getBoundingClientRect();
     for (let y = box.top + 3; y < box.bottom; y += 3) for (let x = box.left + 3; x < box.right; x += 3) {
@@ -725,16 +749,17 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', asy
   });
   expect(start).not.toBeNull();
   await drag(page, start, { x: start.x + 30, y: start.y + 20 });
-  expect(await page.locator('#an-select-element').inputValue()).toBe(id);
-  expect(Number(await page.locator('[data-element-prop=x]').inputValue())).toBeGreaterThan(xBefore + 10);
   expect(await stage.boundingBox()).toEqual(stageBefore);
-  const width = Number(await page.locator('[data-element-prop=w]').inputValue());
+  expect(await page.locator('#an-select-element').inputValue()).toBe(id);
+  expect(await numeric('x')).toBeGreaterThan(xBefore + 10);
+  const width = await numeric('w');
   const grip = await middle(page.locator('#an-hit-layer [data-resize]'));
   await drag(page, grip, { x: grip.x + 30, y: grip.y + 30 });
-  expect(Number(await page.locator('[data-element-prop=w]').inputValue())).toBeGreaterThan(width);
+  expect(await numeric('w')).toBeGreaterThan(width);
   const turn = await middle(page.locator('#an-hit-layer [data-rotate]')), center = await middle(page.locator('#an-hit-layer .an-selected'));
   await drag(page, turn, { x: center.x + 80, y: center.y });
   await expect(page.locator('[data-element-prop=rotation][type=number]')).toHaveValue('90');
+  if (mobile) await workspaceView(workspace, 'inputs');
   await saveDesign(page);
   const saved = state.writes.at(-1).layout.pages.flatMap((entry) => entry.elements).find((entry) => entry.id === id);
   expect(saved.rotation).toBe(90);
@@ -742,30 +767,50 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', asy
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F19-02: Werkzeuge stehen links bzw. unter dem fest sichtbaren Motiv', async ({ page }) => {
+test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat erreichbaren Motiv', async ({ page }) => {
   await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
   const modal = page.locator('.an-cms-preview-modal'), canvas = page.locator('.an-cms-canvas'), side = page.locator('.an-cms-side');
-  const view = page.viewportSize(), dialogBox = await modal.boundingBox();
-  const canvasBox = await canvas.boundingBox(), sideBox = await side.boundingBox();
-  if (dialogBox.width >= 640) expect(sideBox.x + sideBox.width).toBeLessThanOrEqual(canvasBox.x + 2);
-  else expect(canvasBox.y + canvasBox.height).toBeLessThanOrEqual(sideBox.y + 2);
-  if (dialogBox.width >= 1000) expect(canvasBox.width).toBeGreaterThanOrEqual((canvasBox.width + sideBox.width) * .49);
-  else expect((await page.locator('#an-stage').boundingBox()).width).toBeGreaterThanOrEqual(view.width * (dialogBox.width >= 640 ? .35 : .5));
+  const workspace = page.locator('.an-cms-workspace'), view = page.viewportSize(), dialogBox = await modal.boundingBox();
+  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  const minimum = (await compactMouse(page)) ? 32 : 44;
+  const stageInView = async () => {
+    const stage = await page.locator('#an-stage').boundingBox();
+    expect(stage.y).toBeGreaterThanOrEqual(0);
+    expect(stage.y + stage.height).toBeLessThanOrEqual(view.height);
+    return stage;
+  };
+  if (mobile) {
+    await expect(canvas).toBeHidden();
+    expect((await page.locator('.an-task-fields').boundingBox()).height).toBeGreaterThanOrEqual(view.height * .5);
+    await workspaceView(workspace, 'picture');
+    await expect(side).toBeHidden();
+    expect((await stageInView()).width).toBeGreaterThanOrEqual(view.width * .5);
+    await workspaceView(workspace, 'inputs');
+    await expect(canvas).toBeHidden();
+  } else {
+    const canvasBox = await canvas.boundingBox(), sideBox = await side.boundingBox(), total = canvasBox.width + sideBox.width;
+    expect(sideBox.x + sideBox.width).toBeLessThanOrEqual(canvasBox.x + 2);
+    expect(sideBox.width).toBeGreaterThanOrEqual(total * .5 - 1);
+    if (dialogBox.width >= 1000) expect(canvasBox.width).toBeGreaterThanOrEqual(total * .35);
+    else expect((await stageInView()).width).toBeGreaterThanOrEqual(Math.min(view.width * .35, 240) - 1);
+  }
   for (const field of await side.locator('input:not([type=checkbox]):visible,select:visible').all()) {
-    const height = (await field.boundingBox()).height;
-    if (dialogBox.width < 640) expect(height).toBeGreaterThanOrEqual(44);
-    else expect(height).toBeLessThanOrEqual(40);
+    const height = (await field.boundingBox()).height, label = await field.evaluate((node) => node.outerHTML.slice(0, 120));
+    expect(height, label).toBeGreaterThanOrEqual(43.5);
+  }
+  for (const button of await side.locator('button:visible').all()) {
+    const height = (await button.boundingBox()).height, label = await button.evaluate((node) => node.outerHTML.slice(0, 120));
+    expect(height, label).toBeGreaterThanOrEqual(minimum - .5);
   }
   if (view.width >= 1200) expect(await modal.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
   await expect(side.locator('[data-element-prop=fill]')).toBeVisible();
   await expect(side.locator('[data-element-prop=opacity]')).toBeVisible();
   await expect(side.locator('[data-nudge]')).toHaveCount(4);
+  if (mobile) await workspaceView(workspace, 'picture');
   await modal.evaluate((element) => { element.scrollTop = element.scrollHeight; });
-  const stage = await page.locator('#an-stage').boundingBox();
-  expect(stage.y).toBeGreaterThanOrEqual(0);
-  expect(stage.y + stage.height).toBeLessThanOrEqual(view.height);
+  await stageInView();
   expect(await modal.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
   await page.screenshot({ path: test.info().outputPath('vorschau-mit-seitlichen-werkzeugen.png') });
 });
@@ -774,7 +819,7 @@ test('TC-F19-03/TC-F39-04: Artikel, Farbe und Undo/Redo in der Vorschau bearbeit
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
-  const undo = page.locator('.an-toolbar [data-history=undo]'), redo = page.locator('.an-toolbar [data-history=redo]');
+  const undo = page.locator('.an-compact-actions [data-history=undo]'), redo = page.locator('.an-compact-actions [data-history=redo]');
   await expect(undo).toBeVisible(); await expect(redo).toBeVisible();
   await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
   const name = page.locator('[data-cms-article=name]'), price = page.locator('[data-cms-article=price_cents]');
@@ -815,17 +860,24 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'weekly', 1);
-  const surface = page.locator('.an-weekly-surface');
+  const surface = page.locator('.an-weekly-surface'), workspace = page.locator('.an-cms-workspace');
+  const tools = page.locator('.an-cms-side .an-direct-tools');
+  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  await expect(tools).toBeVisible();
+  const toolsBox = await tools.boundingBox();
+  if (mobile) {
+    await expect(surface.locator('canvas')).toBeHidden();
+    await workspaceView(workspace, 'picture');
+  }
   await expect(surface.locator('canvas')).toBeVisible();
-  const stageBox = await surface.locator('.an-stage').boundingBox(), toolsBox = await surface.locator('.an-direct-tools').boundingBox();
-  const phone = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 640;
-  if (phone) expect(stageBox.y + stageBox.height).toBeLessThanOrEqual(toolsBox.y + 2);
-  else expect(toolsBox.x + toolsBox.width).toBeLessThanOrEqual(stageBox.x + 2);
+  const stageBox = await surface.locator('.an-stage').boundingBox();
+  if (!mobile) expect(toolsBox.x + toolsBox.width).toBeLessThanOrEqual(stageBox.x + 2);
   const turn = await middle(surface.locator('[data-preview-rotate]')), center = await middle(surface.locator('.an-selected'));
   await drag(page, turn, { x: center.x + 80, y: center.y });
+  if (mobile) await workspaceView(workspace, 'inputs');
   await saveDesign(page);
   const overrides = Object.values(state.writes.at(-1).layout.cms.plakat_article_overrides)[0];
-  const part = (await surface.locator('select').inputValue()).split(':').pop();
+  const part = (await tools.locator('[data-preview-element]').inputValue()).split(':').pop();
   expect(Math.abs(overrides[part + 'Rot'])).toBeGreaterThan(60);
   expect(state.errors).toEqual([]);
 });
@@ -842,25 +894,48 @@ for (const [surface, path] of SURFACES) {
     await openSurface(page, path);
     for (const kind of ['weekly', 'drinks']) {
       await openPreview(page, kind, 2);
-      const modal = page.locator('.an-cms-preview-modal');
-      const stage = page.locator(kind === 'weekly' ? '.an-weekly-surface .an-stage' : '#an-stage');
+      const modal = page.locator('.an-cms-preview-modal'), workspace = page.locator('.an-cms-workspace');
+      const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
       const writes = state.writes.length;
       for (const target of ['card', 'single', 'sheet', 'scale']) {
         await page.locator('[data-layout-target=' + target + ']').click();
         await showTab(page, 'Element');
-        await expect(stage.locator('canvas')).toBeVisible();
+        const stage = page.locator('.an-task-picture .an-stage:visible');
+        const tools = page.locator('.an-task-tools');
         await modal.evaluate((node) => { node.scrollTop = 0; });
-        const picture = await stage.boundingBox(), dialog = await modal.boundingBox();
-        const tools = kind === 'weekly' ? page.locator('.an-weekly-surface .an-direct-tools') : page.locator('.an-cms-side');
+        // Mobil stehen zuerst die Eingaben im Vordergrund; das Motiv ist separat erreichbar.
+        if (mobile) { await expect(stage).toBeHidden(); await expect(tools).toBeVisible(); }
         const fields = await tools.boundingBox();
-        if (dialog.width >= 640) {
+        const working = await page.locator('.an-task-fields').boundingBox();
+        expect(working.height).toBeGreaterThanOrEqual(fields.height * .5);
+        if (mobile) await workspaceView(workspace, 'picture');
+        await expect(stage.locator('canvas')).toBeVisible();
+        const picture = await stage.boundingBox(), dialog = await modal.boundingBox();
+        await expect(page.locator('.an-task-picture').locator('input,select,.an-direct-tools,.an-actions,h2,.an-note')).toHaveCount(0);
+        if (mobile) {
+          await expect(tools).toBeHidden();
+          await workspaceView(workspace, 'inputs');
+        }
+        const split = page.getByRole('separator');
+        if (await split.isVisible()) {
+          // Ende gibt den Eingaben maximal Platz, Pos1 genau die Hälfte; die Vorschau bleibt nutzbar.
+          await split.focus(); await split.press('End');
+          let right = await page.locator('.an-task-picture').boundingBox(), left = await tools.boundingBox();
+          expect(left.width).toBeGreaterThan(right.width);
+          expect(right.width).toBeGreaterThanOrEqual(240);
+          await split.press('Home');
+          right = await page.locator('.an-task-picture').boundingBox(); left = await tools.boundingBox();
+          expect(left.width).toBeGreaterThanOrEqual(right.width - 1);
+          await split.press('ArrowRight');
+        }
+        if (!mobile) {
           expect(fields.x + fields.width).toBeLessThanOrEqual(picture.x + 2);
           const styles = page.locator('.an-cms-style-options');
           if (await styles.isVisible()) {
             const box = await styles.boundingBox();
             expect(box.x + box.width).toBeLessThanOrEqual(picture.x + 2);
           }
-        } else expect(picture.y + picture.height).toBeLessThanOrEqual(fields.y + 2);
+        }
         await expect(page.locator('[data-layout-target]')).toHaveCount(4);
         for (const tab of await page.locator('[data-layout-target]').all()) await expect(tab).toBeVisible();
         expect(await modal.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
@@ -880,16 +955,27 @@ for (const [surface, path] of SURFACES) {
     const state = await setup(page);
     await openSurface(page, path);
     await openPreview(page, 'weekly', 1, true);
-    const surfaceBox = page.locator('.an-weekly-surface');
-    await expect(surfaceBox.locator('canvas')).toBeVisible();
+    const surfaceBox = page.locator('.an-cms-side'), workspace = page.locator('.an-cms-workspace'), canvas = page.locator('.an-weekly-surface canvas');
+    const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+    if (mobile) { await expect(canvas).toBeHidden(); await workspaceView(workspace, 'picture'); }
+    await expect(canvas).toBeVisible();
+    if (mobile) await workspaceView(workspace, 'inputs');
     const select = surfaceBox.locator('[data-preview-element]');
     const part = async (suffix) => select.locator('option[value$=":' + suffix + '"]');
-    // kompakt: keine Streckung zwischen den Werkzeugblöcken
+    // kompakt: keine Streckung zwischen den Werkzeugblöcken desselben Reiters
     const stacked = (await page.locator('.an-cms-preview-modal').boundingBox()).width < 1000;
     if (!stacked) {
-      const boxes = [];
-      for (const selector of ['.an-direct-tools', '.an-extras', '#an-cms-article', '#an-inspector > details']) boxes.push(await page.locator('.an-cms-preview-modal ' + selector).first().boundingBox());
-      for (let i = 1; i < boxes.length; i++) expect(boxes[i].y - (boxes[i - 1].y + boxes[i - 1].height)).toBeLessThanOrEqual(60);
+      for (const [tab, selectors] of [['Element', ['.an-direct-tools', '.an-extras']], ['Artikel', ['#an-cms-article', '#an-inspector > details']]]) {
+        await showTab(page, tab);
+        const boxes = [];
+        for (const selector of selectors) {
+          const block = page.locator('.an-cms-preview-modal ' + selector).first();
+          if (await block.isVisible()) boxes.push(await block.boundingBox());
+        }
+        expect(boxes.length, tab).toBeGreaterThan(0);
+        for (let i = 1; i < boxes.length; i++) expect(boxes[i].y - (boxes[i - 1].y + boxes[i - 1].height), tab).toBeLessThanOrEqual(60);
+      }
+      await showTab(page, 'Element');
     }
     // Pfeile, Drehung
     await surfaceBox.locator('[data-preview-nudge="2,0"]').click();
@@ -1008,7 +1094,7 @@ test('TC-F24-01: Buttons und Felder sind klar erkennbar (Kontrast)', async ({ pa
     check('Standard', [...dialog.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Download'), white);
     check('Standard klein', [...dialog.querySelectorAll('.an-cms-side button')].find((b) => b.textContent.includes('Duplizieren')), white);
     check('Feld', dialog.querySelector('.an-cms-side input[data-cms-article=name]'), white);
-    const primary = [...dialog.querySelectorAll('button')].find((b) => b.textContent.includes('Gestaltung speichern'));
+    const primary = dialog.querySelector('button[aria-label="Gestaltung speichern"]');
     out.push({ label: 'Primär', border: 4, text: ratio(parse(getComputedStyle(primary).color), parse(getComputedStyle(primary).backgroundColor)) });
     return out;
   });
@@ -1032,33 +1118,37 @@ for (const kind of ['weekly', 'drinks']) {
       expect(b.y).toBeGreaterThanOrEqual(-1);
       expect(b.y + b.height).toBeLessThanOrEqual(view.height + 1);
     };
-    if (dialog.width >= 1000) {
-      await expect(panel).toBeVisible();
+    const workspace = page.locator('.an-cms-workspace');
+    const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+    const stageInView = async () => {
+      if (mobile) await workspaceView(workspace, 'picture');
+      await inView(stage);
+      if (mobile) await workspaceView(workspace, 'inputs');
+    };
+    // Die Gestaltungsbereiche stehen auf allen Breiten hinter Reitern; Vorlage und Marker sind eigene Reiter.
+    await expect(page.locator('.an-cms-tabbar')).toBeVisible();
+    await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 6 : 5);
+    await expect(panel).toBeHidden();
+    await showTab(page, 'Vorlage');
+    await expect(panel).toBeVisible();
+    if (!mobile) {
       const s = await stage.boundingBox(), p = await panel.boundingBox();
       expect(p.x + p.width).toBeLessThanOrEqual(s.x + 2);
-      const previewWidth = kind === 'weekly'
-        ? await page.locator('#an-inspector').evaluate((node) => parseFloat(getComputedStyle(node).gridTemplateColumns.split(' ').at(-1)))
-        : await page.locator('.an-cms-canvas').evaluate((node) => node.clientWidth);
-      expect(previewWidth).toBeGreaterThanOrEqual(dialog.width * .4);
-      await expect(page.locator('.an-cms-tabbar')).toBeHidden();
-      await inView(kind === 'weekly' ? page.locator('[data-cms-config=savingsMarkerType]') : panel.locator('.an-template-picker > summary'));
-    } else {
-      await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 4 : 3);
-      await expect(panel).toBeHidden();
-      await showTab(page, 'Vorlage');
-      await expect(panel).toBeVisible();
-      await inView(stage);
-      if (kind === 'weekly') {
-        await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeVisible();
-        await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeHidden();
-        await showTab(page, 'Marker');
-        await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeVisible();
-        await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeHidden();
-        await inView(stage);
-      }
-      await showTab(page, 'Element');
-      await expect(panel).toBeHidden();
+      if (dialog.width >= 1000) expect(await page.locator('.an-cms-canvas').evaluate((node) => node.clientWidth)).toBeGreaterThanOrEqual(dialog.width * .35);
     }
+    await stageInView();
+    await inView(kind === 'weekly' ? page.locator('[data-cms-config=plakatTemplate]') : panel.locator('.an-template-picker > summary'));
+    if (kind === 'weekly') {
+      await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeVisible();
+      await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeHidden();
+      await showTab(page, 'Marker');
+      await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeVisible();
+      await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeHidden();
+      await inView(page.locator('[data-cms-config=savingsMarkerType]'));
+      await stageInView();
+    }
+    await showTab(page, 'Element');
+    await expect(panel).toBeHidden();
     expect(await modal.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
     expect(state.errors).toEqual([]);
   });
@@ -1068,16 +1158,29 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'weekly', 2);
-  const surface = page.locator('.an-weekly-surface');
+  const surface = page.locator('.an-weekly-surface'), side = page.locator('.an-cms-side'), workspace = page.locator('.an-cms-workspace');
+  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
   for (const target of ['card', 'single', 'sheet', 'scale']) {
     await page.locator('[data-layout-target=' + target + ']').click();
     await showTab(page, 'Element');
-    await expect(surface.locator('canvas')).toBeVisible();
-    for (const name of ['Ghost', 'Duplikat', '+ Ghost', '+ Duplikat', 'Element zurücksetzen', 'Alles zurücksetzen']) {
-      await expect(surface.getByRole('button', { name, exact: true })).toBeVisible();
+    // F47: Die Waage hat ein eigenes Zielrenderer-Layout und damit die nativen Gestaltungswerkzeuge statt der Originalwochenvorschau.
+    const native = target === 'scale', canvas = native ? page.locator('#an-stage canvas') : surface.locator('canvas');
+    if (mobile) await workspaceView(workspace, 'picture');
+    await expect(canvas).toBeVisible();
+    if (mobile) await workspaceView(workspace, 'inputs');
+    if (native) {
+      for (const name of ['+ Eigenes Bild', 'Ghost', 'Duplizieren']) await expect(side.getByRole('button', { name, exact: true })).toBeVisible();
+      await expect(side.locator('[data-element-prop=rotation][type=range]')).toBeVisible();
+      continue;
     }
-    await expect(surface.locator('[data-x-image]')).toBeAttached();
-    await expect(surface.locator('[data-x-rot]')).toBeVisible();
+    // Der Namensblock bringt eigene Textfelder statt Ghost/Duplikat; die Bildwerkzeuge gehören zu den übrigen Elementen.
+    const choice = side.locator('[data-preview-element] option:not([value=""])').filter({ hasNotText: /^Bezeichnung/ }).first();
+    await side.locator('[data-preview-element]').selectOption(await choice.getAttribute('value'));
+    for (const name of ['Ghost', 'Duplikat', '+ Ghost', '+ Duplikat', 'Element zurücksetzen', 'Alles zurücksetzen']) {
+      await expect(side.getByRole('button', { name, exact: true })).toBeVisible();
+    }
+    await expect(side.locator('[data-x-image]')).toBeAttached();
+    await expect(side.locator('[data-x-rot]')).toBeVisible();
   }
   await page.locator('[data-layout-target=sheet]').click();
   const canvas = surface.locator('canvas'), before = await canvas.evaluate((c) => c.toDataURL());
@@ -1107,5 +1210,170 @@ test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je
   await color.fill('#336699'); await color.dispatchEvent('change');
   await saveDesign(page);
   expect(state.writes.at(-1).layout.target_styles.card.background).toBe('#336699');
+  expect(state.errors).toEqual([]);
+});
+
+for (const kind of ['drinks', 'weekly']) {
+  test(`TC-F58-01: vollständiger Roundtrip aus Erfassung, Bild, Gestaltung, Neuöffnung und Ausgabe (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, kind, 2, true);
+    expect(state.writes).toHaveLength(1);
+    await page.locator('[data-layout-target=sheet]').click();
+    await showTab(page, 'Vorlage');
+    const color = kind === 'drinks' ? page.locator('input[data-style=background]') : page.locator('[data-cms-config=plakat_decoBgColor]');
+    await color.fill('#336699'); await color.dispatchEvent('change');
+    await saveDesign(page);
+    expect(state.writes).toHaveLength(2);
+    const saved = state.writes[1];
+    if (kind === 'drinks') expect(saved.layout.background).toBe('#336699'); else expect(saved.layout.cms.config.plakat_decoBgColor).toBe('#336699');
+    expect(saved.items).toHaveLength(2);
+    expect(saved.items[0].image_id).toMatch(/^cms:/);
+    expect(saved.layout.image_refs[saved.items[0].id]).toBe(saved.items[0].image_id);
+    const fs = require('node:fs/promises');
+    async function output() {
+      await showTab(page, 'Ausgabe');
+      const download = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Download', exact: true }).click();
+      return fs.readFile(await (await download).path());
+    }
+    const before = await output();
+    const pngSize = (buffer) => buffer.subarray(16, 24).toString('hex');
+    expect(before.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    await page.locator('#an-overview').click();
+    await page.goto(BASE + '/angebote.html');
+    await page.getByRole('button', { name: 'Alle', exact: true }).click();
+    await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+    await expect(page.locator('#an-stage-info')).not.toHaveClass(/an-error/);
+    const after = await output();
+    // Der Originalwochenrenderer streut Dekoration zufällig; dort gilt gleiche Ausgabegröße, bei Getränken Byte-Gleichheit.
+    if (kind === 'drinks') expect(after.equals(before)).toBe(true);
+    else expect(pngSize(after)).toBe(pngSize(before));
+    await page.locator('#an-overview').click();
+    await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+    const edit = page.getByRole('dialog', { name: kind === 'drinks' ? 'Getränkeaktion erfassen' : 'Sonderaktion erfassen', exact: true });
+    await expect(edit.locator('[data-f=produkt]').first()).toHaveValue(saved.items[0].name);
+    await expect(edit.locator('.cms-ang-row').first().locator('.an-has-image')).toHaveCount(1);
+    await edit.getByRole('button', { name: 'Abbrechen', exact: true }).first().click();
+    expect(state.writes).toHaveLength(2);
+    expect(state.errors).toEqual([]);
+  });
+}
+
+const seededAction = (id, title, from, to) => ({
+  aktion_id: id, title, kind: 'drinks', valid_from: from, valid_to: to, layout: null,
+  items: [{ id: id + '-item', name: 'Seed ' + title, description: '', price_cents: 1249, old_price_cents: 1499, barcode: '', werbebild_id: '', image_id: '',
+    units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310, deposit_free: false, article_number: '' }]
+});
+
+test('TC-F55-01: wahrheitsgemäße Zustände, Schutz vor Verlust und kein doppeltes Anlegen nach unlesbarem Speichern', async ({ page }) => {
+  const state = await setup(page);
+  [['AKT-PLAN', 'Geplant', '2026-12-01', '2026-12-07'], ['AKT-AKTIV', 'Aktiv', '2026-11-16', '2026-11-21'], ['AKT-ALT', 'Abgelaufen', '2026-11-01', '2026-11-07']]
+    .forEach((entry) => state.actions.set(entry[0], seededAction(...entry)));
+  await page.goto(BASE + '/angebote.html');
+  await page.getByRole('button', { name: 'Alle', exact: true }).click();
+  for (const label of ['Geplant', 'Aktiv', 'Abgelaufen']) {
+    await expect(page.locator('.an-action-list').getByText('Gespeichert · ' + label, { exact: false })).toHaveCount(1);
+  }
+  const dlg = await create(page, 'drinks');
+  const status = dlg.locator('[data-capture-status]');
+  const prevented = () => page.evaluate(() => !window.dispatchEvent(new Event('beforeunload', { cancelable: true })));
+  expect(await prevented()).toBe(false);
+  await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
+  await expect(status).toContainText('Ungespeicherte Änderungen');
+  expect(await prevented()).toBe(true);
+  state.failReads = true;
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByRole('dialog').last()).toContainText('konnte aber nicht geladen werden');
+  await page.getByRole('button', { name: 'Schließen', exact: true }).last().click();
+  await expect(dlg).toBeVisible();
+  await expect(status).toContainText('Speichern nicht abgeschlossen');
+  expect(state.actions.size).toBe(4);
+  state.failReads = false;
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+  expect(state.actions.size).toBe(4);
+  const written = state.writes.filter((body) => body.title === 'Getränkeangebote');
+  expect(written).toHaveLength(2);
+  expect(new Set(written.map((body) => body.aktion_id)).size).toBe(1);
+  expect(written[1].original_ids).toHaveLength(1);
+  await page.locator('#an-overview').click();
+  expect(await prevented()).toBe(false);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht', async ({ page }) => {
+  const state = await setup(page);
+  state.actions.set('AKT-ZWEI', seededAction('AKT-ZWEI', 'Gemeinsame Aktion', '2026-11-16', '2026-11-21'));
+  await page.goto(BASE + '/angebote.html');
+  await page.getByRole('button', { name: 'Alle', exact: true }).click();
+  await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+  const dlg = page.getByRole('dialog', { name: 'Getränkeaktion erfassen', exact: true });
+  await dlg.locator('[data-meta=title]').fill('Meine Fassung');
+  state.actions.set('AKT-ZWEI', { ...state.actions.get('AKT-ZWEI'), title: 'Fassung des anderen Clients' });
+  state.revisions.set('AKT-ZWEI', 2);
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByRole('dialog').last()).toContainText('Es wurde nichts überschrieben');
+  await page.getByRole('button', { name: 'Schließen', exact: true }).last().click();
+  await expect(dlg).toBeVisible();
+  await expect(dlg.locator('[data-meta=title]')).toHaveValue('Meine Fassung');
+  expect(state.actions.get('AKT-ZWEI').title).toBe('Fassung des anderen Clients');
+  await dlg.getByRole('button', { name: 'Gespeicherten Stand laden', exact: true }).click();
+  await page.getByRole('button', { name: 'Stand neu laden', exact: true }).click();
+  const fresh = page.getByRole('dialog', { name: 'Getränkeaktion erfassen', exact: true });
+  await expect(fresh.locator('[data-meta=title]')).toHaveValue('Fassung des anderen Clients');
+  await fresh.locator('[data-meta=title]').fill('Zusammengeführt');
+  await fresh.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(fresh).toHaveCount(0);
+  expect(state.actions.get('AKT-ZWEI').title).toBe('Zusammengeführt');
+  await page.locator('#an-overview').click();
+  await page.getByRole('button', { name: 'Alle', exact: true }).click();
+  state.revisions.set('AKT-ZWEI', 9);
+  await page.getByRole('button', { name: 'Aktion löschen', exact: true }).click();
+  await page.getByRole('button', { name: 'Aktion löschen', exact: true }).last().click();
+  await expect(page.getByRole('dialog').last()).toContainText('nicht gelöscht');
+  expect(state.actions.has('AKT-ZWEI')).toBe(true);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennungen und gleichen Bildern', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2, true);
+  expect(state.writes).toHaveLength(1);
+  const source = structuredClone(state.writes[0]);
+  await page.locator('#an-overview').click();
+  await page.getByRole('button', { name: 'Alle', exact: true }).click();
+  await page.getByRole('button', { name: 'Duplizieren', exact: true }).click();
+  const dlg = page.getByRole('dialog', { name: 'Getränkeaktion erfassen', exact: true });
+  await expect(dlg.locator('[data-meta=title]')).toHaveValue(/ · Kopie$/);
+  await expect(dlg.locator('[data-capture-status]')).toContainText('Ungespeicherte Änderungen');
+  expect(state.writes).toHaveLength(1);
+  await dlg.locator('[data-meta=title]').fill('Meine Kopie');
+  await dlg.getByRole('button', { name: 'Abbrechen', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
+  expect(state.writes).toHaveLength(1);
+  await page.getByRole('button', { name: 'Duplizieren', exact: true }).click();
+  await dlg.locator('[data-meta=title]').fill('Meine Kopie');
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+  expect(state.writes).toHaveLength(2);
+  const copy = state.writes[1];
+  expect(copy.aktion_id).not.toBe(source.aktion_id);
+  expect(copy.original_ids).toEqual([]);
+  const oldIds = source.items.map((item) => item.id.toLowerCase());
+  expect(copy.items.map((item) => item.id.toLowerCase()).filter((id) => oldIds.includes(id))).toEqual([]);
+  expect(copy.items.map((item) => item.name)).toEqual(source.items.map((item) => item.name));
+  expect(copy.items[0].image_id).toBe(source.items[0].image_id);
+  expect(copy.items[0].werbebild_id).toBe(source.items[0].werbebild_id);
+  expect(Object.keys(copy.layout.image_refs)).toEqual([copy.items[0].id]);
+  const leaks = [], layoutWithoutImages = structuredClone(copy.layout);
+  delete layoutWithoutImages.image_refs;
+  (function walk(value, path) {
+    if (typeof value === 'string' && value.includes(source.items[0].id)) leaks.push(path);
+    else if (value && typeof value === 'object') Object.entries(value).forEach(([key, entry]) => { if (key.includes(source.items[0].id)) leaks.push(path + '/' + key); walk(entry, path + '/' + key); });
+  })(layoutWithoutImages, 'layout');
+  expect(leaks).toEqual([]);
+  expect(state.actions.get(source.aktion_id).title).toBe(source.title);
   expect(state.errors).toEqual([]);
 });

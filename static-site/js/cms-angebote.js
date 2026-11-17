@@ -52,6 +52,11 @@ window.CMSAngebote = (function () {
             else element.dataset.cmsToggle = '';
             delete element.dataset.action; delete element.dataset.id;
           });
+          var duplicate = document.createElement('button'); duplicate.type = 'button';
+          duplicate.textContent = 'Duplizieren'; duplicate.dataset.duplicateAction = action.id;
+          card.querySelector('.cms-akt-btns').appendChild(duplicate);
+          var state = document.createElement('span'); state.className = 'an-save-state';
+          state.textContent = ' · ' + M.savedState(data, false); card.querySelector('.cms-ang-meta').appendChild(state);
           return card.outerHTML;
         }).join('') + (selected.length ? '' : '<p>Keine Aktionen in diesem Zeitraum.</p>') + '</div>'
         + '<details class="an-legacy-links"><summary>Bereits gespeicherte Feature-Aktionen</summary>'
@@ -69,15 +74,20 @@ window.CMSAngebote = (function () {
         if (b.dataset.week) { filter = b.dataset.week; render(); return; }
         if (b.hasAttribute('data-create')) { choose().catch(M.error); return; }
         if (b.hasAttribute('data-feature-stock')) { options.legacy(); return; }
-        var id = b.dataset.edit || b.dataset.previewAction || b.dataset.shareAction || b.dataset.scaleAction || b.dataset.deleteAction;
+        var id = b.dataset.edit || b.dataset.previewAction || b.dataset.shareAction || b.dataset.scaleAction || b.dataset.deleteAction || b.dataset.duplicateAction;
         var action = list.find(function (item) { return item.id === id; });
         if (!action) return;
-        if (b.dataset.edit) capture(action).catch(M.error);
+        if (b.dataset.duplicateAction) capture(null, action.data.kind, M.duplicateAction(action.data)).catch(M.error);
+        else if (b.dataset.edit) capture(action).catch(M.error);
         else if (b.dataset.deleteAction) {
           (async function () {
             if (!(await M.dialog('Aktion löschen?', '„' + action.data.title + '“ mit allen Artikeln löschen? Bereits an die Waage gesendete Motive werden hierdurch nicht entfernt.', 'Aktion löschen'))) return;
             b.disabled = true;
-            try { await A.remove(action); await overview(); } finally { b.disabled = false; }
+            try { await A.remove(action); await overview(); }
+            catch (error) {
+              if (error.status !== 409) throw error;
+              await M.error(error); await overview();
+            } finally { b.disabled = false; }
           })().catch(M.error);
         } else options.preview(action, b.dataset.scaleAction ? 'scale' : b.dataset.shareAction ? 'share' : 'preview', overview);
       };
@@ -101,12 +111,12 @@ window.CMSAngebote = (function () {
       dlg.addEventListener('cancel', function (event) { event.preventDefault(); close(); });
       document.body.appendChild(dlg); dlg.showModal();
     }
-    async function capture(action, kind) {
-      var draft = action ? M.clone(action.data) : M.blank(kind);
+    async function capture(action, kind, initial) {
+      var draft = initial || (action ? M.clone(action.data) : M.blank(kind));
       var isNew = !action, drinks = draft.kind === 'drinks', changedRows = false;
       if (action && action.needs_weekly_template) await M.adoptWeekly(draft);
       if (isNew) {
-        if (drinks && A.settings().feature_archive_enabled !== false) {
+        if (!initial && drinks && A.settings().feature_archive_enabled !== false) {
           var standards = await M.request('/api/angebote-verwaltung?view=design');
           draft = M.blank(kind, standards.design.drinks);
         }
@@ -114,14 +124,19 @@ window.CMSAngebote = (function () {
         d.setUTCDate(d.getUTCDate() + (day === 0 ? 1 : 8 - day));
         draft.valid_from = d.toISOString().slice(0, 10); d.setUTCDate(d.getUTCDate() + 5);
         draft.valid_to = d.toISOString().slice(0, 10);
-        draft.title = drinks ? 'Getränkeangebote' : 'Sonderangebote';
-        draft.layout.density = 6;
-        if (!drinks) await M.adoptWeekly(draft);
+        if (!initial) {
+          draft.title = drinks ? 'Getränkeangebote' : 'Sonderangebote';
+          draft.layout.density = 6;
+          if (!drinks) await M.adoptWeekly(draft);
+          M.rememberDesign(draft);
+        }
       }
       var dlg = document.createElement('dialog'); dlg.className = 'an-dialog an-cms-capture';
       dlg.setAttribute('aria-label', drinks ? 'Getränkeaktion erfassen' : 'Sonderaktion erfassen');
       dlg.innerHTML = '<div class="an-dialog-top"><h2>' + (action ? 'Aktion bearbeiten' : 'Neue Aktion erstellen') + ' · '
         + (drinks ? 'Getränke' : 'Sonderangebote') + '</h2><div class="an-actions"><button class="an-primary" data-save>Speichern</button>'
+        + (action ? '<button data-reload>Gespeicherten Stand laden</button>' : '')
+        + '<button data-quality>Qualität prüfen</button>'
         + '<button data-cancel>Abbrechen</button><button data-cancel aria-label="Erfassung schließen">×</button></div></div>'
         + '<div class="an-capture-body"><div class="an-capture-meta">'
         + '<label class="an-field"><span>Titel</span><input data-meta="title" value="' + M.esc(draft.title) + '" maxlength="120"></label>'
@@ -180,7 +195,7 @@ window.CMSAngebote = (function () {
       function renumber() {
         Array.from(host.children).forEach(function (row, index) { row.querySelector('.cms-ang-row-num').textContent = index + 1; });
       }
-      function mark() { dirty = true; }
+      function mark() { dirty = true; status.textContent = 'Ungespeicherte Änderungen · Speichern steuert die Sichtbarkeit im Gültigkeitszeitraum.'; }
       function imageStatus(row, text, failed) {
         var note = row.querySelector('[data-image-status]');
         note.textContent = text; note.classList.toggle('an-image-error', !!failed);
@@ -352,6 +367,29 @@ window.CMSAngebote = (function () {
       var initialItems = draft.items.slice();
       initialItems.forEach(add);
       if (isNew) while (host.children.length < draft.layout.density) add();
+      async function inspect(report) {
+        var choice = await M.qualityDialog(report, { goto: true });
+        var issue = choice && choice.goto;
+        if (!issue) return;
+        var row = Array.from(host.children).find(function (candidate) { return states.get(candidate) && states.get(candidate).id === issue.item_id; });
+        var field = { name: 'produkt', old_price: 'statt_preis', units: 'units', deposit: 'deposit_cents' }[issue.field] || 'produkt';
+        if (!row) return;
+        row.scrollIntoView({ block: 'center' });
+        var target = ['no-image', 'low-resolution'].includes(issue.code) ? row.querySelector('.an-image-trigger') : input(row, field);
+        if (target && !target.disabled) target.focus();
+      }
+      async function probe() {
+        var copy = M.clone(draft);
+        copy.title = dlg.querySelector('[data-meta="title"]').value.trim();
+        copy.valid_from = dlg.querySelector('[data-meta="valid_from"]').value;
+        copy.valid_to = dlg.querySelector('[data-meta="valid_to"]').value;
+        copy.items = Array.from(host.children).filter(function (row) { return rowItem(row).name; }).map(function (row) { return M.clone(states.get(row)); });
+        if (!copy.items.length) return M.quality(copy);
+        var layoutChanged = changedRows || copy.items.map(function (it) { return it.id; }).join() !== initialItems.map(function (it) { return it.id; }).join();
+        if (layoutChanged || copy.layout.mode === 'template') M.applyTemplate(copy);
+        M.ensureTargets(copy);
+        return M.quality(copy);
+      }
       function close() {
         document.removeEventListener('paste', onPaste);
         window.removeEventListener('resize', updateLayers);
@@ -465,6 +503,26 @@ window.CMSAngebote = (function () {
       dlg.onclick = function (event) {
         var b = event.target.closest('button'); if (!b || saving) return;
         if (b.hasAttribute('data-cancel')) { cancel().catch(M.error); return; }
+        if (b.hasAttribute('data-reload')) {
+          (async function () {
+            if (dirty && !(await M.dialog('Änderungen verwerfen?', 'Der aktuelle gespeicherte Stand wird geladen. Deine ungespeicherten Eingaben werden verworfen.', 'Stand neu laden'))) return;
+            var fresh = (await A.load()).find(function (entry) { return entry.id === action.id; });
+            if (!fresh) throw M.problem('Diese Aktion ist nicht mehr vorhanden. Bitte die Übersicht neu laden.');
+            close(); await capture(fresh);
+          })().catch(M.error); return;
+        }
+        if (b.hasAttribute('data-quality')) {
+          (async function () {
+            saving = true; status.textContent = 'Qualität wird geprüft …';
+            try {
+              var report = await probe();
+              status.textContent = 'Qualitätsprüfung: ' + report.errors.length + ' Fehler · ' + report.hints.length + ' Hinweise · ' + report.unchecked.length + ' nicht geprüft';
+              saving = false; await inspect(report);
+            } catch (error) { status.textContent = 'Qualitätsprüfung nicht abgeschlossen.'; await M.error(error); }
+            finally { saving = false; }
+          })();
+          return;
+        }
         if (b.hasAttribute('data-add')) { add(); changedRows = true; mark(); return; }
         var row = b.closest('.cms-ang-row'), cmd = b.dataset.offerAction;
         if (cmd === 'removeAngRow') {
@@ -497,7 +555,9 @@ window.CMSAngebote = (function () {
         }
         if (b.hasAttribute('data-save')) {
           (async function () {
+            var blocked = null;
             saving = true; dlg.querySelectorAll('button,input,select').forEach(function (el) { el.disabled = true; });
+            status.textContent = 'Wird gespeichert …';
             try {
               await Promise.all(Array.from(imageTasks));
               draft.title = dlg.querySelector('[data-meta="title"]').value.trim();
@@ -518,16 +578,22 @@ window.CMSAngebote = (function () {
               }
               if (layoutChanged || draft.layout.mode === 'template') M.applyTemplate(draft);
               M.ensureTargets(draft); M.validate(draft);
+              var report = await M.quality(draft);
+              if (report.errors.length) {
+                status.textContent = 'Speichern nicht abgeschlossen · Qualitätsprüfung: ' + report.errors.length + ' Fehler. Eingaben bleiben erhalten.';
+                blocked = report; return;
+              }
               for (var entry of pending) {
                 var it = states.get(entry[0]); if (!draft.items.includes(it)) continue;
                 Object.assign(it, await A.productImage(entry[1], it.barcode || 'ANG-' + it.id));
               }
               var saved = await A.save(action, draft); close(); await overview();
               options.preview(saved, 'preview', overview);
-            } catch (error) { await M.error(error); }
+            } catch (error) { status.textContent = 'Speichern nicht abgeschlossen · Eingaben bleiben erhalten.'; await M.error(error); }
             finally {
               saving = false; dlg.querySelectorAll('button,input,select').forEach(function (el) { el.disabled = false; });
               host.querySelectorAll('[data-f="deposit_mode"]').forEach(function (el) { input(el.closest('.cms-ang-row'), 'deposit_cents').disabled = el.value === 'no'; });
+              if (blocked) await inspect(blocked);
             }
           })();
         }
@@ -536,7 +602,9 @@ window.CMSAngebote = (function () {
       window.addEventListener('resize', updateLayers);
       activeDialog = dlg; document.addEventListener('paste', onPaste);
       document.body.appendChild(dlg); dlg.showModal();
+      if (initial) mark();
     }
+    window.addEventListener('beforeunload', function (event) { if (activeDialog && dirty) { event.preventDefault(); event.returnValue = ''; } });
     return { start: overview, capture: capture, hasUnsavedChanges: function () { return !!activeDialog && dirty; } };
   }
   return { mount: mount };
