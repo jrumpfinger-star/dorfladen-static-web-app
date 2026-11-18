@@ -505,8 +505,9 @@ Die Übersicht kennzeichnet Vorschau schiefergrau, Teilen grün, Waage warm
 orange und Löschen rot. Beschriftung, Tastaturfokus und ausreichender Kontrast
 bleiben erhalten; Farbe ist nicht das einzige Unterscheidungsmerkmal.
 
-- TC-F17-01: Sechs Artikel auf Desktop als kompakte Zeilen (höchstens 110 px
-  je geschlossener Zeile) mit direkt sichtbaren Kernfeldern; auf allen vier
+- TC-F17-01: Sechs Artikel auf Desktop als kompakte, vollständige Zeilen
+  gemäß F62 (Referenz: 125 px normal, 194 px Getränke einschließlich
+  Zusatzfeldern; lange Inhalte dürfen umbrechen) mit direkt sichtbaren Kernfeldern; auf allen vier
   Viewports keine abgeschnittenen Felder, Touchziele mindestens 44 px,
   Bearbeiten/Tab/Speichern/Neuöffnen ohne Datenverlust.
 - TC-F17-02: Mehrere Artikel über unterschiedliche Suchen auswählen, ohne
@@ -1703,6 +1704,122 @@ Keine offenen fachlichen Klärungsmarker. Bestehende Sichtbarkeitslogik und
 | F57 | TC-F57-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
 | F58 | TC-F58-01 | Produktverbesserungen | Folgt im Planungsschritt |
 | F59 | TC-F59-01 | Produktverbesserungen | Folgt im Planungsschritt |
+
+## F60: Mockupgetreue Designverwaltung ohne Funktionsverlust
+
+Die zuletzt freigegebenen Mockups bestimmen die UI möglichst 1:1:
+Designbereichsauswahl, sechs Designerbereiche, strukturierter Preisschilddialog,
+gemeinsamer Aktionsarbeitsraum und die neueste kompakte mobile Hülle.
+Neuere abgestimmte Varianten ersetzen ältere Darstellungen, nicht deren Funktionen.
+Einzelne Bildgrößen-/Drehregler bleiben direkt bedienbar. Nur komplexe
+Preisschildeigenschaften werden transaktional zusammengefasst. Ein Feld hat
+einen Besitzer; Dialogschließen stellt Feldposition und Sichtbarkeit korrekt
+wieder her. Keine leeren ehemaligen Feldgruppen. Unterschiedliche Zielwerte
+werden nicht wegen gleicher Beschriftung zusammengelegt.
+
+- TC-F60-01: Alle sechs Bereiche und sämtliche vorher verfügbaren Datenkeys
+  bleiben erreichbar, auch nach mehrfacher Dialogöffnung und Zielwechsel.
+  Bildgröße und Drehung erfordern keinen Ein-Regler-Dialog.
+- TC-F60-02: Preisschilddialog zeigt volle Eigenschaften strukturiert;
+  Übernehmen ist ein Undo-Schritt, Abbrechen/X/Escape erhält den Entwurf
+  einschließlich zuvor vorgenommener Änderungen.
+- TC-F60-03: Designbereichsauswahl und Oberflächengeometrie gegen die neueste
+  freigegebene Referenz vergleichen; notwendige Abweichungen dokumentieren.
+- TC-F19-06 / TC-F60-04: Sichtbare Dreh-/Größengriffe proportional zur dargestellten
+  Kachel verkleinern, damit sie das Motiv nur gering überdecken. Transparente
+  Touch-Trefferflächen bleiben mindestens 44 px groß; sämtliche bisherigen
+  Griffe, Dreh-/Skalierfunktionen und Zahlen-/Tastaturalternativen erhalten.
+  Große und kleine Motiv-/Kachelgrößen auf allen vier Pflichtansichten prüfen.
+
+## F61: Stilfamilie, echte Layoutvariante und Farbpalette
+
+Farbdubletten werden konsolidiert, echte Geometrie-/Typografieunterschiede
+bleiben erhalten: Magazin Grün/Türkis/Violett als Familie, XL als Bildvariante;
+Bild-50-%- und Preisschild-Farbvarianten jeweils als Familie. Landladen und
+bisheriges Klassisch bleiben wegen runder/eckiger Kacheln getrennt. Neun
+globale Angebotsvorlagen entsprechen sechs Familien, 17 freie Vorlagen zehn.
+Die sieben Wochenplanlayouts bleiben je Homepage-/Druckkontext verfügbar.
+
+Stilwechsel erhält Palette und eigene Farben; Palette verändert nur Farben,
+nicht Positionen, Schrift, Bildgröße, Artikelanzahl oder fremde Ziele.
+Bestehende IDs, wirksame Farbwerte, Verläufe und Overrides ohne Schreibzugriff
+beim Laden erhalten. Kein Ersetzen durch ähnlich aussehende neue Presets.
+Eigene Farben bleiben sichtbar gekennzeichnet und werden bei Palettenwechsel
+nur nach Bestätigung ersetzt. Separate Ersparnismarkerpalette, Preisbild
+Rot/Gelb und individuelle Preisschildvorlagen bleiben erhalten.
+
+- TC-F61-01: Alte Vorlagen unverändert laden; Familien/Varianten korrekt
+  zuordnen und Speichern/Reload ohne Verlust vorhandener Werte prüfen.
+- TC-F61-02: Jede angebotene Palette verändert echte Motivpixel, aber keine
+  Nicht-Farbparameter; Großbild verändert hingegen echte Bildgeometrie.
+- TC-F61-03: Eigene Farbe, Stilwechsel, Palette-Abbruch/bestätigter Ersatz,
+  Undo/Redo und getrennte Ausgabeziele überstehen den Speicherroundtrip.
+- TC-F61-04: Alle bestehenden Farb-/Verlaufseigenschaften einschließlich
+  Kopf-, Datums-, Trenn-, Preisleisten- und Fußfarben bleiben wirksam.
+
+## F62: Gemeinsame vollständige Aktionsbearbeitung
+
+Artikel/Bilder, Gestaltung und Ausgabe sind Bereiche desselben Arbeitsablaufs.
+Kein Verlust ungespeicherter Eingaben, ausstehender Bilder oder Historie beim
+Wechsel. Erfassung verwendet die vorhandenen Cent-/Milliliterverträge und
+Schreib-/Revisionspfade. Keine zweite Persistenz oder Platzhalterausgabe.
+
+Desktop behält volle Erfassungsbreite, ausgerichtete Hauptzeile und Beschreibung
+darunter. Die neue vollständige Referenz konkretisiert F17:
+normale Referenzzeile 125 px, Getränkereferenz einschließlich
+aller Zusatzfelder 194 px; längere Inhalte dürfen vollständig umbrechen.
+
+- TC-F62-01: Beide Arten mit Suche/manueller Erfassung, Reihenfolge, Bildern
+  aus Bestand/Datei/Paste, Preisen/Pfand, Speichern/Reload und Konflikten
+  durchlaufen; keine Stammpreisänderung.
+- TC-F62-02: Erfassung/Gestaltung/Ausgabe wechseln ohne Datenverlust,
+  alle vier Ziele, bedingte Marker und sämtliche Ausgabewege erhalten.
+  Speicherkonflikte überschreiben keinen fremden Stand und behalten den
+  gemeinsamen aktuellen Entwurf einschließlich ungespeicherter Eingaben.
+- TC-F62-03: Vollständige Funktionsübernahmematrix und vorhandene fachliche
+  Regressionen bestehen; keine nicht gezeigte Funktion still entfernen.
+
+## F63: Mobiler Inhalt vor Kopf-, Filter- und Metadatenblöcken
+
+Eine kompakte Kopfzeile statt gestapelter Titel-/Tabzeilen. Aktionsdaten bei
+Bestandsaktionen eingeklappt, bei Neuanlage und fehlenden Pflichtdaten offen.
+Aktive Filter bleiben erkennbar, ihre Auswahl ist bedarfsweise aufklappbar.
+Handy: kompakte Artikelliste, ein Artikel im Arbeitsraum mit Vorheriger/
+Nächster, Rückweg ohne Verlust. Touchziele mindestens 44 px, Mausaktionen
+32 px; Eingabewerte lesbar. Keine abgeschnittenen Auswahltexte.
+Das hohe Ladentablet nicht allein wegen 686 px Breite wie ein Handy behandeln.
+
+- TC-F63-01: Referenz-Artikelliste in 320x568, 360x640, 375x667 und 390x844:
+  Kopf 44 px, erste Karte spätestens y=164, drei Referenzartikel voll sichtbar
+  und mindestens 75 % Fensterhöhe für den Inhaltsbereich bei geschlossenen
+  Metadaten; lange Listen und geöffnete Pflichtdaten dürfen scrollen.
+  Auswahl und Rückkehr aus dem gemeinsamen Editor erhalten Reihenfolge,
+  aktuelle Daten und noch nicht gespeicherte Bilder.
+- TC-F63-02: Einzelartikel mit allen zehn Getränkefeldern auf normalen
+  Handyformaten ohne Scrollen; kurze Fenster/320x568 begrenzt vertikal.
+  Fokus, unbestätigte Eingaben und Daten beim Größenwechsel erhalten.
+- TC-F63-03: Stil-/Palettenauswahl ohne unnötiges Scrollen; übrige Fläche
+  für Motiv statt leere Auswahlbereiche. Vier Pflichtansichten einschließlich
+  Touch/DPR 1,75 sowie kleine/kurze Fenster geometrisch prüfen.
+
+## F64: Wirksame Originalvorschau und nachgewiesene Veröffentlichung
+
+Originalrenderer und direkte Auswahl/Verschiebung/Skalierung/Drehung bleiben,
+ebenso Ghost, Duplikate, eigene Bilder, Zahlen-/Tastaturalternativen,
+Splitter/Zoom, Historie, eigene Vorlagen, Rücksetzen und Kacheltransfer.
+Marker-/Farbweltänderungen erreichen den tatsächlichen Konfigurationspfad.
+Texte vollständig darstellen oder eine echte Qualitätsgrenze sichtbar melden,
+nicht pauschal kürzen. Speichern steuert CMS-Sichtbarkeit im Zeitraum;
+Featurefreigabe und ausdrücklicher Waagenversand bleiben getrennt.
+
+- TC-F64-01: Zielbezogene Markerform/Farbe/Größe verändern Canvaspixel;
+  Wie-Vorgabe erbt korrekt, Speichern/Reload und andere Ziele isoliert.
+- TC-F64-02: Lange echte Produkt-/Zusatz-/Gebinde-/Pfandtexte, direkte
+  Motivbearbeitung und Transfer im Originalrenderer regressionsfrei.
+- TC-F64-03: Visuelle Referenzen und vollständige Funktionserhaltung separat
+  abnehmen. Bestehende fachliche Tests nicht abschwächen. Erst danach
+  Commit/Push und schreibfreie PR-Preview-Abnahme gemäß TC-F59-01;
+  keine Produktion, kein Merge nach main, keine echten Preview-Schreibtests.
 
 ## Verifikation und offene Fragen
 

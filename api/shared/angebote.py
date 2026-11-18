@@ -41,7 +41,8 @@ PRICE_PRESETS = ("", "manual", "classic-red-rect", "green-rounded", "dark-pill",
 DECORATION_FLAGS = {"show_leaf", "show_bag", "show_texture", "background_gradient", "image_gradient"}
 DECORATION_COLORS = {"leaf_color", "footer_color", "vorrat_color", "details_color",
                      "card_border_color", "image_background", "border_color",
-                     "background_color2", "image_color2"}
+                     "background_color2", "image_color2", "header_background", "header_accent",
+                     "date_color", "divider_color", "price_bar_background", "price_bar_border", "tag_background"}
 DECORATION_RANGES = {
     "leaf_size": (16, 50), "border_width": (0, 20), "card_border_width": (0, 20),
     "price_radius": (0, 40), "price_skew": (0, 30), "price_scale": (50, 150),
@@ -111,7 +112,8 @@ CMS_CONFIG_KEYS.update(
         "decoBgColor decoFooterColor vorratColor showLeaf leafSize showBag "
         "showTexture imgScale borderWidth borderColor imgAnchorX imgAnchorY "
         "priceAnchorX priceAnchorY imgWidthPct priceImageColor priceOutlineColor "
-        "priceStripColor priceOldColor priceStrikeColor nameFont nameSize nameColor"
+        "priceStripColor priceOldColor priceStrikeColor nameFont nameSize nameColor "
+        "savingsMarkerType savingsPalette"
     ).split()
 )
 
@@ -132,6 +134,9 @@ def _cms_design(raw, items):
         if raw["config"].get(key) not in TEMPLATES[2:]:
             raise AngeboteFehler(400, "Bitte eine gültige CMS-Wochenvorlage wählen.")
     for kind in ("plakat", "flyer"):
+        if (raw["config"].get(f"{kind}_savingsMarkerType", "") not in ("",) + MARKER_TYPES
+                or raw["config"].get(f"{kind}_savingsPalette", "") not in ("",) + MARKER_PALETTES):
+            raise AngeboteFehler(400, "Bitte die Ersparnis-Marker der Wochenvorlage prüfen.")
         inline = raw["config"].get(f"{kind}_inline", {})
         limits = {"imgDx": (-1000, 1000), "imgDy": (-1500, 1500),
                   "priceDx": (-1000, 1000), "priceDy": (-1500, 1500),

@@ -97,6 +97,8 @@ window.WochenangeboteRenderer = (function () {
     priceFontFlyer:72,priceFontPlakat:36,stattColor:'#555555',tagSkew:18,tagShape:'rect',tagRadius:0,tagPreset:'',
     showLeaf:false,leafSize:34,showBag:false,showTexture:true,
     savingsMarkerType:'starburst',savingsPalette:'harmonie',
+    plakat_savingsMarkerType:'',plakat_savingsPalette:'',
+    flyer_savingsMarkerType:'',flyer_savingsPalette:'',
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
     plakat_inline:{},flyer_inline:{},
@@ -139,7 +141,8 @@ window.WochenangeboteRenderer = (function () {
     'modern-mag-xl':{bgColor:'#f0f4f8',titleColor:'#1e40af',tagColor:'#2563eb',cardBg:'#ffffff',cardBorder:'#bfdbfe',textColor:'#1e293b',detailsColor:'#475569',imgBg:'#eff6ff'}
   };
 
-  var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg'];
+  var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg',
+    'headerBg','headerAccent','dateColor','dividerColor','priceBarBg','priceBarBorder','stattColor','footerColor','vorratColor','priceTextColor','detailsTextColor'];
 
   var TPL_GRAD_KEYS=['bgColor','imgBg'];
 
@@ -158,6 +161,10 @@ window.WochenangeboteRenderer = (function () {
     // Savings-Overrides ('' = Wie Vorgabe) dürfen die globale Einstellung nicht
     // mit einem leeren Wert ueberschreiben; tagPreset etc. duerfen es.
     PERSEC_SELECTS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null&&(v!==''||k.indexOf('savings')!==0))c[k]=v;});
+    var tc=c.tplColors||{},tpl=c[kind+'Template']||'classic-red',own=tc[kind+':'+tpl]||tc[tpl]||{};
+    var priceRoles={priceBarBg:'priceStripColor',priceBarBorder:'priceOutlineColor',priceTextColor:'priceImageColor',stattColor:'priceOldColor'};
+    if(c.tagShape!=='price-image')Object.keys(priceRoles).forEach(function(key){if(own[key])c[priceRoles[key]]=own[key];});
+    if(own.detailsTextColor)c.detailsColor=own.detailsTextColor;
     return c;
   }
 
@@ -184,7 +191,7 @@ window.WochenangeboteRenderer = (function () {
     var tc=cfg.tplColors||{};
     var overrides=(kind&&tc[kind+':'+tplName])||tc[tplName]||{};
     var result={};
-    TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
+    TPL_COLOR_KEYS.forEach(function(k){if(overrides[k]||defaults[k])result[k]=overrides[k]||defaults[k];});
     TPL_GRAD_KEYS.forEach(function(k){
       result[k+'_grad']=overrides[k+'_grad']||false;
       result[k+'_c2']=overrides[k+'_c2']||defaults[k];
@@ -279,6 +286,7 @@ window.WochenangeboteRenderer = (function () {
       base.stattColor='#2563eb';
       base.imgZonePct=0.65;
     }
+    if(/^modern-mag/.test(tpl))base.vorratColor='#ffffff';
     // ── Apply per-section deco color overrides on top of template defaults ──
     // cfg already has per-section values merged by cfgForKind, check against per-section defaults
     var secPfx=kind?kind+'_':'';
@@ -295,14 +303,33 @@ window.WochenangeboteRenderer = (function () {
       base.footerColor=rawFooter;
       if(base.headerAccent) base.headerAccent=rawFooter;
     }
+    // Optional roles override only colours; absent roles retain every legacy pixel.
+    ['headerBg','headerAccent','dateColor','dividerColor','priceBarBg','priceBarBorder',
+      'stattColor','footerColor','vorratColor','priceTextColor'].forEach(function(key){
+      if(colors[key])base[key]=colors[key];
+    });
+    base.dividerExplicit=!!colors.dividerColor;
     return base;
   }
 
   function wrapTextCMS(ctx,text,maxW){
     if(!text)return[''];
-    var words=text.split(' '),lines=[],line='';
-    words.forEach(function(w){var test=line?line+' '+w:w;if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=w;}else{line=test;}});
-    if(line)lines.push(line);return lines;
+    var lines=[];
+    text.split(/\r\n?|\n/).forEach(function(paragraph){
+      var line='';
+      paragraph.split(' ').forEach(function(word){
+        var test=line?line+' '+word:word;
+        if(ctx.measureText(test).width<=maxW){line=test;return;}
+        if(line){lines.push(line);line='';}
+        if(ctx.measureText(word).width<=maxW){line=word;return;}
+        for(var part of new Intl.Segmenter('de',{granularity:'grapheme'}).segment(word)){
+          if(line&&ctx.measureText(line+part.segment).width>maxW){lines.push(line);line='';}
+          line+=part.segment;
+        }
+      });
+      lines.push(line);
+    });
+    return lines;
   }
 
   function drawNameGroup(ctx,item,cfg,x,y,w,fontSize,detailSize,override,metadata){
@@ -317,6 +344,7 @@ window.WochenangeboteRenderer = (function () {
     ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle=cfg.nameColor||'#1a1a1a';ctx.font='900 '+size+'px '+font;
     names.forEach(function(line,index){ctx.fillText(line,0,size+index*step);});
     ctx.font='600 '+detailSize+'px '+font;
+    if(cfg.detailsColor)ctx.fillStyle=cfg.detailsColor;
     details.forEach(function(line,index){ctx.fillText(line,0,names.length*step+4+detailSize+index*detailSize*1.2);});
     ctx.restore();
     metadata.push({id:'name',itemKey:item.key,label:'Bezeichnung und Zusatztext',ovKey:'name',
@@ -918,7 +946,7 @@ window.WochenangeboteRenderer = (function () {
 
           // Footer
           ctx.fillStyle=theme.footerColor||theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
-          ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
+          ctx.fillStyle=theme.vorratColor||'#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
           ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
           ctx.textAlign='left';
 
@@ -1375,6 +1403,10 @@ window.WochenangeboteRenderer = (function () {
 
         // Text area (bottom half)
         var textTop=cy+imgAreaH+8;
+        if(theme.dividerExplicit){
+          ctx.save();ctx.strokeStyle=theme.dividerColor;ctx.lineWidth=1;
+          ctx.beginPath();ctx.moveTo(cx+cardPadI,cy+imgAreaH+4);ctx.lineTo(cx+mgCellW-cardPadI,cy+imgAreaH+4);ctx.stroke();ctx.restore();
+        }
 
         drawNameGroup(ctx,it,cfg,cx+cardPadI,textTop+20,mgCellW-cardPadI*2,20,15,pOv,c._elMeta);
 
@@ -1424,7 +1456,7 @@ window.WochenangeboteRenderer = (function () {
 
       // Footer
       ctx.fillStyle=theme.footerColor||theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
-      ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
+      ctx.fillStyle=theme.vorratColor||'#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
       ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
       ctx.textAlign='left';
 

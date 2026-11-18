@@ -1,5 +1,57 @@
 # Aufgaben
 
+## Gemeinsamer Mockup-Umbau F60–F64
+
+| Aufgabe | Umsetzung / Abschlussnachweis | Abhängigkeiten | Testfälle |
+| --- | --- | --- | --- |
+| GF102 | Datenkey-/Handlerinventur und vollständige Vorher-/Nachher-Übernahme gemäß Plan; keine im Mockup nicht gezeigte Funktion streichen | Spezifikation und Plan F60–F64 | TC-F60-01, TC-F62-03 |
+| GF103 | Feldbesitz/Sichtbarkeit reparieren, Einzelregler direkt und vollständigen transaktionalen Preisschilddialog integrieren; sichtbare Griffe kachelrelativ mit getrennten transparenten Touchzielen verkleinern | GF102 | TC-F60-01..04, TC-F19-06 |
+| GF104 | Marker-/Farbweltbinding und reproduzierte Originaltextfehler beheben | GF102 | TC-F64-01..02 |
+| GF105 | Rückwärtskompatible Familien/Varianten/Paletten, alle Farbrollen und bestätigtes Ersetzen eigener Farben integrieren | GF103, GF104 | TC-F61-01..04 |
+| GF106 | Moderne Designbereichsauswahl und sechs vollständige Designerbereiche möglichst 1:1 integrieren | GF103, GF105 | TC-F60-01..03, TC-F63-03 |
+| GF107 | Gemeinsame Aktionsbereiche mit denselben Draft-/Bild-/Revisionszuständen integrieren | GF103, GF105 | TC-F62-01..03 |
+| GF108 | Mobile Kopfzeile, Daten-/Filterklappe, Liste/Einzelartikel samt Vorheriger/Nächster und Resize/Fokus integrieren | GF107 | TC-F63-01..03 |
+| GF109 | Vollständige Funktions-, Daten-/Bild-/Gestaltungsroundtrips und visuelle Referenzabnahme auf Pflichtansichten; Generator-/Syntax-/Diffprüfung; Dokumentation | GF104, GF106, GF108 | TC-F60-01..TC-F64-03, TC-F58-01 |
+| GF110 | Erst nach vollständiger Abnahme committen/pushen, PR #15 aktualisieren und Deployment des tatsächlichen Commits schreibfrei verifizieren; keine Produktion | GF109, GF100 | TC-F59-01, TC-F64-03 |
+
+Keine Aufgabe durch reine Mockup-Prüfungen oder vorhandene Controls als
+erledigt markieren. GF100/GF101 bleiben bis zu ihren echten Nachweisen offen.
+
+### Ausdrücklich freigegebene Zwischenveröffentlichung
+
+Der Nutzer hat einen Zwischenstand auf PR #15 angefordert. Dieser darf nach
+gezielter Prüfung veröffentlicht werden, ohne GF109/GF110 oder die
+Gesamtabnahme als abgeschlossen zu markieren. Produktion bleibt unverändert.
+Der Stand enthält die gemeinsame Entwurfsbearbeitung, mobile Artikelliste,
+Preisschildstruktur, kleinere Vorschaugriffe und die globalen Stil-/Paletten-
+Designer. Die Paletten-Clickintegration im Aktionseditor sowie die vollständige
+visuelle Referenzabnahme und restlichen F64-Nachweise sind noch offen.
+Die Preview verwendet weiterhin echte gemeinsame Dataverse-Angebote; reales
+Speichern und Löschen ist kein isolierter Test.
+
+Prüfung dieses eingefrorenen Zwischenstands: 53 Desktop-CMS-/Palettenfälle,
+24 gezielte Fälle auf allen vier Ansichten und 50 Python-Angebotsverträge
+bestanden. Alle geänderten JavaScriptdateien sind syntaktisch gültig;
+CMS-Funktionsabgleich ohne Fehlstellen, Generator per Hashvergleich idempotent
+und `git diff --check` erfolgreich. Das ersetzt keine vollständige GF109-Abnahme.
+
+### Integrationsnachweise 18.11.2026
+
+- Parent: TC-F42-01, TC-F62-01 und TC-F63-01 zusammen 16 Fälle auf allen vier
+  Pflichtansichten bestanden; gemeinsamer Entwurf/Editor-Bridge und mobile Liste.
+- Parent: TC-F62-02 (Speicherkonflikt) auf allen vier Ansichten bestanden;
+  kein Überschreiben des fremden Stands und kein Verlust des aktuellen Entwurfs.
+- Parent: TC-F19-01/-03/-04 sowie TC-F19-06 auf vier Ansichten bestanden;
+  TC-F19-06 enthält echtes adaptives 1280→320-Resize, kleinere sichtbare Griffe
+  bei erhaltenen transparenten Maus-/Touch-Treffflächen und Tastaturalternativen.
+- Stil-/Palettenagent: 50 Pythonfälle einschließlich aller neun
+  CMS-Legacy-/Zusatzfarbroundtrips bestanden. Neun fokussierte Playwrightfälle
+  (ein Modell-/Pixelvertrag und zwei UI-Verträge in vier Ansichten) bestanden;
+  sechs echte Designer, Palettenbestätigung, Undo/Redo, Speichern/Reload und
+  getrennte Wochenplanfarben einschließlich Schwarz/Verläufen.
+- Die abschließende Gesamtintegration/visuelle Abnahme und Veröffentlichung
+  sind damit ausdrücklich noch nicht als erledigt markiert.
+
 Spec: [spec.md](./spec.md), Plan: [plan.md](./plan.md).
 Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 

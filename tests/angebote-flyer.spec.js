@@ -2349,6 +2349,285 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F60-03: moderne Bereichsauswahl erhält alle Ziele, Fokus und volle Bezeichnungen', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  async function checkSaveContrast() {
+    const save = page.locator('[data-design-save]:visible,#cfg-plakat-save:visible,[data-action=hpangSave]:visible');
+    await expect(save).toBeVisible();
+    expect(await save.evaluate((button) => {
+      function luminance(color) {
+        const channels = color.match(/[\d.]+/g).slice(0, 3).map(Number).map((value) => {
+          value /= 255; return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+        });
+        return channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+      }
+      const foreground = luminance(getComputedStyle(button).color);
+      const background = luminance(getComputedStyle(button, '::before').backgroundColor);
+      return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05);
+    })).toBeGreaterThanOrEqual(4.5);
+  }
+  await checkSaveContrast();
+  const trigger = page.locator('.an-design-location-btn'), popup = page.locator('.an-design-locations');
+  await trigger.click();
+  await expect(popup).toBeVisible();
+  const entries = await popup.locator('[role=option]').evaluateAll((buttons) =>
+    buttons.map((button) => ({ key: button.dataset.value, title: button.querySelector('.an-loc-name').textContent })));
+  expect(entries.length).toBeGreaterThanOrEqual(6);
+  const geometry = await popup.evaluate((node) => {
+    const r = node.getBoundingClientRect();
+    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, overflow: node.scrollWidth > node.clientWidth,
+      targets: [...node.querySelectorAll('[role=option]')].map((button) => {
+        const label = button.querySelector('.an-loc-name'), box = button.getBoundingClientRect();
+        return { height: box.height, clipped: label.scrollWidth > label.clientWidth + 1 || label.scrollHeight > label.clientHeight + 1,
+          glyph: getComputedStyle(button.querySelector('.an-loc-glyph')).backgroundColor };
+      }) };
+  });
+  expect(geometry.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.right).toBeLessThanOrEqual(page.viewportSize().width);
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.bottom).toBeLessThanOrEqual(page.viewportSize().height);
+  expect(geometry.overflow).toBe(false);
+  expect(geometry.targets.every((target) => target.height >= 44 && !target.clipped)).toBe(true);
+  expect(new Set(geometry.targets.map((target) => target.glyph)).size).toBeGreaterThanOrEqual(4);
+  expect(await popup.locator('[aria-selected=true]').evaluate((node) => {
+    const style = getComputedStyle(node), inactive = getComputedStyle(node.parentElement.querySelector('[aria-selected=false]'));
+    return style.backgroundColor !== inactive.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)'
+      && getComputedStyle(node, '::before').width === '3px';
+  })).toBe(true);
+  await page.screenshot({ path: test.info().outputPath('designbereich-auswahl.png') });
+  await popup.press('Home');
+  await expect(popup.locator('[role=option]').first()).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(popup.locator('[role=option]').last()).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(popup.locator('[role=option]').first()).toBeFocused();
+  await popup.getByRole('button', { name: 'Bereichsauswahl schließen' }).click();
+  await expect(trigger).toBeFocused();
+  for (const entry of entries) {
+    await trigger.click();
+    await popup.locator('[data-value="' + entry.key + '"]').click();
+    await expect(trigger.locator('[data-location-label]')).toHaveText('Vorgabe: ' + entry.title);
+    if (entry.key.startsWith('cfg-plakat/') || entry.key === 'cfg-hpang') await checkSaveContrast();
+    await trigger.click();
+    await expect(popup.locator('[data-value="' + entry.key + '"]')).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Escape');
+    await expect(popup).not.toBeVisible();
+  }
+  await noOverflow(page);
+  expect(state.log.filter((entry) => entry.method !== 'GET' && !entry.read_only_lookup)).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F60-01: Objekteigenschaften restaurieren Feldbesitz und direkte Bildregler', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await designerTool(root, 2);
+  const before = await root.locator('input[id],select[id]').evaluateAll((controls) =>
+    controls.map((control) => ({ id: control.id, parent: control.closest('label')?.parentElement.className,
+      hidden: control.closest('label')?.hidden })).sort((a, b) => a.id.localeCompare(b.id)));
+  for (const close of ['Abbrechen', 'Übernehmen', 'Escape']) {
+    await root.locator('[data-object-properties=price]').click();
+    const dialog = page.locator('.an-object-dialog');
+    await expect(dialog.locator('input,select').first()).toBeVisible();
+    if (close === 'Escape') await dialog.press('Escape');
+    else await dialog.getByRole('button', { name: close, exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await root.locator('input[id],select[id]').evaluateAll((controls) =>
+      controls.map((control) => ({ id: control.id, parent: control.closest('label')?.parentElement.className,
+        hidden: control.closest('label')?.hidden })).sort((a, b) => a.id.localeCompare(b.id)))).toEqual(before);
+  }
+  const direct = await page.evaluate(() => {
+    const host = document.createElement('section');
+    host.innerHTML = '<div id="an-style-controls"><h3 class="an-settings-heading">Preisschild</h3>'
+      + '<fieldset><label>Preisfarbe<input data-style="color" value="#123456"></label>'
+      + '<label>Preisgröße<input data-style="price_size" value="50"></label></fieldset>'
+      + '<h3 class="an-settings-heading">Bild</h3><label>Bildgröße<input data-style="image_scale" value="100"></label></div>';
+    document.body.appendChild(host);
+    window.AngeboteDesign.objectProperties(host, {});
+    const result = { hidden: host.querySelector('[data-style=image_scale]').closest('label').hidden,
+      buttonHidden: host.querySelector('[data-object-properties=image]').hidden,
+      emptyPriceHidden: host.querySelector('fieldset').hidden,
+      emptyHeadingHidden: host.querySelector('.an-settings-heading').hidden,
+      priceReachable: !host.querySelector('[data-object-properties=price]').hidden };
+    host.remove(); return result;
+  });
+  expect(direct).toEqual({ hidden: false, buttonHidden: true,
+    emptyPriceHidden: true, emptyHeadingHidden: true, priceReachable: true });
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F60-02: Preisschilddialog gliedert echte Felder und erhält Transaktionen', async ({ page }) => {
+  const state = await setup(page);
+  await cms(page); await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  const ids = await root.locator('[data-object-field=price] input,[data-object-field=price] select')
+    .evaluateAll((controls) => controls.map((control) => control.id).sort());
+  await root.locator('[data-object-properties=price]').click();
+  const dialog = root.getByRole('dialog', { name: 'Preisschild einstellen', exact: true });
+  await expect(dialog.locator('.an-price-section>h3')).toHaveText(['Vorlage & Form', 'Farben', 'Größe & Ausrichtung']);
+  expect(await dialog.locator('input,select').evaluateAll((controls) => controls.map((control) => control.id).sort())).toEqual(ids);
+  await expect(dialog.locator('[data-price-section=base] #cfg-plakat-tagShape')).toBeVisible();
+  const color = dialog.locator('#cfg-plakat-priceImageColor'), original = await color.inputValue();
+  await expect(color.locator('..').locator('.an-object-color-value')).toHaveText(original.toUpperCase());
+  await color.fill('#112233'); await color.dispatchEvent('change'); await page.clock.runFor(500);
+  await expect(color.locator('..').locator('.an-object-color-value')).toHaveText('#112233');
+  await expect(dialog.locator('[data-price-colors=old] #cfg-plakat-priceOldColor')).toBeVisible();
+  await expect(dialog.locator('[data-price-section=size] #cfg-plakat-tagScale')).toBeVisible();
+  await expect(dialog.locator('canvas')).toBeVisible();
+  expect(await dialog.locator('canvas').evaluate((canvas) => canvas.width)).toBeGreaterThan(1);
+  await dialog.locator('.an-object-body').evaluate((body) => { body.scrollTop = 0; });
+  const geometry = await dialog.evaluate((node) => {
+    const body = node.querySelector('.an-object-body'), footer = node.querySelector('footer');
+    return { width: node.getBoundingClientRect().width, viewport: innerWidth,
+      overflow: body.scrollWidth - body.clientWidth, bottom: footer.getBoundingClientRect().bottom, height: innerHeight };
+  });
+  expect(geometry.width).toBeLessThan(geometry.viewport);
+  expect(geometry.overflow).toBeLessThanOrEqual(1);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.height);
+  await page.screenshot({ path: test.info().outputPath('preisschild-strukturiert.png') });
+  const originalViewport = page.viewportSize();
+  if (originalViewport.width === 375 || await page.evaluate(() => matchMedia('(any-pointer:coarse)').matches)) {
+    for (const [width, height] of [[320, 568], [360, 640], [390, 844], [686, 432]]) {
+      await page.setViewportSize({ width, height }); await page.clock.runFor(200);
+      expect(await dialog.locator('.an-object-body').evaluate((body) => body.scrollWidth - body.clientWidth)).toBeLessThanOrEqual(1);
+      const footer = await dialog.locator('footer').boundingBox();
+      expect(footer.y + footer.height).toBeLessThanOrEqual(height);
+      const minimum = await page.evaluate(() => matchMedia('(any-pointer:coarse),(max-width:599px)').matches ? 44 : 32);
+      expect((await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).boundingBox()).height).toBeGreaterThanOrEqual(minimum);
+    }
+    await page.setViewportSize(originalViewport);
+  }
+  await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  await root.locator('[data-design-history=undo]').click(); await page.clock.runFor(500);
+  await expect(root.locator('#cfg-plakat-priceImageColor')).toHaveValue(original);
+  await root.locator('[data-design-history=redo]').click(); await page.clock.runFor(500);
+  await expect(root.locator('#cfg-plakat-priceImageColor')).toHaveValue('#112233');
+  await root.locator('[data-object-properties=price]').click();
+  await dialog.locator('#cfg-plakat-priceImageColor').fill('#556677');
+  await page.keyboard.press('Escape'); await page.clock.runFor(500);
+  await expect(root.locator('#cfg-plakat-priceImageColor')).toHaveValue('#112233');
+  await expect(root.locator('.an-object-color-value')).toHaveCount(0);
+  expect(state.log.filter((entry) => entry.method !== 'GET' && !entry.read_only_lookup)).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F64-02: Originalrenderer erhält lange Wörter und explizite Textzeilen', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page);
+  const result = await page.evaluate(async () => {
+    const R = window.WochenangeboteRenderer, config = structuredClone(R.CFG_DEFAULTS);
+    config.flyerTemplate = 'minimal-clean'; config.flyer_showTexture = false;
+    const logo = document.createElement('canvas'); logo.width = 2; logo.height = 1;
+    const renderer = R.create({ cfgGet: () => config, logo: logo.toDataURL(),
+      flyerArtOverrideGet: () => null, plakatArtOverrideGet: () => null });
+    const item = { key: 'lange-bezeichnung', produkt: 'Bio-Dinkelvollkornknuspermüsli-Beerenfamilienvorratspackung',
+      details: 'Mehrwegflaschen im wiederverwendbaren Getränkekasten\nPfand wird gesondert berechnet',
+      preis: 2.49, statt_preis: 3.29, bild_data: '' };
+    const probe = document.createElement('canvas').getContext('2d'); probe.font = '20px Arial';
+    const lines = renderer.wrapTextCMS(probe, item.produkt, 120);
+    const calls = [], original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      calls.push({ canvas: this.canvas, text, width: this.measureText(text).width });
+      return original.call(this, text, ...args);
+    };
+    let canvas;
+    try {
+      canvas = await renderer.generateEinzelflyer(item, { von: '2026-03-16', bis: '2026-03-22' }, config, { scale: 1 });
+    } finally { CanvasRenderingContext2D.prototype.fillText = original; }
+    const text = calls.filter((entry) => entry.canvas === canvas && entry.text);
+    return { source: item.produkt, lines, widths: lines.map((line) => probe.measureText(line).width),
+      paragraphs: renderer.wrapTextCMS(probe, 'Zeile eins\nZeile zwei', 1000),
+      product: text.filter((entry) => item.produkt.includes(entry.text)).map(({ text, width }) => ({ text, width })),
+      details: text.filter((entry) => item.details.includes(entry.text)).map(({ text, width }) => ({ text, width })),
+      detailSource: item.details, box: canvas._elMeta.find((entry) => entry.ovKey === 'name').w };
+  });
+  expect(result.lines.join('')).toBe(result.source);
+  expect(result.widths.every((width) => width <= 120)).toBe(true);
+  expect(result.paragraphs).toEqual(['Zeile eins', 'Zeile zwei']);
+  expect(result.product.map((entry) => entry.text).join('')).toBe(result.source);
+  expect(result.product.every((entry) => entry.width <= result.box)).toBe(true);
+  expect(result.details.map((entry) => entry.text).join(' ').replace(/\s+/g, ' ')).toBe(result.detailSource.replace(/\s+/g, ' '));
+  expect(result.details.every((entry) => entry.width <= result.box)).toBe(true);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F64-01: zielbezogene Markerform und Farbwelt erreichen den echten Konfigurationspfad', async ({ page }) => {
+  const state = await setup(page);
+  await page.route('**/api/cms-config', async (route) => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON();
+      if (body.name === 'design_config') state.cmsDesign.design_config = copy(body.wert);
+    }
+    await route.fallback();
+  });
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await workspaceView(root, 'split');
+  await root.locator('#cfg-plakat-showTexture').evaluate((control) => {
+    control.checked = false;
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    control.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  const hash = () => root.locator('.an-designer-preview canvas:visible').first().evaluate((canvas) => {
+    const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    let hash = 2166136261;
+    for (const byte of data) hash = Math.imul(hash ^ byte, 16777619);
+    return hash;
+  });
+  await page.clock.runFor(1000);
+  await expect.poll(hash).not.toBe('');
+  const before = await hash();
+  await designerTool(root, 3);
+  const set = async (id, value) => root.locator(id).evaluate((control, value) => {
+    control.value = value;
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    control.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+  await set('#cfg-plakat-savingsMarkerType', 'heart');
+  await expect.poll(hash).not.toBe(before);
+  const heart = await hash();
+  await set('#cfg-plakat-savingsPalette', 'midnight-gold');
+  await expect.poll(hash).not.toBe(heart);
+  const save = async () => {
+    const request = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/cms-config'
+      && request.method() === 'POST' && request.postDataJSON().name === 'design_config');
+    await root.locator('[data-action=savePlakatCfg]').evaluate((button) => button.click());
+    return (await request).postDataJSON().wert;
+  };
+  const config = await save();
+  expect(config.plakat_savingsMarkerType).toBe('heart');
+  expect(config.plakat_savingsPalette).toBe('midnight-gold');
+  expect(config.flyer_savingsMarkerType).toBe('');
+  expect(config.savingsMarkerType).toBe('starburst');
+  expect(await page.evaluate(async () => {
+    const model = window.AngeboteModel, data = model.blank('weekly');
+    await model.adoptWeekly(data);
+    const config = data.layout.cms.config;
+    return [config.plakat_savingsMarkerType, config.plakat_savingsPalette, config.flyer_savingsMarkerType, config.savingsMarkerType];
+  })).toEqual(['heart', 'midnight-gold', '', 'starburst']);
+  await set('#cfg-plakat-savingsMarkerType', '');
+  await set('#cfg-plakat-savingsPalette', '');
+  const inherited = await save();
+  expect(await page.evaluate((config) => {
+    const effective = window.WochenangeboteRenderer.create({}).cfgForKind(config, 'plakat');
+    return [effective.savingsMarkerType, effective.savingsPalette];
+  }, inherited)).toEqual(['starburst', 'harmonie']);
+  await page.clock.runFor(1000);
+  const inheritedPixels = await hash();
+  await set('#cfg-plakat-savingsMarkerType', 'starburst');
+  await set('#cfg-plakat-savingsPalette', 'harmonie');
+  await page.clock.runFor(1000);
+  expect(await hash()).toBe(inheritedPixels);
+  await page.reload();
+  await designTab(page, 'sec-plakat');
+  await expect(root.locator('#cfg-plakat-savingsMarkerType')).toHaveValue('');
+  await expect(root.locator('#cfg-plakat-savingsPalette')).toHaveValue('');
+  expect(state.errors).toEqual([]);
+});
+
 test('TEMP-SHOTS: Feinabstimmung', async ({ page }) => {
   test.setTimeout(180000);
   const state = await setup(page);
@@ -2470,6 +2749,9 @@ test('TC-F57-01: Designvorgaben erreichen die Live-Vorschau (Marker-Typ, Footer-
     n.dispatchEvent(new Event('change', { bubbles: true }));
   }, value);
 
+  // Zufällige Papiertextur darf keinen erfolgreichen Wirkungstest vortäuschen.
+  await setValue(root, '#cfg-plakat-showTexture', false);
+  await page.clock.runFor(1000);
   // Marker-Typ (Gemeinsame Einstellungen) muss die Plakat-Vorschau sofort verändern
   await expect.poll(hash, { timeout: 20000 }).not.toMatch(/^0:/);
   const beforeMarker = await hash();

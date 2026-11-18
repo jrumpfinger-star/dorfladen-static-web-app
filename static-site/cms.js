@@ -1183,6 +1183,7 @@
       if(workspaceNav)cfgSwitchSection(workspaceNav.getAttribute('data-id'));
       if(sec)_scheduleAutoPreview('cfg-subtab',function(){cfgLivePreview(sec);},300);
     }
+    if(id==='cfg-wp')wpCfgSwitchSection(_activeWpSection()==='flyer'?'wp-sec-flyer':'wp-sec-home');
   };
 
   // ── Seiteninhalte Tab ──
@@ -1334,6 +1335,100 @@
   var _offerHistories={};
   var _cfgInline={plakat:{},flyer:{}};
   var _cfgPreviewSurfaces={};
+  var _offerTemplateBefore={},_offerPalettePickers={};
+  var OFFER_PALETTE_ROLES={bgColor:'bg',titleColor:'title',tagColor:'accent',cardBg:'card',
+    cardBorder:'border',textColor:'text',detailsColor:'muted',imgBg:'image',
+    headerBg:'header',headerAccent:'accent',dateColor:'muted',dividerColor:'border',
+    priceBarBg:'price',priceBarBorder:'border',stattColor:'muted',footerColor:'footer',
+    vorratColor:'card',priceTextColor:'priceText',bgColor_c2:'header',imgBg_c2:'card',detailsTextColor:'muted'};
+  function offerPaletteValues(colors){
+    var result={};Object.keys(OFFER_PALETTE_ROLES).forEach(function(key){result[key]=colors[OFFER_PALETTE_ROLES[key]];});return result;
+  }
+  function offerEffectiveColors(kind,config){
+    var section=cfgForKind(config,kind),theme=getOfferTheme(kind,section);
+    return Object.assign({},getTplColors(config[kind+'Template']||'classic-red',config,kind),{
+      bgColor:theme.bgColor,titleColor:theme.titleColor,headerBg:theme.headerBg||theme.bgColor,
+      headerAccent:theme.headerAccent||theme.tagColor,dateColor:theme.dateColor,
+      dividerColor:theme.dividerColor||theme.cardBorder,footerColor:theme.footerColor,
+      priceBarBg:section.priceStripColor,priceBarBorder:section.priceOutlineColor,
+      priceTextColor:section.priceImageColor,stattColor:section.priceOldColor,vorratColor:theme.vorratColor,
+      textColor:section.nameColor,detailsTextColor:section.detailsColor||section.nameColor
+    });
+  }
+  function cfgEnsurePalette(kind){
+    if(!document.querySelector('[data-offer-workspaces]')||!window.AngeboteDesign)return;
+    var colorRoot=document.getElementById('cfg-tpl-'+kind+'-colors');if(!colorRoot)return;
+    if(!document.getElementById('cfg-tpl-'+kind+'-detailsTextColor')){
+      var details=document.createElement('input');details.type='hidden';details.id='cfg-tpl-'+kind+'-detailsTextColor';colorRoot.appendChild(details);
+    }
+    var names={headerBg:'Kopffläche',headerAccent:'Kopf-Akzent',dateColor:'Datum',dividerColor:'Trennlinie',
+      priceBarBg:'Preisleiste',priceBarBorder:'Preisleistenkontur',stattColor:'Stattpreis',footerColor:'Fußzeile',
+      vorratColor:'Vorratshinweis',priceTextColor:'Preisschrift'};
+    Object.keys(names).forEach(function(key){
+      if(document.getElementById('cfg-tpl-'+kind+'-'+key))return;
+      var label=document.createElement('label');label.className='an-cfield';
+      label.innerHTML='<input type="color" id="cfg-tpl-'+kind+'-'+key+'" aria-label="'+names[key]+'"><span class="an-cfield-lab">'+names[key]+'</span>';
+      colorRoot.appendChild(label);
+    });
+    if(_offerPalettePickers[kind])return;
+    var picker=document.createElement('fieldset');picker.className='an-choice-group';
+    picker.innerHTML='<legend>Farbpalette</legend><div></div>';colorRoot.before(picker);
+    _offerPalettePickers[kind]=window.AngeboteDesign.palettePicker(picker.lastElementChild,{
+      read:function(){return offerEffectiveColors(kind,cfgReadUI());},
+      map:function(colors){
+        var values=offerPaletteValues(colors),shape=document.getElementById('cfg-'+kind+'-tagShape');
+        if(shape&&shape.value==='price-image')['priceBarBg','priceBarBorder','priceTextColor','stattColor'].forEach(function(key){delete values[key];});
+        return values;
+      },
+      defaults:Object.keys(TPL_COLOR_DEFAULTS).map(function(id){
+        var c=_clone(CFG_DEFAULTS);c[kind+'Template']=id;return offerEffectiveColors(kind,c);
+      }),
+      write:function(values){
+        var c=cfgReadUI(),tpl=c[kind+'Template'];c.tplColors[kind+':'+tpl]=Object.assign({},c.tplColors[kind+':'+tpl],values);
+        c[kind+'_decoBgColor']=values.bgColor;c[kind+'_decoTitleColor']=values.titleColor;
+        c[kind+'_decoFooterColor']=values.footerColor;c[kind+'_nameColor']=values.textColor;
+        if(values.priceBarBg)c[kind+'_priceStripColor']=values.priceBarBg;
+        if(values.priceBarBorder)c[kind+'_priceOutlineColor']=values.priceBarBorder;
+        if(values.priceTextColor)c[kind+'_priceImageColor']=values.priceTextColor;
+        if(values.stattColor)c[kind+'_priceOldColor']=values.stattColor;
+        cfgApplyUI(c);
+      },
+      changed:function(){cfgOfferHistory(kind).record();_triggerCfgAutoPreview();}
+    });
+  }
+  function cfgChangeTemplate(kind){
+    var select=document.getElementById('cfg-'+kind+'Template'),next=select.value,old=_offerTemplateBefore[kind]||next;
+    select.value=old;var config=cfgReadUI(),colors=offerEffectiveColors(kind,config);select.value=next;
+    config[kind+'Template']=next;
+    config.tplColors[kind+':'+next]=Object.assign({},colors);
+    _offerTemplateBefore[kind]=next;
+    cfgSyncTplColors(kind,config);cfgSyncOfferTplPreviews();
+    if(_offerPalettePickers[kind])_offerPalettePickers[kind].refresh();
+    _triggerCfgAutoPreview();
+  }
+  function cfgSyncPaletteField(target){
+    var match=/^cfg-(tpl-)?(plakat|flyer)-(\w+)$/.exec(target.id||'');if(!match)return;
+    var template=!!match[1],kind=match[2],key=match[3],mapping={
+      bgColor:'decoBgColor',titleColor:'decoTitleColor',footerColor:'decoFooterColor',
+      textColor:'nameColor',priceBarBg:'priceStripColor',priceBarBorder:'priceOutlineColor',
+      priceTextColor:'priceImageColor',stattColor:'priceOldColor',vorratColor:'vorratColor'
+    };
+    var shape=document.getElementById('cfg-'+kind+'-tagShape');
+    function priceRole(role){return /^(priceBar|priceText|statt)/.test(role);}
+    if(template){
+      target.dataset.paletteExplicit='true';
+      var other=mapping[key]&&document.getElementById('cfg-'+kind+'-'+mapping[key]);
+      if(other&&!(shape&&shape.value==='price-image'&&priceRole(key)))other.value=target.value;
+      if(key==='detailsColor'){
+        var details=document.getElementById('cfg-tpl-'+kind+'-detailsTextColor');details.value=target.value;details.dataset.paletteExplicit='true';
+      }
+    }else{
+      Object.keys(mapping).forEach(function(role){
+        if(mapping[role]!==key||shape&&shape.value==='price-image'&&priceRole(role))return;
+        var field=document.getElementById('cfg-tpl-'+kind+'-'+role);if(field){field.value=target.value;field.dataset.paletteExplicit='true';}
+      });
+    }
+  }
   function cfgGet(){
     if(_cfgCurrent){var r2={};for(var k2 in CFG_DEFAULTS)r2[k2]=_cfgCurrent.hasOwnProperty(k2)?_cfgCurrent[k2]:CFG_DEFAULTS[k2];
       if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;return r2;}
@@ -1450,6 +1545,7 @@
     var pl=document.getElementById('cfg-savingsPalette');if(pl)pl.value=c.savingsPalette||'harmonie';
     var pt=document.getElementById('cfg-plakatTemplate');if(pt)pt.value=c.plakatTemplate||'classic-red';
     var ft=document.getElementById('cfg-flyerTemplate');if(ft)ft.value=c.flyerTemplate||'classic-red';
+    ['plakat','flyer'].forEach(function(kind){_offerTemplateBefore[kind]=c[kind+'Template']||'classic-red';cfgEnsurePalette(kind);});
     cfgSyncOfferTplPreviews();
     cfgSyncAllTplColors(c);
     // Sync global tagColor from the active flyer template tagColor
@@ -1478,6 +1574,7 @@
       });
     });
     cfgSyncPriceImageFields();
+    Object.keys(_offerPalettePickers).forEach(function(kind){_offerPalettePickers[kind].refresh();});
   }
   function cfgUpdateVal(k,v){
     var el=document.getElementById('cfg-'+k+'-val');if(!el)return;
@@ -1532,10 +1629,11 @@
       var tpl=c[tKey]||'classic-red';
       var kind=tKey.replace('Template','');
       var storeKey=kind+':'+tpl;
-      if(!tc[storeKey])tc[storeKey]={};
+      if(!tc[storeKey])tc[storeKey]=_clone((cfgGet().tplColors||{})[storeKey]||{});
       TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
-        if(el)tc[storeKey][ck]=el.value;
+        if(el&&el.value&&(TPL_COLOR_DEFAULTS[tpl]&&TPL_COLOR_DEFAULTS[tpl][ck]!=null||el.dataset.paletteExplicit==='true'))tc[storeKey][ck]=el.value;
+        else if(el)delete tc[storeKey][ck];
       });
       TPL_GRAD_KEYS.forEach(function(gk){
         var tgl=document.querySelector('.cfg-tpl-grad-toggle[data-kind="'+kind+'"][data-key="'+gk+'"]');
@@ -1604,10 +1702,14 @@
     var sel=document.getElementById(selId);if(!sel)return;
     var tpl=sel.value||'classic-red';
     cfg=cfg||cfgGet();
-    var colors=getTplColors(tpl,cfg,kind);
+    var rawColors=getTplColors(tpl,cfg,kind);
+    var colors=offerEffectiveColors(kind,Object.assign({},cfg,{[kind+'Template']:tpl}));
     TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
-      if(el)el.value=colors[ck]||'#000000';
+      if(el){
+        el.value=el.type==='hidden'?(rawColors[ck]||''):(colors[ck]||'#000000');
+        if(rawColors[ck]!=null)el.dataset.paletteExplicit='true';else delete el.dataset.paletteExplicit;
+      }
     });
     TPL_GRAD_KEYS.forEach(function(gk){
       var isGrad=colors[gk+'_grad']||false;
@@ -1785,7 +1887,60 @@
   };
 
   // ── WP Section Navigation (Homepage / Flyer / Elemente) ──
+  var _weekPreview=null,_weekHistories={},_weekPalettePickers={},_weekTemplateBefore={};
+  function weekHistory(kind){
+    if(_weekHistories[kind])return _weekHistories[kind];
+    var root=document.getElementById('wp-sec-'+kind),tplKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate';
+    var changes=window.AngeboteDesign.history(function(){
+      var config=hpCfgReadUI(),values={};root.querySelectorAll('[id^=hcfg-]').forEach(function(field){
+        var key=field.id.slice(5);if(config[key]!=null)values[key]=config[key];
+      });
+      var colors={};Object.keys(config.wpTplColors).forEach(function(key){if(key.indexOf(kind+':')===0)colors[key]=config.wpTplColors[key];});
+      return {values:values,colors:colors};
+    },function(state){
+      var config=hpCfgReadUI();Object.assign(config,state.values);config[tplKey]=state.values[tplKey]||config[tplKey];
+      Object.keys(config.wpTplColors).forEach(function(key){if(key.indexOf(kind+':')===0)delete config.wpTplColors[key];});
+      Object.assign(config.wpTplColors,state.colors);hpCfgApplyUI(config);_triggerWpAutoPreview();
+    });
+    ['input','change'].forEach(function(type){root.addEventListener(type,function(){changes.record();if(_weekPalettePickers[kind])_weekPalettePickers[kind].refresh();});});
+    root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))changes.begin();});
+    document.addEventListener('pointerup',changes.end);document.addEventListener('pointercancel',changes.end);
+    _weekHistories[kind]=changes;return changes;
+  }
+  function weekPaletteValues(c){
+    return {wpHeaderFrom:c.header,wpHeaderTo:c.accent,wpDishColor:c.text,wpPriceColor:c.accent,
+      wpStripeColor:c.stripe,wpDayColor:c.title,wpDayBg:c.card,wpBgColor:c.bg};
+  }
+  function ensureWeekPalette(kind){
+    if(_weekPalettePickers[kind])return;
+    var colors=document.getElementById(kind==='home'?'hcfg-wpHome-colors':'hcfg-wpFlyer-colors');
+    var host=document.createElement('fieldset');host.className='an-choice-group';host.innerHTML='<legend>Farbpalette</legend><div></div>';colors.before(host);
+    var prefix='hcfg-wpTpl-'+kind+'-';
+    _weekPalettePickers[kind]=window.AngeboteDesign.palettePicker(host.lastElementChild,{
+      read:function(){var result={};Object.keys(weekPaletteValues(window.AngeboteModel.palettes[0].colors)).forEach(function(key){result[key]=document.getElementById(prefix+key).value;});return result;},
+      map:weekPaletteValues,defaults:Object.values(WP_TPL_COLOR_DEFAULTS),
+      write:function(values){Object.keys(values).forEach(function(key){document.getElementById(prefix+key).value=values[key];});wpTplGradPreview(kind);},
+      changed:function(){weekHistory(kind).record();_triggerWpAutoPreview();}
+    });
+  }
+  function weekChangeTemplate(kind){
+    var key=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate',select=document.getElementById('hcfg-'+key);
+    var next=select.value,old=_weekTemplateBefore[kind]||next;
+    select.value=old;var config=hpCfgReadUI(),colors=getWpTplColors(old,config,kind);select.value=next;
+    config[key]=next;config.wpTplColors[kind+':'+next]=colors;_weekTemplateBefore[kind]=next;
+    hpCfgSyncWpTplColors(kind,config);hpCfgSyncWpPreview();hpCfgSyncWpFlyerPreview();_triggerWpAutoPreview();
+    if(_weekPalettePickers[kind])_weekPalettePickers[kind].refresh();
+  }
   window.wpCfgSwitchSection=function(secId){
+    var modern=document.querySelector('[data-offer-workspaces]'),kind=secId==='wp-sec-flyer'?'flyer':'home';
+    if(modern&&window.AngeboteDesign){
+      var right=document.querySelector('#cms-cfg-wp>.cfg-split>.cfg-split-right');
+      if(!_weekPreview)_weekPreview=right.querySelector('.cfg-lp-inner');
+      if(!_weekPreview._workspaceTools)_weekPreview._workspaceTools=document.querySelector('#cms-cfg-wp .an-preview-options');
+      ensureWeekPalette(kind);
+      window.AngeboteDesign.mountWeek(document.getElementById('wp-sec-'+kind),_weekPreview,kind,weekHistory(kind));
+      right.hidden=true;
+    }
     ['wp-sec-home','wp-sec-flyer','wp-sec-elemente'].forEach(function(s){
       var panel=document.getElementById(s);
       if(panel)panel.style.display=s===secId?'':'none';
@@ -1810,6 +1965,7 @@
       if(lpFlyer)lpFlyer.style.display='none';
       if(refreshBtn)refreshBtn.setAttribute('data-kind','home');
     }
+    _triggerWpAutoPreview();
   };
 
   // ── Revert Unsaved Changes ──
@@ -1890,6 +2046,7 @@
   // Live-Update der Slider-Werte
   document.addEventListener('input',function(e){
     var id=e.target.id;if(!id||id.indexOf('cfg-')!==0)return;
+    cfgSyncPaletteField(e.target);
     var k=id.replace('cfg-','');cfgUpdateVal(k,e.target.value);
     if(id==='cfg-savingsScalePlakat'||id==='cfg-savingsScaleFlyer'||id==='cfg-tagColor'||id==='cfg-tagRadius')cfgRenderSavingsPreview();
     // Sync deco color pickers ↔ global config pickers
@@ -1906,8 +2063,8 @@
     if(id.indexOf('cfg-tpl-')===0){_triggerCfgAutoPreview();}
   });
   document.addEventListener('change',function(e){
-    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');_triggerCfgAutoPreview();}
-    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');_triggerCfgAutoPreview();}
+    if(e.target.id==='cfg-plakatTemplate')cfgChangeTemplate('plakat');
+    if(e.target.id==='cfg-flyerTemplate')cfgChangeTemplate('flyer');
     // Offer template gradient toggle
     if(e.target.classList.contains('cfg-tpl-grad-toggle')){
       var gk=e.target.getAttribute('data-key'),gkind=e.target.getAttribute('data-kind');
@@ -2065,6 +2222,7 @@
   // Auto-trigger for Angebote design panel
   function _triggerCfgAutoPreview(){
     cfgSyncPriceImageFields();
+    Object.keys(_offerPalettePickers).forEach(function(kind){_offerPalettePickers[kind].refresh();});
     var sec=_activeCfgSection();
     if(!sec)return;
     if(!_autoCheckEnabled('cfg-live-auto-'+sec))return;
@@ -2169,6 +2327,7 @@
       var el=document.getElementById('hpang-'+k);if(el)el.checked=c[k]!=null?c[k]:HPANG_DEFAULTS[k];
     });
     hpangRenderPreview();
+    document.querySelectorAll('#cms-cfg-hpang .an-palette-group').forEach(function(host){if(host._palettePicker)host._palettePicker.refresh();});
   }
 
   function hpangRenderPreview(){
@@ -2259,7 +2418,13 @@
       var root=document.getElementById('cms-cfg-hpang');
       if(window.AngeboteDesign&&!root.dataset.designer){
         _hpangHistory=window.AngeboteDesign.history(hpangReadUI,hpangApplyUI);
-        window.AngeboteDesign.mountHomepage(root,_hpangHistory);
+        window.AngeboteDesign.mountHomepage(root,_hpangHistory,{
+          read:hpangReadUI,defaults:[HPANG_DEFAULTS],
+          map:function(c){return {gridBg:c.bg,cardBg:c.card,cardBorder:c.border,nameColor:c.text,detColor:c.muted,
+            tagBg:c.price,tagText:c.priceText,badgeBg:c.accent,stattColor:c.muted,headerBg:c.header,headerText:c.title};},
+          write:function(values){hpangApplyUI(Object.assign(hpangReadUI(),values));},
+          changed:function(){_hpangHistory.record();}
+        });
         root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))_hpangHistory.begin();});
         document.addEventListener('pointerup',_hpangHistory.end);
         document.addEventListener('pointercancel',_hpangHistory.end);
@@ -2386,8 +2551,7 @@
       WP_TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
         var v=el?el.value:'';
-        // If input is uninitialized (#000000), use template default
-        if(!v||v==='#000000')v=tplDef[ck]||'';
+        if(!v)v=tplDef[ck]||'';
         if(v)tplColors[storeKey][ck]=v;
       });
     });
@@ -2456,6 +2620,8 @@
     hpCfgSyncWpFlyerPreview();
     hpCfgSyncWpTplColors('home',c);
     hpCfgSyncWpTplColors('flyer',c);
+    _weekTemplateBefore.home=c.wpHomeTemplate||'classic-red';_weekTemplateBefore.flyer=c.wpFlyerTemplate||'classic-red';
+    Object.keys(_weekPalettePickers).forEach(function(kind){_weekPalettePickers[kind].refresh();});
   }
   function hpCfgToggleGrad(k,on){
     var row=document.querySelector('.hcfg-grad-row[data-key="'+k+'"]');if(!row)return;
@@ -2731,8 +2897,8 @@
 
   // Sync WP template colors when dropdown changes
   document.addEventListener('change',function(e){
-    if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');_triggerWpAutoPreview();}
-    if(e.target.id==='hcfg-wpFlyerTemplate'){hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');_triggerWpAutoPreview();}
+    if(e.target.id==='hcfg-wpHomeTemplate')weekChangeTemplate('home');
+    if(e.target.id==='hcfg-wpFlyerTemplate')weekChangeTemplate('flyer');
   });
   // WP template color pickers: live-preview only, no auto-save (user must click Speichern)
   document.addEventListener('input',function(e){
@@ -7343,13 +7509,13 @@
       case 'pickWpHomeTpl':
         var tpl=t.getAttribute('data-value')||'classic-red';
         var sel=document.getElementById('hcfg-wpHomeTemplate');
-        if(sel){sel.value=tpl;hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
+        if(sel){sel.value=tpl;sel.dispatchEvent(new Event('change',{bubbles:true}));}
         _triggerWpAutoPreview();
         break;
       case 'pickWpFlyerTpl':
         var tpl2=t.getAttribute('data-value')||'classic-red';
         var sel2=document.getElementById('hcfg-wpFlyerTemplate');
-        if(sel2){sel2.value=tpl2;hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
+        if(sel2){sel2.value=tpl2;sel2.dispatchEvent(new Event('change',{bubbles:true}));}
         _triggerWpAutoPreview();
         break;
       case 'resetWpTplColors':
@@ -7359,19 +7525,20 @@
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
         var psel=document.getElementById('cfg-plakatTemplate');
-        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');_triggerCfgAutoPreview();}
+        if(psel){psel.value=pt;psel.dispatchEvent(new Event('change',{bubbles:true}));}
         break;
       case 'pickFlyerTpl':
         var ft=t.getAttribute('data-value')||'classic-red';
         var fsel=document.getElementById('cfg-flyerTemplate');
-        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');_triggerCfgAutoPreview();}
+        if(fsel){fsel.value=ft;fsel.dispatchEvent(new Event('change',{bubbles:true}));}
         break;
       case 'resetTplColors':
         var rKind=t.getAttribute('data-kind')||'plakat';
         var rSelId=rKind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
         var rSel=document.getElementById(rSelId);
         var rTpl=rSel?rSel.value:'classic-red';
-        var rDefaults=TPL_COLOR_DEFAULTS[rTpl]||TPL_COLOR_DEFAULTS['classic-red'];
+        var resetConfig=_clone(CFG_DEFAULTS);resetConfig[rKind+'Template']=rTpl;
+        var rDefaults=offerEffectiveColors(rKind,resetConfig);
         TPL_COLOR_KEYS.forEach(function(ck){
           var el=document.getElementById('cfg-tpl-'+rKind+'-'+ck);
           if(el)el.value=rDefaults[ck]||'#000000';

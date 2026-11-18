@@ -63,6 +63,112 @@ window.AngeboteModel = (function () {
     return style;
   }
   function useTemplate(layout, id) { Object.assign(layout, templateStyle(id).settings, { template: id }); }
+  var styleFamilies = [
+    ['land', 'Landladen', 'land'], ['square', 'Kantig', 'classic'],
+    ['classic', 'Klassisch', 'classic-red'], ['minimal', 'Minimal', 'minimal-clean'],
+    ['modern', 'Modern', 'dark-modern'], ['organic', 'Naturmarkt', 'organic-market'],
+    ['poster', 'Plakat', 'bold-poster'], ['magazine', 'Magazin', 'modern-magazine'],
+    ['half', 'Bild links', 'half-red'], ['tag', 'Preisschild', 'tag-red']
+  ];
+  var palettes = [
+    ['red', 'Rot / Beige', ['#faf3ee','#f5e4d8','#82152b','#a51d2d','#ffffff','#ddc6be','#2e2023','#68515a','#f7f0e9','#a51d2d','#ffffff','#68515a','#f9eee8']],
+    ['sage', 'Salbei', ['#edf4ea','#d6e5d0','#314f32','#42653a','#f6fbf5','#c2d2bd','#243b26','#4c6347','#e6efdf','#355f3c','#ffffff','#4c6347','#e8f1e4']],
+    ['teal', 'Türkis', ['#e8f6f8','#cffafe','#155e75','#0e7490','#f0fdfa','#a7d8ca','#164e4a','#38635c','#dff6ee','#0e7490','#ffffff','#38635c','#ddf7f0']],
+    ['purple', 'Violett', ['#faf5ff','#ede9fe','#5b21b6','#8b2368','#fefcff','#ddc5f3','#241849','#633a81','#f5effe','#7020a4','#ffffff','#633a81','#f3e8fb']],
+    ['blue', 'Blau', ['#eef3f9','#dbeafe','#1e3a8a','#1d4ed8','#ffffff','#bdd1e9','#1e293b','#475569','#e9f1fb','#1e40af','#ffffff','#475569','#e8f0fa']],
+    ['nature', 'Natur', ['#f7f2e7','#e9e1c8','#355437','#7b243d','#fffdf8','#d7cdb5','#2f3d2f','#635442','#f5edda','#7b243d','#ffffff','#635442','#f2ead8']],
+    ['night', 'Nacht', ['#101e24','#183440','#ebf7fa','#aad576','#203c45','#50727b','#f3fafb','#c0d5da','#294951','#aad576','#13291d','#c0d5da','#27464f']],
+    ['clear', 'Klar', ['#ffffff','#f1f3f5','#17212b','#255f50','#ffffff','#cbd2d8','#17212b','#4b5763','#f4f6f7','#255f50','#ffffff','#4b5763','#f2f5f4']]
+  ].map(function (row) {
+    return { id: row[0], label: row[1], colors: Object.fromEntries(
+      ['bg','header','title','accent','card','border','text','muted','image','price','priceText','footer','stripe']
+        .map(function (key, n) { return [key, row[2][n]]; })) };
+  });
+  function familyOf(id) {
+    if (/^modern-mag/.test(id)) return 'magazine';
+    if (/^half-/.test(id)) return 'half';
+    if (/^tag-|^price-image$/.test(id)) return 'tag';
+    return (styleFamilies.find(function (entry) { return entry[2] === id; }) || styleFamilies[0])[0];
+  }
+  var paletteDecoration = {
+    header_background: 'header', header_accent: 'accent', divider_color: 'border',
+    date_color: 'muted', footer_color: 'footer', vorrat_color: 'footer',
+    details_color: 'muted', card_border_color: 'border', border_color: 'border',
+    image_background: 'image', leaf_color: 'accent', price_bar_background: 'price',
+    price_bar_border: 'border', tag_background: 'stripe'
+  };
+  function effectiveColors(layout) {
+    var style = templateStyle(layout.template), d = layout.decoration || {};
+    var colors = {};
+    ['color','background','title_color','text_color','card_background','price_background',
+      'price_outline_color','old_price_color','price_strike_color'].forEach(function (key) {
+      colors[key] = layout[key] == null ? (style.settings[key] || theme[key]) : layout[key];
+    });
+    var fallbacks = Object.assign({}, decorationDefaults, {
+      header_background: style.header || colors.background, header_accent: style.accent || colors.color,
+      divider_color: d.card_border_color || decorationDefaults.card_border_color,
+      date_color: d.footer_color || (style.original ? colors.title_color : colors.text_color),
+      footer_color: style.original ? colors.title_color : colors.text_color,
+      vorrat_color: d.footer_color || (style.original ? colors.title_color : colors.text_color),
+      details_color: colors.text_color, price_bar_background: colors.price_background,
+      price_bar_border: colors.price_outline_color, tag_background: style.soft || colors.card_background
+    });
+    Object.keys(paletteDecoration).forEach(function (key) { colors['decoration.' + key] = d[key] || fallbacks[key]; });
+    ['background','image'].forEach(function (prefix) {
+      ['gradient','color2','direction','pct'].forEach(function (suffix) {
+        var key = prefix + '_' + suffix;
+        colors['decoration.' + key] = d[key] == null ? decorationDefaults[key] : d[key];
+      });
+    });
+    return colors;
+  }
+  function assignColors(layout, colors) {
+    if (Object.keys(colors).some(function (key) { return key.indexOf('decoration.') === 0; })) {
+      layout.decoration = Object.assign({}, layout.decoration);
+    }
+    Object.keys(colors).forEach(function (key) {
+      if (key.indexOf('decoration.') === 0) {
+        if (!layout.decoration) layout.decoration = {};
+        layout.decoration[key.slice(11)] = colors[key];
+      } else layout[key] = colors[key];
+    });
+  }
+  function useStyle(layout, id) {
+    var colors = effectiveColors(layout), wasPriceImage = priceImage(layout);
+    useTemplate(layout, id);
+    assignColors(layout, colors);
+    if (wasPriceImage) layout.price_preset = 'price-image';
+  }
+  function paletteColors(palette) {
+    var c = palette.colors, values = {
+      background: c.bg, title_color: c.title, color: c.priceText, text_color: c.text,
+      card_background: c.card, price_background: c.price, price_outline_color: c.card,
+      old_price_color: c.muted, price_strike_color: c.accent
+    };
+    Object.keys(paletteDecoration).forEach(function (key) { values['decoration.' + key] = c[paletteDecoration[key]]; });
+    ['background','image'].forEach(function (prefix) {
+      values['decoration.' + prefix + '_color2'] = prefix === 'background' ? c.header : c.card;
+    });
+    return values;
+  }
+  function paletteState(layout) {
+    var colors = effectiveColors(layout);
+    var palette = palettes.find(function (entry) {
+      var values = paletteColors(entry);
+      return Object.keys(values).every(function (key) {
+        if (priceImage(layout) && ['color','price_background','price_outline_color','old_price_color','price_strike_color',
+          'decoration.price_bar_background','decoration.price_bar_border'].includes(key)) return true;
+        return colors[key] === values[key];
+      });
+    });
+    if (palette) return { id: palette.id, label: palette.label, custom: false };
+    var legacy = templateStyles.some(function (style) {
+      var original = blank('drinks'); useTemplate(original.layout, style.id);
+      var base = effectiveColors(original.layout);
+      return Object.keys(colors).every(function (key) { return colors[key] === base[key]; });
+    });
+    return { id: '', label: legacy ? 'Bestandspalette · exakte Werte' : 'Eigene Farben / Verläufe', custom: !legacy };
+  }
   function priceImage(layout) {
     return layout.price_preset ? layout.price_preset === 'price-image' : layout.template === 'price-image';
   }
@@ -208,6 +314,10 @@ window.AngeboteModel = (function () {
   }
   function templates(data) {
     var l = data.layout, density = l.density, compact = density === 6, pages = [], style = Object.assign({}, templateStyle(l.template), { priceImage: priceImage(l) });
+    var decoration = l.decoration || {};
+    style.header = decoration.header_background || style.header;
+    style.accent = decoration.header_accent || style.accent;
+    style.soft = decoration.tag_background || style.soft;
     for (var start = 0; start < Math.max(1, data.items.length); start += density) {
       var elements = [];
       if (style.magazine) {
@@ -378,7 +488,7 @@ window.AngeboteModel = (function () {
       }
     }
     function tagTarget() {
-      var soft = style.soft, ink = priceColor(l), round = 'round';
+      var soft = (l.decoration || {}).tag_background || style.soft, ink = priceColor(l), round = 'round';
       function tag(box, size) {
         if (style.priceImage) {
           box = Object.assign({}, box, target === 'card' ? { y: 154, h: 174, padV: 4 }
@@ -937,6 +1047,7 @@ window.AngeboteModel = (function () {
       if (['pack', 'deposit', 'base', 'description'].indexOf(element.type) >= 0 && decoration.details_color) ctx.fillStyle = decoration.details_color;
       if (element.type === 'footer' && (decoration.vorrat_color || decoration.footer_color)) ctx.fillStyle = decoration.vorrat_color || decoration.footer_color;
       if ((element.type === 'period' || element.type === 'brand') && decoration.footer_color) ctx.fillStyle = decoration.footer_color;
+      if (element.type === 'period' && decoration.date_color) ctx.fillStyle = decoration.date_color;
       var angle = element.rotation * Math.PI / 180;
       var halfW = (Math.abs(Math.cos(angle)) * element.w + Math.abs(Math.sin(angle)) * element.h) / 2;
       var halfH = (Math.abs(Math.sin(angle)) * element.w + Math.abs(Math.cos(angle)) * element.h) / 2;
@@ -946,6 +1057,7 @@ window.AngeboteModel = (function () {
         issue('error', 'outside', element, 'ragt über die Ausgabe hinaus.');
       }
       if (element.type === 'shape') {
+        if (priceBackground && decoration.price_bar_background && !priceImage(layout)) ctx.fillStyle = decoration.price_bar_background;
         ctx.beginPath();
         if (priceBackground && (decoration.price_radius || decoration.price_skew)
             || ['rect', 'round', 'ellipse'].indexOf(element.shape) < 0) {
@@ -962,12 +1074,12 @@ window.AngeboteModel = (function () {
         ctx.fill();
         if (typeof element.fill === 'string') shapes.push({ x: element.x, y: element.y, w: element.w, h: element.h, fill: element.fill });
         if (priceBackground) {
-          ctx.save(); ctx.strokeStyle = layout.price_outline_color; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+          ctx.save(); ctx.strokeStyle = decoration.price_bar_border || layout.price_outline_color; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
         }
         var card = element.item_id && elements.find(function (entry) { return entry.item_id === element.item_id && entry.type === 'shape'; }) === element;
         if (card) {
           if (decoration.card_border_width) {
-            ctx.save(); ctx.strokeStyle = decoration.card_border_color || decorationDefaults.card_border_color;
+            ctx.save(); ctx.strokeStyle = decoration.divider_color || decoration.card_border_color || decorationDefaults.card_border_color;
             ctx.lineWidth = decoration.card_border_width; ctx.stroke(); ctx.restore();
           }
           if (decoration.show_leaf) {
@@ -1505,6 +1617,8 @@ window.AngeboteModel = (function () {
     propertyGroup: propertyGroup, objectValues: objectValues, rememberDesign: rememberDesign, originStatus: originStatus, resetObject: resetObject,
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
     decorationDefaults: decorationDefaults,
+    styleFamilies: styleFamilies, familyOf: familyOf, palettes: palettes, paletteColors: paletteColors,
+    paletteState: paletteState, effectiveColors: effectiveColors, assignColors: assignColors, useStyle: useStyle,
     priceImage: priceImage, groupedElements: groupedElements,
     templateOptions: templateStyles.filter(function (style) { return style.id !== 'price-image'; }).map(function (style) { return [style.id, style.label]; }),
     cmsTemplateOptions: templateStyles.filter(function (style) { return style.original && !style.half && !style.tag; }).map(function (style) { return [style.id, style.label]; }),

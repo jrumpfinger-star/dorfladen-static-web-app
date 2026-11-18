@@ -11,6 +11,12 @@ window.AngeboteVorschauEditor = (function () {
   }
   function pointerAngle(centerX, centerY, event) { return Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI; }
   function normalizeTurn(value) { return ((value + 540) % 360) - 180; }
+  function sizeHandles(layer, entry, entries, width) {
+    var tile = entry.item_id ? entries.filter(function (candidate) { return candidate.item_id === entry.item_id && !candidate.hidden; }) : [entry];
+    var left = Math.min.apply(null, tile.map(function (candidate) { return candidate.x; }));
+    var right = Math.max.apply(null, tile.map(function (candidate) { return candidate.x + candidate.w; }));
+    layer.style.setProperty('--an-tile-size', (right - left) / width * layer.clientWidth + 'px');
+  }
   function mount(host, options) {
     host.innerHTML = '<div class="an-direct-tools"><label class="an-field"><span>Element in der Vorschau</span><select data-preview-element></select></label>'
       + '<div class="an-element-actions"><button type="button" data-preview-transform="left" aria-label="Vorschauelement nach links drehen">↶ 15°</button>'
@@ -63,6 +69,7 @@ window.AngeboteVorschauEditor = (function () {
       });
       var selected = current();
       if (selected) {
+        sizeHandles(layer, selected, entries, width);
         var points = handlePoints(selected, width, height);
         var handle = document.createElement('button'); handle.type = 'button'; handle.className = 'an-resize-handle';
         handle.dataset.previewResize = chosen; handle.textContent = '↘'; handle.setAttribute('aria-label', 'Vorschauelementgröße ziehen');
@@ -255,5 +262,5 @@ window.AngeboteVorschauEditor = (function () {
       destroy: function () { if (endDrag) endDrag(); }
     };
   }
-  return { mount: mount, handlePoints: handlePoints, pointerAngle: pointerAngle, normalizeTurn: normalizeTurn };
+  return { mount: mount, handlePoints: handlePoints, sizeHandles: sizeHandles, pointerAngle: pointerAngle, normalizeTurn: normalizeTurn };
 })();

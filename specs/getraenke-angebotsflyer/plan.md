@@ -8,6 +8,126 @@ Spec/Testfälle vorhanden, keine offenen Klärungsmarker. Eigener Feature-Worktr
 keine Secrets im Repository, keine fremden Assets. Bestehende Vanilla-JS-,
 Azure-Functions- und Playwright-Struktur beibehalten. Vier Viewports testen.
 
+## Gemeinsamer Mockup-Umbau F60–F64
+
+UI möglichst 1:1 nach der jeweils zuletzt freigegebenen Referenz, ohne
+Funktionsverlust. Reihenfolge: Spezifikation, dieser Architekturplan,
+zugeordnete Aufgaben, dann Anwendungscode. Keine neue parallele Anwendung.
+
+### Übernahme- und Besitzmatrix
+
+| Bestand | Weiterer Besitzer / Integration | Erhaltener Vertrag / Abnahme |
+| --- | --- | --- |
+| `AngeboteDesign.definitions`: Vorlage/Dichte, Schrift/Farben, Größen/Drehung | Vorhandene Controls in sechs Designerbereichen; Einzelwerte direkt | Jeder Datenkey bleibt erreichbar; TC-F60-01 |
+| Preisschild: Form/Preset, Preis-/Stattpreis-/Kontur-/Strichfarben, Radius/Neigung/Größe/Offsets, Stattpreisschrift/-größe/-strich | Ein transaktionaler Dialog; ursprüngliche Nodes samt Handler zurückstellen | Übernehmen als ein Schritt, Abbruch erhält Zustand; TC-F60-02 |
+| Dekoration: Blatt/Tasche/Textur, Rahmen/Kartenrahmen und Farben | Weitere Gestaltung, vorhandene Settings | Kein pauschales Ausblenden anderer Eigenschaften; TC-F60-01 |
+| Hintergründe: Seite/Bild, Verläufe/Zweitfarben/Richtung/Stopp/Bildbreite/Offsets | Bestehende Farbcontrols plus Palette als ausdrückliche Sammeländerung | Exakte Bestandswerte und Vererbung; TC-F61-01/04 |
+| Template-Registry und freie Layouts | Familien-/Variantenadapter auf bestehende IDs; keine Lade-Migration | 6/10 Familien, 7 Wochenplanlayouts, XL/eckige Kacheln erhalten; TC-F61-01/02 |
+| CMS `tplColors`, `wpTplColors`, Zieloverrides | Derselbe Lade-/Speicherpfad, Farbrollenadapter | Keine heimliche Geometrieänderung oder fremdes Ziel überschreiben; TC-F61-03/04 |
+| Artikelstamm/Suche/manuelle Erfassung, Preise/Volumen/Gebinde/Pfand | `cms-angebote.js` / `cms-angebote-form.js`; bestehende Row-Nodes | Cent/Milliliter, kein Stamm-VK-Write; TC-F62-01 |
+| Bilder: Suche/Datei/Paste/Entfernen/Pending/Wiederholen | Bestehende Bildzustände und SharePoint-/Dataverseadapter | Keine verlorenen Uploads oder falscher Erfolg; TC-F62-01 |
+| Aktionsübersicht/Filter/Duplizieren/Löschen und Feature-Altbestand | Bestehender CMS-Einstieg; neue Hülle und Aktionsnavigation | Bestandsaktionen und Bestätigungen erhalten; TC-F62-02/03 |
+| Save/Reload/Revisionskonflikte/Verlassen | Vorhandene tatsächliche API-Aufrufe und Dirty-Zustände | Keine neue Persistenz und kein Save bei Tabwechsel; TC-F62-01/02 |
+| Vier Ausgabeziele, bedingte Marker, Element/Artikel/Vorlage/Ansicht/Ausgabe | Bestehende Editor-/Rendereradapter | Ziel-/Artikelisolierung, Historie; TC-F62-02, TC-F64-01 |
+| Vorschau: Auswahl/Verschieben/Skalieren/Drehen/Ghost/Duplikat/Bilder/Reset/Transfer | Vorhandener Vorschaueditor, Inspector und Overlay-Handler | Keine statische Ersatzvorschau; TC-F64-02 |
+| Eigene Vorlagen, Splitter, Zoom, Vollbild, Qualitätsprüfung, Export/Print/Teilen/Waage | Bestehende Tools hinter neuer Navigation | Originalpfade, echte Bestätigungen/Qualitätsfehler; TC-F60-01, TC-F64-02/03 |
+
+Vor-/Nachher-Abnahme über vollständige Datenkey-/Handlerinventur und vorhandene
+fachliche Tests ergänzen; diese gruppierte Matrix erlaubt keine Auslassungen.
+
+### Architektur und Dateien
+
+- `angebote-design.js`: gemeinsame Controls, Feldbesitz und restaurierte
+  Sichtbarkeit; Stil-/Palettenadapter; moderne Bereichsauswahl und sechs Tabs.
+  Keine Feldkopien mit divergierenden Handlern.
+- `angebote-modell.js` / `wochenangebote-renderer.js`: bestehende IDs und
+  Originalrenderer erhalten; explizite Farbrollen für Palette und Zusatzfarben.
+  Beim Laden nichts schreiben. Stil/Palette/Variante getrennt behandeln.
+- `cms.js` / `cms-klassisch.html`: zielbezogene Markerkeys mit generischem
+  Read/Write abstimmen, Ereignis-/Vererbungs- und Previewpfade erhalten;
+  Wochenplanpalette je Homepage/Druck. Nur direkt erforderliche Änderungen.
+- `cms-angebote.js`, `cms-angebote-form.js`, `angebote-editor.js`: gemeinsame
+  Aktionsnavigation und Draftübergabe ohne Daten-/Pendingbildverlust.
+  Mobile Listen-/Einzelartikelansicht nutzt dieselben Formularnodes.
+- `angebote.css`: gemeinsame Dichte/Raster/Dialoge, Höhe und Bedienart
+  berücksichtigen; eine mobile Kopfzeile. Hohes Ladentablet gesondert.
+- CMS aus `tools/build-cms-neu.js` generieren, Funktionserhaltung mit
+  `tools/pruef-cms-abgleich.js`, zweiter Generatorlauf unverändert.
+- Bestehende Playwrightdateien erweitern, Testzuordnung aktuell halten;
+  echte UI-/Pixel-/Roundtripabnahme auf vier Pflichtansichten plus kleinen
+  und kurzen Fenstern. Keine abgeschwächten fachlichen Tests.
+
+### Stil-/Palettenadapter und Aktionsintegration (F61)
+
+`AngeboteModel.styleFamilies` ordnet alte IDs nur lesend sechs globalen bzw.
+zehn freien Familien zu. `modern-mag-xl` bleibt echte Bildgeometrie,
+`land`/`classic` bleiben getrennt. Das Preisbild ist ein separates
+Preisschildpreset. Die acht freigegebenen Paletten besitzen nur Farbwerte;
+Markerpalette, Form, Dichte, Bildmaße, Schrift und Verlaufsgeometrie werden
+nicht durch die Sammeländerung ersetzt.
+
+Öffentliche Integrations-API in `AngeboteDesign` (kein zusätzliches Skript):
+
+- `controls(layout)` enthält `paletteControls(layout)` mit Buttons
+  `[data-offer-palette]` (Wert = Paletten-ID).
+- `await applyPalette(layout, id)` bestätigt eigene Farben über `M.dialog`,
+  mutiert ausschließlich das übergebene Layout und liefert bei Abbruch
+  `false`, sonst `true`. Kein Speichern und kein eigener Historieneintrag.
+- Der RootEditor-Clickhandler muss den **aktuellen State `data`** verwenden:
+  zunächst `draft = M.clone(M.styleOf(data.layout, target))`, dann
+  `await applyPalette(draft, id)`. Nur bei `true` für `sheet` die Farbwerte
+  übernehmen, für andere Ziele `M.setTargetStyle(data.layout, target, ...)`
+  ausführen; anschließend vorhandenen Template-/Preview-Refresh und genau
+  einen Historieneintrag auslösen. Beim Abbruch darf kein `target_styles`
+  angelegt werden. Eine Referenz auf einen früheren State ist nicht gültig.
+- `change(layout, input)` verarbeitet `data-style="family"` und `"variant"`
+  zusätzlich zu den unveränderten bisherigen Feldern; Stilwechsel benutzt
+  `M.useStyle`, nicht das farbersetzende Original-Reset `M.useTemplate`.
+- `previewChoices(host, layout, kind)` synchronisiert Familie, Variante,
+  Bestands-/Eigene-Farbenanzeige und Palette nach Undo/Redo/Zielwechsel.
+- `palettePicker(host, {read, map, defaults, write, changed})` bindet die
+  globalen CMS-/Wochenplan-/Homepagefelder an dieselbe Palettenauswahl.
+  `write` darf nur bestehende Farbfelder ändern, `changed` verwendet die
+  jeweilige bestehende Historie/Vorschau. Keine zweite Persistenz.
+
+Zusätzliche optionale Farbrollen in CMS-`tplColors` laufen über
+`getOfferTheme` bzw. die bestehenden Preisfelder; ohne diese Rollen bleiben
+alle Legacy-Pixel unverändert. Freie Layouts speichern entsprechende
+`decoration`-Farben mit derselben API-Validierung wie bestehende Farben.
+`M.registerImage(id, dataUrl)` bleibt unverändert öffentlich.
+
+### Integrierter Preisschilddialog
+
+Neu bestätigte Griffdarstellung (TC-F19-06 / TC-F60-04): Der Vorschaueditor berechnet
+sichtbare Dreh-/Skaliergriffe relativ zur gerenderten Kachel. Sichtbare
+Markierung und transparente Trefferfläche bleiben getrennt; Touchziele
+mindestens 44 px sowie sämtliche Zahlen-/Tastaturalternativen bleiben erhalten.
+Die gemeinsame Griff-API wird vom vorhandenen Originalrenderer-Overlay und
+vom Aktionseditor verwendet, nicht durch eine zweite Demoauswahl ersetzt.
+
+Die drei Mockupbereiche „Vorlage & Form“, „Farben“ (Preis/Schild und
+Stattpreis) sowie „Größe & Ausrichtung“ nehmen alle tatsächlichen Felder
+auf, auch zusätzliche Schriften, Größen und Positionsregler des Bestands.
+Die ursprünglichen Feldnodes und Listener bleiben erhalten; temporäre
+Hexanzeigen werden beim Schließen entfernt. Transaktionen und
+Herkunftsrücksetzen verwenden unverändert die vorhandenen Besitzer.
+Der Vorschauausschnitt stammt auch auf Desktop aus dem echten Canvas,
+nicht aus dem SVG-Demopreisschild des Mockups.
+
+Notwendige responsive Abweichung: Touchziele bleiben mindestens 44 px
+statt der teils kleineren Mockup-Farbfelder. Auf kleinen/kurzen Fenstern
+scrollt deshalb nur der Eigenschaftsbereich; Kopf, echte Vorschau und
+Abbrechen/Übernehmen bleiben sichtbar. Kein Weglassen zusätzlicher
+Eigenschaften zugunsten einer künstlichen Ein-Bildschirm-Abnahme.
+
+### Rolloutgate
+
+SDD und alle zugeordneten TC-Fälle müssen vor Fertigmeldung nachgewiesen sein.
+GF100/GF101 bleiben bis zu ihren tatsächlichen Abnahmen offen. Nach grünem
+Gesamtstand normal committen/pushen und PR #15 aktualisieren. Nur die zugehörige
+Feature-Preview schreibfrei prüfen, niemals main/Produktion oder echte
+Dataverse-/SharePoint-/Waagen-Schreibtests in der Preview.
+
 ## Entscheidungen
 
 ## Produktverbesserungen F52–F59

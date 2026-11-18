@@ -153,6 +153,27 @@ class AngeboteTests(unittest.TestCase):
                 data["layout"]["cms"]["config"]["plakat_inline"] = invalid
                 self.error(400, normalize, data)
 
+    def test_TC_F64_01_section_markers_survive_snapshot_publication_and_duplicate(self):
+        data = draft("weekly")
+        config = {"plakatTemplate": "classic-red", "flyerTemplate": "modern-mag-xl",
+                  "savingsMarkerType": "starburst", "savingsPalette": "harmonie",
+                  "plakat_savingsMarkerType": "heart", "plakat_savingsPalette": "midnight-gold",
+                  "flyer_savingsMarkerType": "", "flyer_savingsPalette": ""}
+        data["layout"]["cms"] = {
+            "config": config, "plakat_article_overrides": {}, "flyer_article_overrides": {}
+        }
+        head = self.service.create(data)
+        head = self.service.publish(head["id"], head["version"])
+        self.assertEqual(self.service.public()[0]["data"]["layout"]["cms"]["config"], config)
+        duplicate = self.service.duplicate(head["id"])
+        self.assertEqual(duplicate["draft"]["layout"]["cms"]["config"], config)
+        for key in ("plakat_savingsMarkerType", "flyer_savingsPalette"):
+            for invalid in ("unknown", None, True, 4, {}):
+                with self.subTest(key=key, invalid=invalid):
+                    broken = copy.deepcopy(data)
+                    broken["layout"]["cms"]["config"][key] = invalid
+                    self.error(400, normalize, broken)
+
     def test_TC_F15_02_delete_requires_current_version_and_ends_publication(self):
         head = self.service.create(draft())
         head = self.service.publish(head["id"], head["version"])
@@ -263,6 +284,54 @@ class AngeboteTests(unittest.TestCase):
         with self.assertRaises(AngeboteFehler) as failure:
             service.homepage()
         self.assertEqual(failure.exception.status, 503)
+
+    def test_TC_F61_extended_palette_roles_roundtrip_and_validation(self):
+        colors = {key: "#123456" for key in (
+            "header_background", "header_accent", "date_color", "divider_color",
+            "price_bar_background", "price_bar_border")}
+        colors.update(background_gradient=True, background_color2="#abcdef",
+                      background_direction="135deg", background_pct=37)
+        data = draft()
+        data["layout"].update(decoration=colors, target_styles={
+            "card": {"decoration": colors}, "single": {"decoration": colors},
+            "scale": {"decoration": colors}})
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        layout = self.service.public()[0]["data"]["layout"]
+        self.assertEqual(layout["decoration"], colors)
+        for target in ("card", "single", "scale"):
+            self.assertEqual(layout["target_styles"][target]["decoration"], colors)
+        settings = self.service.design()
+        settings["drinks"]["decoration"] = colors
+        self.service.save_design(settings["version"], settings)
+        self.assertEqual(self.service.design()["drinks"]["decoration"], colors)
+        for key in colors:
+            if not key.endswith(("_color", "_background", "_accent", "_border")):
+                continue
+            invalid = draft()
+            invalid["layout"]["decoration"] = {key: "keine Farbe"}
+            self.error(400, normalize, invalid)
+
+    def test_TC_F61_all_legacy_cms_palette_roles_survive_snapshot_roundtrip(self):
+        roles = {key: "#123456" for key in (
+            "headerBg", "headerAccent", "dateColor", "dividerColor", "priceBarBg",
+            "priceBarBorder", "stattColor", "footerColor", "vorratColor", "priceTextColor")}
+        roles.update(bgColor_grad=True, bgColor_c2="#abcdef", bgColor_dir="135deg",
+                     bgColor_pct=37, imgBg_grad=True, imgBg_c2="#345678",
+                     imgBg_dir="to right", imgBg_pct=63)
+        for template in TEMPLATES[2:11]:
+            with self.subTest(template=template):
+                data = draft("weekly")
+                config = {"plakatTemplate": template, "flyerTemplate": template,
+                          "tplColors": {f"{kind}:{template}": copy.deepcopy(roles)
+                                        for kind in ("plakat", "flyer")}}
+                data["layout"]["cms"] = {
+                    "config": config, "plakat_article_overrides": {}, "flyer_article_overrides": {}}
+                head = self.service.create(data)
+                self.service.publish(head["id"], head["version"])
+                public = next(entry for entry in self.service.public() if entry["id"] == head["id"])
+                self.assertEqual(public["data"]["layout"]["cms"]["config"], config)
+                self.assertEqual(self.service.duplicate(head["id"])["draft"]["layout"]["cms"]["config"], config)
 
     def test_TC_F35_decoration_and_named_presets_roundtrip_and_validation(self):
         decoration = {"show_leaf": True, "leaf_size": 40, "leaf_color": "#123456",

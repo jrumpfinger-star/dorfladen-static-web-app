@@ -13,6 +13,7 @@
   var objectTransaction = null;
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
+  var cmsSession = null;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -502,13 +503,14 @@
     }).join('');
     var current = visible.find(function (element) { return element.id === selected; });
     if (current && !current.hidden) {
+      window.AngeboteVorschauEditor.sizeHandles(host, current, visible, size.w);
       var points = window.AngeboteVorschauEditor.handlePoints(current, size.w, size.h);
       host.insertAdjacentHTML('beforeend', '<button type="button" class="an-resize-handle" data-resize="' + current.id
-        + '" aria-label="Elementgröße ziehen" title="Größe ziehen" style="left:clamp(22px,'
-        + points.resize.x + '%,calc(100% - 22px));top:clamp(22px,' + points.resize.y + '%,calc(100% - 22px))">↘</button>'
+        + '" aria-label="Elementgröße ziehen" title="Größe ziehen" style="left:clamp(var(--an-handle-edge),'
+        + points.resize.x + '%,calc(100% - var(--an-handle-edge)));top:clamp(var(--an-handle-edge),' + points.resize.y + '%,calc(100% - var(--an-handle-edge)))">↘</button>'
         + '<button type="button" class="an-rotate-handle" data-rotate="' + current.id
-        + '" aria-label="Element frei drehen" title="Ziehen zum Drehen" style="left:clamp(22px,'
-        + points.rotate.x + '%,calc(100% - 22px));top:clamp(22px,' + points.rotate.y + '%,calc(100% - 22px))">↻</button>');
+        + '" aria-label="Element frei drehen" title="Ziehen zum Drehen" style="left:clamp(var(--an-handle-edge),'
+        + points.rotate.x + '%,calc(100% - var(--an-handle-edge)));top:clamp(var(--an-handle-edge),' + points.rotate.y + '%,calc(100% - var(--an-handle-edge)))">↻</button>');
     }
   }
   async function preview() {
@@ -666,8 +668,9 @@
     else editorWorkspace();
     if (busy) lock(true);
   }
-  async function cmsPreview(action, mode, onClose) {
+  async function cmsPreview(action, mode, onClose, session) {
     try {
+      cmsSession = session || null;
       cmsAction = action; cmsReturn = onClose; cmsScrolled = false;
       record = { id: action.id }; data = M.clone(action.data);
       var openingData = data;
@@ -675,6 +678,15 @@
       dirty = false; undo = []; redo = []; page = 0; selected = '';
       step = 'design'; designTarget = 'sheet'; designItemId = data.items[0] ? data.items[0].id : '';
       previewMode = 'paper';
+      if (cmsSession) {
+        dirty = !!cmsSession.dirty;
+        var state = cmsSession.state;
+        if (state) {
+          undo = M.clone(state.undo); redo = M.clone(state.redo);
+          designTarget = state.designTarget; designItemId = state.designItemId;
+          selected = state.selected; page = Math.min(state.page, data.layout.pages.length - 1);
+        }
+      }
       cmsPlaceholder = document.createComment('Angebotsverwaltung');
       root.before(cmsPlaceholder);
       root.classList.remove('an-cms-overview');
@@ -684,7 +696,7 @@
       cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
       cmsDialog.addEventListener('cancel', function (event) { event.preventDefault(); run(closeCmsPreview); });
       cmsDialog.showModal();
-      cmsTab = 'element'; cmsNarrow = null;
+      cmsTab = mode === 'output' ? 'output' : cmsSession && cmsSession.state ? cmsSession.state.cmsTab : 'element'; cmsNarrow = null;
       if (window.ResizeObserver) {
         cmsObserver = new ResizeObserver(function () {
           if (!cmsDialog || !cmsPanel || cmsNarrow === (cmsDialog.clientWidth < 1000)) return;
@@ -706,6 +718,7 @@
         cmsPlaceholder.replaceWith(root); cmsPlaceholder = null;
         cmsDialog.close(); cmsDialog.remove(); cmsDialog = null;
         cmsAction = null; record = null; data = null; dirty = false; paint++;
+        cmsSession = null;
         root.classList.remove('an-cms-preview');
         await cmsReturn();
       }
@@ -719,13 +732,16 @@
     cmsPanel = null; cmsTabbar = null; cmsNarrow = null;
   }
   async function closeCmsPreview() {
-    if (!(await discard())) return;
+    if (!cmsSession && !(await discard())) return;
+    var result = cmsSession ? { data: M.clone(data), dirty: dirty, undo: M.clone(undo), redo: M.clone(redo),
+      designTarget: designTarget, designItemId: designItemId, selected: selected, page: page, cmsTab: cmsTab } : undefined;
     cmsCleanup();
     cmsAction = null; record = null; data = null; dirty = false; paint++;
+    cmsSession = null;
     root.classList.remove('an-cms-preview');
     cmsPlaceholder.replaceWith(root); cmsPlaceholder = null;
     cmsDialog.close(); cmsDialog.remove(); cmsDialog = null;
-    await cmsReturn();
+    await cmsReturn(result);
   }
   function finishTaskFrame(layout, left, picture, view) {
     root.classList.add('an-task-editor');
@@ -788,10 +804,20 @@
   function cmsPreviewTools() {
     root.classList.add('an-cms-preview');
     $('an-state').textContent = M.savedState(data, dirty);
-    $('an-save').textContent = 'Gestaltung speichern';
-    $('an-reload-saved').hidden = false;
-    $('an-overview').textContent = 'Schließen';
+    $('an-save').textContent = cmsSession ? 'Aktion speichern' : 'Gestaltung speichern';
+    $('an-reload-saved').hidden = !!cmsSession;
+    $('an-overview').textContent = cmsSession ? 'Artikel / Bilder' : 'Schließen';
     $('an-overview').onclick = function () { run(closeCmsPreview); };
+    if (cmsSession) {
+      var area = document.createElement('select'); area.className = 'an-workspace-area'; area.setAttribute('aria-label', 'Aktionsbereich');
+      area.innerHTML = '<option value="articles">Artikel / Bilder</option><option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
+      area.value = cmsTab === 'output' ? 'output' : 'design';
+      area.onchange = function () {
+        if (area.value === 'articles') run(closeCmsPreview);
+        else { cmsTab = area.value === 'output' ? 'output' : 'element'; cmsTabs(); }
+      };
+      root.querySelector('.an-toolbar').prepend(area);
+    }
     var panel = root.querySelector('.an-work-panel');
     panel.hidden = true;
     var previewPanel = $('an-preview');
@@ -1108,7 +1134,10 @@
   async function save() {
     $('an-state').textContent = 'Wird gespeichert …';
     if (cmsAction) {
-      cmsAction = await window.AngeboteDataverse.save(cmsAction, data);
+      var saved = cmsSession ? await cmsSession.save(data) : await window.AngeboteDataverse.save(cmsAction, data);
+      if (!saved) { await closeCmsPreview(); return; }
+      cmsAction = saved;
+      if (cmsSession) data = M.clone(cmsAction.data);
       dirty = false; renderEditor(); return;
     }
     var response = record ? await M.request('/api/angebote-verwaltung/' + record.id, M.json('PUT', { version: record.version, data: data }))
@@ -1586,13 +1615,13 @@
         var points = surface.handlePoints(e, size.w, size.h);
         var handle = $('an-hit-layer').querySelector('[data-resize]');
         if (handle) {
-          handle.style.left = 'clamp(22px,' + points.resize.x + '%,calc(100% - 22px))';
-          handle.style.top = 'clamp(22px,' + points.resize.y + '%,calc(100% - 22px))';
+          handle.style.left = 'clamp(var(--an-handle-edge),' + points.resize.x + '%,calc(100% - var(--an-handle-edge)))';
+          handle.style.top = 'clamp(var(--an-handle-edge),' + points.resize.y + '%,calc(100% - var(--an-handle-edge)))';
         }
         var turner = $('an-hit-layer').querySelector('[data-rotate]');
         if (turner) {
-          turner.style.left = 'clamp(22px,' + points.rotate.x + '%,calc(100% - 22px))';
-          turner.style.top = 'clamp(22px,' + points.rotate.y + '%,calc(100% - 22px))';
+          turner.style.left = 'clamp(var(--an-handle-edge),' + points.rotate.x + '%,calc(100% - var(--an-handle-edge)))';
+          turner.style.top = 'clamp(var(--an-handle-edge),' + points.rotate.y + '%,calc(100% - var(--an-handle-edge)))';
         }
         if (designTarget === 'sheet') data.layout.mode = 'free'; changed();
       }

@@ -74,6 +74,94 @@ window.AngeboteDesign = (function () {
     ['decoration.price_dx', 'Preisposition · rechts/links', 'number', -1000, 1000],
     ['decoration.price_dy', 'Preisposition · unten/oben', 'number', -1500, 1500]
   ]);
+  [
+    ['header_background', 'Kopffläche'], ['header_accent', 'Kopf-Akzent'],
+    ['date_color', 'Datum'], ['divider_color', 'Trennlinie'],
+    ['price_bar_background', 'Preisleiste'], ['price_bar_border', 'Preisleistenkontur'], ['tag_background', 'Preisschild-Bildfläche']
+  ].forEach(function (entry) { definitions.push(['decoration.' + entry[0], entry[1], 'color']); });
+  function styleGlyph(id) {
+    var icons = {
+      minimal: '<path d="M4 5h36M4 13h36M4 21h36" fill="none" stroke="currentColor"/>',
+      modern: '<rect x="3" y="2" width="38" height="7" rx="2"/><path d="M6 14h32M6 22h32" fill="none" stroke="currentColor" stroke-width="2"/>',
+      organic: '<rect x="3" y="2" width="38" height="7" rx="4"/><rect x="3" y="12" width="17" height="15" rx="7"/><rect x="24" y="12" width="17" height="15" rx="7"/>',
+      poster: '<rect x="3" y="2" width="38" height="10"/><rect x="3" y="16" width="17" height="11"/><rect x="24" y="16" width="17" height="11"/>',
+      magazine: '<rect x="2" y="1" width="40" height="6"/><path d="M3 11h17v9H3zm21 0h17v9H24zM3 24h17v3H3zm21 0h17v3H24z"/>',
+      half: '<rect x="3" y="3" width="17" height="20" rx="2"/><path d="M25 5h15m-15 6h15m-15 6h12M3 27h37" fill="none" stroke="currentColor" stroke-width="2"/>',
+      tag: '<rect x="8" y="2" width="15" height="23" rx="4"/><path d="m19 11 22-3 2 13-22 3z"/>'
+    };
+    return icons[id] || '<rect x="3" y="2" width="38" height="5"/><rect x="3" y="10" width="17" height="17" rx="'
+      + (id === 'square' ? 0 : 3) + '"/><rect x="24" y="10" width="17" height="17" rx="' + (id === 'square' ? 0 : 3) + '"/>';
+  }
+  function familyControls(layout, global) {
+    var families = global ? M.styleFamilies.slice(2, 8) : M.styleFamilies;
+    var group = ++controlId;
+    return '<fieldset class="an-choice-group an-style-families"><legend>Aufbau / Stil <small>'
+      + families.length + ' Familien</small></legend><div class="an-family-grid">'
+      + families.map(function (entry) {
+        return '<label class="an-family"><input type="radio" name="an-family-' + group
+          + '" data-style="family" value="' + entry[0] + '"' + (M.familyOf(layout.template) === entry[0] ? ' checked' : '')
+          + '><span><svg viewBox="0 0 44 30" aria-hidden="true" fill="currentColor">'
+          + styleGlyph(entry[0])
+          + '</svg><strong>' + entry[1] + '</strong></span></label>';
+      }).join('') + '</div><label class="an-field an-style-variant"' + (M.familyOf(layout.template) !== 'magazine' ? ' hidden' : '')
+      + '><span>Magazin-Bildfläche</span><select data-style="variant" aria-label="Magazin-Bildfläche"><option value="standard">Standard</option>'
+      + '<option value="xl"' + (layout.template === 'modern-mag-xl' ? ' selected' : '') + '>Großbild</option></select></label>'
+      + '<button type="button" class="an-family-enlarge" data-template-enlarge="' + layout.template + '">Aktiven Stil vergrößern</button></fieldset>';
+  }
+  function paletteButtons(state) {
+    return '<div class="an-palette-grid">' + M.palettes.map(function (palette) {
+      return '<button type="button" class="an-palette" data-offer-palette="' + palette.id + '" aria-pressed="' + (state.id === palette.id)
+        + '"><span class="an-palette-swatches" aria-hidden="true">'
+        + ['header','accent','card'].map(function (key) { return '<i style="background:' + palette.colors[key] + '"></i>'; }).join('')
+        + '</span><span>' + palette.label + '</span></button>';
+    }).join('') + '</div><p class="an-palette-state" role="status" data-palette-state>' + M.esc(state.label)
+      + '</p><p class="an-palette-hint">Stilwechsel behält die Farben. Palettenwechsel behält den Aufbau.</p>';
+  }
+  function paletteControls(layout) {
+    return '<fieldset class="an-choice-group an-palette-group"><legend>Farbpalette</legend>'
+      + paletteButtons(M.paletteState(layout)) + '</fieldset>';
+  }
+  async function applyPalette(layout, id) {
+    var palette = M.palettes.find(function (entry) { return entry.id === id; });
+    if (!palette) return false;
+    if (M.paletteState(layout).custom && !(await M.dialog('Eigene Farben ersetzen?',
+      'Die eigenen Farben dieses Ausgabeziels durch „' + palette.label + '“ ersetzen? Aufbau, Größen und andere Ausgabeziele bleiben unverändert.',
+      'Palette anwenden'))) return false;
+    var values = M.paletteColors(palette);
+    if (M.priceImage(layout)) ['color','price_background','price_outline_color','old_price_color','price_strike_color',
+      'decoration.price_bar_background','decoration.price_bar_border'].forEach(function (key) { delete values[key]; });
+    M.assignColors(layout, values);
+    return true;
+  }
+  function palettePicker(host, options) {
+    if (host._palettePicker) { host._palettePicker.refresh(); return host._palettePicker; }
+    host.classList.add('an-palette-group');
+    function state() {
+      var value = options.read(), keys = Object.keys(options.map(M.palettes[0].colors));
+      function equal(candidate) { return keys.every(function (key) { return value[key] === candidate[key]; }); }
+      var match = M.palettes.find(function (entry) { return equal(options.map(entry.colors)); });
+      if (match) return { id: match.id, label: match.label, custom: false };
+      var legacy = (options.defaults || []).some(equal);
+      return { id: '', label: legacy ? 'Bestandspalette · exakte Werte' : 'Eigene Farben / Verläufe', custom: !legacy };
+    }
+    function refresh() {
+      var current = state();
+      if (!host.querySelector('[data-offer-palette]')) host.innerHTML = paletteButtons(current);
+      host.querySelectorAll('[data-offer-palette]').forEach(function (button) { button.setAttribute('aria-pressed', String(current.id === button.dataset.offerPalette)); });
+      host.querySelector('[data-palette-state]').textContent = current.label;
+    }
+    host.addEventListener('click', async function (event) {
+      var button = event.target.closest('[data-offer-palette]');
+      if (!button) return;
+      event.stopPropagation();
+      var palette = M.palettes.find(function (entry) { return entry.id === button.dataset.offerPalette; });
+      if (state().custom && !(await M.dialog('Eigene Farben ersetzen?', 'Die eigenen Farben dieses Bereichs durch „'
+        + palette.label + '“ ersetzen? Andere Bereiche und der Aufbau bleiben unverändert.', 'Palette anwenden'))) return;
+      options.write(options.map(palette.colors)); refresh();
+      if (options.changed) options.changed();
+    });
+    host._palettePicker = { refresh: refresh }; refresh(); return host._palettePicker;
+  }
   function controls(layout) {
     if (layout.cms) {
       var cfg = layout.cms.config;
@@ -182,9 +270,10 @@ window.AngeboteDesign = (function () {
         }
         return html + '</label>';
     }
-    return '<div data-side-panel="design">' + choices('template', '1 · Stil wählen', M.templateOptions)
+    return '<div data-side-panel="design">' + familyControls(layout)
+      + '<div class="an-legacy-template" hidden>' + choices('template', 'Originalvorlagen', M.templateOptions) + '</div>'
       + choices('density', '2 · Artikel pro Seite', [['4', '4 · großzügig'], ['6', '6 · kompakt']])
-      + '<h3 class="an-settings-heading">3 · Farben und Schrift</h3>' + fields(false)
+      + paletteControls(layout) + '<h3 class="an-settings-heading">Eigene Farben und Schrift</h3>' + fields(false)
       + '<details class="an-fine"><summary>Feinabstimmung · Größen und Drehung</summary>' + fields(true) + '</details>'
       + '<details class="an-fine an-more-design"><summary>Weitere Gestaltung · Dekoration, Farben und Preisschild</summary>' + fields('extra') + '</details></div>';
   }
@@ -204,6 +293,13 @@ window.AngeboteDesign = (function () {
       host.addEventListener('click', open); host.addEventListener('dblclick', open);
     }
     choiceState.set(host, { layout: M.clone(layout), kind: kind });
+    host.querySelectorAll('[data-style=family]').forEach(function (input) { input.checked = input.value === M.familyOf(layout.template); });
+    host.querySelectorAll('.an-style-variant').forEach(function (field) { field.hidden = M.familyOf(layout.template) !== 'magazine'; });
+    host.querySelectorAll('[data-style=variant]').forEach(function (select) { select.value = layout.template === 'modern-mag-xl' ? 'xl' : 'standard'; });
+    host.querySelectorAll('.an-family-enlarge').forEach(function (button) { button.dataset.templateEnlarge = layout.template; });
+    var palette = M.paletteState(layout);
+    host.querySelectorAll('[data-offer-palette]').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.offerPalette === palette.id)); });
+    host.querySelectorAll('[data-palette-state]').forEach(function (node) { node.textContent = palette.label; });
     var ticket = (choicePaint.get(host) || 0) + 1; choicePaint.set(host, ticket);
     host.querySelectorAll('[data-price-image-color]').forEach(function (field) { field.hidden = false; });
     host.querySelectorAll('[data-price-background-label]').forEach(function (label) {
@@ -296,10 +392,11 @@ window.AngeboteDesign = (function () {
   }
   function change(layout, target) {
     var key = target.dataset.style;
-    if (!key || !definitions.some(function (d) { return d[0] === key; })) return false;
-    if (key === 'template') {
-      M.useTemplate(layout, target.value);
-      layout.price_preset = '';
+    if (!key || !definitions.some(function (d) { return d[0] === key; }) && !['family', 'variant'].includes(key)) return false;
+    if (key === 'family' || key === 'variant' || key === 'template') {
+      var id = key === 'family' ? M.styleFamilies.find(function (family) { return family[0] === target.value; })[2]
+        : key === 'variant' ? (target.value === 'xl' ? 'modern-mag-xl' : 'modern-magazine') : target.value;
+      M.useStyle(layout, id);
     } else if (key === 'price_preset') {
       if (!target.value) { layout.price_preset = 'manual'; return true; }
       var preset = window.WochenangeboteRenderer.TAG_PRESETS[target.value];
@@ -407,7 +504,7 @@ window.AngeboteDesign = (function () {
         root.onkeydown = function (event) { historyShortcut(event, api.undo, api.redo); };
         update();
         compactActions(host);
-        objectProperties(root, { history: api });
+        if (!/^week-/.test(root.dataset.designer || '')) objectProperties(root, { history: api });
       }
     };
     return api;
@@ -450,12 +547,38 @@ window.AngeboteDesign = (function () {
             if (!group || !field || field.dataset.objectUnavailable === 'true' || field.querySelectorAll('input,select,textarea').length !== 1) return;
             if (field.hidden && !field.dataset.objectField) return;
             field.dataset.objectField = group;
-            if (!displayOnly) field.hidden = true;
             groups[group].push(field);
+          });
+          Object.keys(groups).forEach(function (group) {
+            groups[group].forEach(function (field) {
+              field.hidden = !displayOnly && group === 'price' && groups[group].length > 1;
+            });
+          });
+          function visibleWithin(node, boundary) {
+            while (node && node !== boundary) {
+              if (node.hidden) return false;
+              node = node.parentElement;
+            }
+            return true;
+          }
+          root.querySelectorAll('fieldset').forEach(function (section) {
+            if (!section.querySelector('[data-object-field]') || section.hidden && !section.dataset.objectEmpty) return;
+            var visible = Array.from(section.querySelectorAll('input,select,textarea,button,summary,a[href]'))
+              .some(function (control) { return visibleWithin(control, section); });
+            if (visible && section.dataset.objectEmpty) { section.hidden = false; delete section.dataset.objectEmpty; }
+            else if (!visible) { section.hidden = true; section.dataset.objectEmpty = 'true'; }
+          });
+          root.querySelectorAll('.an-settings-heading').forEach(function (heading) {
+            var next = heading.nextElementSibling, visible = false;
+            while (next && !next.classList.contains('an-settings-heading')) {
+              if (visibleWithin(next, next.parentElement)) visible = true;
+              next = next.nextElementSibling;
+            }
+            heading.hidden = !visible;
           });
           bar.querySelectorAll('[data-object-properties]').forEach(function (button) {
             var group = button.dataset.objectProperties, detail = describe(group);
-            button.hidden = !groups[group].length; button.querySelector('small').textContent = (options.origin ? options.origin(group) + ' · ' : '') + detail;
+            button.hidden = groups[group].length < 2; button.querySelector('small').textContent = (options.origin ? options.origin(group) + ' · ' : '') + detail;
             button.title = labels[group] + ': ' + detail;
           });
           var host = root.querySelector('.an-designer-body,#an-style-controls');
@@ -467,20 +590,60 @@ window.AngeboteDesign = (function () {
           if (!nodes.length) return;
           var dialog = document.createElement('dialog'), positions = [], statuses = [];
           dialog.className = 'an-dialog an-object-dialog';
+          dialog.dataset.objectGroup = group;
           dialog.setAttribute('aria-label', labels[group] + ' einstellen');
           dialog.innerHTML = '<form><header><h2>' + labels[group] + ' einstellen</h2>'
             + '<button type="button" data-object-cancel aria-label="Eigenschaften schließen und Änderungen verwerfen">×</button></header>'
             + '<div class="an-object-preview"><figure tabindex="0" aria-label="Vorschauausschnitt, bei Bedarf scrollen"><canvas aria-label="Live-Detailvorschau"></canvas></figure><div><small>Live-Vorschau · noch nicht gespeichert</small><button type="button" data-object-view>Gesamtmotiv</button></div></div>'
             + '<div class="an-object-body"><div class="an-object-grid"></div></div><footer><button type="button" data-object-cancel>Abbrechen</button>'
             + '<button type="submit" class="an-primary">Übernehmen</button></footer></form>';
+          if (group === 'price') {
+            var sections = [
+              ['base', 'Vorlage & Form', '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/>'],
+              ['colors', 'Farben', '<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1"/><circle cx="13" cy="7" r="1"/><path d="m7 16 3 2"/>'],
+              ['size', 'Größe & Ausrichtung', '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M4 4l5 5M20 20l-5-5"/>']
+            ];
+            dialog.querySelector('.an-object-body').innerHTML = sections.map(function (section) {
+              return '<section class="an-price-section" data-price-section="' + section[0] + '" aria-label="' + section[1] + '">'
+                + '<h3><svg viewBox="0 0 24 24" aria-hidden="true">' + section[2] + '</svg>' + section[1] + '</h3>'
+                + (section[0] === 'colors' ? '<div class="an-price-colors">'
+                  + '<div data-price-colors="price"><h4>Preis & Schild</h4><div class="an-object-grid"></div></div>'
+                  + '<div data-price-colors="old"><h4>Stattpreis</h4><div class="an-object-grid"></div></div></div>'
+                  : '<div class="an-object-grid"></div>') + '</section>';
+            }).join('');
+            var caption = document.createElement('strong'); caption.textContent = 'Dein Preisschild';
+            dialog.querySelector('.an-object-preview>div').prepend(caption);
+          }
           root.querySelectorAll('[role=status],[data-design-status]').forEach(function (node) { statuses.push([node, node.textContent]); });
           if (options.history) options.history.transaction();
           if (options.begin) options.begin();
           nodes.forEach(function (field) {
             var marker = document.createComment('object-field'); field.replaceWith(marker);
-            positions.push([marker, field]); field.hidden = false;
-            dialog.querySelector('.an-object-grid').appendChild(field);
+            positions.push([marker, field, field.hidden]); field.hidden = false;
+            var container = dialog.querySelector('.an-object-grid');
+            if (group === 'price') {
+              var control = field.querySelector('input,select,textarea');
+              var key = control.dataset.style || control.dataset.cmsConfig || control.id || '';
+              var section = control.type === 'color' ? 'colors' : /(?:preset|shape)$/i.test(key) ? 'base' : 'size';
+              var selector = '[data-price-section="' + section + '"] ';
+              if (section === 'colors') {
+                selector += '[data-price-colors="' + (/(?:old|statt|strike|strip)/i.test(key) ? 'old' : 'price') + '"] ';
+                var hex = document.createElement('output'); hex.className = 'an-object-color-value';
+                hex.setAttribute('aria-hidden', 'true'); field.appendChild(hex);
+              }
+              container = dialog.querySelector(selector + '.an-object-grid');
+            }
+            container.appendChild(field);
           });
+          dialog.querySelectorAll('.an-price-section,[data-price-colors]').forEach(function (section) {
+            section.hidden = !section.querySelector('input,select,textarea');
+          });
+          function refreshColors() {
+            dialog.querySelectorAll('.an-object-color-value').forEach(function (output) {
+              output.value = output.closest('label').querySelector('input').value.toUpperCase();
+            });
+          }
+          dialog.addEventListener('input', refreshColors); dialog.addEventListener('change', refreshColors); refreshColors();
           root.appendChild(dialog); active = dialog;
           if (options.reset) {
             var reset = document.createElement('button'); reset.type = 'button';
@@ -498,13 +661,15 @@ window.AngeboteDesign = (function () {
                 }
                 if (control.type === 'checkbox') control.checked = values[key]; else control.value = values[key];
               });
+              refreshColors();
             };
             dialog.querySelector('.an-object-body').appendChild(reset);
           }
           function close(commit) {
             if (commit && !dialog.querySelector('form').reportValidity()) return;
             clearInterval(timer);
-            positions.forEach(function (entry) { entry[1].hidden = true; entry[0].replaceWith(entry[1]); });
+            dialog.querySelectorAll('.an-object-color-value').forEach(function (output) { output.remove(); });
+            positions.forEach(function (entry) { entry[1].hidden = entry[2]; entry[0].replaceWith(entry[1]); });
             dialog.close(); dialog.remove(); active = null;
             if (options.history) options.history.transaction(commit);
             if (options.end) options.end(commit);
@@ -513,7 +678,8 @@ window.AngeboteDesign = (function () {
           }
           var whole = false;
           function preview() {
-            if (!matchMedia('(max-width:559px)').matches) return;
+            if (group !== 'price' && !matchMedia('(max-width:559px)').matches) return;
+            refreshColors();
             var source = options.canvas ? options.canvas() : root.querySelector('.an-designer-paper canvas,#an-stage-canvas');
             if (!source || !source.width || !source.height) return;
             drawDetail(dialog.querySelector('canvas'), source, whole ? '' : group, options.item && options.item());
@@ -573,8 +739,9 @@ window.AngeboteDesign = (function () {
     host.querySelectorAll('[data-design-history],[data-history]').forEach(function (button) {
       iconButton(button, button.dataset.designHistory || button.dataset.history);
     });
-    var save = host.querySelector('[data-design-save],#cfg-plakat-save,[data-action=hpangSave],#an-save');
+    var save = host.querySelector('[data-design-save],#cfg-plakat-save,[data-action=hpangSave],[data-action=saveHPCfg],#an-save');
     if (save) {
+      save.classList.add('an-primary');
       if (!save.hasAttribute('aria-label')) save.setAttribute('aria-label', save.textContent.trim());
       save.textContent = 'Speichern';
     }
@@ -626,7 +793,7 @@ window.AngeboteDesign = (function () {
     function resize() {
       var width = root.clientWidth;
       if (!width) { viewButton.hidden = true; return; }
-      var mobile = width < 612;
+      var mobile = width < 612 && !(innerWidth >= 600 && innerHeight >= 900 && width >= 480);
       root.classList.toggle('an-split-mobile', mobile);
       if (!explicitView) view.value = mobile ? 'inputs' : 'split';
       root.dataset.workspaceView = view.value;
@@ -895,19 +1062,42 @@ window.AngeboteDesign = (function () {
     popup.className = 'an-action-popover an-design-locations'; popup.popover = 'auto'; popup.id = 'an-design-locations-' + (++helpId);
     popup.setAttribute('role', 'listbox'); popup.setAttribute('aria-label', 'Designbereich');
     button.setAttribute('popovertarget', popup.id);
-    button.innerHTML = '<span></span><svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
-    button.querySelector('span').textContent = 'Designbereich';
+    button.innerHTML = '<span class="an-loc-glyph" aria-hidden="true"></span><span data-location-label>Designbereich</span><svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+    var pickerHead = document.createElement('header'), pickerFoot = document.createElement('p');
+    pickerHead.className = 'an-loc-head';
+    pickerHead.innerHTML = '<div><strong>Designbereich wählen</strong><small>Vorgaben für deine Ausgaben</small></div><button type="button" aria-label="Bereichsauswahl schließen">×</button>';
+    pickerHead.querySelector('button').onclick = function () { popup.hidePopover(); button.focus(); };
+    pickerFoot.className = 'an-loc-foot';
+    pickerFoot.textContent = 'Designvorgaben · einzelne Aktionen bleiben unverändert';
+    popup.appendChild(pickerHead);
+    function glyph(key) {
+      key = key.split('/').pop();
+      var type = /drinks/.test(key) ? 'drinks' : /flyer|print/.test(key) ? 'print'
+        : /plakat/.test(key) ? 'poster' : /wp/.test(key) ? 'week'
+          : /hpang/.test(key) ? 'special' : /home|hp/.test(key) ? 'web' : 'shared';
+      var paths = {
+        drinks: '<path d="M10 3h4M10 6h4M10 3v5l-3 4v7a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-7l-3-4V3M7 13h10M7 17h10"/>',
+        print: '<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2ZM9 3v16M15 5v16"/>',
+        poster: '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 9h5M8 17l3-4 5 5M8 19h8"/>',
+        week: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M7 15h3M14 15h3M7 18h3"/>',
+        special: '<path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4ZM20 2v4M18 4h4"/>',
+        web: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 9v11M12 13h5M12 16h3"/>',
+        shared: '<path d="M4 6h16M4 12h16M4 18h16"/><rect x="7" y="4" width="3" height="4" rx="1"/><rect x="14" y="10" width="3" height="4" rx="1"/><rect x="8" y="16" width="3" height="4" rx="1"/>'
+      };
+      return '<span class="an-loc-glyph an-loc-' + type + '" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + paths[type] + '</svg></span>';
+    }
     location.appendChild(button); toolbar.insertBefore(location, toolbar.children[1]); header.appendChild(popup);
     var observer = new MutationObserver(sync);
     observer.observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
     nav.querySelectorAll('[data-id]').forEach(function (top) {
       var section = panel.querySelector('#cms-' + top.dataset.id), subnav = section && section.querySelector(':scope>.cfg-section-nav');
-      var group = document.createElement('div');
+      var group = document.createElement('div'), heading = document.createElement('div'), grid = document.createElement('div');
       group.className = 'an-loc-group';
       group.setAttribute('role', 'group');
       var groupLabel = top.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim();
       group.setAttribute('aria-label', groupLabel);
-      group.textContent = groupLabel;
+      heading.className = 'an-loc-heading'; heading.textContent = groupLabel;
+      grid.className = 'an-loc-grid'; group.append(heading, grid);
       popup.appendChild(group);
       if (subnav) observer.observe(subnav, { subtree: true, attributes: true, attributeFilter: ['class'] });
       var children = subnav ? Array.from(subnav.querySelectorAll('button[data-id]')) : [null];
@@ -915,18 +1105,31 @@ window.AngeboteDesign = (function () {
         var item = document.createElement('button'), key = top.dataset.id + (sub ? '/' + sub.dataset.id : '');
         item.type = 'button'; item.className = 'an-loc-item'; item.dataset.value = key;
         item.setAttribute('role', 'option');
-        item.textContent = 'Vorgabe: ' + (sub ? sub.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim() : group.textContent);
+        var title = sub ? sub.textContent.replace(/^[^\p{L}\p{N}]+/u, '').trim() : groupLabel;
+        item.setAttribute('aria-label', 'Vorgabe: ' + title);
+        item.innerHTML = glyph(key);
+        var caption = document.createElement('span'); caption.className = 'an-loc-name'; caption.textContent = title;
+        item.appendChild(caption);
         var check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         check.setAttribute('viewBox', '0 0 24 24'); check.setAttribute('width', '14'); check.setAttribute('height', '14');
         check.setAttribute('fill', 'none'); check.setAttribute('stroke', 'currentColor'); check.setAttribute('stroke-width', '3');
         check.setAttribute('aria-hidden', 'true'); check.style.visibility = 'hidden'; check.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
         item.appendChild(check);
-        var entry = { top: top, sub: sub, item: item, check: check };
+        var entry = { top: top, sub: sub, item: item, check: check, title: title, glyph: glyph(key) };
         item.onclick = function () {
           popup.hidePopover(); entry.top.click(); if (entry.sub) entry.sub.click();
         };
-        popup.appendChild(item); destinations.set(key, entry);
+        grid.appendChild(item); destinations.set(key, entry);
       });
+    });
+    popup.appendChild(pickerFoot);
+    popup.addEventListener('keydown', function (event) {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      var items = Array.from(popup.querySelectorAll('[role=option]')), index = items.indexOf(document.activeElement);
+      var next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+        : ((index < 0 ? (event.key === 'ArrowDown' ? -1 : 0) : index) + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length;
+      items[next].focus();
     });
     function sync() {
       var current = null;
@@ -935,14 +1138,20 @@ window.AngeboteDesign = (function () {
         entry.item.classList.toggle('active', active);
         entry.item.setAttribute('aria-selected', String(active));
         entry.check.style.visibility = active ? 'visible' : 'hidden';
-        if (active) current = entry.item.textContent;
+        if (active) current = entry;
       });
-      if (current) button.querySelector('span').textContent = current;
+      if (current) {
+        button.querySelector('[data-location-label]').textContent = 'Vorgabe: ' + current.title;
+        button.querySelector('.an-loc-glyph').outerHTML = current.glyph;
+      }
     }
     popup.addEventListener('toggle', function () {
       var open = popup.matches(':popover-open');
       button.setAttribute('aria-expanded', String(open));
-      if (open) placePopover(button, popup);
+      if (open) {
+        placePopover(button, popup);
+        (popup.querySelector('[aria-selected=true]') || popup.querySelector('[role=option]')).focus({ preventScroll: true });
+      }
     });
     var optionsButton = document.createElement('button'), optionsPopup = document.createElement('div');
     optionsButton.type = 'button'; optionsButton.className = 'an-icon-action an-design-options-toggle'; iconButton(optionsButton, 'more');
@@ -1191,12 +1400,41 @@ window.AngeboteDesign = (function () {
     select.addEventListener('change', update);
     gallery.addEventListener('click', function () { update(); });
     update();
+    picker.hidden = true;
+    var family = document.createElement('div');
+    family.innerHTML = familyControls({ template: select.value }, true);
+    family.querySelector('.an-family-enlarge').remove();
+    var oldLegend = groups[0][0].querySelector(':scope>legend');
+    if (oldLegend) oldLegend.remove();
+    var enlargeButton = groups[0][0].querySelector('[data-action=previewOfferTpl]');
+    if (enlargeButton) {
+      var oldPosition = enlargeButton.parentElement;
+      enlargeButton.classList.add('an-family-enlarge');
+      enlargeButton.textContent = 'Originalvorschau vergrößern';
+      family.appendChild(enlargeButton);
+      if (!oldPosition.children.length) oldPosition.remove();
+    }
+    groups[0][0].appendChild(family);
+    function syncFamilies() {
+      family.querySelectorAll('[data-style=family]').forEach(function (input) { input.checked = input.value === M.familyOf(select.value); });
+      family.querySelector('.an-style-variant').hidden = M.familyOf(select.value) !== 'magazine';
+      family.querySelector('[data-style=variant]').value = select.value === 'modern-mag-xl' ? 'xl' : 'standard';
+    }
+    family.addEventListener('change', function (event) {
+      var input = event.target, key = input.dataset.style;
+      if (!key) return;
+      select.value = key === 'variant' ? (input.value === 'xl' ? 'modern-mag-xl' : 'modern-magazine')
+        : M.styleFamilies.find(function (entry) { return entry[0] === input.value; })[2];
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      syncFamilies();
+    });
+    select.addEventListener('change', syncFamilies); syncFamilies();
     workspace(root, { kind: kind, title: kind === 'plakat' ? 'Plakat-Design' : 'Einzelflyer-Design',
       groups: groups, preview: preview, actions: actions });
     history.bind(actions, root);
     moveColorResets(root);
   }
-  function mountHomepage(root, changes) {
+  function mountHomepage(root, changes, paletteOptions) {
     if (root.dataset.designer) return;
     var preview = root.querySelector('#hpang-preview-wrap').parentElement;
     preview.style.removeProperty('overflow');
@@ -1211,8 +1449,39 @@ window.AngeboteDesign = (function () {
       while (body.firstChild) section.appendChild(body.firstChild);
       groups[index].push(section);
     });
+    if (paletteOptions) {
+      var palette = document.createElement('fieldset');
+      palette.className = 'an-choice-group'; palette.innerHTML = '<legend>Farbpalette</legend><div></div>';
+      groups[0].unshift(palette);
+      var picker = palettePicker(palette.lastElementChild, paletteOptions);
+      ['input','change'].forEach(function (type) { root.addEventListener(type, picker.refresh); });
+    }
     workspace(root, { kind: 'homepage', title: 'Homepage-Sonderangebote',
       tabs: ['Farben', 'Preis-Tag', 'Layout'], groups: groups, preview: preview, actions: actions });
+    changes.bind(actions, root);
+  }
+  function mountWeek(root, preview, kind, changes) {
+    if (root.dataset.designer) {
+      root.querySelector('.an-designer-workspace').appendChild(preview);
+      pictureViewport(preview, root.querySelector('.an-designer-controls'));
+      return;
+    }
+    var original = root.firstElementChild, groups = [[], [], [], [], []], actions = null;
+    Array.from(original.children).forEach(function (node) {
+      if (node.classList.contains('cms-card')) {
+        var legend = document.createElement('legend'), fieldset = document.createElement('fieldset');
+        var title = node.querySelector('.cms-card-header').textContent.trim(), body = node.querySelector('.cms-card-body');
+        fieldset.className = 'an-choice-group'; legend.textContent = title; fieldset.appendChild(legend);
+        while (body.firstChild) fieldset.appendChild(body.firstChild);
+        var index = /Template/.test(title) ? 0 : /Farben/.test(title) ? 1 : /Schrift/.test(title) ? 2 : 3;
+        if (index === 0) fieldset.classList.add('an-week-styles');
+        groups[index].push(fieldset);
+      } else if (node.querySelector('[data-action=saveHPCfg]')) actions = node;
+      else if (node.querySelector('[data-action=wpPresetSave]')) groups[4].push(node);
+    });
+    if (!actions) return;
+    workspace(root, { kind: 'week-' + kind, title: kind === 'home' ? 'Wochenplan · Homepage' : 'Wochenplan · Druck',
+      groups: groups, preview: preview, actions: actions });
     changes.bind(actions, root);
   }
   async function mount(root) {
@@ -1274,8 +1543,8 @@ window.AngeboteDesign = (function () {
       function fieldGroups(fields) {
         var fine = fields.querySelector('.an-fine:not(.an-more-design)'), extra = fields.querySelector('.an-more-design');
         fine.querySelector('summary').remove(); extra.querySelector('summary').remove();
-        return [Array.from(fields.querySelectorAll(':scope>.an-choice-group')),
-          [fields.querySelector('.an-settings-heading'), fields.querySelector(':scope>.an-fields')],
+        return [Array.from(fields.querySelectorAll(':scope>.an-choice-group:not(.an-palette-group),:scope>.an-legacy-template')),
+          [fields.querySelector('.an-palette-group'), fields.querySelector('.an-settings-heading'), fields.querySelector(':scope>.an-fields')],
           Array.from(fine.childNodes), Array.from(extra.childNodes)];
       }
       function refreshFields() {
@@ -1371,6 +1640,14 @@ window.AngeboteDesign = (function () {
         if (e.target.dataset.style) root.querySelector('[data-design-status]').textContent = 'Geändert · noch nicht gespeichert';
       });
       root.addEventListener('click', async function (e) {
+        var palette = e.target.closest('[data-offer-palette]');
+        if (palette) {
+          if (await applyPalette(design[kind], palette.dataset.offerPalette)) {
+            refreshFields(); await preview(); changes.record();
+            root.querySelector('[data-design-status]').textContent = 'Palette übernommen · noch nicht gespeichert';
+          }
+          return;
+        }
         if (e.target.closest('[data-design-products-retry]')) { await loadProducts(); return; }
         var tab = e.target.closest('[data-design-mode]');
         if (tab) { mode = tab.dataset.designMode; selectPreview(root, mode, 'data-design-mode'); preview().catch(M.error); return; }
@@ -1457,11 +1734,12 @@ window.AngeboteDesign = (function () {
       await M.error(e);
     }
   }
-  return { mount: mount, mountCms: mountCms, mountHomepage: mountHomepage, mountShared: mountShared, prepareCms: prepareCms, compactHelp: compactHelp,
+  return { mount: mount, mountCms: mountCms, mountHomepage: mountHomepage, mountWeek: mountWeek, mountShared: mountShared, prepareCms: prepareCms, compactHelp: compactHelp,
     pictureViewport: pictureViewport, history: history, historyShortcut: historyShortcut,
     split: split, compactActions: compactActions, objectProperties: objectProperties,
     expandGroups: expandGroups,
     fullscreen: fullscreen,
     controls: controls, change: change, previewChoices: previewChoices,
+    paletteControls: paletteControls, applyPalette: applyPalette, palettePicker: palettePicker,
     previewTabs: previewTabs, selectPreview: selectPreview, outputPreview: outputPreview, cards: cards };
 })();

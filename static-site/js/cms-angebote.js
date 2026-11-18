@@ -31,8 +31,10 @@ window.CMSAngebote = (function () {
     }
     function render() {
       root.classList.add('an-cms-overview');
+      root.classList.remove('an-filters-open');
       var selected = list.filter(function (action) { return overlaps(action.data); });
       root.innerHTML = '<div class="an-overview-toolbar"><h2>Sonderangebote</h2>'
+        + '<button type="button" data-filter-toggle aria-expanded="false">Zeitraum: ' + ({ this: 'Diese Woche', next: 'Nächste Woche', all: 'Alle' })[filter] + '</button>'
         + '<button class="an-primary" data-create>+ Neue Aktion erstellen</button></div>'
         + '<nav class="an-tabs an-week-filter" aria-label="Aktionszeitraum">'
         + [['this', 'Diese Woche'], ['next', 'Nächste Woche'], ['all', 'Alle']].map(function (entry) {
@@ -71,6 +73,10 @@ window.CMSAngebote = (function () {
           toggle.setAttribute('aria-expanded', String(!collapsed)); return;
         }
         if (!b) return;
+        if (b.hasAttribute('data-filter-toggle')) {
+          var open = b.getAttribute('aria-expanded') !== 'true';
+          b.setAttribute('aria-expanded', String(open)); root.classList.toggle('an-filters-open', open); return;
+        }
         if (b.dataset.week) { filter = b.dataset.week; render(); return; }
         if (b.hasAttribute('data-create')) { choose().catch(M.error); return; }
         if (b.hasAttribute('data-feature-stock')) { options.legacy(); return; }
@@ -149,6 +155,29 @@ window.CMSAngebote = (function () {
         + '<div class="an-capture-items"></div><p class="an-muted" data-capture-status role="status">Angebotspreis separat eingeben. Speichern übernimmt die Aktion für den gewählten Gültigkeitszeitraum.</p></div>';
       var host = dlg.querySelector('.an-capture-items'), status = dlg.querySelector('[data-capture-status]');
       var states = new Map(), pending = new Map(), imageTasks = new Set(), imageRequests = new WeakMap();
+      var filePreviews = new Map(), workspaceState = null, selectedRow = null, blockedReport = null;
+      var phone = matchMedia('(max-width:599px), (max-width:899px) and (max-height:500px)');
+      var top = dlg.querySelector('.an-dialog-top'), footer = document.createElement('footer');
+      footer.className = 'an-capture-footer';
+      var actions = top.querySelector('.an-actions'), closeButton = actions.querySelector('[aria-label="Erfassung schließen"]');
+      top.appendChild(closeButton); footer.appendChild(actions); dlg.appendChild(footer);
+      var area = document.createElement('select'); area.dataset.captureArea = ''; area.setAttribute('aria-label', 'Aktionsbereich');
+      area.innerHTML = '<option value="articles">Artikel / Bilder</option><option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
+      top.insertBefore(area, closeButton);
+      var metaToggle = document.createElement('button'); metaToggle.type = 'button'; metaToggle.dataset.metaToggle = '';
+      metaToggle.textContent = 'Daten'; metaToggle.setAttribute('aria-label', 'Aktionsdaten ein- oder ausblenden');
+      metaToggle.setAttribute('aria-expanded', String(isNew)); top.insertBefore(metaToggle, closeButton);
+      var mobileList = document.createElement('div'); mobileList.className = 'an-capture-mobile-list';
+      host.before(mobileList);
+      var stepper = document.createElement('div'); stepper.className = 'an-capture-stepper';
+      stepper.innerHTML = '<button type="button" data-capture-back aria-label="Zur Artikelliste">← Liste</button><span data-capture-count></span>'
+        + '<button type="button" data-capture-prev aria-label="Vorheriger Artikel">←</button><button type="button" data-capture-next aria-label="Nächster Artikel">→</button>';
+      host.before(stepper);
+      var more = document.createElement('details'); more.className = 'an-capture-more';
+      more.open = !phone.matches;
+      more.innerHTML = '<summary>Weitere Aktionen</summary><div></div>';
+      Array.from(actions.children).filter(function (button) { return !button.hasAttribute('data-save') && !button.hasAttribute('data-cancel'); }).forEach(function (button) { more.lastElementChild.appendChild(button); });
+      actions.prepend(more);
       var layerAnchors = new Map();
       var sequence = 0, dragRow = null, pasteRow = null, saving = false, resetApproved = false;
       dlg.classList.toggle('an-capture-drinks', drinks);
@@ -194,8 +223,57 @@ window.CMSAngebote = (function () {
       function input(row, field) { return row.querySelector('[data-f="' + field + '"]'); }
       function renumber() {
         Array.from(host.children).forEach(function (row, index) { row.querySelector('.cms-ang-row-num').textContent = index + 1; });
+        renderMobile();
       }
-      function mark() { dirty = true; status.textContent = 'Ungespeicherte Änderungen · Speichern steuert die Sichtbarkeit im Gültigkeitszeitraum.'; }
+      function mark(event) {
+        if (event && event.target === area) return;
+        dirty = true; status.textContent = 'Ungespeicherte Änderungen · Speichern steuert die Sichtbarkeit im Gültigkeitszeitraum.'; renderMobile();
+      }
+      function renderMobile() {
+        var rows = Array.from(host.children), narrow = phone.matches;
+        if (selectedRow && !rows.includes(selectedRow)) selectedRow = null;
+        if (dlg.classList.contains('an-capture-phone') !== narrow) more.open = !narrow;
+        dlg.classList.toggle('an-capture-phone', narrow);
+        dlg.classList.toggle('an-capture-detail', narrow && !!selectedRow);
+        dlg.classList.toggle('an-meta-open', metaToggle.getAttribute('aria-expanded') === 'true');
+        mobileList.hidden = !narrow || !!selectedRow; stepper.hidden = !narrow || !selectedRow;
+        rows.forEach(function (row) { row.hidden = narrow && row !== selectedRow; });
+        if (selectedRow) {
+          var index = rows.indexOf(selectedRow);
+          stepper.querySelector('[data-capture-count]').textContent = (index + 1) + ' / ' + rows.length;
+          stepper.querySelector('[data-capture-prev]').disabled = index === 0;
+          stepper.querySelector('[data-capture-next]').disabled = index === rows.length - 1;
+        }
+        mobileList.replaceChildren();
+        rows.forEach(function (row, index) {
+          var button = document.createElement('button'); button.type = 'button'; button.dataset.captureItem = row.id;
+          var image = row.querySelector('.cms-bild-preview'), copy = document.createElement('span');
+          if (image && image.style.display !== 'none' && image.src) { var thumb = document.createElement('img'); thumb.src = image.src; thumb.alt = ''; button.appendChild(thumb); }
+          var name = document.createElement('strong'); name.textContent = (index + 1) + ' · ' + (input(row, 'produkt').value || 'Neuer Artikel');
+          var detail = document.createElement('small'); detail.textContent = [input(row, 'preis').value ? input(row, 'preis').value + ' €' : 'Preis fehlt', input(row, 'details').value].filter(Boolean).join(' · ');
+          copy.append(name, detail); button.appendChild(copy);
+          button.onclick = function () { selectRow(row); }; mobileList.appendChild(button);
+        });
+      }
+      function selectRow(row) {
+        layerAnchors.forEach(function (anchor, layer) { hideLayer(layer); });
+        selectedRow = row; metaToggle.setAttribute('aria-expanded', 'false'); renderMobile();
+        dlg.querySelector('.an-capture-body').scrollTop = 0;
+        if (row) input(row, 'produkt').focus({ preventScroll: true });
+        else mobileList.querySelector('button')?.focus({ preventScroll: true });
+      }
+      metaToggle.onclick = function () { metaToggle.setAttribute('aria-expanded', String(metaToggle.getAttribute('aria-expanded') !== 'true')); renderMobile(); };
+      stepper.querySelector('[data-capture-back]').onclick = function () { selectRow(null); };
+      stepper.querySelector('[data-capture-prev]').onclick = function () { selectRow(selectedRow.previousElementSibling); };
+      stepper.querySelector('[data-capture-next]').onclick = function () { selectRow(selectedRow.nextElementSibling); };
+      function resizeCapture() {
+        var focused = document.activeElement && document.activeElement.closest('.cms-ang-row');
+        if (phone.matches && focused && host.contains(focused)) {
+          selectedRow = focused; metaToggle.setAttribute('aria-expanded', 'false');
+        }
+        renderMobile();
+      }
+      phone.addEventListener('change', resizeCapture);
       function imageStatus(row, text, failed) {
         var note = row.querySelector('[data-image-status]');
         note.textContent = text; note.classList.toggle('an-image-error', !!failed);
@@ -210,6 +288,7 @@ window.CMSAngebote = (function () {
         var preview = row.querySelector('.cms-bild-preview'); preview.src = canvas.toDataURL(); preview.style.display = '';
         imagePresence(row, true);
         imageStatus(row, '', false);
+        renderMobile();
       }
       function rowItem(row) {
         var it = states.get(row);
@@ -348,15 +427,20 @@ window.CMSAngebote = (function () {
         if (!file || !/^image\/(?:png|jpeg|webp)$/.test(file.type)) throw M.problem('Bitte ein PNG-, JPEG- oder WebP-Bild auswählen.');
         var token = invalidateImage(row);
         imageStatus(row, '', false);
-        pending.set(row, file); mark();
+        pending.set(row, file); filePreviews.delete(row); mark();
         var reader = new FileReader();
-        reader.onload = function () {
-          if (!row.isConnected || imageRequests.get(row) !== token) return;
-          var preview = row.querySelector('.cms-bild-preview'); preview.src = reader.result; preview.style.display = '';
-          imagePresence(row, true);
-        };
-        reader.onerror = function () { M.error(M.problem('Das Bild konnte nicht gelesen werden.')); };
-        reader.readAsDataURL(file);
+        track(new Promise(function (resolve, reject) {
+          reader.onload = function () {
+            if (row.isConnected && imageRequests.get(row) === token) {
+              filePreviews.set(row, reader.result);
+              var preview = row.querySelector('.cms-bild-preview'); preview.src = reader.result; preview.style.display = '';
+              imagePresence(row, true); renderMobile();
+            }
+            resolve();
+          };
+          reader.onerror = function () { reject(M.problem('Das Bild konnte nicht gelesen werden.')); };
+          reader.readAsDataURL(file);
+        })).catch(function (error) { imageStatus(row, error.userMessage, true); M.error(error); });
       }
       function onPaste(event) {
         if (!pasteRow || saving) return;
@@ -365,6 +449,7 @@ window.CMSAngebote = (function () {
         if (found) { event.preventDefault(); try { setFile(pasteRow, found.getAsFile()); } catch (error) { M.error(error); } }
       }
       var initialItems = draft.items.slice();
+      var arrangedItems = initialItems.map(function (item) { return item.id; }).join();
       initialItems.forEach(add);
       if (isNew) while (host.children.length < draft.layout.density) add();
       async function inspect(report) {
@@ -374,6 +459,7 @@ window.CMSAngebote = (function () {
         var row = Array.from(host.children).find(function (candidate) { return states.get(candidate) && states.get(candidate).id === issue.item_id; });
         var field = { name: 'produkt', old_price: 'statt_preis', units: 'units', deposit: 'deposit_cents' }[issue.field] || 'produkt';
         if (!row) return;
+        if (phone.matches) selectRow(row);
         row.scrollIntoView({ block: 'center' });
         var target = ['no-image', 'low-resolution'].includes(issue.code) ? row.querySelector('.an-image-trigger') : input(row, field);
         if (target && !target.disabled) target.focus();
@@ -385,12 +471,142 @@ window.CMSAngebote = (function () {
         copy.valid_to = dlg.querySelector('[data-meta="valid_to"]').value;
         copy.items = Array.from(host.children).filter(function (row) { return rowItem(row).name; }).map(function (row) { return M.clone(states.get(row)); });
         if (!copy.items.length) return M.quality(copy);
-        var layoutChanged = changedRows || copy.items.map(function (it) { return it.id; }).join() !== initialItems.map(function (it) { return it.id; }).join();
+        var layoutChanged = changedRows || copy.items.map(function (it) { return it.id; }).join() !== arrangedItems;
         if (layoutChanged || copy.layout.mode === 'template') M.applyTemplate(copy);
         M.ensureTargets(copy);
         return M.quality(copy);
       }
+      async function prepareDraft() {
+        await Promise.all(Array.from(imageTasks));
+        draft.title = dlg.querySelector('[data-meta="title"]').value.trim();
+        draft.valid_from = dlg.querySelector('[data-meta="valid_from"]').value;
+        draft.valid_to = dlg.querySelector('[data-meta="valid_to"]').value;
+        draft.items = Array.from(host.children).filter(function (row) {
+          var it = rowItem(row);
+          if (it.name) return true;
+          var hasValue = Array.from(row.querySelectorAll('input:not([type=hidden]),select')).some(function (field) { return field.value.trim() !== ''; });
+          if (hasValue || pending.has(row) || it.image_id || it.article_number) {
+            if (phone.matches) selectRow(row);
+            throw M.problem('Bitte für jede ausgefüllte Zeile einen Produktnamen eingeben oder die Zeile entfernen.');
+          }
+          return false;
+        }).map(rowItem);
+        var layoutChanged = changedRows || draft.items.map(function (it) { return it.id; }).join() !== arrangedItems;
+        if (layoutChanged && !resetApproved && draft.layout.mode === 'free') {
+          if (!(await M.dialog('Sammelflyer neu anordnen?', 'Alle Artikel und Einzelflyer bleiben erhalten. Die geänderte Artikelanzahl oder Reihenfolge erfordert eine neue Anordnung des Sammelflyers.', 'Neu anordnen'))) return false;
+          resetApproved = true;
+        }
+        for (var row of host.children) {
+          var oldPrice = input(row, 'statt_preis');
+          if (oldPrice.value.trim() && M.cents(oldPrice.value) == null) {
+            if (phone.matches) selectRow(row);
+            throw M.problem('Bitte einen gültigen Stattpreis eingeben oder das Feld leer lassen.');
+          }
+        }
+        if (layoutChanged || draft.layout.mode === 'template') M.applyTemplate(draft);
+        M.ensureTargets(draft);
+        arrangedItems = draft.items.map(function (item) { return item.id; }).join(); changedRows = false;
+        return true;
+      }
+      function acceptPreview(value, temporaryImages) {
+        draft = M.clone(value);
+        Array.from(host.children).forEach(function (row) {
+          var previous = states.get(row), item = draft.items.find(function (entry) { return entry.id === previous.id; });
+          if (!item) return;
+          var temporary = temporaryImages.get(item.id);
+          if (temporary && item.image_id === temporary.id) {
+            item.image_id = pending.has(row) ? temporary.original : previous.image_id;
+            if (!pending.has(row)) item.werbebild_id = previous.werbebild_id;
+          }
+          else if (temporary) { pending.delete(row); filePreviews.delete(row); }
+          states.set(row, item);
+          var fields = { produkt: item.name, details: item.description, preis: item.price_cents == null ? '' : M.money(item.price_cents),
+            statt_preis: item.old_price_cents == null ? '' : M.money(item.old_price_cents), artikelnummer: item.barcode };
+          if (drinks) Object.assign(fields, { units: item.units == null ? '' : item.units, volume_ml: M.litres(item.volume_ml),
+            packaging: item.packaging, deposit_mode: item.deposit_free ? 'no' : item.deposit_cents > 0 ? 'yes' : '',
+            deposit_cents: item.deposit_cents == null ? '' : M.money(item.deposit_cents) });
+          Object.keys(fields).forEach(function (key) { input(row, key).value = fields[key] == null ? '' : fields[key]; });
+          if (drinks) input(row, 'deposit_cents').disabled = !!item.deposit_free;
+          if (!pending.has(row) && item.image_id !== previous.image_id) {
+            if (item.image_id) track(imagePreview(row, item, invalidateImage(row))).catch(M.error);
+            else { row.querySelector('.cms-bild-preview').style.display = 'none'; imagePresence(row, false); }
+          }
+        });
+        ['title', 'valid_from', 'valid_to'].forEach(function (key) { dlg.querySelector('[data-meta="' + key + '"]').value = draft[key]; });
+        renderMobile();
+      }
+      async function persist() {
+        if (!(await prepareDraft())) return null;
+        M.validate(draft);
+        var report = await M.quality(draft);
+        if (report.errors.length) {
+          status.textContent = 'Speichern nicht abgeschlossen · Qualitätsprüfung: ' + report.errors.length + ' Fehler. Eingaben bleiben erhalten.';
+          blockedReport = report; return null;
+        }
+        for (var entry of pending) {
+          var it = states.get(entry[0]); if (!draft.items.includes(it)) continue;
+          Object.assign(it, await A.productImage(entry[1], it.barcode || 'ANG-' + it.id));
+          pending.delete(entry[0]); filePreviews.delete(entry[0]);
+        }
+        var saved = await A.save(action, draft);
+        action = saved; isNew = false; changedRows = false; resetApproved = false; dirty = false;
+        initialItems = M.clone(saved.data.items);
+        return saved;
+      }
+      area.onchange = function () {
+        if (area.value === 'articles' || saving) return;
+        var mode = area.value; area.value = 'articles';
+        (async function () {
+          if (!(await prepareDraft())) return;
+          if (!draft.items.length) throw M.problem('Bitte zuerst mindestens einen Artikel eingeben.');
+          var previewDraft = M.clone(draft), temporaryImages = new Map();
+          for (var row of host.children) {
+            var item = previewDraft.items.find(function (entry) { return entry.id === states.get(row).id; });
+            if (!item || !pending.has(row)) continue;
+            if (!filePreviews.has(row)) throw M.problem('Das ausgewählte Bild konnte nicht gelesen werden. Bitte erneut auswählen.');
+            var id = 'cms:pending-' + item.id;
+            temporaryImages.set(item.id, { id: id, original: item.image_id });
+            M.registerImage(id, filePreviews.get(row)); item.image_id = id;
+          }
+          if (workspaceState) {
+            ['undo', 'redo'].forEach(function (key) {
+              workspaceState[key].forEach(function (snapshot) {
+                var idsChanged = snapshot.items.map(function (item) { return item.id; }).join() !== previewDraft.items.map(function (item) { return item.id; }).join();
+                snapshot.items = M.clone(previewDraft.items);
+                snapshot.title = previewDraft.title; snapshot.valid_from = previewDraft.valid_from; snapshot.valid_to = previewDraft.valid_to;
+                if (idsChanged) M.applyTemplate(snapshot);
+              });
+            });
+          }
+          layerAnchors.forEach(function (anchor, layer) { hideLayer(layer); });
+          var captureDirty = dirty;
+          await options.preview(Object.assign({}, action || {}, { data: previewDraft }), mode, async function (result) {
+            if (result) {
+              workspaceState = result; acceptPreview(result.data, temporaryImages);
+              dirty = captureDirty || result.dirty;
+            }
+            dlg.classList.remove('an-capture-suspended'); area.focus();
+            if (blockedReport) { var report = blockedReport; blockedReport = null; await inspect(report); }
+          }, {
+            state: workspaceState, dirty: dirty,
+            save: async function (value) {
+              acceptPreview(value, temporaryImages);
+              var saved = await persist();
+              if (!saved) {
+                if (blockedReport) return null;
+                throw M.problem('Speichern abgebrochen · alle Eingaben bleiben erhalten.');
+              }
+              captureDirty = false; temporaryImages.clear();
+              return saved;
+            }
+          });
+        })().catch(async function (error) {
+          dlg.classList.remove('an-capture-suspended'); metaToggle.setAttribute('aria-expanded', 'true'); renderMobile();
+          status.textContent = 'Bereichswechsel nicht abgeschlossen · Eingaben bleiben erhalten.'; await M.error(error);
+        });
+      };
       function close() {
+        phone.removeEventListener('change', resizeCapture);
         document.removeEventListener('paste', onPaste);
         window.removeEventListener('resize', updateLayers);
         layerAnchors.forEach(function (anchor, layer) { hideLayer(layer); });
@@ -523,7 +739,7 @@ window.CMSAngebote = (function () {
           })();
           return;
         }
-        if (b.hasAttribute('data-add')) { add(); changedRows = true; mark(); return; }
+        if (b.hasAttribute('data-add')) { var added = add(); changedRows = true; mark(); if (phone.matches) selectRow(added); return; }
         var row = b.closest('.cms-ang-row'), cmd = b.dataset.offerAction;
         if (cmd === 'removeAngRow') {
           row.querySelectorAll('[popover]').forEach(hideLayer);
@@ -555,45 +771,21 @@ window.CMSAngebote = (function () {
         }
         if (b.hasAttribute('data-save')) {
           (async function () {
-            var blocked = null;
             saving = true; dlg.querySelectorAll('button,input,select').forEach(function (el) { el.disabled = true; });
             status.textContent = 'Wird gespeichert …';
             try {
-              await Promise.all(Array.from(imageTasks));
-              draft.title = dlg.querySelector('[data-meta="title"]').value.trim();
-              draft.valid_from = dlg.querySelector('[data-meta="valid_from"]').value;
-              draft.valid_to = dlg.querySelector('[data-meta="valid_to"]').value;
-              draft.items = Array.from(host.children).filter(function (row) {
-                var it = rowItem(row);
-                if (it.name) return true;
-                var hasValue = Array.from(row.querySelectorAll('input:not([type=hidden]),select')).some(function (field) { return field.value.trim() !== ''; });
-                if (hasValue || pending.has(row) || it.image_id || it.article_number) throw M.problem('Bitte für jede ausgefüllte Zeile einen Produktnamen eingeben oder die Zeile entfernen.');
-                return false;
-              }).map(rowItem);
-              var layoutChanged = changedRows || draft.items.map(function (it) { return it.id; }).join() !== initialItems.map(function (it) { return it.id; }).join();
-              if (layoutChanged && !resetApproved && draft.layout.mode === 'free' && !(await M.dialog('Sammelflyer neu anordnen?', 'Alle Artikel und Einzelflyer bleiben erhalten. Die geänderte Artikelanzahl oder Reihenfolge erfordert eine neue Anordnung des Sammelflyers.', 'Neu anordnen'))) return;
-              for (var row of host.children) {
-                var oldPrice = input(row, 'statt_preis');
-                if (oldPrice.value.trim() && M.cents(oldPrice.value) == null) throw M.problem('Bitte einen gültigen Stattpreis eingeben oder das Feld leer lassen.');
-              }
-              if (layoutChanged || draft.layout.mode === 'template') M.applyTemplate(draft);
-              M.ensureTargets(draft); M.validate(draft);
-              var report = await M.quality(draft);
-              if (report.errors.length) {
-                status.textContent = 'Speichern nicht abgeschlossen · Qualitätsprüfung: ' + report.errors.length + ' Fehler. Eingaben bleiben erhalten.';
-                blocked = report; return;
-              }
-              for (var entry of pending) {
-                var it = states.get(entry[0]); if (!draft.items.includes(it)) continue;
-                Object.assign(it, await A.productImage(entry[1], it.barcode || 'ANG-' + it.id));
-              }
-              var saved = await A.save(action, draft); close(); await overview();
+              var saved = await persist(); if (!saved) return;
+              close(); await overview();
               options.preview(saved, 'preview', overview);
-            } catch (error) { status.textContent = 'Speichern nicht abgeschlossen · Eingaben bleiben erhalten.'; await M.error(error); }
+            } catch (error) {
+              status.textContent = 'Speichern nicht abgeschlossen · Eingaben bleiben erhalten.';
+              metaToggle.setAttribute('aria-expanded', 'true'); renderMobile(); await M.error(error);
+            }
             finally {
               saving = false; dlg.querySelectorAll('button,input,select').forEach(function (el) { el.disabled = false; });
               host.querySelectorAll('[data-f="deposit_mode"]').forEach(function (el) { input(el.closest('.cms-ang-row'), 'deposit_cents').disabled = el.value === 'no'; });
-              if (blocked) await inspect(blocked);
+              renderMobile();
+              if (blockedReport) { var report = blockedReport; blockedReport = null; await inspect(report); }
             }
           })();
         }
