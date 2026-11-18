@@ -4,9 +4,16 @@ Stand: 18.11.2026 · Branch `feature/getraenke-angebotsflyer` · Repo `jrumpfing
 
 ## Wichtigste URLs
 
-- Feature-Preview (deployed bei Push auf diesen Branch): https://witty-island-064f9d903.7.azurestaticapps.net
-- Produktion: https://kind-pebble-072605b03.7.azurestaticapps.net
-- Tests laufen lokal, nicht gegen die Live-URL (siehe unten).
+- **Feature-Preview (PR #15), aktuelle Deployments:**
+  `https://kind-pebble-072605b03-15.westeurope.7.azurestaticapps.net`
+  (Wird bei jedem Push auf den Branch automatisch neu deployt; der Hostname steht auch im
+  Deploy-Log der GitHub-Actions-Run „Azure Static Web Apps CI/CD".)
+- **Achtung:** `https://witty-island-064f9d903.7.azurestaticapps.net` ist eine VERALTETE
+  Preview-Environment — dort fehlen u. a. `angebote.html`/`app.html` (404). Nicht mehr verwenden.
+- Produktion (nur main): `https://kind-pebble-072605b03.7.azurestaticapps.net`
+- Tests laufen lokal gegen den statischen Server, nicht gegen die Live-URL (siehe unten).
+- Live-UI-Prüfungen: read-only; Dark-Mode ist per CMS-Feature-Flag `dark_mode:false` bewusst
+  abgeschaltet (System-Follow nur bei Freigabe), Kiosk-401 ohne Gerätekennung ist normal.
 
 ## Wie weiterarbeiten (anderer Rechner)
 
@@ -66,8 +73,9 @@ Stand: 18.11.2026 · Branch `feature/getraenke-angebotsflyer` · Repo `jrumpfing
 
 ## Stolpersteine
 
+- `test-live.ps1` existiert nicht mehr; Live-Checks gegen die PR-15-Preview
+  (`TEST_URL=https://kind-pebble-072605b03-15.westeurope.7.azurestaticapps.net`).
 - Playwright direkt ohne Server läuft gegen `http://127.0.0.1:8817` → ERR_CONNECTION_REFUSED.
   Immer statischer Server starten oder TEST_URL setzen bzw. `npm run test:*` nutzen.
-- `test-live.ps1` existiert nicht mehr; Live-Checks über die Feature-URL per `TEST_URL=https://witty-island-064f9d903.7.azurestaticapps.net`.
 - Service Worker ist in der Playwright-Konfig global geblockt (Gründe siehe playwright.config.js).
 - CSS: Dark-Mode- und Navigations-Fixes müssen in **style.css UND content.css** landen.
