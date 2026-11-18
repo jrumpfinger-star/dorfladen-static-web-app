@@ -211,45 +211,52 @@
       blobs.push(blob);
     }
     var files = blobs.map(function (blob, index) { return new File([blob], 'Angebot-' + (index + 1) + '.png', { type: 'image/png' }); });
-    var urls = blobs.map(function (blob) { return URL.createObjectURL(blob); });
     var message = '🏷️ *' + draft.title + '*\n_Gültig ' + M.date(draft.valid_from) + ' – ' + M.date(draft.valid_to) + '_';
     var mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    var whatsApp = (mobile ? 'https://wa.me/?text=' : 'https://web.whatsapp.com/send?text=') + encodeURIComponent(message);
-    var canNative = !!navigator.share && (!navigator.canShare || navigator.canShare({ files: files }));
-    var canCopy = !!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
+    // Wie früher zuerst das System-Teilen-Menü (öffnet die WhatsApp-App); der Dialog ist nur der Ausweichweg.
+    var note = '';
+    if (navigator.share) {
+      try { await navigator.share({ files: files, text: message, title: draft.title }); return; }
+      catch (error) { if (error.name === 'AbortError') return; note = 'Das Teilen-Menü ist hier nicht verfügbar. Bitte eine der Möglichkeiten unten wählen.'; }
+    }
+    var urls = blobs.map(function (blob) { return URL.createObjectURL(blob); });
+    var appLink = mobile ? 'https://wa.me/?text=' + encodeURIComponent(message) : 'whatsapp://send?text=' + encodeURIComponent(message);
+    var webLink = 'https://web.whatsapp.com/send?text=' + encodeURIComponent(message);
+    var canCopy = !mobile && !!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
     var dialog = document.createElement('dialog'); dialog.className = 'an-dialog an-share';
     dialog.setAttribute('aria-label', 'Angebot teilen');
     dialog.innerHTML = '<div class="an-dialog-top"><h2>Angebot teilen</h2><button type="button" data-share-close aria-label="Schließen">×</button></div>'
       + '<div class="an-share-pages">' + urls.map(function (url) { return '<img alt="" src="' + url + '">'; }).join('') + '</div>'
       + '<p class="an-muted" data-share-status role="status"></p>'
       + '<div class="an-actions an-share-actions">'
-      + (canNative ? '<button type="button" class="an-primary" data-share-native>Teilen …</button>' : '')
       + (canCopy ? blobs.map(function (blob, index) {
-        return '<button type="button"' + (canNative ? '' : ' class="an-primary"') + ' data-share-copy="' + index + '">'
+        return '<button type="button" class="an-primary" data-share-copy="' + index + '">'
           + (blobs.length > 1 ? 'Seite ' + (index + 1) + ' kopieren' : 'Bild kopieren & WhatsApp öffnen') + '</button>'; }).join('') : '')
-      + '<button type="button" data-share-whatsapp>WhatsApp öffnen</button>'
-      + '<button type="button" data-share-download>Herunterladen</button></div>';
+      + '<button type="button"' + (canCopy ? '' : ' class="an-primary"') + ' data-share-whatsapp>WhatsApp öffnen</button>'
+      + '<button type="button" data-share-download>Herunterladen</button>'
+      + (mobile ? '' : '<button type="button" data-share-web>WhatsApp Web</button>') + '</div>';
     var status = dialog.querySelector('[data-share-status]');
     function say(text) { status.textContent = text; }
-    function openWhatsApp() { window.open(whatsApp, '_blank'); }
+    say(note);
+    function open(link) {
+      var anchor = document.createElement('a'); anchor.href = link; anchor.rel = 'noopener';
+      if (/^https?:/.test(link)) anchor.target = '_blank';
+      document.body.appendChild(anchor); anchor.click(); anchor.remove();
+    }
     dialog.addEventListener('close', function () { urls.forEach(function (url) { URL.revokeObjectURL(url); }); dialog.remove(); });
     dialog.addEventListener('click', async function (event) {
       var button = event.target.closest('button'); if (!button) return;
       if (button.hasAttribute('data-share-close')) { dialog.close(); return; }
-      if (button.hasAttribute('data-share-native')) {
-        try { await navigator.share({ files: files, text: message, title: draft.title }); dialog.close(); }
-        catch (error) { if (error.name !== 'AbortError') say('Teilen ist hier nicht möglich. Bitte „Herunterladen“ oder „Bild kopieren“ verwenden.'); }
-        return;
-      }
       if (button.hasAttribute('data-share-copy')) {
         try {
           await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobs[Number(button.dataset.shareCopy)] })]);
           say('Bild kopiert – in WhatsApp mit Strg+V einfügen.');
-          if (blobs.length === 1) openWhatsApp();
+          if (blobs.length === 1) open(appLink);
         } catch (error) { say('Das Bild konnte nicht kopiert werden. Bitte „Herunterladen“ verwenden.'); }
         return;
       }
-      if (button.hasAttribute('data-share-whatsapp')) { openWhatsApp(); return; }
+      if (button.hasAttribute('data-share-whatsapp')) { open(appLink); return; }
+      if (button.hasAttribute('data-share-web')) { open(webLink); return; }
       if (button.hasAttribute('data-share-download')) {
         files.forEach(function (file, index) {
           var link = document.createElement('a'); link.href = urls[index]; link.download = file.name; link.click();

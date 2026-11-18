@@ -1893,15 +1893,20 @@ Mauskontrollen kompakt und Touchziele mindestens 44 px.
   „Eigene Vorlagen" wählen (Plakat für Sammelflyer/Kachel, Einzelflyer für
   Einzelflyer); sie ersetzt nach Bestätigung nur das aktuelle Ausgabeziel,
   setzt die Herkunft auf den Vorlagennamen und speichert nicht automatisch.
-- TC-F66-12: „Teilen" öffnet einen Dialog mit Bildvorschau. Mobil teilt „Teilen …"
-  Bild(er) samt Text über das Teilen-Menü. Auf dem Desktop kopiert „Bild kopieren
-  & WhatsApp öffnen" das PNG in die Zwischenablage (Strg+V) und öffnet WhatsApp
-  Web mit dem Text; „Herunterladen" bleibt als Ausweichweg. Kein stiller Download.
+- TC-F66-12: „Teilen" öffnet zuerst das System-Teilen-Menü (WhatsApp-App), auch
+  wenn `canShare` false meldet. Nur wenn das scheitert oder fehlt, erscheint ein
+  Dialog: Mobil „WhatsApp öffnen" (wa.me → App), „Herunterladen"; am Desktop
+  zusätzlich „Bild kopieren & WhatsApp öffnen" (PNG in die Zwischenablage, Strg+V,
+  öffnet die WhatsApp-App über `whatsapp://`) und „WhatsApp Web". Kein stiller Download.
 - TC-F66-13: In den Design-Einstellungen heißt der Speichern-Knopf „Als Standard
-  speichern" (Ein-Satz-Hinweis in der Kontextzeile). Ist eine eigene Vorlage
-  geladen, wird sie dabei aktualisiert. „+ Vorlage speichern" fragt bei gleichem
-  Namen „Vorlage ersetzen?" statt eine Kopie anzulegen. „★ Als Standard speichern"
-  und „Werkseinstellungen" entfallen; „Auf Default zurücksetzen" nutzt die Werksvorgaben.
+  speichern". Ist eine eigene Vorlage geladen (oder gerade angelegt), speichert
+  „Vorlage speichern" nur diese Vorlage; der Standard bleibt unverändert. Der
+  Standard wird dann über den Knopf „Als Standard speichern" neben „Standard-
+  Gestaltung laden" gesetzt. Laden einer Vorlage und „Standard-Gestaltung laden"
+  aktualisieren die Vorschau sofort. „+ Vorlage speichern" fragt bei gleichem
+  Namen „Vorlage ersetzen?". „★ Als Standard speichern" und „Werkseinstellungen"
+  entfallen; „Auf Default zurücksetzen" nutzt die Werksvorgaben. Gilt für
+  Plakat, Einzelflyer, Wochenplan und Getränkeflyer.
 - TC-F66-14: Bezeichnung und Zusatztext haben je eine eigene Schriftstärke
   (Normal 400 · Halbfett 600 · Fett 700 · Extrafett 900; Standard 900 bzw. 600),
   im Designer und im Aktionseditor, gespeichert und von der API geprüft. Die

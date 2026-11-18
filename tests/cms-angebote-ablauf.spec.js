@@ -1211,16 +1211,23 @@ test('TC-F66-11: Eigene Vorlage laesst sich im Aktionseditor waehlen und ersetzt
   expect(state.errors).toEqual([]);
 });
 
-for (const variant of ['mobil', 'desktop']) {
-  test(`TC-F66-12: Teilen per WhatsApp (${variant}) teilt, kopiert oder laedt das Bild statt es nur herunterzuladen`, async ({ page }) => {
+for (const variant of ['mobil', 'mobil-ohne-teilen', 'desktop-mit-teilen', 'desktop']) {
+  test(`TC-F66-12: Teilen per WhatsApp (${variant}) oeffnet das Teilen-Menue bzw. die App statt WhatsApp Web`, async ({ page }) => {
     const state = await setup(page);
     await page.addInitScript((mode) => {
       window.__opened = []; window.__copied = []; window.__shared = null;
-      window.open = (url) => { window.__opened.push(String(url)); return null; };
+      document.addEventListener('click', (event) => {
+        const link = event.target.closest && event.target.closest('a');
+        if (link && /^(whatsapp:|https:\/\/(wa\.me|web\.whatsapp\.com))/.test(link.href)) { window.__opened.push(link.href); event.preventDefault(); }
+      }, true);
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { write: async (items) => { items.forEach((item) => window.__copied.push(item.types.join(','))); } } });
-      if (mode === 'mobil') {
-        navigator.canShare = () => true;
+      if (mode.startsWith('mobil')) Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Mozilla/5.0 (Linux; Android 14; SM-S911B) Chrome/120 Mobile Safari/537.36' });
+      // canShare bewusst false: das Teilen-Menü muss trotzdem versucht werden (wie früher).
+      if (mode === 'mobil' || mode === 'desktop-mit-teilen') {
+        navigator.canShare = () => false;
         navigator.share = async (data) => { window.__shared = { files: data.files.length, text: data.text, title: data.title }; };
+      } else if (mode === 'mobil-ohne-teilen') {
+        navigator.share = async () => { throw new DOMException('nicht erlaubt', 'NotAllowedError'); };
       } else { navigator.share = undefined; navigator.canShare = undefined; }
     }, variant);
     await page.goto(BASE + '/angebote.html');
@@ -1229,21 +1236,28 @@ for (const variant of ['mobil', 'desktop']) {
     await allWeeks(page);
     await page.locator('[data-share-action]').first().click();
     const dialog = page.getByRole('dialog', { name: 'Angebot teilen' });
-    await expect(dialog).toBeVisible();
-    if (variant === 'mobil') {
-      await dialog.getByRole('button', { name: 'Teilen …', exact: true }).click();
+    if (variant === 'mobil' || variant === 'desktop-mit-teilen') {
+      await expect.poll(() => page.evaluate(() => window.__shared)).not.toBeNull();
       await expect(dialog).toHaveCount(0);
       const shared = await page.evaluate(() => window.__shared);
       expect(shared.files).toBeGreaterThan(0);
       expect(shared.text).toContain('Gültig');
+    } else if (variant === 'mobil-ohne-teilen') {
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator('[data-share-status]')).toContainText('Teilen-Menü');
+      await expect(dialog.getByRole('button', { name: /kopieren/ })).toHaveCount(0);
+      await dialog.getByRole('button', { name: 'WhatsApp öffnen', exact: true }).click();
+      expect((await page.evaluate(() => window.__opened))[0]).toMatch(/^https:\/\/wa\.me\/\?text=/);
     } else {
-      await expect(dialog.getByRole('button', { name: 'Teilen …' })).toHaveCount(0);
+      await expect(dialog).toBeVisible();
       await dialog.getByRole('button', { name: 'Bild kopieren & WhatsApp öffnen', exact: true }).click();
       await expect(dialog.locator('[data-share-status]')).toContainText('Strg+V');
       expect(await page.evaluate(() => window.__copied)).toEqual(['image/png']);
       const opened = await page.evaluate(() => window.__opened);
       expect(opened).toHaveLength(1);
-      expect(opened[0]).toContain('web.whatsapp.com/send?text=');
+      expect(opened[0]).toMatch(/^whatsapp:\/\/send\?text=/);
+      await dialog.getByRole('button', { name: 'WhatsApp Web', exact: true }).click();
+      expect((await page.evaluate(() => window.__opened))[1]).toContain('web.whatsapp.com/send?text=');
       const download = page.waitForEvent('download');
       await dialog.getByRole('button', { name: 'Herunterladen', exact: true }).click();
       expect((await download).suggestedFilename()).toMatch(/^Angebot-1\.png$/);

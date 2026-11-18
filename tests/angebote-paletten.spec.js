@@ -940,29 +940,44 @@ test('TC-F66-14: Schriftstaerke von Bezeichnung und Zusatztext ist getrennt eins
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F66-13: Als Standard speichern aktualisiert die geladene Vorlage, gleicher Name fragt nach statt zu duplizieren', async ({ page }) => {
+test('TC-F66-13: Mit geladener Vorlage speichert Speichern nur die Vorlage; der Standard laesst sich getrennt setzen und laden', async ({ page }) => {
   const state = await offlineCms(page);
   const root = await area(page, 'cfg-plakat', 'sec-plakat', '#cfg-sec-plakat');
   await tool(root, 'Eigene Vorlagen', 4);
   await root.locator('[data-global-preset-name]').fill('Vorlage A');
   await root.locator('[data-action=cfgPresetSave]').click();
   await expect(root.getByText('Vorlage A', { exact: true })).toBeVisible();
-  await expect(root.locator('[data-action=cfgPresetSave]')).toBeVisible();
-  await expect(root.locator('.an-design-context [data-save-hint]')).toContainText('Vorlage „Vorlage A“');
+  await expect(root.locator('.an-design-context [data-save-hint]')).toContainText('nur die Vorlage „Vorlage A“');
+  await expect(root.locator('[data-design-save-standard]')).toBeVisible();
   await root.locator('[data-action=cfgPresetLoad]').first().click();
   await tool(root, 'Farben', 1);
   const color = root.locator('#cfg-plakat-decoBgColor');
+  const original = await color.inputValue();
   await color.fill('#123456'); await color.dispatchEvent('input'); await color.dispatchEvent('change');
-  await root.locator('button:visible', { hasText: 'Als Standard speichern' }).click();
+  await root.locator('button:visible', { hasText: /^Vorlage speichern$/ }).click();
   await expect.poll(() => state.config.design_presets?.plakat?.[0]?.data?.plakat_decoBgColor).toBe('#123456');
   expect(state.config.design_presets.plakat).toHaveLength(1);
-  expect(state.config.design_config.plakat_decoBgColor).toBe('#123456');
+  expect(state.config.design_config?.plakat_decoBgColor).not.toBe('#123456');
+  await root.locator('[data-design-save-standard]').click();
+  await expect.poll(() => state.config.design_config?.plakat_decoBgColor).toBe('#123456');
+  await color.fill('#654321'); await color.dispatchEvent('input'); await color.dispatchEvent('change');
+  const signature = () => page.evaluate(() => [...document.querySelectorAll('#cfg-sec-plakat canvas, #cms-cfg-plakat canvas')].map((canvas) => canvas.toDataURL().length).join(','));
+  await expect.poll(signature).not.toBe('');
+  await page.waitForTimeout(1200);
+  const beforeLoad = await signature();
+  await root.locator('[data-design-load-standard]').click();
+  await page.getByRole('button', { name: 'OK', exact: true }).click();
+  await expect(color).toHaveValue('#123456');
+  await expect.poll(signature, { message: 'Vorschau aktualisiert sich nach Standard laden' }).not.toBe(beforeLoad);
+  await expect(root.locator('[data-design-save-standard]')).toBeHidden();
+  await root.locator('button:visible', { hasText: 'Als Standard speichern' }).first().click();
   await tool(root, 'Eigene Vorlagen', 4);
   await root.locator('[data-global-preset-name]').fill('Vorlage A');
   await root.locator('[data-action=cfgPresetSave]').click();
   await page.getByRole('button', { name: 'Vorlage ersetzen', exact: true }).click();
   await expect.poll(() => state.config.design_presets.plakat.length).toBe(1);
   await expect(root.getByText('Vorlage A', { exact: true })).toHaveCount(1);
+  expect(original).not.toBe('#123456');
   expect(state.errors).toEqual([]);
 });
 

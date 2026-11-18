@@ -1699,7 +1699,19 @@
       :savedSnapshot?designStableJson(savedSnapshot)!==designStableJson(current):false;
     return {area:area==='plakat'?'Sonderangebote · Plakat':area==='flyer'?'Sonderangebote · Einzelflyer'
       :area==='week-home'?'Wochenplan · Homepage':'Wochenplan · Druck',
-      layout:layout||'',name:entry&&entry.name||'',source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',changed:changed};
+      layout:layout||'',name:entry&&entry.name||'',source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',changed:changed,
+      preset:_loadedPresets[area]||'',saveStandard:function(){return saveAreaAsStandard(area);}};
+  }
+  // In dieser Sitzung geladene eigene Vorlage je Bereich: „Speichern" aktualisiert dann nur die Vorlage, nicht den Standard.
+  var _loadedPresets={};
+  function refreshAreaContexts(){
+    ['cfg-sec-plakat','cfg-sec-flyer','wp-sec-home','wp-sec-flyer'].forEach(function(id){
+      var root=document.getElementById(id);
+      if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
+    });
+  }
+  function saveAreaAsStandard(area){
+    if(area.indexOf('week-')===0)window.saveHPCfgAsStandard();else window.cmsSaveCfgAsStandard();
   }
   function mergeOfferArea(current,source,kind){
     var merged=_clone(current),templateKey=kind+'Template',template=source[templateKey]||current[templateKey]||'classic-red';
@@ -1754,8 +1766,9 @@
         &&!(await cmsConfirm('Standard-Gestaltung laden? Ungespeicherte Änderungen im Bereich „'
           +(kind==='plakat'?'Plakat':'Einzelflyer')+'“ werden durch die aktuell gespeicherte Standard-Gestaltung ersetzt.')))return;
     cfgApplyUI(standard);_cfgCurrent=_clone(standard);
-    cfgOfferHistory(kind).record();
-    if(window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(document.getElementById('cfg-sec-'+kind));
+    delete _loadedPresets[kind];
+    cfgOfferHistory(kind).record();_triggerCfgAutoPreview();
+    refreshAreaContexts();
   }
   function weekAreaContext(kind){
     var config=hpCfgReadUI(),templateKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate';
@@ -1769,8 +1782,9 @@
         &&!(await cmsConfirm('Standard-Gestaltung laden? Ungespeicherte Änderungen im Wochenplanbereich „'
           +(kind==='home'?'Homepage':'Druck')+'“ werden durch den aktuell gespeicherten Standard ersetzt.')))return;
     hpCfgApplyUI(standard);_hpCfgCurrent=_clone(standard);
+    delete _loadedPresets['week-'+kind];
     weekHistory(kind).record();_triggerWpAutoPreview();
-    if(window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(document.getElementById('wp-sec-'+kind));
+    refreshAreaContexts();
   }
   function cfgSyncOfferTplPreviews(){
     function sync(selId,boxId){
@@ -1867,36 +1881,36 @@
     ctx.font='9px Arial, sans-serif';
     ctx.fillText(samplePreis.toFixed(2).replace('.',',')+'€ statt '+sampleStatt.toFixed(2).replace('.',',')+'€',112,68);
   }
-  // Eine in den Design-Einstellungen geladene Vorlage wird beim Speichern mit aktualisiert (gleicher Name, kein Duplikat).
-  function updateLoadedOfferPresets(c){
-    var all=cfgPresetsGet(),updated=[];
-    ['plakat','flyer'].forEach(function(kind){
-      var entry=areaProvenance(c).targets[kind],list=all[kind]||[];
-      var index=entry&&entry.name?list.findIndex(function(p){return p.name===entry.name;}):-1;
-      if(index<0)return;
-      var data=_clone(c);delete data.design_provenance;
-      list[index]={name:entry.name,data:data,ts:Date.now()};
-      setAreaProvenance(c,kind,entry.name,offerAreaSnapshot(c,kind));
-      updated.push(entry.name);
-    });
-    if(updated.length){cfgPresetsSave(all);cfgPresetsRenderAll();}
-    return updated;
+  // Mit geladener Vorlage aktualisiert „Speichern" nur diese Vorlage; der Standard für neue Angebote bleibt unverändert.
+  function saveLoadedOfferPreset(kind){
+    var name=_loadedPresets[kind],all=cfgPresetsGet(),list=all[kind]||[];
+    var index=name?list.findIndex(function(p){return p.name===name;}):-1;
+    if(index<0){delete _loadedPresets[kind];return false;}
+    var c=cfgReadUI(),data=_clone(c);delete data.design_provenance;
+    list[index]={name:name,data:data,ts:Date.now()};
+    setAreaProvenance(c,kind,name,offerAreaSnapshot(c,kind));_cfgCurrent=_clone(c);
+    cfgPresetsSave(all);cfgPresetsRenderAll();refreshAreaContexts();
+    toast('Vorlage \u201e'+name+'\u201c gespeichert \u2013 Standard unver\u00e4ndert','ok');
+    return true;
   }
-  window.cmsSaveCfg=function(){
+  window.cmsSaveCfgAsStandard=function(){
     var c=cfgReadUI();
-    var updated=updateLoadedOfferPresets(c);
     cfgSave(c);
-    ['plakat','flyer'].forEach(function(kind){
-      var root=document.getElementById('cfg-sec-'+kind);
-      if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
-    });
-    toast('Standard gespeichert'+(updated.length?' \u00b7 Vorlage \u201e'+updated.join('\u201c, \u201e')+'\u201c aktualisiert':''),'ok');
+    refreshAreaContexts();
+    toast('Als Standard f\u00fcr neue Angebote gespeichert','ok');
+  };
+  window.cmsSaveCfg=function(){
+    var sec=_activeCfgSection();
+    if(sec&&_loadedPresets[sec]&&saveLoadedOfferPreset(sec))return;
+    window.cmsSaveCfgAsStandard();
   };
   window.cmsResetCfg=function(){
     var defaults=_clone(cfgGetEffectiveDefaults());
     cfgSave(defaults);
     // savingsStarStyle reset through cfgSave
     cfgApplyUI(defaults);
+    delete _loadedPresets.plakat;delete _loadedPresets.flyer;
+    _triggerCfgAutoPreview();refreshAreaContexts();
     toast('Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
   };
 
@@ -2131,8 +2145,8 @@
       if(field)field.value='';
       if(section==='plakat'||section==='flyer'){
         var cur=cfgReadUI();setAreaProvenance(cur,section,name,offerAreaSnapshot(cur,section));_cfgCurrent=_clone(cur);
-        var presetRoot=document.getElementById('cfg-sec-'+section);
-        if(presetRoot&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(presetRoot);
+        _loadedPresets[section]=name;
+        refreshAreaContexts();
       }
       if(_offerHistories[section])_offerHistories[section].record();
       toast('Vorlage "'+name+'" '+(index>=0?'ersetzt':'gespeichert'),'ok');
@@ -2149,9 +2163,10 @@
       setAreaProvenance(preset,section,entry.name,offerAreaSnapshot(preset,section));
     }
     _cfgCurrent=_clone(preset);cfgApplyUI(preset);
+    if(section==='plakat'||section==='flyer')_loadedPresets[section]=entry.name;
     if(_offerHistories[section])_offerHistories[section].record();
-    var root=document.getElementById('cfg-sec-'+section);
-    if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
+    _triggerCfgAutoPreview();
+    refreshAreaContexts();
     toast('Vorlage "'+entry.name+'" geladen','ok');
   };
   window.cfgPresetDelete=function(section,idx){
@@ -2912,37 +2927,37 @@
     if(!e.target.classList.contains('wpTpl-grad-input'))return;
     var kind=e.target.getAttribute('data-kind');if(kind)wpTplGradPreview(kind);
   });
-  function updateLoadedWeekPresets(c){
-    var all=wpPresetsGet(),updated=[];
-    [['home','wp-home'],['flyer','wp-flyer']].forEach(function(pair){
-      var entry=areaProvenance(c).targets['week-'+pair[0]],list=all[pair[1]]||[];
-      var index=entry&&entry.name?list.findIndex(function(p){return p.name===entry.name;}):-1;
-      if(index<0)return;
-      var data=_clone(c);delete data.design_provenance;
-      list[index]={name:entry.name,data:data,ts:Date.now()};
-      setAreaProvenance(c,'week-'+pair[0],entry.name,weekAreaSnapshot(c,pair[0]));
-      updated.push(entry.name);
-    });
-    if(updated.length){wpPresetsSave(all);wpPresetsRenderAll();}
-    return updated;
+  function saveLoadedWeekPreset(kind){
+    var name=_loadedPresets['week-'+kind],all=wpPresetsGet(),list=all['wp-'+kind]||[];
+    var index=name?list.findIndex(function(p){return p.name===name;}):-1;
+    if(index<0){delete _loadedPresets['week-'+kind];return false;}
+    var c=hpCfgReadUI(),data=_clone(c);delete data.design_provenance;
+    list[index]={name:name,data:data,ts:Date.now()};
+    setAreaProvenance(c,'week-'+kind,name,weekAreaSnapshot(c,kind));_hpCfgCurrent=_clone(c);
+    wpPresetsSave(all);wpPresetsRenderAll();refreshAreaContexts();
+    toast('Vorlage \u201e'+name+'\u201c gespeichert \u2013 Standard unver\u00e4ndert','ok');
+    return true;
   }
-  window.saveHPCfg=function(){
+  window.saveHPCfgAsStandard=function(){
     var c=hpCfgReadUI();
-    var updated=updateLoadedWeekPresets(c);
     hpCfgSave(c);
     hpCfgSyncWpTplColors('home',c);
     hpCfgSyncWpTplColors('flyer',c);
-    ['home','flyer'].forEach(function(kind){
-      var root=document.getElementById('wp-sec-'+kind);
-      if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
-    });
-    toast('Standard gespeichert'+(updated.length?' \u00b7 Vorlage \u201e'+updated.join('\u201c, \u201e')+'\u201c aktualisiert':''),'ok');
+    refreshAreaContexts();
+    toast('Als Standard gespeichert','ok');
+  };
+  window.saveHPCfg=function(){
+    var sec=_activeWpSection();
+    if(sec&&_loadedPresets['week-'+sec]&&saveLoadedWeekPreset(sec))return;
+    window.saveHPCfgAsStandard();
   };
   window.resetHPCfg=function(){
     var defaults=_clone(hpCfgGetEffectiveDefaults());
     if(!defaults.wpTplColors)defaults.wpTplColors={};
     hpCfgSave(defaults);
     hpCfgApplyUI(defaults);
+    delete _loadedPresets['week-home'];delete _loadedPresets['week-flyer'];
+    _triggerWpAutoPreview();refreshAreaContexts();
     toast('Auf Werks-Standards zur\u00fcckgesetzt','ok');
   };
   window.resetWpTplColors=function(kind){
@@ -3044,8 +3059,8 @@
       var weekKind=section==='wp-flyer'?'flyer':'home';
       var weekCurrent=hpCfgReadUI();
       setAreaProvenance(weekCurrent,'week-'+weekKind,name,weekAreaSnapshot(weekCurrent,weekKind));_hpCfgCurrent=_clone(weekCurrent);
-      var weekRoot=document.getElementById('wp-sec-'+weekKind);
-      if(weekRoot&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(weekRoot);
+      _loadedPresets['week-'+weekKind]=name;
+      refreshAreaContexts();
       toast('Vorlage "'+name+'" '+(index>=0?'ersetzt':'gespeichert'),'ok');
     }
     if(index>=0)cmsConfirm('Vorlage \u201e'+name+'\u201c ersetzen? Die gespeicherte Vorlage wird durch die aktuellen Einstellungen \u00fcberschrieben.',{ok:'Vorlage ersetzen'}).then(function(ok){if(ok)store();});
@@ -3058,9 +3073,10 @@
     var preset=mergeWeekArea(hpCfgReadUI(),entry.data,kind);
     setAreaProvenance(preset,'week-'+kind,entry.name,weekAreaSnapshot(preset,kind));
     _hpCfgCurrent=_clone(preset);hpCfgApplyUI(preset);
+    _loadedPresets['week-'+kind]=entry.name;
     if(_weekHistories[kind])_weekHistories[kind].record();
-    var root=document.getElementById('wp-sec-'+kind);
-    if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
+    _triggerWpAutoPreview();
+    refreshAreaContexts();
     toast('Vorlage "'+entry.name+'" geladen','ok');
   };
   window.wpPresetDelete=function(section,idx){

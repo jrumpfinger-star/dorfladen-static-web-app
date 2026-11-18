@@ -1746,6 +1746,12 @@ window.AngeboteDesign = (function () {
     root.addEventListener('input', function () { refreshDesignContext(root); });
     root.addEventListener('change', function () { refreshDesignContext(root); });
     root.addEventListener('click', function (event) {
+      var saveStandard = event.target.closest('[data-design-save-standard]');
+      if (saveStandard) {
+        var info = root._designContextProvider && root._designContextProvider();
+        if (info && info.saveStandard) { info.saveStandard(); refreshDesignContext(root); }
+        return;
+      }
       if (!event.target.closest('[data-design-load-standard]') || !root._designStandardLoader) return;
       root._designStandardLoader().then(function () { refreshDesignContext(root); }).catch(M.error);
     });
@@ -1762,8 +1768,19 @@ window.AngeboteDesign = (function () {
     status.textContent = [info.area, info.layout ? 'Aussehen: ' + info.layout : '', source].filter(Boolean).join(' · ');
     var hint = status.parentElement.querySelector('[data-save-hint]');
     if (!hint) { hint = document.createElement('small'); hint.dataset.saveHint = ''; status.after(hint); }
-    hint.textContent = 'Als Standard speichern: gilt für neue Angebote, bestehende Aktionen bleiben unverändert.'
-      + (info.name ? ' Die geladene Vorlage „' + info.name + '“ wird mit aktualisiert.' : '');
+    hint.textContent = info.preset
+      ? 'Speichern aktualisiert nur die Vorlage „' + info.preset + '“. Der Standard für neue Angebote bleibt unverändert.'
+      : 'Als Standard speichern: gilt für neue Angebote, bestehende Aktionen bleiben unverändert.';
+    var standardSave = status.parentElement.querySelector('[data-design-save-standard]');
+    if (!standardSave) {
+      standardSave = document.createElement('button'); standardSave.type = 'button';
+      standardSave.dataset.designSaveStandard = ''; standardSave.textContent = 'Als Standard speichern';
+      (button || status).after(standardSave);
+    }
+    standardSave.hidden = !info.preset || typeof info.saveStandard !== 'function';
+    var primary = root.querySelector('.an-designer-save>.an-primary,.an-compact-actions>.an-primary');
+    if (primary && primary.id !== 'an-save') primary.textContent = info.preset ? 'Vorlage speichern' : 'Als Standard speichern';
+    if (primary && primary.id !== 'an-save') primary.title = info.preset ? 'Speichert die Vorlage „' + info.preset + '“' : 'Speichert den Standard für neue Angebote';
     if (button) button.hidden = typeof root._designStandardLoader !== 'function';
   }
   function mountCms(root, preview, actions, kind, history, context) {
@@ -1938,7 +1955,7 @@ window.AngeboteDesign = (function () {
     root.innerHTML = '<p role="status">Die Getränkeflyer-Einstellungen werden geladen …</p>';
     try {
       var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, kind = 'drinks', mode = 'paper', ticket = 0, surface = null;
-      var savedStandard = M.clone(design[kind]);
+      var savedStandard = M.clone(design[kind]), loadedPreset = '';
       var products = [], productsMessage = 'Produktbilder werden geladen …', productsLoading = false, productsFailed = false;
       var changes = history(function () {
         var value = M.clone(design); delete value.version; return value;
@@ -1959,10 +1976,33 @@ window.AngeboteDesign = (function () {
         var layout = family ? family[1] : current.template;
         if (M.familyOf(current.template) === 'magazine') layout += current.template === 'modern-mag-xl' ? ' · Großbild' : ' · Standard';
         return { area: 'Getränkeflyer', layout: layout,
+          preset: loadedPreset, saveStandard: function () { return persist('standard'); },
           name: state.known ? state.name : '',
           source: state.known ? '' : 'Gespeicherte Gestaltung · Vorlage unbekannt',
           changed: state.known ? state.changed
             : JSON.stringify(M.designSnapshot(current, 'sheet')) !== JSON.stringify(M.designSnapshot(savedStandard, 'sheet')) };
+      }
+      // Mit geladener Vorlage speichert „Speichern" nur diese Vorlage; der Standard für neue Getränkeaktionen bleibt unverändert.
+      async function persist(how) {
+        synchronizeTiles(design[kind]);
+        var working = M.clone(design[kind]), payload = M.clone(design), presetIndex = -1;
+        if (how === 'preset') {
+          presetIndex = (design.presets || []).findIndex(function (entry) { return entry.name === loadedPreset; });
+          if (presetIndex < 0) { loadedPreset = ''; how = 'standard'; }
+        }
+        if (how === 'preset') {
+          M.setDesignProvenance(working, 'sheet', loadedPreset);
+          var presetLayout = M.clone(working); presetLayout.pages = []; presetLayout.targets = { card: [], single: [], scale: [] };
+          payload.presets[presetIndex] = { name: loadedPreset, layout: presetLayout };
+          payload[kind] = M.clone(savedStandard);
+        }
+        var saved = await M.request('/api/angebote-verwaltung?view=design', M.json('PUT', { version: design.version, data: payload }));
+        design = saved.design;
+        if (how === 'preset') design[kind] = working; else savedStandard = M.clone(design[kind]);
+        root.querySelector('[data-design-status]').textContent = how === 'preset'
+          ? 'Vorlage „' + loadedPreset + '“ gespeichert. Der Standard blieb unverändert.'
+          : 'Designstandards gespeichert. Bestehende Aktionen wurden nicht verändert.';
+        refreshFields(); renderPresets(); refreshDesignContext(root);
       }
       async function loadAreaStandard() {
         var latest = await M.request('/api/angebote-verwaltung?view=design');
@@ -1974,7 +2014,7 @@ window.AngeboteDesign = (function () {
           'Die ungespeicherte Gestaltung des Getränkeflyers wird durch den aktuell gespeicherten Standard für neue Getränkeaktionen ersetzt. Andere Bereiche, Vorlagen und bestehende Aktionen bleiben unverändert.',
           'Standard-Gestaltung laden'))) return;
         var presets = design.presets;
-        design[kind] = M.clone(standard);
+        design[kind] = M.clone(standard); loadedPreset = '';
         if (presets) design.presets = presets;
         design.version = latest.design.version;
         refreshFields(); await preview(); changes.record();
@@ -2169,7 +2209,7 @@ window.AngeboteDesign = (function () {
           var preset = { name: name, layout: layout };
           if (index >= 0) presets[index] = preset; else presets.push(preset);
           design.presets = presets; renderPresets();
-          M.setDesignProvenance(design[kind], 'sheet', name); refreshDesignContext(root);
+          M.setDesignProvenance(design[kind], 'sheet', name); loadedPreset = name; refreshDesignContext(root);
           changes.record();
           root.querySelector('[data-design-status]').textContent = 'Vorlage angelegt · bitte Designstandards speichern';
           return;
@@ -2184,8 +2224,10 @@ window.AngeboteDesign = (function () {
           } else {
             design[kind] = M.clone(entry.layout);
             M.setDesignProvenance(design[kind], 'sheet', entry.name);
+            loadedPreset = entry.name;
             refreshFields();
             preview().catch(M.error);
+            refreshDesignContext(root);
           }
           root.querySelector('[data-design-status]').textContent = 'Geändert · bitte Designstandards speichern';
           changes.record();
@@ -2194,7 +2236,7 @@ window.AngeboteDesign = (function () {
         if (e.target.closest('[data-design-reset]')) {
           if (!(await M.dialog('Vorlage auf Original zurücksetzen?', 'Farben, Größen, Ersparnismarker und freie Anpassungen werden in der Vorschau auf die Originalwerte der ausgewählten Vorlage zurückgesetzt. Erst „Designstandards speichern“ übernimmt dies als Startstandard für neue Aktionen. Bestehende Flyer bleiben erhalten.', 'Vorschau zurücksetzen'))) return;
           var reset = M.blank(kind).layout; M.useTemplate(reset, design[kind].template);
-          design[kind] = reset; refreshFields();
+          design[kind] = reset; loadedPreset = ''; refreshFields();
           root.querySelector('[data-design-status]').textContent = 'Originalwerte in der Vorschau · noch nicht gespeichert';
           try { await preview(); } catch (error) { await M.error(error); }
           changes.record();
@@ -2217,20 +2259,7 @@ window.AngeboteDesign = (function () {
             await preview();
             changes.record();
           } else {
-            synchronizeTiles(design[kind]);
-            var origin = M.designProvenanceState(design[kind], 'sheet'), ownPresets = design.presets || [];
-            var loadedIndex = origin.known ? ownPresets.findIndex(function (entry) { return entry.name === origin.name; }) : -1;
-            if (loadedIndex >= 0) {
-              M.setDesignProvenance(design[kind], 'sheet', origin.name);
-              var updatedLayout = M.clone(design[kind]); updatedLayout.pages = []; updatedLayout.targets = { card: [], single: [], scale: [] };
-              ownPresets[loadedIndex] = { name: origin.name, layout: updatedLayout }; design.presets = ownPresets;
-            }
-            var saved = await M.request('/api/angebote-verwaltung?view=design', M.json('PUT', { version: design.version, data: design }));
-            design = saved.design;
-            savedStandard = M.clone(design[kind]);
-            root.querySelector('[data-design-status]').textContent = 'Designstandards gespeichert. Bestehende Aktionen wurden nicht verändert.'
-              + (loadedIndex >= 0 ? ' Vorlage „' + origin.name + '“ aktualisiert.' : '');
-            refreshDesignContext(root);
+            await persist(loadedPreset ? 'preset' : 'standard');
           }
         } catch (error) { await M.error(error); }
         finally { button.disabled = false; }

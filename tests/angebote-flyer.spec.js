@@ -673,7 +673,7 @@ for (const cmsMode of [true, false]) {
     }
     expect(clippedLabels).toEqual([]);
     if (cmsMode) {
-      await host.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
+      await host.locator('[data-design-save]').click();
       await expect(host.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
       expect(state.design.drinks).toMatchObject({ template: 'classic', density: 6 });
     } else {
@@ -683,9 +683,10 @@ for (const cmsMode of [true, false]) {
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const attribute = cmsMode ? 'data-design-mode' : 'data-editor-mode';
     if (cmsMode) await designerTool(host, 'tools');
-    if (!cmsMode) await page.getByRole('button', { name: '3 · Ausgeben' }).click();
+    // Die reine Ausgabe zeigt nur das Motiv; die Ausgabevorschauen (Handy/Kiosk, Waage) liegen in der Gestaltung.
     await workspaceView(cmsMode ? page.locator('[data-designer=drinks]') : page.locator('#an-root'), 'split');
-    for (const mode of ['cards', 'scale-large', 'scale-small', 'paper']) {
+    // Im Aktionseditor ersetzt die Formatwahl der reinen Ausgabe (Homepage/Kiosk, Waage) die früheren Vorschauschalter.
+    for (const mode of cmsMode ? ['cards', 'scale-large', 'scale-small', 'paper'] : []) {
       const button = page.locator('[' + attribute + '="' + mode + '"]');
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
@@ -727,7 +728,7 @@ test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Ki
   await expect(page.locator('#an-design-root').getByRole('heading', { name: 'Getränkeflyer-Design' })).toBeVisible();
   await expect(page.locator('#cfg-offer-legacy-save')).toBeHidden();
   await setField(page, page.locator('#an-design-root'), page.locator('#an-design-root [data-style=color]'), '#0066aa');
-  await page.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
+  await page.locator('[data-design-save]').click();
   await expect(page.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
   expect(state.actions.get(head.id).draft).toEqual(original);
   await designerTool(page.locator('#an-design-root'), 'tools');
@@ -1001,7 +1002,7 @@ test('TC-F35-01/02: zusätzliche Gestaltung und eigene Vorlagen bleiben gespeich
   await openDetails(root.locator('.an-own-presets'));
   await root.locator('[data-preset-name]').fill('Sommer <img src=x>');
   await root.locator('[data-preset-add]').click();
-  await root.locator('[data-design-save]').click();
+  await root.locator('[data-design-save-standard]').click();
   await expect(root.locator('[data-design-status]')).toContainText('Designstandards gespeichert');
   expect(state.design.drinks.decoration).toEqual(options);
   expect(state.design.presets[0].name).toBe('Sommer <img src=x>');
