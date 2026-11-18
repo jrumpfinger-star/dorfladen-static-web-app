@@ -1406,11 +1406,14 @@
   }
   function cfgGet(){
     if(_cfgCurrent){var r2={};for(var k2 in CFG_DEFAULTS)r2[k2]=_cfgCurrent.hasOwnProperty(k2)?_cfgCurrent[k2]:CFG_DEFAULTS[k2];
-      if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;return r2;}
+      if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;
+      if(_cfgCurrent.design_provenance)r2.design_provenance=_cfgCurrent.design_provenance;return r2;}
     return _clone(CFG_DEFAULTS);
   }
+  var _cfgSaved=null;
   function cfgSave(o){
     _cfgCurrent=_clone(o);
+    _cfgSaved=_clone(o);
     // Persist to Dataverse
     _dvSave('design_config',o)
       .then(function(res){if(!res.success)console.warn('Design save to Dataverse failed',res.error);})
@@ -1470,7 +1473,9 @@
           // Dataverse is always the source of truth
           var merged={};for(var k in CFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:CFG_DEFAULTS[k];
           if(dvCfg.tplColors)merged.tplColors=dvCfg.tplColors;
+          if(dvCfg.design_provenance)merged.design_provenance=dvCfg.design_provenance;
           _cfgCurrent=merged;
+          _cfgSaved=_clone(merged);
           cfgApplyUI(merged);
           Object.keys(_offerHistories).forEach(function(kind){_offerHistories[kind].reset();});
         }
@@ -1483,6 +1488,7 @@
         if(dvHpCfg&&typeof dvHpCfg==='object'){
           var hpMerged={};for(var hk in HPCFG_DEFAULTS)hpMerged[hk]=dvHpCfg.hasOwnProperty(hk)?dvHpCfg[hk]:HPCFG_DEFAULTS[hk];
           if(dvHpCfg.wpTplColors)hpMerged.wpTplColors=dvHpCfg.wpTplColors;
+          if(dvHpCfg.design_provenance)hpMerged.design_provenance=dvHpCfg.design_provenance;
           _hpCfgCurrent=hpMerged;
           _hpCfgSaved=_clone(hpMerged);
         }
@@ -1574,7 +1580,8 @@
     xEl.dispatchEvent(new Event('change',{bubbles:true}));
   };
   function cfgReadUI(){
-    var c={};
+    var c={}, existingConfig=cfgGet();
+    if(existingConfig.design_provenance)c.design_provenance=_clone(existingConfig.design_provenance);
     ['bgColor','tagColor','leafColor','titleColor','stattColor','decoFooterColor'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)c[k]=el.value;
     });
@@ -1639,6 +1646,127 @@
       });
     });
     return c;
+  }
+  function designStableValue(value){
+    if(Array.isArray(value))return value.map(designStableValue);
+    if(value&&typeof value==='object'){
+      var result={};Object.keys(value).sort().forEach(function(key){result[key]=designStableValue(value[key]);});return result;
+    }
+    return value;
+  }
+  function designStableJson(value){return JSON.stringify(designStableValue(value));}
+  function areaProvenance(config){
+    var value=config&&config.design_provenance;
+    return value&&value.schema===1&&value.targets&&typeof value.targets==='object'
+      ?_clone(value):{schema:1,targets:{}};
+  }
+  function setAreaProvenance(config,area,name,snapshot){
+    var value=areaProvenance(config);
+    if(name)value.targets[area]={name:String(name).trim().slice(0,80),snapshot:_clone(snapshot)};
+    else delete value.targets[area];
+    config.design_provenance=value;
+  }
+  function offerAreaSnapshot(config,kind){
+    var snapshot={template:config[kind+'Template']||'classic-red',fields:{},colors:{}};
+    PERSEC_COLORS.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    PERSEC_RANGES.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    PERSEC_CHECKS.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    PERSEC_SELECTS.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    snapshot.colors=_clone((config.tplColors||{})[kind+':'+snapshot.template]
+      ||(config.tplColors||{})[snapshot.template]||getTplColors(snapshot.template,config,kind));
+    return snapshot;
+  }
+  function weekAreaSnapshot(config,kind){
+    var root=document.getElementById('wp-sec-'+kind), snapshot={fields:{},colors:{}};
+    if(root)root.querySelectorAll('[id^=hcfg-]').forEach(function(field){
+      var key=field.id.slice(5);
+      if(config[key]!=null)snapshot.fields[key]=config[key];
+    });
+    var prefix=kind+':';
+    Object.keys(config.wpTplColors||{}).forEach(function(key){
+      if(key.indexOf(prefix)===0)snapshot.colors[key]=_clone(config.wpTplColors[key]);
+    });
+    return snapshot;
+  }
+  function areaContext(config,area,layout,savedSnapshot){
+    var provenance=areaProvenance(config),entry=provenance.targets[area];
+    var current=area.indexOf('week-')===0?weekAreaSnapshot(config,area.slice(5)):offerAreaSnapshot(config,area);
+    var changed=entry?designStableJson(entry.snapshot)!==designStableJson(current)
+      :savedSnapshot?designStableJson(savedSnapshot)!==designStableJson(current):false;
+    return {area:area==='plakat'?'Sonderangebote · Plakat':area==='flyer'?'Sonderangebote · Einzelflyer'
+      :area==='week-home'?'Wochenplan · Homepage':'Wochenplan · Druck',
+      layout:layout||'',name:entry&&entry.name||'',source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',changed:changed};
+  }
+  function mergeOfferArea(current,source,kind){
+    var merged=_clone(current),templateKey=kind+'Template',template=source[templateKey]||current[templateKey]||'classic-red';
+    merged[templateKey]=template;
+    [].concat(PERSEC_COLORS,PERSEC_RANGES,PERSEC_CHECKS,PERSEC_SELECTS).forEach(function(key){
+      var name=kind+'_'+key;
+      if(Object.prototype.hasOwnProperty.call(source,name))merged[name]=_clone(source[name]);
+    });
+    merged.tplColors=_clone(current.tplColors||{});
+    var colors=source.tplColors||{},key=kind+':'+template;
+    if(Object.prototype.hasOwnProperty.call(colors,key))merged.tplColors[key]=_clone(colors[key]);
+    else if(Object.prototype.hasOwnProperty.call(colors,template))merged.tplColors[key]=_clone(colors[template]);
+    else delete merged.tplColors[key];
+    var provenance=areaProvenance(current),sourceProvenance=areaProvenance(source).targets[kind];
+    if(sourceProvenance)provenance.targets[kind]=_clone(sourceProvenance);else delete provenance.targets[kind];
+    merged.design_provenance=provenance;
+    return merged;
+  }
+  function mergeWeekArea(current,source,kind){
+    var merged=_clone(current),root=document.getElementById('wp-sec-'+kind);
+    if(root)root.querySelectorAll('[id^=hcfg-]').forEach(function(field){
+      var key=field.id.slice(5);
+      if(Object.prototype.hasOwnProperty.call(source,key))merged[key]=_clone(source[key]);
+    });
+    var templateKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate',template=source[templateKey]||current[templateKey]||'classic-red';
+    merged[templateKey]=template;
+    var currentColors=_clone(current.wpTplColors||{}),sourceColors=source.wpTplColors||{},prefix=kind+':';
+    Object.keys(currentColors).forEach(function(key){if(key.indexOf(prefix)===0)delete currentColors[key];});
+    var specific=prefix+template;
+    if(sourceColors[specific])currentColors[specific]=_clone(sourceColors[specific]);
+    else if(sourceColors[template])currentColors[specific]=_clone(sourceColors[template]);
+    merged.wpTplColors=currentColors;
+    var provenance=areaProvenance(current),sourceProvenance=areaProvenance(source).targets['week-'+kind];
+    if(sourceProvenance)provenance.targets['week-'+kind]=_clone(sourceProvenance);else delete provenance.targets['week-'+kind];
+    merged.design_provenance=provenance;
+    return merged;
+  }
+  async function loadCmsConfig(){
+    var response=await fetch(API+'/cms-config'),result=await response.json();
+    if(!response.ok||!result.success||!result.data)throw new Error('Die gespeicherten Designstandards konnten nicht geladen werden.');
+    return result.data;
+  }
+  function offerAreaContext(kind){
+    var config=cfgReadUI(),select=document.getElementById('cfg-'+kind+'Template');
+    var label=select&&select.options[select.selectedIndex]?select.options[select.selectedIndex].textContent:'';
+    return areaContext(config,kind,label,offerAreaSnapshot(_cfgSaved||CFG_DEFAULTS,kind));
+  }
+  async function loadOfferAreaStandard(kind){
+    var data=await loadCmsConfig(),source=data.design_config||CFG_DEFAULTS,current=cfgReadUI();
+    var standard=mergeOfferArea(current,source,kind);
+    if(designStableJson(offerAreaSnapshot(current,kind))!==designStableJson(offerAreaSnapshot(standard,kind))
+        &&!(await cmsConfirm('Bereichsstandard übernehmen? Ungespeicherte Änderungen im Bereich „'
+          +(kind==='plakat'?'Plakat':'Einzelflyer')+'“ werden durch den aktuell gespeicherten Bereichsstandard ersetzt.')))return;
+    cfgApplyUI(standard);_cfgCurrent=_clone(standard);
+    cfgOfferHistory(kind).record();
+    if(window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(document.getElementById('cfg-sec-'+kind));
+  }
+  function weekAreaContext(kind){
+    var config=hpCfgReadUI(),templateKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate';
+    var select=document.getElementById('hcfg-'+templateKey),label=select&&select.options[select.selectedIndex]?select.options[select.selectedIndex].textContent:'';
+    return areaContext(config,'week-'+kind,label,weekAreaSnapshot(_hpCfgSaved||HPCFG_DEFAULTS,kind));
+  }
+  async function loadWeekAreaStandard(kind){
+    var data=await loadCmsConfig(),source=data.hp_design_config||HPCFG_DEFAULTS,current=hpCfgReadUI();
+    var standard=mergeWeekArea(current,source,kind);
+    if(designStableJson(weekAreaSnapshot(current,kind))!==designStableJson(weekAreaSnapshot(standard,kind))
+        &&!(await cmsConfirm('Bereichsstandard übernehmen? Ungespeicherte Änderungen im Wochenplanbereich „'
+          +(kind==='home'?'Homepage':'Druck')+'“ werden durch den aktuell gespeicherten Standard ersetzt.')))return;
+    hpCfgApplyUI(standard);_hpCfgCurrent=_clone(standard);
+    weekHistory(kind).record();_triggerWpAutoPreview();
+    if(window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(document.getElementById('wp-sec-'+kind));
   }
   function cfgSyncOfferTplPreviews(){
     function sync(selId,boxId){
@@ -1778,12 +1906,15 @@
         if(key.indexOf(kind+'_')===0||key===kind+'Template'||key==='priceFont'+suffix||key==='savingsScale'+suffix)values[key]=config[key];
       });
       Object.keys(config.tplColors).forEach(function(key){if(key.indexOf(kind+':')===0)colors[key]=config.tplColors[key];});
-      return {values:values,colors:colors,presets:cfgPresetsGet()[kind]||[]};
+      return {values:values,colors:colors,presets:cfgPresetsGet()[kind]||[],
+        provenance:areaProvenance(config).targets[kind]||null};
     },function(state){
       var config=cfgReadUI();
       Object.assign(config,state.values);
       Object.keys(config.tplColors).forEach(function(key){if(key.indexOf(kind+':')===0)delete config.tplColors[key];});
       Object.assign(config.tplColors,state.colors);
+      setAreaProvenance(config,kind,state.provenance&&state.provenance.name,state.provenance&&state.provenance.snapshot);
+      _cfgCurrent=_clone(config);
       cfgApplyUI(config);
       var presets=cfgPresetsGet();presets[kind]=state.presets;cfgPresetsSave(presets);cfgPresetsRenderAll();
       _triggerCfgAutoPreview();
@@ -1806,7 +1937,10 @@
       if(secId==='sec-plakat'||secId==='sec-flyer'){
         var kind=secId==='sec-flyer'?'flyer':'plakat';
         window.AngeboteDesign.mountCms(document.getElementById('cfg-'+secId),_offerWorkspacePreview,
-          document.getElementById('cfg-offer-legacy-save'),kind,cfgOfferHistory(kind));
+          document.getElementById('cfg-offer-legacy-save'),kind,cfgOfferHistory(kind),{
+            read:function(){return offerAreaContext(kind);},
+            loadStandard:function(){return loadOfferAreaStandard(kind);}
+          });
       }else if(secId==='sec-shared'){
         right.appendChild(_offerWorkspacePreview);
         window.AngeboteDesign.mountShared(document.getElementById('cfg-sec-shared'),_offerWorkspacePreview,
@@ -1872,11 +2006,13 @@
         var key=field.id.slice(5);if(config[key]!=null)values[key]=config[key];
       });
       var colors={};Object.keys(config.wpTplColors).forEach(function(key){if(key.indexOf(kind+':')===0)colors[key]=config.wpTplColors[key];});
-      return {values:values,colors:colors};
+      return {values:values,colors:colors,provenance:areaProvenance(config).targets['week-'+kind]||null};
     },function(state){
       var config=hpCfgReadUI();Object.assign(config,state.values);config[tplKey]=state.values[tplKey]||config[tplKey];
       Object.keys(config.wpTplColors).forEach(function(key){if(key.indexOf(kind+':')===0)delete config.wpTplColors[key];});
-      Object.assign(config.wpTplColors,state.colors);hpCfgApplyUI(config);_triggerWpAutoPreview();
+      Object.assign(config.wpTplColors,state.colors);
+      setAreaProvenance(config,'week-'+kind,state.provenance&&state.provenance.name,state.provenance&&state.provenance.snapshot);
+      _hpCfgCurrent=_clone(config);hpCfgApplyUI(config);_triggerWpAutoPreview();
     });
     ['input','change'].forEach(function(type){root.addEventListener(type,function(){changes.record();if(_weekPalettePickers[kind])_weekPalettePickers[kind].refresh();});});
     root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))changes.begin();});
@@ -1914,7 +2050,10 @@
       if(!_weekPreview)_weekPreview=right.querySelector('.cfg-lp-inner');
       if(!_weekPreview._workspaceTools)_weekPreview._workspaceTools=document.querySelector('#cms-cfg-wp .an-preview-options');
       ensureWeekPalette(kind);
-      window.AngeboteDesign.mountWeek(document.getElementById('wp-sec-'+kind),_weekPreview,kind,weekHistory(kind));
+      window.AngeboteDesign.mountWeek(document.getElementById('wp-sec-'+kind),_weekPreview,kind,weekHistory(kind),{
+        read:function(){return weekAreaContext(kind);},
+        loadStandard:function(){return loadWeekAreaStandard(kind);}
+      });
       right.hidden=true;
     }
     ['wp-sec-home','wp-sec-flyer','wp-sec-elemente'].forEach(function(s){
@@ -1979,9 +2118,16 @@
   window.cfgPresetLoad=function(section,idx){
     var all=cfgPresetsGet();
     if(!all[section]||!all[section][idx])return;
-    var preset=all[section][idx].data;
-    cfgApplyUI(preset);
-    toast('Vorlage "'+all[section][idx].name+'" geladen','ok');
+    var entry=all[section][idx],preset=entry.data,current=cfgReadUI();
+    if(section==='plakat'||section==='flyer'){
+      preset=mergeOfferArea(current,preset,section);
+      setAreaProvenance(preset,section,entry.name,offerAreaSnapshot(preset,section));
+    }
+    _cfgCurrent=_clone(preset);cfgApplyUI(preset);
+    if(_offerHistories[section])_offerHistories[section].record();
+    var root=document.getElementById('cfg-sec-'+section);
+    if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
+    toast('Vorlage "'+entry.name+'" geladen','ok');
   };
   window.cfgPresetDelete=function(section,idx){
     var all=cfgPresetsGet();
@@ -2292,6 +2438,35 @@
     });
     return c;
   }
+  function hpangHistoryRead(){
+    return {settings:hpangReadUI(),provenance:_hpangDocument&&_hpangDocument.design_provenance
+      ?_clone(_hpangDocument.design_provenance.targets&&_hpangDocument.design_provenance.targets.homepage||null):null};
+  }
+  function hpangHistoryRestore(state){
+    if(_hpangDocument){
+      setAreaProvenance(_hpangDocument,'homepage',state.provenance&&state.provenance.name,state.provenance&&state.provenance.snapshot);
+    }
+    hpangApplyUI(state.settings||state);
+  }
+  function homepageAreaContext(){
+    var config=hpangReadUI(),entry=areaProvenance(_hpangDocument).targets.homepage;
+    var saved=_hpangDocument&&_hpangDocument.homepage||HPANG_DEFAULTS;
+    return {area:'Homepage-Sonderangebote',layout:'Angebotskarten',name:entry&&entry.name||'',
+      source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',
+      changed:entry?designStableJson(entry.snapshot)!==designStableJson(config)
+        :designStableJson(saved)!==designStableJson(config)};
+  }
+  async function loadHomepageAreaStandard(){
+    var result=await window.AngeboteModel.request('/api/angebote-verwaltung?view=design'),latest=result.design;
+    var standard=latest.homepage||HPANG_DEFAULTS,current=hpangReadUI();
+    if(designStableJson(current)!==designStableJson(standard)
+        &&!(await window.AngeboteModel.dialog('Bereichsstandard übernehmen?',
+          'Ungespeicherte Homepage-Gestaltung wird durch die aktuell gespeicherte Gestaltung für neue Angebote ersetzt. Getraenke- und Wochenplanbereiche bleiben unverändert.',
+          'Bereichsstandard laden')))return;
+    _hpangDocument=latest;_hpangCurrent=_clone(standard);hpangApplyUI(standard);
+    if(_hpangHistory)_hpangHistory.record();
+    if(window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(document.getElementById('cms-cfg-hpang'));
+  }
   function hpangApplyUI(c){
     ['gridBg','cardBg','cardBorder','nameColor','detColor','tagBg','tagText','badgeBg','stattColor','headerBg','headerText'].forEach(function(k){
       var el=document.getElementById('hpang-'+k);if(el)el.value=c[k]||HPANG_DEFAULTS[k];
@@ -2395,13 +2570,15 @@
     if(id==='cfg-hpang'&&!_hpangLoaded){
       var root=document.getElementById('cms-cfg-hpang');
       if(window.AngeboteDesign&&!root.dataset.designer){
-        _hpangHistory=window.AngeboteDesign.history(hpangReadUI,hpangApplyUI);
+        _hpangHistory=window.AngeboteDesign.history(hpangHistoryRead,hpangHistoryRestore);
         window.AngeboteDesign.mountHomepage(root,_hpangHistory,{
           read:hpangReadUI,defaults:[HPANG_DEFAULTS],
           map:function(c){return {gridBg:c.bg,cardBg:c.card,cardBorder:c.border,nameColor:c.text,detColor:c.muted,
             tagBg:c.price,tagText:c.priceText,badgeBg:c.accent,stattColor:c.muted,headerBg:c.header,headerText:c.title};},
           write:function(values){hpangApplyUI(Object.assign(hpangReadUI(),values));},
           changed:function(){_hpangHistory.record();}
+        },{
+          read:homepageAreaContext,loadStandard:loadHomepageAreaStandard
         });
         root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))_hpangHistory.begin();});
         document.addEventListener('pointerup',_hpangHistory.end);
@@ -2469,7 +2646,7 @@
   var _hpCfgCurrent=null;
   var _hpCfgSaved=null;
   function hpCfgGet(){
-    if(_hpCfgCurrent){var r2={};for(var k2 in HPCFG_DEFAULTS)r2[k2]=_hpCfgCurrent.hasOwnProperty(k2)?_hpCfgCurrent[k2]:HPCFG_DEFAULTS[k2];if(_hpCfgCurrent.wpTplColors)r2.wpTplColors=_hpCfgCurrent.wpTplColors;return r2;}
+    if(_hpCfgCurrent){var r2={};for(var k2 in HPCFG_DEFAULTS)r2[k2]=_hpCfgCurrent.hasOwnProperty(k2)?_hpCfgCurrent[k2]:HPCFG_DEFAULTS[k2];if(_hpCfgCurrent.wpTplColors)r2.wpTplColors=_hpCfgCurrent.wpTplColors;if(_hpCfgCurrent.design_provenance)r2.design_provenance=_hpCfgCurrent.design_provenance;return r2;}
     return _clone(HPCFG_DEFAULTS);
   }
   function hpCfgSave(o){
@@ -2480,7 +2657,8 @@
       .catch(function(e){console.warn('HP Design save error',e);});
   }
   function hpCfgReadUI(){
-    var c={};
+    var c={},existingConfig=hpCfgGet();
+    if(existingConfig.design_provenance)c.design_provenance=_clone(existingConfig.design_provenance);
     ['priColor','priHover','accColor','bgColor','textColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
     });
@@ -2656,6 +2834,7 @@
         if(dvCfg&&typeof dvCfg==='object'){
           var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
           if(dvCfg.wpTplColors)merged.wpTplColors=dvCfg.wpTplColors;
+          if(dvCfg.design_provenance)merged.design_provenance=dvCfg.design_provenance;
           _hpCfgCurrent=merged;
           _hpCfgSaved=_clone(merged);
           hpCfgApplyUI(merged);
@@ -2832,9 +3011,14 @@
   window.wpPresetLoad=function(section,idx){
     var all=wpPresetsGet();
     if(!all[section]||!all[section][idx])return;
-    var preset=all[section][idx].data;
-    hpCfgApplyUI(preset);
-    toast('Vorlage "'+all[section][idx].name+'" geladen','ok');
+    var entry=all[section][idx],kind=section==='wp-flyer'?'flyer':'home';
+    var preset=mergeWeekArea(hpCfgReadUI(),entry.data,kind);
+    setAreaProvenance(preset,'week-'+kind,entry.name,weekAreaSnapshot(preset,kind));
+    _hpCfgCurrent=_clone(preset);hpCfgApplyUI(preset);
+    if(_weekHistories[kind])_weekHistories[kind].record();
+    var root=document.getElementById('wp-sec-'+kind);
+    if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
+    toast('Vorlage "'+entry.name+'" geladen','ok');
   };
   window.wpPresetDelete=function(section,idx){
     var all=wpPresetsGet();

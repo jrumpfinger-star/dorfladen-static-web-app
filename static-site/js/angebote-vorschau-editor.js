@@ -241,7 +241,8 @@ window.AngeboteVorschauEditor = (function () {
         width = logicalWidth; height = logicalHeight; entries = elements;
         if (pending && elements.some(function (entry) { return entry.id === pending; })) { chosen = pending; pending = ''; }
         if (!entries.some(function (entry) { return entry.id === chosen; })) {
-          var first = entries.find(function (entry) { return entry.type === 'image' || entry.ovKey === 'img'; }) || entries[0];
+          var candidates = options.itemId ? entries.filter(function (entry) { return entry.itemId === options.itemId; }) : entries;
+          var first = candidates.find(function (entry) { return entry.type === 'image' || entry.ovKey === 'img'; }) || candidates[0] || entries[0];
           chosen = first && (!options.toolsHost || options.selectFirst) ? first.id : '';
         }
         if (canvas.isConnected) {

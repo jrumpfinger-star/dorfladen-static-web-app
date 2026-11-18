@@ -394,6 +394,51 @@ def _design_origin(raw):
     return copy.deepcopy(raw)
 
 
+def _design_provenance(raw, allowed_targets=("sheet", "card", "single", "scale")):
+    if (not isinstance(raw, dict) or set(raw) != {"schema", "targets"}
+            or type(raw.get("schema")) is not int or raw["schema"] != 1
+            or not isinstance(raw["targets"], dict)
+            or set(raw["targets"]) - set(allowed_targets)):
+        raise AngeboteFehler(400, "Bitte die gespeicherte Designherkunft prüfen.")
+    result = {"schema": 1, "targets": {}}
+    for target, entry in raw["targets"].items():
+        if (not isinstance(entry, dict) or set(entry) != {"name", "snapshot"}
+                or not isinstance(entry["name"], str) or not entry["name"].strip()
+                or len(entry["name"]) > 80 or any(ord(char) < 32 for char in entry["name"])):
+            raise AngeboteFehler(400, "Bitte den Namen der Designherkunft prüfen.")
+        if target == "homepage":
+            _homepage(entry["snapshot"])
+            snapshot = copy.deepcopy(entry["snapshot"])
+        elif isinstance(entry["snapshot"], dict) and "cms" in entry["snapshot"]:
+            snapshot = entry["snapshot"]
+            kind = "flyer" if target == "single" else "plakat"
+            cms = snapshot["cms"]
+            if (target == "scale" or set(snapshot) != {"cms"} or not isinstance(cms, dict)
+                    or set(cms) != {"config", f"{kind}_article_overrides"}
+                    or not isinstance(cms["config"], dict)
+                    or f"{kind}Template" not in cms["config"]):
+                raise AngeboteFehler(400, "Bitte den CMS-Designherkunft-Snapshot prüfen.")
+            validation = copy.deepcopy(cms)
+            other = "plakat" if kind == "flyer" else "flyer"
+            if (any(key.startswith(f"{other}_") or key in (
+                    f"{other}Template", f"priceFont{other.title()}", f"savingsScale{other.title()}")
+                    for key in cms["config"])
+                    or not isinstance(cms[f"{kind}_article_overrides"], dict)
+                    or any(not isinstance(value, dict) for value in cms[f"{kind}_article_overrides"].values())):
+                raise AngeboteFehler(400, "Bitte den bereichsbezogenen CMS-Designherkunft-Snapshot prüfen.")
+            validation["config"].setdefault(f"{other}Template", "classic-red")
+            validation[f"{other}_article_overrides"] = {}
+            _cms_design(validation, [])
+            snapshot = copy.deepcopy(snapshot)
+        else:
+            checked = _target_styles({"card": entry["snapshot"]}).get("card")
+            snapshot = copy.deepcopy(entry["snapshot"]) if checked else None
+        if not snapshot:
+            raise AngeboteFehler(400, "Bitte den Designherkunft-Snapshot prüfen.")
+        result["targets"][target] = {"name": entry["name"], "snapshot": snapshot}
+    return result
+
+
 def _layout(raw, items):
     if not isinstance(raw, dict):
         raise AngeboteFehler(400, "Die Gestaltung konnte nicht gelesen werden.")
@@ -452,10 +497,11 @@ def _layout(raw, items):
     cms = {"cms": _cms_design(raw["cms"], items)} if "cms" in raw else {}
     decoration = {"decoration": _decoration(raw["decoration"])} if "decoration" in raw else {}
     origin = {"design_origin": _design_origin(raw["design_origin"])} if "design_origin" in raw else {}
+    provenance = {"design_provenance": _design_provenance(raw["design_provenance"])} if "design_provenance" in raw else {}
     return {"mode": mode, "template": template, "density": density,
             "color": color, "background": background, "pages": result,
             "targets": target_result, "adjustments": normalized_adjustments, **theme, **cms, **decoration, **origin,
-            **({"target_styles": target_styles} if target_styles else {})}
+            **({"target_styles": target_styles} if target_styles else {}), **provenance}
 
 
 def normalize(raw, publish=False):
@@ -607,6 +653,9 @@ class AngeboteService:
             design[kind]["mode"] = "template"
         if "homepage" in raw or (stored and "homepage" in stored):
             design["homepage"] = _homepage(raw.get("homepage", (stored or {}).get("homepage", {})))
+        if "design_provenance" in raw or (stored and "design_provenance" in stored):
+            provenance = raw.get("design_provenance", (stored or {}).get("design_provenance", {}))
+            design["design_provenance"] = _design_provenance(provenance, ("homepage",))
         if "presets" in raw or (stored and "presets" in stored):
             presets = raw.get("presets", stored.get("presets", []) if stored else [])
             if not isinstance(presets, list) or len(presets) > MAX_ITEMS:

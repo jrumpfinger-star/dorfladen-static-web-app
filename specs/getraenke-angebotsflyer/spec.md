@@ -1821,6 +1821,121 @@ Featurefreigabe und ausdrücklicher Waagenversand bleiben getrennt.
   Commit/Push und schreibfreie PR-Preview-Abnahme gemäß TC-F59-01;
   keine Produktion, kein Merge nach main, keine echten Preview-Schreibtests.
 
+## F65: Eindeutige Designherkunft und gespeicherter Bereichsstandard
+
+Alle sechs globalen Designer und Aktionsgestaltungen zeigen kompakt Bereich,
+aktives Layout/Variante und die Herkunft einer geladenen eigenen Vorlage.
+Herkunft und Speicherzustand sind getrennt. Weitere Anpassungen behalten den
+historischen Vorlagennamen und kennzeichnen die Gestaltung als angepasst.
+Optionale validierte Herkunftsdaten bleiben beim Speichern/Neuoeffnen erhalten;
+bei Altbestand ohne verlaessliche Herkunft wird kein Name geraten.
+
+"Bereichsstandard laden" laedt die aktuell gespeicherte Bereichsgestaltung,
+die neue Angebote verwenden, nicht die getrennte alte Ruecksetzvorgabe.
+Ungespeicherte Gestaltung nur nach Bestaetigung ersetzen. Uebernahme ist
+atomar und rueckgaengig, speichert nicht und veraendert weder andere Bereiche/
+Ausgaben noch Artikel, Preise, Produktbilder oder Vorlagenlisten.
+Ladefehler/Abbruch erhalten den Entwurf. Aeltere Werks-/Ruecksetzfunktionen
+bleiben eindeutig getrennt erreichbar.
+
+- TC-F65-01: Eigene Vorlage laden, anpassen, Undo/Redo, speichern/neu oeffnen:
+  Herkunft und wirkliches Layout stimmen; Altbestand erhaelt keinen Namen.
+- TC-F65-02: Bereichsstandard nach bestaetigter Uebernahme korrekt; Abbruch/
+  Ladefehler identisch, keine Schreibanfrage, fremde Bereiche/Ziele erhalten.
+- TC-F65-03: API akzeptiert begrenzte optionale Herkunft und erhaelt sie im
+  Roundtrip; ungueltige Werte/Versionen werden explizit abgelehnt.
+
+## F66: Lesbare Auswahlfelder und bedienbare Produktergebnisse
+
+Auswahltexte sind vertikal vollstaendig sichtbar, lange Werte zugaenglich.
+Die kompakte Mausbedienung und mindestens 44-px-Touchziele bleiben erhalten.
+Produktsuche bleibt beim Klicken/Ziehen am eigenen Scrollbalken sowie
+Rad-/Touchscrollen offen. Tab, Escape, echte Aussenklicks und Auswahl
+schliessen weiterhin korrekt; kein versehentlich ausgewaehlter Artikel.
+Exakte Name-, Artikelnummer- und Strichcode-Treffer erscheinen vor
+Teiltreffern, bevor die Ergebnisliste auf zwoelf Eintraege begrenzt wird.
+Farben, Groessen und andere kontinuierliche Gestaltungseingaben aktualisieren
+die echte Vorschau bereits waehrend `input`, ohne Auswahlwechsel, Blur oder
+Schliessen des nativen Farbwaehlers. Der aktive Editor und Fokus bleiben erhalten;
+eine Eingabeserie bildet einen ruecknehmbaren Schritt und wird nicht gespeichert.
+Die gemeinsame Fussleiste richtet sich nach der tatsaechlichen Werkzeugbreite:
+ab 500 px stehen Undo/Redo, weitere Aktionen, Arbeitsansicht, Status und Speichern
+in einer kompakten Zeile; darunter darf der Status eine eigene Zeile belegen.
+Keine unnoetige dritte Reihe; Status und alle Funktionen bleiben erreichbar,
+Mauskontrollen kompakt und Touchziele mindestens 44 px.
+
+- TC-F66-01: Echte betroffene Preisschildselects samt Text/Innenhoehe auf vier
+  Ansichten sichten/messen; keine abgeschnittenen Auswahltexte.
+- TC-F66-02: Zwoelf Produkttreffer mit echten Mausaktionen an Scrollspur und
+  Griff scrollen, dann unteren Treffer waehlen; Escape/Tab/Aussenklick/
+  Touch und Dialogcleanup bleiben funktionsfaehig.
+- TC-F66-03: Farbe und Groesse nur durch `input` veraendern, ohne `change`/Blur;
+  sichtbare Vorschau aendert sich sofort, Feld bleibt aktiv, Undo stellt den
+  vorherigen Stand her. Gilt fuer globale Designer und Aktionsgestaltung.
+- TC-F66-04: Bei mehr als zwoelf Teiltreffern erscheinen exakte Namen und
+  Artikel-/Strichcodes vor der Trefferbegrenzung.
+- TC-F66-05: Breite und schmale Werkzeugspalten auf vier Ansichten messen;
+  Fussleiste belegt hoechstens eine beziehungsweise zwei Inhaltsreihen,
+  ohne verdeckte Bedienelemente oder beschnittenen Status.
+
+## F67: Gemeinsame Artikelnavigation und volle CMS-Inhaltsbreite
+
+Sonder- und Getraenkeangebote bieten an der bestehenden Artikelauswahl
+Vor/Zurueck und "Artikel x von n", bei erster/letzter Position deaktiviert.
+Keine zyklische Navigation. Auswahlliste, CMS-Artikelpositionen, direkte
+Vorschauauswahl, Inspector und Zaehler verwenden denselben aktuellen Artikel.
+Navigation speichert nicht und erhaelt Werte, Bilder, Ziel, Werkzeugkontext
+und Historie. Null/ein Artikel und Loeschen/Umordnen sind deterministisch.
+Sammelflyer-Seitenpfeile bleiben Seitensteuerung, keine Artikelpfeile.
+
+Der eingebettete CMS-Editor nutzt die verfuegbare Inhaltsbreite mit genau
+einem aktiven Werkzeug-/Vorschausplit. Keine leere aeussere Rasterspalte;
+aktiver Hauptschritt entspricht dem sichtbaren Inhalt. Containerbreite,
+verborgener Einstieg, Resize und Vollbild korrekt behandeln.
+
+- TC-F67-01: Beide Arten mit drei Artikeln ueber Pfeile/Select/Vorschau
+  wechseln; Grenzen, null/ein Artikel und erhaltenen Entwurf pruefen.
+- TC-F67-02: Echter CMS-Einstieg/Modal/Kiosk/Standalone nutzen volle Breite;
+  Hauptnavigation, vier Ansichten, Resize und Wiederoeffnen pruefen.
+
+## F68: Reine Ausgabevorschau und eindeutig begrenzter Export
+
+Ausgabe zeigt ausschliesslich das Ergebnis mit direkt daran platzierten
+Aktionen, Artikelwahl und Zaehler, ohne bearbeitbare Hitlayer. Gestaltung
+bleibt separat; kein zweiter unbestimmter Speicherbutton unter Ausgabe.
+PNG/Druck verwenden den beim Klick sichtbaren Ausgabe-/Artikelzustand
+einschliesslich ungespeicherter Gestaltung, ohne implizites Speichern,
+Veroeffentlichen, Hochladen oder Waagensenden.
+
+Einzelflyer: aktuellen Artikel direkt als PNG oder drucken/PDF; "Weitere
+Artikel" bietet Checkboxen, Alle, Auswahl aufheben und Sammeldruck mit Anzahl.
+Anfangs aktueller Artikel gewaehlt, null Auswahl deaktiviert, Reihenfolge
+wie Aktion. Abbruch aendert keine Gestaltung/Artikelwahl.
+Kachel-Download liefert die angezeigte Kachel; Sammelflyer-Seitendownload
+die angezeigte Seite, Gesamtausgabe bleibt separat eindeutig erreichbar.
+Alle bisherigen Qualitaets-/Fehler-/Bestaetigungsgates bleiben erhalten.
+Dieses Konzept gilt gleich fuer Sonder- und Getraenkeangebote.
+
+- TC-F68-01: Ausgabe nicht editierbar, Rueckkehr erhaelt Kontext; aktueller
+  Artikel B erzeugt genau B als PNG/Druck, keine andere Ausgabe.
+- TC-F68-02: Auswahl B/C, Alle, Nullauswahl und Abbruch liefern exakt den
+  angeforderten Umfang; danach Einzeldruck weiterhin einzeln.
+- TC-F68-03: Zieltreue fuer Kachel/Sammelseite/Waage, Qualitaetsgates,
+  eingefrorener Exportumfang und keine impliziten Schreibanfragen.
+
+## F69: Ein Flyer pro A4-Seite ohne Restbogen
+
+Je angefordertem Einzelflyer entsteht genau eine vollstaendige A4-Seite,
+ohne Fragmentierung, abgeschnittenen Rahmen oder zusaetzlichen roten
+Balkenbogen. Motiv proportional innerhalb der nutzbaren Seite einpassen,
+nicht beschneiden/verdecken. Echte Sammelflyer-Folgeseiten erhalten.
+Browserdruck erfolgt nur ausdruecklich; Druckende/Abbruch reinigen den
+Druckzustand. Physischer Druckertreiber bleibt manuelle Gegenprobe.
+
+- TC-F69-01: Original-CMS-Einzelflyer mit Rahmen und Getraenkeflyer im echten
+  modalen Ausgabeweg als PDF: exakt eine Seite; ausgewaehlte zwei Flyer
+  exakt zwei Seiten, Motiv vollstaendig. Sammelflyer-Regression erhalten.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

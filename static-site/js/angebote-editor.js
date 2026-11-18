@@ -11,6 +11,7 @@
   var weeklySurface = null;
   var taskFrame = null;
   var objectTransaction = null;
+  var liveControl = null, liveValue = '', liveApplying = false;
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
   var cmsSession = null;
@@ -18,6 +19,76 @@
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
   var $ = function (id) { return document.getElementById(id); };
+  function outputMode() { return cmsAction ? cmsTab === 'output' : step === 'output'; }
+  function selectArticle(id) {
+    if (!data.items.some(function (item) { return item.id === id; })) return;
+    designItemId = id; selected = '';
+    if (designTarget === 'sheet') {
+      var index = data.layout.pages.findIndex(function (entry) { return entry.elements.some(function (element) { return element.item_id === id; }); });
+      if (index >= 0) page = index;
+    }
+    syncArticleNavigation(); renderInspector(); preview().catch(M.error);
+  }
+  function syncSelectedArticle() {
+    var element = selection();
+    if (element && element.item_id) designItemId = element.item_id;
+  }
+  function syncArticleNavigation() {
+    var picker = $('an-design-item'), position = root.querySelector('[data-article-position]');
+    if (!picker) return;
+    var index = data.items.findIndex(function (item) { return item.id === designItemId; });
+    if (index < 0 && data.items.length) { index = 0; designItemId = data.items[0].id; }
+    picker.value = designItemId;
+    if (position) position.textContent = index < 0 ? 'Keine Artikel' : 'Artikel ' + (index + 1) + ' von ' + data.items.length;
+    var back = root.querySelector('[data-article-prev]'), next = root.querySelector('[data-article-next]');
+    if (back) back.disabled = index <= 0;
+    if (next) next.disabled = index < 0 || index >= data.items.length - 1;
+    if ($('an-cms-item')) $('an-cms-item').value = designItemId;
+    syncOutput();
+  }
+  function syncOutput() {
+    root.dataset.outputMode = String(outputMode());
+    var status = root.querySelector('[data-export-state]');
+    if (status) status.textContent = dirty ? 'Ausgabe der ungespeicherten Gestaltung · zum Sichern zurück zur Gestaltung.'
+      : 'Ausgabe der gespeicherten Gestaltung.';
+    var download = root.querySelector('[data-cms-download]'), printButton = root.querySelector('[data-cms-print]');
+    if (download) download.textContent = designTarget === 'sheet' ? 'Diese Seite als PNG herunterladen' : 'PNG herunterladen';
+    if (printButton) printButton.textContent = designTarget === 'single' ? 'Diesen Artikel drucken / PDF'
+      : designTarget === 'sheet' ? 'Sammelflyer drucken / PDF (' + data.layout.pages.length + ' Seiten)' : 'Dieses Motiv drucken / PDF';
+    var outputTarget = root.querySelector('[data-output-target]');
+    if (outputTarget) outputTarget.value = designTarget;
+    var batch = root.querySelector('[data-cms-singles]');
+    if (batch) batch.hidden = designTarget !== 'single';
+    var allPages = root.querySelector('[data-cms-all-pages]');
+    if (allPages) allPages.hidden = designTarget !== 'sheet';
+    syncDesignContext();
+    var outputBar = root.querySelector('.an-output-bar'), pageTools = $('an-page-tools');
+    if (outputBar && pageTools) {
+      if (outputMode()) outputBar.prepend(pageTools);
+      else if (outputBar.contains(pageTools)) root.querySelector('[data-task-panel=view],[data-editor-panel=view]').prepend(pageTools);
+    }
+    function syncDesignContext() {
+      var status = root.querySelector('[data-action-design-context]');
+      if (!status || !data) return;
+      var names = { sheet: 'Sammelflyer', single: 'Einzelflyer', card: 'Homepage / Kiosk', scale: 'Waage' };
+      var kind = designTarget === 'single' ? 'flyer' : 'plakat';
+      var template = weeklyTarget() ? root.querySelector('[data-cms-variant][data-cms-kind=' + kind + '] option:checked')
+        : root.querySelector('[data-style=template] option:checked');
+      var layout = weeklyTarget() ? M.cmsFor(data, designTarget).config[kind + 'Template'] : controlLayout().template;
+      var origin = M.designProvenanceState(data.layout, designTarget);
+      status.textContent = names[designTarget] + ' · Layout: ' + (template ? template.textContent : layout)
+        + ' · ' + (origin.known ? origin.label : 'Vorlagenherkunft nicht gespeichert');
+      var button = $('an-defaults'); if (button) button.hidden = outputMode();
+    }
+    if (!cmsAction) {
+      var bar = root.querySelector('.an-output-bar'), picker = $('an-design-item-wrap');
+      if (bar) {
+        bar.hidden = !outputMode();
+        if (outputMode()) bar.prepend(picker);
+        else if (bar.contains(picker)) root.querySelector('[data-editor-panel=element]').prepend(picker);
+      }
+    }
+  }
   function weeklyTarget() { return !!data.layout.cms && designTarget !== 'scale'; }
   function controlLayout() {
     var layout = M.clone(data.layout);
@@ -51,9 +122,11 @@
     if (status) status.textContent = cmsAction ? 'Gestaltung geändert · noch nicht gespeichert' : 'Entwurf geändert · noch nicht gespeichert oder veröffentlicht';
     root.querySelectorAll('[data-history="undo"]').forEach(function (button) { button.disabled = !undo.length; });
     root.querySelectorAll('[data-history="redo"]').forEach(function (button) { button.disabled = !redo.length; });
+    syncOutput();
   }
-  function checkpoint() { if (objectTransaction) return; undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
+  function checkpoint() { if (objectTransaction || liveApplying) return; liveControl = null; undo.push(M.clone(data)); if (undo.length > 30) undo.shift(); redo = []; }
   function edit(fn, free) {
+    if (outputMode()) return;
     checkpoint(); fn(); if (free && designTarget === 'sheet') data.layout.mode = 'free'; changed(); preview().catch(M.error);
   }
   async function discard() {
@@ -357,6 +430,7 @@
       D.expandGroups($('an-inspector'));
       $('an-inspector').querySelectorAll('[data-history]').forEach(function (button) { button.parentElement.remove(); });
     }
+    syncArticleNavigation();
   }
   function cmsLayout() {
     if (!cmsAction || !cmsDialog) return;
@@ -376,7 +450,7 @@
     var wanted = tabs.map(function (tab) { return tab[0]; }).join();
     if (cmsTabbar.dataset.tabs !== wanted) {
       cmsTabbar.dataset.tabs = wanted;
-      cmsTabbar.innerHTML = tabs.map(function (tab) { return '<button type="button" data-cms-tab="' + tab[0] + '">' + tab[1] + '</button>'; }).join('');
+      cmsTabbar.innerHTML = tabs.map(function (tab) { return '<button type="button" data-cms-tab="' + tab[0] + '"' + (tab[0] === 'output' ? ' hidden' : '') + '>' + tab[1] + '</button>'; }).join('');
     }
     cmsTabbar.querySelectorAll('button').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.cmsTab === cmsTab)); });
     root.querySelector('.an-cms-workspace').dataset.anTab = cmsTab;
@@ -387,6 +461,17 @@
     cmsPanel.hidden = cmsTab !== 'design' && cmsTab !== 'marker';
     var article = $('an-cms-article');
     if (article) article.hidden = cmsTab !== 'article';
+    var outputBar = root.querySelector('.an-output-bar'), itemPicker = $('an-design-item-wrap');
+    if (outputBar && itemPicker) {
+      if (outputMode()) outputBar.prepend(itemPicker);
+      else root.querySelector('.an-task-fields').prepend(itemPicker);
+      outputBar.hidden = !outputMode();
+    }
+    var weeklyPicture = root.querySelector('.an-weekly-picture');
+    if (weeklyPicture) { weeklyPicture.hidden = outputMode() || !weeklyTarget(); weeklyPicture.inert = outputMode(); }
+    var hits = $('an-hit-layer');
+    if (hits) { hits.hidden = outputMode(); hits.inert = outputMode(); }
+    syncOutput();
     var area = root.querySelector('.an-workspace-area');
     if (area) {
       area.value = cmsTab === 'output' ? 'output' : 'design';
@@ -397,6 +482,10 @@
     var host = $('an-inspector'); if (!host) return;
     if (weeklySurface) { weeklySurface.destroy(); weeklySurface = null; }
     var picture = root.querySelector('.an-weekly-picture');
+    if (outputMode()) {
+      if (picture) { picture.hidden = true; picture.inert = true; }
+      host.replaceChildren(); return;
+    }
     if (picture) picture.hidden = !weeklyTarget();
     if (weeklyTarget()) {
       var itemId = designItemId || (data.items[0] && data.items[0].id);
@@ -416,9 +505,17 @@
       if (!picture) { picture = document.createElement('div'); picture.className = 'an-weekly-picture an-weekly-surface'; $('an-stage').after(picture); }
       picture.hidden = false;
       weeklySurface = window.AngeboteVorschauEditor.mount(picture, {
-        toolsHost: host.querySelector('.an-weekly-tools'), selectFirst: true,
+        toolsHost: host.querySelector('.an-weekly-tools'), selectFirst: true, itemId: itemId,
         select: function (entry) {
           if (entry.itemId) designItemId = entry.itemId;
+          syncArticleNavigation();
+          var item = data.items.find(function (item) { return item.id === designItemId; });
+          var defaults = group === 'plakat_article_overrides' ? renderer.plakatArtOverrideDefault() : renderer.flyerArtOverrideDefault();
+          var overrides = item && M.cmsFor(data, designTarget)[group][M.weeklyKey(item)] || {};
+          host.querySelectorAll('[data-cms-override]').forEach(function (field) {
+            field.dataset.cmsItem = designItemId;
+            field.value = overrides[field.dataset.cmsOverride] == null ? defaults[field.dataset.cmsOverride] : overrides[field.dataset.cmsOverride];
+          });
           if (cmsAction) { cmsTab = 'element'; cmsTabs(); renderCmsArticle(); }
         },
         begin: checkpoint,
@@ -460,7 +557,8 @@
     }
     var expanded = step === 'design' || !!(host.querySelector('details') && host.querySelector('details').open);
     if (!selection()) {
-      var first = elements().find(function (e) { return e.type === 'image' && !e.hidden; }) || elements()[0];
+      var candidates = designTarget === 'sheet' && designItemId ? elements().filter(function (e) { return e.item_id === designItemId; }) : elements();
+      var first = candidates.find(function (e) { return e.type === 'image' && !e.hidden; }) || candidates[0];
       selected = first ? first.id : '';
     }
     var current = selection();
@@ -501,7 +599,7 @@
   }
   function overlay() {
     var host = $('an-hit-layer'); if (!host) return;
-    if (weeklyTarget()) { host.replaceChildren(); return; }
+    if (weeklyTarget() || outputMode()) { host.replaceChildren(); return; }
     var size = activeSize();
     var visible = M.groupedElements(data, elements(), controlLayout());
     host.innerHTML = visible.filter(function (e) { return !e.hidden; }).map(function (e) {
@@ -523,7 +621,7 @@
   }
   async function preview() {
     if (!data || !$('an-stage-canvas')) return;
-    var ticket = ++paint, draft = M.clone(data), n = page;
+    var ticket = ++paint, draft = M.clone(data), n = page, target = designTarget, itemId = designItemId;
     var ownStyle = designTarget !== 'sheet' && !weeklyTarget();
     await D.previewChoices($('an-style-controls'), controlLayout(), draft.kind);
     if (weeklyTarget()) {
@@ -545,9 +643,9 @@
     if (noTargetItem) {
       var empty = document.createElement('canvas'), emptySize = activeSize();
       empty.width = emptySize.w; empty.height = emptySize.h; result = { canvas: empty, errors: [] };
-    } else result = designTarget === 'sheet'
+    } else result = target === 'sheet'
       ? await M.render(draft, n, 1.5)
-      : await M.renderTarget(draft, designTarget, designItemId, 1.5);
+      : await M.renderTarget(draft, target, itemId, 1.5);
     if (ticket !== paint || !data || !$('an-stage-canvas')) return;
     if (root._objectProperties) root._objectProperties.refresh();
     var canvas = result.canvas; canvas.id = 'an-stage-canvas'; canvas.setAttribute('aria-label', 'Live-Vorschau des Angebotsflyers');
@@ -556,7 +654,7 @@
     if (weeklyTarget() && weeklySurface) weeklySurface.update(canvas, canvas._weeklyElements || [], canvas._weeklyWidth || activeSize().w, canvas._weeklyHeight || activeSize().h);
     var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv', sheet: 'Sammelflyer' };
     var context = root.querySelector('.an-workspace-context');
-    if (context) context.textContent = 'Aktion „' + data.title + '“ · ' + names[designTarget] + ' · Gestaltung dieser Ausgabe';
+    if (context) context.textContent = 'Aktion „' + data.title + '“ · ' + names[designTarget] + (outputMode() ? ' · Ausgabevorschau' : ' · Gestaltung dieser Ausgabe');
     var size = activeSize();
     $('an-stage').style.aspectRatio = size.w + ' / ' + size.h;
     var canvasColumn = cmsAction && root.querySelector('.an-cms-canvas');
@@ -593,13 +691,14 @@
     $('an-page-prev').disabled = designTarget !== 'sheet' || page === 0;
     $('an-page-next').disabled = designTarget !== 'sheet' || page >= data.layout.pages.length - 1;
     $('an-page-tools').hidden = designTarget !== 'sheet';
-    $('an-design-item-wrap').hidden = designTarget === 'sheet';
+    $('an-design-item-wrap').hidden = designTarget === 'sheet' && outputMode();
     if ($('an-design-item')) $('an-design-item').value = designItemId;
+    syncArticleNavigation();
     root.querySelectorAll('[data-layout-target]').forEach(function (button) {
       button.setAttribute('aria-pressed', String(button.dataset.layoutTarget === designTarget));
     });
-    $('an-stage').hidden = previewMode !== 'paper' || weeklyTarget();
-    $('an-inspector').hidden = previewMode !== 'paper';
+    $('an-stage').hidden = previewMode !== 'paper' || (weeklyTarget() && !outputMode());
+    $('an-inspector').hidden = previewMode !== 'paper' || outputMode();
     $('an-other-preview').hidden = previewMode === 'paper';
     $('an-preview-hint').textContent = weeklyTarget() ? 'Originale CMS-Wochenvorlage' : previewMode === 'paper' ? 'Zum Auswählen auf ein Element tippen' : 'Ausgabevorschau · keine Änderung deiner Gestaltung';
     $('an-stage-help').hidden = weeklyTarget();
@@ -628,6 +727,7 @@
     ['articles', 'design', 'output'].forEach(function (s) { $('an-step-' + s).hidden = value !== s; });
     root.querySelectorAll('[data-step]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.step === value)); });
     renderInspector();
+    preview().catch(M.error);
   }
   function renderEditor() {
     if (taskFrame) { taskFrame.destroy(); taskFrame = null; }
@@ -660,9 +760,9 @@
       + '<nav class="an-tabs an-target-tabs" aria-label="Gestaltungsziel">'
       + '<button type="button" data-layout-target="card">Homepage / Kiosk</button><button type="button" data-layout-target="single">Einzelflyer</button>'
       + '<button type="button" data-layout-target="sheet">Sammelflyer</button><button type="button" data-layout-target="scale">Waage</button></nav>'
-      + '<label class="an-field" id="an-design-item-wrap"><span>Artikel für diese Gestaltung</span><select id="an-design-item">'
+      + '<div class="an-article-picker" id="an-design-item-wrap"><div class="an-article-navigation"><button type="button" data-article-prev aria-label="Vorheriger Artikel">←</button><span data-article-position role="status"></span><button type="button" data-article-next aria-label="Nächster Artikel">→</button></div><label class="an-field"><span>Artikel auswählen</span><select id="an-design-item">'
       + data.items.map(function (item) { return '<option value="' + item.id + '"' + (item.id === designItemId ? ' selected' : '') + '>' + M.esc(item.name || 'Neuer Artikel') + '</option>'; }).join('')
-      + '</select></label><div id="an-inspector" class="an-inspector"></div><div id="an-other-preview" hidden></div>'
+      + '</select></label></div><div id="an-inspector" class="an-inspector"></div><div id="an-other-preview" hidden></div>'
       + '<div class="an-stage" id="an-stage"><canvas id="an-stage-canvas"></canvas><div class="an-hit-layer" id="an-hit-layer"></div></div>'
       + '<p class="an-stage-info" id="an-stage-info" role="status"></p><div class="an-actions an-spread" id="an-page-tools"><button id="an-page-prev" aria-label="Vorherige Flyerseite">←</button><span id="an-page-label"></span><button id="an-page-next" aria-label="Nächste Flyerseite">→</button></div>'
       + '<p class="an-muted" id="an-stage-help">Tippen = auswählen · Ziehen = verschieben · Quadrat unten rechts = Größe ändern. Zahlenfelder funktionieren auch ohne Ziehen.</p></section></div>';
@@ -765,6 +865,11 @@
     var toolbar = root.querySelector('.an-toolbar'), actions = toolbar.querySelector('.an-actions');
     var full = D.fullscreen(root, toolbar);
     toolbar.appendChild($('an-overview')); left.appendChild(actions);
+    var context = document.createElement('section'); context.className = 'an-design-context';
+    context.setAttribute('aria-label', 'Aktuelle Gestaltung');
+    context.innerHTML = '<span data-action-design-context role="status"></span>';
+    var standard = $('an-defaults'); standard.textContent = 'Bereichsstandard laden'; standard.dataset.designLoadStandard = ''; context.appendChild(standard);
+    toolbar.after(context);
     actions.appendChild($('an-stage-info'));
     D.compactActions(actions); D.compactHelp(root, help); D.expandGroups(root);
     actions.classList.add('an-action-footer');
@@ -815,6 +920,7 @@
     tabs.onclick = function (event) { var button = event.target.closest('button'); if (button) select(button.dataset.editorPanelTab); };
     designFields.prepend(tabs, tools, styles, view); select('element');
     finishTaskFrame(layout, left, picture, view);
+    createOutputControls(picture);
   }
   function cmsPreviewTools() {
     root.classList.add('an-cms-preview');
@@ -825,34 +931,28 @@
     $('an-reload-saved').hidden = !!cmsSession;
     $('an-overview').textContent = cmsSession ? 'Artikel / Bilder' : 'Schließen';
     $('an-overview').onclick = function () { run(closeCmsPreview); };
-    if (cmsSession) {
+    {
       var area = document.createElement('select'); area.className = 'an-workspace-area'; area.setAttribute('aria-label', 'Aktionsbereich');
-      area.innerHTML = '<option value="articles">Artikel / Bilder</option><option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
+      area.innerHTML = (cmsSession ? '<option value="articles">Artikel / Bilder</option>' : '') + '<option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
       area.value = cmsTab === 'output' ? 'output' : 'design';
       area.onchange = function () {
         if (area.value === 'articles') run(closeCmsPreview);
-        else { cmsTab = area.value === 'output' ? 'output' : 'element'; cmsTabs(); }
+        else { cmsTab = area.value === 'output' ? 'output' : 'element'; renderInspector(); preview().catch(M.error); }
       };
       root.querySelector('.an-toolbar').prepend(area);
-      window.CMSAngeboteForm.areaNavigation(area);
+      if (cmsSession) window.CMSAngeboteForm.areaNavigation(area);
     }
     var panel = root.querySelector('.an-work-panel');
     panel.hidden = true;
     var previewPanel = $('an-preview');
     previewPanel.querySelector('h2').textContent = 'Vorschau';
-    var actions = document.createElement('div'); actions.className = 'an-actions an-cms-output';
-    actions.innerHTML = '<section><h3>Download</h3><p>Das aktuelle Motiv als PNG speichern.</p><button data-cms-download>Download</button></section>'
-      + '<section><h3>Drucken / PDF</h3><p>Die gewählte Ausgabe druckfertig öffnen.</p><button data-cms-print>Drucken / PDF</button></section>'
-      + '<section><h3>Einzelflyer</h3><p>Alle Artikel einzeln gestalten und drucken.</p><button data-cms-singles>Alle Einzelflyer</button></section>'
-      + '<section><h3>Waage</h3><p>Querformat vorbereiten. Versand erst nach Bestätigung.</p><button data-cms-scale>Auf die Waage</button></section>'
-      + '<section><h3>Qualitätsprüfung</h3><p>Bilder, Preise und Textgrenzen kontrollieren.</p><button data-cms-quality>Qualität prüfen</button></section>';
     cmsPanel = document.createElement('section'); cmsPanel.className = 'an-cms-style-options';
     cmsPanel.setAttribute('aria-label', 'Vorlage und Gestaltung');
     cmsPanel.appendChild($('an-design-options'));
     cmsTabbar = document.createElement('nav'); cmsTabbar.className = 'an-tabs an-cms-tabbar an-task-tabs'; cmsTabbar.setAttribute('aria-label', 'Gestaltungsbereich');
     cmsTabbar.onclick = function (event) {
       var button = event.target.closest('[data-cms-tab]'); if (!button) return;
-      cmsTab = button.dataset.cmsTab; cmsTabs();
+      cmsTab = button.dataset.cmsTab; renderInspector(); preview().catch(M.error);
     };
     var workspace = document.createElement('div'); workspace.className = 'an-cms-workspace' + (data.layout.cms ? ' an-cms-weekly' : '');
     var canvasColumn = document.createElement('div'); canvasColumn.className = 'an-cms-canvas';
@@ -860,7 +960,7 @@
     var article = document.createElement('div'); article.id = 'an-cms-article';
     var fields = document.createElement('div'); fields.className = 'an-task-fields';
     var view = document.createElement('div'); view.dataset.taskPanel = 'view';
-    var output = document.createElement('div'); output.dataset.taskPanel = 'output'; output.append(actions, $('an-quality-note'));
+    var output = document.createElement('div'); output.dataset.taskPanel = 'output';
     var notice = root.querySelector(':scope>.an-note');
     if (notice) output.appendChild(notice);
     var tabs = previewPanel.querySelector('.an-target-tabs');
@@ -879,35 +979,89 @@
     sideColumn.append(context, cmsTabbar, fields);
     if (!weeklyTarget()) $('an-inspector').before(article);
     finishTaskFrame(workspace, sideColumn, canvasColumn, view);
+    createOutputControls(canvasColumn);
     renderCmsArticle(); cmsLayout();
-    actions.querySelector('[data-cms-download]').onclick = function () {
-      run(async function () {
-        if (!(await qualityGate())) return;
-        var canvases;
-        if (designTarget === 'single') {
-          canvases = [];
-          for (var item of data.items) {
-            var result = await M.renderTarget(data, 'single', item.id, 2);
-            if (result.errors.length) throw M.problem(result.errors[0]);
-            canvases.push(result.canvas);
-          }
-        } else canvases = await M.preflight(data);
-        for (var index = 0; index < canvases.length; index++) {
-          var blob = await new Promise(function (resolve) { canvases[index].toBlob(resolve, 'image/png'); });
-          if (!blob) throw M.problem('Das Bild konnte nicht erstellt werden.');
-          var url = URL.createObjectURL(blob), link = document.createElement('a');
-          link.href = url; link.download = 'Angebot-' + (index + 1) + '.png'; link.click();
-          setTimeout(function (value) { URL.revokeObjectURL(value); }, 10000, url);
-        }
-      });
+  }
+  function createOutputControls(picture) {
+    var bar = document.createElement('section'); bar.className = 'an-output-bar'; bar.hidden = true;
+    bar.setAttribute('aria-label', 'Ausgabe der Vorschau');
+    bar.innerHTML = '<label class="an-field"><span>Ausgabeformat</span><select data-output-target aria-label="Ausgabeformat">'
+      + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option></select></label>'
+      + '<div class="an-output-actions"><button type="button" class="an-primary" data-cms-print>Drucken / PDF</button>'
+      + '<button type="button" data-cms-download>PNG herunterladen</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
+      + '<button type="button" data-cms-all-pages>Alle Seiten als PNG herunterladen</button></div>'
+      + '<details class="an-output-more"><summary>Weitere Ausgaben und Prüfung</summary><div class="an-output-actions">'
+      + '<button type="button" data-cms-quality>Qualität prüfen</button><button type="button" data-cms-scale>Für Waage vorbereiten</button>'
+      + (!cmsAction ? '<button type="button" data-output-publish>Für Homepage veröffentlichen</button>' : '') + '</div></details>'
+      + '<p data-export-state role="status"></p><button type="button" data-output-back>Zur Gestaltung</button>';
+    picture.prepend(bar);
+    var note = $('an-quality-note'); if (note) bar.appendChild(note);
+    bar.querySelector('[data-output-target]').onchange = function () {
+      root.querySelector('[data-layout-target="' + this.value + '"]').click();
     };
-    actions.querySelector('[data-cms-print]').onclick = function () { run(designTarget === 'single' ? printSingles : print); };
-    actions.querySelector('[data-cms-scale]').onclick = function () { run(scale); };
-    actions.querySelector('[data-cms-quality]').onclick = function () { run(function () { return qualityGate(true); }); };
-    actions.querySelector('[data-cms-singles]').onclick = function () {
-      designTarget = 'single'; designItemId = data.items[0] ? data.items[0].id : '';
-      selected = ''; renderInspector(); preview().catch(M.error);
+    bar.querySelector('[data-cms-download]').onclick = function () { run(function () { return exportOutput('png'); }); };
+    bar.querySelector('[data-cms-all-pages]').onclick = function () { run(function () { return exportOutput('png', null, true); }); };
+    bar.querySelector('[data-cms-print]').onclick = function () { run(function () { return exportOutput('print'); }); };
+    bar.querySelector('[data-cms-singles]').onclick = choosePrintArticles;
+    bar.querySelector('[data-cms-scale]').onclick = function () { run(scale); };
+    bar.querySelector('[data-cms-quality]').onclick = function () { run(function () { return qualityGate(true); }); };
+    var publishButton = bar.querySelector('[data-output-publish]');
+    if (publishButton) publishButton.onclick = function () { run(publish); };
+    bar.querySelector('[data-output-back]').onclick = function () {
+      if (cmsAction) { cmsTab = 'element'; renderInspector(); preview().catch(M.error); }
+      else setStep('design');
     };
+    syncOutput();
+  }
+  function choosePrintArticles() {
+    var dlg = document.createElement('dialog'); dlg.className = 'an-dialog an-batch-print';
+    dlg.setAttribute('aria-label', 'Einzelflyer auswählen');
+    dlg.innerHTML = '<form><h2>Einzelflyer auswählen</h2><p>Ein A4-Blatt je ausgewähltem Artikel.</p>'
+      + '<div class="an-actions"><button type="button" data-batch-all>Alle auswählen</button><button type="button" data-batch-none>Auswahl aufheben</button></div>'
+      + '<div class="an-batch-items">' + data.items.map(function (item) { return '<label class="an-check"><input type="checkbox" value="'
+        + M.esc(item.id) + '"' + (item.id === designItemId ? ' checked' : '') + '> ' + M.esc(item.name || 'Neuer Artikel') + '</label>'; }).join('')
+      + '</div><div class="an-actions"><button type="button" data-batch-cancel>Abbrechen</button><button type="submit" class="an-primary" data-batch-print></button></div></form>';
+    var previous = document.activeElement;
+    function ids() { return Array.from(dlg.querySelectorAll('input:checked'), function (box) { return box.value; }); }
+    function update() { var button = dlg.querySelector('[data-batch-print]'), count = ids().length; button.disabled = !count; button.textContent = 'Ausgewählte Einzelflyer drucken / PDF (' + count + ')'; }
+    function close() { dlg.close(); dlg.remove(); if (previous && previous.isConnected) previous.focus(); }
+    dlg.onchange = update;
+    dlg.querySelector('[data-batch-all]').onclick = function () { dlg.querySelectorAll('input').forEach(function (box) { box.checked = true; }); update(); };
+    dlg.querySelector('[data-batch-none]').onclick = function () { dlg.querySelectorAll('input').forEach(function (box) { box.checked = false; }); update(); };
+    dlg.querySelector('[data-batch-cancel]').onclick = close;
+    dlg.oncancel = function (event) { event.preventDefault(); close(); };
+    dlg.querySelector('form').onsubmit = function (event) { event.preventDefault(); var chosen = ids(); if (!chosen.length) return; close(); run(function () { return exportOutput('print', chosen); }); };
+    document.body.appendChild(dlg); dlg.showModal(); update();
+  }
+  async function exportOutput(method, itemIds, allPages) {
+    var draft = M.clone(data), target = itemIds ? 'single' : designTarget, currentPage = page;
+    var ids = itemIds ? itemIds.slice() : [designItemId], names = [], canvases = [];
+    if (!draft.items.length) throw M.problem('Bitte zuerst einen Artikel erfassen.');
+    if (!(await qualityGate(false, draft, target, ids))) return;
+    if (target === 'sheet') {
+      var pages = method === 'print' || allPages ? draft.layout.pages.map(function (_, index) { return index; }) : [currentPage];
+      for (var n of pages) {
+        var rendered = await M.render(draft, n, 2);
+        if (rendered.errors.length) throw M.problem(rendered.errors[0]);
+        canvases.push(rendered.canvas); names.push(draft.title + ' · Seite ' + (n + 1));
+      }
+    } else {
+      for (var id of ids) {
+        var item = draft.items.find(function (entry) { return entry.id === id; });
+        if (!item) throw M.problem('Der ausgewählte Artikel ist nicht mehr verfügbar. Bitte erneut auswählen.');
+        var result = await M.renderTarget(draft, target, id, 2);
+        if (result.errors.length) throw M.problem(result.errors[0]);
+        canvases.push(result.canvas); names.push(draft.title + ' · ' + item.name);
+      }
+    }
+    if (method === 'print') return printCanvases(canvases, names);
+    for (var index = 0; index < canvases.length; index++) {
+      var blob = imageDataBlob(canvases[index].toDataURL('image/png'));
+      if (!blob) throw M.problem('Das Bild konnte nicht erstellt werden.');
+      var url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = (names[index] + '-' + target).replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').slice(0, 160) + '.png';
+      link.click(); setTimeout(function (value) { URL.revokeObjectURL(value); }, 10000, url);
+    }
   }
   function addItem(it) {
     addItems([it]);
@@ -1174,8 +1328,15 @@
     record = response.action; data = M.clone(record.draft); config = response.config; dirty = false;
     renderEditor(); $('an-state').textContent = 'Entwurf gespeichert · Veröffentlichung bleibt getrennt';
   }
-  async function qualityGate(explicit) {
-    var result = await M.quality(data), status = $('an-quality-note');
+  async function qualityGate(explicit, snapshot, target, ids) {
+    var result = await M.quality(snapshot || data), status = $('an-quality-note');
+    if (target) {
+      ['errors', 'hints', 'unchecked'].forEach(function (key) {
+        result[key] = result[key].filter(function (issue) {
+          return (!issue.target || issue.target === target) && (target === 'sheet' || !issue.item_id || ids.indexOf(issue.item_id) >= 0);
+        });
+      });
+    }
     if (status) status.textContent = 'Qualitätsprüfung: ' + result.errors.length + ' Fehler · ' + result.hints.length + ' Hinweise · ' + result.unchecked.length + ' nicht geprüft';
     if (!explicit && !result.errors.length) return true;
     var choice = await M.qualityDialog(result, { goto: true, confirm: explicit });
@@ -1184,6 +1345,7 @@
     return !result.errors.length && !explicit;
   }
   function goToIssue(issue) {
+    if (cmsAction && outputMode()) cmsTab = 'element';
     var item = data.items.find(function (it) { return it.id === issue.item_id; });
     if (issue.field === 'meta') { if (!cmsAction) { setStep('articles'); $('an-action-meta').open = true; $('an-title').focus(); } return; }
     if (item && ['no-image', 'low-resolution'].includes(issue.code) || issue.code === 'data' && item && ['name', 'old_price', 'units', 'deposit'].includes(issue.field)) {
@@ -1283,7 +1445,10 @@
     }
     await printCanvases(canvases, data.items.map(function (item) { return data.title + ' · ' + item.name; }));
   }
-  window.addEventListener('afterprint', function () { document.body.classList.remove('an-printing'); });
+  window.addEventListener('afterprint', function () {
+    document.body.classList.remove('an-printing');
+    var container = $('an-print'); if (container) container.replaceChildren();
+  });
   async function scale() {
     if (!(await qualityGate())) return;
     await M.preflight(data);
@@ -1330,6 +1495,8 @@
   }
   function bind() {
     root.onkeydown = function (event) {
+      if (outputMode()) return;
+      if (event.ctrlKey || event.metaKey) liveControl = null;
       var undoButton = root.querySelector('[data-history=undo]'), redoButton = root.querySelector('[data-history=redo]');
       if (undoButton && redoButton) D.historyShortcut(event, function () { undoButton.click(); }, function () { redoButton.click(); });
     };
@@ -1355,12 +1522,19 @@
     root.onclick = async function (event) {
       var b = event.target.closest('button');
       if (!b || b.disabled || busy) return;
+      if (b.hasAttribute('data-article-prev') || b.hasAttribute('data-article-next')) {
+        var index = data.items.findIndex(function (item) { return item.id === designItemId; });
+        var next = data.items[index + (b.hasAttribute('data-article-prev') ? -1 : 1)];
+        if (next) selectArticle(next.id);
+        return;
+      }
       if (b.dataset.editorMode) {
         previewMode = b.dataset.editorMode; D.selectPreview(root, previewMode, 'data-editor-mode');
         preview().catch(M.error); return;
       }
       if (b.dataset.layoutTarget) {
-        designTarget = b.dataset.layoutTarget; designItemId = data.items[0] ? data.items[0].id : '';
+        designTarget = b.dataset.layoutTarget;
+        if (!data.items.some(function (item) { return item.id === designItemId; })) designItemId = data.items[0] ? data.items[0].id : '';
         if (root.querySelector('.an-object-dialog[open]')) {
           root.querySelectorAll('[data-cms-config]').forEach(function (control) {
             var value = cfg[control.dataset.cmsConfig];
@@ -1395,14 +1569,16 @@
         return;
       }
       if (b.dataset.step) setStep(b.dataset.step);
-      if (b.dataset.select) { selected = b.dataset.select; renderInspector(); overlay(); }
+      if (outputMode()) return;
+      if (b.dataset.select) { selected = b.dataset.select; syncSelectedArticle(); renderInspector(); overlay(); }
       if (b.dataset.remove) {
+        var removedIndex = data.items.findIndex(function (item) { return item.id === b.dataset.remove; });
         edit(function () { data.items = data.items.filter(function (it) { return it.id !== b.dataset.remove; });
           data.layout.pages.forEach(function (p) { p.elements = p.elements.filter(function (e) { return e.item_id !== b.dataset.remove; }); });
           M.ensureTargets(data);
           if (data.layout.mode === 'template') M.applyTemplate(data); page = Math.min(page, data.layout.pages.length - 1);
         });
-        if (designItemId === b.dataset.remove) designItemId = data.items[0] ? data.items[0].id : '';
+        if (designItemId === b.dataset.remove) designItemId = data.items.length ? data.items[Math.min(removedIndex, data.items.length - 1)].id : '';
         pendingImages.delete(b.dataset.remove); pendingImageUrls.delete(b.dataset.remove);
         renderItems(); renderInspector();
       }
@@ -1473,7 +1649,10 @@
             var updated = M.clone(data); await M.adoptWeekly(updated);
             checkpoint();
             if (!data.layout.cms) {
-              data = updated; M.rememberDesign(data); page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor(); return;
+              data = updated;
+              var inherited = M.designProvenanceState(updated.layout, 'sheet');
+              M.setDesignProvenance(data.layout, 'sheet', inherited.known ? inherited.name : 'Gespeicherter Bereichsstandard');
+              M.rememberDesign(data); page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor(); return;
             }
             if (designTarget === 'sheet') {
               M.cmsFor(data, 'sheet', true);
@@ -1484,6 +1663,8 @@
               M.cmsFor(data, designTarget, true);
               data.layout.cms.targets[designTarget] = M.clone(updated.layout.cms);
             }
+            var inherited = M.designProvenanceState(updated.layout, 'sheet');
+            M.setDesignProvenance(data.layout, designTarget, inherited.known ? inherited.name : 'Gespeicherter Bereichsstandard');
             M.rememberDesign(data, designTarget); page = 0; selected = ''; changed(); renderEditor();
           });
           return;
@@ -1505,6 +1686,8 @@
               if (designTarget === 'sheet') {
                 data.layout = M.clone(layout); data.layout.targets = targets; data.layout.pages = pages; data.layout.mode = mode;
                 data.layout.design_origin = oldLayout.design_origin;
+                if (oldLayout.design_provenance) data.layout.design_provenance = M.clone(oldLayout.design_provenance);
+                else delete data.layout.design_provenance;
                 data.layout.target_styles = {};
                 ['card', 'single', 'scale'].forEach(function (target) {
                   var style = M.styleOf(oldLayout, target); delete style.density; data.layout.target_styles[target] = style;
@@ -1520,7 +1703,11 @@
             if (designTarget === 'sheet') { M.applyTemplate(data); page = 0; }
             else if (standards) M.applyTargetStyleToAll(data, designTarget);
             else M.applyTargetTemplate(data, designTarget, designItemId);
-            if (b.id === 'an-defaults') M.rememberDesign(data, designTarget);
+            if (b.id === 'an-defaults') {
+              var inherited = M.designProvenanceState(layout, designTarget);
+              M.setDesignProvenance(data.layout, designTarget, inherited.known ? inherited.name : 'Gespeicherter Bereichsstandard');
+              M.rememberDesign(data, designTarget);
+            }
             selected = '';
           });
           renderEditor();
@@ -1540,7 +1727,19 @@
       }
     };
     root.onchange = function (event) {
+      if (outputMode()) {
+        if (event.target.id === 'an-design-item') selectArticle(event.target.value);
+        return;
+      }
       var target = event.target;
+      if (event.type === 'change' && target === liveControl) {
+        liveControl = null;
+        if (!target.validity.valid || target.type === 'number' && target.value === '') {
+          target.value = liveValue;
+          M.error(M.problem('Bitte einen gültigen Zahlenwert eingeben. Der letzte gültige Wert bleibt erhalten.'));
+        }
+        return;
+      }
       if (target.hasAttribute('data-cms-family') || target.hasAttribute('data-cms-variant')) {
         var kind = target.dataset.cmsKind;
         var family = M.styleFamilies.find(function (entry) { return entry[0] === target.value; });
@@ -1569,7 +1768,7 @@
           if (target.dataset.cmsConfig === 'plakatTemplate') data.layout.template = target.value;
         });
       }
-      if (target.id === 'an-cms-item') { designItemId = target.value; renderInspector(); preview().catch(M.error); }
+      if (target.id === 'an-cms-item') { selectArticle(target.value); return; }
       if (target.dataset.cmsOverride) {
         if (!target.reportValidity()) return;
         edit(function () {
@@ -1616,8 +1815,8 @@
           else preview().catch(M.error);
         });
       }
-      if (target.id === 'an-design-item') { designItemId = target.value; selected = ''; renderInspector(); preview().catch(M.error); }
-      if (target.id === 'an-select-element') { selected = target.value; renderInspector(); overlay(); }
+      if (target.id === 'an-design-item') { selectArticle(target.value); return; }
+      if (target.id === 'an-select-element') { selected = target.value; syncSelectedArticle(); renderInspector(); overlay(); }
       if (target.dataset.elementProp && selection()) {
         var e = selection();
         edit(function () { e[target.dataset.elementProp] = target.type === 'checkbox' ? target.checked : target.type === 'number' || target.type === 'range' ? Number(target.value) : target.value; }, true);
@@ -1638,12 +1837,24 @@
         if (data.layout.cms && field === 'name') renderInspector();
       }
     };
+    root.oninput = function (event) {
+      var target = event.target;
+      if (busy || outputMode() || !target.matches('input[type=color],input[type=range],input[type=number]')) return;
+      if (!target.matches('[data-cms-config],[data-cms-override],[data-style],[data-element-prop]')) return;
+      if (!target.validity.valid || (target.type === 'number' && target.value === '')) return;
+      if (liveControl !== target) { checkpoint(); liveControl = target; }
+      liveValue = target.value;
+      liveApplying = true;
+      try { root.onchange(event); } finally { liveApplying = false; }
+    };
     $('an-stage').onpointerdown = function (event) {
+      if (outputMode()) return;
       var resize = event.target.closest('[data-resize]'), rotate = event.target.closest('[data-rotate]');
       var hit = resize || rotate || event.target.closest('[data-select]');
       if (!hit || busy || event.button !== 0) return;
       event.preventDefault();
-      selected = resize ? hit.dataset.resize : rotate ? hit.dataset.rotate : hit.dataset.select; renderInspector();
+      selected = resize ? hit.dataset.resize : rotate ? hit.dataset.rotate : hit.dataset.select;
+      syncSelectedArticle(); renderInspector();
       var e = selection(), size = activeSize(), rect = $('an-stage').getBoundingClientRect(), startX = event.clientX, startY = event.clientY, x = e.x, y = e.y, w = e.w, h = e.h, moved = false;
       var surface = window.AngeboteVorschauEditor;
       var centerX = rect.left + (x + w / 2) / size.w * rect.width, centerY = rect.top + (y + h / 2) / size.h * rect.height;
@@ -1695,6 +1906,7 @@
       document.addEventListener('pointermove', drag); document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
     };
     $('an-stage').onkeydown = function (e) {
+      if (outputMode()) return;
       var key = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       if (key && selection()) { e.preventDefault(); move(key[0] * (e.shiftKey ? 10 : 1), key[1] * (e.shiftKey ? 10 : 1)); }
     };

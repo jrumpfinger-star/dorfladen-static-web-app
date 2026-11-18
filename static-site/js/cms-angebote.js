@@ -199,6 +199,14 @@ window.CMSAngebote = (function () {
       Array.from(actions.children).filter(function (button) { return !button.hasAttribute('data-save') && !button.hasAttribute('data-cancel'); }).forEach(function (button) { more.lastElementChild.appendChild(button); });
       actions.prepend(more);
       var layerAnchors = new Map();
+      var pointerLayer = null;
+      function clearLayerPointer() { pointerLayer = null; }
+      function releaseLayerPointer() {
+        var layer = pointerLayer; pointerLayer = null;
+        if (layer && layer.classList.contains('open') && (!document.activeElement || document.activeElement === document.body)) {
+          var anchor = layerAnchors.get(layer); if (anchor) anchor.focus({ preventScroll: true });
+        }
+      }
       var sequence = 0, dragRow = null, pasteRow = null, saving = false, resetApproved = false;
       dlg.classList.toggle('an-capture-drinks', drinks);
       function hideLayer(layer) {
@@ -225,8 +233,22 @@ window.CMSAngebote = (function () {
         positionLayer(layer, anchor);
       }
       function updateLayers() { layerAnchors.forEach(function (anchor, layer) { positionLayer(layer, anchor); }); }
+      function dismissArtLayer(event) {
+        layerAnchors.forEach(function (anchor, layer) {
+          if (!layer.classList.contains('cms-art-dd') || layer.contains(event.target)) return;
+          var rect = layer.getBoundingClientRect(), style = getComputedStyle(layer);
+          var border = parseFloat(style.borderRightWidth) || 0;
+          var gutter = layer.offsetWidth - layer.clientWidth;
+          var onScrollbar = gutter > 0 && event.clientX >= rect.right - border - gutter
+            && event.clientX <= rect.right - border && event.clientY >= rect.top
+            && event.clientY <= rect.bottom;
+          if (onScrollbar) pointerLayer = layer;
+          else hideLayer(layer);
+        });
+      }
       function prepareLayer(layer) {
-        layer.setAttribute('popover', 'auto');
+        layer.setAttribute('popover', layer.classList.contains('cms-art-dd') ? 'manual' : 'auto');
+        layer.addEventListener('pointerdown', function () { pointerLayer = layer; });
         layer.addEventListener('toggle', function (event) {
           if (event.newState === 'closed') {
             layer.classList.remove('open'); layerAnchors.delete(layer);
@@ -630,6 +652,10 @@ window.CMSAngebote = (function () {
       function close() {
         phone.removeEventListener('change', resizeCapture);
         document.removeEventListener('paste', onPaste);
+        document.removeEventListener('pointerup', releaseLayerPointer);
+        document.removeEventListener('pointercancel', releaseLayerPointer);
+        document.removeEventListener('pointerdown', dismissArtLayer);
+        window.removeEventListener('blur', clearLayerPointer);
         window.removeEventListener('resize', updateLayers);
         layerAnchors.forEach(function (anchor, layer) { hideLayer(layer); });
         dlg.close(); dlg.remove(); activeDialog = null; dirty = false;
@@ -682,7 +708,21 @@ window.CMSAngebote = (function () {
         catalog().then(function (items) {
           if (!row.isConnected || inp.value.trim().toLocaleLowerCase('de') !== query) return;
           dd.replaceChildren();
-          items.filter(function (it) { return [it.bezeichnung, it.artikelnummer, it.strichcode].join(' ').toLocaleLowerCase('de').includes(query); }).slice(0, 12).forEach(function (source) {
+          items.map(function (item, index) {
+            var name = String(item.bezeichnung || '').toLocaleLowerCase('de');
+            var number = String(item.artikelnummer || '').toLocaleLowerCase('de');
+            var barcode = String(item.strichcode || '').toLocaleLowerCase('de');
+            var fields = [name, number, barcode];
+            if (!fields.some(function (value) { return value.includes(query); })) return null;
+            var rank = number === query || barcode === query ? 0
+              : name === query ? 1
+                : number.startsWith(query) || barcode.startsWith(query) ? 2
+                  : name.startsWith(query) ? 3
+                    : name.split(/[\s-]+/).some(function (word) { return word.startsWith(query); }) ? 4 : 5;
+            return { item: item, index: index, rank: rank };
+          }).filter(Boolean).sort(function (a, b) { return a.rank - b.rank || a.index - b.index; })
+            .slice(0, 12).forEach(function (result) {
+            var source = result.item;
             var b = document.createElement('button'); b.type = 'button'; b.className = 'cms-art-opt';
             var name = document.createElement('strong'); name.textContent = source.bezeichnung;
             var detail = document.createElement('small'); detail.textContent = (source.artikelnummer || '') + ' · ' + (source.strichcode || '') + ' · Stamm-VK ' + M.money(M.cents(source.vk)) + ' €';
@@ -725,11 +765,16 @@ window.CMSAngebote = (function () {
           (next || (forward ? dd.firstElementChild : dd.lastElementChild))?.focus();
         }
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); hideLayer(dd); input(event.target.closest('.cms-ang-row'), 'produkt').focus(); }
+        if (event.key === 'Tab') { pointerLayer = null; hideLayer(dd); }
       });
       host.addEventListener('focusout', function (event) {
         var wrap = event.target.closest('.cms-art-wrap');
-        if (wrap && !wrap.contains(event.relatedTarget)) hideLayer(wrap.querySelector('.cms-art-dd'));
+        if (wrap && !wrap.contains(event.relatedTarget)) {
+          var layer = wrap.querySelector('.cms-art-dd');
+          if (pointerLayer !== layer) hideLayer(layer);
+        }
       });
+      document.addEventListener('pointerdown', dismissArtLayer);
       host.addEventListener('dragstart', function (event) { dragRow = event.target.closest('.cms-ang-row'); if (dragRow) event.dataTransfer.setData('text/plain', dragRow.id); });
       host.addEventListener('dragover', function (event) { if (dragRow) event.preventDefault(); });
       host.addEventListener('drop', function (event) {
@@ -813,6 +858,9 @@ window.CMSAngebote = (function () {
         }
       };
       dlg.addEventListener('scroll', updateLayers, true);
+      document.addEventListener('pointerup', releaseLayerPointer);
+      document.addEventListener('pointercancel', releaseLayerPointer);
+      window.addEventListener('blur', clearLayerPointer);
       window.addEventListener('resize', updateLayers);
       activeDialog = dlg; document.addEventListener('paste', onPaste);
       document.body.appendChild(dlg); dlg.showModal();

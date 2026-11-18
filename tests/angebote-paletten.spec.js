@@ -17,6 +17,10 @@ async function offlineCms(page, visualContent = false) {
   const dishes = ['Kartoffelrösti mit Kräuterquark', 'Linseneintopf mit Gemüse', 'Ofengemüse mit Feta', 'Spinatknödel mit Parmesan', 'Fischfilet mit Kartoffelgratin'];
   const state = { design: defaults(), config: {}, writes: [], errors: [], imageReads: 0, weekReads: 0 };
   page.on('pageerror', (error) => state.errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:'))
+      state.errors.push(message.location().url + ': ' + message.text());
+  });
   await page.addInitScript(() => { localStorage.setItem('cms_auth_token', 'palette-test'); localStorage.setItem('dl_cookies', '1'); });
   await page.route('**/*', async (route) => {
     const request = route.request(), url = new URL(request.url());
@@ -54,6 +58,7 @@ async function offlineCms(page, visualContent = false) {
   await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
   await page.evaluate(() => sessionStorage.setItem('cms_auth_ok', JSON.parse(document.getElementById('cms-pw-hash').textContent)));
   await page.reload();
+  if (state.errors.length) throw new Error('CMS page errors: ' + state.errors.join(' | '));
   await expect(page.locator('#an-design-root [data-style=family]')).toHaveCount(10);
   if (visualContent) {
     await expect(page.locator('#an-design-root [data-design-products]')).toContainText('mit Produktbildern');
@@ -76,6 +81,260 @@ async function area(page, top, sub, selector) {
   }, { top, sub });
   const root = page.locator(selector); await expect(root.locator('.an-designer-settings')).toBeVisible(); return root;
 }
+
+test('TC-F66-01: actual price-tag selects expose their full text and fit computed inner height', async ({ page }) => {
+  await offlineCms(page);
+  const root = page.locator('#an-design-root');
+  await tool(root, 'Werkzeuge', 5);
+  await root.locator('[data-object-properties=price]').click();
+  const controls = [
+    ['select[data-style=price_shape]', 'explosion', 'Zacken'],
+    ['select[data-style=old_price_strike]', 'single', 'Einfach durchgestrichen'],
+    ['select[data-style=price_preset]', 'price-image', 'Rot/Gelb'],
+  ];
+  const measured = [];
+  async function measureSelect(dialog, selector, value, expectedText) {
+    const select = dialog.locator(selector);
+    await expect(select).toHaveCount(1);
+    await select.selectOption(value);
+    const metrics = await select.evaluate((element) => {
+      const style = getComputedStyle(element), rect = element.getBoundingClientRect();
+      const px = (value) => parseFloat(value) || 0;
+      const innerHeight = element.clientHeight - px(style.paddingTop) - px(style.paddingBottom);
+      const textContext = document.createElement('canvas').getContext('2d');
+      textContext.font = style.font;
+      const textMetrics = textContext.measureText(element.selectedOptions[0].textContent);
+      return { height: rect.height, clientHeight: element.clientHeight, innerHeight,
+        lineHeight: px(style.lineHeight), paddingTop: px(style.paddingTop), paddingBottom: px(style.paddingBottom),
+        borderTop: px(style.borderTopWidth), borderBottom: px(style.borderBottomWidth),
+        fontHeight: (textMetrics.fontBoundingBoxAscent || textMetrics.actualBoundingBoxAscent)
+          + (textMetrics.fontBoundingBoxDescent || textMetrics.actualBoundingBoxDescent),
+        appearance: style.appearance, webkitAppearance: style.webkitAppearance,
+        targetHeight: matchMedia('(pointer:coarse),(max-width:559px)').matches ? 44 : 32,
+        selectedText: element.selectedOptions[0].textContent };
+    });
+    expect(metrics.height, selector + ' has a visible native select').toBeGreaterThan(0);
+    expect(metrics.lineHeight, selector + ' line-height fits its inner box').toBeLessThanOrEqual(metrics.innerHeight);
+    expect(metrics.fontHeight, selector + ' glyphs fit the actual content box').toBeLessThanOrEqual(metrics.innerHeight);
+    expect(metrics.height, selector + ' preserves its mouse/touch target').toBeGreaterThanOrEqual(metrics.targetHeight);
+    expect(['auto', 'menulist']).toContain(metrics.appearance);
+    expect(['menulist', 'auto']).toContain(metrics.webkitAppearance);
+    expect(metrics.selectedText).toBe(expectedText);
+    measured.push({ selector, metrics });
+  }
+  const priceDialog = root.locator('.an-object-dialog[data-object-group=price]');
+  await expect(priceDialog).toBeVisible();
+  for (const [selector, value, expectedText] of controls) await measureSelect(priceDialog, selector, value, expectedText);
+  await priceDialog.locator('button[type=submit]').click();
+  await root.locator('[data-object-properties=text]').click();
+  const textDialog = root.locator('.an-object-dialog[data-object-group=text]');
+  await expect(textDialog).toBeVisible();
+  await measureSelect(textDialog, 'select[data-style=old_price_font]', 'Arial', 'Arial');
+  await page.screenshot({ path: test.info().outputPath('f66-select-text.png') });
+  expect(measured).toHaveLength(4);
+});
+
+test('TC-F65-03: saved area standard is confirmed, isolated, undoable, and draft-only', async ({ page }) => {
+  const state = await offlineCms(page);
+  const standard = await page.evaluate(() => structuredClone(window.WochenangeboteRenderer.CFG_DEFAULTS));
+  standard.plakat_nameSize = 27;
+  standard.flyer_nameSize = 69;
+  standard.imgRotation = 33;
+  state.config.design_config = standard;
+  const root = await area(page, 'cfg-plakat', 'sec-plakat', '#cfg-sec-plakat');
+  const size = root.locator('#cfg-plakat-nameSize');
+  const flyerSize = page.locator('#cfg-flyer-nameSize');
+  const sharedRotation = page.locator('#cfg-imgRotation');
+  const originalFlyerSize = await flyerSize.inputValue();
+  const originalRotation = await sharedRotation.inputValue();
+  await size.evaluate((element) => {
+    element.focus();
+    element.value = '31';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(root.locator('[data-design-history=undo]')).toBeEnabled();
+  await root.locator('[data-design-load-standard]').click();
+  await expect(page.locator('.cms-confirm-overlay')).toBeVisible();
+  await page.locator('.cms-confirm-btn-cancel').click();
+  await expect(size).toHaveValue('31');
+  await root.locator('[data-design-load-standard]').click();
+  await page.locator('.cms-confirm-btn-ok').click();
+  await expect(size).toHaveValue('27');
+  await expect(flyerSize).toHaveValue(originalFlyerSize);
+  await expect(sharedRotation).toHaveValue(originalRotation);
+  await root.locator('[data-design-history=undo]').click();
+  await expect(size).toHaveValue('31');
+  expect(state.writes).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F65-03: CMS provenance snapshots track effective target config and overrides without cross-target changes', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await offlineCms(page);
+  state.config.design_config = { plakatTemplate:'classic-red', flyerTemplate:'modern-magazine',
+    design_provenance:{ schema:1, targets:{
+      plakat:{ name:'Markt historisch', snapshot:{ template:'classic-red', fields:{}, colors:{} } },
+      flyer:{ name:'Waage historisch', snapshot:{ template:'modern-magazine', fields:{}, colors:{} } }
+    } } };
+  const result = await page.evaluate(async () => {
+    const M=window.AngeboteModel, data=M.blank('weekly'), item=M.item();
+    item.name='Saft'; item.price_cents=249; data.items.push(item);
+    await M.adoptWeekly(data);
+    const inherited=['sheet','card','single'].map((target) => M.designProvenanceState(data.layout,target));
+    const initial=JSON.stringify(data.layout);
+    M.designSnapshot(data.layout,'card');
+    const immutable=initial===JSON.stringify(data.layout);
+    M.cmsFor(data,'card',true).config.plakat_nameColor='#123456';
+    const ownChanged=M.designProvenanceState(data.layout,'card').changed;
+    const sheetUnchanged=!M.designProvenanceState(data.layout,'sheet').changed;
+    M.setDesignProvenance(data.layout,'card','Kachel');
+    M.cmsFor(data,'card').config.flyer_nameColor='#abcdef';
+    const foreignUnchanged=!M.designProvenanceState(data.layout,'card').changed;
+    M.cmsFor(data,'card').plakat_article_overrides.saft={nameScale:123};
+    const overrideChanged=M.designProvenanceState(data.layout,'card').changed;
+    M.setDesignProvenance(data.layout,'card','Kachel');
+    const standard=M.clone(data.layout);
+    M.cmsFor(data,'card').config.plakat_nameColor='#ffffff';
+    M.inheritTargetStyle(data.layout,'card',standard);
+    const adoptedUnchanged=!M.designProvenanceState(data.layout,'card').changed;
+    const otherBefore=JSON.stringify(data.layout.design_provenance.targets.card);
+    M.setDesignProvenance(data.layout,'sheet','Sammelflyer');
+    const otherPreserved=otherBefore===JSON.stringify(data.layout.design_provenance.targets.card);
+    return { inherited, immutable, ownChanged, sheetUnchanged, foreignUnchanged, overrideChanged, adoptedUnchanged, otherPreserved,
+      savedName:M.savedCmsProvenance({design_provenance:{schema:1,targets:{plakat:{name:'Historisch',snapshot:{}}}}},'plakat').name };
+  });
+  expect(result.inherited.map((entry) => entry.name)).toEqual(['Markt historisch','Markt historisch','Waage historisch']);
+  expect(result.inherited.every((entry) => entry.known && !entry.changed)).toBe(true);
+  for (const key of ['immutable','ownChanged','sheetUnchanged','foreignUnchanged','overrideChanged','adoptedUnchanged','otherPreserved'])
+    expect(result[key],key).toBe(true);
+  expect(result.savedName).toBe('Historisch');
+  expect(state.writes).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F66-03: color, range, and number input previews immediately and remains undoable without change or blur', async ({ page }) => {
+  const state = await offlineCms(page);
+  const root = page.locator('#an-design-root');
+  async function sendInput(selector, value) {
+    await tool(root, 'Werkzeuge', 5);
+    await root.locator('[data-object-properties=price]').click();
+    const dialog = root.locator('.an-object-dialog[data-object-group=price]');
+    const control = dialog.locator(selector);
+    const before = await control.inputValue();
+    const count = await root.locator('[data-style]').count();
+    await control.evaluate((element, next) => {
+      element.focus();
+      element.value = next;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    }, String(value));
+    expect(await page.evaluate(() => document.activeElement.dataset.style)).toBe(selector.match(/data-style=["']?([^"'\]]+)/)[1]);
+    expect(await root.locator('[data-style]').count()).toBe(count);
+    await expect(control).toHaveValue(String(value));
+    await dialog.locator('button[type=submit]').click();
+    await expect(root.locator('[data-design-history=undo]')).toBeEnabled();
+    await root.locator('[data-design-history=undo]').click();
+    await expect(root.locator(selector)).toHaveValue(before);
+  }
+  await sendInput('[data-style=color]', '#123456');
+  await sendInput('[data-style="decoration.price_scale"]', '125');
+
+  const global = await area(page, 'cfg-plakat', 'sec-plakat', '#cfg-sec-plakat');
+  await tool(global, 'Werkzeuge', 5);
+  await global.locator('[data-object-properties=text]').click();
+  const globalDialog = global.locator('.an-object-dialog[data-object-group=text]');
+  const number = global.locator('#cfg-plakat-nameSize');
+  await expect(number).toBeVisible();
+  const numberBefore = await number.inputValue();
+  const originalCount = await global.locator('#cfg-plakat-nameSize').count();
+  await number.evaluate((element) => {
+    element.focus();
+    element.value = '22';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('cfg-plakat-nameSize');
+  expect(await global.locator('#cfg-plakat-nameSize').count()).toBe(originalCount);
+  await expect(number).toHaveValue('22');
+  await globalDialog.locator('button[type=submit]').click();
+  await expect(global.locator('[data-design-history=undo]')).toBeEnabled();
+  await global.locator('[data-design-history=undo]').click();
+  await expect(global.locator('#cfg-plakat-nameSize')).toHaveValue(numberBefore);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F66-05: responsive designer footer stays compact, readable, and touch-safe', async ({ page }) => {
+  const state = await offlineCms(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(BASE + '/angebote.html?bestand=1');
+  const root = page.locator('#an-root');
+  await expect(root.getByRole('button', { name: '+ Getränkeaktion anlegen', exact: true })).toBeVisible();
+  await root.getByRole('button', { name: '+ Getränkeaktion anlegen', exact: true }).click();
+  await expect(root).toHaveClass(/an-task-editor/);
+  await root.locator('#an-title').evaluate((element) => {
+    element.focus();
+    element.value += ' Live';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const footer = root.locator('.an-action-footer');
+  const status = footer.locator('#an-state');
+  await expect(status).not.toBeEmpty();
+
+  async function measure(width) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect.poll(() => footer.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(0);
+    return footer.evaluate((element) => {
+      const box = (node) => {
+        const rect = node.getBoundingClientRect();
+        return { left:rect.left, right:rect.right, top:rect.top, bottom:rect.bottom, width:rect.width, height:rect.height };
+      };
+      const children = Array.from(element.children).filter((node) => {
+        const style = getComputedStyle(node), rect = node.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      }).map((node) => ({ node, box:box(node), name:node.className || node.dataset.action || node.tagName }));
+      const buttons = Array.from(element.querySelectorAll('button')).filter((button) => {
+        const style = getComputedStyle(button), rect = button.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      }).map((button) => ({ name:button.getAttribute('aria-label') || button.textContent.trim(), ...box(button) }));
+      const sorted = children.map((child) => child.box).sort((a,b) => a.top-b.top);
+      let rows=0,rowBottom=-Infinity;
+      for (const child of sorted) {
+        if (child.top >= rowBottom) rows++;
+        rowBottom=Math.max(rowBottom,child.bottom);
+      }
+      const overlaps = [];
+      for (let i=0;i<buttons.length;i++) for (const other of buttons.slice(i+1)) {
+        if (buttons[i].left < other.right && buttons[i].right > other.left
+            && buttons[i].top < other.bottom && buttons[i].bottom > other.top)
+          overlaps.push(buttons[i].name + '/' + other.name);
+      }
+      const coarse = matchMedia('(pointer:coarse),(max-width:559px)').matches;
+      const stateNode = element.querySelector('#an-state'), stateBox = stateNode.getBoundingClientRect();
+      const toolColumn = element.closest('.an-task-tools').getBoundingClientRect();
+      const containerStyle=getComputedStyle(element.closest('.an-task-tools'));
+      return { rows, width:element.getBoundingClientRect().width, toolWidth:toolColumn.width,
+        flexWrap:getComputedStyle(element).flexWrap, containerType:containerStyle.containerType, containerName:containerStyle.containerName,
+        statusWidth:stateBox.width, statusTop:Math.round(stateBox.top), statusHeight:stateBox.height,
+        statusFullRow:stateBox.width >= element.getBoundingClientRect().width * .9,
+        statusRowAlone:children.filter((child) => child.box.top < stateBox.bottom && child.box.bottom > stateBox.top)
+          .every((child) => child.node === stateNode),
+        overlaps, minimum:coarse?44:32, buttons };
+    });
+  }
+  const wide = await measure(1440);
+  expect(wide.toolWidth).toBeGreaterThanOrEqual(500);
+  expect(wide.rows, JSON.stringify(wide)).toBeLessThanOrEqual(1);
+  expect(wide.overlaps).toEqual([]);
+  const narrow = await measure(390);
+  expect(narrow.toolWidth).toBeLessThan(500);
+  expect(narrow.rows).toBeLessThanOrEqual(2);
+  expect(narrow.statusFullRow).toBe(true);
+  expect(narrow.statusRowAlone).toBe(true);
+  expect(narrow.overlaps).toEqual([]);
+  if (narrow.minimum === 44) for (const button of narrow.buttons) {
+    expect(button.height, button.name).toBeGreaterThanOrEqual(44);
+    expect(button.width, button.name).toBeGreaterThanOrEqual(44);
+  }
+  expect(state.writes).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
 
 test('TC-F61-01/02/03: all legacy families retain exact colours; palettes change pixels, never geometry', { tag: '@ohne-layout' }, async ({ page }) => {
   await offlineCms(page);

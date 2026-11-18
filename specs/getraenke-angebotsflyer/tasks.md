@@ -210,3 +210,17 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF70 | Offene responsive F31/F32-Lücken und Generatorquellen schließen; idempotente CMS-Ausgaben erzeugen | GF64, GF68 | TC-F31-01..02, TC-F32-01..02 |
 | GF71 | Explizite Testzuordnung, asynchroner lokaler Server, Fehlerbehandlung und gezielte Testbefehle fertigstellen | GF67 | TC-F37-01..02 |
 | GF72 | Gezielte Abnahme F31-F37, Hilfe und Regression; Commit/PR #15/Feature-Preview mit read-only Nachweis, kein main-Merge | GF69, GF70, GF71 | TC-F31-01..TC-F37-02, Preview-Smoke |
+# Folgeauftrag F65-F69
+
+| Aufgabe | Abhaengigkeit | Testvertrag |
+| --- | --- | --- |
+| GF111 Herkunft und Standardquellen bereichsbezogen implementieren | F65-Spec/Plan | TC-F65-01..03 |
+| GF112 Auswahltexte, Trefferreihenfolge und Scrollfokus beheben | F66-Spec/Plan | TC-F66-01..02, TC-F66-04 |
+| GF113 Artikelpfeile und CMS-Workspacebreite korrigieren | F67-Spec/Plan | TC-F67-01..02 |
+| GF114 Reine Ausgabe, zieltreuer Einzel-/Sammelauftrag | GF113 | TC-F68-01..03 |
+| GF115 A4-Paginierung und echter Modal-PDF-Nachweis | GF114 | TC-F69-01 |
+| GF116 Vier Ansichten, Bestandsregression und Bedienhilfe abnehmen | GF111..GF115, GF117..GF118 | TC-F65..F69 |
+| GF117 Live-Rendering kontinuierlicher Eingaben erhalten | F66-Spec/Plan | TC-F66-03 |
+| GF118 Responsive Fussleiste an Werkzeugbreite anpassen | F66-Spec/Plan | TC-F66-05 |
+
+Abgenommen: Globale Designer F65/F66 17/17 und CMS-Aktionseditor F65–F69 (Einzel-/Sammelausgabe, PNG, Navigation, Live) jeweils auf den vier Pflichtansichten grün; API-Provenienz (`test_angebote.py`) grün. Der echte Scrollbalken-Test läuft nur Desktop/iPad (Headless-Einschränkung).

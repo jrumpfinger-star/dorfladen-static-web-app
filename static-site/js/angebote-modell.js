@@ -421,6 +421,85 @@ window.AngeboteModel = (function () {
     STYLE_KEYS.forEach(function (key) { if (effective[key] != null) result[key] = effective[key]; });
     return result;
   }
+  function designSnapshot(layout, target) {
+    if (layout.cms && target !== 'scale') {
+      var source = cmsFor({ layout: layout }, target), kind = target === 'single' ? 'flyer' : 'plakat';
+      var other = kind === 'plakat' ? 'flyer' : 'plakat', config = {}, original = source.config;
+      Object.keys(original).forEach(function (key) {
+        if (key === 'design_provenance' || key === 'tplColors' || key === other + 'Template'
+            || key.indexOf(other + '_') === 0 || key === 'priceFont' + (other === 'plakat' ? 'Plakat' : 'Flyer')
+            || key === 'savingsScale' + (other === 'plakat' ? 'Plakat' : 'Flyer')) return;
+        config[key] = clone(original[key]);
+      });
+      var template = original[kind + 'Template'], colors = original.tplColors || {};
+      if (colors[kind + ':' + template] || colors[template]) {
+        config.tplColors = {};
+        config.tplColors[kind + ':' + template] = clone(colors[kind + ':' + template] || colors[template]);
+      }
+      var cms = { config: config };
+      cms[kind + '_article_overrides'] = clone(source[kind + '_article_overrides'] || {});
+      return { cms: cms };
+    }
+    var style = styleOf(layout, target);
+    delete style.density;
+    return clone(style);
+  }
+  function savedCmsProvenance(config, kind) {
+    var provenance = config && config.design_provenance;
+    var entry = provenance && provenance.schema === 1 && provenance.targets && provenance.targets[kind];
+    return entry && typeof entry.name === 'string' && entry.name.trim() && entry.snapshot ? clone(entry) : null;
+  }
+  function stableDesignJson(value) {
+    function sorted(input) {
+      if (Array.isArray(input)) return input.map(sorted);
+      if (!input || typeof input !== 'object') return input;
+      var output = {};
+      Object.keys(input).sort().forEach(function (key) { output[key] = sorted(input[key]); });
+      return output;
+    }
+    return JSON.stringify(sorted(value));
+  }
+  function setDesignProvenance(layout, target, name, snapshot) {
+    if (!layout || !['sheet', 'card', 'single', 'scale'].includes(target)
+        || typeof name !== 'string' || !name.trim()) return false;
+    var provenance = layout.design_provenance;
+    if (!provenance || provenance.schema !== 1 || !provenance.targets || typeof provenance.targets !== 'object') {
+      provenance = { schema: 1, targets: {} };
+      layout.design_provenance = provenance;
+    }
+    provenance.targets[target] = { name: name.trim().slice(0, 80),
+      snapshot: clone(snapshot || designSnapshot(layout, target)) };
+    return true;
+  }
+  function designProvenanceState(layout, target) {
+    var entry = layout && layout.design_provenance && layout.design_provenance.schema === 1
+      && layout.design_provenance.targets && layout.design_provenance.targets[target];
+    if (!entry || typeof entry.name !== 'string' || !entry.snapshot) {
+      return { known: false, name: '', changed: false, label: 'Gespeicherte Gestaltung · Vorlage unbekannt' };
+    }
+    var changed = stableDesignJson(entry.snapshot) !== stableDesignJson(designSnapshot(layout, target));
+    return { known: true, name: entry.name, changed: changed,
+      label: entry.name + (changed ? ' · angepasst' : '') };
+  }
+  function inheritTargetStyle(layout, target, standard) {
+    if (!layout || !standard || !['card', 'single', 'scale'].includes(target)) return false;
+    var source = standard.layout || standard;
+    var style = designSnapshot(source, target);
+    if (source.cms && target !== 'scale') {
+      if (!layout.cms) return false;
+      var cms = clone(cmsFor({ layout: source }, target));
+      delete cms.targets;
+      layout.cms.targets = Object.assign({}, layout.cms.targets || {});
+      layout.cms.targets[target] = cms;
+    } else {
+      layout.target_styles = Object.assign({}, layout.target_styles || {});
+      layout.target_styles[target] = style;
+    }
+    var sourceState = designProvenanceState(source, target);
+    if (sourceState.known) setDesignProvenance(layout, target, sourceState.name, style);
+    else if (layout.design_provenance && layout.design_provenance.targets) delete layout.design_provenance.targets[target];
+    return true;
+  }
   function setTargetStyle(layout, target, apply) {
     if (!layout.target_styles) layout.target_styles = {};
     var style = styleOf(layout, target); delete style.density;
@@ -758,6 +837,11 @@ window.AngeboteModel = (function () {
     data.layout.cms = { config: config, plakat_article_overrides: {}, flyer_article_overrides: {} };
     data.layout.template = config.plakatTemplate; data.layout.density = 6;
     applyTemplate(data);
+    ['sheet', 'card', 'single'].forEach(function (target) {
+      var entry = savedCmsProvenance(saved, target === 'single' ? 'flyer' : 'plakat');
+      if (entry) setDesignProvenance(data.layout, target, entry.name);
+      else if (data.layout.design_provenance && data.layout.design_provenance.targets) delete data.layout.design_provenance.targets[target];
+    });
   }
   function cmsFor(data, target, editing) {
     var base = data.layout.cms;
@@ -1655,6 +1739,8 @@ window.AngeboteModel = (function () {
     savedState: savedState, duplicateAction: duplicateAction, cmsFor: cmsFor,
     transferOptions: transferOptions, transferPlan: transferPlan, transferApply: transferApply,
     propertyGroup: propertyGroup, objectValues: objectValues, rememberDesign: rememberDesign, originStatus: originStatus, resetObject: resetObject,
+    designSnapshot: designSnapshot, setDesignProvenance: setDesignProvenance, savedCmsProvenance: savedCmsProvenance,
+    designProvenanceState: designProvenanceState, inheritTargetStyle: inheritTargetStyle,
     hash: hash, theme: theme, problem: problem, dialog: dialog, error: error, cardHTML: cardHTML,
     decorationDefaults: decorationDefaults,
     styleFamilies: styleFamilies, familyOf: familyOf, palettes: palettes, paletteColors: paletteColors,

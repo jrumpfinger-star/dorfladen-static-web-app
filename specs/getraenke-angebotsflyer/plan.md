@@ -997,3 +997,51 @@ Preview-Namespace. Kein Merge oder Produktivdeployment.
   API/Renderer ohne Viewportbezug einmal, keine pauschale Gesamtsuite.
 - Erst nach Abnahme committen und bestehenden PR #15 aktualisieren; isolierte
   Feature-Preview und ausgelieferte Dateien read-only verifizieren.
+# Folgeauftrag F65-F69: Designkontext und eindeutige Ausgabe
+
+Quelle bleibt der gemeinsame Aktionsentwurf. Die bestehende Artikelauswahl
+erhaelt zentrale Wechsel-/Zaehlerlogik, statt einen zweiten Zustand
+einzufuehren. Ein gemeinsamer Exportauftrag friert Entwurf, Ausgabeziel
+und Artikel-IDs/Seitenumfang beim Klick ein; bestehende Renderer bleiben.
+Ausgabe suspendiert echte Direktbearbeitung, nicht nur deren sichtbare Griffe.
+Die CMS-Aussenhuelle darf keinen zweiten leeren Split neben dem inneren
+Workspace erzeugen. Druck verwendet proportionale, unteilbare A4-Seitenboxen.
+
+Dateikarte:
+
+- `static-site/js/angebote-design.js`, `static-site/cms.js`: gemeinsame
+  Herkunftsanzeige, Bereichsstandard-Adapter und globale Vorlagenpfade.
+- `static-site/js/angebote-modell.js`, `api/shared/angebote.py`: optionale
+  versionierte Herkunft pro Bereich/Ziel, bestehendes `design_origin`
+  unveraendert. Guards, Snapshot und historischer Name statt Listenindex.
+- `static-site/js/angebote-editor.js`: Artikelpfeile, reiner Ausgabemodus,
+  gemeinsame Exportaufloesung, Mehrfachauswahl und Druckcleanup.
+- `static-site/js/cms-angebote.js`: Produktsuche-Fokus/Scrolllebenszyklus
+  und Herkunft bei Aktionserstellung.
+- `static-site/css/angebote.css`: Auswahltext-Innenhoehe, Workspacebreite,
+  kompakte Ausgabe-/Artikelsteuerung, gezielte Druckregeln.
+- Existierende Playwright-/Pythondateien und Bedienhilfe: TC-F65 bis F69
+  einschliesslich echter PDF-Seiten und aller vier Pflichtansichten.
+
+Standardquellen: Sonderaktionen kopieren CMS `design_config`; Getraenke
+`design.drinks`; Wochenplan Web/Druck nutzen `hp_design_config`, Homepage
+ihre eigene Gestaltung. Bestehende Aktionen behalten ihren Snapshot.
+Globale Standardrueckkehr ist ein bestaetigter Entwurfsschritt des aktiven
+Bereichs, keine alte sofort persistierende Gesamtresetfunktion.
+Keine echten Schreibtests, kein Produktionsdeploy, kein main-Merge.
+
+---
+
+# Ergaenzung: Live-Eingaben (TC-F66-03)
+
+Kontinuierliche Farb-, Range- und Zahlfelder rendern bereits auf `input`.
+Die bestehende Aenderungslogik bleibt gemeinsam; pro Eingabeserie entsteht
+nur ein Undo-Schritt. Kein Neuaufbau des aktiven Feldes/Farbwaehlers.
+Globale Designer und einzelne Aktionen verwenden dieselbe Zusage.
+
+## Ergaenzung: Relevante Produktsuche (TC-F66-04)
+
+`cms-angebote.js` sortiert passende Artikel stabil: exakter Artikel-/Strichcode,
+exakter Name, Codepraefix, Namenspraefix, Wortanfang, sonstiger Teiltreffer.
+Die bestehende sichtbare Trefferbegrenzung auf zwoelf bleibt, wird aber erst
+nach der Relevanzsortierung angewandt.

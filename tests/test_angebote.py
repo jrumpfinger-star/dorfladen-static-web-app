@@ -312,6 +312,67 @@ class AngeboteTests(unittest.TestCase):
             invalid["layout"]["decoration"] = {key: "keine Farbe"}
             self.error(400, normalize, invalid)
 
+    def test_TC_F65_03_design_provenance_roundtrip_validation_and_legacy_compatibility(self):
+        data = draft()
+        data["layout"]["design_origin"] = {"schema": 1, "targets": {"sheet": {"background": "#ffffff"}}}
+        data["layout"]["design_provenance"] = {
+            "schema": 1, "targets": {"sheet": {"name": "Sommer & Markt", "snapshot": {
+                "template": "modern-mag-xl", "color": "#123456",
+                "decoration": {"header_background": "#abcdef"}}}}}
+        normalized = normalize(data)
+        self.assertEqual(normalized["layout"]["design_provenance"], data["layout"]["design_provenance"])
+        self.assertEqual(normalized["layout"]["design_origin"], data["layout"]["design_origin"])
+        legacy = draft()
+        self.assertNotIn("design_provenance", normalize(legacy)["layout"])
+
+        cms_snapshot = {"cms": {"config": {"plakatTemplate": "classic-red", "plakat_nameColor": "#123456",
+                                           "tplColors": {"plakat:classic-red": {"titleColor": "#abcdef"}}},
+                                "plakat_article_overrides": {"historical_article": {"nameScale": 120}}}}
+        data["layout"]["design_provenance"]["targets"]["sheet"]["snapshot"] = cms_snapshot
+        self.assertEqual(normalize(data)["layout"]["design_provenance"], data["layout"]["design_provenance"])
+        for invalid_cms in (
+                {"config": {"plakatTemplate": "missing"}, "plakat_article_overrides": {}},
+                {"config": {"plakatTemplate": "classic-red", "plakat_nameColor": "red"}, "plakat_article_overrides": {}},
+                {"config": {"plakatTemplate": "classic-red", "flyerTemplate": "classic-red"}, "plakat_article_overrides": {}},
+                {"config": {"plakatTemplate": "classic-red"}, "plakat_article_overrides": {"article": 42}},
+                {"config": {"plakatTemplate": "classic-red"}, "plakat_article_overrides": {}, "targets": {}},
+        ):
+            with self.subTest(cms_snapshot=invalid_cms):
+                broken = copy.deepcopy(data)
+                broken["layout"]["design_provenance"]["targets"]["sheet"]["snapshot"] = {"cms": invalid_cms}
+                self.error(400, normalize, broken)
+
+        invalid_values = (
+            {"schema": True, "targets": {}},
+            {"schema": 2, "targets": {}},
+            {"schema": 1, "targets": {"unknown": {"name": "Test", "snapshot": {"template": "land"}}}},
+            {"schema": 1, "targets": {"sheet": {"name": "", "snapshot": {"template": "land"}}}},
+            {"schema": 1, "targets": {"sheet": {"name": "x" * 81, "snapshot": {"template": "land"}}}},
+            {"schema": 1, "targets": {"sheet": {"name": "Test", "snapshot": {"template": "missing"}}}},
+            {"schema": 1, "targets": {"sheet": {"name": "Test", "snapshot": {"unknown": True}}}},
+            {"schema": 1, "targets": {"sheet": {"name": "Test", "snapshot": {"template": "land"}, "extra": 1}}},
+        )
+        for value in invalid_values:
+            with self.subTest(value=value):
+                broken = draft()
+                broken["layout"]["design_provenance"] = value
+                self.error(400, normalize, broken)
+
+        design = self.service.design()
+        design["homepage"] = {"tagBg": "#123456"}
+        design["design_provenance"] = {
+            "schema": 1, "targets": {"homepage": {"name": "Startseite", "snapshot": {"tagBg": "#123456"}}}}
+        saved = self.service.save_design(design["version"], design)
+        self.assertEqual(saved["design_provenance"], design["design_provenance"])
+        older_client = copy.deepcopy(saved)
+        del older_client["design_provenance"]
+        self.assertEqual(self.service.save_design(saved["version"], older_client)["design_provenance"],
+                         design["design_provenance"])
+        bad = self.service.design()
+        bad["design_provenance"] = {
+            "schema": 1, "targets": {"homepage": {"name": "Startseite", "snapshot": {"tagBg": "rot"}}}}
+        self.error(400, self.service.save_design, bad["version"], bad)
+
     def test_TC_F61_all_legacy_cms_palette_roles_survive_snapshot_roundtrip(self):
         roles = {key: "#123456" for key in (
             "headerBg", "headerAccent", "dateColor", "dividerColor", "priceBarBg",

@@ -3,7 +3,7 @@ const BASE = process.env.TEST_URL || 'http://127.0.0.1:8818';
 const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6hywAAAAASUVORK5CYII=';
 
 async function setup(page) {
-  const state = { actions: new Map(), revisions: new Map(), writes: [], errors: [], offerReads: [], imageLookups: [], failSave: false, failReads: false, images: 0 };
+  const state = { actions: new Map(), revisions: new Map(), writes: [], errors: [], offerReads: [], imageLookups: [], failSave: false, failReads: false, images: 0, featureArchive: false };
   await page.clock.install({ time: new Date('2026-11-18T12:00:00Z') });
   await page.addInitScript((hash) => {
     if (window !== window.top) return;
@@ -40,7 +40,7 @@ async function setup(page) {
         state.offerReads.push(token);
         const visible = [...state.actions.values()].filter((action) => token === 'test-cms-session'
           || action.valid_to >= '2026-11-18');
-        return json({ success: true, config: { scale_enabled: false, scale_scope: 'preview', feature_archive_enabled: false },
+        return json({ success: true, config: { scale_enabled: false, scale_scope: 'preview', feature_archive_enabled: state.featureArchive },
           data: visible.flatMap((action) => action.items.map((it, i) => ({
             id: it.id, dl_angeboteid: it.id, dl_aktion_id: action.aktion_id, dl_aktion_titel: action.title,
             dl_gueltig_von: action.valid_from, dl_gueltig_bis: action.valid_to, dl_sortierung: i,
@@ -300,10 +300,15 @@ test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artik
   await expect(page.locator('#an-stage-info')).not.toHaveClass(/an-error/);
   await showTab(page, 'Ausgabe');
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download', exact: true }).click();
-  expect((await download).suggestedFilename()).toBe('Angebot-1.png');
+  await page.locator('[data-cms-download]').click();
+  expect((await download).suggestedFilename()).toContain('Seite 2');
   await page.screenshot({ path: test.info().outputPath('getraenke-vorschau.png') });
-  await page.getByRole('button', { name: 'Alle Einzelflyer', exact: true }).click();
+  await page.locator('[data-output-target]').selectOption('single');
+  await page.locator('[data-cms-singles]').click();
+  const selection = page.getByRole('dialog', { name: 'Einzelflyer auswählen', exact: true });
+  await selection.getByRole('button', { name: 'Alle auswählen', exact: true }).click();
+  await expect(selection.locator('input:checked')).toHaveCount(6);
+  await selection.getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await showTab(page, 'Element');
   await expect(page.locator('#an-design-item option')).toHaveCount(6);
   await page.locator('#an-overview').click();
@@ -726,8 +731,14 @@ test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelauf
   expect(state.errors).toEqual([]);
 });
 
-async function openPreview(page, kind, count, withImage) {
+async function openPreview(page, kind, count, withImage, density) {
   const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
+  if (density) await dlg.locator('[data-density]').selectOption(String(density));
+  while (await rows.count() < count) {
+    const add = dlg.getByRole('button', { name: '+ Artikel', exact: true });
+    if (!(await add.isVisible())) await dlg.locator('[data-capture-back]').click();
+    await add.click();
+  }
   if (kind === 'drinks') for (let i = 0; i < count; i++) await fillDrink(rows.nth(i), i + 1);
   else for (let i = 0; i < count; i++) {
     await focusRow(rows.nth(i));
@@ -756,6 +767,9 @@ const saveDesign = async (page) => {
 };
 // Unter 1000 px Dialogbreite liegen die Einstellungen hinter Reitern; sonst stehen sie neben der Vorschau.
 const showTab = async (page, name) => {
+  const root = page.locator('#an-root');
+  if (name === 'Ausgabe') { await selectArea(root, 'output'); return; }
+  if (await root.getAttribute('data-output-mode') === 'true') await selectArea(root, 'design');
   const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
   if (await tab.isVisible()) await tab.click();
 };
@@ -767,6 +781,267 @@ async function workspaceView(root, mode) {
   await expect(select.or(toggle).locator('visible=true').first()).toBeVisible();
   if (!(await select.isVisible())) await toggle.click();
   await select.selectOption(mode);
+}
+
+test('TC-F65-03: Aktion laedt benannten Bereichsstandard bestaetigt und behaelt fremde Ziele', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const root = page.locator('#an-root');
+  const standard = await page.evaluate(() => {
+    const M = window.AngeboteModel, layout = M.blank('drinks').layout;
+    layout.background = '#224466';
+    M.setDesignProvenance(layout, 'sheet', 'Fruehlingsvorlage');
+    return layout;
+  });
+  await page.route('**/api/angebote-verwaltung?view=design', route => route.fulfill({ json: { success: true, design: { drinks: standard } } }));
+  await workspaceView(root.locator('.an-cms-workspace'), 'inputs');
+  await showTab(page, 'Vorlage');
+  const color = root.locator('input[data-style=background]');
+  await color.fill('#552244');
+  await root.locator('#an-defaults').click();
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await expect(color).toHaveValue('#552244');
+  expect(state.writes).toHaveLength(1);
+  await root.locator('#an-defaults').click();
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Vorlage anwenden', exact: true }).click();
+  await expect(root.locator('[data-action-design-context]')).toContainText('Fruehlingsvorlage');
+  await expect(color).toHaveValue('#224466');
+  await saveDesign(page);
+  expect(state.writes[1].layout.targets.card).toEqual(state.writes[0].layout.targets.card);
+  expect(state.writes[1].items).toEqual(state.writes[0].items);
+  await root.locator('#an-overview').click();
+  await allWeeks(page);
+  await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+  await expect(root.locator('[data-action-design-context]')).toContainText('Fruehlingsvorlage');
+  expect(state.writes).toHaveLength(2);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F65-01: Neue Getraenkeaktion uebernimmt die Herkunft des gespeicherten Bereichsstandards', async ({ page }) => {
+  const state = await setup(page);
+  state.featureArchive = true;
+  await page.goto(BASE + '/angebote.html');
+  const layout = await page.evaluate(() => {
+    const M = window.AngeboteModel, layout = M.blank('drinks').layout;
+    M.setDesignProvenance(layout, 'sheet', 'Sommerangebote');
+    return layout;
+  });
+  await page.route('**/api/angebote-verwaltung?view=design', route => route.fulfill({ json: { success: true, design: { drinks: layout } } }));
+  await openPreview(page, 'drinks', 1);
+  await expect(page.locator('[data-action-design-context]')).toContainText('Sommerangebote');
+  await expect(page.locator('[data-article-prev]')).toBeDisabled();
+  await expect(page.locator('[data-article-next]')).toBeDisabled();
+  expect(state.writes[0].layout.design_provenance.targets.sheet.name).toBe('Sommerangebote');
+  expect(state.errors).toEqual([]);
+});
+
+test.use({ launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] } });
+test('TC-F66-04: Exakter Name und exakter Code stehen vor den ersten zwoelf Teiltreffern', async ({ page }) => {
+  await setup(page);
+  const catalog = Array.from({ length: 14 }, (_, index) => ({
+    bezeichnung: 'Brezel Snack ' + (index + 1), artikelnummer: 'ART-' + index, strichcode: '1508' + index, vk: 1.99
+  }));
+  catalog.push({ bezeichnung: 'Breze', artikelnummer: '', strichcode: '508', vk: 0.79 });
+  await page.route('**/api/preisliste?all=1', route => route.fulfill({ json: { groups: { Backwaren: catalog } } }));
+  await page.goto(BASE + '/angebote.html');
+  const dlg = await create(page, 'weekly'), input = dlg.locator('.cms-ang-row').first().locator('[data-f=produkt]');
+  const dd = dlg.locator('.cms-ang-row').first().locator('.cms-art-dd');
+  for (const [index, query] of ['Breze', '508'].entries()) {
+    if (index) await input.fill('');
+    await input.fill(query);
+    await expect(dd.locator('button')).toHaveCount(12);
+    await expect(dd.locator('button').first().locator('strong')).toHaveText('Breze');
+  }
+});
+test('TC-F66-02: Produktauswahl bleibt beim echten Scrollbalkenziehen geöffnet', async ({ page }) => {
+  test.skip(['mobile', 'tablet-hoch'].includes(test.info().project.name));
+  const state = await setup(page);
+  await page.route('**/api/preisliste?all=1', route => route.fulfill({ json: { groups: { Artikel: Array.from({ length: 12 }, (_, i) => ({
+    bezeichnung: 'Breze ' + (i + 1), artikelnummer: 'BREZE-' + i, vk: 1.99
+  })) } } }));
+  await page.goto(BASE + '/angebote.html');
+  await page.addStyleTag({ content: '.cms-art-dd{scrollbar-width:auto!important;scrollbar-gutter:stable}.cms-art-dd::-webkit-scrollbar{width:16px;background:#eee}.cms-art-dd::-webkit-scrollbar-thumb{background:#777}' });
+  const dlg = await create(page, 'weekly'), row = dlg.locator('.cms-ang-row').first();
+  const input = row.locator('[data-f=produkt]'), dd = row.locator('.cms-art-dd');
+  await input.fill('Breze');
+  await expect(dd.locator('button')).toHaveCount(12);
+  await expect(dd).toBeVisible();
+  const scrollbar = await dd.evaluate(el => {
+    const r = el.getBoundingClientRect(), style = getComputedStyle(el);
+    return { x: r.right - (el.offsetWidth - el.clientWidth) / 2 - parseFloat(style.borderRightWidth) / 2,
+      top: r.top, height: r.height, gutter: el.offsetWidth - el.clientWidth, overflow: el.scrollHeight > el.clientHeight };
+  });
+  expect(scrollbar.overflow).toBe(true);
+  expect(scrollbar.gutter).toBeGreaterThan(2);
+  await drag(page, { x: scrollbar.x, y: scrollbar.top + 36 },
+    { x: scrollbar.x, y: scrollbar.top + scrollbar.height - 30 });
+  await expect(dd).toBeVisible();
+  await expect.poll(() => dd.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  await expect(input).toHaveValue('Breze');
+  await dd.locator('button').last().click();
+  await expect(input).toHaveValue('Breze 12');
+  await expect(dd).toBeHidden();
+  await input.fill('Breze');
+  await expect(dd).toBeVisible();
+  const track = await dd.boundingBox();
+  await page.mouse.click(scrollbar.x, track.y + track.height - 18);
+  await expect(dd).toBeVisible();
+  await expect.poll(() => dd.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  await input.press('Escape');
+  await expect(dd).toBeHidden();
+  await input.fill('Brez');
+  await expect(dd).toBeVisible();
+  await dd.hover();
+  await page.mouse.wheel(0, 150);
+  await expect(dd).toBeVisible();
+  await row.locator('[data-f=preis]').click();
+  await expect(dd).toBeHidden();
+  await input.fill('Breze');
+  await expect(dd).toBeVisible();
+  await input.press('Tab');
+  await expect(dd).toBeHidden();
+  expect(state.writes).toHaveLength(0);
+  expect(state.errors).toEqual([]);
+});
+
+for (const kind of ['weekly', 'drinks']) {
+  test(`TC-F66-03: Gestaltung rendert waehrend input ohne Auswahlwechsel (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, kind, 2);
+    const root = page.locator('#an-root');
+    await workspaceView(root.locator('.an-cms-workspace'), 'inputs');
+    await showTab(page, 'Vorlage');
+    const color = kind === 'drinks' ? root.locator('input[data-style=background]') : root.locator('[data-cms-config=plakat_decoBgColor]');
+    const before = await color.inputValue();
+    const canvas = root.locator('#an-stage-canvas');
+    const image = await canvas.evaluate(el => el.toDataURL());
+    await color.focus();
+    await color.evaluate(el => { window.__liveInput = el; el.value = '#112233'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await expect.poll(() => canvas.evaluate(el => el.toDataURL())).not.toBe(image);
+    const intermediate = await canvas.evaluate(el => el.toDataURL());
+    await color.evaluate(el => { el.value = '#556677'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await expect.poll(() => canvas.evaluate(el => el.toDataURL())).not.toBe(intermediate);
+    expect(await color.evaluate(el => el === window.__liveInput && el === document.activeElement)).toBe(true);
+    await root.locator('.an-compact-actions [data-history=undo]').click();
+    await showTab(page, 'Vorlage');
+    await expect(color).toHaveValue(before);
+    expect(state.writes).toHaveLength(1);
+    expect(state.errors).toEqual([]);
+  });
+
+  test(`TC-F67/68/69: Artikelwechsel und reine zieltreue Einzelausgabe (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, kind, 3);
+    const root = page.locator('#an-root'), workspace = root.locator('.an-cms-workspace');
+    await workspaceView(workspace, 'inputs');
+    const sizes = await root.evaluate(el => {
+      const outer = el.querySelector('.an-layout').getBoundingClientRect(), inner = el.querySelector('#an-preview').getBoundingClientRect();
+      return { outer: outer.width, inner: inner.width };
+    });
+    expect(sizes.inner).toBeGreaterThan(sizes.outer * .95);
+    await expect(root.locator('[data-article-position]')).toBeVisible();
+    await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 2 von 3');
+    await root.getByRole('button', { name: 'Vorheriger Artikel', exact: true }).click();
+    await root.locator('[data-action-target]').selectOption('single');
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 1 von 3');
+    await expect(root.getByRole('button', { name: 'Vorheriger Artikel', exact: true })).toBeDisabled();
+    await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 2 von 3');
+    await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 3 von 3');
+    await expect(root.getByRole('button', { name: 'Nächster Artikel', exact: true })).toBeDisabled();
+    await root.locator('#an-design-item').selectOption({ index: 0 });
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 1 von 3');
+    await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 2 von 3');
+    await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
+    await expect(root.locator('[data-article-position]')).toHaveText('Artikel 3 von 3');
+    await expect(root.getByRole('button', { name: 'Nächster Artikel', exact: true })).toBeDisabled();
+    await root.getByRole('button', { name: 'Vorheriger Artikel', exact: true }).click();
+    const selectedId = await root.locator('#an-design-item').inputValue();
+    const writes = state.writes.length;
+    await selectArea(root, 'output');
+    await expect(root.locator('[data-cms-print]')).toBeVisible();
+    await expect(root.locator('#an-save')).toBeHidden();
+    await expect(root.locator('#an-hit-layer')).toBeHidden();
+    await expect(root.locator('.an-weekly-picture')).toBeHidden();
+    await expect(root.locator('#an-design-item')).toHaveValue(selectedId);
+    const readonlyCanvas = root.locator('#an-stage-canvas');
+    const readonlyImage = await readonlyCanvas.evaluate(el => el.toDataURL());
+    await root.locator('#an-stage').press('Delete');
+    await root.locator('#an-stage').press('Control+z');
+    expect(await readonlyCanvas.evaluate(el => el.toDataURL())).toBe(readonlyImage);
+    await root.locator('[data-cms-print]').click();
+    await expect.poll(() => page.evaluate(() => window.__printed)).toBe(true);
+    await expect(page.locator('#an-print .an-print-page')).toHaveCount(1);
+    expect(await page.locator('#an-print img').getAttribute('alt')).toContain('2');
+    const pdf = await page.pdf({ path: test.info().outputPath(kind + '-einzelflyer.pdf'), preferCSSPageSize: true, printBackground: true });
+    expect((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length).toBe(1);
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    const download = page.waitForEvent('download');
+    await root.locator('[data-cms-download]').click();
+    expect((await download).suggestedFilename()).toContain('2');
+    await root.locator('[data-cms-singles]').click();
+    const batch = page.getByRole('dialog', { name: 'Einzelflyer auswählen', exact: true });
+    await expect(batch.locator('input:checked')).toHaveCount(1);
+    await batch.getByRole('button', { name: 'Auswahl aufheben', exact: true }).click();
+    await expect(batch.locator('[data-batch-print]')).toBeDisabled();
+    await batch.locator('input').nth(1).check();
+    await batch.locator('input').nth(2).check();
+    await page.evaluate(() => { window.__printed = false; });
+    await batch.locator('[data-batch-print]').click();
+    await expect.poll(() => page.evaluate(() => window.__printed)).toBe(true);
+    await expect(page.locator('#an-print .an-print-page')).toHaveCount(2);
+    const batchPdf = await page.pdf({ path: test.info().outputPath(kind + '-auswahl.pdf'), preferCSSPageSize: true, printBackground: true });
+    expect((batchPdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length).toBe(2);
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await root.locator('[data-output-target]').selectOption('card');
+    const cardDownload = page.waitForEvent('download');
+    await root.locator('[data-cms-download]').click();
+    const card = await cardDownload;
+    expect(card.suggestedFilename()).toContain('2-card.png');
+    const png = await require('node:fs/promises').readFile(await card.path());
+    const targetSize = await page.evaluate(() => window.AngeboteModel.targetSizes.card);
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([targetSize.w * 2, targetSize.h * 2]);
+    await selectArea(root, 'design');
+    expect(state.writes).toHaveLength(writes);
+    expect(state.errors).toEqual([]);
+  });
+
+  test(`TC-F69-01: Sammeldruck hat exakt zwei A4-Seiten ohne Restbogen (${kind})`, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, kind, kind === 'drinks' ? 6 : 7, false, kind === 'drinks' ? 4 : undefined);
+    const picker = page.locator('#an-design-item'), ids = await picker.locator('option').evaluateAll(options => options.map(option => option.value));
+    await picker.selectOption(ids.at(-1));
+    await expect(page.locator('#an-page-label')).toHaveText('Seite 2 / 2');
+    await picker.selectOption(ids[0]);
+    await expect(page.locator('#an-page-label')).toHaveText('Seite 1 / 2');
+    await showTab(page, 'Ausgabe');
+    await expect(page.locator('#an-page-label')).toBeVisible();
+    await page.locator('#an-page-next').click();
+    await expect(page.locator('#an-page-label')).toHaveText('Seite 2 / 2');
+    const download = page.waitForEvent('download');
+    await page.locator('[data-cms-download]').click();
+    expect((await download).suggestedFilename()).toContain('Seite 2');
+    await page.locator('[data-cms-print]').click();
+    await expect.poll(() => page.evaluate(() => window.__printed)).toBe(true);
+    const pdf = await page.pdf({ path: test.info().outputPath(kind + '-sammeldruck.pdf'), preferCSSPageSize: true, printBackground: true });
+    const content = pdf.toString('latin1');
+    expect((content.match(/\/Type\s*\/Page\b/g) || []).length).toBe(2);
+    const mediaBoxes = [...content.matchAll(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/g)];
+    expect(mediaBoxes.length).toBeGreaterThan(0);
+    for (const box of mediaBoxes) { expect(Number(box[1])).toBeCloseTo(595, 0); expect(Number(box[2])).toBeCloseTo(842, 0); }
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await expect(page.locator('#an-print .an-print-page')).toHaveCount(0);
+    await expect(page.locator('body')).not.toHaveClass(/an-printing/);
+    expect(state.writes).toHaveLength(1);
+    expect(state.errors).toEqual([]);
+  });
 }
 
 test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', async ({ page }) => {
@@ -838,6 +1113,7 @@ test('TC-F60-03/TC-F62-02: Aktionsreiter zeigen nur ihren Inhalt und behalten Zi
   await expect(page.locator('.an-cms-style-options')).toBeHidden();
   await expect(page.locator('[data-cms-download]')).toBeVisible();
   await expect(page.locator('[data-cms-print]')).toBeVisible();
+  await page.locator('.an-output-more>summary').click();
   await expect(page.locator('[data-cms-scale]')).toBeVisible();
   await expect(page.locator('[data-action-target]')).toHaveValue('card');
   await showTab(page, 'Ansicht');
@@ -1090,7 +1366,12 @@ for (const [surface, path] of SURFACES) {
         if (mobile) await workspaceView(workspace, 'picture');
         await expect(stage.locator('canvas')).toBeVisible();
         const picture = await stage.boundingBox(), dialog = await modal.boundingBox();
-        await expect(page.locator('.an-task-picture').locator('input,select,.an-direct-tools,.an-actions,h2,.an-note')).toHaveCount(0);
+        await expect(page.locator('.an-task-picture').locator(':is(input,select,.an-direct-tools,.an-actions,h2,.an-note):visible')).toHaveCount(0);
+        const contentWidths = await page.locator('#an-root').evaluate(el => ({
+          outer: el.querySelector('.an-layout').getBoundingClientRect().width,
+          inner: el.querySelector('#an-preview').getBoundingClientRect().width
+        }));
+        expect(contentWidths.inner).toBeGreaterThan(contentWidths.outer * .95);
         if (mobile) {
           await expect(tools).toBeHidden();
           await workspaceView(workspace, 'inputs');
@@ -1257,6 +1538,7 @@ test('TC-F24-01: Buttons und Felder sind klar erkennbar (Kontrast)', async ({ pa
   await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
+  await showTab(page, 'Artikel');
   const result = await page.evaluate(() => {
     const parse = (value) => value.match(/[\d.]+/g).slice(0, 4).map(Number);
     const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
@@ -1268,10 +1550,10 @@ test('TC-F24-01: Buttons und Felder sind klar erkennbar (Kontrast)', async ({ pa
     };
     const dialog = document.querySelector('.an-cms-preview-modal');
     const white = [255, 255, 255];
-    check('Standard', [...dialog.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Download'), white);
-    check('Standard klein', [...dialog.querySelectorAll('.an-cms-side button')].find((b) => b.textContent.includes('Duplizieren')), white);
+    check('Standard', dialog.querySelector('[data-cms-download]'), white);
+    check('Standard klein', dialog.querySelector('.an-cms-side [data-element-action=copy]'), white);
     check('Feld', dialog.querySelector('.an-cms-side input[data-cms-article=name]'), white);
-    const primary = dialog.querySelector('button[aria-label="Gestaltung speichern"]');
+    const primary = dialog.querySelector('#an-save');
     out.push({ label: 'Primär', border: 4, text: ratio(parse(getComputedStyle(primary).color), parse(getComputedStyle(primary).backgroundColor)) });
     return out;
   });
@@ -1412,7 +1694,7 @@ for (const kind of ['drinks', 'weekly']) {
     async function output() {
       await showTab(page, 'Ausgabe');
       const download = page.waitForEvent('download');
-      await page.getByRole('button', { name: 'Download', exact: true }).click();
+      await page.locator('[data-cms-download]').click();
       return fs.readFile(await (await download).path());
     }
     const before = await output();

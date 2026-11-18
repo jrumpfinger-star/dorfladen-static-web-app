@@ -25,6 +25,8 @@ Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
 3. Artikel direkt in den nummerierten Zeilen erfassen. Im Produktfeld nach
    Name, Artikelnummer oder EAN suchen und den Treffer übernehmen. Der
    reguläre Stamm-VK bleibt vom separat einzugebenden Angebotspreis getrennt.
+   Exakte Namen, Artikelnummern und Strichcodes stehen vor ähnlichen Treffern,
+   damit die Ergebnisbegrenzung den gesuchten Artikel nicht verdeckt.
    Stattpreis und Details sind direkt bearbeitbar.
 4. Das Produktbild bzw. **+ Bild** öffnet das gemeinsame Bildmenü:
    **Bild im Bestand suchen**, **Bilddatei auswählen** (PNG/JPEG/WebP),
@@ -78,12 +80,53 @@ und Skalieren; kleine Symbole haben separate ausreichend große Trefferflächen.
 Entwurf samt ungespeicherten Bildern und Historie. Desktop zeigt Hauptschritte,
 das Handy eine kompakte Bereichsauswahl. Ein Bereichswechsel speichert nicht.
 In **Gestaltung** wählt **Gestalten für** das Ausgabeziel; **Element**,
-**Artikel**, **Vorlage**, **Ansicht** und **Ausgabe** zeigen nur ihre jeweiligen
-Werkzeuge. Download, Drucken/PDF, Einzelflyer, Waage und Qualitätsprüfung stehen
-in Ausgabekarten. Bestehende Qualitätsprüfungen und Versandbestätigungen bleiben
-wirksam.
+**Artikel**, **Vorlage** und **Ansicht** zeigen nur ihre jeweiligen Werkzeuge.
+Neben der Artikelauswahl stehen Pfeile und **Artikel x von n**; am Anfang und
+Ende ist der jeweilige Pfeil deaktiviert. Zielwechsel behalten den Artikel.
+Beim Sammelflyer wechselt die Artikelauswahl bei Bedarf auf dessen Flyerseite;
+die separaten Seitenpfeile bleiben eine Seitensteuerung.
 
-### Gemeinsame Designer-Arbeitsfläche
+Der Hauptschritt **Ausgabe** ist eine reine Vorschau ohne Bearbeitungsgriffe,
+Bildbearbeitung oder Speichern. Ausgabeformat, Artikelauswahl und Ausgabeaktionen
+stehen direkt am Motiv. **Diesen Artikel drucken / PDF** und **PNG herunterladen**
+betreffen beim Einzelflyer nur den angezeigten Artikel. **Weitere Artikel …**
+öffnet eine ausdrückliche Mehrfachauswahl mit **Alle auswählen**; erst
+**Ausgewählte Einzelflyer drucken / PDF (n)** startet diesen Sammeldruck.
+Beim Sammelflyer wird die aktuelle Seite als PNG heruntergeladen; **Alle Seiten
+als PNG herunterladen** und der Druck berücksichtigen sämtliche Flyerseiten.
+Pro Flyer wird genau ein A4-Bogen ohne zusätzliche Restseite angelegt.
+**Zur Gestaltung** kehrt zum unveränderten Entwurf zurück.
+Ungespeicherte Gestaltung kann ausgegeben werden und bleibt als solche markiert;
+Ausgabe allein speichert oder veröffentlicht nichts.
+Waagenvorbereitung und Qualitätsprüfung stehen unter **Weitere Ausgaben und
+Prüfung**. Bestehende Prüfungen und Versandbestätigungen bleiben wirksam.
+
+### Layout, eigene Vorlage und Bereichsstandard
+
+Die Kontextzeile nennt den bearbeiteten Bereich, das aktuelle Layout und die
+historische eigene Vorlage samt Änderungsstatus. Bei älteren Aktionen ohne
+Herkunftsdaten steht ausdrücklich **Vorlagenherkunft nicht gespeichert**;
+ein Vorlagenname wird nicht aus ähnlichen Farben geraten.
+
+Die Standards werden unter **Design-Einstellungen** im jeweiligen Bereich
+eingestellt:
+
+| Bereich | Verwendung |
+| --- | --- |
+| Plakat | Ausgangsgestaltung neuer Sonderaktions-Sammelflyer und ihrer CMS-Kacheln |
+| Einzelflyer | Einzelausgabe der CMS-Sonderaktion |
+| Getränkeflyer | Ausgangsgestaltung neuer Getränkeaktionen |
+| HP-Sonderangebote | Eigene Homepage-Darstellung, nicht die Aktionsflyer-Vorlage |
+| Wochenplan Web / Druck | Jeweils eigener gespeicherter Bereichsstandard |
+
+Bestehende Aktionen behalten ihre gespeicherte Gestaltung. **Bereichsstandard
+laden** liest den aktuell gespeicherten Stand des gewählten Bereichs bzw.
+Ausgabeziels neu ein. Ungespeicherte Änderungen werden nur nach Bestätigung
+ersetzt; die Übernahme bleibt rücknehmbar und speichert nicht automatisch.
+Andere Bereiche, Ausgabeziele, Artikel und Preise bleiben erhalten.
+Das ist nicht die ältere separate Funktion zum Speichern von Rücksetzvorgaben.
+
+### Arbeitsfläche und Vorschau
 
 Unter **Design → Plakate & Flyer** verwenden **Plakat**, **Einzelflyer** und
 **Getränkeflyer** dieselbe Arbeitsfläche: Einstellungen links, bildreine
@@ -96,6 +139,13 @@ Verwerfen erhalten links einen eigenen, dauerhaft erreichbaren Bereich
 und verdecken die Vorschau nicht. Erklärungstexte sind über **ⓘ** per Maus,
 Tastatur oder Antippen erreichbar; **Escape** schließt die Erklärung.
 Fehler und aktuelle Statusmeldungen bleiben sichtbar.
+Farb-, Größen- und Regleränderungen erscheinen bereits während der Eingabe in
+der Live-Vorschau, ohne erst eine andere Auswahl anzuklicken oder den
+Farbwähler zu schließen. Eine Eingabeserie bildet einen rücknehmbaren Schritt.
+Auswahlfelder behalten ihre vollständige Text-Innenhöhe. Die Fußleiste passt
+sich an die tatsächliche Werkzeugbreite an: ausreichend breit eine kompakte
+Zeile, schmal höchstens eine zusätzliche Statuszeile. Touchziele bleiben
+mindestens 44 px groß.
 Die Live-Vorschau zeigt zunächst ausschließlich die Ausgabe. Erst nach
 Elementauswahl erscheinen die zugehörigen Bearbeitungsanfasser.
 Format, Elementauswahl und Bildwerkzeuge stehen links.

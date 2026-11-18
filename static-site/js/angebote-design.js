@@ -1651,7 +1651,9 @@ window.AngeboteDesign = (function () {
     var layout = document.createElement('div'), settings = document.createElement('section');
     layout.className = 'an-design-layout an-designer-workspace';
     settings.className = 'an-card an-designer-settings';
-    settings.innerHTML = '<h2>' + M.esc(options.title) + '</h2><small class="an-designer-scope">Designvorgabe · alle Kacheln</small><div class="an-tabs an-designer-tabs" role="tablist" aria-label="Gestaltungswerkzeuge"></div>';
+    settings.innerHTML = '<h2>' + M.esc(options.title) + '</h2><div class="an-design-context" role="status"><span data-design-context></span>'
+      + '<button type="button" data-design-load-standard>Bereichsstandard laden</button></div>'
+      + '<small class="an-designer-scope">Designvorgabe · alle Kacheln</small><div class="an-tabs an-designer-tabs" role="tablist" aria-label="Gestaltungswerkzeuge"></div>';
     var tabs = settings.querySelector('[role=tablist]'), panels = document.createElement('div'), body = document.createElement('div');
     var tools = document.createElement('select'); tools.className = 'an-designer-tool-select'; tools.setAttribute('aria-label', 'Gestaltungswerkzeuge');
     tabs.before(tools);
@@ -1713,6 +1715,8 @@ window.AngeboteDesign = (function () {
     var splitter = split(layout, settings, options.preview);
     layout.querySelector('.an-workspace-context').textContent = 'Designvorgabe · ' + options.title + ' · alle Kacheln';
     root.replaceChildren(layout);
+    root._designContextProvider = options.contextProvider || root._designContextProvider;
+    root._designStandardLoader = options.loadStandard || root._designStandardLoader;
     compactHelp(root, help);
     select(0);
     expandGroups(root);
@@ -1723,16 +1727,39 @@ window.AngeboteDesign = (function () {
     root._designerUi = { select: select, direct: direct, help: help, destroy: function () {
       splitter.destroy(); options.preview._pictureView.destroy();
     } };
+    refreshDesignContext(root);
+    root.addEventListener('input', function () { refreshDesignContext(root); });
+    root.addEventListener('change', function () { refreshDesignContext(root); });
+    root.addEventListener('click', function (event) {
+      if (!event.target.closest('[data-design-load-standard]') || !root._designStandardLoader) return;
+      root._designStandardLoader().then(function () { refreshDesignContext(root); }).catch(M.error);
+    });
     return root._designerUi;
   }
-  function mountCms(root, preview, actions, kind, history) {
+  function refreshDesignContext(root) {
+    var status = root && root.querySelector('[data-design-context]');
+    if (!status) return;
+    var info = root._designContextProvider ? root._designContextProvider() : null;
+    var button = root.querySelector('[data-design-load-standard]');
+    if (!info) { status.textContent = ''; if (button) button.hidden = true; return; }
+    var source = info.name ? 'Vorlage: ' + info.name + (info.changed ? ' · angepasst' : '')
+      : (info.source || 'Bereichsstandard') + (info.changed ? ' · noch nicht gespeichert' : '');
+    status.textContent = [info.area, info.layout ? 'Layout: ' + info.layout : '', source].filter(Boolean).join(' · ');
+    if (button) button.hidden = typeof root._designStandardLoader !== 'function';
+  }
+  function mountCms(root, preview, actions, kind, history, context) {
     captureFields(root, kind);
+    if (context) {
+      root._designContextProvider = context.read;
+      root._designStandardLoader = context.loadStandard;
+    }
     if (root.dataset.designer) {
       root.querySelector('.an-designer-workspace').appendChild(preview);
       root.querySelector('.an-designer-controls').appendChild(preview._workspaceTools);
       pictureViewport(preview, root.querySelector('.an-designer-controls'));
       root.querySelector('.an-designer-settings').appendChild(actions);
       history.bind(actions, root);
+      refreshDesignContext(root);
       moveColorResets(root);
       return;
     }
@@ -1820,11 +1847,12 @@ window.AngeboteDesign = (function () {
     if (palette) groups[0].push(palette);
     select.addEventListener('change', syncFamilies); syncFamilies();
     workspace(root, { kind: kind, title: kind === 'plakat' ? 'Plakat-Design' : 'Einzelflyer-Design',
-      groups: groups, preview: preview, actions: actions });
+      groups: groups, preview: preview, actions: actions,
+      contextProvider: context && context.read, loadStandard: context && context.loadStandard });
     history.bind(actions, root);
     moveColorResets(root);
   }
-  function mountHomepage(root, changes, paletteOptions) {
+  function mountHomepage(root, changes, paletteOptions, context) {
     captureFields(root, 'homepage');
     if (root.dataset.designer) return;
     var preview = root.querySelector('#hpang-preview-wrap').parentElement;
@@ -1848,11 +1876,16 @@ window.AngeboteDesign = (function () {
       ['input','change'].forEach(function (type) { root.addEventListener(type, picker.refresh); });
     }
     workspace(root, { kind: 'homepage', title: 'Homepage-Sonderangebote',
-      tabs: ['Farben', 'Preis-Tag', 'Layout'], groups: groups, preview: preview, actions: actions });
+      tabs: ['Farben', 'Preis-Tag', 'Layout'], groups: groups, preview: preview, actions: actions,
+      contextProvider: context && context.read, loadStandard: context && context.loadStandard });
     changes.bind(actions, root);
   }
-  function mountWeek(root, preview, kind, changes) {
+  function mountWeek(root, preview, kind, changes, context) {
     captureFields(root, 'week-' + kind);
+    if (context) {
+      root._designContextProvider = context.read;
+      root._designStandardLoader = context.loadStandard;
+    }
     if (root.dataset.designer) {
       root.querySelector('.an-designer-workspace').appendChild(preview);
       pictureViewport(preview, root.querySelector('.an-designer-controls'));
@@ -1876,7 +1909,8 @@ window.AngeboteDesign = (function () {
     if (palette) groups[0].push(palette);
     if (!actions) return;
     workspace(root, { kind: 'week-' + kind, title: kind === 'home' ? 'Wochenplan · Homepage' : 'Wochenplan · Druck',
-      groups: groups, preview: preview, actions: actions });
+      groups: groups, preview: preview, actions: actions,
+      contextProvider: context && context.read, loadStandard: context && context.loadStandard });
     changes.bind(actions, root);
   }
   async function mount(root) {
@@ -1885,6 +1919,7 @@ window.AngeboteDesign = (function () {
     root.innerHTML = '<p role="status">Die Getränkeflyer-Einstellungen werden geladen …</p>';
     try {
       var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, kind = 'drinks', mode = 'paper', ticket = 0, surface = null;
+      var savedStandard = M.clone(design[kind]);
       var products = [], productsMessage = 'Produktbilder werden geladen …', productsLoading = false, productsFailed = false;
       var changes = history(function () {
         var value = M.clone(design); delete value.version; return value;
@@ -1898,6 +1933,32 @@ window.AngeboteDesign = (function () {
         select.innerHTML = '<option value="">Eigene Vorlage wählen</option>' + presets.map(function (preset, index) {
           return '<option value="' + index + '">' + M.esc(preset.name) + '</option>';
         }).join('');
+      }
+      function layoutContext() {
+        var current = design[kind], state = M.designProvenanceState(current, 'sheet');
+        var family = M.styleFamilies.find(function (entry) { return entry[0] === M.familyOf(current.template); });
+        var layout = family ? family[1] : current.template;
+        if (M.familyOf(current.template) === 'magazine') layout += current.template === 'modern-mag-xl' ? ' · Großbild' : ' · Standard';
+        return { area: 'Getränkeflyer', layout: layout,
+          name: state.known ? state.name : '',
+          source: state.known ? '' : 'Gespeicherte Gestaltung · Vorlage unbekannt',
+          changed: state.known ? state.changed
+            : JSON.stringify(M.designSnapshot(current, 'sheet')) !== JSON.stringify(M.designSnapshot(savedStandard, 'sheet')) };
+      }
+      async function loadAreaStandard() {
+        var latest = await M.request('/api/angebote-verwaltung?view=design');
+        var standard = latest.design && latest.design[kind];
+        if (!standard || !standard.template) throw M.problem('Der gespeicherte Getränkeflyer-Standard ist nicht verfügbar.');
+        M.templateStyle(standard.template);
+        var changed = JSON.stringify(M.designSnapshot(design[kind], 'sheet')) !== JSON.stringify(M.designSnapshot(standard, 'sheet'));
+        if (changed && !(await M.dialog('Bereichsstandard übernehmen?',
+          'Die ungespeicherte Gestaltung des Getränkeflyers wird durch den aktuell gespeicherten Standard für neue Getränkeaktionen ersetzt. Andere Bereiche, Vorlagen und bestehende Aktionen bleiben unverändert.',
+          'Bereichsstandard laden'))) return;
+        var presets = design.presets;
+        design[kind] = M.clone(standard);
+        if (presets) design.presets = presets;
+        design.version = latest.design.version;
+        refreshFields(); await preview(); changes.record();
       }
       function productStatus() {
         var status = root.querySelector('[data-design-products]');
@@ -1990,7 +2051,8 @@ window.AngeboteDesign = (function () {
         actions.appendChild(status);
         var note = root.querySelector(':scope>.an-note');
         var workspaceUi = workspace(root, { kind: kind, title: 'Getränkeflyer-Design', groups: groups,
-          preview: root.querySelector('.an-preview'), actions: actions });
+          preview: root.querySelector('.an-preview'), actions: actions, contextProvider: layoutContext,
+          loadStandard: loadAreaStandard });
         changes.bind(actions, root);
         workspaceUi.help.appendChild(note); compactHelp(workspaceUi.help, workspaceUi.help);
         var link = root.parentElement.querySelector(':scope>p');
@@ -2037,9 +2099,24 @@ window.AngeboteDesign = (function () {
             x: element.x * ratio + offsetX, y: element.y * ratio + offsetY, w: element.w * ratio, h: element.h * ratio, rotation: element.rotation, unitScale: ratio };
         }), width, height);
       }
+      var liveInputValues = new WeakMap();
+      function applyFieldChange(target) {
+        if (change(design[kind], target)) { preview().catch(M.error); changes.record(); }
+        if (target.dataset.style) root.querySelector('[data-design-status]').textContent = 'Geändert · noch nicht gespeichert';
+      }
+      root.addEventListener('input', function (e) {
+        var target = e.target;
+        if (!target.dataset.style || !['color', 'range', 'number'].includes(target.type)) return;
+        if (target.type === 'number' && (!target.value || target.validity.badInput)) return;
+        applyFieldChange(target);
+        liveInputValues.set(target, target.value);
+      });
       root.addEventListener('change', function (e) {
-        if (change(design[kind], e.target)) { preview().catch(M.error); changes.record(); }
-        if (e.target.dataset.style) root.querySelector('[data-design-status]').textContent = 'Geändert · noch nicht gespeichert';
+        if (liveInputValues.has(e.target) && liveInputValues.get(e.target) === e.target.value) {
+          liveInputValues.delete(e.target);
+          return;
+        }
+        applyFieldChange(e.target);
       });
       root.addEventListener('click', async function (e) {
         var palette = e.target.closest('[data-offer-palette]');
@@ -2057,6 +2134,7 @@ window.AngeboteDesign = (function () {
           if (!(await M.dialog('Änderungen verwerfen?', 'Ungespeicherte Gestaltung und Änderungen an eigenen Vorlagen werden verworfen.', 'Änderungen verwerfen'))) return;
           try {
             design = (await M.request('/api/angebote-verwaltung?view=design')).design;
+            savedStandard = M.clone(design[kind]);
             html(); changes.reset(); root.querySelector('[data-design-status]').textContent = 'Gespeicherter Stand wiederhergestellt';
           } catch (error) { await M.error(error); }
           return;
@@ -2085,6 +2163,7 @@ window.AngeboteDesign = (function () {
             design.presets.splice(Number(selected), 1); renderPresets();
           } else {
             design[kind] = M.clone(entry.layout);
+            M.setDesignProvenance(design[kind], 'sheet', entry.name);
             refreshFields();
             preview().catch(M.error);
           }
@@ -2121,6 +2200,7 @@ window.AngeboteDesign = (function () {
             synchronizeTiles(design[kind]);
             var saved = await M.request('/api/angebote-verwaltung?view=design', M.json('PUT', { version: design.version, data: design }));
             design = saved.design;
+            savedStandard = M.clone(design[kind]);
             root.querySelector('[data-design-status]').textContent = 'Designstandards gespeichert. Bestehende Aktionen wurden nicht verändert.';
           }
         } catch (error) { await M.error(error); }
@@ -2145,5 +2225,6 @@ window.AngeboteDesign = (function () {
     paletteControls: paletteControls, applyPalette: applyPalette, palettePicker: palettePicker,
     cmsPaletteValues: cmsPaletteValues, applyCmsPaletteValues: applyCmsPaletteValues,
     cmsEffectiveColors: cmsEffectiveColors, cmsPaletteState: cmsPaletteState, fieldInventory: fieldInventory,
+    refreshDesignContext: refreshDesignContext,
     previewTabs: previewTabs, selectPreview: selectPreview, outputPreview: outputPreview, cards: cards };
 })();
