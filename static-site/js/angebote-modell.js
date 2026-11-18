@@ -1332,7 +1332,7 @@ window.AngeboteModel = (function () {
     return 'Gespeichert · ' + (data.valid_from > day ? 'Geplant' : data.valid_to < day ? 'Abgelaufen' : 'Aktiv');
   }
   function propertyGroup(key) {
-    if (/(?:name(?:Font|Size|Color|Dx|Dy|Scale|Rot)|(?:^|[-_])font$|name_size|details_size|text_color)/i.test(key)) return 'text';
+    if (/(?:name(?:Font|Size|Color|Dx|Dy|Scale|Rot|Weight)|detailsWeight|(?:^|[-_])font$|name_size|details_size|text_color)/i.test(key)) return 'text';
     if (/(?:^color$|price|old_price|tag(?:Preset|Shape|Color|Radius|Skew|Scale|Bg|Text)|stattColor)/i.test(key)) return 'price';
     if (/(?:image_|decoration\.image|img(?:Scale|Rot|Dx|Dy|Width|Height))/i.test(key)) return 'image';
     return '';

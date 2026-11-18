@@ -153,6 +153,24 @@ class AngeboteTests(unittest.TestCase):
                 data["layout"]["cms"]["config"]["plakat_inline"] = invalid
                 self.error(400, normalize, data)
 
+    def test_TC_F66_font_weights_survive_snapshot_and_reject_invalid_values(self):
+        data = draft("weekly")
+        config = {"plakatTemplate": "classic-red", "flyerTemplate": "modern-mag-xl",
+                  "plakat_nameWeight": "400", "plakat_detailsWeight": "900",
+                  "flyer_nameWeight": "700", "flyer_detailsWeight": "600"}
+        data["layout"]["cms"] = {
+            "config": config, "plakat_article_overrides": {}, "flyer_article_overrides": {}
+        }
+        head = self.service.create(data)
+        self.service.publish(head["id"], head["version"])
+        self.assertEqual(self.service.public()[0]["data"]["layout"]["cms"]["config"], config)
+        for key in ("plakat_nameWeight", "flyer_detailsWeight"):
+            for invalid in ("bold", "", "800", None, 4):
+                with self.subTest(key=key, invalid=invalid):
+                    broken = copy.deepcopy(data)
+                    broken["layout"]["cms"]["config"][key] = invalid
+                    self.error(400, normalize, broken)
+
     def test_TC_F64_01_section_markers_survive_snapshot_publication_and_duplicate(self):
         data = draft("weekly")
         config = {"plakatTemplate": "classic-red", "flyerTemplate": "modern-mag-xl",

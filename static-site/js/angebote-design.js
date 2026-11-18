@@ -275,6 +275,13 @@ window.AngeboteDesign = (function () {
           + options.map(function (option) { return '<option value="' + option[0] + '"' + (cfg[key] === option[0] ? ' selected' : '') + '>' + option[1] + '</option>'; }).join('')
           + '</select></label>';
       }
+      function weightSelect(key, title, text, fallback) {
+        var current = String(cfg[key] != null ? cfg[key] : fallback);
+        return '<label class="an-field"><span>' + text + '</span><select aria-label="' + title + ' · ' + text + '" data-cms-config="' + key + '">'
+          + [['400', 'Normal'], ['600', 'Halbfett'], ['700', 'Fett'], ['900', 'Extrafett']].map(function (option) {
+            return '<option value="' + option[0] + '"' + (current === option[0] ? ' selected' : '') + '>' + option[1] + '</option>'; }).join('')
+          + '</select></label>';
+      }
       function number(key, text, min, max) {
         return '<label class="an-field"><span>' + text + '</span><input type="number" data-cms-config="' + key + '" min="' + min + '" max="' + max + '" value="' + cfg[key] + '"></label>';
       }
@@ -290,6 +297,8 @@ window.AngeboteDesign = (function () {
             + select(kind + '_tagShape', label, 'Preisschildform', shapeLabels)
             + select(kind + '_nameFont', label, 'Bezeichnung · Schrift', ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS'].map(function (font) { return [font, font]; }))
             + number(kind + '_nameSize', 'Bezeichnung · Größe (0 = Vorlage)', 0, 100)
+            + weightSelect(kind + '_nameWeight', label, 'Bezeichnung · Schriftstärke', '900')
+            + weightSelect(kind + '_detailsWeight', label, 'Zusatztext · Schriftstärke', '600')
             + [['decoBgColor', 'Hintergrund'], ['decoTitleColor', 'Überschrift'], ['nameColor', 'Bezeichnung · Farbe'],
               ['priceImageColor', 'Preisfarbe'], ['priceOutlineColor', 'Konturfarbe'],
               ['priceStripColor', 'Hintergrund / Stattpreis-Streifen'], ['priceOldColor', 'Stattpreisfarbe'],
@@ -880,7 +889,7 @@ window.AngeboteDesign = (function () {
     if (save) {
       save.classList.add('an-primary');
       if (!save.hasAttribute('aria-label')) save.setAttribute('aria-label', save.textContent.trim());
-      save.textContent = 'Speichern';
+      save.textContent = save.id === 'an-save' ? 'Speichern' : 'Als Standard speichern';
     }
     var popup = host.querySelector('.an-action-popover'), menu = host.querySelector('[data-more-actions]');
     var extras = Array.from(host.querySelectorAll(':scope>button')).filter(function (button) {
@@ -1751,6 +1760,10 @@ window.AngeboteDesign = (function () {
     var source = info.name ? 'Eigene Vorlage: ' + info.name + (info.changed ? ' (verändert)' : '')
       : info.changed ? 'Ungespeicherte Änderungen' : 'Gespeichert';
     status.textContent = [info.area, info.layout ? 'Aussehen: ' + info.layout : '', source].filter(Boolean).join(' · ');
+    var hint = status.parentElement.querySelector('[data-save-hint]');
+    if (!hint) { hint = document.createElement('small'); hint.dataset.saveHint = ''; status.after(hint); }
+    hint.textContent = 'Als Standard speichern: gilt für neue Angebote, bestehende Aktionen bleiben unverändert.'
+      + (info.name ? ' Die geladene Vorlage „' + info.name + '“ wird mit aktualisiert.' : '');
     if (button) button.hidden = typeof root._designStandardLoader !== 'function';
   }
   function mountCms(root, preview, actions, kind, history, context) {
@@ -2156,6 +2169,7 @@ window.AngeboteDesign = (function () {
           var preset = { name: name, layout: layout };
           if (index >= 0) presets[index] = preset; else presets.push(preset);
           design.presets = presets; renderPresets();
+          M.setDesignProvenance(design[kind], 'sheet', name); refreshDesignContext(root);
           changes.record();
           root.querySelector('[data-design-status]').textContent = 'Vorlage angelegt · bitte Designstandards speichern';
           return;
@@ -2204,10 +2218,19 @@ window.AngeboteDesign = (function () {
             changes.record();
           } else {
             synchronizeTiles(design[kind]);
+            var origin = M.designProvenanceState(design[kind], 'sheet'), ownPresets = design.presets || [];
+            var loadedIndex = origin.known ? ownPresets.findIndex(function (entry) { return entry.name === origin.name; }) : -1;
+            if (loadedIndex >= 0) {
+              M.setDesignProvenance(design[kind], 'sheet', origin.name);
+              var updatedLayout = M.clone(design[kind]); updatedLayout.pages = []; updatedLayout.targets = { card: [], single: [], scale: [] };
+              ownPresets[loadedIndex] = { name: origin.name, layout: updatedLayout }; design.presets = ownPresets;
+            }
             var saved = await M.request('/api/angebote-verwaltung?view=design', M.json('PUT', { version: design.version, data: design }));
             design = saved.design;
             savedStandard = M.clone(design[kind]);
-            root.querySelector('[data-design-status]').textContent = 'Designstandards gespeichert. Bestehende Aktionen wurden nicht verändert.';
+            root.querySelector('[data-design-status]').textContent = 'Designstandards gespeichert. Bestehende Aktionen wurden nicht verändert.'
+              + (loadedIndex >= 0 ? ' Vorlage „' + origin.name + '“ aktualisiert.' : '');
+            refreshDesignContext(root);
           }
         } catch (error) { await M.error(error); }
         finally { button.disabled = false; }

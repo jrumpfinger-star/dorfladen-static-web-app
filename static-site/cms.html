@@ -1348,12 +1348,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
       </div>
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Alles speichern</button>
+        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Als Standard speichern</button>
         <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-        <button class="cms-btn cms-btn-gray" onclick="hpSaveAsDefault()" title="Aktuelle HP-Werte als neuen Standard definieren" style="font-size:var(--schrift-klein)">&#9733; Als Standard speichern</button>
-        <button class="cms-btn cms-btn-gray" onclick="hpClearCustomDefault()" title="Eigene HP-Standards l&ouml;schen" style="font-size:var(--schrift-klein);color:var(--red)">&#10005; Werkseinstellungen</button>
       </div>
     </div>
     <!-- ============ SUB-TAB: Wochenplan (REDESIGNED) ============ -->
@@ -1877,6 +1873,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <div class="cms-card-header">Bezeichnung und Zusatztext</div>
             <div class="cms-card-body an-fields">
               <label class="an-field"><span>Schriftart</span><select id="cfg-plakat-nameFont" class="cms-input cfg-persec-ctl" data-sec="plakat"><option>Arial</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option></select></label>
+              <label class="an-field"><span>Bezeichnung &middot; Schriftst&auml;rke</span><select id="cfg-plakat-nameWeight" class="cms-input cfg-persec-ctl" data-sec="plakat"><option value="400">Normal</option><option value="600">Halbfett</option><option value="700">Fett</option><option value="900" selected>Extrafett</option></select></label>
+              <label class="an-field"><span>Zusatztext &middot; Schriftst&auml;rke</span><select id="cfg-plakat-detailsWeight" class="cms-input cfg-persec-ctl" data-sec="plakat"><option value="400">Normal</option><option value="600" selected>Halbfett</option><option value="700">Fett</option><option value="900">Extrafett</option></select></label>
               <label class="an-field"><span>Schriftgr&ouml;&szlig;e (0 = Vorlage)</span><input id="cfg-plakat-nameSize" type="number" min="0" max="100" value="0" class="cms-input cfg-persec-ctl" data-sec="plakat"></label>
               <label class="an-field"><span>Farbe</span><input id="cfg-plakat-nameColor" type="color" value="#1a1a1a" class="cfg-persec-ctl" data-sec="plakat"></label>
             </div>
@@ -1988,13 +1986,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Plakat Action Buttons -->
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
+            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Als Standard speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-            <button class="cms-btn cms-btn-gray" onclick="cmsSaveAsDefault()" title="Aktuelle Werte als neuen Standard definieren" style="font-size:var(--schrift-klein)">&#9733; Als Standard speichern</button>
-            <button class="cms-btn cms-btn-gray" onclick="cmsClearCustomDefault()" title="Eigene Standards l&ouml;schen" style="font-size:var(--schrift-klein);color:var(--red)">&#10005; Werkseinstellungen</button>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
@@ -2164,6 +2158,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <div class="cms-card-header">Bezeichnung und Zusatztext</div>
             <div class="cms-card-body an-fields">
               <label class="an-field"><span>Schriftart</span><select id="cfg-flyer-nameFont" class="cms-input cfg-persec-ctl" data-sec="flyer"><option>Arial</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option></select></label>
+              <label class="an-field"><span>Bezeichnung &middot; Schriftst&auml;rke</span><select id="cfg-flyer-nameWeight" class="cms-input cfg-persec-ctl" data-sec="flyer"><option value="400">Normal</option><option value="600">Halbfett</option><option value="700">Fett</option><option value="900" selected>Extrafett</option></select></label>
+              <label class="an-field"><span>Zusatztext &middot; Schriftst&auml;rke</span><select id="cfg-flyer-detailsWeight" class="cms-input cfg-persec-ctl" data-sec="flyer"><option value="400">Normal</option><option value="600" selected>Halbfett</option><option value="700">Fett</option><option value="900">Extrafett</option></select></label>
               <label class="an-field"><span>Schriftgr&ouml;&szlig;e (0 = Vorlage)</span><input id="cfg-flyer-nameSize" type="number" min="0" max="100" value="0" class="cms-input cfg-persec-ctl" data-sec="flyer"></label>
               <label class="an-field"><span>Farbe</span><input id="cfg-flyer-nameColor" type="color" value="#1a1a1a" class="cfg-persec-ctl" data-sec="flyer"></label>
             </div>
@@ -2347,13 +2343,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Action Buttons -->
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
+            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Als Standard speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-            <button class="cms-btn cms-btn-gray" onclick="cmsSaveAsDefault()" title="Aktuelle Werte als neuen Standard definieren" style="font-size:var(--schrift-klein)">&#9733; Als Standard speichern</button>
-            <button class="cms-btn cms-btn-gray" onclick="cmsClearCustomDefault()" title="Eigene Standards l&ouml;schen" style="font-size:var(--schrift-klein);color:var(--red)">&#10005; Werkseinstellungen</button>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
@@ -3488,10 +3480,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein);margin-bottom:10px">
               <thead><tr style="background:var(--gr-t)"><th style="padding:6px 10px;text-align:left;border:1px solid var(--line)">Button</th><th style="padding:6px 10px;text-align:left;border:1px solid var(--line)">Funktion</th></tr></thead>
               <tbody>
-                <tr><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#128190; Alles speichern</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Alle Design&#228;nderungen dauerhaft speichern</td></tr>
-                <tr style="background:var(--gr-t)"><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#8630; Auf Default zur&#252;cksetzen</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Zu gespeichertem Standard-Design zur&#252;ckspringen</td></tr>
-                <tr><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#9733; Als Standard speichern</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Aktuelles Design als pers&#246;nlichen Standard hinterlegen</td></tr>
-                <tr style="background:var(--gr-t)"><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#10005; Werkseinstellungen</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Pers&#246;nlichen Standard l&#246;schen, Original-Werksvorgaben laden</td></tr>
+                <tr><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#128190; Als Standard speichern</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Speichert den Standard f&#252;r neue Angebote und aktualisiert eine geladene eigene Vorlage</td></tr>
+                <tr style="background:var(--gr-t)"><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#8630; Auf Default zur&#252;cksetzen</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Zu den Original-Werksvorgaben zur&#252;ckspringen</td></tr>
               </tbody>
             </table>
           </div>
@@ -3612,8 +3602,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <div style="background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s);padding:12px;margin-bottom:10px">
               <strong style="color:var(--red)">&#128204; Design-Farben versehentlich ge&#228;ndert &#8211; Reset</strong>
               <ol style="margin:6px 0 0;padding-left:20px;font-size:var(--schrift-klein)">
-                <li>Tab <strong>Design</strong> &#8594; <strong>&#8222;&#10005; Werkseinstellungen&#8220;</strong> klicken &#8594; best&#228;tigen.</li>
-                <li><strong>&#8222;&#128190; Alles speichern&#8220;</strong> klicken um Reset dauerhaft zu &#252;bernehmen.</li>
+                <li>Tab <strong>Design</strong> &#8594; <strong>&#8222;&#8634; Auf Default zur&#252;cksetzen&#8220;</strong> klicken.</li>
+                <li><strong>&#8222;&#128190; Als Standard speichern&#8220;</strong> klicken um den Reset dauerhaft zu &#252;bernehmen.</li>
               </ol>
             </div>
 
@@ -3761,8 +3751,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <p style="margin:8px 0 0;font-size:var(--schrift-klein)">Ja &#8211; aber bei gleichzeitiger Bearbeitung gewinnt die zuletzt gespeicherte Version. Bitte Bearbeitung im Team koordinieren.</p>
             </details>
 
-            <details style="border-bottom:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600;color:var(--gr-d)">Was bedeutet &#8222;Als Standard speichern&#8220; vs. &#8222;Werkseinstellungen&#8220;?</summary>
-              <p style="margin:8px 0 0;font-size:var(--schrift-klein)"><strong>&#9733; Als Standard speichern</strong> hinterlegt Ihre aktuellen Einstellungen. <strong>&#10005; Werkseinstellungen</strong> l&#246;scht diesen Standard und kehrt zu Original-Werksvorgaben zur&#252;ck.</p>
+            <details style="border-bottom:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600;color:var(--gr-d)">Was macht &#8222;Als Standard speichern&#8220;? Und was eine eigene Vorlage?</summary>
+              <p style="margin:8px 0 0;font-size:var(--schrift-klein)"><strong>&#128190; Als Standard speichern</strong> sichert die aktuellen Einstellungen als Standard f&#252;r neue Angebote; bestehende Aktionen bleiben unver&#228;ndert. Ist eine eigene Vorlage geladen, wird sie dabei mit aktualisiert. <strong>+ Vorlage speichern</strong> legt eine benannte Vorlage an; bei gleichem Namen fragt das CMS, ob die Vorlage ersetzt werden soll.</p>
             </details>
 
             <details style="border-bottom:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600;color:var(--gr-d)">Wochenplan-Plakat wird beim Drucken abgeschnitten</summary>

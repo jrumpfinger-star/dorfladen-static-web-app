@@ -1897,6 +1897,15 @@ Mauskontrollen kompakt und Touchziele mindestens 44 px.
   Bild(er) samt Text über das Teilen-Menü. Auf dem Desktop kopiert „Bild kopieren
   & WhatsApp öffnen" das PNG in die Zwischenablage (Strg+V) und öffnet WhatsApp
   Web mit dem Text; „Herunterladen" bleibt als Ausweichweg. Kein stiller Download.
+- TC-F66-13: In den Design-Einstellungen heißt der Speichern-Knopf „Als Standard
+  speichern" (Ein-Satz-Hinweis in der Kontextzeile). Ist eine eigene Vorlage
+  geladen, wird sie dabei aktualisiert. „+ Vorlage speichern" fragt bei gleichem
+  Namen „Vorlage ersetzen?" statt eine Kopie anzulegen. „★ Als Standard speichern"
+  und „Werkseinstellungen" entfallen; „Auf Default zurücksetzen" nutzt die Werksvorgaben.
+- TC-F66-14: Bezeichnung und Zusatztext haben je eine eigene Schriftstärke
+  (Normal 400 · Halbfett 600 · Fett 700 · Extrafett 900; Standard 900 bzw. 600),
+  im Designer und im Aktionseditor, gespeichert und von der API geprüft. Die
+  Bedienelemente der Feinabstimmung stehen in einer gemeinsamen Spalte.
 
 ## F67: Gemeinsame Artikelnavigation und volle CMS-Inhaltsbreite
 

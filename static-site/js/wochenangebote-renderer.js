@@ -102,8 +102,8 @@ window.WochenangeboteRenderer = (function () {
     savingsScalePlakat:95,savingsScaleFlyer:120,
     plakatTemplate:'classic-red',flyerTemplate:'classic-red',
     plakat_inline:{},flyer_inline:{},
-    plakat_nameFont:'Arial',plakat_nameSize:0,plakat_nameColor:'#1a1a1a',
-    flyer_nameFont:'Arial',flyer_nameSize:0,flyer_nameColor:'#1a1a1a',
+    plakat_nameFont:'Arial',plakat_nameSize:0,plakat_nameColor:'#1a1a1a',plakat_nameWeight:'900',plakat_detailsWeight:'600',
+    flyer_nameFont:'Arial',flyer_nameSize:0,flyer_nameColor:'#1a1a1a',flyer_nameWeight:'900',flyer_detailsWeight:'600',
     plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
     plakat_priceImageColor:'#ed1c24',plakat_priceOutlineColor:'#ffffff',plakat_priceStripColor:'#fff000',plakat_priceOldColor:'#000000',plakat_priceStrikeColor:'#ed1c24',
     plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',plakat_vorratColor:'#888888',
@@ -125,7 +125,7 @@ window.WochenangeboteRenderer = (function () {
 
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
 
-  var PERSEC_SELECTS=['tagPreset','tagShape','nameFont','savingsMarkerType','savingsPalette'];
+  var PERSEC_SELECTS=['tagPreset','tagShape','nameFont','nameWeight','detailsWeight','savingsMarkerType','savingsPalette'];
 
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
 
@@ -332,18 +332,22 @@ window.WochenangeboteRenderer = (function () {
     return lines;
   }
 
+  function fontWeightOf(value,fallback){
+    return ['400','600','700','900'].indexOf(String(value))>=0?String(value):fallback;
+  }
   function drawNameGroup(ctx,item,cfg,x,y,w,fontSize,detailSize,override,metadata){
     var ov=override||{},size=cfg.nameSize||fontSize,font='"'+(cfg.nameFont||'Arial')+'"',step=size*1.2;
-    ctx.save();ctx.font='900 '+size+'px '+font;
+    var nameWeight=fontWeightOf(cfg.nameWeight,'900'),detailsWeight=fontWeightOf(cfg.detailsWeight,'600');
+    ctx.save();ctx.font=nameWeight+' '+size+'px '+font;
     var names=wrapTextCMS(ctx,item.produkt||'Produkt',w);
-    ctx.font='600 '+detailSize+'px '+font;
+    ctx.font=detailsWeight+' '+detailSize+'px '+font;
     var details=item.details?wrapTextCMS(ctx,item.details,w):[];
     var h=names.length*step+(details.length?4+details.length*detailSize*1.2:0),top=y-size;
     var scale=(ov.nameScale||100)/100,dx=ov.nameDx||0,dy=ov.nameDy||0;
     ctx.translate(x+w/2+dx,top+h/2+dy);ctx.rotate((ov.nameRot||0)*Math.PI/180);ctx.scale(scale,scale);ctx.translate(-w/2,-h/2);
-    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle=cfg.nameColor||'#1a1a1a';ctx.font='900 '+size+'px '+font;
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle=cfg.nameColor||'#1a1a1a';ctx.font=nameWeight+' '+size+'px '+font;
     names.forEach(function(line,index){ctx.fillText(line,0,size+index*step);});
-    ctx.font='600 '+detailSize+'px '+font;
+    ctx.font=detailsWeight+' '+detailSize+'px '+font;
     if(cfg.detailsColor)ctx.fillStyle=cfg.detailsColor;
     details.forEach(function(line,index){ctx.fillText(line,0,names.length*step+4+detailSize+index*detailSize*1.2);});
     ctx.restore();

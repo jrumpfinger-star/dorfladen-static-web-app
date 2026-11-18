@@ -113,9 +113,10 @@ CMS_CONFIG_KEYS.update(
         "showTexture imgScale borderWidth borderColor imgAnchorX imgAnchorY "
         "priceAnchorX priceAnchorY imgWidthPct priceImageColor priceOutlineColor "
         "priceStripColor priceOldColor priceStrikeColor nameFont nameSize nameColor "
-        "savingsMarkerType savingsPalette"
+        "nameWeight detailsWeight savingsMarkerType savingsPalette"
     ).split()
 )
+FONT_WEIGHTS = ("400", "600", "700", "900")
 
 
 def _cms_design(raw, items):
@@ -148,6 +149,9 @@ def _cms_design(raw, items):
             raise AngeboteFehler(400, "Bitte die direkten Standardanpassungen prüfen.")
         if raw["config"].get(f"{kind}_nameFont", "Arial") not in FONTS:
             raise AngeboteFehler(400, "Bitte die Schrift der Bezeichnung prüfen.")
+        for weight_key, default in (("nameWeight", "900"), ("detailsWeight", "600")):
+            if str(raw["config"].get(f"{kind}_{weight_key}", default)) not in FONT_WEIGHTS:
+                raise AngeboteFehler(400, "Bitte die Schriftstärke von Bezeichnung und Zusatztext prüfen.")
         if not COLOR.fullmatch(str(raw["config"].get(f"{kind}_nameColor", "#1a1a1a"))):
             raise AngeboteFehler(400, "Bitte die Farbe der Bezeichnung prüfen.")
         _number(raw["config"].get(f"{kind}_nameSize", 0), "die Schriftgröße der Bezeichnung", 0, 100)
