@@ -479,7 +479,7 @@ window.AngeboteModel = (function () {
     }
     var changed = stableDesignJson(entry.snapshot) !== stableDesignJson(designSnapshot(layout, target));
     return { known: true, name: entry.name, changed: changed,
-      label: entry.name + (changed ? ' · angepasst' : '') };
+      label: entry.name + (changed ? ' (verändert)' : '') };
   }
   function inheritTargetStyle(layout, target, standard) {
     if (!layout || !standard || !['card', 'single', 'scale'].includes(target)) return false;

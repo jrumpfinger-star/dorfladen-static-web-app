@@ -76,8 +76,8 @@
         : root.querySelector('[data-style=template] option:checked');
       var layout = weeklyTarget() ? M.cmsFor(data, designTarget).config[kind + 'Template'] : controlLayout().template;
       var origin = M.designProvenanceState(data.layout, designTarget);
-      status.textContent = names[designTarget] + ' · Layout: ' + (template ? template.textContent : layout)
-        + ' · ' + (origin.known ? origin.label : 'Vorlagenherkunft nicht gespeichert');
+      status.textContent = names[designTarget] + ' · Aussehen: ' + (template ? template.textContent : layout)
+        + (origin.known ? ' · Eigene Vorlage: ' + origin.label : '');
       var button = $('an-defaults'); if (button) button.hidden = outputMode();
     }
     if (!cmsAction) {

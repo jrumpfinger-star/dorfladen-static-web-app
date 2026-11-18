@@ -1742,9 +1742,9 @@ window.AngeboteDesign = (function () {
     var info = root._designContextProvider ? root._designContextProvider() : null;
     var button = root.querySelector('[data-design-load-standard]');
     if (!info) { status.textContent = ''; if (button) button.hidden = true; return; }
-    var source = info.name ? 'Vorlage: ' + info.name + (info.changed ? ' · angepasst' : '')
-      : (info.source || 'Bereichsstandard') + (info.changed ? ' · noch nicht gespeichert' : '');
-    status.textContent = [info.area, info.layout ? 'Layout: ' + info.layout : '', source].filter(Boolean).join(' · ');
+    var source = info.name ? 'Eigene Vorlage: ' + info.name + (info.changed ? ' (verändert)' : '')
+      : info.changed ? 'Ungespeicherte Änderungen' : 'Gespeichert';
+    status.textContent = [info.area, info.layout ? 'Aussehen: ' + info.layout : '', source].filter(Boolean).join(' · ');
     if (button) button.hidden = typeof root._designStandardLoader !== 'function';
   }
   function mountCms(root, preview, actions, kind, history, context) {
