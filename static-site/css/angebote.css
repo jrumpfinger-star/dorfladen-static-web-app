@@ -783,6 +783,18 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-object-dialog .an-object-body{padding:8px 12px;min-height:0;overflow:auto;overscroll-behavior:contain;container-type:inline-size}
 .an-object-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:4px 12px}
 .an-object-grid>label{display:flex!important;flex-direction:column;min-width:0;max-width:100%;margin:0!important;font-size:inherit!important;font-weight:400!important}
+/* Objekt-Dialog: gestapelte, kompakte Felder. Die Zeilenoptik der
+   Einstellungspanels (.an-srow/.an-cfield mit breitem Label) wird hier
+   zurueckgebaut — sonst wird die Spaltenbreite zur Zeilenhoehe und die
+   Zellen stehen mit leeren Riesenflaechen da. */
+.an-object-dialog .an-object-grid>label{min-height:0;padding:0;border:0;background:none;gap:4px;align-items:stretch}
+.an-object-dialog .an-object-grid>label.an-srow{min-height:0}
+.an-object-dialog .an-object-grid label .an-srow-lab{flex:0 0 auto;width:auto;min-height:0;height:auto;text-align:left;font-size:12px;color:var(--an-muted,#59695f);white-space:normal;overflow:visible;text-overflow:clip}
+.an-object-dialog .an-object-grid label .an-srow-slider{flex:1 1 0;display:flex;align-items:center;gap:8px;min-width:0;max-width:100%}
+.an-object-dialog .an-object-grid label .an-srow-slider input[type=range]{flex:1;min-width:0;width:auto;height:44px;min-height:44px}
+.an-object-dialog .an-object-grid label .an-srow-slider output{flex:none;min-width:44px}
+.an-object-dialog .an-object-grid>label.an-cfield{align-items:flex-start;min-height:0;gap:6px;padding:0;border:0;background:none}
+.an-object-dialog .an-object-grid>label.an-cfield>.an-cfield-lab{flex:0 0 auto;width:auto;min-height:0;font-size:12px;color:var(--an-muted,#59695f);white-space:normal;overflow:visible;text-overflow:clip;text-align:left}
 .an-object-grid input,.an-object-grid select{min-width:0;max-width:100%;border:1px solid var(--an-field-border);border-radius:6px}
 .an-object-grid input[type=number]{width:88px!important}
 .an-object-grid input[type=color]{width:44px!important;height:44px!important;padding:7px 3px!important}
@@ -970,16 +982,20 @@ body.an-body{margin:0;background:#f7f5ed}
 
 /* ── Slider-Zeilen: Kartenzeile Label · Slider · Wert ── */
 .an-srow{display:flex;align-items:center;gap:10px;min-height:36px;border:1px solid var(--an-line,#d8dfd7);border-radius:8px;padding:4px 10px;background:#fff;margin-bottom:8px}
-.an-srow .an-srow-lab{flex:0 0 190px;font-size:13px;font-weight:400;color:var(--an-ink,#24362d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-srow .an-srow-lab{flex:0 1 190px;min-width:0;font-size:13px;font-weight:400;color:var(--an-ink,#24362d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .an-srow input[type=range]{flex:1;min-width:0;accent-color:var(--an-green,#234c38)}
 .an-srow .an-srow-slider{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.an-srow .an-srow-slider output{flex:0 1 52px;min-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:13px;font-weight:400;color:var(--an-muted,#59695f);font-variant-numeric:tabular-nums}
 .an-srow span[id$="-val"]{flex:0 0 52px;min-width:52px;text-align:right;font-size:13px!important;font-weight:400;color:var(--an-muted,#59695f);font-variant-numeric:tabular-nums}
 @media(pointer:coarse){.an-srow{min-height:44px}}
 
 /* ── Feld-Zeilen (Selects, Zahlen): Label links · Feld rechts ── */
 .an-designer-settings .an-fields,.an-designer-settings .an-fields.an-fields-3{grid-template-columns:1fr!important}
 .an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox])){display:flex;align-items:center;gap:10px;min-height:36px;border:1px solid var(--an-line,#d8dfd7);border-radius:8px;padding:4px 10px;background:#fff;margin-bottom:8px}
-.an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox]))>span{flex:0 0 190px;font-size:13px;font-weight:400!important;color:var(--an-ink,#24362d)}
+/* Slider-Zeilen (.an-srow) haben ihre eigene Zeilenoptik und werden hier
+   ausgenommen — sonst bekäme der Slider-Wrapper die fixe 190px-Labelbasis
+   und würde auf schmalen Ansichten aus der Zeile laufen. */
+.an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox])):not(.an-srow)>span{flex:0 0 190px;font-size:13px;font-weight:400!important;color:var(--an-ink,#24362d)}
 .an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox]))>select,
 .an-designer-settings label.an-field:has(>span):not(:has(>input[type=checkbox]))>input:not([type=checkbox]){flex:1;min-width:0;min-height:36px!important;height:36px;border:1px solid var(--an-field-border,#7d8f84);border-radius:8px;background:#fff;color:var(--an-ink,#24362d)}
 .an-designer-settings label.an-field>input[type=color]{flex:0 0 32px!important;width:32px!important;height:32px!important;padding:2px!important;border:1px solid var(--an-line,#d8dfd7)!important;border-radius:8px!important;background:#fff!important}

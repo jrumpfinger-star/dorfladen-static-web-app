@@ -54,14 +54,20 @@ window.WochenangeboteRenderer = (function () {
       else {ctx.moveTo(12,174);ctx.lineTo(width-4,168);ctx.lineTo(width-12,212);ctx.lineTo(4,218);ctx.closePath();}
       ctx.fill();
       var old = (item.old_price_cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
-      font = '"' + element.font + '"';
-      ctx.font = 'bold 32px ' + font;
-      var oldSize = Math.min(32, 32 * (width - 36) / ctx.measureText(old).width);
+      font = '"' + (layout.old_price_font || element.font) + '"';
+      var oldBase = 32 * (Number(layout.old_price_size) || 100) / 100;
+      ctx.font = 'bold ' + oldBase + 'px ' + font;
+      var oldSize = Math.min(oldBase, oldBase * (width - 36) / ctx.measureText(old).width);
       ctx.font = 'bold ' + oldSize + 'px ' + font; ctx.textAlign = 'center';
       ctx.fillStyle = layout.old_price_color || '#000000';
       ctx.fillText(old, width / 2, 204);
-      ctx.strokeStyle = layout.price_strike_color || '#ed1c24'; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(18, 182); ctx.lineTo(width - 18, 210); ctx.stroke();
+      if ((layout.old_price_strike || 'single') !== 'none') {
+        ctx.strokeStyle = layout.price_strike_color || '#ed1c24'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(18, 182); ctx.lineTo(width - 18, 210); ctx.stroke();
+        if (layout.old_price_strike === 'double') {
+          ctx.beginPath(); ctx.moveTo(18, 196); ctx.lineTo(width - 18, 224); ctx.stroke();
+        }
+      }
     }
     ctx.restore();
   }
@@ -117,7 +123,7 @@ window.WochenangeboteRenderer = (function () {
 
   var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
 
-  var PERSEC_SELECTS=['tagPreset','tagShape','nameFont'];
+  var PERSEC_SELECTS=['tagPreset','tagShape','nameFont','savingsMarkerType','savingsPalette'];
 
   var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
 
@@ -149,7 +155,9 @@ window.WochenangeboteRenderer = (function () {
     PERSEC_COLORS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[PERSEC_COLOR_MAP[k]||k]=v;});
     PERSEC_RANGES.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
     PERSEC_CHECKS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
-    PERSEC_SELECTS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
+    // Savings-Overrides ('' = Wie Vorgabe) dürfen die globale Einstellung nicht
+    // mit einem leeren Wert ueberschreiben; tagPreset etc. duerfen es.
+    PERSEC_SELECTS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null&&(v!==''||k.indexOf('savings')!==0))c[k]=v;});
     return c;
   }
 

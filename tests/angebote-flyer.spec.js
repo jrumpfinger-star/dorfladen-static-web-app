@@ -636,6 +636,21 @@ for (const cmsMode of [true, false]) {
       range.selectNodeContents(label);
       return [...range.getClientRects()].some((rect) => rect.width && (rect.left < bounds.left - 1 || rect.right > bounds.right + 1));
     }).map((label) => label.textContent));
+    if (clippedLabels.length) {
+      const dump = await host.locator('.an-field > span').evaluateAll((labels) => labels.filter((label) => {
+        const bounds = label.parentElement.getBoundingClientRect(), range = document.createRange();
+        range.selectNodeContents(label);
+        return [...range.getClientRects()].some((rect) => rect.width && (rect.left < bounds.left - 1 || rect.right > bounds.right + 1));
+      }).map((label) => {
+        const r = document.createRange(); r.selectNodeContents(label);
+        const b = label.parentElement.getBoundingClientRect();
+        return { html: label.parentElement.outerHTML.slice(0, 400), cls: label.className,
+          spanRect: JSON.parse(JSON.stringify(label.getBoundingClientRect())),
+          bounds: { left: Math.round(b.left), right: Math.round(b.right), width: Math.round(b.width) },
+          rects: [...r.getClientRects()].map((x) => ({ left: Math.round(x.left), right: Math.round(x.right), w: Math.round(x.width) })) };
+      }));
+      console.log('CLIPPED-DUMP ' + JSON.stringify(dump, null, 1));
+    }
     expect(clippedLabels).toEqual([]);
     if (cmsMode) {
       await host.getByRole('button', { name: 'Designstandards speichern', exact: true }).click();
@@ -2367,6 +2382,43 @@ test('TEMP-SHOTS: alle Designer-Tabs', async ({ page }) => {
   for (const [i, n] of [[0, 'hp-farben'], [1, 'hp-preistag'], [2, 'hp-layout']]) {
     await designerTool(hp, i); await shoot(n);
   }
+});
+
+test('TC-F55a: Preisschild-Dialog zeigt kompakte, gestapelte Felder ohne Riesenflächen', async ({ page }) => {
+  test.setTimeout(180000);
+  const state = await setup(page);
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await designerTool(root, 2);
+  const button = root.locator('[data-object-properties="price"]');
+  await expect(button).toBeVisible();
+  await button.click();
+  const dialog = page.locator('.an-object-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.an-object-grid label')).not.toHaveCount(0);
+  // Regression: Ohne Fix waren Slider-Zellen 258 px hoch (Labelbasis 190 px wurde
+  // zur Hoehe) und der Dialogkörper 717 px. Kompakt heißt: Zelle < 120 px, kein
+  // horizontaler Überlauf, Bedienelemente sichtbar.
+  const geometry = await dialog.evaluate((dialog) => {
+    const cells = Array.from(dialog.querySelectorAll('.an-object-grid > label'));
+    const body = dialog.querySelector('.an-object-body');
+    return {
+      cells: cells.length,
+      maxCellHeight: Math.max(...cells.map((cell) => cell.getBoundingClientRect().height)),
+      bodyScroll: body.scrollHeight, bodyClient: body.clientHeight,
+      overflowX: body.scrollWidth > body.clientWidth + 1,
+      visibleControls: cells.filter((cell) => {
+        const control = cell.querySelector('input,select');
+        return control && control.getBoundingClientRect().height > 0;
+      }).length,
+    };
+  });
+  expect(geometry.maxCellHeight).toBeLessThan(120);
+  expect(geometry.overflowX).toBe(false);
+  expect(geometry.visibleControls).toBe(geometry.cells);
+  expect(state.errors).toEqual([]);
 });
 
 test('TC-F57-02: Ersparnis-Marker und Stattpreis sind eigene, getrennt verschiebbare Vorschau-Elemente', async ({ page }) => {

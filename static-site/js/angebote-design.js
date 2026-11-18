@@ -34,7 +34,10 @@ window.AngeboteDesign = (function () {
     ['image_scale', 'Produktbild · Größe in Prozent', 'number', 20, 200],
     ['marker_type', 'Ersparnis-Marker Typ', markerTypes],
     ['marker_palette', 'Ersparnis-Farbwelt', markerPalettes],
-    ['marker_scale', 'Ersparnis-Marker Größe %', 'number', 80, 180]
+    ['marker_scale', 'Ersparnis-Marker Größe %', 'number', 80, 180],
+    ['old_price_size', 'Stattpreis · Größe %', 'number', 60, 160],
+    ['old_price_font', 'Stattpreis · Schrift', ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS']],
+    ['old_price_strike', 'Stattpreis · Durchstreich-Stil', [['single', 'Einfach durchgestrichen'], ['double', 'Doppelt durchgestrichen'], ['none', 'Ohne Durchstreichung']]]
   ].concat([
     ['price_preset', 'Preisschild-Farbvorlage', [['', 'Manuell'], ['classic-red-rect', 'Classic Rot'],
       ['green-rounded', 'Naturgrün'], ['dark-pill', 'Dark Elegance'], ['gold-banner', 'Gold Banner'],
@@ -128,7 +131,7 @@ window.AngeboteDesign = (function () {
     }
     function fields(advanced) {
       var defs = definitions.filter(function (def) {
-        var extra = def[0].indexOf('decoration.') === 0 || def[0] === 'price_preset';
+        var extra = def[0].indexOf('decoration.') === 0 || def[0] === 'price_preset' || def[0].indexOf('old_price_') === 0;
         var marker = def[0].indexOf('marker_') === 0;
         return def[0] !== 'template' && def[0] !== 'density'
           && (advanced === 'extra' ? extra : !extra && (advanced === true ? def[2] === 'number' || marker : def[2] === 'number' === advanced && !marker));
@@ -139,7 +142,7 @@ window.AngeboteDesign = (function () {
         return (i < 0 ? 99 : i) - (j < 0 ? 99 : j);
       });
       var out = [], lastSection = '';
-      var extraSections = { price_preset: 'Preisschild', 'decoration.price_radius': 'Preisschild', 'decoration.price_skew': 'Preisschild', 'decoration.price_scale': 'Preisschild', 'decoration.price_dx': 'Preisschild', 'decoration.price_dy': 'Preisschild', 'decoration.show_leaf': 'Deko', 'decoration.leaf_size': 'Deko', 'decoration.show_bag': 'Deko', 'decoration.show_texture': 'Deko', 'decoration.border_width': 'Deko', 'decoration.card_border_width': 'Deko', 'decoration.leaf_color': 'Deko-Farben', 'decoration.border_color': 'Deko-Farben', 'decoration.card_border_color': 'Deko-Farben', 'decoration.details_color': 'Deko-Farben', 'decoration.footer_color': 'Deko-Farben', 'decoration.vorrat_color': 'Deko-Farben', 'decoration.background_gradient': 'Hintergründe', 'decoration.background_color2': 'Hintergründe', 'decoration.background_direction': 'Hintergründe', 'decoration.background_pct': 'Hintergründe', 'decoration.image_background': 'Hintergründe', 'decoration.image_gradient': 'Hintergründe', 'decoration.image_color2': 'Hintergründe', 'decoration.image_direction': 'Hintergründe', 'decoration.image_pct': 'Hintergründe', 'decoration.image_width_pct': 'Hintergründe', 'decoration.image_dx': 'Hintergründe', 'decoration.image_dy': 'Hintergründe' };
+      var extraSections = { price_preset: 'Preisschild', 'decoration.price_radius': 'Preisschild', 'decoration.price_skew': 'Preisschild', 'decoration.price_scale': 'Preisschild', 'decoration.price_dx': 'Preisschild', 'decoration.price_dy': 'Preisschild', old_price_size: 'Preisschild', old_price_font: 'Preisschild', old_price_strike: 'Preisschild', 'decoration.show_leaf': 'Deko', 'decoration.leaf_size': 'Deko', 'decoration.show_bag': 'Deko', 'decoration.show_texture': 'Deko', 'decoration.border_width': 'Deko', 'decoration.card_border_width': 'Deko', 'decoration.leaf_color': 'Deko-Farben', 'decoration.border_color': 'Deko-Farben', 'decoration.card_border_color': 'Deko-Farben', 'decoration.details_color': 'Deko-Farben', 'decoration.footer_color': 'Deko-Farben', 'decoration.vorrat_color': 'Deko-Farben', 'decoration.background_gradient': 'Hintergründe', 'decoration.background_color2': 'Hintergründe', 'decoration.background_direction': 'Hintergründe', 'decoration.background_pct': 'Hintergründe', 'decoration.image_background': 'Hintergründe', 'decoration.image_gradient': 'Hintergründe', 'decoration.image_color2': 'Hintergründe', 'decoration.image_direction': 'Hintergründe', 'decoration.image_pct': 'Hintergründe', 'decoration.image_width_pct': 'Hintergründe', 'decoration.image_dx': 'Hintergründe', 'decoration.image_dy': 'Hintergründe' };
       function sectionIndex(def0) { var s = extraSections[def0]; return s === 'Preisschild' ? 0 : s === 'Deko' ? 1 : s === 'Deko-Farben' ? 2 : 3; }
       if (advanced === 'extra') defs.sort(function (a, b) { return sectionIndex(a[0]) - sectionIndex(b[0]); });
       defs.forEach(function (def) {
@@ -812,6 +815,16 @@ window.AngeboteDesign = (function () {
       row.dataset.srow = 'true';
       row.classList.add('an-srow');
       if (row !== label) row.classList.add('an-srow-slider');
+      else if (range.parentElement) {
+        // Slider + Wertausgabe in einem gemeinsamen Span halten: So bleibt die
+        // Zeile im Einstellungspanel horizontal und im Objekt-Dialog gestapelt
+        // (Label oben, Slider daneben), ohne dass die Spaltenbreite zur Hoehe wird.
+        var slider = document.createElement('span'); slider.className = 'an-srow-slider';
+        range.parentElement.insertBefore(slider, range);
+        var out = range.nextElementSibling;
+        slider.appendChild(range);
+        if (out && out.tagName === 'OUTPUT') slider.appendChild(out);
+      }
       var head = row.childNodes[0];
       while (head && head.nodeType === 3 && !head.textContent.trim()) head = head.nextSibling;
       if (head && head.nodeType === 3) {
