@@ -1426,8 +1426,12 @@ test('TC-F15-01..02: kompakte Übersicht mit Wochenfiltern und Direktaktionen oh
   await row.getByRole('button', { name: 'Vorschau', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Aktionsvorschau' }).locator('canvas')).toBeVisible();
   await page.getByRole('button', { name: 'Vorschau schließen' }).click();
-  const download = page.waitForEvent('download'); await row.getByRole('button', { name: 'Teilen', exact: true }).click();
+  await row.getByRole('button', { name: 'Teilen', exact: true }).click();
+  const shareDialog = page.getByRole('dialog', { name: 'Angebot teilen' });
+  await expect(shareDialog).toBeVisible();
+  const download = page.waitForEvent('download'); await shareDialog.getByRole('button', { name: 'Herunterladen', exact: true }).click();
   expect((await download).suggestedFilename()).toBe('Angebot-1.png');
+  await shareDialog.getByRole('button', { name: 'Schließen', exact: true }).click();
   await row.getByRole('button', { name: 'Aktion löschen', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Abbrechen', exact: true }).click();
   expect(state.actions.has(current.id)).toBe(true);

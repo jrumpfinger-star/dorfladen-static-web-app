@@ -1893,6 +1893,10 @@ Mauskontrollen kompakt und Touchziele mindestens 44 px.
   „Eigene Vorlagen" wählen (Plakat für Sammelflyer/Kachel, Einzelflyer für
   Einzelflyer); sie ersetzt nach Bestätigung nur das aktuelle Ausgabeziel,
   setzt die Herkunft auf den Vorlagennamen und speichert nicht automatisch.
+- TC-F66-12: „Teilen" öffnet einen Dialog mit Bildvorschau. Mobil teilt „Teilen …"
+  Bild(er) samt Text über das Teilen-Menü. Auf dem Desktop kopiert „Bild kopieren
+  & WhatsApp öffnen" das PNG in die Zwischenablage (Strg+V) und öffnet WhatsApp
+  Web mit dem Text; „Herunterladen" bleibt als Ausweichweg. Kein stiller Download.
 
 ## F67: Gemeinsame Artikelnavigation und volle CMS-Inhaltsbreite
 

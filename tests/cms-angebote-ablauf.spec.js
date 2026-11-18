@@ -1211,6 +1211,47 @@ test('TC-F66-11: Eigene Vorlage laesst sich im Aktionseditor waehlen und ersetzt
   expect(state.errors).toEqual([]);
 });
 
+for (const variant of ['mobil', 'desktop']) {
+  test(`TC-F66-12: Teilen per WhatsApp (${variant}) teilt, kopiert oder laedt das Bild statt es nur herunterzuladen`, async ({ page }) => {
+    const state = await setup(page);
+    await page.addInitScript((mode) => {
+      window.__opened = []; window.__copied = []; window.__shared = null;
+      window.open = (url) => { window.__opened.push(String(url)); return null; };
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { write: async (items) => { items.forEach((item) => window.__copied.push(item.types.join(','))); } } });
+      if (mode === 'mobil') {
+        navigator.canShare = () => true;
+        navigator.share = async (data) => { window.__shared = { files: data.files.length, text: data.text, title: data.title }; };
+      } else { navigator.share = undefined; navigator.canShare = undefined; }
+    }, variant);
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, 'drinks', 2, true);
+    await page.locator('#an-overview').click();
+    await allWeeks(page);
+    await page.locator('[data-share-action]').first().click();
+    const dialog = page.getByRole('dialog', { name: 'Angebot teilen' });
+    await expect(dialog).toBeVisible();
+    if (variant === 'mobil') {
+      await dialog.getByRole('button', { name: 'Teilen …', exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      const shared = await page.evaluate(() => window.__shared);
+      expect(shared.files).toBeGreaterThan(0);
+      expect(shared.text).toContain('Gültig');
+    } else {
+      await expect(dialog.getByRole('button', { name: 'Teilen …' })).toHaveCount(0);
+      await dialog.getByRole('button', { name: 'Bild kopieren & WhatsApp öffnen', exact: true }).click();
+      await expect(dialog.locator('[data-share-status]')).toContainText('Strg+V');
+      expect(await page.evaluate(() => window.__copied)).toEqual(['image/png']);
+      const opened = await page.evaluate(() => window.__opened);
+      expect(opened).toHaveLength(1);
+      expect(opened[0]).toContain('web.whatsapp.com/send?text=');
+      const download = page.waitForEvent('download');
+      await dialog.getByRole('button', { name: 'Herunterladen', exact: true }).click();
+      expect((await download).suggestedFilename()).toMatch(/^Angebot-1\.png$/);
+    }
+    expect(state.errors).toEqual([]);
+  });
+}
+
 test('TC-F66-09: Waage ist in der Aktionsliste direkt erreichbar und oeffnet ohne Zwischendialog', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');

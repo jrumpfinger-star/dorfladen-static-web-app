@@ -203,22 +203,65 @@
       }); };
     });
   }
-  async function previewAction(draft, share) {
-    var canvases = await M.preflight(draft);
-    async function download(canvas, index) {
+  async function shareDialog(draft, canvases) {
+    var blobs = [];
+    for (var canvas of canvases) {
       var blob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
       if (!blob) throw M.problem('Das Vorschaubild konnte nicht erstellt werden. Bitte erneut versuchen.');
-      var file = new File([blob], 'Angebot-' + (index + 1) + '.png', { type: 'image/png' });
-      if (share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: draft.title }); }
-        catch (error) { if (error.name !== 'AbortError') throw error; }
-      } else {
-        var url = URL.createObjectURL(blob), link = document.createElement('a');
-        link.href = url; link.download = file.name; link.click();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
-      }
+      blobs.push(blob);
     }
-    if (share) { for (var i = 0; i < canvases.length; i++) await download(canvases[i], i); return; }
+    var files = blobs.map(function (blob, index) { return new File([blob], 'Angebot-' + (index + 1) + '.png', { type: 'image/png' }); });
+    var urls = blobs.map(function (blob) { return URL.createObjectURL(blob); });
+    var message = '🏷️ *' + draft.title + '*\n_Gültig ' + M.date(draft.valid_from) + ' – ' + M.date(draft.valid_to) + '_';
+    var mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var whatsApp = (mobile ? 'https://wa.me/?text=' : 'https://web.whatsapp.com/send?text=') + encodeURIComponent(message);
+    var canNative = !!navigator.share && (!navigator.canShare || navigator.canShare({ files: files }));
+    var canCopy = !!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem);
+    var dialog = document.createElement('dialog'); dialog.className = 'an-dialog an-share';
+    dialog.setAttribute('aria-label', 'Angebot teilen');
+    dialog.innerHTML = '<div class="an-dialog-top"><h2>Angebot teilen</h2><button type="button" data-share-close aria-label="Schließen">×</button></div>'
+      + '<div class="an-share-pages">' + urls.map(function (url) { return '<img alt="" src="' + url + '">'; }).join('') + '</div>'
+      + '<p class="an-muted" data-share-status role="status"></p>'
+      + '<div class="an-actions an-share-actions">'
+      + (canNative ? '<button type="button" class="an-primary" data-share-native>Teilen …</button>' : '')
+      + (canCopy ? blobs.map(function (blob, index) {
+        return '<button type="button"' + (canNative ? '' : ' class="an-primary"') + ' data-share-copy="' + index + '">'
+          + (blobs.length > 1 ? 'Seite ' + (index + 1) + ' kopieren' : 'Bild kopieren & WhatsApp öffnen') + '</button>'; }).join('') : '')
+      + '<button type="button" data-share-whatsapp>WhatsApp öffnen</button>'
+      + '<button type="button" data-share-download>Herunterladen</button></div>';
+    var status = dialog.querySelector('[data-share-status]');
+    function say(text) { status.textContent = text; }
+    function openWhatsApp() { window.open(whatsApp, '_blank'); }
+    dialog.addEventListener('close', function () { urls.forEach(function (url) { URL.revokeObjectURL(url); }); dialog.remove(); });
+    dialog.addEventListener('click', async function (event) {
+      var button = event.target.closest('button'); if (!button) return;
+      if (button.hasAttribute('data-share-close')) { dialog.close(); return; }
+      if (button.hasAttribute('data-share-native')) {
+        try { await navigator.share({ files: files, text: message, title: draft.title }); dialog.close(); }
+        catch (error) { if (error.name !== 'AbortError') say('Teilen ist hier nicht möglich. Bitte „Herunterladen“ oder „Bild kopieren“ verwenden.'); }
+        return;
+      }
+      if (button.hasAttribute('data-share-copy')) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobs[Number(button.dataset.shareCopy)] })]);
+          say('Bild kopiert – in WhatsApp mit Strg+V einfügen.');
+          if (blobs.length === 1) openWhatsApp();
+        } catch (error) { say('Das Bild konnte nicht kopiert werden. Bitte „Herunterladen“ verwenden.'); }
+        return;
+      }
+      if (button.hasAttribute('data-share-whatsapp')) { openWhatsApp(); return; }
+      if (button.hasAttribute('data-share-download')) {
+        files.forEach(function (file, index) {
+          var link = document.createElement('a'); link.href = urls[index]; link.download = file.name; link.click();
+        });
+        say('Heruntergeladen – in WhatsApp als Bild anhängen.');
+      }
+    });
+    document.body.appendChild(dialog); dialog.showModal();
+  }
+  async function previewAction(draft, share) {
+    var canvases = await M.preflight(draft);
+    if (share) { await shareDialog(draft, canvases); return; }
     var dialog = document.createElement('dialog'); dialog.className = 'an-dialog an-action-preview';
     dialog.setAttribute('aria-label', 'Aktionsvorschau');
     dialog.innerHTML = '<div class="an-dialog-top"><h2>' + M.esc(draft.title) + '</h2><button aria-label="Vorschau schließen">×</button></div><div class="an-preview-pages"></div>';
