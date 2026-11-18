@@ -1889,6 +1889,10 @@ Mauskontrollen kompakt und Touchziele mindestens 44 px.
   Zwischendialog; Löschen steht beschriftet im Menü „⋯".
 - TC-F66-10: Der Preisschild-Dialog ist für Sonder- und Getränkeaktion, Sammel-
   und Einzelflyer erreichbar und der Zugang ist nicht dauerhaft deaktiviert.
+- TC-F66-11: Im Aktionseditor (Sonderaktion) lässt sich eine eigene Vorlage aus
+  „Eigene Vorlagen" wählen (Plakat für Sammelflyer/Kachel, Einzelflyer für
+  Einzelflyer); sie ersetzt nach Bestätigung nur das aktuelle Ausgabeziel,
+  setzt die Herkunft auf den Vorlagennamen und speichert nicht automatisch.
 
 ## F67: Gemeinsame Artikelnavigation und volle CMS-Inhaltsbreite
 

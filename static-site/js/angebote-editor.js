@@ -81,6 +81,7 @@
       status.textContent = names[designTarget] + ' · Aussehen: ' + (template ? template.textContent : layout)
         + (origin.known ? ' · Eigene Vorlage: ' + origin.label : '');
       var button = $('an-defaults'); if (button) button.hidden = outputMode();
+      refreshPresetPicker().catch(function (error) { console.warn('[Angebote] Eigene Vorlagen', error); });
     }
     if (!cmsAction) {
       var bar = root.querySelector('.an-output-bar'), picker = $('an-design-item-wrap');
@@ -869,7 +870,8 @@
     toolbar.appendChild($('an-overview')); left.appendChild(actions);
     var context = document.createElement('section'); context.className = 'an-design-context';
     context.setAttribute('aria-label', 'Aktuelle Gestaltung');
-    context.innerHTML = '<span data-action-design-context role="status"></span>';
+    context.innerHTML = '<span data-action-design-context role="status"></span>'
+      + '<select data-action-preset aria-label="Eigene Vorlage laden" hidden><option value="">Eigene Vorlage laden …</option></select>';
     var standard = $('an-defaults'); standard.textContent = 'Standard-Gestaltung laden'; standard.title = 'Zurück zur gespeicherten Standard-Gestaltung dieses Bereichs'; standard.dataset.designLoadStandard = ''; context.appendChild(standard);
     toolbar.after(context);
     actions.appendChild($('an-stage-info'));
@@ -1451,6 +1453,50 @@
     document.body.classList.remove('an-printing');
     var container = $('an-print'); if (container) container.replaceChildren();
   });
+  async function applyWeeklyDesign(source, presetName) {
+    var updated = M.clone(data); await M.adoptWeekly(updated, source, presetName);
+    checkpoint();
+    if (!data.layout.cms) {
+      data = updated;
+      var firstOrigin = M.designProvenanceState(updated.layout, 'sheet');
+      M.setDesignProvenance(data.layout, 'sheet', firstOrigin.known ? firstOrigin.name : 'Gespeicherter Bereichsstandard');
+      M.rememberDesign(data); page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor(); return;
+    }
+    if (designTarget === 'sheet') {
+      M.cmsFor(data, 'sheet', true);
+      var keptTargets = data.layout.cms.targets;
+      data.layout.cms = M.clone(updated.layout.cms); data.layout.cms.targets = keptTargets;
+      data.layout.template = updated.layout.template; data.layout.pages = updated.layout.pages;
+    } else {
+      M.cmsFor(data, designTarget, true);
+      data.layout.cms.targets[designTarget] = M.clone(updated.layout.cms);
+    }
+    var inherited = M.designProvenanceState(updated.layout, 'sheet');
+    M.setDesignProvenance(data.layout, designTarget, inherited.known ? inherited.name : 'Gespeicherter Bereichsstandard');
+    M.rememberDesign(data, designTarget); page = 0; selected = ''; changed(); renderEditor();
+  }
+  // Eigene Vorlagen (Design-Einstellungen → Eigene Vorlagen) für Plakat bzw. Einzelflyer in der Aktion wählbar machen.
+  var presetCache = null;
+  async function refreshPresetPicker() {
+    var picker = root.querySelector('[data-action-preset]'); if (!picker) return;
+    var usable = !!data && !!data.layout.cms && designTarget !== 'scale';
+    var presetKind = designTarget === 'single' ? 'flyer' : 'plakat', key = usable + ':' + presetKind;
+    if (picker.dataset.key === key && presetCache) return;
+    picker.hidden = !usable; if (!usable) { picker.dataset.key = key; return; }
+    if (!presetCache) { try { var result = await M.request('/api/cms-config'); presetCache = result.data && result.data.design_presets || {}; } catch (error) { presetCache = {}; } }
+    var list = presetCache[presetKind] || [];
+    picker.dataset.key = key;
+    picker.innerHTML = '<option value="">Eigene Vorlage laden …</option>' + list.map(function (entry, index) {
+      return '<option value="' + index + '">' + M.esc(entry.name) + '</option>';
+    }).join('');
+    picker.hidden = !list.length;
+  }
+  async function loadOwnPreset(picker) {
+    var list = presetCache && presetCache[designTarget === 'single' ? 'flyer' : 'plakat'] || [], entry = list[Number(picker.value)];
+    picker.value = ''; if (!entry) return;
+    if (!(await M.dialog('Eigene Vorlage laden?', '„' + entry.name + '“ ersetzt die Gestaltung des gewählten Ausgabeziels. Andere Ausgaben, Artikel und Preise bleiben erhalten. Zum Behalten bitte die Aktion speichern.', 'Vorlage laden'))) return;
+    run(function () { return applyWeeklyDesign(entry.data, entry.name); });
+  }
   async function scale() {
     if (!(await qualityGate())) return;
     await M.preflight(data);
@@ -1639,28 +1685,7 @@
       if (b.id === 'an-template' || b.id === 'an-defaults') {
         if (b.id === 'an-defaults' && data.kind === 'weekly' && (!data.layout.cms || designTarget !== 'scale')) {
           if (!(await M.dialog('CMS-Wochenvorlage übernehmen?', 'Die aktuelle CMS-Vorlage ersetzt nur die Gestaltung des gewählten Ausgabeziels. Andere Ausgaben, Artikel und Preise bleiben erhalten. Alte freie Wochenlayouts werden dabei insgesamt auf die CMS-Vorlage umgestellt.', 'CMS-Vorlage übernehmen'))) return;
-          run(async function () {
-            var updated = M.clone(data); await M.adoptWeekly(updated);
-            checkpoint();
-            if (!data.layout.cms) {
-              data = updated;
-              var inherited = M.designProvenanceState(updated.layout, 'sheet');
-              M.setDesignProvenance(data.layout, 'sheet', inherited.known ? inherited.name : 'Gespeicherter Bereichsstandard');
-              M.rememberDesign(data); page = 0; selected = ''; designTarget = 'sheet'; changed(); renderEditor(); return;
-            }
-            if (designTarget === 'sheet') {
-              M.cmsFor(data, 'sheet', true);
-              var keptTargets = data.layout.cms.targets;
-              data.layout.cms = M.clone(updated.layout.cms); data.layout.cms.targets = keptTargets;
-              data.layout.template = updated.layout.template; data.layout.pages = updated.layout.pages;
-            } else {
-              M.cmsFor(data, designTarget, true);
-              data.layout.cms.targets[designTarget] = M.clone(updated.layout.cms);
-            }
-            var inherited = M.designProvenanceState(updated.layout, 'sheet');
-            M.setDesignProvenance(data.layout, designTarget, inherited.known ? inherited.name : 'Gespeicherter Bereichsstandard');
-            M.rememberDesign(data, designTarget); page = 0; selected = ''; changed(); renderEditor();
-          });
+          run(function () { return applyWeeklyDesign(); });
           return;
         }
         var standards = b.id === 'an-defaults' && designTarget !== 'sheet';
@@ -1726,6 +1751,7 @@
         return;
       }
       var target = event.target;
+      if (target.matches('[data-action-preset]')) { loadOwnPreset(target); return; }
       if (event.type === 'change' && target === liveControl) {
         liveControl = null;
         if (!target.validity.valid || target.type === 'number' && target.value === '') {

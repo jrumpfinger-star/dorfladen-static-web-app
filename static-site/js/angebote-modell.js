@@ -825,11 +825,11 @@ window.AngeboteModel = (function () {
       });
     });
   }
-  async function adoptWeekly(data) {
+  async function adoptWeekly(data, override, presetName) {
     var result = await request('/api/cms-config');
     if (!result.data || typeof result.data !== 'object') throw problem('Die gespeicherten Wochenvorlagen konnten nicht geladen werden. Bitte erneut versuchen.');
     var R = window.WochenangeboteRenderer;
-    var config = clone(R.CFG_DEFAULTS), saved = result.data.design_config || {};
+    var config = clone(R.CFG_DEFAULTS), saved = override || result.data.design_config || {};
     Object.keys(config).concat(['tplColors']).forEach(function (key) {
       if (Object.prototype.hasOwnProperty.call(saved, key)) config[key] = clone(saved[key]);
     });
@@ -838,7 +838,7 @@ window.AngeboteModel = (function () {
     data.layout.template = config.plakatTemplate; data.layout.density = 6;
     applyTemplate(data);
     ['sheet', 'card', 'single'].forEach(function (target) {
-      var entry = savedCmsProvenance(saved, target === 'single' ? 'flyer' : 'plakat');
+      var entry = presetName ? { name: presetName } : savedCmsProvenance(saved, target === 'single' ? 'flyer' : 'plakat');
       if (entry) setDesignProvenance(data.layout, target, entry.name);
       else if (data.layout.design_provenance && data.layout.design_provenance.targets) delete data.layout.design_provenance.targets[target];
     });

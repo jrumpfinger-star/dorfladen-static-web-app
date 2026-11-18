@@ -1184,6 +1184,33 @@ test('TC-F66-10: Preisschild ist in jeder Aktionsgestaltung erreichbar und oeffn
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F66-11: Eigene Vorlage laesst sich im Aktionseditor waehlen und ersetzt nur das aktuelle Ziel', async ({ page }) => {
+  const state = await setup(page);
+  await page.route('**/api/cms-config', (route) => route.fulfill({ json: { success: true, data: {
+    feature_flags: { kiosk_werbebilder: true }, design_config: {},
+    design_presets: { plakat: [{ name: 'Mein Test', ts: 1, data: { plakat_decoBgColor: '#123456' } }], flyer: [] },
+  } } }));
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 2);
+  const root = page.locator('#an-root');
+  const picker = root.locator('[data-action-preset]');
+  await expect(picker).toBeVisible();
+  await workspaceView(root.locator('.an-cms-workspace'), 'inputs');
+  await showTab(page, 'Vorlage');
+  const color = root.locator('[data-cms-config=plakat_decoBgColor]');
+  const before = await color.inputValue();
+  expect(before).not.toBe('#123456');
+  await picker.selectOption({ label: 'Mein Test' });
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Vorlage laden', exact: true }).click();
+  await expect(color).toHaveValue('#123456');
+  await expect(root.locator('[data-action-design-context]')).toContainText('Mein Test');
+  await expect(picker).toHaveValue('');
+  expect(state.writes).toHaveLength(1);
+  await root.locator('[data-action-target]').selectOption('single');
+  await expect(picker).toBeHidden();
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F66-09: Waage ist in der Aktionsliste direkt erreichbar und oeffnet ohne Zwischendialog', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
