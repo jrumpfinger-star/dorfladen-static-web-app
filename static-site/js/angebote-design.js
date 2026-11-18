@@ -4,6 +4,42 @@ window.AngeboteDesign = (function () {
   var controlId = 0;
   var choicePaint = new WeakMap();
   var choiceState = new WeakMap(), previewDialog = null;
+  var sourceFields = new WeakMap();
+  function inventoryFields(root, kind) {
+    return Array.from(root.querySelectorAll('input,select,textarea')).flatMap(function (control) {
+      var style = control.dataset.style, config = control.dataset.cmsConfig, id = control.id;
+      var gradient = control.classList.contains('cfg-tpl-grad-toggle') ? control.dataset.kind + '.' + control.dataset.key : '';
+      var key = id || (style ? 'style.' + style + (control.type === 'radio' ? '=' + control.value : '') : config ? 'cms.' + config
+        : gradient ? 'gradient.' + gradient : control.hasAttribute('data-preset-name') ? 'ui.preset.name'
+          : control.hasAttribute('data-preset-select') ? 'ui.preset.selected' : '');
+      if (!key) return [];
+      var panel = control.closest('[data-designer-panel]'), dataKey = '';
+      var templateColor = /^cfg-tpl-(plakat|flyer)-(.+)$/.exec(id), weekColor = /^hcfg-wpTpl-(home|flyer)-(.+)$/.exec(id);
+      if (gradient) dataKey = 'design_config.tplColors[' + control.dataset.kind + ':template].' + control.dataset.key + '_grad';
+      else if (templateColor) dataKey = 'design_config.tplColors[' + templateColor[1] + ':template].' + templateColor[2];
+      else if (weekColor) dataKey = 'hp_design_config.wpTplColors[' + weekColor[1] + ':template].' + weekColor[2];
+      else if (id.startsWith('hpang-')) dataKey = 'design.homepage.' + id.slice(6);
+      else if (id.startsWith('hcfg-')) dataKey = 'hp_design_config.' + id.slice(5);
+      else if (/^cfg-(plakat|flyer)-/.test(id)) dataKey = 'design_config.' + id.slice(4).replace('-', '_');
+      else if (id.startsWith('cfg-')) dataKey = 'design_config.' + id.slice(4);
+      else if (style) dataKey = 'design.' + kind + '.' + (/^(family|variant)$/.test(style) ? 'template' : style);
+      if (/^cfg-lp-/.test(id)) dataKey = 'UI only · preview';
+      var label = control.closest('label')?.textContent.trim().replace(/\s+/g,' ') || control.getAttribute('aria-label') || '';
+      return [{ key:key, dataKey:dataKey, source:id ? 'DOM#' + id : gradient ? '[data-kind=' + control.dataset.kind + '][data-key=' + control.dataset.key + ']'
+        : style ? '[data-style=' + style + ']' : key,
+        label:label, type:control.type || 'select', tab:panel ? root.querySelector('[aria-controls="' + panel.id + '"]')?.textContent : '',
+        objectDialog:M.propertyGroup(style || config || id || '') || '', hidden:!!control.closest('[hidden]') }];
+    });
+  }
+  function captureFields(root, kind) {
+    if (!sourceFields.has(root)) sourceFields.set(root, { kind:kind, count:root.querySelectorAll('input,select,textarea').length, fields:inventoryFields(root, kind) });
+  }
+  function fieldInventory(root) {
+    var source = sourceFields.get(root) || { kind:root.dataset.designer, fields:[] }, after = inventoryFields(root, source.kind);
+    var present = new Set(after.map(function (field) { return field.key; }));
+    return { kind:source.kind, controlCountBefore:source.count, controlCountAfter:root.querySelectorAll('input,select,textarea').length, before:source.fields, after:after,
+      missing:source.fields.filter(function (field) { return !present.has(field.key); }).map(function (field) { return field.key; }) };
+  }
   var elementLabels = { image: 'Produktbild', logo: 'Dorfladen-Logo', shape: 'Fläche', text: 'Eigener Text',
     brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile', name: 'Artikelname',
     description: 'Beschreibung', pack: 'Gebinde', price: 'Preis', old_price: 'Stattpreis',
@@ -92,25 +128,39 @@ window.AngeboteDesign = (function () {
     return icons[id] || '<rect x="3" y="2" width="38" height="5"/><rect x="3" y="10" width="17" height="17" rx="'
       + (id === 'square' ? 0 : 3) + '"/><rect x="24" y="10" width="17" height="17" rx="' + (id === 'square' ? 0 : 3) + '"/>';
   }
-  function familyControls(layout, global) {
+  function familyControls(layout, global, cmsKind) {
     var families = global ? M.styleFamilies.slice(2, 8) : M.styleFamilies;
     var group = ++controlId;
     return '<fieldset class="an-choice-group an-style-families"><legend>Aufbau / Stil <small>'
       + families.length + ' Familien</small></legend><div class="an-family-grid">'
       + families.map(function (entry) {
-        return '<label class="an-family"><input type="radio" name="an-family-' + group
-          + '" data-style="family" value="' + entry[0] + '"' + (M.familyOf(layout.template) === entry[0] ? ' checked' : '')
+        return '<div class="an-family-option"><label class="an-family"><input type="radio" name="an-family-' + group
+          + '" ' + (cmsKind ? 'data-cms-kind="' + cmsKind + '" data-cms-family="' + entry[0] + '"' : 'data-style="family"')
+          + ' value="' + entry[0] + '"' + (M.familyOf(layout.template) === entry[0] ? ' checked' : '')
           + '><span><svg viewBox="0 0 44 30" aria-hidden="true" fill="currentColor">'
           + styleGlyph(entry[0])
-          + '</svg><strong>' + entry[1] + '</strong></span></label>';
+          + '</svg><strong>' + entry[1] + '</strong></span></label><button type="button" class="an-family-zoom" data-template-enlarge="'
+          + (M.familyOf(layout.template) === entry[0] && layout.template ? layout.template : entry[2]) + '"' + (cmsKind ? ' data-cms-kind="' + cmsKind + '"' : '')
+          + ' aria-label="' + entry[1] + ' vergrößern" title="' + entry[1] + ' vergrößern">'
+          + '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/>'
+          + '<path d="m15 15 6 6M7 10h6m-3-3v6"/></svg><span>Vergrößern</span></button></div>';
       }).join('') + '</div><label class="an-field an-style-variant"' + (M.familyOf(layout.template) !== 'magazine' ? ' hidden' : '')
-      + '><span>Magazin-Bildfläche</span><select data-style="variant" aria-label="Magazin-Bildfläche"><option value="standard">Standard</option>'
+      + '><span>Magazin-Bildfläche</span><select ' + (cmsKind ? 'data-cms-kind="' + cmsKind + '" data-cms-variant="' + cmsKind + '"' : 'data-style="variant"')
+      + ' aria-label="Magazin-Bildfläche"><option value="standard">Standard</option>'
       + '<option value="xl"' + (layout.template === 'modern-mag-xl' ? ' selected' : '') + '>Großbild</option></select></label>'
-      + '<button type="button" class="an-family-enlarge" data-template-enlarge="' + layout.template + '">Aktiven Stil vergrößern</button></fieldset>';
+      + '</fieldset>';
   }
-  function paletteButtons(state) {
+  function familyZooms(host, template) {
+    host.querySelectorAll('.an-family-option').forEach(function (option) {
+      var input = option.querySelector('input'), button = option.querySelector('.an-family-zoom');
+      var family = M.styleFamilies.find(function (entry) { return entry[0] === input.value; });
+      if (family && button) button.dataset.templateEnlarge = M.familyOf(template) === family[0] && template ? template : family[2];
+    });
+  }
+  function paletteButtons(state, cmsKind) {
     return '<div class="an-palette-grid">' + M.palettes.map(function (palette) {
-      return '<button type="button" class="an-palette" data-offer-palette="' + palette.id + '" aria-pressed="' + (state.id === palette.id)
+      return '<button type="button" class="an-palette" ' + (cmsKind ? 'data-cms-kind="' + cmsKind + '" data-cms-palette="' : 'data-offer-palette="')
+        + palette.id + '" aria-pressed="' + (state.id === palette.id)
         + '"><span class="an-palette-swatches" aria-hidden="true">'
         + ['header','accent','card'].map(function (key) { return '<i style="background:' + palette.colors[key] + '"></i>'; }).join('')
         + '</span><span>' + palette.label + '</span></button>';
@@ -133,16 +183,68 @@ window.AngeboteDesign = (function () {
     M.assignColors(layout, values);
     return true;
   }
+  var cmsPaletteRenderer;
+  var cmsPaletteRoles = { bgColor: 'bg', titleColor: 'title', tagColor: 'accent', cardBg: 'card',
+    cardBorder: 'border', textColor: 'text', detailsColor: 'muted', imgBg: 'image',
+    headerBg: 'header', headerAccent: 'accent', dateColor: 'muted', dividerColor: 'border',
+    priceBarBg: 'price', priceBarBorder: 'border', stattColor: 'muted', footerColor: 'footer',
+    vorratColor: 'card', priceTextColor: 'priceText', bgColor_c2: 'header', imgBg_c2: 'card', detailsTextColor: 'muted' };
+  function cmsPaletteValues(colors, config, kind) {
+    var values = {};
+    Object.keys(cmsPaletteRoles).forEach(function (key) { values[key] = colors[cmsPaletteRoles[key]]; });
+    if (config && config[kind + '_tagShape'] === 'price-image')
+      ['priceBarBg', 'priceBarBorder', 'priceTextColor', 'stattColor'].forEach(function (key) { delete values[key]; });
+    return values;
+  }
+  function applyCmsPaletteValues(config, kind, values) {
+    if (kind !== 'plakat' && kind !== 'flyer') throw M.problem('Unbekannter CMS-Designbereich.');
+    var aliases = { bgColor: 'decoBgColor', titleColor: 'decoTitleColor', footerColor: 'decoFooterColor',
+      textColor: 'nameColor', vorratColor: 'vorratColor', priceBarBg: 'priceStripColor',
+      priceBarBorder: 'priceOutlineColor', priceTextColor: 'priceImageColor', stattColor: 'priceOldColor' };
+    var priceImage = (config[kind + '_tagShape'] || config.tagShape) === 'price-image';
+    var key = kind + ':' + (config[kind + 'Template'] || 'classic-red');
+    var previous = config.tplColors || {}, entry = Object.assign({}, previous[key] || previous[config[kind + 'Template']] || {});
+    Object.keys(cmsPaletteRoles).forEach(function (role) {
+      if (values[role] == null || priceImage && /^(priceBarBg|priceBarBorder|priceTextColor|stattColor)$/.test(role)) return;
+      entry[role] = values[role];
+      if (aliases[role]) config[kind + '_' + aliases[role]] = values[role];
+    });
+    config.tplColors = Object.assign({}, previous, { [key]: entry });
+    return config;
+  }
+  function cmsEffectiveColors(config, kind) {
+    var R = window.WochenangeboteRenderer;
+    if (!cmsPaletteRenderer) cmsPaletteRenderer = R.create({ cfgGet: function () { return R.CFG_DEFAULTS; } });
+    var section = cmsPaletteRenderer.cfgForKind(config, kind), theme = cmsPaletteRenderer.getOfferTheme(kind, section);
+    return Object.assign({}, cmsPaletteRenderer.getTplColors(config[kind + 'Template'] || 'classic-red', config, kind), {
+      bgColor: theme.bgColor, titleColor: theme.titleColor, headerBg: theme.headerBg || theme.bgColor,
+      headerAccent: theme.headerAccent || theme.tagColor, dateColor: theme.dateColor,
+      dividerColor: theme.dividerColor || theme.cardBorder, footerColor: theme.footerColor,
+      priceBarBg: section.priceStripColor, priceBarBorder: section.priceOutlineColor,
+      priceTextColor: section.priceImageColor, stattColor: section.priceOldColor, vorratColor: theme.vorratColor,
+      textColor: section.nameColor, detailsTextColor: section.detailsColor || section.nameColor
+    });
+  }
+  function paletteMatch(value, map, defaults) {
+    var keys = Object.keys(map(M.palettes[0].colors));
+    function equal(candidate) { return keys.every(function (key) { return value[key] === candidate[key]; }); }
+    var match = M.palettes.find(function (entry) { return equal(map(entry.colors)); });
+    if (match) return { id: match.id, label: match.label, custom: false };
+    var legacy = (defaults || []).some(equal);
+    return { id: '', label: legacy ? 'Bestandspalette · exakte Werte' : 'Eigene Farben / Verläufe', custom: !legacy };
+  }
+  function cmsPaletteState(config, kind) {
+    var defaults = M.cmsTemplateOptions.map(function (entry) {
+      var cfg = M.clone(window.WochenangeboteRenderer.CFG_DEFAULTS); cfg[kind + 'Template'] = entry[0];
+      return cmsEffectiveColors(cfg, kind);
+    });
+    return paletteMatch(cmsEffectiveColors(config, kind), function (colors) { return cmsPaletteValues(colors, config, kind); }, defaults);
+  }
   function palettePicker(host, options) {
     if (host._palettePicker) { host._palettePicker.refresh(); return host._palettePicker; }
     host.classList.add('an-palette-group');
     function state() {
-      var value = options.read(), keys = Object.keys(options.map(M.palettes[0].colors));
-      function equal(candidate) { return keys.every(function (key) { return value[key] === candidate[key]; }); }
-      var match = M.palettes.find(function (entry) { return equal(options.map(entry.colors)); });
-      if (match) return { id: match.id, label: match.label, custom: false };
-      var legacy = (options.defaults || []).some(equal);
-      return { id: '', label: legacy ? 'Bestandspalette · exakte Werte' : 'Eigene Farben / Verläufe', custom: !legacy };
+      return paletteMatch(options.read(), options.map, options.defaults);
     }
     function refresh() {
       var current = state();
@@ -179,8 +281,11 @@ window.AngeboteDesign = (function () {
       return '<div data-side-panel="design">'
         + ['plakat', 'flyer'].map(function (kind) {
           var label = kind === 'plakat' ? 'Sammelflyer / Kachel' : 'Einzelflyer / Waage';
-          return '<fieldset class="an-compact-group"><legend>' + label + '</legend><div class="an-fields">'
-            + select(kind + 'Template', label, 'Originalvorlage', M.cmsTemplateOptions)
+          return '<fieldset class="an-compact-group" data-cms-section="' + kind + '"><legend>' + label + '</legend>'
+            + '<div class="an-legacy-template" hidden>' + select(kind + 'Template', label, 'Originalvorlage', M.cmsTemplateOptions) + '</div>'
+            + familyControls({ template: cfg[kind + 'Template'] }, true, kind)
+            + '<fieldset class="an-choice-group an-palette-group"><legend>Farbpalette</legend>'
+            + paletteButtons(cmsPaletteState(cfg, kind), kind) + '</fieldset><div class="an-fields">'
             + select(kind + '_tagPreset', label, 'Preisschild-Vorlage', definitions.find(function (def) { return def[0] === 'price_preset'; })[2])
             + select(kind + '_tagShape', label, 'Preisschildform', shapeLabels)
             + select(kind + '_nameFont', label, 'Bezeichnung · Schrift', ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS'].map(function (font) { return [font, font]; }))
@@ -293,7 +398,26 @@ window.AngeboteDesign = (function () {
       host.addEventListener('click', open); host.addEventListener('dblclick', open);
     }
     choiceState.set(host, { layout: M.clone(layout), kind: kind });
+    if (layout.cms) {
+      var cfg = layout.cms.config;
+      host.querySelectorAll('[data-cms-family]').forEach(function (input) {
+        input.checked = input.value === M.familyOf(cfg[input.dataset.cmsKind + 'Template']);
+      });
+      host.querySelectorAll('[data-cms-variant]').forEach(function (select) {
+        familyZooms(select.closest('.an-style-families'), cfg[select.dataset.cmsKind + 'Template']);
+      });
+      host.querySelectorAll('[data-cms-variant]').forEach(function (select) {
+        var template = cfg[select.dataset.cmsKind + 'Template'];
+        select.closest('.an-style-variant').hidden = M.familyOf(template) !== 'magazine';
+        select.value = template === 'modern-mag-xl' ? 'xl' : 'standard';
+      });
+      host.querySelectorAll('[data-cms-palette]').forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.dataset.cmsPalette === cmsPaletteState(cfg, button.dataset.cmsKind).id));
+      });
+      return;
+    }
     host.querySelectorAll('[data-style=family]').forEach(function (input) { input.checked = input.value === M.familyOf(layout.template); });
+    familyZooms(host, layout.template);
     host.querySelectorAll('.an-style-variant').forEach(function (field) { field.hidden = M.familyOf(layout.template) !== 'magazine'; });
     host.querySelectorAll('[data-style=variant]').forEach(function (select) { select.value = layout.template === 'modern-mag-xl' ? 'xl' : 'standard'; });
     host.querySelectorAll('.an-family-enlarge').forEach(function (button) { button.dataset.templateEnlarge = layout.template; });
@@ -303,7 +427,7 @@ window.AngeboteDesign = (function () {
     var ticket = (choicePaint.get(host) || 0) + 1; choicePaint.set(host, ticket);
     host.querySelectorAll('[data-price-image-color]').forEach(function (field) { field.hidden = false; });
     host.querySelectorAll('[data-price-background-label]').forEach(function (label) {
-      label.textContent = M.priceImage(layout) ? 'Stattpreis-Streifen' : 'Preis-Hintergrund';
+      label.textContent = M.priceImage(layout) ? 'Stattpreis-Streifen' : host.closest('[data-designer]') ? 'Schildfläche' : 'Preis-Hintergrund';
     });
     host.querySelectorAll('[data-style]').forEach(function (control) {
       var key = control.dataset.style, decorationKey = key.split('.')[1];
@@ -328,7 +452,8 @@ window.AngeboteDesign = (function () {
   async function enlarge(layout, kind, id, opener) {
     if (previewDialog) previewDialog();
     var style = M.clone(layout);
-    if (id !== style.template) M.useTemplate(style, id);
+    if (style.cms) style.cms.config[(opener.dataset.cmsKind || 'plakat') + 'Template'] = id;
+    else if (id !== style.template) M.useTemplate(style, id);
     var dlg = document.createElement('dialog'); dlg.className = 'an-viewer';
     dlg.setAttribute('aria-label', 'Vorlagenvorschau · ' + M.templateStyle(id).label);
     dlg.innerHTML = '<div class="an-viewer-shell"><div class="an-viewer-tools"><strong></strong><button type="button" data-template-close>Schließen</button></div>'
@@ -366,7 +491,9 @@ window.AngeboteDesign = (function () {
     document.body.appendChild(dlg); document.documentElement.style.overflow = 'hidden';
     dlg.showModal(); observer.observe(scroller); previewDialog = close;
     try {
-      var rendered = await M.render(sample(style, kind), 0, 2);
+      var data = sample(style, kind);
+      var rendered = style.cms && opener.dataset.cmsKind === 'flyer'
+        ? await M.renderTarget(data, 'single', data.items[0].id, 2) : await M.render(data, 0, 2);
       if (closed) return;
       if (rendered.errors.length) throw M.problem(rendered.errors[0]);
       canvas = rendered.canvas; canvas.setAttribute('aria-label', 'Große Stilvorschau ' + M.templateStyle(id).label);
@@ -458,6 +585,7 @@ window.AngeboteDesign = (function () {
       if (!toolbar) return;
       toolbar.querySelector('[data-design-history=undo]').disabled = !past.length;
       toolbar.querySelector('[data-design-history=redo]').disabled = !future.length;
+      refreshColorValues(toolbar.closest('[data-designer]'));
     }
     function record() {
       if (transaction) return;
@@ -581,8 +709,10 @@ window.AngeboteDesign = (function () {
             button.hidden = groups[group].length < 2; button.querySelector('small').textContent = (options.origin ? options.origin(group) + ' · ' : '') + detail;
             button.title = labels[group] + ': ' + detail;
           });
-          var host = root.querySelector('.an-designer-body,#an-style-controls');
-          if (host && !bar.isConnected) host.prepend(bar);
+          var host = root.dataset.designer ? root.querySelector('.an-designer-controls') : root.querySelector('.an-designer-body,#an-style-controls');
+          if (host && !bar.isConnected) {
+            if (root.dataset.designer) host.prepend(bar); else host.appendChild(bar);
+          }
         }
         function open(group, opener) {
           if (active) return;
@@ -628,6 +758,7 @@ window.AngeboteDesign = (function () {
               var selector = '[data-price-section="' + section + '"] ';
               if (section === 'colors') {
                 selector += '[data-price-colors="' + (/(?:old|statt|strike|strip)/i.test(key) ? 'old' : 'price') + '"] ';
+                field.querySelectorAll('.an-color-hex').forEach(function (output) { output.remove(); });
                 var hex = document.createElement('output'); hex.className = 'an-object-color-value';
                 hex.setAttribute('aria-hidden', 'true'); field.appendChild(hex);
               }
@@ -717,7 +848,7 @@ window.AngeboteDesign = (function () {
     target.width = Math.max(1, Math.round(w)); target.height = Math.max(1, Math.round(h));
     target.getContext('2d').drawImage(source, x, y, w, h, 0, 0, target.width, target.height);
   }
-        root._objectProperties = { refresh: refresh };
+        root._objectProperties = { refresh: refresh, open: open };
         refresh(); return root._objectProperties;
       }
   var helpId = 0;
@@ -765,7 +896,7 @@ window.AngeboteDesign = (function () {
   function split(root, left, right) {
     if (root._splitView) return root._splitView;
     root.classList.add('an-split'); left.classList.add('an-split-tools'); right.classList.add('an-split-picture');
-    var handle = document.createElement('div'), ratio = .6, dragging = false, explicitView = false;
+    var handle = document.createElement('div'), ratio = root.classList.contains('an-designer-workspace') ? .66 : .6, dragging = false, explicitView = false;
     var viewbar = document.createElement('div');
     viewbar.className = 'an-workspace-view';
     viewbar.innerHTML = '<span class="an-workspace-context"></span><select aria-label="Arbeitsansicht">'
@@ -795,13 +926,14 @@ window.AngeboteDesign = (function () {
       if (!width) { viewButton.hidden = true; return; }
       var mobile = width < 612 && !(innerWidth >= 600 && innerHeight >= 900 && width >= 480);
       root.classList.toggle('an-split-mobile', mobile);
-      if (!explicitView) view.value = mobile ? 'inputs' : 'split';
+      if (!explicitView) view.value = mobile && !root.classList.contains('an-designer-workspace') ? 'inputs' : 'split';
       root.dataset.workspaceView = view.value;
-      viewButton.hidden = !mobile || !actions;
+      var global = root.classList.contains('an-designer-workspace');
+      viewButton.hidden = (!mobile && !global) || !actions;
       viewButton.setAttribute('aria-label', 'Arbeitsansicht: ' + view.selectedOptions[0].textContent);
       viewButton.title = 'Arbeitsansicht: ' + view.selectedOptions[0].textContent;
-      if (actions) (mobile && view.value === 'picture' ? viewbar : actions).appendChild(viewButton);
-      if (mobile && actions) viewLabel.appendChild(view);
+      if (actions) ((mobile || global) && view.value === 'picture' ? viewbar : actions).appendChild(viewButton);
+      if ((mobile || global) && actions) viewLabel.appendChild(view);
       else if (view.parentElement !== viewbar) { viewPopup.hidePopover(); viewbar.appendChild(view); }
       handle.hidden = mobile || view.value !== 'split';
       if (mobile || !width) return;
@@ -943,12 +1075,20 @@ window.AngeboteDesign = (function () {
   }
   // Checkbox-Zeilen: Kästchen nach vorn (links), Label daneben.
   function restyleCheckRows(panel) {
-    panel.querySelectorAll('label.an-field>input[type=checkbox]').forEach(function (box) {
+    panel.querySelectorAll('label>input[type=checkbox]').forEach(function (box) {
       var label = box.parentElement;
+      if (label.closest('.an-gradchk')) return;
       if (label.dataset.chkrow) return;
       label.dataset.chkrow = 'true';
       label.classList.add('an-chkrow');
       label.insertBefore(box, label.firstChild);
+    });
+    panel.querySelectorAll('div>input[type=checkbox]').forEach(function (box) {
+      var row = box.parentElement, label = row.querySelector(':scope>label');
+      if (!label || row.classList.contains('an-chkrow')) return;
+      row.classList.add('an-chkrow');
+      if (box.id && !label.htmlFor) label.htmlFor = box.id;
+      row.prepend(box);
     });
   }
   // Übrige Farb-Zeilen (HP, Wochenplan, …) ebenfalls auf Swatch-links-Zeilen umbauen.
@@ -970,6 +1110,221 @@ window.AngeboteDesign = (function () {
       }
     });
   }
+  function refreshColorValues(root) {
+    if (!root) return;
+    root.querySelectorAll('.an-cfield>input[type=color]').forEach(function (input) {
+      if (input.closest('.an-object-dialog')) return;
+      var field = input.parentElement, output = field.querySelector('.an-color-hex');
+      if (!output) { output = document.createElement('output'); output.className = 'an-color-hex'; field.appendChild(output); }
+      output.textContent = input.value.toUpperCase();
+    });
+  }
+  function harmonizeColors(root) {
+    restyleColorRows(root);
+    if (root.dataset.designer === 'drinks') root.querySelectorAll('.an-cfield>input[data-style]').forEach(function (input) {
+      var label = input.parentElement.querySelector('.an-cfield-lab'); if (!label) return;
+      if (!input.hasAttribute('aria-label')) input.setAttribute('aria-label', label.textContent);
+      var labels = { color:'Preis / Akzent', background:'Grundfarbe', text_color:'Artikeltext',
+        card_background:'Kartenfläche', price_background:'Schildfläche', price_outline_color:'Kontur',
+        old_price_color:'Stattpreis', price_strike_color:'Durchstreichung',
+        'decoration.footer_color':'Fuß / Zeitraum', 'decoration.leaf_color':'Blatt / Tasche', 'decoration.background_color2':'Zweite Farbe',
+        'decoration.image_color2':'Zweite Farbe' };
+      label.textContent = labels[input.dataset.style] || label.textContent.replace(/^Preisschild · /,'').replace(/ · Farbe$/,'');
+    });
+    nativeBackgrounds(root);
+    root.querySelectorAll('[id^=cfg-tpl-][id$=-colors]').forEach(function (colors) {
+      if (colors.dataset.harmonized) return;
+      colors.dataset.harmonized = 'true';
+      var grid = colors.querySelector('.an-cgrid');
+      if (!grid) return;
+      var legend = colors.closest('fieldset')?.querySelector(':scope>legend');
+      if (legend && legend.firstChild?.nodeType === 3) legend.firstChild.textContent = 'Flächen & Text ';
+      else {
+        var title = document.createElement('h3'); title.className = 'an-color-heading'; title.textContent = 'Flächen & Text';
+        colors.insertBefore(title, grid);
+      }
+      grid.classList.add('an-color-grid');
+      Array.from(grid.querySelectorAll('.cfg-tpl-grad-row')).forEach(function (row) {
+        var group = document.createElement('section'), heading = document.createElement('header');
+        var line = row.querySelector('.an-cfield'), label = line.querySelector('.an-cfield-lab');
+        var input = line.querySelector('input[type=color]'), toggle = line.querySelector('.an-gradchk');
+        group.className = 'an-background-group'; heading.className = 'an-color-heading';
+        var text = document.createElement('span'); text.textContent = /imgBg/.test(input.id) ? 'Bildhintergrund' : 'Seitenhintergrund';
+        heading.appendChild(text); if (toggle) heading.appendChild(toggle);
+        input.setAttribute('aria-label', text.textContent + ' · Grundfarbe');
+        var second = row.querySelector('.cfg-tpl-grad-c2');
+        if (second) {
+          var secondField = document.createElement('label'), secondLabel = document.createElement('span');
+          secondField.className = 'an-cfield'; secondLabel.className = 'an-cfield-lab'; secondLabel.textContent = 'Zweite Farbe';
+          second.before(secondField); secondField.append(second, secondLabel);
+        }
+        label.textContent = 'Grundfarbe'; group.append(heading, row); colors.appendChild(group);
+      });
+      var extra = document.createElement('section'), extraTitle = document.createElement('h3'), extraGrid = document.createElement('div');
+      extra.className = 'an-extra-color-group'; extraTitle.className = 'an-color-heading'; extraTitle.textContent = 'Kopf, Datum, Preisleiste & Fuß';
+      extraGrid.className = 'an-color-grid';
+      Array.from(colors.children).filter(function (node) { return node.classList.contains('an-cfield'); }).forEach(function (field) { extraGrid.appendChild(field); });
+      if (extraGrid.children.length) { extra.append(extraTitle, extraGrid); colors.appendChild(extra); }
+    });
+    simpleBackgrounds(root);
+    root.querySelectorAll('.an-cfield').forEach(function (field) {
+      if (field.closest('.an-object-dialog,.an-background-group')) return;
+      var parent = field.parentElement;
+      if (parent.querySelectorAll(':scope>.an-cfield').length > 1) parent.classList.add('an-color-grid');
+    });
+    refreshColorValues(root);
+    if (!root.dataset.colorValuesBound) {
+      root.dataset.colorValuesBound = 'true';
+      ['input','change'].forEach(function (type) { root.addEventListener(type, function () { queueMicrotask(function () { refreshColorValues(root); }); }); });
+    }
+    visualMarkers(root);
+    compactPriceControls(root);
+    plainPresets(root);
+    var zoom = root.querySelector('.an-family-enlarge'), tools = root.querySelector('.an-designer-controls');
+    if (zoom && tools) {
+      tools.querySelectorAll('.an-family-enlarge').forEach(function (old) { if (old !== zoom) old.remove(); });
+      tools.appendChild(zoom);
+    }
+  }
+  function simpleBackgrounds(root) {
+    var panel = root.querySelector('[data-designer-panel="' + (root.dataset.designer === 'homepage' ? '0' : '1') + '"]');
+    if (!panel) return;
+    var base = root.querySelector('#hpang-gridBg,[id$="-wpBgColor"]');
+    if (base && !base.closest('.an-background-group')) {
+      var field = base.closest('.an-cfield'), group = document.createElement('section'), heading = document.createElement('h3');
+      if (field) {
+        group.className = 'an-background-group'; heading.className = 'an-color-heading'; heading.textContent = 'Seitenhintergrund';
+        field.querySelector('.an-cfield-lab').textContent = 'Grundfarbe'; group.append(heading, field); panel.appendChild(group);
+      }
+    }
+    var from = root.querySelector('[id$="-wpHeaderFrom"]');
+    if (from && !from.closest('.an-background-group')) {
+      var group = document.createElement('section'), heading = document.createElement('h3'), grid = document.createElement('div');
+      group.className = 'an-background-group'; heading.className = 'an-color-heading'; heading.textContent = 'Kopfhintergrund · Verlauf';
+      grid.className = 'an-color-grid';
+      ['From','To','Dir'].forEach(function (suffix) {
+        var input = root.querySelector('[id$="-wpHeader' + suffix + '"]'); if (input) grid.appendChild(input.closest('label'));
+      });
+      group.append(heading, grid); panel.appendChild(group);
+    }
+  }
+  function nativeBackgrounds(root) {
+    if (root.dataset.designer !== 'drinks') return;
+    var panel = root.querySelector('[data-designer-panel="1"]');
+    [['Seitenhintergrund','background','background'],['Bildhintergrund','decoration.image_background','image']].forEach(function (entry) {
+      var base = root.querySelector('[data-style="' + entry[1] + '"]');
+      if (!base || base.closest('.an-background-group')) return;
+      var prefix = 'decoration.' + entry[2] + '_', toggle = root.querySelector('[data-style="' + prefix + 'gradient"]');
+      var group = document.createElement('section'), heading = document.createElement('header'), options = document.createElement('div');
+      group.className = 'an-background-group'; heading.className = 'an-color-heading'; heading.textContent = entry[0];
+      options.className = 'an-background-options';
+      if (toggle) {
+        var field = toggle.closest('label'), label = field.querySelector('span'); if (label) label.textContent = 'Verlauf';
+        heading.appendChild(field);
+      }
+      var field = base.closest('label'); field.querySelector('.an-cfield-lab').textContent = 'Grundfarbe';
+      group.append(heading, field, options);
+      ['color2','direction','pct'].forEach(function (key) {
+        var control = root.querySelector('[data-style="' + prefix + key + '"]'); if (control) options.appendChild(control.closest('label'));
+      });
+      if (toggle) { options.hidden = !toggle.checked; toggle.addEventListener('change', function () { options.hidden = !toggle.checked; }); }
+      panel.appendChild(group);
+    });
+  }
+  function visualMarkers(root) {
+    root.querySelectorAll('select[data-style=marker_type],select[data-style=marker_palette],select[id$=-savingsMarkerType],select[id$=-savingsPalette]').forEach(function (select) {
+      var field = select.closest('label');
+      if (!field) return;
+      var picker = field.nextElementSibling;
+      var palette = /palette/i.test(select.dataset.style || select.id);
+      if (!picker || picker.dataset.markerFor !== (select.id || select.dataset.style)) {
+        picker = document.createElement('fieldset'); picker.className = 'an-choice-group an-marker-picker' + (palette ? ' an-marker-palettes' : '');
+        picker.dataset.markerFor = select.id || select.dataset.style;
+        var legend = document.createElement('legend'); legend.textContent = palette ? 'Ersparnis-Farbwelt' : 'Ersparnis-Form';
+        var choices = document.createElement('div'); choices.className = 'an-marker-choices';
+        Array.from(select.options).forEach(function (option) {
+          var button = document.createElement('button'); button.type = 'button'; button.dataset.markerChoice = option.value;
+          var canvas = document.createElement('canvas'); canvas.width = 72; canvas.height = 60; canvas.setAttribute('aria-hidden', 'true');
+          var entry = (palette ? markerPalettes : markerTypes).find(function (entry) { return entry[0] === option.value; });
+          var label = document.createElement('span'); label.textContent = (entry ? entry[1] : option.textContent).replace(/\s*\(Zacken\)/, '');
+          button.append(canvas, label); button.onclick = function () { select.value = option.value; select.dispatchEvent(new Event('change', { bubbles: true })); visualMarkers(root); };
+          choices.appendChild(button);
+        });
+        picker.append(legend, choices); field.after(picker); field.classList.add('an-marker-legacy');
+      }
+      if (!cmsPaletteRenderer) cmsPaletteRenderer = window.WochenangeboteRenderer.create({ cfgGet: function () { return window.WochenangeboteRenderer.CFG_DEFAULTS; } });
+      picker.querySelectorAll('button').forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.dataset.markerChoice === select.value));
+        var canvas = button.querySelector('canvas'), ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (button.dataset.markerChoice) cmsPaletteRenderer.drawSavingsBurst(ctx,36,30,26,17,'−24%','plakat',{
+          savingsMarkerType: palette ? 'starburst' : button.dataset.markerChoice, savingsPalette: palette ? button.dataset.markerChoice : 'harmonie', savingsScalePlakat:100 });
+        if (palette && button.dataset.markerChoice) {
+          var dot = button.querySelector('.an-marker-dot');
+          if (!dot) { dot = document.createElement('i'); dot.className = 'an-marker-dot'; dot.setAttribute('aria-hidden','true'); button.prepend(dot); }
+          var rgb = ctx.getImageData(36,12,1,1).data;
+          dot.style.backgroundColor = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+        }
+      });
+    });
+  }
+  function compactPriceControls(root) {
+    var panel = root.querySelector('[data-designer-panel="3"]');
+    if (!panel || root.dataset.designer === 'homepage' || /^week-/.test(root.dataset.designer || '')) return;
+    var section = panel.querySelector('.an-global-price');
+    if (!section) {
+      section = document.createElement('section'); section.className = 'an-global-price';
+      section.innerHTML = '<h3>Preisschild</h3><button type="button" class="an-price-dialog-link">Preisschild bearbeiten</button>'
+        + '<details><summary>Einzelne Preisschildfelder</summary><div class="an-global-price-fields"></div></details>';
+      section.querySelector('button').onclick = function (event) { if (root._objectProperties) root._objectProperties.open('price', event.currentTarget); };
+      panel.prepend(section);
+    }
+    panel.querySelectorAll('input,select').forEach(function (control) {
+      if (control.closest('.an-global-price')) return;
+      if (M.propertyGroup(control.dataset.style || control.id || '') !== 'price') return;
+      var field = control.closest('label'); if (field && field.querySelectorAll('input,select').length === 1) section.querySelector('.an-global-price-fields').appendChild(field);
+    });
+    var fine = root.querySelector('[data-designer-panel="2"]'), colors = root.querySelector('[data-designer-panel="1"]');
+    panel.querySelectorAll('input,select').forEach(function (control) {
+      if (control.closest('.an-global-price')) return;
+      var field = control.closest('label'); if (!field || field.querySelectorAll('input,select').length !== 1) return;
+      if (control.type === 'color') {
+        var extra = colors.querySelector('.an-legacy-colors');
+        if (!extra) {
+          extra = document.createElement('section'); extra.className = 'an-extra-color-group an-legacy-colors';
+          extra.innerHTML = '<h3 class="an-color-heading">Dekoration · zusätzliche Originalfarben</h3><div class="an-color-grid"></div>'; colors.appendChild(extra);
+        }
+        extra.querySelector('.an-color-grid').appendChild(field);
+      } else if (fine && M.propertyGroup(control.dataset.style || control.id || '') === 'image') {
+        var images = fine.querySelector('.an-fine-images');
+        if (!images) {
+          images = document.createElement('fieldset'); images.className = 'an-choice-group an-fine-images';
+          images.innerHTML = '<legend>Bild</legend>'; fine.appendChild(images);
+        }
+        images.appendChild(field);
+      }
+    });
+    panel.querySelectorAll('fieldset').forEach(function (fieldset) {
+      if (!fieldset.querySelector('input,select,button')) fieldset.hidden = true;
+    });
+    panel.querySelectorAll('div').forEach(function (node) {
+      if (!node.querySelector('input,select,button,summary,a,canvas') && /^(?:🎨\s*)?(?:Deko|Preisschild)-Farben$/i.test(node.textContent.trim()))
+        node.classList.add('an-empty-design-group');
+    });
+  }
+  function plainPresets(root) {
+    var panel = root.querySelector('[data-designer-panel="4"]'); if (!panel) return;
+    panel.querySelectorAll('[data-action=cfgPresetSave],[data-action=wpPresetSave]').forEach(function (button) {
+      if (button.closest('.an-preset-create')) return;
+      var header = button.parentElement, manager = header.parentElement;
+      manager.classList.add('an-preset-manager');
+      var field = document.createElement('label'), input = document.createElement('input'), caption = document.createElement('span');
+      field.className = 'an-field'; caption.textContent = 'Vorlagenname'; input.maxLength = 80; input.dataset.globalPresetName = button.dataset.section;
+      field.append(caption, input);
+      header.replaceChildren(field, button); header.className = 'an-preset-create';
+    });
+    var heading = panel.querySelector('.an-own-presets>h3'), nestedLegend = panel.querySelector('.an-own-presets>fieldset>legend');
+    if (heading && nestedLegend) heading.hidden = true;
+  }
   // Slider-Zeilen 1:1 nach Entwurf: Kartenzeile = Label links · Slider · Wert rechts.
   function restyleSliderRows(panel) {
     panel.querySelectorAll('input[type=range]').forEach(function (range) {
@@ -981,7 +1336,11 @@ window.AngeboteDesign = (function () {
       if (row !== label && row.parentElement !== label && row !== range.parentElement) return;
       row.dataset.srow = 'true';
       row.classList.add('an-srow');
-      if (row !== label) row.classList.add('an-srow-slider');
+      if (row !== label) {
+        var slider = document.createElement('span'); slider.className = 'an-srow-slider';
+        var out = range.nextElementSibling; range.before(slider); slider.appendChild(range);
+        if (out && out.matches('output,span')) slider.appendChild(out);
+      }
       else if (range.parentElement) {
         // Slider + Wertausgabe in einem gemeinsamen Span halten: So bleibt die
         // Zeile im Einstellungspanel horizontal und im Objekt-Dialog gestapelt
@@ -1144,6 +1503,7 @@ window.AngeboteDesign = (function () {
         button.querySelector('[data-location-label]').textContent = 'Vorgabe: ' + current.title;
         button.querySelector('.an-loc-glyph').outerHTML = current.glyph;
       }
+      fitShell();
     }
     popup.addEventListener('toggle', function () {
       var open = popup.matches(':popover-open');
@@ -1172,7 +1532,20 @@ window.AngeboteDesign = (function () {
     }
     toolbar.insertBefore(optionsButton, toolbar.querySelector('[data-workspace-fullscreen]')); header.appendChild(optionsPopup);
     optionsPopup.addEventListener('toggle', function () { if (optionsPopup.matches(':popover-open')) placePopover(optionsButton, optionsPopup); });
-    var size = new ResizeObserver(function () { if (panel.clientWidth) panel.classList.toggle('an-design-narrow', panel.clientWidth < 612); });
+    var menu = document.getElementById('cmsneu-menue-btn'), menuMarker = document.createComment('design-menu-home');
+    if (menu) menu.before(menuMarker);
+    function fitShell() {
+      if (panel.clientWidth) panel.classList.toggle('an-design-narrow', panel.clientWidth < 612);
+      var mobile = panel.clientWidth && innerWidth < 600 && Array.from(panel.querySelectorAll('[data-designer]')).some(function (node) { return node.checkVisibility(); });
+      if (menu) {
+        if (mobile && menu.parentElement !== toolbar) toolbar.prepend(menu);
+        else if (!mobile && menuMarker.parentNode && menu.parentNode !== menuMarker.parentNode) menuMarker.after(menu);
+      }
+      document.body.classList.toggle('an-global-design-mobile', !!mobile);
+    }
+    var shellState = new MutationObserver(fitShell); shellState.observe(panel, { attributes:true, attributeFilter:['style'] });
+    observer.observe(panel, { attributes:true, attributeFilter:['style'] });
+    var size = new ResizeObserver(fitShell);
     size.observe(panel); sync();
   }
   function pictureViewport(preview, controls) {
@@ -1302,8 +1675,8 @@ window.AngeboteDesign = (function () {
       var content = panel;
       if (index === names.length - 1) { button.dataset.designerTools = ''; panel.appendChild(controls); }
       if (index === 4) {
-        content = document.createElement('details'); content.className = 'an-fine an-own-presets';
-        var summary = document.createElement('summary'); summary.textContent = 'Eigene Designvorlagen';
+        content = document.createElement('section'); content.className = 'an-own-presets';
+        var summary = document.createElement('h3'); summary.textContent = 'Eigene Designvorlagen';
         content.appendChild(summary); panel.appendChild(content);
       }
       (options.groups[index] || []).forEach(function (node) { content.appendChild(node); });
@@ -1317,6 +1690,7 @@ window.AngeboteDesign = (function () {
         if (focus && n === index) button.focus();
       });
       settings.querySelectorAll('[data-designer-panel]').forEach(function (panel, n) { panel.hidden = n !== index; });
+      refreshColorValues(root);
     }
     tools.onchange = function () { select(Number(tools.value)); };
     tabs.addEventListener('click', function (event) {
@@ -1345,12 +1719,14 @@ window.AngeboteDesign = (function () {
     restyleColorRows(root);
     restyleSliderRows(root);
     restyleCheckRows(root);
+    harmonizeColors(root);
     root._designerUi = { select: select, direct: direct, help: help, destroy: function () {
       splitter.destroy(); options.preview._pictureView.destroy();
     } };
     return root._designerUi;
   }
   function mountCms(root, preview, actions, kind, history) {
+    captureFields(root, kind);
     if (root.dataset.designer) {
       root.querySelector('.an-designer-workspace').appendChild(preview);
       root.querySelector('.an-designer-controls').appendChild(preview._workspaceTools);
@@ -1376,6 +1752,10 @@ window.AngeboteDesign = (function () {
       } else if (node.querySelector('[data-action=cfgPresetSave]') || node.querySelector('[onclick*="cmsSaveAsDefault"]')) {
         groups[4].push(node);
       }
+    });
+    groups[2].sort(function (a, b) {
+      function order(node) { return /Bezeichnung/.test(node.querySelector('legend')?.textContent || '') ? 0 : 1; }
+      return order(a) - order(b);
     });
     var select = groups[0][0].querySelector('#cfg-' + kind + 'Template');
     var gallery = groups[0][0].querySelector('#cfg-' + kind + 'Template-preview');
@@ -1403,7 +1783,7 @@ window.AngeboteDesign = (function () {
     picker.hidden = true;
     var family = document.createElement('div');
     family.innerHTML = familyControls({ template: select.value }, true);
-    family.querySelector('.an-family-enlarge').remove();
+    family.querySelector('.an-family-enlarge')?.remove();
     var oldLegend = groups[0][0].querySelector(':scope>legend');
     if (oldLegend) oldLegend.remove();
     var enlargeButton = groups[0][0].querySelector('[data-action=previewOfferTpl]');
@@ -1419,6 +1799,7 @@ window.AngeboteDesign = (function () {
       family.querySelectorAll('[data-style=family]').forEach(function (input) { input.checked = input.value === M.familyOf(select.value); });
       family.querySelector('.an-style-variant').hidden = M.familyOf(select.value) !== 'magazine';
       family.querySelector('[data-style=variant]').value = select.value === 'modern-mag-xl' ? 'xl' : 'standard';
+      familyZooms(family, select.value);
     }
     family.addEventListener('change', function (event) {
       var input = event.target, key = input.dataset.style;
@@ -1428,6 +1809,15 @@ window.AngeboteDesign = (function () {
       select.dispatchEvent(new Event('change', { bubbles: true }));
       syncFamilies();
     });
+    family.addEventListener('click', function (event) {
+      var button = event.target.closest('.an-family-zoom');
+      if (!button) return;
+      event.preventDefault(); event.stopPropagation();
+      window.cmsPreviewOfferTpl(kind, button.dataset.templateEnlarge);
+    });
+    var palette = groups[1][0] && groups[1][0].querySelector('.an-palette-group');
+    if (palette) palette = palette.closest('fieldset');
+    if (palette) groups[0].push(palette);
     select.addEventListener('change', syncFamilies); syncFamilies();
     workspace(root, { kind: kind, title: kind === 'plakat' ? 'Plakat-Design' : 'Einzelflyer-Design',
       groups: groups, preview: preview, actions: actions });
@@ -1435,6 +1825,7 @@ window.AngeboteDesign = (function () {
     moveColorResets(root);
   }
   function mountHomepage(root, changes, paletteOptions) {
+    captureFields(root, 'homepage');
     if (root.dataset.designer) return;
     var preview = root.querySelector('#hpang-preview-wrap').parentElement;
     preview.style.removeProperty('overflow');
@@ -1461,6 +1852,7 @@ window.AngeboteDesign = (function () {
     changes.bind(actions, root);
   }
   function mountWeek(root, preview, kind, changes) {
+    captureFields(root, 'week-' + kind);
     if (root.dataset.designer) {
       root.querySelector('.an-designer-workspace').appendChild(preview);
       pictureViewport(preview, root.querySelector('.an-designer-controls'));
@@ -1479,6 +1871,9 @@ window.AngeboteDesign = (function () {
       } else if (node.querySelector('[data-action=saveHPCfg]')) actions = node;
       else if (node.querySelector('[data-action=wpPresetSave]')) groups[4].push(node);
     });
+    var palette = groups[1][0] && groups[1][0].querySelector('.an-palette-group');
+    if (palette) palette = palette.closest('fieldset');
+    if (palette) groups[0].push(palette);
     if (!actions) return;
     workspace(root, { kind: 'week-' + kind, title: kind === 'home' ? 'Wochenplan · Homepage' : 'Wochenplan · Druck',
       groups: groups, preview: preview, actions: actions });
@@ -1543,8 +1938,13 @@ window.AngeboteDesign = (function () {
       function fieldGroups(fields) {
         var fine = fields.querySelector('.an-fine:not(.an-more-design)'), extra = fields.querySelector('.an-more-design');
         fine.querySelector('summary').remove(); extra.querySelector('summary').remove();
-        return [Array.from(fields.querySelectorAll(':scope>.an-choice-group:not(.an-palette-group),:scope>.an-legacy-template')),
-          [fields.querySelector('.an-palette-group'), fields.querySelector('.an-settings-heading'), fields.querySelector(':scope>.an-fields')],
+        var colors = fields.querySelector(':scope>.an-fields'), font = colors.querySelector('[data-style=font]').closest('label');
+        fields.querySelector('.an-settings-heading').textContent = 'Flächen & Text';
+        fine.prepend(font);
+        Array.from(colors.querySelectorAll('select')).forEach(function (select) { extra.prepend(select.closest('label')); });
+        Array.from(extra.querySelectorAll('input[type=color]')).forEach(function (input) { colors.appendChild(input.closest('label')); });
+        return [Array.from(fields.querySelectorAll(':scope>.an-choice-group,:scope>.an-legacy-template')),
+          [fields.querySelector('.an-settings-heading'), fields.querySelector(':scope>.an-fields')],
           Array.from(fine.childNodes), Array.from(extra.childNodes)];
       }
       function refreshFields() {
@@ -1554,6 +1954,7 @@ window.AngeboteDesign = (function () {
             root.querySelector('[data-designer-panel="' + index + '"]'), nodes);
         });
         if (root._objectProperties) root._objectProperties.refresh();
+        restyleSliderRows(root); restyleCheckRows(root); harmonizeColors(root);
       }
       function html() {
         if (root._designerUi) root._designerUi.destroy();
@@ -1581,6 +1982,7 @@ window.AngeboteDesign = (function () {
           + '<p class="an-note">Nur die erste Kachel ist als Musterkachel bearbeitbar. Ihre Änderungen gelten automatisch für alle Kacheln dieser Ausgabe. Titel und Logo gelten für die ganze Seite.</p>'
           + '<div data-design-preview></div></section></div>';
         renderPresets();
+        captureFields(root, kind);
         var settings = root.querySelector('.an-card'), fields = root.querySelector('[data-design-fields]>div');
         var groups = fieldGroups(fields);
         groups.push([settings.querySelector(':scope>fieldset')]);
@@ -1741,5 +2143,7 @@ window.AngeboteDesign = (function () {
     fullscreen: fullscreen,
     controls: controls, change: change, previewChoices: previewChoices,
     paletteControls: paletteControls, applyPalette: applyPalette, palettePicker: palettePicker,
+    cmsPaletteValues: cmsPaletteValues, applyCmsPaletteValues: applyCmsPaletteValues,
+    cmsEffectiveColors: cmsEffectiveColors, cmsPaletteState: cmsPaletteState, fieldInventory: fieldInventory,
     previewTabs: previewTabs, selectPreview: selectPreview, outputPreview: outputPreview, cards: cards };
 })();

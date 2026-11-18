@@ -55,5 +55,32 @@ window.CMSAngeboteForm = (function () {
     card.innerHTML = h + '</div>';
     return card;
   }
-  return { row: row, action: action };
+  function syncAreaNavigation(select) {
+    var nav = select.previousElementSibling;
+    if (!nav || !nav.classList.contains('an-main-steps')) return;
+    nav.querySelectorAll('button').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.actionArea === select.value));
+    });
+  }
+  function areaNavigation(select) {
+    var nav = document.createElement('nav');
+    nav.className = 'an-main-steps'; nav.setAttribute('aria-label', 'Aktionsbereiche');
+    Array.from(select.options).forEach(function (option, index) {
+      var button = document.createElement('button'); button.type = 'button';
+      button.dataset.actionArea = option.value;
+      button.textContent = (index + 1) + ' · ' + option.textContent;
+      nav.appendChild(button);
+    });
+    select.classList.add('an-action-area-select'); select.before(nav);
+    nav.onclick = function (event) {
+      var button = event.target.closest('button');
+      if (!button || select.disabled) return;
+      select.value = button.dataset.actionArea; syncAreaNavigation(select);
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    select.addEventListener('change', function () { syncAreaNavigation(select); });
+    syncAreaNavigation(select);
+    return nav;
+  }
+  return { row: row, action: action, areaNavigation: areaNavigation, syncAreaNavigation: syncAreaNavigation };
 })();

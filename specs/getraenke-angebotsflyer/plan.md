@@ -35,7 +35,77 @@ zugeordnete Aufgaben, dann Anwendungscode. Keine neue parallele Anwendung.
 Vor-/Nachher-Abnahme über vollständige Datenkey-/Handlerinventur und vorhandene
 fachliche Tests ergänzen; diese gruppierte Matrix erlaubt keine Auslassungen.
 
+#### Feld- und Handlernachweis: gemeinsame Aktion
+
+Die folgende Zuordnung konkretisiert die Bestandsmatrix. Desktopzeile und
+mobile Einzelartikelansicht verwenden dieselben Nodes und `rowItem()`;
+es gibt keinen zweiten mobilen Datenadapter.
+
+| Bestandsfeld / Datenkey | Erreichbarer Zielpfad / unveränderter Besitzer | Funktionaler Nachweis |
+| --- | --- | --- |
+| `title`, `valid_from`, `valid_to` | Artikel/Bilder → Aktionsdaten; `capture`/`collect`, bestehendes `Dataverse.save` | TC-F42-01, TC-F55-01 |
+| `name` (`data-f=produkt`) | Produktfeld, Suchtreffer oder manuell; `rowItem` | TC-F42-01, TC-F18-01/05 |
+| `description` (`details`) | Details / Beschreibung; dieselbe Erfassungszeile | TC-F42-01, TC-F58-01 |
+| `price_cents` (`preis`) | Angebot €; `M.cents`, kein Stamm-VK-Write | TC-F42-01, TC-F58-01 |
+| `old_price_cents` (`statt_preis`) | Statt €; `M.cents`, leer bleibt leer | TC-F42-01, TC-F58-01 |
+| `barcode` (`artikelnummer`) | Strichcode; manuell oder Suchtreffer | TC-F42-01, TC-F18-01/03 |
+| `article_number`, `retail_price_cents` | Unveränderter Artikelstamm-Trefferadapter; getrennt vom Angebotspreis | TC-F18-01/05, TC-F58-01 |
+| `units` | Anzahl, Zahleneingabe; `rowItem` | TC-F42-01, TC-F63-02 |
+| `volume_ml` | Liter je Einheit; `M.millilitres`, ganzzahlige Speicherung | TC-F42-01, TC-F58-01 |
+| `packaging` | Gebindeauswahl; `rowItem` | TC-F42-01, TC-F63-02 |
+| `deposit_free` (`deposit_mode`) | Pfand / Pfandfrei, bestehende Validierung | TC-F42-01, TC-F58-01 |
+| `deposit_cents` | Gesamtpfand €; `M.cents`, bei pfandfrei explizit null Cent | TC-F42-01, TC-F63-02 |
+| `image_id`, `werbebild_id`, Pending-Datei | Bildmenü Suche/Datei/Paste/Entfernen; vorhandene Requesttokens/Uploadwarteschlange | TC-F42-02/03, TC-F18-01/03, TC-F62-01/02 |
+| `id`, `layout_key`, Reihenfolge | Bestehende Row-States; Entfernen, Drag/Tastatur, Vorheriger/Nächster | TC-F42-01, TC-F63-01, TC-F57-01 |
+| `layout.density` | Aktionsdaten → Kacheln je Seite; vorhandene Rasteranpassung | TC-F18-02/03 |
+| Aktions-/Artikelrevisionen | Vorhandene Original-IDs und Revisionsprüfung beim Speichern/Löschen | TC-F18-10, TC-F55-02, TC-F62-02 |
+| `x`, `y`, `w`, `h`, `rotation`, `opacity` | Gestaltung → Element; Zahlen/Regler und echte Vorschauanfasser, bestehendes `edit()` | TC-F19-01/04/06, TC-F61-05 |
+| `fill`, `font`, `align`, `bold`, `hidden` | Element → Detailgestaltung; vorhandene Rootdelegation | TC-F19-03, TC-F27-02 |
+| `text`, `shape`, Ebenenreihenfolge | Element → Detailgestaltung / Ebenenaktionen; nur passende Elementtypen | TC-F27-02 |
+| Original-CMS-Overrides pro Artikel/Ziel | Gestaltung → Artikel; vorhandene Originalrenderer-Controls | TC-F18-04, TC-F19-04, TC-F31-02 |
+| `layout.template`, `target_styles`, `cms.targets` | Vorlage/Familie/Variante, Zielselect delegiert an bisherige Zielhandler | TC-F23-01..03, TC-F61-03/05 |
+| Effektive Farbrollen | Vorlage → Palette bzw. Original-CMS-Farben; ein `edit`, keine Geometrieneuerstellung | TC-F61-03/05 |
+| Undo/Redo, Dirty, Pending-Bilder | Gemeinsamer Capture-/Vorschaustate; Footer und Tastatur | TC-F62-01/02, TC-F58-01 |
+| Ghost, Duplikat, eigenes Bild, Reset, Transfer | Bestehende Element-/Objektwerkzeuge und Dialogtransaktionen | TC-F27-01/02, TC-F53-01, TC-F54-01 |
+| Download, Druck/PDF, Einzelflyer, Waage, Qualitätsbefunde | Ausgabe → echte bestehende Handler/Qualitätsgates; kein Speichern durch Navigation | TC-F60-03/TC-F62-02, TC-F58-01 |
+| Wochenfilter, Artikelliste, Bearbeiten/Vorschau/Teilen | Übersicht, bestehende Rootdelegation und aufklappbare Aktionsliste | TC-F18-07/09, TC-F45-01/02 |
+| Duplizieren, Löschen, Waage | Übersicht → natives Mehrmenü; ursprüngliche Bestätigungs-/Versandpfade | TC-F57-01, TC-F15-01/02 |
+
+#### Reproduzierbare Feldinventur: globale Designer
+
+`GF102` in `tests/angebote-paletten.spec.js` vergleicht jeden ursprünglichen
+Kontrollkey mit der integrierten Oberfläche und prüft dessen erreichbaren
+Reiter-/Objektdialogbesitzer. Der Test erzeugt `GF102-feldinventur.json`
+im jeweiligen Playwright-Ausgabeordner: mit Quelle, Datenpfad, Beschriftung,
+Typ, ursprünglichem und neuem Besitzer sowie Speicherhandler.
+
+Ausführen: `node tools/test-lauf.js schnell angebote-paletten.spec.js --grep GF102`.
+Der lokale Nachweis enthält keine fehlenden ursprünglichen Keys:
+
+| Designer | Ursprüngliche eindeutige Keys | Fehlende Keys | Erhaltener Speicherweg |
+| --- | ---: | ---: | --- |
+| Plakat | 55 | 0 | `savePlakatCfg` → `design_config` |
+| Einzelflyer | 62 | 0 | `savePlakatCfg` → `design_config` |
+| Getränkeflyer | 91 | 0 | `data-design-save` → Angebotsdesign |
+| Wochenplan Web | 18 | 0 | `saveHPCfg` → `hp_design_config` |
+| Wochenplan Druck | 17 | 0 | `saveHPCfg` → `hp_design_config` |
+| HP-Sonderangebote | 17 | 0 | `hpangSave` → Angebotsdesign |
+
+Zusätzliche Adapterkontrollen erhöhen die Kontrollanzahl, ersetzen aber keine
+Bestandskeys. Inventur ersetzt weder visuelle Abnahme noch Speicher-/Render-
+und Dialogtransaktionstests.
+
 ### Architektur und Dateien
+
+Nach der visuellen Bestandsaufnahme werden die vorhandenen F60-F64 ohne
+neuen Funktionsumfang konkretisiert: aktive Aktionspanels erhalten expliziten
+Sichtbarkeitsbesitz statt konkurrierender CSS-Selektoren. Hauptnavigation und
+Zielselect delegieren an die vorhandenen Change-/Clickhandler; weder
+Bereichswechsel noch Darstellungsadapter speichern Daten. Die Aktionskarten
+behalten die aufklappbare Artikelliste und verschieben sekundäre Befehle in
+ein natives Mehrmenü. Ihre Typgrafik benötigt keine zusätzlichen Bildabrufe.
+Globale und freie Farbfelder sowie Dialoge werden in derselben Sichtabnahme
+geprüft; Farbpaletten verwenden weiterhin die bestehenden Zieladapter.
 
 - `angebote-design.js`: gemeinsame Controls, Feldbesitz und restaurierte
   Sichtbarkeit; Stil-/Palettenadapter; moderne Bereichsauswahl und sechs Tabs.
@@ -75,11 +145,16 @@ nicht durch die Sammeländerung ersetzt.
   `false`, sonst `true`. Kein Speichern und kein eigener Historieneintrag.
 - Der RootEditor-Clickhandler muss den **aktuellen State `data`** verwenden:
   zunächst `draft = M.clone(M.styleOf(data.layout, target))`, dann
-  `await applyPalette(draft, id)`. Nur bei `true` für `sheet` die Farbwerte
-  übernehmen, für andere Ziele `M.setTargetStyle(data.layout, target, ...)`
-  ausführen; anschließend vorhandenen Template-/Preview-Refresh und genau
-  einen Historieneintrag auslösen. Beim Abbruch darf kein `target_styles`
-  angelegt werden. Eine Referenz auf einen früheren State ist nicht gültig.
+  `await applyPalette(draft, id)`. Nur bei `true`
+  `M.applyPaletteColors(data, target, M.effectiveColors(draft))` innerhalb
+  genau eines vorhandenen Historieneintrags ausführen und Controls/Vorschau
+  aktualisieren. Der Modelladapter aktualisiert Zielhintergründe und gebundene
+  Elementfarben an bestehenden Nodes; kein `applyTemplate` oder
+  `applyTargetStyleToAll`, weil dies freie Geometrie ersetzen würde.
+  Vor einer globalen Sammelflyer-Farbänderung werden nur bislang vererbte
+  fremde Zielstile mit ihren bisherigen effektiven Werten fixiert.
+  Beim Abbruch darf kein `target_styles` angelegt werden. Eine Referenz auf
+  einen früheren State ist nicht gültig.
 - `change(layout, input)` verarbeitet `data-style="family"` und `"variant"`
   zusätzlich zu den unveränderten bisherigen Feldern; Stilwechsel benutzt
   `M.useStyle`, nicht das farbersetzende Original-Reset `M.useTemplate`.
@@ -95,6 +170,13 @@ Zusätzliche optionale Farbrollen in CMS-`tplColors` laufen über
 alle Legacy-Pixel unverändert. Freie Layouts speichern entsprechende
 `decoration`-Farben mit derselben API-Validierung wie bestehende Farben.
 `M.registerImage(id, dataUrl)` bleibt unverändert öffentlich.
+
+Die Qualitätsprüfung der Originalvorlagen verwendet die tatsächlich
+gezeichneten Namens-/Zusatztext- und Preisgeometrien. Text außerhalb der Ausgabe
+oder eine gemessene Überlagerung des ungedrehten Preises durch die ungedrehte
+Namensgruppe ist ein blockierender Fehler mit Ziel/Artikel/Element.
+Nicht sicher messbare Überdeckungen und Kontrast bleiben ausdrücklich
+ungeprüft; daraus wird kein bestandener Prüfpunkt abgeleitet.
 
 ### Integrierter Preisschilddialog
 

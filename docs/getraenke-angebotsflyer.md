@@ -10,15 +10,17 @@ Der Reiter **Angebote** steht im Kioskmenü ganz unten, unter „Werbebilder“.
 Das eigentliche Getränke-Bestellsystem bleibt unverändert.
 
 Die kompakte Übersicht bietet Wochenfilter und direkte Aktionen:
-**Bearbeiten**, **Vorschau** (grau), **Teilen** (grün), **Waage** (orange)
-und **Löschen** (rot, mit Bestätigung).
+**Bearbeiten**, **Vorschau** und **Teilen**. **Duplizieren**, **Waage**
+und **Löschen** (mit Bestätigung) stehen im Mehrmenü der Aktionskarte.
+Eine Typkennzeichnung unterscheidet Sonder- und Getränkeaktionen.
+Auf dem Handy öffnet **Zeitraum** die Filter; am Desktop sind sie direkt sichtbar.
 Die ursprünglichen CMS-Aktionszeilen mit aufklappbarer Artikelliste bleiben
 erhalten. Die Übersicht wartet nicht auf Vorlagen oder Artikelbilder;
 Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
 
 ### Angebote erfassen
 
-1. **Neue Aktion erstellen** und **Sonderaktion** oder **Getränkeaktion** wählen.
+1. Direkt **+ Sonderaktion** oder **+ Getränkeaktion** wählen.
 2. Titel und Gültigkeitszeitraum eintragen.
 3. Artikel direkt in den nummerierten Zeilen erfassen. Im Produktfeld nach
    Name, Artikelnummer oder EAN suchen und den Treffer übernehmen. Der
@@ -67,17 +69,29 @@ Sonderaktionen behalten ihre ursprüngliche Sechser-Erfassung und CMS-Vorlagen.
 Auch in der **Vorschau einer gespeicherten Aktion** stehen die Werkzeuge auf
 Desktop und Tablet links und das Motiv rechts. Das gilt für **Homepage / Kiosk**,
 **Einzelflyer**, **Sammelflyer** und **Waage**, beim Einstieg über CMS, Kiosk
-oder Angebotsseite. Auf dem Handy steht das Motiv weiterhin über den Werkzeugen.
+oder Angebotsseite. Auf dem Handy priorisiert **Nur Eingaben** die Bearbeitung;
+**Nur Motiv** und **Geteilt** bleiben über die Arbeitsansicht erreichbar.
+Die Motivansicht erlaubt weiterhin direkte Auswahl, Verschieben, Drehen
+und Skalieren; kleine Symbole haben separate ausreichend große Trefferflächen.
+
+**Artikel / Bilder**, **Gestaltung** und **Ausgabe** verwenden denselben
+Entwurf samt ungespeicherten Bildern und Historie. Desktop zeigt Hauptschritte,
+das Handy eine kompakte Bereichsauswahl. Ein Bereichswechsel speichert nicht.
+In **Gestaltung** wählt **Gestalten für** das Ausgabeziel; **Element**,
+**Artikel**, **Vorlage**, **Ansicht** und **Ausgabe** zeigen nur ihre jeweiligen
+Werkzeuge. Download, Drucken/PDF, Einzelflyer, Waage und Qualitätsprüfung stehen
+in Ausgabekarten. Bestehende Qualitätsprüfungen und Versandbestätigungen bleiben
+wirksam.
 
 ### Gemeinsame Designer-Arbeitsfläche
 
 Unter **Design → Plakate & Flyer** verwenden **Plakat**, **Einzelflyer** und
 **Getränkeflyer** dieselbe Arbeitsfläche: Einstellungen links, bildreine
-Vorschau rechts; auf dem Handy steht die Vorschau über den Werkzeugen.
+Vorschau rechts; auf dem Handy sind Eingaben und Motiv gezielt umschaltbar.
 Kopfzeile und Reiternavigation scrollen nicht mit. Die Werkzeugreiter
-**Stil**, **Farben**, **Feinabstimmung**, **Weitere Gestaltung** und
-**Eigene Vorlagen** begrenzen die angezeigten Einstellungen. Eigene
-Designvorlagen sind zusätzlich standardmäßig eingeklappt. Speichern und
+**Stil**, **Farben**, **Feinabstimmung**, **Weitere Gestaltung**,
+**Eigene Vorlagen** und **Werkzeuge** begrenzen die angezeigten Einstellungen.
+Eigene Designvorlagen haben einen eigenen Reiter. Speichern und
 Verwerfen erhalten links einen eigenen, dauerhaft erreichbaren Bereich
 und verdecken die Vorschau nicht. Erklärungstexte sind über **ⓘ** per Maus,
 Tastatur oder Antippen erreichbar; **Escape** schließt die Erklärung.
@@ -89,7 +103,7 @@ Format, Elementauswahl und Bildwerkzeuge stehen links.
 es, **Vollbild** nutzt den Bildschirm mit weiterhin erreichbaren Werkzeugen.
 Nur bei vergrößerter Ausgabe wird die Bildfläche unabhängig gescrollt.
 Auf Desktop und Tablet scrollen Werkzeuge und Vorschau getrennt;
-auf dem Handy bleibt die obere Vorschau beim Scrollen der Werkzeuge sichtbar.
+auf dem Handy vermeidet die Eingabeansicht eine dauerhaft kleine Motivhälfte.
 Bild- und Preisposition stehen bei ausreichender Containerbreite nebeneinander;
 nur auf schmalen Ansichten werden sie untereinander angeordnet.
 
@@ -132,7 +146,7 @@ Vorschau. Dafür muss ein Produktbild zur Artikelnummer hinterlegt sein.
 
 **HP-Sonderangebote** nutzt ebenfalls die gemeinsame Arbeitsfläche mit
 separat scrollbarerer Vorschau und den kompakten Reitern **Farben**,
-**Preis-Tag** und **Layout**, einschließlich Rückgängig/Wiederholen.
+**Preis-Tag**, **Layout** und **Werkzeuge**, einschließlich Rückgängig/Wiederholen.
 Die Vorschau zeigt echte Angebote der aktuellen Homepage-Woche und lädt
 deren Produktbilder über vorhandene Bildreferenzen oder die lesende
 Artikelbildsuche. Ohne Bestand erscheint ein Leerzustand statt fiktiver
@@ -166,8 +180,9 @@ Aktionseditor weiterhin individuell gestaltet werden.
 ### Gestaltung einer einzelnen Aktion
 
 Unter **Weitere Gestaltung** stehen auch im Getränkedesigner Blatt- und
-Taschen-Dekoration, Papiertextur, Rahmen, Detail-/Fußzeilenfarben,
-Hintergrund- und Bildverläufe sowie zusätzliche Preisschildformen bereit.
+Taschen-Dekoration, Papiertextur und Rahmen bereit. **Farben** bündelt
+Farbrollen sowie Hintergrund- und Bildverläufe. Das vollständige
+Preisschild öffnet sich über seine Eigenschaften-Zusammenfassung.
 Bild- und Preisgröße und ihre Abstände lassen sich fein einstellen.
 **Eigene Vorlagen** sichern benannte Gestaltungen ohne Artikeldaten.
 Laden wirkt auf die aktuelle Mustergestaltung; Löschen fragt nach.
@@ -187,11 +202,10 @@ Nach dem Speichern öffnet sich die Vorschau. Sonderaktionen verwenden die
 echten gespeicherten CMS-Plakat-/Einzelflyervorlagen und deren Zeichenfunktionen;
 Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpreis.
 
-- Die Vorschau steht links (mindestens die halbe Breite), die kompakten
-  Werkzeuge rechts daneben. Auf schmalen Geräten bleibt das Motiv oben fixiert
-  und füllt mehr als die halbe Breite; die Werkzeuge scrollen darunter. So ist
-  jede Änderung sofort am Motiv sichtbar. Die Vorschau wird so groß, wie sie
-  ohne Scrollen in das Fenster passt. Unter **Artikel bearbeiten** lassen sich
+- Die Werkzeuge stehen links, das echte Motiv rechts; beide Flächen sind
+  getrennt scrollbar und über den Splitter verstellbar. Auf dem Handy
+  wechseln **Nur Eingaben**, **Nur Motiv** und **Geteilt** die Arbeitsansicht.
+  **Einpassen** zeigt das Motiv ohne unnötiges Scrollen. Unter **Artikel** lassen sich
   Name, Angebots- und Stattpreis direkt ändern.
 - Ein Element antippen, dann direkt **ziehen** (verschieben), am Quadrat
   ↘ **vergrößern** und am runden Griff ↻ oben **frei drehen** (rastet bei
@@ -200,12 +214,14 @@ Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpr
   stehen unter **Weitere Werkzeuge**. **Rückgängig** macht den letzten Schritt
   rückgängig.
 - **Alle Einzelflyer** öffnet die Einzelansichten; den Artikel direkt auswählen.
-- **Vorlage und Gestaltung** enthält Vorlagen, Farben, Schrift und
-  Ersparnismarker. Der Marker benötigt einen Stattpreis über dem Angebotspreis.
-  Neu sind „Bild 50 % · Rot/Grün/Blau“ (Bild nimmt die halbe Breite ein, rechts
+- **Vorlage** trennt Stilfamilie, echte Layoutvariante und Farbpalette.
+  Ein Stilwechsel bewahrt die Farben; eine Palette verändert keine freie
+  Geometrie und keine fremden Ausgabeziele. Eigene Farben werden nur nach
+  Bestätigung ersetzt. Der Ersparnismarker benötigt einen Stattpreis über dem Angebotspreis.
+  Die bestehenden Varianten „Bild 50 % · Rot/Grün/Blau“ (Bild nimmt die halbe Breite ein, rechts
   Name und Gebinde, darunter ein durchgehendes Preisband) und „Preisschild ·
   Rot/Grün/Blau“ (Aufteilung der Originalkachel mit großer Bildfläche und
-  gedrehtem Preisschild). Beide gelten für Sammelflyer, Kachel, Einzelflyer und Waage.
+  gedrehtem Preisschild) bleiben ladbar. Beide gelten für Sammelflyer, Kachel, Einzelflyer und Waage.
 - Auf der Startseite erscheinen die Kacheltexte halbfett statt fett und wirken
   dadurch filigraner; Flyer, Druck und Waage bleiben unverändert.
 - Wie im bisherigen CMS-Editor stehen in jeder Vorschau **Ghost**, **Duplikat**,

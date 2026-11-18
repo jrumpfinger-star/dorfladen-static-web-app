@@ -78,8 +78,7 @@ async function setup(page) {
 }
 
 async function create(page, kind) {
-  await page.getByRole('button', { name: '+ Neue Aktion erstellen', exact: true }).click();
-  await page.getByRole('button', { name: kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion', exact: true }).click();
+  await page.getByRole('button', { name: kind === 'drinks' ? '+ Getränkeaktion' : '+ Sonderaktion', exact: true }).click();
   const dlg = page.getByRole('dialog', { name: kind === 'drinks' ? 'Getränkeaktion erfassen' : 'Sonderaktion erfassen', exact: true });
   await focusRow(dlg.locator('.cms-ang-row').first());
   await showMeta(dlg);
@@ -95,13 +94,19 @@ async function focusRow(row) {
 }
 
 async function allWeeks(page) {
-  const all = page.getByRole('button', { name: 'Alle', exact: true });
+  const all = page.locator('.an-cms-overview [data-week=all]');
+  await all.waitFor({ state: 'attached' });
   if (!(await all.isVisible())) await page.locator('[data-filter-toggle]').click();
   await all.click();
 }
 
 async function showMeta(dlg) {
   if (!(await dlg.locator('[data-meta=title]').isVisible())) await dlg.locator('[data-meta-toggle]').click();
+}
+async function selectArea(scope, value) {
+  const select = scope.getByLabel('Aktionsbereich', { exact: true });
+  if (await select.isVisible()) await select.selectOption(value);
+  else await scope.locator('[data-action-area=' + value + ']').click();
 }
 
 async function fillDrink(row, index) {
@@ -233,7 +238,9 @@ for (const kind of ['drinks', 'weekly']) {
     await expect(dd).toBeVisible();
     await expect.poll(async () => {
       const b = await dd.boundingBox(), anchor = await input.boundingBox();
-      return !!b && b.y >= 0 && b.y + b.height <= anchor.y;
+      const phone = await dlg.evaluate(node => node.classList.contains('an-capture-phone'));
+      return !!b && b.y >= 0 && b.y + b.height <= page.viewportSize().height
+        && (b.y + b.height <= anchor.y || (phone && b.y >= anchor.y + anchor.height));
     }).toBe(true);
     const hit = await dd.locator('button').first().evaluate(el => {
       const r = el.getBoundingClientRect();
@@ -675,7 +682,9 @@ test('TC-F18-07/09: ursprüngliche aufklappbare CMS-Übersicht lädt ohne Vorlag
   await expect(page.locator('.an-cms-overview .cms-card')).toHaveCount(30, { timeout: 2000 });
   expect(templates).toBe(0);
   expect(state.imageLookups).toHaveLength(0);
-  expect((await page.getByRole('button', { name: 'Diese Woche', exact: true }).boundingBox()).width).toBeLessThan(200);
+  const week = page.getByRole('button', { name: 'Diese Woche', exact: true });
+  if (!(await week.isVisible())) await page.locator('[data-filter-toggle]').click();
+  expect((await week.boundingBox()).width).toBeLessThan(200);
   const first = page.locator('.an-cms-overview .cms-card').first();
   await expect(first.locator('.cms-ang-items')).toBeHidden();
   await first.locator('[data-cms-toggle]').press('Enter');
@@ -721,10 +730,12 @@ async function openPreview(page, kind, count, withImage) {
   const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
   if (kind === 'drinks') for (let i = 0; i < count; i++) await fillDrink(rows.nth(i), i + 1);
   else for (let i = 0; i < count; i++) {
+    await focusRow(rows.nth(i));
     await rows.nth(i).locator('[data-f=produkt]').fill('Original ' + (i + 1));
     await rows.nth(i).locator('[data-f=preis]').fill('1,99');
   }
   if (withImage) {
+    await focusRow(rows.first());
     await rows.first().getByRole('button', { name: 'Produktbild bearbeiten', exact: true }).click();
     const chooser = page.waitForEvent('filechooser');
     await rows.first().locator('[data-offer-action=uploadBildSP]').click();
@@ -752,7 +763,9 @@ const showTab = async (page, name) => {
 const compactMouse = (page) => page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
 async function workspaceView(root, mode) {
   const select = root.locator('[aria-label=Arbeitsansicht]');
-  if (!(await select.isVisible())) await root.locator('[data-workspace-views]:visible').click();
+  const toggle = root.locator('[data-workspace-views]');
+  await expect(select.or(toggle).locator('visible=true').first()).toBeVisible();
+  if (!(await select.isVisible())) await toggle.click();
   await select.selectOption(mode);
 }
 
@@ -784,7 +797,12 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', asy
   const width = await numeric('w');
   for (const handle of await page.locator('#an-hit-layer [data-resize],#an-hit-layer [data-rotate]').all()) {
     const metrics = await handle.evaluate(el => {
-      const style = getComputedStyle(el), glyph = getComputedStyle(el, '::before'), scale = el.getBoundingClientRect().width / el.offsetWidth;
+      const style = getComputedStyle(el), glyph = getComputedStyle(el, '::before');
+      let scale = 1;
+      for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+        const transform = new DOMMatrixReadOnly(getComputedStyle(parent).transform);
+        scale *= Math.hypot(transform.a, transform.b);
+      }
       return { visible: parseFloat(glyph.width) * scale, hit: el.getBoundingClientRect().width,
         transparent: style.backgroundColor === 'rgba(0, 0, 0, 0)', coarse: matchMedia('(pointer:coarse)').matches };
     });
@@ -805,6 +823,110 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', asy
   const saved = state.writes.at(-1).layout.pages.flatMap((entry) => entry.elements).find((entry) => entry.id === id);
   expect(saved.rotation).toBe(90);
   expect(saved.w).toBeGreaterThan(width);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F60-03/TC-F62-02: Aktionsreiter zeigen nur ihren Inhalt und behalten Ziel und Entwurf', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 1);
+  const workspace = page.locator('.an-cms-workspace');
+  await workspaceView(workspace, 'inputs');
+  await page.locator('[data-action-target]').selectOption('card');
+  await showTab(page, 'Ausgabe');
+  await expect(page.locator('#an-inspector')).toBeHidden();
+  await expect(page.locator('.an-cms-style-options')).toBeHidden();
+  await expect(page.locator('[data-cms-download]')).toBeVisible();
+  await expect(page.locator('[data-cms-print]')).toBeVisible();
+  await expect(page.locator('[data-cms-scale]')).toBeVisible();
+  await expect(page.locator('[data-action-target]')).toHaveValue('card');
+  await showTab(page, 'Ansicht');
+  await expect(page.locator('#an-inspector')).toBeHidden();
+  await expect(page.locator('[data-cms-download]')).toBeHidden();
+  await showTab(page, 'Element');
+  await expect(page.locator('#an-inspector')).toBeVisible();
+  await expect(page.locator('[data-cms-download]')).toBeHidden();
+  await expect(page.locator('.an-action-footer #an-save')).toBeVisible();
+  await expect(page.locator('#an-inspector [data-history]')).toHaveCount(0);
+  expect(state.writes).toHaveLength(1);
+  expect(state.errors).toEqual([]);
+  await page.screenshot({ path: test.info().outputPath('aktion-panelbesitz.png') });
+});
+
+test('TC-F61-03: Original-CMS-Familie und Palette erhalten fremde Ausgabeziele und Historie', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 1);
+  const original = structuredClone(state.writes[0].layout.cms);
+  await workspaceView(page.locator('.an-cms-workspace'), 'inputs');
+  await page.locator('[data-action-target]').selectOption('card');
+  await showTab(page, 'Artikel');
+  await page.locator('[data-cms-override=imgDx]').fill('23');
+  await page.locator('[data-cms-override=imgDx]').dispatchEvent('change');
+  await showTab(page, 'Vorlage');
+  await page.locator('[data-cms-family][data-cms-kind=plakat][value=magazine]').locator('..').click();
+  await expect(page.locator('[data-cms-family][data-cms-kind=plakat][value=magazine]')).toBeChecked();
+  const palette = page.locator('[data-cms-palette][data-cms-kind=plakat]').first();
+  await palette.click();
+  const confirm = page.getByRole('button', { name: 'Palette übernehmen', exact: true });
+  await expect.poll(async () => await confirm.isVisible() || await page.locator('#an-root').getAttribute('aria-busy') !== 'true').toBe(true);
+  if (await confirm.isVisible()) await confirm.click();
+  await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
+  await page.locator('[data-history=undo]').click();
+  await expect(page.locator('[data-cms-family][data-cms-kind=plakat][value=magazine]')).toBeChecked();
+  await page.locator('[data-history=redo]').click();
+  await saveDesign(page);
+  const saved = state.writes.at(-1).layout.cms;
+  expect(saved.config).toEqual(original.config);
+  expect(saved.targets.single ? saved.targets.single.config : saved.config).toEqual(original.config);
+  expect(saved.targets.card.config.plakatTemplate).toBe('modern-magazine');
+  expect(saved.targets.card.config).not.toEqual(original.config);
+  expect(saved.targets.card.plakat_article_overrides[state.writes[0].items[0].id].imgDx).toBe(23);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F61-05: Aktionspaletten erhalten freie Geometrie, fremde Ziele und Undo nach Speichern', async ({ page }) => {
+  test.setTimeout(120000);
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const geometry = layout => JSON.stringify([layout.pages, layout.targets], (key, value) => ['fill', 'background'].includes(key) ? undefined : value);
+  const colours = layout => page.evaluate(layout => Object.fromEntries(['sheet', 'card', 'single', 'scale'].map(target =>
+    [target, window.AngeboteModel.effectiveColors(window.AngeboteModel.styleOf(layout, target))])), layout);
+  for (const [index, target] of ['card', 'single', 'scale', 'sheet'].entries()) {
+    await page.locator('[data-action-target]').selectOption(target);
+    await showTab(page, 'Element');
+    const select = page.locator('#an-select-element');
+    const imageId = await select.locator('option').evaluateAll(options => options.find(option => /\bBild\b/.test(option.textContent)).value);
+    await select.selectOption(imageId);
+    const x = page.locator('[data-element-prop=x]');
+    await x.fill('77'); await x.dispatchEvent('change');
+    await saveDesign(page);
+    const baseline = structuredClone(state.writes.at(-1).layout), before = await colours(baseline);
+    await showTab(page, 'Vorlage');
+    const palette = page.locator('[data-offer-palette]').nth(index);
+    const id = await palette.getAttribute('data-offer-palette');
+    await palette.click();
+    const confirmation = page.getByRole('dialog', { name: 'Eigene Farben ersetzen?', exact: true });
+    if (await confirmation.isVisible()) {
+      await confirmation.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+      await expect(page.locator('input[data-style=background]')).toHaveValue(before[target].background);
+      await palette.click();
+      await confirmation.getByRole('button', { name: 'Palette anwenden', exact: true }).click();
+    }
+    await expect(page.locator('[data-offer-palette="' + id + '"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('.an-compact-actions [data-history=undo]').click();
+    await expect(page.locator('input[data-style=background]')).toHaveValue(before[target].background);
+    await page.locator('.an-compact-actions [data-history=redo]').click();
+    await saveDesign(page);
+    const result = state.writes.at(-1).layout, after = await colours(result);
+    expect(geometry(result)).toBe(geometry(baseline));
+    expect(after[target]).not.toEqual(before[target]);
+    for (const other of ['sheet', 'card', 'single', 'scale'].filter(other => other !== target)) expect(after[other]).toEqual(before[other]);
+    await showTab(page, 'Element');
+    await select.selectOption(imageId);
+    await expect(page.locator('[data-element-prop=x]')).toHaveValue('77');
+  }
   expect(state.errors).toEqual([]);
 });
 
@@ -855,7 +977,7 @@ test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat 
   }
   for (const field of await side.locator('input:not([type=checkbox]):visible,select:visible').all()) {
     const height = (await field.boundingBox()).height, label = await field.evaluate((node) => node.outerHTML.slice(0, 120));
-    expect(height, label).toBeGreaterThanOrEqual(43.5);
+    expect(height, label).toBeGreaterThanOrEqual(minimum - .5);
   }
   for (const button of await side.locator('button:visible').all()) {
     const height = (await button.boundingBox()).height, label = await button.evaluate((node) => node.outerHTML.slice(0, 120));
@@ -955,7 +1077,7 @@ for (const [surface, path] of SURFACES) {
       const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
       const writes = state.writes.length;
       for (const target of ['card', 'single', 'sheet', 'scale']) {
-        await page.locator('[data-layout-target=' + target + ']').click();
+        await page.locator('[data-action-target]').selectOption(target);
         await showTab(page, 'Element');
         const stage = page.locator('.an-task-picture .an-stage:visible');
         const tools = page.locator('.an-task-tools');
@@ -993,12 +1115,12 @@ for (const [surface, path] of SURFACES) {
             expect(box.x + box.width).toBeLessThanOrEqual(picture.x + 2);
           }
         }
-        await expect(page.locator('[data-layout-target]')).toHaveCount(4);
-        for (const tab of await page.locator('[data-layout-target]').all()) await expect(tab).toBeVisible();
+        await expect(page.locator('[data-action-target] option')).toHaveCount(4);
+        await expect(page.locator('[data-action-target]')).toBeVisible();
         expect(await modal.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
         expect(state.writes).toHaveLength(writes);
       }
-      await page.locator('[data-layout-target=sheet]').click();
+      await page.locator('[data-action-target]').selectOption('sheet');
       await page.screenshot({ path: test.info().outputPath('aktionsvorschau-rechts-' + kind + '.png') });
       await page.getByRole('button', { name: 'Schließen', exact: true }).click();
       await expect(modal).toHaveCount(0);
@@ -1098,14 +1220,14 @@ test('TC-F23-01..03: Stil gilt je Ausgabeziel; freie Positionen werden erst nach
     await page.locator('label.an-family', { has: page.locator('input[data-style=family][value=' + id + ']') }).click();
   };
   const original = await chosen();
-  await page.locator('[data-layout-target=card]').click();
+  await page.locator('[data-action-target]').selectOption('card');
   await pick('half');
   await expect.poll(chosen).toBe('half-red');
   await expect(page.getByRole('dialog', { name: 'Gestaltung ersetzen?' })).toHaveCount(0);
   await expect(page.locator('[data-style=density]').first()).toBeHidden();
-  await page.locator('[data-layout-target=single]').click();
+  await page.locator('[data-action-target]').selectOption('single');
   await expect.poll(chosen).toBe(original);
-  await page.locator('[data-layout-target=card]').click();
+  await page.locator('[data-action-target]').selectOption('card');
   await expect.poll(chosen).toBe('half-red');
   await saveDesign(page);
   let layout = state.writes.at(-1).layout;
@@ -1192,9 +1314,10 @@ for (const kind of ['weekly', 'drinks']) {
       if (dialog.width >= 1000) expect(await page.locator('.an-cms-canvas').evaluate((node) => node.clientWidth)).toBeGreaterThanOrEqual(dialog.width * .35);
     }
     await stageInView();
-    await inView(kind === 'weekly' ? page.locator('[data-cms-config=plakatTemplate]') : panel.locator('.an-style-families legend'));
+    await inView(panel.locator('.an-style-families:visible legend'));
     if (kind === 'weekly') {
-      await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeVisible();
+      await expect(panel.locator('.an-style-families:visible legend')).toBeVisible();
+      await expect(page.locator('[data-cms-config=plakatTemplate]')).toHaveCount(1);
       await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeHidden();
       await showTab(page, 'Marker');
       await expect(page.locator('[data-cms-config=savingsMarkerType]')).toBeVisible();
@@ -1216,7 +1339,7 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
   const surface = page.locator('.an-weekly-surface'), side = page.locator('.an-cms-side'), workspace = page.locator('.an-cms-workspace');
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
   for (const target of ['card', 'single', 'sheet', 'scale']) {
-    await page.locator('[data-layout-target=' + target + ']').click();
+    await page.locator('[data-action-target]').selectOption(target);
     await showTab(page, 'Element');
     // F47: Die Waage hat ein eigenes Zielrenderer-Layout und damit die nativen Gestaltungswerkzeuge statt der Originalwochenvorschau.
     const native = target === 'scale', canvas = native ? page.locator('#an-stage canvas') : surface.locator('canvas');
@@ -1237,7 +1360,7 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
     await expect(side.locator('[data-x-image]')).toBeAttached();
     await expect(side.locator('[data-x-rot]')).toBeVisible();
   }
-  await page.locator('[data-layout-target=sheet]').click();
+  await page.locator('[data-action-target]').selectOption('sheet');
   const canvas = surface.locator('canvas'), before = await canvas.evaluate((c) => c.toDataURL());
   await showTab(page, 'Vorlage');
   const color = page.locator('[data-cms-config=plakat_decoBgColor]');
@@ -1254,12 +1377,12 @@ test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je
   await openPreview(page, 'drinks', 2);
   const tools = page.locator('#an-inspector');
   for (const target of ['card', 'single', 'sheet', 'scale']) {
-    await page.locator('[data-layout-target=' + target + ']').click();
+    await page.locator('[data-action-target]').selectOption(target);
     await showTab(page, 'Element');
     for (const name of ['+ Eigenes Bild', 'Ghost', 'Duplizieren']) await expect(tools.getByRole('button', { name, exact: true })).toBeVisible();
     await expect(tools.locator('[data-element-prop=rotation][type=range]')).toBeVisible();
   }
-  await page.locator('[data-layout-target=card]').click();
+  await page.locator('[data-action-target]').selectOption('card');
   await showTab(page, 'Vorlage');
   const color = page.locator('input[data-style=background]');
   await color.fill('#336699'); await color.dispatchEvent('change');
@@ -1274,7 +1397,7 @@ for (const kind of ['drinks', 'weekly']) {
     await page.goto(BASE + '/angebote.html');
     await openPreview(page, kind, 2, true);
     expect(state.writes).toHaveLength(1);
-    await page.locator('[data-layout-target=sheet]').click();
+    await page.locator('[data-action-target]').selectOption('sheet');
     await showTab(page, 'Vorlage');
     const color = kind === 'drinks' ? page.locator('input[data-style=background]') : page.locator('[data-cms-config=plakat_decoBgColor]');
     await color.fill('#336699'); await color.dispatchEvent('change');
@@ -1385,6 +1508,7 @@ test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht'
   await page.locator('#an-overview').click();
   await allWeeks(page);
   state.revisions.set('AKT-ZWEI', 9);
+  await page.locator('.an-action-more > summary').click();
   await page.getByRole('button', { name: 'Aktion löschen', exact: true }).click();
   await page.getByRole('button', { name: 'Aktion löschen', exact: true }).last().click();
   await expect(page.getByRole('dialog').last()).toContainText('nicht gelöscht');
@@ -1402,7 +1526,7 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await row.locator('[data-offer-action=uploadBildSP]').click();
   await (await chooser).setFiles({ name: 'artikel.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
   await row.evaluate(el => { window.__captureRow = el; });
-  await dlg.getByLabel('Aktionsbereich', { exact: true }).selectOption('design');
+  await selectArea(dlg, 'design');
   const workspace = page.getByRole('dialog', { name: 'Vorschau', exact: true });
   if (page.viewportSize().width < 600) await workspaceView(workspace, 'picture');
   await expect(workspace.locator('#an-stage-canvas')).toBeVisible();
@@ -1411,12 +1535,12 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await showTab(page, 'Vorlage');
   const color = page.locator('input[data-style=background]');
   await color.fill('#336699');
-  await workspace.getByLabel('Aktionsbereich', { exact: true }).selectOption('articles');
+  await selectArea(workspace, 'articles');
   await expect(workspace).toHaveCount(0);
   await expect(row.locator('[data-f=produkt]')).toHaveValue('Getränk 1');
   expect(await row.evaluate(el => el === window.__captureRow)).toBe(true);
   await row.locator('[data-f=produkt]').fill('Korrigierter Artikel');
-  await dlg.getByLabel('Aktionsbereich', { exact: true }).selectOption('output');
+  await selectArea(dlg, 'output');
   await expect(workspace.locator('[data-cms-download]')).toBeVisible();
   expect(state.writes).toHaveLength(0); expect(state.images).toBe(0);
   await showTab(page, 'Vorlage');
@@ -1425,9 +1549,9 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await expect(undo).toBeEnabled(); await undo.click();
   await expect(page.locator('input[data-style=background]')).not.toHaveValue('#336699');
   await page.locator('.an-compact-actions [data-history=redo]').click();
-  await workspace.getByLabel('Aktionsbereich', { exact: true }).selectOption('articles');
+  await selectArea(workspace, 'articles');
   await expect(row.locator('[data-f=produkt]')).toHaveValue('Korrigierter Artikel');
-  await dlg.getByLabel('Aktionsbereich', { exact: true }).selectOption('design');
+  await selectArea(dlg, 'design');
   await workspace.locator('#an-save').click();
   await expect.poll(() => state.writes.length).toBe(1);
   expect(state.images).toBe(1);
@@ -1446,13 +1570,13 @@ test('TC-F62-02: Speicherkonflikt nach Bildupload erhält Bild, Artikel und geme
   const chooser = page.waitForEvent('filechooser');
   await row.locator('[data-offer-action=uploadBildSP]').click();
   await (await chooser).setFiles({ name: 'konflikt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
-  await dlg.getByLabel('Aktionsbereich', { exact: true }).selectOption('design');
+  await selectArea(dlg, 'design');
   const workspace = page.getByRole('dialog', { name: 'Vorschau', exact: true });
   state.failSave = true;
   await workspace.locator('#an-save').click();
   await expect(page.getByRole('dialog').last()).toContainText('zwischenzeitlich geändert');
   await page.getByRole('button', { name: 'Schließen', exact: true }).last().click();
-  await workspace.getByLabel('Aktionsbereich', { exact: true }).selectOption('articles');
+  await selectArea(workspace, 'articles');
   await expect(row.locator('[data-f=produkt]')).toHaveValue('Getränk 1');
   await expect(row.locator('.cms-bild-preview')).toBeVisible();
   expect(state.images).toBe(1); expect(state.actions.size).toBe(0);
@@ -1472,7 +1596,7 @@ test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks');
-  await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
+  for (let index = 0; index < 3; index++) await fillDrink(dlg.locator('.cms-ang-row').nth(index), index + 1);
   await page.setViewportSize({ width: 375, height: 667 });
   await dlg.locator('[data-capture-back]').click();
   const first = dlg.locator('[data-capture-item]').first();
@@ -1485,6 +1609,19 @@ test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten
   }));
   expect(geometry.header).toBe(44); expect(geometry.body).toBeGreaterThanOrEqual(550);
   expect(geometry.first).toBeLessThanOrEqual(164); expect(geometry.overflow).toBe(false);
+  for (const [width, height] of [[320, 568], [360, 640], [375, 667], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    const list = await dlg.evaluate(el => {
+      const body = el.querySelector('.an-capture-body').getBoundingClientRect();
+      return { header: el.querySelector('.an-dialog-top').getBoundingClientRect().height, height: body.height,
+        cards: [...el.querySelectorAll('[data-capture-item]')].slice(0, 3).map(node => {
+          const box = node.getBoundingClientRect(); return { top: box.top, bottom: box.bottom, visible: box.top >= body.top && box.bottom <= body.bottom };
+        }) };
+    });
+    expect(list.header).toBe(44); expect(list.height).toBeGreaterThanOrEqual(height * .75);
+    expect(list.cards[0].top).toBeLessThanOrEqual(164); expect(list.cards.every(card => card.visible)).toBe(true);
+    await page.screenshot({ path: test.info().outputPath('artikelliste-' + width + '.png') });
+  }
   await first.click();
   await dlg.locator('.cms-ang-row').first().evaluate(el => { window.__mobileRow = el; });
   await dlg.locator('[data-capture-next]').click();
@@ -1499,6 +1636,32 @@ test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten
   expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
 });
 
+test('TC-F63-02: alle zehn Getränkefelder passen in den mobilen Einzelarbeitsraum', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
+  await fillDrink(row, 1);
+  for (const [width, height] of [[360, 640], [375, 667], [390, 844], [320, 568], [686, 432]]) {
+    await page.setViewportSize({ width, height });
+    if (await dlg.locator('[data-meta-toggle]').getAttribute('aria-expanded') === 'true') await dlg.locator('[data-meta-toggle]').click();
+    await focusRow(row);
+    const bounds = await row.evaluate(el => {
+      const body = el.closest('.an-capture-body').getBoundingClientRect();
+      return [...el.querySelectorAll('input[data-f]:not([type=hidden]),select[data-f]')].map(field => {
+        const box = field.getBoundingClientRect(); return { height: box.height, left: box.left, right: box.right, bottom: box.bottom, bodyBottom: body.bottom };
+      });
+    });
+    expect(bounds).toHaveLength(10);
+    expect(bounds.every(box => box.height >= 44 && box.left >= 0 && box.right <= width)).toBe(true);
+    const remove = await row.locator('.cms-ang-row-close').boundingBox();
+    expect(remove.width).toBeGreaterThanOrEqual(44); expect(remove.height).toBeGreaterThanOrEqual(44);
+    if (height >= 640) expect(bounds.every(box => box.bottom <= box.bodyBottom)).toBe(true);
+    await page.screenshot({ path: test.info().outputPath('einzelartikel-' + width + 'x' + height + '.png') });
+  }
+  await expect(row.locator('[data-f=produkt]')).toHaveValue('Getränk 1');
+  expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
+});
+
 test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennungen und gleichen Bildern', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
@@ -1507,16 +1670,21 @@ test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennung
   const source = structuredClone(state.writes[0]);
   await page.locator('#an-overview').click();
   await allWeeks(page);
+  await page.locator('.an-action-more > summary').click();
   await page.getByRole('button', { name: 'Duplizieren', exact: true }).click();
   const dlg = page.getByRole('dialog', { name: 'Getränkeaktion erfassen', exact: true });
   await expect(dlg.locator('[data-meta=title]')).toHaveValue(/ · Kopie$/);
   await expect(dlg.locator('[data-capture-status]')).toContainText('Ungespeicherte Änderungen');
   expect(state.writes).toHaveLength(1);
+  await showMeta(dlg);
   await dlg.locator('[data-meta=title]').fill('Meine Kopie');
   await dlg.getByRole('button', { name: 'Abbrechen', exact: true }).first().click();
   await page.getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
   expect(state.writes).toHaveLength(1);
+  const more = page.locator('.an-action-more');
+  if (!(await more.evaluate(node => node.open))) await more.locator('summary').click();
   await page.getByRole('button', { name: 'Duplizieren', exact: true }).click();
+  await showMeta(dlg);
   await dlg.locator('[data-meta=title]').fill('Meine Kopie');
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dlg).toHaveCount(0);

@@ -61,15 +61,43 @@ Stand: 18.11.2026 · Branch `feature/getraenke-angebotsflyer` · Repo `jrumpfing
 5. Verifiziert: Label „Element in der Vorschau" ist auf allen vier Ansichten vollständig lesbar
    (scrollWidth == clientWidth) — durch den vorherigen Commit (8aa1858f) behoben.
 
-## Offene Punkte / Nächste Schritte
+## Mockup-Nacharbeit / Abnahme
 
-- Screenshot-Matrix gegen Mockup endabnehmen (shots/ wird von den TEMP-SHOTS-Tests erzeugt).
-- `TEMP-SHOTS`-Tests in tests/angebote-flyer.spec.js erzeugen nur Screenshots (keine Assertions) —
-  vor dem Merge in main entfernen oder in echte Abnahme-Tests umwandeln.
-- GF100/GF101 aus specs/getraenke-angebotsflyer/tasks.md: Funktionsübernahmematrix F46–F51,
-  vollständiger Roundtrip, PR/Preview-Nachweis.
-- Der untracked Ordner `shots/` ist Screenshot-Arbeitsmaterial; `.agents/` enthält die Skill-Datei,
-  `tools/pruef-seitengeruest.js` ist ein nützlicher statischer Gerüst-Check (kommittieren empfohlen).
+### Mockup-Nacharbeit F60–F64
+
+Der vorherige PR-Zwischenstand `29a1b557` ist keine abgeschlossene
+Mockup-Abnahme. Die verbindliche Nacharbeit umfasst alle sechs globalen
+Designer und den vollständigen gemeinsamen Aktionsweg:
+
+- Aktionsübersicht mit Typkennzeichnung, zwei direkten Neuaktionen und
+  Mehrmenü für Nebenaktionen; ursprüngliche Artikelliste und Filter erhalten.
+- Gemeinsame Hauptschritte, kompakter mobiler Bereichsselect und linker
+  Zielselect; alle delegieren an die vorhandenen Handler.
+- Expliziter Panelbesitz: Ansicht und Ausgabe zeigen nicht mehr den
+  Elementinspector. Ausgabekarten nutzen die echten Export-/Druck-/Waagenpfade.
+- Original-CMS-Familien und Paletten sind im Aktionseditor angeschlossen;
+  getrennte Zielkonfigurationen, Geometrie und Undo/Redo bleiben erhalten.
+- Sichtbare Dreh-/Größenmarkierungen sind kachelrelativ; transparente
+  Maus-/Touchtrefferflächen und numerische Alternativen bleiben groß genug.
+- Datenkeys, Besitzer und Testzuordnungen stehen im Implementierungsplan.
+  SDD-Aufgaben GF100–GF110 erst nach funktionalem und visuellem Nachweis
+  schließen; eine Screenshotanzahl ist keine bestandene Abnahme.
+
+Die Nacharbeit ist lokal integriert und geprüft: 29 globale Designer-/Paletten-
+Verträge bestanden; die 156 Desktopfälle sind durch 151 bestandene Fälle des
+Gesamtlaufs plus grünen Nachlauf aller fünf migrierten UI-Verträge abgedeckt.
+Die responsive Kernprüfung bestand 83/84 Fälle; nach Beheben des
+Testhelfer-Wettlaufs ist auch der betroffene Vertrag in allen vier Ansichten
+grün. Zusätzliche Vorlagen-/Preisbild-/Bild-/Kompaktheitsfälle sind auf Desktop,
+iPad mini, Telefon und Ladentablet erfolgreich. Python: 81/81.
+Exakte Befehle und die differenzierten Nachweise stehen in
+[tasks.md](../specs/getraenke-angebotsflyer/tasks.md).
+
+Lokale Regressionen einschließlich Bild-/Entwurfsroundtrips verwenden ausschließlich
+gemockte APIs. Zur Veröffentlichung gehören normaler Commit/Push und
+schreibfreier Abgleich der PR-Preview mit dem ausgelieferten Commit.
+Kein main-Merge, kein Produktionsdeploy und keine echten Dataverse-, Upload-
+oder Waagenschreibtests in der Preview.
 
 ## Stolpersteine
 

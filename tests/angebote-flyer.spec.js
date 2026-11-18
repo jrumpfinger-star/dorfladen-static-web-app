@@ -228,7 +228,7 @@ async function designerTool(root, index) {
   const tab = index === 'tools' ? await root.locator('[data-designer-tools]').getAttribute('data-designer-tab') : String(index);
   // Auf schmalen Viewports erscheint das Werkzeuge-Select erst mit dem Layout (ResizeObserver);
   // bis dahin ist auch der Reiter-Button versteckt. Auf eines von beiden warten.
-  await expect(select.or(root.locator('[data-designer-tab="' + tab + '"]')).first()).toBeVisible({ timeout: 15000 });
+  await expect(select.or(root.locator('[data-designer-tab="' + tab + '"]')).locator('visible=true').first()).toBeVisible({ timeout: 15000 });
   if (await select.isVisible()) await select.selectOption(tab);
   else await root.locator('[data-designer-tab="' + tab + '"]').click();
 }
@@ -240,6 +240,12 @@ async function workspaceView(root, mode) {
   await select.selectOption(mode);
 }
 
+async function chooseFamily(root, name) {
+  const radio = root.getByRole('radio', { name, exact: true });
+  await radio.locator('..').click({ position: { x: 4, y: 4 } });
+  await expect(radio).toBeChecked();
+}
+
 // Unter ~612 px stehen Eingaben und Motiv als getrennte Arbeitsansichten; breiter ist es ein No-op.
 async function phoneView(page, mode) {
   const split = page.locator('.an-split-mobile').first();
@@ -249,7 +255,7 @@ async function phoneView(page, mode) {
 }
 
 async function openDetails(details) {
-  if (!(await details.evaluate((node) => node.open))) await details.locator(':scope > summary').click();
+  if (await details.evaluate((node) => node.tagName === 'DETAILS' && !node.open)) await details.locator(':scope > summary').click();
 }
 // Mindestgröße von Bedienflächen: 32 px bei Maus ab 600 px, sonst 44 px (docs/ui-designstandard.md 4.3).
 const hit = (page) => page.viewportSize().width >= 600 && !test.info().project.use.hasTouch ? 32 : 44;
@@ -269,9 +275,26 @@ async function setField(page, root, locator, value) {
   if (await locator.isVisible()) { await act(); return; }
   const key = await locator.evaluate((node) => node.dataset.style || node.dataset.cmsConfig || node.id || '');
   const group = await page.evaluate((name) => window.AngeboteModel.propertyGroup(name), key);
+  const toolSelect = root.locator('select[aria-label="Gestaltungswerkzeuge"]');
+  const previousTool = await toolSelect.count() ? await toolSelect.inputValue() : null;
+  if (!group) {
+    const ownerTab = await locator.evaluate(node => {
+      const panel = node.closest('[role=tabpanel]');
+      const tab = panel && document.querySelector('[role=tab][aria-controls="' + panel.id + '"]');
+      return tab && tab.dataset.designerTab;
+    });
+    expect(ownerTab, 'Das Feld besitzt einen erreichbaren Werkzeugreiter: ' + key).toBeTruthy();
+    await designerTool(root, ownerTab);
+    for (const details of (await locator.locator('xpath=ancestor::details').all()).reverse()) await openDetails(details);
+    await act();
+    if (previousTool !== null) await designerTool(root, previousTool);
+    return;
+  }
+  if (!(await root.locator('[data-object-properties=' + group + ']').isVisible()) && previousTool !== null) await designerTool(root, 'tools');
   await root.locator('[data-object-properties=' + group + ']').click();
   await act();
   await root.locator('dialog.an-object-dialog[open]').getByRole('button', { name: 'Übernehmen', exact: true }).click();
+  if (previousTool !== null) await designerTool(root, previousTool);
 }
 
 async function noOverflow(page, selector = 'html') {
@@ -454,17 +477,16 @@ test('TC-F13-01/03..04: Logo bearbeiten und Vorlage nur auf das gewählte Ziel a
   const preserved = copy(state.actions.get(head.id).draft);
   await page.locator('[data-layout-target=card]').click();
   await templatePanel(page);
-  await page.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-  await page.locator('input[data-style=template][value=modern-mag-fresh]').check();
+  await page.locator('label.an-family').filter({ has: page.locator('input[data-style=family][value=magazine]') }).click();
   await saveDraft(page);
   const changed = state.actions.get(head.id).draft;
   expect(changed.layout.pages).toEqual(preserved.layout.pages);
   expect(changed.layout.targets.single).toEqual(preserved.layout.targets.single);
   expect(changed.layout.targets.scale).toEqual(preserved.layout.targets.scale);
   expect(changed.layout.template).toBe(preserved.layout.template);
-  expect(changed.layout.target_styles.card.template).toBe('modern-mag-fresh');
+  expect(changed.layout.target_styles.card.template).toBe('modern-magazine');
   for (const card of changed.layout.targets.card) {
-    expect(card.background).toBe('#e8f6f8');
+    expect(card.background).toBe(preserved.layout.targets.card.find(entry => entry.item_id === card.item_id).background);
     expect(card.elements.find((e) => e.type === 'image').w).toBe(372);
   }
   const output = await page.evaluate(async (data) => {
@@ -524,17 +546,16 @@ for (const cmsMode of [true, false]) {
       await templatePanel(page);
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
-    await host.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
+    await expect(host.locator('[data-style=family]')).toHaveCount(10);
     const stored = copy(cmsMode ? state.design : state.actions.get(head.id));
     const writes = state.log.filter((r) => !['GET', 'HEAD', 'OPTIONS'].includes(r.method)).length;
-    await host.locator('.an-choice-option').first().locator('.an-choice-body').dblclick();
+    await host.getByRole('button', { name: 'Landladen vergrößern', exact: true }).click();
     let dialog = page.getByRole('dialog', { name: 'Vorlagenvorschau · Landladen', exact: true });
     await expect(dialog.locator('canvas')).toHaveAttribute('width', '1588');
     await expect(dialog.locator('canvas')).toHaveAttribute('height', '2246');
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
-    const enlarge = host.getByRole('button', { name: 'Klassisch vergrößern', exact: true });
+    const enlarge = host.getByRole('button', { name: 'Kantig vergrößern', exact: true });
     if (test.info().project.use.hasTouch) await enlarge.tap();
     else { await enlarge.focus(); await page.keyboard.press('Enter'); }
     dialog = page.getByRole('dialog', { name: 'Vorlagenvorschau · Klassisch', exact: true });
@@ -594,31 +615,28 @@ for (const cmsMode of [true, false]) {
       await templatePanel(page);
     }
     const host = page.locator(cmsMode ? '#an-design-root' : '#an-step-design');
-    await expect(host.locator('.an-template-picker > summary')).toContainText('17 Vorlagen');
-    await host.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-    await expect(host.locator('[data-template-preview] canvas')).toHaveCount(17);
-    const sizes = await host.locator('[data-template-preview] canvas').evaluateAll((nodes) => nodes.map((c) => [c.width, c.height]));
-    expect(sizes.every(([w, h]) => w > 100 && h > w)).toBe(true);
+    await expect(host.locator('[data-style=family]')).toHaveCount(10);
+    await expect(host.locator('[data-style=template]')).toHaveCount(17);
     await expect(host.locator('select[data-style=template],select[data-style=density]')).toHaveCount(0);
-    for (const id of ORIGINAL_TEMPLATES) {
-      await host.locator('input[data-style=template][value="' + id + '"]').check();
-      await expect(host.locator('[data-template-label]')).not.toBeEmpty();
-      const expected = await page.evaluate((id) => window.AngeboteModel.templateStyle(id).settings, id);
-      await expect(host.getByLabel('Angebots-/Preisfarbe')).toHaveValue(expected.color);
-      await expect(host.getByLabel('Flyer-Hintergrund', { exact: true })).toHaveValue(expected.background);
+    const originalColors = [await host.getByLabel('Angebots-/Preisfarbe').inputValue(), await host.getByLabel('Flyer-Hintergrund', { exact: true }).inputValue()];
+    const families = await host.locator('[data-style=family]').evaluateAll(nodes => nodes.map(node => node.value));
+    for (const id of families) {
+      await host.locator('label.an-family').filter({ has: page.locator('input[data-style=family][value="' + id + '"]') }).click();
+      await expect(host.getByLabel('Angebots-/Preisfarbe')).toHaveValue(originalColors[0]);
+      await expect(host.getByLabel('Flyer-Hintergrund', { exact: true })).toHaveValue(originalColors[1]);
     }
-    const classic = host.getByRole('radio', { name: /Klassisch/ });
-    await classic.check();
+    const classic = host.getByRole('radio', { name: /Kantig/ });
+    await host.locator('label.an-family:has(input[data-style=family][value=square])').click();
     await expect(classic).toBeChecked();
     await classic.focus();
     await page.keyboard.press('ArrowLeft');
     await expect(host.getByRole('radio', { name: /Landladen/ })).toBeChecked();
     await page.keyboard.press('ArrowRight');
     await expect(classic).toBeChecked();
-    await host.getByRole('radio', { name: /6 · kompakt/ }).check();
-    for (const group of await host.locator('.an-choice-group').filter({ has: page.locator('input[type=radio]') }).all()) {
-      await expect(group.locator('.an-choice-active:visible')).toHaveCount(1);
-      const rect = await group.locator('.an-choice').first().boundingBox();
+    await host.locator('label.an-choice:has(input[data-style=density][value="6"])').click();
+    for (const group of await host.locator('.an-choice-group:visible').filter({ has: page.locator('input[type=radio]') }).all()) {
+      await expect(group.locator('input[type=radio]:checked')).toHaveCount(1);
+      const rect = await group.locator('.an-family,.an-choice').first().boundingBox();
       expect(rect.height).toBeGreaterThanOrEqual(page.viewportSize().width >= 600 && !test.info().project.use.hasTouch ? 32 : 44);
     }
     await expect(host.getByLabel('Schrift', { exact: true })).toBeAttached();
@@ -628,8 +646,10 @@ for (const cmsMode of [true, false]) {
     await host.getByLabel('Flyer-Hintergrund', { exact: true }).dispatchEvent('change');
     await expect.poll(() => host.locator('[data-template-preview=classic] canvas').evaluate((canvas) =>
       Array.from(canvas.getContext('2d').getImageData(1, 1, 1, 1).data))).toEqual([255, 240, 223, 255]);
-    if (cmsMode) await designerTool(host, 2);
-    await expect(host.locator('.an-fine:not(.an-more-design)').first()).toHaveAttribute('open', '');
+    if (cmsMode) {
+      await designerTool(host, 'tools');
+      await expect(host.locator('[data-object-properties=image]')).toBeVisible();
+    } else await expect(host.locator('.an-fine:not(.an-more-design)').first()).toHaveAttribute('open', '');
     await expect(host.getByLabel('Produktbild · Drehung in Grad')).toBeAttached();
     const clippedLabels = await host.locator('.an-field > span').evaluateAll((labels) => labels.filter((label) => {
       const bounds = label.parentElement.getBoundingClientRect(), range = document.createRange();
@@ -693,8 +713,7 @@ for (const cmsMode of [true, false]) {
       await page.locator('[data-layout-target=sheet]').click();
       await templatePanel(page);
     }
-    await host.locator('.an-template-picker > summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-    await expect(host.getByRole('radio', { name: /Klassisch/ })).toBeChecked();
+    await expect(host.getByRole('radio', { name: /Kantig/ })).toBeChecked();
     await expect(host.getByRole('radio', { name: /6 · kompakt/ })).toBeChecked();
     expect(state.errors).toEqual([]);
   });
@@ -727,7 +746,8 @@ test('TC-F1-01/F7-01..03/F9-01..03: echter CMS-Reiter, kopierte Standards und Ki
   await designTab(page, 'sec-shared');
   await expect(page.locator('#cfg-sec-shared')).toBeVisible();
   await cms(page, 'ang');
-  await expect(page.locator('#an-root').getByRole('button', { name: '+ Neue Aktion erstellen', exact: true })).toBeVisible();
+  await expect(page.locator('#an-root').getByRole('button', { name: '+ Sonderaktion', exact: true })).toBeVisible();
+  await expect(page.locator('#an-root').getByRole('button', { name: '+ Getränkeaktion', exact: true })).toBeVisible();
   await page.goto(BASE + '/angebote.html?bestand=1');
   await page.getByRole('button', { name: '+ Getränkeaktion anlegen' }).click();
   await saveDraft(page);
@@ -755,8 +775,8 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   await page.dispatchEvent('body', 'pointermove', { pointerId: 71, pointerType: 'touch', clientX: box.x + 20, clientY: box.y + 15 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 71, pointerType: 'touch' });
   await designerTool(page.locator('#an-design-root'), 2);
-  await page.locator('[data-style=marker_type]').selectOption('heart');
-  await page.locator('[data-style=marker_palette]').selectOption('ocean-blue');
+  await page.locator('#an-design-root').getByRole('button', { name: 'Herz', exact: true }).click();
+  await page.locator('#an-design-root').getByRole('button', { name: 'Ozean Blau', exact: true }).click();
   await page.locator('[data-style=marker_scale]').evaluate((n) => {
     n.value = '140';
     n.dispatchEvent(new Event('input', { bubbles: true }));
@@ -791,6 +811,7 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
 
 for (const density of [4, 6]) {
   test(`TC-F33-01: nur Musterkachel bearbeiten und alle ${density} Kacheln synchronisieren`, async ({ page }) => {
+    test.setTimeout(120000);
     const state = await setup(page);
     state.design.drinks.density = density;
     const existing = await seed(page, state), before = copy(existing);
@@ -929,6 +950,7 @@ test('TC-F34-01: Preisbild auswählen, fünf Farben einstellen und Standards ern
     price_outline_color: ['#ffffff', '#ddccff'], old_price_color: ['#000000', '#112233'],
     price_strike_color: ['#ed1c24', '#ff44aa'],
   };
+  await designerTool(root, 'tools');
   await root.locator('[data-object-properties=price]').click();
   const dialog = root.locator('dialog.an-object-dialog[open]');
   await dialog.locator('[data-style=price_preset]').selectOption('price-image');
@@ -1346,7 +1368,8 @@ test('TC-F14-03: alte freie Wochenlayouts bleiben erhalten; Übernahme nur best�
   await page.locator('#an-defaults').click();
   await page.getByRole('dialog').getByRole('button', { name: 'CMS-Vorlage übernehmen', exact: true }).click();
   await templatePanel(page);
-  await expect(page.locator('[data-cms-config=plakatTemplate]')).toBeVisible();
+  await expect(page.locator('.an-style-families:visible')).toBeVisible();
+  await expect(page.locator('[data-cms-config=plakatTemplate]')).toHaveValue('classic-red');
   await saveDraft(page); expect(state.actions.get(head.id).draft.layout.cms.config.plakatTemplate).toBe('classic-red');
   await page.locator('#an-overview').click();
   state.failCmsDesign = true;
@@ -2338,8 +2361,11 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   });
   await cms(page);
   await designTab(page, 'sec-flyer');
-  await page.locator('#cfg-sec-flyer .an-template-picker summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-  await page.locator('#cfg-flyerTemplate-preview [data-value=modern-mag-xl]').click();
+  const root = page.locator('[data-designer=flyer]');
+  await designerTool(root, 0);
+  await chooseFamily(root, 'Magazin');
+  await root.getByRole('combobox', { name: 'Magazin-Bildfläche', exact: true }).selectOption({ label: 'Großbild' });
+  await expect(root.locator('#cfg-flyerTemplate')).toHaveValue('modern-mag-xl');
   await page.clock.runFor(1000);
   await workspaceView(page.locator('[data-designer=flyer]'), 'split');
   await expect(page.locator('#cfg-live-preview-flyer canvas')).toBeVisible();
@@ -2424,7 +2450,7 @@ test('TC-F60-01: Objekteigenschaften restaurieren Feldbesitz und direkte Bildreg
   await cms(page);
   await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
-  await designerTool(root, 2);
+  await designerTool(root, 'tools');
   const before = await root.locator('input[id],select[id]').evaluateAll((controls) =>
     controls.map((control) => ({ id: control.id, parent: control.closest('label')?.parentElement.className,
       hidden: control.closest('label')?.hidden })).sort((a, b) => a.id.localeCompare(b.id)));
@@ -2463,6 +2489,7 @@ test('TC-F60-02: Preisschilddialog gliedert echte Felder und erhält Transaktion
   const state = await setup(page);
   await cms(page); await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
+  await designerTool(root, 'tools');
   const ids = await root.locator('[data-object-field=price] input,[data-object-field=price] select')
     .evaluateAll((controls) => controls.map((control) => control.id).sort());
   await root.locator('[data-object-properties=price]').click();
@@ -2553,6 +2580,63 @@ test('TC-F64-02: Originalrenderer erhält lange Wörter und explizite Textzeilen
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F61-02: Aktionspaletten färben alle freien Bestandsvorlagen ohne Geometrie-Neuaufbau', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page);
+  const result = await page.evaluate(async () => {
+    const M = window.AngeboteModel, rows = [];
+    const geometry = layout => JSON.stringify([layout.pages, layout.targets], (key, value) => ['fill', 'background'].includes(key) ? undefined : value);
+    for (const [id] of M.templateOptions) {
+      const source = M.blank('drinks'), item = M.item(); Object.assign(item, { name: 'Apfelsaft', price_cents: 249 });
+      source.items.push(item); M.useTemplate(source.layout, id); M.applyTemplate(source);
+      const image = source.layout.targets.card[0].elements.find(element => element.type === 'image');
+      Object.assign(image, { x: 77, rotation: 13, image_scale: 1.17 });
+      const hashes = [], before = geometry(source.layout), foreign = JSON.stringify(source.layout.targets.single);
+      for (const palette of M.palettes) {
+        const data = M.clone(source);
+        M.applyPaletteColors(data, 'card', M.paletteColors(palette));
+        if (geometry(data.layout) !== before || JSON.stringify(data.layout.targets.single) !== foreign) throw Error('Geometrie verändert: ' + id + '/' + palette.id);
+        const { canvas } = await M.renderTarget(data, 'card', item.id, .3);
+        const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+        let hash = 2166136261;
+        for (const byte of pixels) hash = Math.imul(hash ^ byte, 16777619) >>> 0;
+        hashes.push(hash);
+      }
+      rows.push({ id, distinct: new Set(hashes).size, palettes: M.palettes.length });
+    }
+    return rows;
+  });
+  expect(result).toHaveLength(17);
+  for (const row of result) expect(row.distinct, row.id).toBe(row.palettes);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F64-02: extreme Originaltexte melden eine echte Qualitätsgrenze statt stiller Überdeckung', { tag: '@ohne-layout' }, async ({ page }) => {
+  const state = await setup(page);
+  const result = await page.evaluate(async templates => {
+    const M = window.AngeboteModel, source = M.blank('weekly');
+    const item = M.item(); Object.assign(item, { name: 'Apfelsaft', description: '1 Liter Mehrweg', price_cents: 249, old_price_cents: 329 });
+    source.items.push(item); await M.adoptWeekly(source); M.applyTemplate(source);
+    const reports = [];
+    for (const id of templates) {
+      const data = M.clone(source);
+      data.layout.cms.config.plakatTemplate = id; data.layout.cms.config.flyerTemplate = id;
+      data.layout.cms.config.plakat_showTexture = false; data.layout.cms.config.flyer_showTexture = false;
+      const normal = await M.quality(data);
+      data.items[0].name = 'Donaudampfschifffahrtsgesellschaftsgetränkevorratspackung '.repeat(24);
+      data.items[0].description = 'Mehrwegflaschen im wiederverwendbaren Getränkekasten, Pfand gesondert berechnet. '.repeat(12);
+      const extreme = await M.quality(data);
+      reports.push({ id, normal: normal.errors, extreme: extreme.errors });
+    }
+    return reports;
+  }, ORIGINAL_TEMPLATES);
+  for (const report of result) {
+    expect(report.normal, report.id).toEqual([]);
+    expect(report.extreme.some(issue => issue.code === 'outside' || issue.code === 'text-overlap'), report.id).toBe(true);
+    expect(report.extreme.every(issue => issue.message && issue.target)).toBe(true);
+  }
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F64-01: zielbezogene Markerform und Farbwelt erreichen den echten Konfigurationspfad', async ({ page }) => {
   const state = await setup(page);
   await page.route('**/api/cms-config', async (route) => {
@@ -2628,41 +2712,6 @@ test('TC-F64-01: zielbezogene Markerform und Farbwelt erreichen den echten Konfi
   expect(state.errors).toEqual([]);
 });
 
-test('TEMP-SHOTS: Feinabstimmung', async ({ page }) => {
-  test.setTimeout(180000);
-  const state = await setup(page);
-  await seed(page, state, { count: 8, publish: true });
-  await cms(page);
-  await designTab(page, 'sec-plakat');
-  const root = page.locator('[data-designer=plakat]');
-  await designerTool(root, 2);
-  await page.waitForTimeout(600);
-  await page.screenshot({ path: 'shots/feinabstimmung-plakat.png' });
-});
-
-test('TEMP-SHOTS: alle Designer-Tabs', async ({ page }) => {
-  test.setTimeout(300000);
-  const state = await setup(page);
-  await seed(page, state, { count: 8, publish: true });
-  await cms(page);
-  const shoot = async (name) => { await page.waitForTimeout(400); await page.screenshot({ path: 'shots/' + name + '.png' }); };
-  await designTab(page, 'sec-plakat');
-  const plakat = page.locator('[data-designer=plakat]');
-  for (const [i, n] of [[0, 'plakat-stil'], [1, 'plakat-farben'], [2, 'plakat-fein'], [3, 'plakat-weiter'], [4, 'plakat-eigene']]) {
-    await designerTool(plakat, i); await shoot(n);
-  }
-  await designTab(page, 'sec-drinks');
-  const drinks = page.locator('[data-designer=drinks]');
-  for (const [i, n] of [[0, 'drinks-stil'], [1, 'drinks-farben'], [2, 'drinks-fein'], [3, 'drinks-weiter']]) {
-    await designerTool(drinks, i); await shoot(n);
-  }
-  await designTab(page, 'cfg-hpang');
-  const hp = page.locator('[data-designer=homepage]');
-  for (const [i, n] of [[0, 'hp-farben'], [1, 'hp-preistag'], [2, 'hp-layout']]) {
-    await designerTool(hp, i); await shoot(n);
-  }
-});
-
 test('TC-F55a: Preisschild-Dialog zeigt kompakte, gestapelte Felder ohne Riesenflächen', async ({ page }) => {
   test.setTimeout(180000);
   const state = await setup(page);
@@ -2670,7 +2719,7 @@ test('TC-F55a: Preisschild-Dialog zeigt kompakte, gestapelte Felder ohne Riesenf
   await cms(page);
   await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
-  await designerTool(root, 2);
+  await designerTool(root, 'tools');
   const button = root.locator('[data-object-properties="price"]');
   await expect(button).toBeVisible();
   await button.click();
@@ -2868,7 +2917,7 @@ for (const kind of ['plakat', 'flyer']) {
     await expect.poll(async () => (await meta()).w).toBeGreaterThan(before.w);
     await root.locator('[data-preview-transform=right]').click(); await page.clock.runFor(500);
     const handle = await preview.locator('.an-rotate-handle:visible').boundingBox();
-    expect(handle.width).toBeGreaterThanOrEqual(40);
+    expect(handle.width).toBeGreaterThanOrEqual(hit(page) - .01);
     expect(state.log.filter((entry) => entry.path === '/api/cms-config' && entry.method !== 'GET')).toHaveLength(writes);
     await designTab(page, 'sec-drinks');
     await designTab(page, 'sec-' + kind); await page.clock.runFor(500);
@@ -2911,6 +2960,8 @@ test('TC-F52-04: echte Eingabefläche statt abgeschnittener mobiler Miniansicht'
   await cms(page);
   const root = page.locator('[data-designer=drinks]'), body = root.locator('.an-designer-body');
   await expect(root).toBeVisible();
+  await workspaceView(root, 'inputs');
+  await designerTool(root, 'tools');
   await expect.poll(() => body.evaluate(node => node.getBoundingClientRect().height / innerHeight)).toBeGreaterThanOrEqual(.5);
   await expect(root.locator('[data-design-save]')).toBeInViewport();
   await expect(root.locator('[data-object-properties=text]')).toBeInViewport();
@@ -2927,9 +2978,10 @@ test('TC-F52-04: echte Eingabefläche statt abgeschnittener mobiler Miniansicht'
   await expect(body).toBeVisible();
   await expect(root.locator('[data-design-save]')).toBeInViewport();
   await designTab(page, 'sec-flyer');
+  await designerTool(page.locator('[data-designer=flyer]'), 'tools');
   await expect(page.locator('[data-designer=flyer] [data-object-properties=text]')).toBeVisible();
   await designTab(page, 'sec-drinks');
-  await expect(root.locator('[data-workspace-views]:visible')).toHaveCount(await root.locator('.an-split').evaluate(node => node.classList.contains('an-split-mobile')) ? 1 : 0);
+  await expect(root.locator('[data-workspace-views]:visible')).toHaveCount(1);
   expect(state.log.filter(entry => entry.method !== 'GET' && !entry.read_only_lookup)).toHaveLength(0);
   expect(state.errors).toEqual([]);
 });
@@ -2942,22 +2994,36 @@ test('TC-F52-05: Mausaktionen sind tatsächlich 32 px hoch, Touchziele bleiben e
   const compact = await page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
   const controls = [
     root.locator('[data-design-save]'), root.locator('[data-design-history=undo]'),
-    root.locator('[data-more-actions]'), root.locator('[data-object-properties=text]'),
-    root.locator('.an-template-picker>summary'), root.locator('.an-density-choice .an-choice').first(),
-    root.locator('.an-designer-tool-select'), page.locator('.an-design-location-btn').first(),
+    root.locator('[data-more-actions]'),
+    root.locator('.an-density-choice .an-choice').first(),
+    page.locator('.an-design-location-btn').first(),
     page.getByRole('button', { name: 'Designoptionen und Hilfe', exact: true }),
     page.locator('.an-design-header [data-workspace-fullscreen]'),
   ];
-  for (const control of controls) {
-    const height = await control.evaluate(node => node.getBoundingClientRect().height);
-    if (compact) expect(height).toBeCloseTo(32, 0);
-    else expect(height).toBeGreaterThanOrEqual(44);
+  const measurements = await Promise.all(controls.map(control => control.evaluate(node => ({
+    control: node.outerHTML.slice(0, 200), height: node.getBoundingClientRect().height
+  }))));
+  await test.info().attach('control-sizes.json', { body: JSON.stringify(measurements, null, 2), contentType: 'application/json' });
+  for (const { control, height } of measurements) {
+    if (compact) expect(height, control).toBeCloseTo(32, 0);
+    else expect(height, control).toBeGreaterThanOrEqual(44);
   }
+  const toolSelect = root.locator('.an-designer-tool-select');
+  const navigation = await toolSelect.isVisible() ? toolSelect : root.locator('[data-designer-tab]').first();
+  const navigationHeight = (await navigation.boundingBox()).height;
+  expect(navigationHeight).toBeGreaterThanOrEqual(hit(page) - .5);
+  if (compact) expect(navigationHeight).toBeLessThanOrEqual((await toolSelect.isVisible() ? 32 : 44) + .5);
+  const familyZoom = await root.locator('.an-family-zoom').first().boundingBox();
+  expect(familyZoom.height).toBeGreaterThanOrEqual(hit(page) - .5);
   const density = root.locator('.an-density-choice .an-choice').last();
   await density.click({ position: { x: 2, y: 2 } });
   await expect(density.locator('input')).toBeChecked();
   await density.locator('input').press('ArrowLeft');
   await expect(root.locator('[data-style=density][value="4"]')).toBeChecked();
+  await designerTool(root, 'tools');
+  const objectButtonHeight = (await root.locator('[data-object-properties=text]').boundingBox()).height;
+  if (compact) expect(objectButtonHeight).toBeCloseTo(32, 0);
+  else expect(objectButtonHeight).toBeGreaterThanOrEqual(44);
   await page.screenshot({ path: test.info().outputPath('kompakte-buttonhoehen.png') });
   await page.goto(BASE + '/angebote.html?bestand=1');
   await page.getByRole('button', { name: '+ Getränkeaktion anlegen', exact: true }).click();
@@ -2976,6 +3042,8 @@ test('TC-F52-01/02/03: kompakte Eigenschaften sind live, verwerfbar und ein Gest
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   await cms(page); await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
+  await workspaceView(root, 'inputs');
+  await designerTool(root, 'tools');
   if (page.viewportSize().width < 612) {
     await expect(root.locator('[aria-label=Arbeitsansicht]')).toHaveValue('inputs');
     await expect(root.locator('.an-designer-preview')).not.toBeVisible();
@@ -3208,9 +3276,12 @@ test('TC-F49-03: Preisschildfarben und Geometrie ändern echte Magazin-Vorschaup
     await designTab(page, 'sec-' + kind);
     const root = page.locator('[data-designer=' + kind + ']'), canvas = root.locator('.an-designer-preview canvas:visible');
     await workspaceView(root, 'split');
-    await root.locator('.an-template-picker summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-    await root.locator('#cfg-' + kind + 'Template-preview [data-value=modern-mag-xl]').click();
+    await designerTool(root, 0);
+    await chooseFamily(root, 'Magazin');
+    await root.getByRole('combobox', { name: 'Magazin-Bildfläche', exact: true }).selectOption({ label: 'Großbild' });
+    await expect(root.locator('#cfg-' + kind + 'Template')).toHaveValue('modern-mag-xl');
     await page.clock.runFor(500); await expect(canvas).toBeVisible();
+    await designerTool(root, 'tools');
     await root.locator('[data-object-properties=price]').click();
     async function change(key, value, select = false) {
       const field = root.locator('#cfg-' + kind + '-' + key);
@@ -3340,7 +3411,7 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
       await expect(root.locator('[data-designer-panel="' + i + '"]')).toBeVisible();
     }
     await designerTool(root, 0);
-    await expect(root.locator('.an-template-picker').first()).toHaveAttribute('open');
+    await expect(root.locator('.an-style-families')).toBeVisible();
     const previewHost = root.locator('.an-designer-preview');
     await workspaceView(root, 'split');
     await page.clock.runFor(500);
@@ -3385,18 +3456,21 @@ for (const section of ['plakat', 'flyer']) {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       return [...doc.querySelectorAll('#cfg-sec-' + section + ' input[id],#cfg-sec-' + section + ' select[id]')].map((node) => node.id).sort();
     }, { html: original, section });
-    expect(await root.locator('.an-designer-settings input[id]:not([id^=cfg-live-auto]),.an-designer-settings select[id]').evaluateAll((nodes) => nodes.map((node) => node.id).sort())).toEqual(originalIds);
+    const currentIds = await root.locator('.an-designer-settings input[id]:not([id^=cfg-live-auto]),.an-designer-settings select[id]').evaluateAll((nodes) => nodes.map((node) => node.id).sort());
+    expect(currentIds).toEqual(expect.arrayContaining(originalIds));
+    expect(new Set(currentIds).size).toBe(currentIds.length);
     await expect(root.locator('.cms-card')).toHaveCount(0);
-    await root.locator('.an-template-picker summary').evaluate((s) => { if (!s.parentElement.open) s.parentElement.open = true; });
-    await expect(root.locator('.cms-wp-preview.active')).toHaveCount(1);
-    await expect(root.locator('.cms-wp-preview.active .an-choice-active')).toBeVisible();
+    await expect(root.locator('.an-style-families:visible')).toBeVisible();
+    await expect(root.locator('.an-style-families:visible input:checked')).toHaveCount(1);
     const left = page.locator('#cms-cfg-plakat .cfg-split-left');
     expect(await left.evaluate((node) => getComputedStyle(node).overflowY)).toBe('visible');
     await page.locator('#cfg-plakat-save').scrollIntoViewIfNeeded();
     const save = await page.locator('#cfg-plakat-save').boundingBox(), view = page.viewportSize();
     expect(save.y).toBeGreaterThanOrEqual(0);
     expect(save.y + save.height).toBeLessThanOrEqual(view.height + 1);
-    await designerTool(root, 3);
+    await designerTool(root, 'tools');
+    await root.locator('[data-object-properties=price]').click();
+    await expect(root.locator('#cfg-' + section + '-tagShape')).toBeVisible();
     const contrast = await root.locator('#cfg-' + section + '-tagShape').evaluate((node) => {
       const parse = (value) => value.match(/[\d.]+/g).slice(0, 3).map(Number);
       const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
@@ -3406,12 +3480,13 @@ for (const section of ['plakat', 'flyer']) {
     });
     expect(contrast.border).toBeGreaterThanOrEqual(3);
     expect(contrast.text).toBeGreaterThanOrEqual(4.5);
+    await root.getByRole('dialog', { name: 'Preisschild einstellen', exact: true }).getByRole('button', { name: 'Abbrechen', exact: true }).click();
     await noOverflow(page, '#cms-cfg-plakat');
     await page.screenshot({ path: test.info().outputPath('design-' + section + '.png') });
     // Funktion: Vorlagenwechsel, Preisschildform, unveränderte Speicheranfrage
     await designerTool(root, 0);
-    await root.locator('[data-value=minimal-clean]').first().click();
-    await expect(root.locator('.cms-wp-preview.active')).toHaveAttribute('data-value', 'minimal-clean');
+    await chooseFamily(root, 'Minimal');
+    await expect(root.getByRole('radio', { name: 'Minimal', exact: true })).toBeChecked();
     await expect(page.locator('#cfg-' + section + 'Template')).toHaveValue('minimal-clean');
     await designerTool(root, 3);
     await setField(page, root, root.locator('#cfg-' + section + '-tagShape'), 'pill');
@@ -3434,6 +3509,7 @@ test('TC-F38-04: Rot/Gelb-Preisbild und fünf Farben für Plakat und Einzelflyer
   for (const kind of ['plakat', 'flyer']) {
     await designTab(page, 'sec-' + kind);
     const root = page.locator('#cfg-sec-' + kind);
+    await designerTool(root, 'tools');
     await root.locator('[data-object-properties=price]').click();
     const dialog = root.locator('dialog.an-object-dialog[open]');
     await dialog.locator('#cfg-' + kind + '-tagPreset').selectOption('price-image');

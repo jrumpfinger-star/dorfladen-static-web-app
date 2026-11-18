@@ -17,6 +17,57 @@
 Keine Aufgabe durch reine Mockup-Prüfungen oder vorhandene Controls als
 erledigt markieren. GF100/GF101 bleiben bis zu ihren echten Nachweisen offen.
 
+Visuelle Nacharbeit innerhalb GF103/GF105-GF109: zuerst mobile Farbzeilen,
+doppelte Hexanzeigen und Panelbesitz reproduzieren; dann gemeinsame Hülle,
+alle sechs Werkzeugbereiche, Aktionskarten/Hauptnavigation/Zielselect und
+echte Ausgabegruppen vervollständigen. TC-F60-03 und TC-F62-02 prüfen
+sichtbare Inhalte statt nur den aktiven Reiter. Funktions- und Sichtabnahme
+sind getrennte Abschlussbedingungen.
+
+### Abschlussnachweise der Mockup-Nacharbeit
+
+- Globale Designer-/Palettensuite: **29/29** auf vier Pflichtansichten,
+  einschließlich Originalpixeln, Zieltrennung, Dialogtransaktionen,
+  Initialvorschau, Vergrößerung und echter Namens-/Lupen-Hitbereiche.
+  Die enthaltene Sichtmatrix erzeugt 204 Aufnahmen aller sechs Bereiche
+  und verfügbaren Reiter auf sechs Bildschirmgrößen; das sind keine
+  204 zusätzlichen bestandenen Tests.
+- Desktop-Gesamtregression: **151/156** im Gesamtlauf. Die fünf alten
+  UI-Zugriffspfade/Inventurannahmen wurden migriert und anschließend
+  vollständig grün nachgeprüft: **12/12** für Desktop und iPad mini.
+  Die neue Inventur erlaubt zusätzliche Farbrollen, verlangt aber weiterhin
+  jeden ursprünglichen Key und eindeutige Feldkennungen.
+- Responsive Aktionskernfälle: **83/84** im Vieransichtenlauf; der eine
+  ResizeObserver-Wettlauf im Testhelfer wurde durch Warten auf die sichtbare
+  Bedienvariante behoben. Der zugehörige Panel-/Zielvertrag ist danach
+  **4/4** grün. Keine Panel- oder Datenassertion entfernt.
+- Zusätzliche mobile/Ladentablet-Nachprüfung der migrierten Vorlagen-,
+  Preisbild-, Bildnachlade- und Kompaktheitsverträge: **12/12** grün.
+  Direkte Plakat-/Flyerwerkzeuge einschließlich Speichern und Undo:
+  **8/8** auf vier Ansichten grün.
+- Python-Angebots-/API-Verträge: **81/81** grün. CMS-Funktionsabgleich ohne
+  Fehlstellen, Generator per Hashvergleich idempotent, JS-Syntax und
+  Diff-Hygiene erfolgreich.
+- Feldgenaue GF102-Inventur und Aktions-Daten-/Handlermatrix stehen im Plan.
+  Originalrenderer, zusätzliche Bestandsfelder, zehn freie Stilfamilien
+  und die vier Homepage-Werkzeugreiter bleiben erhalten. Daher können
+  vollständige Paletten/Feldlisten auf dem Telefon weiterhin Scrollen
+  benötigen; Eingaben, Motiv und Geteilt bleiben ausdrücklich wählbar.
+
+Damit sind die lokalen Integrations- und Abnahmegates GF100/GF102–GF109
+nachgewiesen. GF101/GF110 erfordern zusätzlich Commit, Push und die
+schreibfreie Prüfung des tatsächlich ausgelieferten PR-Commits.
+
+Reproduzierbare Hauptbefehle:
+
+```text
+node tools/test-lauf.js schnell angebote-flyer.spec.js cms-angebote-ablauf.spec.js
+node tools/test-lauf.js schnell --alle-ansichten angebote-paletten.spec.js
+node tools/test-lauf.js schnell --alle-ansichten cms-angebote-ablauf.spec.js --grep "TC-F42-|TC-F58-|TC-F62-|TC-F63-|TC-F19-|TC-F60-|TC-F61-"
+python -m unittest discover -s tests -p "test_angebote*.py"
+node tools/pruef-cms-abgleich.js
+```
+
 ### Ausdrücklich freigegebene Zwischenveröffentlichung
 
 Der Nutzer hat einen Zwischenstand auf PR #15 angefordert. Dieser darf nach
@@ -24,7 +75,7 @@ gezielter Prüfung veröffentlicht werden, ohne GF109/GF110 oder die
 Gesamtabnahme als abgeschlossen zu markieren. Produktion bleibt unverändert.
 Der Stand enthält die gemeinsame Entwurfsbearbeitung, mobile Artikelliste,
 Preisschildstruktur, kleinere Vorschaugriffe und die globalen Stil-/Paletten-
-Designer. Die Paletten-Clickintegration im Aktionseditor sowie die vollständige
+Designer. Zum damaligen Zwischenstand waren die Paletten-Clickintegration im Aktionseditor sowie die vollständige
 visuelle Referenzabnahme und restlichen F64-Nachweise sind noch offen.
 Die Preview verwendet weiterhin echte gemeinsame Dataverse-Angebote; reales
 Speichern und Löschen ist kein isolierter Test.

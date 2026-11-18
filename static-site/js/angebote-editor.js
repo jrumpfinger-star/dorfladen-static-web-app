@@ -26,7 +26,7 @@
     return designTarget !== 'sheet' && !weeklyTarget() ? Object.assign(layout, M.styleOf(layout, designTarget)) : layout;
   }
   function header(title) {
-    return '<header class="an-head"><div><small>DORFLADEN · WOCHEN- UND GETRÄNKEANGEBOTE</small><h1>Angebote gestalten</h1></div>'
+    return '<header class="an-head"><div><small>DORFLADEN · WOCHEN- UND GETRÄNKEANGEBOTE</small><h1>' + M.esc(title) + '</h1></div>'
       + '</header>' + (config && !config.scale_enabled ? '<p class="an-note">'
         + (cmsAction ? 'Kein echter Waagenversand aus dieser Umgebung.' : 'Vorschauumgebung · Feature-Entwürfe sind getrennt gespeichert. Kein echter Waagenversand aus dieser Umgebung.') + '</p>' : '');
   }
@@ -383,6 +383,15 @@
     root.querySelectorAll('[data-task-panel]').forEach(function (panel) {
       panel.hidden = panel.dataset.taskPanel !== cmsTab;
     });
+    $('an-inspector').hidden = previewMode !== 'paper' || cmsTab === 'view' || cmsTab === 'output';
+    cmsPanel.hidden = cmsTab !== 'design' && cmsTab !== 'marker';
+    var article = $('an-cms-article');
+    if (article) article.hidden = cmsTab !== 'article';
+    var area = root.querySelector('.an-workspace-area');
+    if (area) {
+      area.value = cmsTab === 'output' ? 'output' : 'design';
+      window.CMSAngeboteForm.syncAreaNavigation(area);
+    }
   }
   function renderInspectorBody() {
     var host = $('an-inspector'); if (!host) return;
@@ -488,8 +497,7 @@
         + '<div class="an-row"><label class="an-field"><input type="checkbox" data-element-prop="bold"' + (current.bold ? ' checked' : '') + '> Fett</label>'
         + '<label class="an-field"><input type="checkbox" data-element-prop="hidden"' + (current.hidden ? ' checked' : '') + '> Ausblenden</label></div>'
         + '<div class="an-element-actions"><button data-element-action="forward">Ebene nach vorn</button><button data-element-action="back">Ebene zurück</button><button data-element-action="delete">Element entfernen</button></div>' : '')
-      + '</details></fieldset>'
-      + '<div class="an-actions"><button data-history="undo"' + (undo.length ? '' : ' disabled') + '>Rückgängig</button><button data-history="redo"' + (redo.length ? '' : ' disabled') + '>Wiederholen</button></div>';
+      + '</details></fieldset>';
   }
   function overlay() {
     var host = $('an-hit-layer'); if (!host) return;
@@ -610,6 +618,9 @@
       }
     }
     overlay();
+    if (cmsAction && cmsPanel) cmsTabs();
+    var targetSelect = root.querySelector('[data-action-target]');
+    if (targetSelect) targetSelect.value = designTarget;
   }
   function setStep(value) {
     step = value;
@@ -756,6 +767,10 @@
     toolbar.appendChild($('an-overview')); left.appendChild(actions);
     actions.appendChild($('an-stage-info'));
     D.compactActions(actions); D.compactHelp(root, help); D.expandGroups(root);
+    actions.classList.add('an-action-footer');
+    actions.insertBefore($('an-state'), $('an-save'));
+    var issues = $('an-stage-info');
+    actions.before(issues);
     var splitter = D.split(layout, left, picture), viewport = D.pictureViewport(picture, view);
     D.objectProperties(root, {
       canvas: function () { return $('an-stage-canvas'); },
@@ -803,6 +818,8 @@
   }
   function cmsPreviewTools() {
     root.classList.add('an-cms-preview');
+    var title = root.querySelector('.an-head');
+    root.querySelector('.an-toolbar').prepend(title);
     $('an-state').textContent = M.savedState(data, dirty);
     $('an-save').textContent = cmsSession ? 'Aktion speichern' : 'Gestaltung speichern';
     $('an-reload-saved').hidden = !!cmsSession;
@@ -817,14 +834,18 @@
         else { cmsTab = area.value === 'output' ? 'output' : 'element'; cmsTabs(); }
       };
       root.querySelector('.an-toolbar').prepend(area);
+      window.CMSAngeboteForm.areaNavigation(area);
     }
     var panel = root.querySelector('.an-work-panel');
     panel.hidden = true;
     var previewPanel = $('an-preview');
     previewPanel.querySelector('h2').textContent = 'Vorschau';
     var actions = document.createElement('div'); actions.className = 'an-actions an-cms-output';
-    actions.innerHTML = '<button data-cms-download>Download</button><button data-cms-print>Drucken / PDF</button>'
-      + '<button data-cms-scale>Auf die Waage</button><button data-cms-singles>Alle Einzelflyer</button><button data-cms-quality>Qualität prüfen</button>';
+    actions.innerHTML = '<section><h3>Download</h3><p>Das aktuelle Motiv als PNG speichern.</p><button data-cms-download>Download</button></section>'
+      + '<section><h3>Drucken / PDF</h3><p>Die gewählte Ausgabe druckfertig öffnen.</p><button data-cms-print>Drucken / PDF</button></section>'
+      + '<section><h3>Einzelflyer</h3><p>Alle Artikel einzeln gestalten und drucken.</p><button data-cms-singles>Alle Einzelflyer</button></section>'
+      + '<section><h3>Waage</h3><p>Querformat vorbereiten. Versand erst nach Bestätigung.</p><button data-cms-scale>Auf die Waage</button></section>'
+      + '<section><h3>Qualitätsprüfung</h3><p>Bilder, Preise und Textgrenzen kontrollieren.</p><button data-cms-quality>Qualität prüfen</button></section>';
     cmsPanel = document.createElement('section'); cmsPanel.className = 'an-cms-style-options';
     cmsPanel.setAttribute('aria-label', 'Vorlage und Gestaltung');
     cmsPanel.appendChild($('an-design-options'));
@@ -840,14 +861,22 @@
     var fields = document.createElement('div'); fields.className = 'an-task-fields';
     var view = document.createElement('div'); view.dataset.taskPanel = 'view';
     var output = document.createElement('div'); output.dataset.taskPanel = 'output'; output.append(actions, $('an-quality-note'));
+    var notice = root.querySelector(':scope>.an-note');
+    if (notice) output.appendChild(notice);
     var tabs = previewPanel.querySelector('.an-target-tabs');
+    var context = document.createElement('label'); context.className = 'an-action-context';
+    context.innerHTML = '<span>Gestalten für</span><select data-action-target aria-label="Gestaltungsziel">'
+      + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option></select>';
+    context.lastElementChild.value = designTarget;
+    context.lastElementChild.onchange = function () { tabs.querySelector('[data-layout-target="' + this.value + '"]').click(); };
+    tabs.hidden = true;
     tabs.after(workspace); workspace.append(sideColumn, canvasColumn);
     canvasColumn.append($('an-other-preview'), $('an-stage'));
     var weeklyPicture = root.querySelector('.an-weekly-picture');
     if (weeklyPicture) canvasColumn.appendChild(weeklyPicture);
     view.append($('an-page-tools'), $('an-stage-help'));
     fields.append($('an-design-item-wrap'), $('an-inspector'), cmsPanel, view, output);
-    sideColumn.append(cmsTabbar, fields);
+    sideColumn.append(context, cmsTabbar, fields);
     if (!weeklyTarget()) $('an-inspector').before(article);
     finishTaskFrame(workspace, sideColumn, canvasColumn, view);
     renderCmsArticle(); cmsLayout();
@@ -1343,6 +1372,28 @@
         selected = ''; previewMode = 'paper'; renderInspector(); preview().catch(M.error); return;
       }
       if (b.dataset.editItem) { openItemDialog(b.dataset.editItem); return; }
+      if (b.dataset.cmsPalette) {
+        run(async function () {
+          var kind = b.dataset.cmsKind, cfg = M.cmsFor(data, designTarget).config;
+          var palette = M.palettes.find(function (entry) { return entry.id === b.dataset.cmsPalette; });
+          if (!palette) throw M.problem('Diese Farbpalette ist nicht mehr verfügbar. Bitte die Gestaltung erneut öffnen.');
+          if (D.cmsPaletteState(cfg, kind).custom
+            && !(await M.dialog('Eigene Farben ersetzen?', 'Die Farbpalette ersetzt die eigenen Farben nur im aktuellen Ausgabeziel. Positionen, Schrift und andere Ausgaben bleiben erhalten.', 'Palette übernehmen'))) return;
+          var values = D.cmsPaletteValues(palette.colors, cfg, kind);
+          edit(function () { D.applyCmsPaletteValues(M.cmsFor(data, designTarget, true).config, kind, values); });
+          renderEditor();
+        });
+        return;
+      }
+      if (b.dataset.offerPalette) {
+        run(async function () {
+          var target = designTarget, palette = M.clone(M.styleOf(data.layout, target));
+          if (!(await D.applyPalette(palette, b.dataset.offerPalette))) return;
+          edit(function () { M.applyPaletteColors(data, target, M.effectiveColors(palette)); });
+          renderEditor();
+        });
+        return;
+      }
       if (b.dataset.step) setStep(b.dataset.step);
       if (b.dataset.select) { selected = b.dataset.select; renderInspector(); overlay(); }
       if (b.dataset.remove) {
@@ -1490,6 +1541,17 @@
     };
     root.onchange = function (event) {
       var target = event.target;
+      if (target.hasAttribute('data-cms-family') || target.hasAttribute('data-cms-variant')) {
+        var kind = target.dataset.cmsKind;
+        var family = M.styleFamilies.find(function (entry) { return entry[0] === target.value; });
+        var template = target.hasAttribute('data-cms-family') ? family && family[2] : target.value;
+        if (!template) { M.error(M.problem('Dieser Stil ist nicht mehr verfügbar. Bitte die Gestaltung erneut öffnen.')); return; }
+        edit(function () {
+          M.cmsFor(data, designTarget, true).config[kind + 'Template'] = template;
+          if (kind === 'plakat' && designTarget === 'sheet') data.layout.template = template;
+        });
+        renderEditor(); return;
+      }
       if (target.dataset.cmsConfig) {
         if (!target.reportValidity()) return;
         edit(function () {

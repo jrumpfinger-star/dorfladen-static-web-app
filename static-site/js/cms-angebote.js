@@ -33,9 +33,10 @@ window.CMSAngebote = (function () {
       root.classList.add('an-cms-overview');
       root.classList.remove('an-filters-open');
       var selected = list.filter(function (action) { return overlaps(action.data); });
-      root.innerHTML = '<div class="an-overview-toolbar"><h2>Sonderangebote</h2>'
+      root.innerHTML = '<div class="an-overview-toolbar"><h2>Angebote</h2>'
         + '<button type="button" data-filter-toggle aria-expanded="false">Zeitraum: ' + ({ this: 'Diese Woche', next: 'Nächste Woche', all: 'Alle' })[filter] + '</button>'
-        + '<button class="an-primary" data-create>+ Neue Aktion erstellen</button></div>'
+        + '<div class="an-new-actions"><button class="an-primary" data-create-kind="weekly">+ Sonderaktion</button>'
+        + '<button data-create-kind="drinks">+ Getränkeaktion</button></div></div>'
         + '<nav class="an-tabs an-week-filter" aria-label="Aktionszeitraum">'
         + [['this', 'Diese Woche'], ['next', 'Nächste Woche'], ['all', 'Alle']].map(function (entry) {
           return '<button data-week="' + entry[0] + '" aria-pressed="' + (filter === entry[0]) + '">' + entry[1] + '</button>';
@@ -43,7 +44,7 @@ window.CMSAngebote = (function () {
         + selected.map(function (action) {
           var data = action.data;
           var card = window.CMSAngeboteForm.action({
-            aktion_id: action.id, titel: data.title, von: data.valid_from, bis: data.valid_to,
+            aktion_id: action.id, titel: data.title, von: M.date(data.valid_from), bis: M.date(data.valid_to),
             items: data.items.map(function (item) { return { produkt: item.name, preis: item.price_cents == null ? null : item.price_cents / 100,
               statt_preis: item.old_price_cents == null ? null : item.old_price_cents / 100 }; })
           }, M.esc, function (value) { return M.money(Math.round(value * 100)) + ' €'; });
@@ -56,7 +57,24 @@ window.CMSAngebote = (function () {
           });
           var duplicate = document.createElement('button'); duplicate.type = 'button';
           duplicate.textContent = 'Duplizieren'; duplicate.dataset.duplicateAction = action.id;
-          card.querySelector('.cms-akt-btns').appendChild(duplicate);
+          var buttons = card.querySelector('.cms-akt-btns'), summary = card.querySelector('.cms-ang-summary');
+          var toggle = card.querySelector('[data-cms-toggle]');
+          toggle.removeAttribute('data-cms-toggle'); toggle.removeAttribute('role'); toggle.removeAttribute('tabindex'); toggle.removeAttribute('aria-expanded');
+          summary.dataset.cmsToggle = ''; summary.setAttribute('role', 'button'); summary.tabIndex = 0; summary.setAttribute('aria-expanded', 'false');
+          var badge = document.createElement('span'); badge.className = 'an-action-kind';
+          badge.textContent = data.kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion';
+          summary.firstElementChild.prepend(badge);
+          var art = document.createElement('span'); art.className = 'an-action-art'; art.setAttribute('aria-hidden', 'true');
+          art.innerHTML = '<svg viewBox="0 0 32 40" fill="none" stroke="currentColor" stroke-width="1.5">'
+            + (data.kind === 'drinks' ? '<path d="M12 3h8v8l4 7v17a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3V18l4-7z"/><path d="M12 7h8M8 22h16v10H8"/>'
+              : '<rect x="3" y="2" width="26" height="36" rx="3"/><path d="M8 9h16M8 15h16M8 22h6v9H8zM19 22h5v9h-5z"/>') + '</svg>';
+          summary.prepend(art);
+          var more = document.createElement('details'); more.className = 'an-action-more';
+          var moreLabel = document.createElement('summary'); moreLabel.textContent = '⋯'; moreLabel.setAttribute('aria-label', 'Weitere Aktionsfunktionen');
+          var menu = document.createElement('div'); more.append(moreLabel, menu);
+          buttons.querySelectorAll('[data-scale-action],[data-delete-action]').forEach(function (button) { menu.appendChild(button); });
+          menu.prepend(duplicate); buttons.appendChild(more);
+          card.classList.add('an-overview-action');
           var state = document.createElement('span'); state.className = 'an-save-state';
           state.textContent = ' · ' + M.savedState(data, false); card.querySelector('.cms-ang-meta').appendChild(state);
           return card.outerHTML;
@@ -68,7 +86,7 @@ window.CMSAngebote = (function () {
         var b = event.target.closest('button');
         var toggle = event.target.closest('[data-cms-toggle]');
         if (!b && toggle) {
-          var collapsed = toggle.nextElementSibling.classList.toggle('collapsed');
+          var collapsed = toggle.closest('.cms-card').querySelector('.cms-ang-items').classList.toggle('collapsed');
           toggle.querySelector('.cms-ang-chevron').classList.toggle('collapsed', collapsed);
           toggle.setAttribute('aria-expanded', String(!collapsed)); return;
         }
@@ -78,6 +96,7 @@ window.CMSAngebote = (function () {
           b.setAttribute('aria-expanded', String(open)); root.classList.toggle('an-filters-open', open); return;
         }
         if (b.dataset.week) { filter = b.dataset.week; render(); return; }
+        if (b.dataset.createKind) { capture(null, b.dataset.createKind).catch(M.error); return; }
         if (b.hasAttribute('data-create')) { choose().catch(M.error); return; }
         if (b.hasAttribute('data-feature-stock')) { options.legacy(); return; }
         var id = b.dataset.edit || b.dataset.previewAction || b.dataset.shareAction || b.dataset.scaleAction || b.dataset.deleteAction || b.dataset.duplicateAction;
@@ -164,6 +183,7 @@ window.CMSAngebote = (function () {
       var area = document.createElement('select'); area.dataset.captureArea = ''; area.setAttribute('aria-label', 'Aktionsbereich');
       area.innerHTML = '<option value="articles">Artikel / Bilder</option><option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
       top.insertBefore(area, closeButton);
+      window.CMSAngeboteForm.areaNavigation(area);
       var metaToggle = document.createElement('button'); metaToggle.type = 'button'; metaToggle.dataset.metaToggle = '';
       metaToggle.textContent = 'Daten'; metaToggle.setAttribute('aria-label', 'Aktionsdaten ein- oder ausblenden');
       metaToggle.setAttribute('aria-expanded', String(isNew)); top.insertBefore(metaToggle, closeButton);
@@ -556,6 +576,7 @@ window.CMSAngebote = (function () {
       area.onchange = function () {
         if (area.value === 'articles' || saving) return;
         var mode = area.value; area.value = 'articles';
+        window.CMSAngeboteForm.syncAreaNavigation(area);
         (async function () {
           if (!(await prepareDraft())) return;
           if (!draft.items.length) throw M.problem('Bitte zuerst mindestens einen Artikel eingeben.');
@@ -585,7 +606,8 @@ window.CMSAngebote = (function () {
               workspaceState = result; acceptPreview(result.data, temporaryImages);
               dirty = captureDirty || result.dirty;
             }
-            dlg.classList.remove('an-capture-suspended'); area.focus();
+            dlg.classList.remove('an-capture-suspended');
+            (area.checkVisibility() ? area : top.querySelector('[data-action-area=articles]')).focus();
             if (blockedReport) { var report = blockedReport; blockedReport = null; await inspect(report); }
           }, {
             state: workspaceState, dirty: dirty,

@@ -1336,24 +1336,8 @@
   var _cfgInline={plakat:{},flyer:{}};
   var _cfgPreviewSurfaces={};
   var _offerTemplateBefore={},_offerPalettePickers={};
-  var OFFER_PALETTE_ROLES={bgColor:'bg',titleColor:'title',tagColor:'accent',cardBg:'card',
-    cardBorder:'border',textColor:'text',detailsColor:'muted',imgBg:'image',
-    headerBg:'header',headerAccent:'accent',dateColor:'muted',dividerColor:'border',
-    priceBarBg:'price',priceBarBorder:'border',stattColor:'muted',footerColor:'footer',
-    vorratColor:'card',priceTextColor:'priceText',bgColor_c2:'header',imgBg_c2:'card',detailsTextColor:'muted'};
-  function offerPaletteValues(colors){
-    var result={};Object.keys(OFFER_PALETTE_ROLES).forEach(function(key){result[key]=colors[OFFER_PALETTE_ROLES[key]];});return result;
-  }
   function offerEffectiveColors(kind,config){
-    var section=cfgForKind(config,kind),theme=getOfferTheme(kind,section);
-    return Object.assign({},getTplColors(config[kind+'Template']||'classic-red',config,kind),{
-      bgColor:theme.bgColor,titleColor:theme.titleColor,headerBg:theme.headerBg||theme.bgColor,
-      headerAccent:theme.headerAccent||theme.tagColor,dateColor:theme.dateColor,
-      dividerColor:theme.dividerColor||theme.cardBorder,footerColor:theme.footerColor,
-      priceBarBg:section.priceStripColor,priceBarBorder:section.priceOutlineColor,
-      priceTextColor:section.priceImageColor,stattColor:section.priceOldColor,vorratColor:theme.vorratColor,
-      textColor:section.nameColor,detailsTextColor:section.detailsColor||section.nameColor
-    });
+    return window.AngeboteDesign.cmsEffectiveColors(config,kind);
   }
   function cfgEnsurePalette(kind){
     if(!document.querySelector('[data-offer-workspaces]')||!window.AngeboteDesign)return;
@@ -1376,22 +1360,13 @@
     _offerPalettePickers[kind]=window.AngeboteDesign.palettePicker(picker.lastElementChild,{
       read:function(){return offerEffectiveColors(kind,cfgReadUI());},
       map:function(colors){
-        var values=offerPaletteValues(colors),shape=document.getElementById('cfg-'+kind+'-tagShape');
-        if(shape&&shape.value==='price-image')['priceBarBg','priceBarBorder','priceTextColor','stattColor'].forEach(function(key){delete values[key];});
-        return values;
+        return window.AngeboteDesign.cmsPaletteValues(colors,cfgReadUI(),kind);
       },
       defaults:Object.keys(TPL_COLOR_DEFAULTS).map(function(id){
         var c=_clone(CFG_DEFAULTS);c[kind+'Template']=id;return offerEffectiveColors(kind,c);
       }),
       write:function(values){
-        var c=cfgReadUI(),tpl=c[kind+'Template'];c.tplColors[kind+':'+tpl]=Object.assign({},c.tplColors[kind+':'+tpl],values);
-        c[kind+'_decoBgColor']=values.bgColor;c[kind+'_decoTitleColor']=values.titleColor;
-        c[kind+'_decoFooterColor']=values.footerColor;c[kind+'_nameColor']=values.textColor;
-        if(values.priceBarBg)c[kind+'_priceStripColor']=values.priceBarBg;
-        if(values.priceBarBorder)c[kind+'_priceOutlineColor']=values.priceBarBorder;
-        if(values.priceTextColor)c[kind+'_priceImageColor']=values.priceTextColor;
-        if(values.stattColor)c[kind+'_priceOldColor']=values.stattColor;
-        cfgApplyUI(c);
+        cfgApplyUI(window.AngeboteDesign.applyCmsPaletteValues(cfgReadUI(),kind,values));
       },
       changed:function(){cfgOfferHistory(kind).record();_triggerCfgAutoPreview();}
     });
@@ -1883,7 +1858,8 @@
     }
     // Auto-trigger preview for the newly activated section
     var target=secId==='sec-flyer'?'flyer':'plakat';
-    _scheduleAutoPreview('cfg-switch',function(){cfgLivePreview(target);},200);
+    if(_livePreviewTimers['cfg-switch'])clearTimeout(_livePreviewTimers['cfg-switch']);
+    cfgLivePreview(target);
   };
 
   // ── WP Section Navigation (Homepage / Flyer / Elemente) ──
@@ -1987,7 +1963,8 @@
     _cfgPresets=_clone(all);
   }
   window.cfgPresetSave=function(section){
-    var name=prompt('Name f\u00fcr die Vorlage:');
+    var field=document.querySelector('[data-global-preset-name="'+section+'"]');
+    var name=field?field.value:prompt('Name f\u00fcr die Vorlage:');
     if(!name||!name.trim())return;
     var c=cfgReadUI();
     var all=cfgPresetsGet();
@@ -1995,6 +1972,7 @@
     all[section].push({name:name.trim(),data:_clone(c),ts:Date.now()});
     cfgPresetsSave(all);
     cfgPresetsRenderAll();
+    if(field)field.value='';
     if(_offerHistories[section])_offerHistories[section].record();
     toast('Vorlage "'+name.trim()+'" gespeichert','ok');
   };
@@ -2089,7 +2067,7 @@
 
   // ── Live Preview System (Angebote + Wochenplan) ──
   var _livePreviewTimers={};
-  var _livePreviewGen=0;
+  var _livePreviewGen={plakat:0,flyer:0};
   function loadOfferPreviewImage(sample){
     var key=(sample.artikelnummer||'').trim();
     if(sample.bild_data||!key)return Promise.resolve();
@@ -2142,9 +2120,9 @@
     var container=document.getElementById('cfg-live-preview-'+target);
     if(!container)return;
     if(!_cfgPreviewSurfaces[target])container.innerHTML='<span role="status" style="font-size:var(--schrift-klein);color:var(--mut)">Wird generiert\u2026</span>';
-    var gen=++_livePreviewGen;
+    var gen=++_livePreviewGen[target];
     ensureAngeboteForPreview().then(function(){
-      if(gen!==_livePreviewGen)return;
+      if(gen!==_livePreviewGen[target])return;
       var cfg=Object.assign({},cfgGet(),cfgReadUI());
       var now=new Date();var plus6=new Date(now.getTime()+6*86400000);
       var fallback=[
@@ -2161,23 +2139,23 @@
       if(target==='flyer'){
         var sample=data.items[0]||fallback[0];
         loadOfferPreviewImage(sample).then(function(){
-          if(gen!==_livePreviewGen)return;
+          if(gen!==_livePreviewGen[target])return;
           return generateEinzelflyer(sample,data,cfg);
         }).then(function(canvas){
           if(!canvas)return;
-          if(gen!==_livePreviewGen)return;
+          if(gen!==_livePreviewGen[target])return;
           cfgShowOfferPreview(target,canvas,data.items[0].key);
         }).catch(function(error){
           console.error('Einzelflyer-Vorschau konnte nicht geladen werden',error);
-          if(gen===_livePreviewGen)container.innerHTML='<span role="alert" style="font-size:var(--schrift-klein);color:var(--red)">Einzelflyer-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
+          if(gen===_livePreviewGen[target])container.innerHTML='<span role="alert" style="font-size:var(--schrift-klein);color:var(--red)">Einzelflyer-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
         });
       }else{
         generateAngebotPlakat(data,function(canvas){
-          if(!canvas||gen!==_livePreviewGen)return;
+          if(!canvas||gen!==_livePreviewGen[target])return;
           cfgShowOfferPreview(target,canvas,data.items[0].key);
         },cfg,{returnCanvas:true}).catch(function(error){
           console.error('Plakat-Vorschau konnte nicht geladen werden',error);
-          if(gen===_livePreviewGen)container.innerHTML='<span role="alert">Plakat-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
+          if(gen===_livePreviewGen[target])container.innerHTML='<span role="alert">Plakat-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
         });
       }
     });
@@ -2839,7 +2817,8 @@
     _wpPresets=_clone(all);
   }
   window.wpPresetSave=function(section){
-    var name=prompt('Name f\u00fcr die Vorlage:');
+    var field=document.querySelector('[data-global-preset-name="'+section+'"]');
+    var name=field?field.value:prompt('Name f\u00fcr die Vorlage:');
     if(!name||!name.trim())return;
     var c=hpCfgReadUI();
     var all=wpPresetsGet();
@@ -2847,6 +2826,7 @@
     all[section].push({name:name.trim(),data:_clone(c),ts:Date.now()});
     wpPresetsSave(all);
     wpPresetsRenderAll();
+    if(field)field.value='';
     toast('Vorlage "'+name.trim()+'" gespeichert','ok');
   };
   window.wpPresetLoad=function(section,idx){
@@ -7395,10 +7375,17 @@
       .catch(function(){return angebote||[];});
   }
 
-  window.cmsPreviewOfferTpl=function(target){
+  window.cmsPreviewOfferTpl=function(target,template){
     target=(target||'plakat').toLowerCase();
-    ensureAngeboteForPreview().then(function(){
+    function showCanvas(canvas,filename){
+      // Vorlagenvorschauen dürfen nicht auf Chromiums verzögertes toBlob-Idle-Encoding warten.
+      var png=canvas.toDataURL('image/png').split(',')[1];
+      var bytes=Uint8Array.from(atob(png),function(character){return character.charCodeAt(0);});
+      showSharePreview(new Blob([bytes],{type:'image/png'}),filename);
+    }
+    return ensureAngeboteForPreview().then(function(){
       var cfg=Object.assign({},cfgGet(),cfgReadUI());
+      if(template)cfg[target+'Template']=template;
       var now=new Date();
       var plus6=new Date(now.getTime()+6*86400000);
       var fallback=[
@@ -7428,19 +7415,15 @@
       };
       var sample=data.items[0]||fallback[0];
       if(target==='flyer'){
-        loadOfferPreviewImage(sample).then(function(){
+        return loadOfferPreviewImage(sample).then(function(){
           return generateEinzelflyer(sample,data,cfg).then(function(canvas){
-            canvas.toBlob(function(blob){
-              if(!blob){toast('Vorschau konnte nicht erzeugt werden','error');return;}
-              showSharePreview(blob,'Template-Vorschau-Einzelflyer.png');
-            },'image/png');
+            showCanvas(canvas,'Template-Vorschau-Einzelflyer.png');
           });
         }).catch(function(e){toast('Fehler: '+(e&&e.message?e.message:e),'error');});
-        return;
       }
-      generateAngebotPlakat(data,function(blob){
-        showSharePreview(blob,'Template-Vorschau-Plakat.png');
-      },cfg).catch(reportOfferRenderError);
+      return generateAngebotPlakat(data,function(canvas){
+        showCanvas(canvas,'Template-Vorschau-Plakat.png');
+      },cfg,{returnCanvas:true}).catch(reportOfferRenderError);
     });
   };
 

@@ -426,6 +426,36 @@ window.AngeboteModel = (function () {
     var style = styleOf(layout, target); delete style.density;
     apply(style); layout.target_styles[target] = style;
   }
+  function applyPaletteColors(data, target, colors) {
+    var before = effectiveColors(styleOf(data.layout, target));
+    preserveBackgrounds(data);
+    if (target === 'sheet') {
+      Object.keys(targetSizes).forEach(function (other) {
+        if (!data.layout.target_styles || !data.layout.target_styles[other]) setTargetStyle(data.layout, other, function () {});
+      });
+      assignColors(data.layout, colors);
+    } else setTargetStyle(data.layout, target, function (style) { assignColors(style, colors); });
+    var style = styleFor(data.layout, target), current = effectiveColors(style);
+    var entries = target === 'sheet' ? data.layout.pages : data.layout.targets[target];
+    (entries || []).forEach(function (entry) {
+      entry.background = style.background;
+      entry.elements.forEach(function (element) {
+        if (element.type === 'image' || element.type === 'logo' || element.type === 'discount') return;
+        if (element.type === 'shape') {
+          if (priceShape(entry.elements, element)) element.fill = style.price_background;
+          else if (element.item_id) element.fill = style.card_background;
+          else {
+            var role = Object.keys(before).find(function (key) { return before[key] === element.fill; });
+            if (role) element.fill = current[role];
+          }
+        } else {
+          var key = { title: 'title_color', price: 'color', old_price: 'old_price_color', period: 'decoration.date_color',
+            footer: 'decoration.footer_color', brand: 'decoration.header_accent' }[element.type] || 'text_color';
+          element.fill = element.type === 'price' ? priceColor(style) : current[key];
+        }
+      });
+    });
+  }
   function targetTemplate(data, target, item) {
     var l = styleFor(data.layout, target), id = item.id, elements = [], size = targetSizes[target], style = Object.assign({}, templateStyle(l.template), { priceImage: priceImage(l) });
     function add(type, x, y, w, h, fontSize, extra) {
@@ -1454,6 +1484,16 @@ window.AngeboteModel = (function () {
           if ((meta.ovKey === 'name' || meta.ovKey === 'price') && (meta.x < -1 || meta.y < -1 || meta.x + meta.w > width + 1 || meta.y + meta.h > height + 1)) {
             put(named({ severity: 'error', code: 'outside', message: (meta.ovKey === 'price' ? 'Der Preis' : 'Der Artikelname') + ' liegt außerhalb der Ausgabe.', element_id: meta.id }, target, owner, { page: page }));
           }
+          if (meta.ovKey === 'name' && !meta.rotation) {
+            var price = rendered.canvas._weeklyElements.find(function (entry) {
+              return entry.itemId === meta.itemId && entry.ovKey === 'price' && !entry.rotation;
+            });
+            if (price && Math.min(meta.x + meta.w, price.x + price.w) - Math.max(meta.x, price.x) > 2
+                && Math.min(meta.y + meta.h, price.y + price.h) - Math.max(meta.y, price.y) > 2) {
+              put(named({ severity: 'error', code: 'text-overlap', field: 'name', element_id: meta.id,
+                message: 'Bezeichnung oder Zusatztext überlagert den Preis. Bitte Text, Schriftgröße oder Position anpassen.' }, target, owner, { page: page }));
+            }
+          }
         });
       }
     }
@@ -1466,7 +1506,7 @@ window.AngeboteModel = (function () {
     }
     if (cms) {
       put({ severity: 'unchecked', code: 'weekly-render', target: '', item_id: '', item_name: '',
-        message: 'Textabschnitt und Kontrast der originalen Wochenvorlage werden vom bestehenden Renderer nicht gemeldet und deshalb nicht als bestanden ausgewiesen.' });
+        message: 'Weitere Textüberdeckungen und Kontrast der originalen Wochenvorlage sind nicht sicher prüfbar und werden deshalb nicht als bestanden ausgewiesen.' });
     }
     return result;
   }
@@ -1622,5 +1662,5 @@ window.AngeboteModel = (function () {
     priceImage: priceImage, groupedElements: groupedElements,
     templateOptions: templateStyles.filter(function (style) { return style.id !== 'price-image'; }).map(function (style) { return [style.id, style.label]; }),
     cmsTemplateOptions: templateStyles.filter(function (style) { return style.original && !style.half && !style.tag; }).map(function (style) { return [style.id, style.label]; }),
-    weeklyOverride: weeklyOverride, weeklyDefaults: weeklyDefaults, weeklyNewCopy: weeklyNewCopy, weeklyFields: weeklyFields, weeklyCompress: weeklyCompress, templateStyle: templateStyle, styleFor: styleFor, styleOf: styleOf, setTargetStyle: setTargetStyle, applyTargetStyleToAll: applyTargetStyleToAll, targetCustomized: targetCustomized, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
+    weeklyOverride: weeklyOverride, weeklyDefaults: weeklyDefaults, weeklyNewCopy: weeklyNewCopy, weeklyFields: weeklyFields, weeklyCompress: weeklyCompress, templateStyle: templateStyle, styleFor: styleFor, styleOf: styleOf, setTargetStyle: setTargetStyle, applyPaletteColors: applyPaletteColors, applyTargetStyleToAll: applyTargetStyleToAll, targetCustomized: targetCustomized, useTemplate: useTemplate, preserveBackgrounds: preserveBackgrounds, savings: savings };
 })();
