@@ -49,12 +49,14 @@
   function syncOutput() {
     root.dataset.outputMode = String(outputMode());
     var status = root.querySelector('[data-export-state]');
-    if (status) status.textContent = dirty ? 'Ausgabe der ungespeicherten Gestaltung · zum Sichern zurück zur Gestaltung.'
-      : 'Ausgabe der gespeicherten Gestaltung.';
+    if (status) {
+      status.textContent = dirty ? 'Ungespeicherte Gestaltung · zum Sichern zurück zur Gestaltung.' : '';
+      status.hidden = !dirty;
+    }
     var download = root.querySelector('[data-cms-download]'), printButton = root.querySelector('[data-cms-print]');
-    if (download) download.textContent = designTarget === 'sheet' ? 'Diese Seite als PNG herunterladen' : 'PNG herunterladen';
-    if (printButton) printButton.textContent = designTarget === 'single' ? 'Diesen Artikel drucken / PDF'
-      : designTarget === 'sheet' ? 'Sammelflyer drucken / PDF (' + data.layout.pages.length + ' Seiten)' : 'Dieses Motiv drucken / PDF';
+    if (download) download.textContent = designTarget === 'sheet' ? 'Seite als PNG' : 'Als PNG speichern';
+    if (printButton) printButton.textContent = designTarget === 'single' ? 'Artikel drucken / PDF'
+      : designTarget === 'sheet' && data.layout.pages.length > 1 ? 'Drucken / PDF (' + data.layout.pages.length + ' Seiten)' : 'Drucken / PDF';
     var outputTarget = root.querySelector('[data-output-target]');
     if (outputTarget) outputTarget.value = designTarget;
     var batch = root.querySelector('[data-cms-singles]');
@@ -868,7 +870,7 @@
     var context = document.createElement('section'); context.className = 'an-design-context';
     context.setAttribute('aria-label', 'Aktuelle Gestaltung');
     context.innerHTML = '<span data-action-design-context role="status"></span>';
-    var standard = $('an-defaults'); standard.textContent = 'Bereichsstandard laden'; standard.dataset.designLoadStandard = ''; context.appendChild(standard);
+    var standard = $('an-defaults'); standard.textContent = 'Standard-Gestaltung laden'; standard.title = 'Zurück zur gespeicherten Standard-Gestaltung dieses Bereichs'; standard.dataset.designLoadStandard = ''; context.appendChild(standard);
     toolbar.after(context);
     actions.appendChild($('an-stage-info'));
     D.compactActions(actions); D.compactHelp(root, help); D.expandGroups(root);
@@ -940,7 +942,7 @@
         else { cmsTab = area.value === 'output' ? 'output' : 'element'; renderInspector(); preview().catch(M.error); }
       };
       root.querySelector('.an-toolbar').prepend(area);
-      if (cmsSession) window.CMSAngeboteForm.areaNavigation(area);
+      window.CMSAngeboteForm.areaNavigation(area);
     }
     var panel = root.querySelector('.an-work-panel');
     panel.hidden = true;
@@ -988,10 +990,10 @@
     bar.innerHTML = '<label class="an-field"><span>Ausgabeformat</span><select data-output-target aria-label="Ausgabeformat">'
       + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option></select></label>'
       + '<div class="an-output-actions"><button type="button" class="an-primary" data-cms-print>Drucken / PDF</button>'
-      + '<button type="button" data-cms-download>PNG herunterladen</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
-      + '<button type="button" data-cms-all-pages>Alle Seiten als PNG herunterladen</button></div>'
-      + '<details class="an-output-more"><summary>Weitere Ausgaben und Prüfung</summary><div class="an-output-actions">'
-      + '<button type="button" data-cms-quality>Qualität prüfen</button><button type="button" data-cms-scale>Für Waage vorbereiten</button>'
+      + '<button type="button" data-cms-download>Als PNG speichern</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
+      + '<button type="button" data-cms-all-pages>Alle Seiten als PNG</button><button type="button" data-cms-scale title="Einzelartikel im Wechsel auf die Waage">⚖ Waage</button></div>'
+      + '<details class="an-output-more"><summary>Mehr</summary><div class="an-output-actions">'
+      + '<button type="button" data-cms-quality>Qualität prüfen</button>'
       + (!cmsAction ? '<button type="button" data-output-publish>Für Homepage veröffentlichen</button>' : '') + '</div></details>'
       + '<p data-export-state role="status"></p><button type="button" data-output-back>Zur Gestaltung</button>';
     picture.prepend(bar);
@@ -1453,18 +1455,8 @@
     if (!(await qualityGate())) return;
     await M.preflight(data);
     if (dirty || !record) await save();
-    var dlg = document.createElement('dialog'); dlg.className = 'an-dialog';
-    dlg.innerHTML = '<button class="an-close" aria-label="Waagenauswahl schließen">×</button><h2>Ausgabe für die Waage</h2>'
-      + '<label class="an-field"><span>Darstellung</span><select id="an-scale-mode"><option value="single">Einzelartikel im Wechsel · empfohlen</option><option value="full">Gesamter Flyer · jede Seite</option></select></label>'
-      + '<p class="an-note">Ein ganzer A4-Flyer wird unverzerrt eingepasst, hat auf der Waage aber kleine Schrift. Bitte Lesbarkeit prüfen.</p>'
-      + (!config.scale_enabled ? '<p class="an-note">Preview: Vorschau und Export möglich, echter Versand ist serverseitig gesperrt.</p>' : '')
-      + '<button class="an-primary" id="an-scale-prepare">Waagenvorschau öffnen</button>';
-    function close() { dlg.close(); dlg.remove(); }
-    dlg.querySelector('.an-close').onclick = close;
-    dlg.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
-    dlg.querySelector('#an-scale-prepare').onclick = function () {
-      var mode = dlg.querySelector('select').value; close();
-      run(async function () {
+    var mode = 'single';
+    await (async function () {
         var draft = M.clone(data), actionHash = await M.hash(record.id, 12), revision = await M.hash(M.uid(), 12);
         var prefix = '21_' + config.scale_scope + '_' + actionHash + '_';
         window.KWerbebilder.uebertragen({
@@ -1473,19 +1465,21 @@
           hinweisDauer: 'Gültig ' + M.date(draft.valid_from) + ' – ' + M.date(draft.valid_to) + '. Abgelaufene Bilder werden beim nächsten Online-Abgleich deaktiviert.',
           erzeuge: async function (art, progress, cancelled, dimensions) {
             var canvases = await M.scaleImages(draft, mode, dimensions), result = [];
+            var scaleTargets = draft.layout.targets && draft.layout.targets.scale && draft.layout.targets.scale.length ? draft.layout.targets.scale : null;
+            var titles = mode === 'single' ? (scaleTargets ? scaleTargets.map(function (entry) { return entry.item_id; }) : draft.items.map(function (entry) { return entry.id; })) : [];
             for (var n = 0; n < canvases.length; n++) {
               if (cancelled()) return [];
               progress(n + 1, canvases.length);
               var blob = await new Promise(function (resolve) { canvases[n].toBlob(resolve, 'image/jpeg', .94); });
               if (!blob) throw M.problem('Das Waagenbild konnte nicht erstellt werden.');
-              result.push({ name: prefix + revision + '_' + draft.valid_from.replace(/-/g, '') + '_' + draft.valid_to.replace(/-/g, '') + '_' + String(n + 1).padStart(2, '0') + '.jpg', blob: blob, an: true });
+              var article = draft.items.find(function (entry) { return entry.id === titles[n]; });
+              result.push({ name: prefix + revision + '_' + draft.valid_from.replace(/-/g, '') + '_' + draft.valid_to.replace(/-/g, '') + '_' + String(n + 1).padStart(2, '0') + '.jpg', blob: blob, an: true,
+                titel: article ? article.name : mode === 'full' ? 'Flyer-Seite ' + (n + 1) : 'Bild ' + (n + 1) });
             }
             return result;
           }
         });
-      });
-    };
-    document.body.appendChild(dlg); dlg.showModal();
+    })();
   }
   function move(dx, dy) {
     var e = selection(); if (!e) return;
@@ -1516,7 +1510,7 @@
     $('an-page-prev').onclick = function () { page--; selected = ''; renderInspector(); preview().catch(M.error); };
     $('an-page-next').onclick = function () { page++; selected = ''; renderInspector(); preview().catch(M.error); };
     $('an-publish').onclick = function () { run(publish); }; $('an-print-single').onclick = function () { run(printSingles); };
-    $('an-print-action').onclick = function () { run(print); }; $('an-scale').onclick = function () { run(scale); };
+    $('an-print-action').onclick = function () { run(print); };     $('an-scale').onclick = function () { run(scale); };
     $('an-quality').onclick = function () { run(function () { return qualityGate(true); }); };
     $('an-transfer').onclick = function () { run(transfer); };
     root.onclick = async function (event) {

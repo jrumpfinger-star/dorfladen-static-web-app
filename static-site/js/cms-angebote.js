@@ -72,7 +72,9 @@ window.CMSAngebote = (function () {
           var more = document.createElement('details'); more.className = 'an-action-more';
           var moreLabel = document.createElement('summary'); moreLabel.textContent = '⋯'; moreLabel.setAttribute('aria-label', 'Weitere Aktionsfunktionen');
           var menu = document.createElement('div'); more.append(moreLabel, menu);
-          buttons.querySelectorAll('[data-scale-action],[data-delete-action]').forEach(function (button) { menu.appendChild(button); });
+          buttons.querySelectorAll('[data-delete-action]').forEach(function (button) {
+            button.append(' Löschen'); menu.appendChild(button);
+          });
           menu.prepend(duplicate); buttons.appendChild(more);
           card.classList.add('an-overview-action');
           var state = document.createElement('span'); state.className = 'an-save-state';

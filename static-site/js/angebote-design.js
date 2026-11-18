@@ -713,6 +713,12 @@ window.AngeboteDesign = (function () {
           if (host && !bar.isConnected) {
             if (root.dataset.designer) host.prepend(bar); else host.appendChild(bar);
           }
+          // Beim Neuaufbau des Editors hing die Leiste beim Entsperren nicht im Dokument und behielt sonst den gesperrten Zustand.
+          if (bar.isConnected && root.getAttribute('aria-busy') !== 'true') {
+            bar.querySelectorAll('[data-was-disabled]').forEach(function (button) {
+              button.disabled = button.dataset.wasDisabled === 'true'; delete button.dataset.wasDisabled;
+            });
+          }
         }
         function open(group, opener) {
           if (active) return;
@@ -1652,7 +1658,7 @@ window.AngeboteDesign = (function () {
     layout.className = 'an-design-layout an-designer-workspace';
     settings.className = 'an-card an-designer-settings';
     settings.innerHTML = '<h2>' + M.esc(options.title) + '</h2><div class="an-design-context" role="status"><span data-design-context></span>'
-      + '<button type="button" data-design-load-standard>Bereichsstandard laden</button></div>'
+      + '<button type="button" data-design-load-standard>Standard-Gestaltung laden</button></div>'
       + '<small class="an-designer-scope">Designvorgabe · alle Kacheln</small><div class="an-tabs an-designer-tabs" role="tablist" aria-label="Gestaltungswerkzeuge"></div>';
     var tabs = settings.querySelector('[role=tablist]'), panels = document.createElement('div'), body = document.createElement('div');
     var tools = document.createElement('select'); tools.className = 'an-designer-tool-select'; tools.setAttribute('aria-label', 'Gestaltungswerkzeuge');
@@ -1951,9 +1957,9 @@ window.AngeboteDesign = (function () {
         if (!standard || !standard.template) throw M.problem('Der gespeicherte Getränkeflyer-Standard ist nicht verfügbar.');
         M.templateStyle(standard.template);
         var changed = JSON.stringify(M.designSnapshot(design[kind], 'sheet')) !== JSON.stringify(M.designSnapshot(standard, 'sheet'));
-        if (changed && !(await M.dialog('Bereichsstandard übernehmen?',
+        if (changed && !(await M.dialog('Standard-Gestaltung laden?',
           'Die ungespeicherte Gestaltung des Getränkeflyers wird durch den aktuell gespeicherten Standard für neue Getränkeaktionen ersetzt. Andere Bereiche, Vorlagen und bestehende Aktionen bleiben unverändert.',
-          'Bereichsstandard laden'))) return;
+          'Standard-Gestaltung laden'))) return;
         var presets = design.presets;
         design[kind] = M.clone(standard);
         if (presets) design.presets = presets;

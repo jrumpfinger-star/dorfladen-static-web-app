@@ -1129,6 +1129,97 @@ test('TC-F60-03/TC-F62-02: Aktionsreiter zeigen nur ihren Inhalt und behalten Zi
   await page.screenshot({ path: test.info().outputPath('aktion-panelbesitz.png') });
 });
 
+test('TC-F66-08: Ausgabe ist ein direkter Knopf und laesst den Flyer gross sichtbar', async ({ page }, testInfo) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  await expect(page.locator('.an-workspace-area')).toBeHidden();
+  const button = page.locator('[data-action-area=output]');
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(page.locator('#an-root')).toHaveAttribute('data-output-mode', 'true');
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-cms-print]')).toBeVisible();
+  await expect(page.locator('#an-stage canvas')).toBeVisible();
+  const metrics = await page.evaluate(() => {
+    const barNode = document.querySelector('.an-output-bar'), bar = barNode.getBoundingClientRect();
+    const stage = document.querySelector('#an-stage').getBoundingClientRect();
+    const host = barNode.parentElement;
+    return { bar: bar.height, barWidth: bar.width, hostClient: host.clientWidth, hostScroll: host.scrollWidth, hostClass: host.className,
+      visible: Math.min(stage.bottom, innerHeight) - Math.max(stage.top, 0), height: innerHeight, width: innerWidth,
+      kids: [...barNode.children].map((node) => node.tagName + '.' + node.className + ':' + Math.round(node.getBoundingClientRect().left) + '-' + Math.round(node.getBoundingClientRect().right)) };
+  });
+  console.log(JSON.stringify(metrics));
+  await page.screenshot({ path: testInfo.outputPath('ausgabe-kompakt.png') });
+  expect(metrics.visible, JSON.stringify(metrics)).toBeGreaterThan(metrics.height * .4);
+  await page.locator('[data-action-area=design]').click();
+  await expect(page.locator('#an-root')).toHaveAttribute('data-output-mode', 'false');
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F66-10: Preisschild ist in jeder Aktionsgestaltung erreichbar und oeffnet seinen Dialog', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  for (const kind of ['weekly', 'drinks']) {
+    await openPreview(page, kind, 2);
+    const root = page.locator('#an-root');
+    for (const target of ['sheet', 'single']) {
+      await root.locator('[data-action-target]').selectOption(target);
+      let reachable = false;
+      for (const tab of ['Element', 'Artikel', 'Vorlage', 'Marker', 'Ansicht']) {
+        await showTab(page, tab);
+        const entry = root.locator('[data-object-properties=price]:visible').first();
+        if (!(await entry.count())) continue;
+        await expect(entry, kind + '/' + target + '/' + tab).toBeEnabled();
+        await entry.click();
+        const dialog = root.locator('.an-object-dialog');
+        await expect(dialog).toBeVisible();
+        await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).first().click();
+        reachable = true;
+      }
+      expect(reachable, kind + '/' + target).toBe(true);
+    }
+    await root.getByRole('button', { name: /Schließen|Artikel \/ Bilder/ }).first().click();
+  }
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F66-09: Waage ist in der Aktionsliste direkt erreichbar und oeffnet ohne Zwischendialog', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2, true);
+  await page.locator('#an-overview').click();
+  await allWeeks(page);
+  const scaleButton = page.locator('[data-scale-action]').first();
+  await expect(scaleButton).toBeVisible();
+  await expect(page.locator('.an-action-more [data-delete-action]').first()).toContainText('Löschen');
+  await scaleButton.click();
+  await expect(page.locator('#wb-ueb')).toBeVisible();
+  await expect(page.locator('#an-scale-prepare')).toHaveCount(0);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F66-07: Waagenvorschau liegt sichtbar und bedienbar ueber dem modalen Aktionseditor', async ({ page }) => {
+  await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 1);
+  await showTab(page, 'Ausgabe');
+  await page.locator('.an-output-more>summary').click();
+  await page.locator('[data-cms-scale]').click();
+  const overlay = page.locator('#wb-ueb');
+  await expect(overlay).toBeVisible();
+  const topmost = await overlay.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return node.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+  });
+  expect(topmost).toBe(true);
+  await expect(overlay.locator('[data-ueb-neu] b').first()).not.toHaveText(/^21_/);
+  await expect(overlay.locator('[data-ueb-neu] b').first()).toHaveAttribute('title', /^21_.*\.jpg$/);
+  await page.keyboard.press('Escape');
+  await expect(overlay).toHaveCount(0);
+  await expect(page.locator('.an-cms-capture, #an-root').first()).toBeVisible();
+});
+
 test('TC-F61-03: Original-CMS-Familie und Palette erhalten fremde Ausgabeziele und Historie', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');

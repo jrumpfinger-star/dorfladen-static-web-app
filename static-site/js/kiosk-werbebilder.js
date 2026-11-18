@@ -505,6 +505,14 @@ window.KWerbebilder = (function () {
     return { an: an, loesch: loesch, ersetzt: ersetzt, danach: danach, zuviel: danach > MAX_BILDER, neuNamen: neuNamen };
   }
 
+  // Dateinamen verwalteter Angebote (21_<Bereich>_<Aktion>_<Fassung>_<von>_<bis>_NN.jpg) sind für die Waagenbrücke; angezeigt wird Klartext.
+  function bildTitel(b) {
+    if (b.titel) return b.titel;
+    if (!_ueb || !_ueb.o.verwaltetesAngebot) return b.name;
+    var m = /_(\d{4})(\d{2})(\d{2})_(\d{4})(\d{2})(\d{2})_(\d+)\.jpe?g$/i.exec(b.name || '');
+    return m ? 'Bild ' + parseInt(m[7], 10) + ' · gültig ' + m[3] + '.' + m[2] + '. – ' + m[6] + '.' + m[5] + '.' + m[4] : b.name;
+  }
+
   function uebZu() {
     if (!_ueb) return;
     _ueb.token++;
@@ -517,7 +525,7 @@ window.KWerbebilder = (function () {
   }
 
   function uebTaste(e) {
-    if (e.key === 'Escape' && _ueb && !_ueb.laufend && !_lb) { e.stopPropagation(); uebZu(); }
+    if (e.key === 'Escape' && _ueb && !_ueb.laufend && !_lb) { e.preventDefault(); e.stopPropagation(); uebZu(); }
   }
 
   function brueckeText(b) {
@@ -579,9 +587,9 @@ window.KWerbebilder = (function () {
       u.neu.forEach(function (n, i) {
         var st = n.status === 'ok' ? '✓ hochgeladen' : n.status === 'laeuft' ? 'wird gesendet …' : n.status === 'fehler' ? esc(n.fehler) : '';
         h += '<div class="wb-item wb-ueb-item' + (n.status === 'fehler' ? ' wb-fehler' : n.status === 'ok' ? ' wb-ok' : '') + '" data-ueb-neu="' + i + '">'
-          + '<label class="wb-haken"><input type="checkbox" data-ueb="an" data-i="' + i + '"' + (n.an ? ' checked' : '') + (u.laufend || u.ergebnis ? ' disabled' : '') + ' aria-label="' + esc(n.name) + ' übertragen"></label>'
+          + (u.o.verwaltetesAngebot ? '' : '<label class="wb-haken"><input type="checkbox" data-ueb="an" data-i="' + i + '"' + (n.an ? ' checked' : '') + (u.laufend || u.ergebnis ? ' disabled' : '') + ' aria-label="' + esc(n.name) + ' übertragen"></label>')
           + '<button class="wb-thumb" data-ueb="gross" data-i="' + i + '" aria-label="Vorschau ' + esc(n.name) + '"><img alt="" src="' + n.url + '"></button>'
-          + '<div class="wb-info"><b>' + esc(n.name) + '</b><span>' + groesse(n.blob.size) + '</span>'
+          + '<div class="wb-info"><b title="' + esc(n.name) + '">' + esc(bildTitel(n)) + '</b><span>' + groesse(n.blob.size) + '</span>'
           + (z.neuNamen[n.name] && u.alt.some(function (b) { return b.name === n.name; }) ? '<span class="wb-sync wartet">ersetzt das gleichnamige Bild</span>' : '')
           + (st ? '<span class="wb-st">' + st + '</span>' : '')
           + (u.o.verwaltetesAngebot ? '<a class="wb-btn" href="' + n.url + '" download="' + esc(n.name) + '">JPEG speichern</a>' : '') + '</div></div>';
@@ -610,7 +618,7 @@ window.KWerbebilder = (function () {
           + ((b.an && !ersetzt) ? ' checked' : '') + ((u.laufend || u.ergebnis || ersetzt || b.wahlbar === false || u.o.nurVorschau) ? ' disabled' : '') + ' aria-label="' + esc(b.name) + ' löschen"></label>'
           + '<button class="wb-thumb" data-ueb-thumb="' + esc(b.name) + '" data-ueb="gross-alt" data-i="' + i + '" aria-label="Vorschau ' + esc(b.name) + '">'
           + (b.url ? '<img alt="" src="' + b.url + '">' : '') + '</button>'
-          + '<div class="wb-info"><b>' + esc(b.name) + '</b><span>' + groesse(b.groesse) + '</span>'
+          + '<div class="wb-info"><b title="' + esc(b.name) + '">' + esc(bildTitel(b)) + '</b><span>' + groesse(b.groesse) + '</span>'
           + '<span class="wb-sync ' + (ersetzt ? 'wartet' : (b.an ? 'wartet' : 'auf')) + '">' + (ersetzt ? 'wird ersetzt' : (b.an ? 'wird gelöscht' : 'bleibt')) + '</span>'
           + (u.o.verwaltetesAngebot ? '<span class="wb-klein">' + esc(bildStatusText(b.status, u.bruecke && !u.bruecke.online)) + '</span>' : '') + '</div></div>';
       });
@@ -673,7 +681,7 @@ window.KWerbebilder = (function () {
     }).then(function (liste) {
       if (ende()) return;
       u.neu = (liste || []).map(function (x) {
-        return { name: x.name, blob: x.blob, an: x.an !== false, url: URL.createObjectURL(x.blob), status: '' };
+        return { name: x.name, titel: x.titel, blob: x.blob, an: x.an !== false, url: URL.createObjectURL(x.blob), status: '' };
       });
       u.erzeugt = true;
       uebRender();
@@ -856,7 +864,9 @@ window.KWerbebilder = (function () {
              laufend: false, erzeugt: false, altGeladen: false, ergebnis: null, bruecke: null };
     el.addEventListener('click', uebKlick);
     el.addEventListener('change', uebAenderung);
-    document.body.appendChild(el);
+    // Ein modaler Dialog (z. B. CMS-Aktionseditor) liegt in der Top-Layer; nur Kinder davon sind sichtbar und bedienbar.
+    var modale = document.querySelectorAll('dialog:modal');
+    (modale.length ? modale[modale.length - 1] : document.body).appendChild(el);
     document.addEventListener('keydown', uebTaste, true);
     uebNeuLaden();
   }

@@ -912,8 +912,29 @@ test('TC-F60/63: compact reference controls, readable colour labels and price-di
     });
     await expect(page.locator('.cmsneu-kopf #cmsneu-menue-btn')).toBeVisible();
   }
-  expect(state.writes).toEqual([]);
+  expect(state.writes.filter((write) => !/_presets$/.test(write.name))).toEqual([]);
   expect(prompts).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F66-06: saved own templates survive a reload for Plakat and Wochenplan', async ({ page }) => {
+  const state = await offlineCms(page);
+  for (const [top, sub, selector, slug, key] of [
+    ['cfg-plakat', 'sec-plakat', '#cfg-sec-plakat', 'plakat', 'design_presets'],
+    ['cfg-wp', 'wp-sec-home', '#wp-sec-home', 'wp', 'wp_design_presets'],
+  ]) {
+    let root = await area(page, top, sub, selector);
+    await tool(root, 'Eigene Vorlagen', 4);
+    await root.locator('[data-global-preset-name]').fill('Dauerhaft <b>' + slug + '</b>');
+    await root.locator('[data-action=cfgPresetSave],[data-action=wpPresetSave]').click();
+    await expect(root.getByText('Dauerhaft <b>' + slug + '</b>', { exact: true })).toBeVisible();
+    await expect.poll(() => state.config[key] && JSON.stringify(state.config[key])).toContain('Dauerhaft');
+    await page.reload();
+    root = await area(page, top, sub, selector);
+    await tool(root, 'Eigene Vorlagen', 4);
+    await expect(root.getByText('Dauerhaft <b>' + slug + '</b>', { exact: true })).toBeVisible();
+    await expect(root.locator('.an-own-presets b')).toHaveCount(0);
+  }
   expect(state.errors).toEqual([]);
 });
 

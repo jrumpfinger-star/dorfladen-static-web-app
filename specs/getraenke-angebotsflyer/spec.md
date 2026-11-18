@@ -1877,6 +1877,18 @@ Mauskontrollen kompakt und Touchziele mindestens 44 px.
 - TC-F66-05: Breite und schmale Werkzeugspalten auf vier Ansichten messen;
   Fussleiste belegt hoechstens eine beziehungsweise zwei Inhaltsreihen,
   ohne verdeckte Bedienelemente oder beschnittenen Status.
+- TC-F66-06: Gespeicherte eigene Vorlagen (Plakat, Flyer, gemeinsam, Wochenplan)
+  werden dauerhaft in `design_presets` bzw. `wp_design_presets` abgelegt und
+  sind nach einem Neuladen wieder sichtbar; Namen werden nicht als HTML gedeutet.
+- TC-F66-07: Die Waagenvorschau liegt sichtbar und bedienbar über dem modalen
+  Aktionseditor; Escape schließt nur sie. Bilder zeigen Klartext statt
+  technischer Dateinamen; alle Bilder werden ohne Auswahl übertragen.
+- TC-F66-08: „Ausgabe" ist ein direkter Knopf (keine Auswahlliste); die
+  Ausgabeleiste ist kompakt und lässt den Flyer auf vier Ansichten groß sichtbar.
+- TC-F66-09: Waage ist in der Aktionsliste direkt erreichbar und öffnet ohne
+  Zwischendialog; Löschen steht beschriftet im Menü „⋯".
+- TC-F66-10: Der Preisschild-Dialog ist für Sonder- und Getränkeaktion, Sammel-
+  und Einzelflyer erreichbar und der Zugang ist nicht dauerhaft deaktiviert.
 
 ## F67: Gemeinsame Artikelnavigation und volle CMS-Inhaltsbreite
 

@@ -2243,8 +2243,7 @@ test('TC-F8-02/F6-05: Preview exportiert, versendet und löscht aber nichts', as
   const state = await setup(page);
   await editSeed(page, state);
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-scale').click();
-  await page.getByRole('button', { name: 'Waagenvorschau öffnen' }).click();
+  await page.locator('[data-cms-scale]').click();
   await expect(page.locator('#wb-ueb-start')).toBeDisabled();
   await expect(page.locator('#wb-ueb')).toContainText('Echter Versand und Löschen sind gesperrt');
   await expect(page.locator('#wb-ueb a[download]')).toHaveCount(1);
@@ -2267,8 +2266,7 @@ test('TC-F6-02/F6-05: Ersatz nur eigener Aktion, Upload vor Löschen und tatsäc
     { name: other, etag: 'fremd', groesse: 1000, status: 'auf_waage' }];
   state.bridge.ist = [old, other];
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-scale').click();
-  await page.getByRole('button', { name: 'Waagenvorschau öffnen' }).click();
+  await page.locator('[data-cms-scale]').click();
   await expect(page.getByRole('checkbox', { name: other + ' löschen', exact: true })).toBeDisabled();
   await expect(page.getByRole('checkbox', { name: old + ' löschen', exact: true })).toBeChecked();
   await expect(page.locator('#wb-ueb-start')).toBeEnabled({ timeout: 15000 });
