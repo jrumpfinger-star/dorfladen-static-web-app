@@ -1763,7 +1763,10 @@ window.AngeboteDesign = (function () {
     var info = root._designContextProvider ? root._designContextProvider() : null;
     var button = root.querySelector('[data-design-load-standard]');
     if (!info) { status.textContent = ''; if (button) button.hidden = true; return; }
-    var source = info.name ? 'Eigene Vorlage: ' + info.name + (info.changed ? ' (verändert)' : '')
+    var source = info.name
+      ? info.sessionLoaded
+        ? 'Eigene Vorlage: ' + info.name + (info.changed ? ' (verändert)' : '')
+        : 'Standard · aus Vorlage „' + info.name + '“' + (info.changed ? ' (verändert)' : '')
       : info.changed ? 'Ungespeicherte Änderungen' : 'Gespeichert';
     status.textContent = [info.area, info.layout ? 'Aussehen: ' + info.layout : '', source].filter(Boolean).join(' · ');
     var hint = status.parentElement.querySelector('[data-save-hint]');

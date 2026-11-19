@@ -1700,6 +1700,7 @@
     return {area:area==='plakat'?'Sonderangebote · Plakat':area==='flyer'?'Sonderangebote · Einzelflyer'
       :area==='week-home'?'Wochenplan · Homepage':'Wochenplan · Druck',
       layout:layout||'',name:entry&&entry.name||'',source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',changed:changed,
+      sessionLoaded:!!_loadedPresets[area],
       preset:_loadedPresets[area]||'',saveStandard:function(){return saveAreaAsStandard(area);}};
   }
   // In dieser Sitzung geladene eigene Vorlage je Bereich: „Speichern" aktualisiert dann nur die Vorlage, nicht den Standard.
@@ -1901,6 +1902,9 @@
   window.cmsSaveCfgAsStandard=function(){
     var c=cfgReadUI();
     cfgSave(c);
+    // Der Standard gilt ab jetzt ohne geladene Vorlage weiter: „Speichern“
+    // schreibt sonst still nur die Vorlage fort, während der Standard gleich aussieht.
+    delete _loadedPresets.plakat;delete _loadedPresets.flyer;
     refreshAreaContexts();
     toast('Als Standard f\u00fcr neue Angebote gespeichert','ok');
   };

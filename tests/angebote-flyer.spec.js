@@ -2670,6 +2670,9 @@ test('TC-F60-04: Geladene Vorlage und Standard-Gestaltung aktualisieren die Live
   await expect(standardKnopf).toBeVisible();
   await standardKnopf.click();
   await expect(page.locator('body')).toContainText('Als Standard für neue Angebote gespeichert');
+  /* Nach dem Sichern als Standard endet die Vorlage-Sitzung: die
+     Kontextzeile darf nicht mehr „Eigene Vorlage geladen“ behaupten. */
+  await expect(root.locator('[data-design-context]')).not.toContainText('Eigene Vorlage: Inline-Vorlage');
   expect(standardSpeicherung && standardSpeicherung.name).toBe('design_config');
   expect(standardSpeicherung.wert.plakat_inline.priceDx).toBeCloseTo(-148.29, 1);
   expect(standardSpeicherung.wert.plakat_inline.priceDy).toBeCloseTo(37.7, 1);
