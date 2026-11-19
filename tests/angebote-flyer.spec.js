@@ -2597,6 +2597,85 @@ test('TC-F60-02: Preisschilddialog gliedert echte Felder und erhält Transaktion
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F60-04: Geladene Vorlage und Standard-Gestaltung aktualisieren die Live-Vorschau', async ({ page }) => {
+  const state = await setup(page);
+  /* Ein gespeicherter Standard mit eigenem Plakat-Wert, zu dem die
+     Standard-Gestaltung laden zurückkehren kann. */
+  state.cmsDesign.design_config.plakat_priceImageColor = '#ed1c24';
+  /* Vorlage aus dem Feldbefund: nur die freie Preisschild-Positionierung
+     unterscheidet sich — genau die musste „Laden“ bislang verschlucken. */
+  state.cmsDesign.design_presets = { plakat: [{ name: 'Inline-Vorlage', ts: 1,
+    data: { plakat_inline: { priceDx: -148.29, priceDy: 37.7, priceScale: 100, priceRot: 0,
+      imgDx: 0, imgDy: 0, imgScale: 100, imgRot: 0 } } }] };
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  const farbe = root.locator('#cfg-plakat-priceImageColor');
+  const setFarbe = (wert) => farbe.evaluate((el, value) => {
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, wert);
+  const vorschauHash = () => root.evaluate((node) => {
+    const canvas = [...node.querySelectorAll('canvas')].find((candidate) => candidate.width > 200);
+    return canvas ? canvas.toDataURL().length + ':' + canvas.toDataURL().slice(-48) : 'KEINE-VORSCHAU';
+  });
+  await setFarbe('#0055ff');
+  await page.clock.runFor(700);
+  const original = await vorschauHash();
+  expect(original).not.toBe('KEINE-VORSCHAU');
+
+  await designerTool(root, 4);
+  await root.locator('[data-global-preset-name="plakat"]').fill('Vorschau-Rundlauf');
+  await root.getByRole('button', { name: '+ Vorlage speichern', exact: true }).click();
+  await expect(page.locator('body')).toContainText('Vorlage "Vorschau-Rundlauf" gespeichert');
+
+  await setFarbe('#aa0088');
+  await page.clock.runFor(700);
+  const geaendert = await vorschauHash();
+  expect(geaendert).not.toBe(original);
+
+  await root.getByRole('button', { name: 'Laden', exact: true }).nth(1).click();
+  await page.clock.runFor(900);
+  await expect(farbe).toHaveValue('#0055ff');
+  /* Entscheidend ist die erneute Zeichnung: vorher blieb das alte Bild stehen. */
+  await expect.poll(vorschauHash, { timeout: 15000 }).not.toBe(geaendert);
+  await expect(page.locator('body')).toContainText('Vorlage "Vorschau-Rundlauf" geladen');
+
+  /* Standard-Gestaltung laden nach ungespeicherter Änderung: die Vorschau
+     springt auf den gespeicherten Standard zurück. */
+  await setFarbe('#112233');
+  await page.clock.runFor(700);
+  const abweichend = await vorschauHash();
+  expect(abweichend).not.toBe(original);
+  await root.getByRole('button', { name: 'Standard-Gestaltung laden' }).click();
+  const bestaetigen = page.locator('.cms-confirm-overlay .cms-confirm-btn-ok');
+  await expect(bestaetigen).toBeVisible();
+  await bestaetigen.click();
+  await page.clock.runFor(900);
+  await expect.poll(() => farbe.inputValue(), { timeout: 15000 }).toBe('#ed1c24');
+  await expect.poll(vorschauHash, { timeout: 15000 }).not.toBe(abweichend);
+
+  /* Die freie Positionierung gehört zur Vorlage: Laden übernimmt
+     plakat_inline, und „Als Standard speichern“ schreibt sie fort. */
+  let standardSpeicherung = null;
+  await page.route('**/api/cms-config', (route) => {
+    if (route.request().method() === 'GET') return route.fallback();
+    standardSpeicherung = route.request().postDataJSON();
+    return route.fulfill({ json: { success: true } });
+  });
+  await root.getByRole('button', { name: 'Laden', exact: true }).nth(0).click();
+  await expect(page.locator('body')).toContainText('Vorlage "Inline-Vorlage" geladen');
+  const standardKnopf = root.locator('[data-design-save-standard]');
+  await expect(standardKnopf).toBeVisible();
+  await standardKnopf.click();
+  await expect(page.locator('body')).toContainText('Als Standard für neue Angebote gespeichert');
+  expect(standardSpeicherung && standardSpeicherung.name).toBe('design_config');
+  expect(standardSpeicherung.wert.plakat_inline.priceDx).toBeCloseTo(-148.29, 1);
+  expect(standardSpeicherung.wert.plakat_inline.priceDy).toBeCloseTo(37.7, 1);
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F64-02: Originalrenderer erhält lange Wörter und explizite Textzeilen', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page);
   const result = await page.evaluate(async () => {

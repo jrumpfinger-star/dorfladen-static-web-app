@@ -1720,6 +1720,11 @@
       var name=kind+'_'+key;
       if(Object.prototype.hasOwnProperty.call(source,name))merged[name]=_clone(source[name]);
     });
+    /* Freie Positionierung des Bereichs (Preisschild/Bild im Vorschau-Editor)
+       gehört zur Vorlage — ohne sie „kommt die geänderte Vorlage nicht an“. */
+    var inlineKey=kind+'_inline';
+    if(Object.prototype.hasOwnProperty.call(source,inlineKey))merged[inlineKey]=_clone(source[inlineKey]);
+    else delete merged[inlineKey];
     merged.tplColors=_clone(current.tplColors||{});
     var colors=source.tplColors||{},key=kind+':'+template;
     if(Object.prototype.hasOwnProperty.call(colors,key))merged.tplColors[key]=_clone(colors[key]);
