@@ -125,6 +125,16 @@ window.AngeboteKunden = (function () {
       + (a.statt ? '<span class="ang-statt">' + M.money(Math.round(a.statt * 100)) + ' €</span>' : '') + '</div>' : '')
       + '<span class="ang-basket">🛒</span></article>';
   }
+  /* Klappzustand der Angebotsgruppen (je Raster + Titel). Default: aufgeklappt. */
+  var groupOpen = new Map();
+  function groupHTML(state, title, cards, count) {
+    var key = state.grid + '|' + title, open = groupOpen.get(key);
+    if (open === undefined) open = true;
+    return '<section class="an-group"><button type="button" class="an-group-hdr" data-group-key="' + M.esc(key) + '"'
+      + ' aria-expanded="' + open + '"><span class="an-group-t">' + M.esc(title) + '</span><span class="an-group-n">'
+      + count + '</span></button><div class="an-customer-grid an-group-body' + (open ? '' : ' an-hidden') + '">'
+      + cards + '</div></section>';
+  }
   function render(state) {
     var grid = document.getElementById(state.grid);
     if (!grid || !loaded) return;
@@ -137,26 +147,48 @@ window.AngeboteKunden = (function () {
       grid.parentElement.classList.add('an-customer');
       controls.addEventListener('click', function (e) {
         if (e.target.closest('[data-offer-flyer]')) {
-          var chooser = controls.querySelector('[data-offer-action]');
-          var action = selected(state).actions.find(function (a) { return !chooser || a.id === chooser.value; });
-          if (action) viewer(action, e.target.closest('[data-offer-flyer]')).catch(M.error);
+          var actions = selected(state).actions;
+          /* Ein Button für alle Flyer: der Viewer lässt seiten- und flyerübergreifend blättern. */
+          if (actions.length) viewer(actions, e.target.closest('[data-offer-flyer]')).catch(M.error);
         }
       });
     }
     controls.hidden = !result.actions.length;
-    controls.classList.toggle('an-has-choice', result.actions.length > 1);
-    controls.innerHTML = (result.actions.length > 1 ? '<label class="an-field"><span>Flyer auswählen</span><select data-offer-action aria-label="Flyer auswählen">' + result.actions.map(function (a) {
-        return '<option value="' + M.esc(a.id) + '">' + M.esc(a.data.title) + '</option>'; }).join('') + '</select></label>' : '')
-      + (result.actions.length ? '<button class="an-flyer-button" data-offer-flyer><svg aria-hidden="true" focusable="false" width="16" height="20" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="18" rx="2"/><path d="M4 6h8M4 10h8M4 14h8"/></svg><span>Flyer ansehen</span></button>' : '');
-    grid.classList.add('an-customer-grid');
+    controls.innerHTML = (result.actions.length ? '<button class="an-flyer-button" data-offer-flyer><svg aria-hidden="true" focusable="false" width="16" height="20" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="18" rx="2"/><path d="M4 6h8M4 10h8M4 14h8"/></svg><span>Flyer ansehen</span></button>' : '');
+    grid.classList.remove('an-customer-grid');
+    grid.classList.add('an-groups');
+    if (!grid.dataset.groupToggle) {
+      grid.dataset.groupToggle = '1';
+      grid.addEventListener('click', function (e) {
+        var hdr = e.target.closest('.an-group-hdr');
+        if (!hdr) return;
+        var open = hdr.getAttribute('aria-expanded') !== 'false';
+        groupOpen.set(hdr.dataset.groupKey, !open);
+        hdr.setAttribute('aria-expanded', String(!open));
+        if (hdr.nextElementSibling) hdr.nextElementSibling.classList.toggle('an-hidden', open);
+      });
+    }
     var homepage = state.grid === 'ang-grid' || state.grid === 'mob-ang-grid';
     if (homepage) applyHomepage(grid.parentElement, loaded.homepage);
-    grid.innerHTML = result.legacy.map(function (a) {
-      return homepage ? homepageCard({ name: a.produkt, description: a.details, article_number: a.artnr,
-        price_cents: Math.round(a.preis * 100), old_price_cents: Math.round(a.statt * 100) }, 'weekly', true) : legacyHTML(a);
-    }).join('') + result.actions.map(function (action) {
-      return action.data.items.map(function (it) { return homepage ? homepageCard(it, action.data.kind) : M.cardHTML(action.data, it); }).join('');
-    }).join('');
+    var legacyGroups = new Map();
+    result.legacy.forEach(function (a) {
+      var title = a.titel || 'Sonderangebote';
+      if (!legacyGroups.has(title)) legacyGroups.set(title, []);
+      legacyGroups.get(title).push(a);
+    });
+    var sections = [];
+    legacyGroups.forEach(function (rows, title) {
+      sections.push(groupHTML(state, title, rows.map(function (a) {
+        return homepage ? homepageCard({ name: a.produkt, description: a.details, article_number: a.artnr,
+          price_cents: Math.round(a.preis * 100), old_price_cents: Math.round(a.statt * 100) }, 'weekly', true) : legacyHTML(a);
+      }).join(''), rows.length));
+    });
+    result.actions.forEach(function (action) {
+      sections.push(groupHTML(state, action.data.title, action.data.items.map(function (it) {
+        return homepage ? homepageCard(it, action.data.kind) : M.cardHTML(action.data, it);
+      }).join(''), action.data.items.length));
+    });
+    grid.innerHTML = sections.join('');
     if (homepage) paintHomepage(grid).catch(M.error);
     else Promise.all(result.actions.map(function (action) { return M.paintCards(grid, action.data); })).catch(M.error);
     if (!result.legacy.length && !result.actions.length) grid.innerHTML = '<p class="an-status">Aktuell keine Angebote in diesem Zeitraum.</p>';
@@ -198,14 +230,19 @@ window.AngeboteKunden = (function () {
       }
     }
   }
-  async function viewer(action, opener) {
+  async function viewer(list, opener) {
+    /* akzeptiert eine Aktion (Rückwärtskompatibilität) oder eine Liste;
+       bei einer Liste wird seiten- und flyerübergreifend geblättert. */
+    var actions = Array.isArray(list) ? list : [list];
+    if (!actions.length) return;
     if (currentViewer) currentViewer.close();
+    var ai = 0;
     var dlg = document.createElement('dialog'); dlg.className = 'an-viewer'; dlg.setAttribute('aria-label', 'Original-Angebotsflyer');
     dlg.innerHTML = '<div class="an-viewer-shell"><div class="an-viewer-tools"><strong></strong><button data-viewer-close aria-label="Flyer schließen">Schließen ×</button></div>'
       + '<div class="an-viewer-tools"><div class="an-row"><button data-viewer-prev aria-label="Vorherige Flyerseite">←</button><span data-viewer-page-label></span><button data-viewer-next aria-label="Nächste Flyerseite">→</button></div>'
       + '<div class="an-row"><button data-viewer-zoom-out aria-label="Flyer verkleinern">−</button><button data-viewer-fit>An Breite anpassen</button><button data-viewer-zoom-in aria-label="Flyer vergrößern">+</button></div></div>'
       + '<div class="an-viewer-scroll" tabindex="0" aria-label="Flyer, bei Vergrößerung verschiebbar"><div class="an-viewer-page"></div></div></div>';
-    dlg.querySelector('strong').textContent = action.data.title;
+    var titleEl = dlg.querySelector('strong');
     var n = 0, zoom = 1, generation = 0, canvas = null, scroller = dlg.querySelector('.an-viewer-scroll'), page = dlg.querySelector('.an-viewer-page');
     var previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
@@ -218,24 +255,32 @@ window.AngeboteKunden = (function () {
     var observer = new ResizeObserver(fit);
     function close() { generation++; observer.disconnect(); dlg.close(); dlg.remove(); document.documentElement.style.overflow = previousOverflow; currentViewer = null; if (opener && opener.isConnected) opener.focus(); }
     async function draw() {
-      var ticket = ++generation, rendered = await M.render(action.data, n, 2);
+      var ticket = ++generation, action = actions[ai], rendered = await M.render(action.data, n, 2);
       if (ticket !== generation || !dlg.isConnected) return;
       canvas = rendered.canvas; canvas.setAttribute('aria-label', action.data.title + ' · Seite ' + (n + 1));
       page.replaceChildren(canvas); fit(); scroller.scrollTop = 0; scroller.scrollLeft = 0;
+      titleEl.textContent = action.data.title + (actions.length > 1 ? ' · Flyer ' + (ai + 1) + '/' + actions.length : '');
       dlg.querySelector('[data-viewer-page-label]').textContent = (n + 1) + ' / ' + action.data.layout.pages.length;
-      dlg.querySelector('[data-viewer-prev]').disabled = n === 0;
-      dlg.querySelector('[data-viewer-next]').disabled = n === action.data.layout.pages.length - 1;
+      dlg.querySelector('[data-viewer-prev]').disabled = ai === 0 && n === 0;
+      dlg.querySelector('[data-viewer-next]').disabled = ai === actions.length - 1 && n === action.data.layout.pages.length - 1;
     }
     dlg.addEventListener('click', function (e) {
       if (e.target.closest('[data-viewer-close]')) close();
-      if (e.target.closest('[data-viewer-prev]') && n > 0) { n--; draw().catch(M.error); }
-      if (e.target.closest('[data-viewer-next]') && n < action.data.layout.pages.length - 1) { n++; draw().catch(M.error); }
+      if (e.target.closest('[data-viewer-prev]')) {
+        if (n > 0) { n--; draw().catch(M.error); }
+        else if (ai > 0) { ai--; n = actions[ai].data.layout.pages.length - 1; draw().catch(M.error); }
+      }
+      if (e.target.closest('[data-viewer-next]')) {
+        if (n < actions[ai].data.layout.pages.length - 1) { n++; draw().catch(M.error); }
+        else if (ai < actions.length - 1) { ai++; n = 0; draw().catch(M.error); }
+      }
       if (e.target.closest('[data-viewer-zoom-in]')) { zoom = Math.min(3, zoom + .5); fit(); }
       if (e.target.closest('[data-viewer-zoom-out]')) { zoom = Math.max(1, zoom - .5); fit(); }
       if (e.target.closest('[data-viewer-fit]')) { zoom = 1; fit(); scroller.scrollLeft = 0; }
     });
     dlg.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
-    document.body.appendChild(dlg); dlg.showModal(); observer.observe(scroller); currentViewer = { id: action.id, close: close };
+    document.body.appendChild(dlg); dlg.showModal(); observer.observe(scroller);
+    currentViewer = { ids: actions.map(function (a) { return a.id; }), close: close };
     try { await draw(); } catch (e) { close(); throw e; }
   }
   async function refresh() {
@@ -243,7 +288,7 @@ window.AngeboteKunden = (function () {
     try {
       await load(true);
       states.forEach(render);
-      if (currentViewer && !loaded.actions.some(function (a) { return a.id === currentViewer.id; })) currentViewer.close();
+      if (currentViewer && !currentViewer.ids.some(function (id) { return loaded.actions.some(function (a) { return a.id === id; }); })) currentViewer.close();
     } catch (e) {
       console.error('[Angebote] Aktualisierung fehlgeschlagen', e);
       states.forEach(function (state) {

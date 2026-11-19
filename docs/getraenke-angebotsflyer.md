@@ -288,9 +288,14 @@ Getränke behalten ihre Getränkevorlagen mit Gebinde, Inhalt, Pfand und Literpr
 - Auf der Startseite wechseln **Diese Woche / Nächste Woche** auch mobil;
   eine bereits angelegte Aktion der nächsten Woche erscheint dort.
 - **Flyer ansehen** steht rechts in der Wochenleiste, ohne separate Leerzeile
-  über den Angebotskacheln. Mobil ordnen sich Zeitraum und Flyer-Aktion kompakt
-  unter der Wochenwahl an. Bei mehreren Aktionen bleibt **Flyer auswählen**
-  verfügbar; ohne Flyer wird der Aktionsbereich ausgeblendet.
+  über den Angebotskacheln. Mobil ordnen sich Zeitraum und Flyer-Button kompakt
+  unter der Wochenwahl an. Ohne Flyer wird der Aktionsbereich ausgeblendet.
+- **Alle Angebote der Woche werden immer angezeigt**, gruppiert nach Aktion
+  (klassische Wochenangebote unter „Sonderangebote“). Gruppenkopf zeigt Titel
+  und Artikelzahl und lässt sich auf- und zuklappen; Default ist aufgeklappt.
+- **Flyer ansehen** öffnet den Original-Flyer der ersten Aktion; mit **Vor /
+  Zurück** wird seiten- und flyerübergreifend geblättert (Anzeige
+  „Flyer 1/3“ im Fenstertitel). Eine separate Flyer-Auswahl gibt es nicht mehr.
 - **Gestaltung speichern** erhält die Anpassungen für diese Aktion.
   Andere Aktionen und globale Designstandards werden dadurch nicht verändert.
 - Im Gestaltungsmodus liegen die Einstellungen **neben** der Vorschau: auf

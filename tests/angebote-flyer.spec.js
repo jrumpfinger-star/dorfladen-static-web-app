@@ -1100,7 +1100,7 @@ test('TC-F36-01/02: zentraler Homepage-Designer wirkt in Kundensitzung, Flyer bl
   expect(font).toBeLessThanOrEqual(14);
   const overflow = await grid.locator('.an-hp-card').evaluateAll((cards) => cards.some((card) => card.scrollWidth > card.clientWidth + 1));
   expect(overflow).toBe(false);
-  const columns = await grid.evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length);
+  const columns = await grid.locator('.an-group-body').first().evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length);
   expect(columns).toBeGreaterThanOrEqual(2);
   if (page.viewportSize().width === 375) {
     expect((await shell.locator('[data-offer-flyer]').boundingBox()).height).toBeGreaterThanOrEqual(44);
@@ -2080,10 +2080,10 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   expect(cardLayout.elements.find((element) => element.type === 'price').font_size).toBeGreaterThanOrEqual(28);
   await expect(card.locator('canvas')).toHaveCount(0);
   await expect(card.locator('.an-hp-price')).toBeVisible();
-  const lesbar = await grid.evaluate((el) => [...el.children].map((n) => ({
-    breite: n.clientWidth,
-    gitter: el.clientWidth,
-    abgeschnitten: [...n.querySelectorAll('.ang-name')].some((t) => t.scrollWidth > t.clientWidth + 1),
+  const lesbar = await grid.locator('.an-product').evaluateAll((cards) => cards.map((card) => ({
+    breite: card.clientWidth,
+    gitter: card.parentElement.clientWidth,
+    abgeschnitten: [...card.querySelectorAll('.ang-name')].some((t) => t.scrollWidth > t.clientWidth + 1),
   })));
   expect(lesbar.length).toBeGreaterThan(0);
   for (const eintrag of lesbar) {
@@ -2093,7 +2093,6 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   }
   await noOverflow(page);
   await page.screenshot({ path: test.info().outputPath('customer-cards.png') });
-  await shell.locator('[data-offer-action]').selectOption(head.id);
   await shell.locator('[data-offer-flyer]').click();
   const viewer = page.locator('dialog.an-viewer[open]');
   await expect(viewer.locator('canvas')).toBeVisible();
@@ -2150,13 +2149,29 @@ for (const count of [1, 2]) {
     }
     await noOverflow(page, '.ang-week-nav:visible');
     await noOverflow(page);
-    if (count > 1) await controls.getByRole('combobox', { name: 'Flyer auswählen', exact: true }).selectOption(selected.id);
-    else await expect(controls.locator('select')).toHaveCount(0);
+    await expect(controls.locator('select')).toHaveCount(0);
+    const groups = shell.locator('.an-group-hdr');
+    const legacy = await shell.locator('.an-legacy').count();
+    await expect(groups).toHaveCount(count + legacy);
+    await expect(groups.first()).toHaveAttribute('aria-expanded', 'true');
+    await groups.first().click();
+    await expect(groups.first()).toHaveAttribute('aria-expanded', 'false');
+    await expect(groups.first().locator('+ .an-group-body')).toBeHidden();
+    await groups.first().click();
+    await expect(groups.first()).toHaveAttribute('aria-expanded', 'true');
     await nav.screenshot({ path: test.info().outputPath('flyer-week-toolbar.png') });
     await button.locator('svg').click();
     const viewer = page.getByRole('dialog', { name: 'Original-Angebotsflyer', exact: true });
-    await expect(viewer.locator('strong')).toHaveText(selected.draft.title);
-    await expect(viewer.locator('canvas')).toBeVisible();
+    if (count > 1) {
+      await expect(viewer.locator('strong')).toContainText('· Flyer 1/2');
+      await expect(viewer.locator('canvas')).toBeVisible();
+      await viewer.locator('[data-viewer-next]').click();
+      await expect(viewer.locator('strong')).toContainText('· Flyer 2/2');
+      await expect(viewer.locator('[data-viewer-page-label]')).toContainText('1 /');
+    } else {
+      await expect(viewer.locator('strong')).toHaveText(selected.draft.title);
+      await expect(viewer.locator('canvas')).toBeVisible();
+    }
     await viewer.getByRole('button', { name: 'Flyer schließen', exact: true }).click();
     await expect(button).toBeFocused();
     await nav.getByRole('button', { name: 'Nächste Woche', exact: true }).click();

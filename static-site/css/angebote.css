@@ -458,9 +458,6 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-customer-controls .an-tabs{margin:0;flex:1 1 270px}
 .an-customer .ang-week-nav{flex-wrap:wrap;min-width:0}
 .ang-week-nav .an-customer-controls{margin:0 0 0 auto;justify-content:flex-end;flex-wrap:nowrap;min-width:0;max-width:100%}
-.ang-week-nav .an-customer-controls .an-field{flex:1 1 140px;max-width:160px;margin:0}
-.ang-week-nav .an-customer-controls select{font-size:14px}
-.ang-week-nav .an-customer-controls .an-field>span{display:none}
 .an-customer button.an-flyer-button{flex:none;background:#fff5f3;color:#a92020;border-color:#b5524b;box-shadow:none;font-size:14px;font-weight:600;white-space:nowrap}
 .an-customer button.an-flyer-button:hover{background:#ffe7e3;border-color:#a92020;color:#8d1919}
 .an-flyer-button svg{flex:none}
@@ -469,9 +466,18 @@ body.an-body{margin:0;background:#f7f5ed}
   .an-customer .ang-week-nav .ang-week-btn{padding:8px 10px;font-size:14px}
   .an-customer .ang-week-nav .ang-week-label{font-size:11px;min-width:0}
   .ang-week-nav .an-customer-controls{width:100%;margin:0}
-  .ang-week-nav .an-customer-controls.an-has-choice{grid-column:1/-1}
   .an-customer .ang-week-nav button.an-flyer-button{padding:8px 10px}
 }
+/* Angebotsgruppen: alle Aktionen einer Woche als eigene, aufklappbare
+   Sektion (Default: aufgeklappt). Das Raster liegt auf .an-group-body. */
+.an-groups{display:flex!important;flex-direction:column;gap:12px;padding:0!important;min-width:0}
+.an-group{display:flex;flex-direction:column;gap:8px;min-width:0}
+.an-group-hdr{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:10px 14px;border:1px solid var(--an-line,#d8dfd7);border-radius:12px;background:var(--an-card-bg,#fff);color:var(--an-text,#24362d);font:600 15px/1.3 var(--an-font,inherit);text-align:left;cursor:pointer}
+.an-group-hdr:hover{border-color:var(--an-green,#234c38)}
+.an-group-t{flex:1;min-width:0;overflow-wrap:anywhere}
+.an-group-n{flex:none;font-size:12px;font-weight:600;color:var(--an-muted,#59695f);background:var(--an-line,#d8dfd7);border-radius:10px;padding:2px 8px}
+.an-group-hdr::after{content:'▾';flex:none;font-size:14px;color:var(--an-muted,#59695f);transition:transform .2s}
+.an-group-hdr[aria-expanded="false"]::after{transform:rotate(-90deg)}
 .an-customer-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr))!important;gap:14px!important;padding:0!important}
 .an-product{background:var(--an-card-bg,#fff);border:1px solid var(--an-line);border-radius:14px;padding:20px;min-width:0;color:var(--an-text,#24362d);font-family:var(--an-font,inherit)}
 .an-product h3{font-size:20px;font-weight:600;margin:12px 0 8px;line-height:1.35;overflow-wrap:anywhere;color:inherit}
@@ -492,7 +498,9 @@ body.an-body{margin:0;background:#f7f5ed}
    der roten Kopfzeile - auf dem hellen Chip unsichtbar. Glas-Chip + Farbe der
    Kopfzeile macht ihn wieder erkennbar (Wahl des Ladens: weiß auf Glas). */
 .an-homepage .mob-popup-x{color:var(--hp-headerText,#fff)!important;background:rgba(255,255,255,.18)!important;border-radius:10px;min-width:44px;min-height:44px;font-size:1.35rem}
-.an-homepage .an-customer-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:10px!important;background:var(--hp-gridBg,#f4f1ea)}
+.an-homepage .an-groups{gap:10px;padding:10px!important;background:var(--hp-gridBg,#f4f1ea)}
+.an-homepage .an-customer-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:0!important;background:none}
+.an-homepage .an-group-hdr{border-color:var(--hp-cardBorder,#d8dfd7);border-radius:var(--hp-cardRadius,10px);background:var(--hp-cardBg,#fff);color:var(--hp-nameColor,#1f2521);font-family:var(--f,"Segoe UI",system-ui,sans-serif)}
 .an-homepage .an-hp-card{display:block;position:relative;min-width:0;min-height:0;padding:12px;border:1px solid var(--hp-cardBorder,#d8dfd7);border-radius:var(--hp-cardRadius,10px);background:var(--hp-cardBg,#fff);box-shadow:none;font-family:inherit;color:var(--hp-nameColor,#1f2521)}
 .an-homepage .an-hp-card h3{position:relative;z-index:1;font:600 14px/1.35 var(--f,"Segoe UI",system-ui,sans-serif);color:var(--hp-nameColor,#1f2521);margin:0;min-height:38px;overflow-wrap:anywhere}
 .an-homepage .an-hp-card p{font:400 12px/1.4 var(--f,"Segoe UI",system-ui,sans-serif);color:var(--hp-detColor,#555);margin:4px 0;overflow-wrap:anywhere}
@@ -511,11 +519,11 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-hp-leaves .an-hp-leaf,.an-hp-baskets .an-hp-basket{display:block}
 .an-homepage .ang-week-nav button,.an-homepage .ang-week-nav .an-flyer-button{font-size:12px;min-height:32px;padding:5px 10px;border-radius:7px;box-shadow:none}
 .an-homepage .ang-week-label{font-size:11px}
-.an-homepage .an-customer-controls select{font-size:12px;min-height:32px;padding:4px}
 @container(min-width:740px){.an-homepage .an-customer-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @container(max-width:500px){
-  .an-homepage .ang-week-nav button,.an-homepage .ang-week-nav .an-flyer-button,.an-homepage .an-customer-controls select{min-height:44px}
-  .an-homepage .an-customer-grid{gap:8px!important;padding:8px!important}
+  .an-homepage .ang-week-nav button,.an-homepage .ang-week-nav .an-flyer-button{min-height:44px}
+  .an-homepage .an-groups{gap:8px;padding:8px!important}
+  .an-homepage .an-customer-grid{gap:8px!important}
   .an-homepage .an-hp-card{padding:9px}
   .an-homepage .an-hp-card h3{font-size:13px;min-height:53px}
   .an-homepage .an-hp-card p{font-size:11px}
@@ -526,7 +534,7 @@ body.an-body{margin:0;background:#f7f5ed}
   .an-homepage .an-hp-discount{right:46px;font-size:9px}
 }
 @container(max-width:339px){.an-homepage .an-customer-grid{grid-template-columns:1fr!important}.an-homepage .an-hp-card h3{min-height:0}}
-@media(max-width:768px){.an-homepage .ang-week-nav button,.an-homepage .ang-week-nav .an-flyer-button,.an-homepage .an-customer-controls select{min-height:44px}}
+@media(max-width:768px){.an-homepage .ang-week-nav button,.an-homepage .ang-week-nav .an-flyer-button{min-height:44px}}
 .an-viewer{position:fixed;inset:0;width:min(100%,1000px);height:96dvh;max-width:100%;max-height:100dvh;border:0;border-radius:14px;background:#eff1eb;padding:14px;margin:auto;overflow:hidden}
 .an-viewer-shell{display:flex;flex-direction:column;height:100%;gap:10px}
 .an-viewer-tools{display:flex;flex:none;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
