@@ -137,7 +137,7 @@ async function fillDrink(row, index) {
 }
 
 for (const kind of ['drinks', 'weekly']) {
-  test(`TC-F42-01: direkt editierbare ausgerichtete Erfassung mit erhaltenen Werten (${kind})`, async ({ page }) => {
+  test(`TC-F42-01: direkt editierbare ausgerichtete Erfassung mit erhaltenen Werten (${kind})`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page);
     await page.goto(BASE + '/angebote.html');
     const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
@@ -234,7 +234,7 @@ for (const kind of ['drinks', 'weekly']) {
     expect(state.errors).toEqual([]);
   });
 
-  test(`TC-F42-03: unverdeckte Auswahl am Dialogende mit Tastatur und ohne verwaiste Ebenen (${kind})`, async ({ page }) => {
+  test(`TC-F42-03: unverdeckte Auswahl am Dialogende mit Tastatur und ohne verwaiste Ebenen (${kind})`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page);
     await page.route('**/api/preisliste?all=1', route => route.fulfill({ json: { groups: { Artikel: Array.from({ length: 12 }, (_, i) => ({
       bezeichnung: 'Testgetränk ' + (i + 1), artikelnummer: 'ART1-' + i, strichcode: '4001234567890', vk: 14.99, menge: '20x0,5 l'
@@ -288,7 +288,7 @@ for (const kind of ['drinks', 'weekly']) {
   });
 }
 
-test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artikelverlust', async ({ page }) => {
+test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artikelverlust', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), rows = dlg.locator('.cms-ang-row');
@@ -342,7 +342,7 @@ test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artik
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-01/05: Erfassung direkt im Kiosk mit Produktsuche und erhaltenem Menü', async ({ page }) => {
+test('TC-F18-01/05: Erfassung direkt im Kiosk mit Produktsuche und erhaltenem Menü', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/kiosk.html');
   await page.evaluate(() => window.K.switchTab('angebote'));
@@ -385,7 +385,7 @@ test('TC-F18-01/05: Erfassung direkt im Kiosk mit Produktsuche und erhaltenem Me
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-04/06: gespeicherte Getränke sind ohne weitere Freigabe mit Flyer genau einmal öffentlich sichtbar', async ({ page }) => {
+test('TC-F18-04/06: gespeicherte Getränke sind ohne weitere Freigabe mit Flyer genau einmal öffentlich sichtbar', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks');
@@ -408,7 +408,7 @@ test('TC-F18-04/06: gespeicherte Getränke sind ohne weitere Freigabe mit Flyer 
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F25-02: Aktion der nächsten Woche erscheint auf der Startseite nur unter „Nächste Woche“', async ({ page }) => {
+test('TC-F25-02: Aktion der nächsten Woche erscheint auf der Startseite nur unter „Nächste Woche“', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks');
@@ -472,7 +472,7 @@ test('TC-F18-10: Gestaltung direkt nach dem Erfassen mehrfach speichern ohne Kon
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-11: Meldungsfenster stehen im Kiosk mittig im sichtbaren Bereich', async ({ page }) => {
+test('TC-F18-11: Meldungsfenster stehen im Kiosk mittig im sichtbaren Bereich', { tag: '@layout' }, async ({ page }) => {
   await setup(page);
   await page.goto(BASE + '/kiosk.html');
   await page.evaluate(() => window.K.switchTab('angebote'));
@@ -606,7 +606,7 @@ test('TC-F21-01: Startseitenkacheln verwenden halbfette statt fette Schrift', as
   }
 });
 
-test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speicherung erhalten', async ({ page }) => {
+test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speicherung erhalten', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
@@ -632,7 +632,7 @@ test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speich
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen des Artikels', async ({ page }) => {
+test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen des Artikels', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'weekly'), row = dlg.locator('.cms-ang-row').first();
@@ -662,7 +662,7 @@ test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-01/03: gefundene CMS-Bilder mit Produktnamen bleiben nach dem Speichern verknüpft', async ({ page }) => {
+test('TC-F18-01/03: gefundene CMS-Bilder mit Produktnamen bleiben nach dem Speichern verknüpft', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
@@ -720,7 +720,7 @@ test('TC-F18-07/09: ursprüngliche aufklappbare CMS-Übersicht lädt ohne Vorlag
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelaufenem Link werden lesend geladen', async ({ page }) => {
+test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelaufenem Link werden lesend geladen', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.route('**/api/angebote', route => route.fulfill({ json: { success: true, data: [0, 1, 2].map(i => ({
     id: '00000000-0000-4000-8000-' + String(i).padStart(12, '0'), aktion_id: 'ALT-BILDER',
@@ -1062,7 +1062,7 @@ for (const kind of ['weekly', 'drinks']) {
   });
 }
 
-test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', async ({ page }) => {
+test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
@@ -1397,7 +1397,7 @@ test('TC-F61-05: Aktionspaletten erhalten freie Geometrie, fremde Ziele und Undo
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F19-06: sichtbare Griffe schrumpfen mit der dargestellten Kachel statt den Inhalt zu verdecken', async ({ page }) => {
+test('TC-F19-06: sichtbare Griffe schrumpfen mit der dargestellten Kachel statt den Inhalt zu verdecken', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(BASE + '/angebote.html');
@@ -1413,7 +1413,7 @@ test('TC-F19-06: sichtbare Griffe schrumpfen mit der dargestellten Kachel statt 
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat erreichbaren Motiv', async ({ page }) => {
+test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat erreichbaren Motiv', { tag: '@layout' }, async ({ page }) => {
   await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
@@ -1510,7 +1510,7 @@ test('TC-F19-03/TC-F39-04: Artikel, Farbe und Undo/Redo in der Vorschau bearbeit
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Drehgriff', async ({ page }) => {
+test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Drehgriff', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'weekly', 1);
@@ -1543,7 +1543,7 @@ async function openSurface(page, path) {
 }
 
 for (const [surface, path] of SURFACES) {
-  test(`TC-F45-01/02: alle Aktionsvorschauen rechts und ohne Schreibvorgang (${surface})`, async ({ page }) => {
+  test(`TC-F45-01/02: alle Aktionsvorschauen rechts und ohne Schreibvorgang (${surface})`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page);
     await openSurface(page, path);
     for (const kind of ['weekly', 'drinks']) {
@@ -1610,7 +1610,7 @@ for (const [surface, path] of SURFACES) {
 }
 
 for (const [surface, path] of SURFACES) {
-  test(`TC-F26-01/F27-01: Original-Wochenvorschau hat überall dieselben Werkzeuge (${surface})`, async ({ page }) => {
+  test(`TC-F26-01/F27-01: Original-Wochenvorschau hat überall dieselben Werkzeuge (${surface})`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page);
     await openSurface(page, path);
     await openPreview(page, 'weekly', 1, true);
@@ -1763,7 +1763,7 @@ test('TC-F24-01: Buttons und Felder sind klar erkennbar (Kontrast)', async ({ pa
 });
 
 for (const kind of ['weekly', 'drinks']) {
-  test(`TC-F31-01: Gestaltung liegt neben der Vorschau bzw. hinter Reitern (${kind})`, async ({ page }) => {
+  test(`TC-F31-01: Gestaltung liegt neben der Vorschau bzw. hinter Reitern (${kind})`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page);
     await page.goto(BASE + '/angebote.html');
     await openPreview(page, kind, 2);
@@ -1813,7 +1813,7 @@ for (const kind of ['weekly', 'drinks']) {
   });
 }
 
-test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofort in der Vorschau', async ({ page }) => {
+test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofort in der Vorschau', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'weekly', 2);
@@ -1852,7 +1852,7 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je Ziel', async ({ page }) => {
+test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je Ziel', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
@@ -1961,7 +1961,7 @@ test('TC-F55-01: wahrheitsgemäße Zustände, Schutz vor Verlust und kein doppel
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht', async ({ page }) => {
+test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   state.actions.set('AKT-ZWEI', seededAction('AKT-ZWEI', 'Gemeinsame Aktion', '2026-11-16', '2026-11-21'));
   await page.goto(BASE + '/angebote.html');
@@ -2007,7 +2007,7 @@ test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht'
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gestaltungshistorie', async ({ page }) => {
+test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gestaltungshistorie', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
@@ -2083,7 +2083,7 @@ test('TC-F62-02: Speicherkonflikt nach Bildupload erhält Bild, Artikel und geme
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten dieselben Zeilen', async ({ page }) => {
+test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten dieselben Zeilen', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks');
@@ -2127,7 +2127,7 @@ test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten
   expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
 });
 
-test('TC-F63-02: alle zehn Getränkefelder passen in den mobilen Einzelarbeitsraum', async ({ page }) => {
+test('TC-F63-02: alle zehn Getränkefelder passen in den mobilen Einzelarbeitsraum', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   const dlg = await create(page, 'drinks'), row = dlg.locator('.cms-ang-row').first();
@@ -2153,7 +2153,7 @@ test('TC-F63-02: alle zehn Getränkefelder passen in den mobilen Einzelarbeitsra
   expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
 });
 
-test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennungen und gleichen Bildern', async ({ page }) => {
+test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennungen und gleichen Bildern', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2, true);

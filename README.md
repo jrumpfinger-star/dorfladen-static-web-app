@@ -128,6 +128,26 @@ git push origin main
 - Sofort nach Änderung pushen – NICHT erst fragen
 - Für Staging/Tests: Branch erstellen → PR öffnen → Preview-URL nutzen
 
+## Test-Arbeitsregel (schnelle Zyklen)
+
+Die Playwright-Suite ist groß (~1.500 Tests, `fullyParallel`, 12 Worker).
+Während der Entwicklung NIE die volle Suite fahren:
+
+```bash
+npm run test:schnell              # nur Desktop-Projekt, alles — ~1-2 min
+npm run test:geaendert            # nur Specs zu den geänderten Dateien, Desktop
+npm run test:geaendert:alle       # dieselben Specs auf allen Ansichten
+npm run test:voll                 # volle Matrix (vor Push / release)
+npx playwright test tests/xyz.spec.js --project=desktop --grep "TC-F…"   # gezielt
+```
+
+Ansichtsabhängige Tests tragen den Tag `@layout` und laufen zusätzlich auf
+`ansichten-mobil` (375×667) und `ansichten-tablet` (686×1095, Touch).
+Alles andere läuft nur auf Desktop — Tests ohne Layoutbezug verhalten sich
+in jeder Ansicht gleich. Ein neuer ansichtsabhängiger Test bekommt
+`{ tag: '@layout' }`; Dateien, die komplett nur Desktop brauchen, markiert
+man mit `// @ansichten: desktop` in der ersten Zeile.
+
 ---
 
 ## Python

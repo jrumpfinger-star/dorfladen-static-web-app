@@ -556,7 +556,7 @@ test('TC-F13-03: Logo-Ladefehler verhindert unvollständiges Rendern und ist wie
 });
 
 for (const cmsMode of [true, false]) {
-  test(`TC-F13-05: große Vorlagenvorschau ohne Übernahme im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, async ({ page }) => {
+  test(`TC-F13-05: große Vorlagenvorschau ohne Übernahme im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page), head = await seed(page, state, { count: 2 });
     if (cmsMode) await cms(page);
     else {
@@ -621,7 +621,7 @@ for (const cmsMode of [true, false]) {
 }
 
 for (const cmsMode of [true, false]) {
-  test(`TC-F10-01..04: Layoutkacheln, Tastatur und Ausgabevorschauen im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, async ({ page }) => {
+  test(`TC-F10-01..04: Layoutkacheln, Tastatur und Ausgabevorschauen im ${cmsMode ? 'CMS' : 'Aktionseditor'}`, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page), head = await seed(page, state, { count: 7 });
     if (cmsMode) await cms(page);
     else {
@@ -1088,7 +1088,7 @@ test('TC-F35-01: neue Dekoration zeichnet sichtbar ohne sachfremde Positionsänd
   expect(result.changed[0].geometry).toEqual(result.plain.geometry);
 });
 
-test('TC-F36-01/02: zentraler Homepage-Designer wirkt in Kundensitzung, Flyer bleiben erhalten', async ({ page }) => {
+test('TC-F36-01/02: zentraler Homepage-Designer wirkt in Kundensitzung, Flyer bleiben erhalten', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   const action = await seed(page, state, { count: 2 });
   const imageId = uid(); state.images.set(imageId, PHOTO); action.draft.items[0].image_id = imageId;
@@ -1426,7 +1426,7 @@ test('TC-F14-04: Kioskmenü und ungespeicherter Angebotsentwurf bleiben beim Rei
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F15-01..02: kompakte Übersicht mit Wochenfiltern und Direktaktionen ohne implizite Freigabe', async ({ page }) => {
+test('TC-F15-01..02: kompakte Übersicht mit Wochenfiltern und Direktaktionen ohne implizite Freigabe', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page), current = await seed(page, state, { count: 2, publish: true, title: 'Aktuelle Aktion' });
   const next = await seed(page, state, { title: 'Nächste Aktion' });
   next.draft.valid_from = '2026-11-23'; next.draft.valid_to = '2026-11-29';
@@ -1807,7 +1807,7 @@ for (const technical of [false, true]) {
   });
 }
 
-test('TC-F17-01/03: kompakte Artikelzeilen auf voller Breite und farbige Direktaktionen', async ({ page }) => {
+test('TC-F17-01/03: kompakte Artikelzeilen auf voller Breite und farbige Direktaktionen', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page), head = await seed(page, state, { kind: 'weekly', count: 6 });
   await page.reload();
   const action = page.locator('[data-action-id="' + head.id + '"]');
@@ -1901,7 +1901,7 @@ test('TC-F17-02: Mehrfachauswahl behält Trefferknoten, Fokus und Auswahl über 
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontalen Überlauf', async ({ page }) => {
+test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontalen Überlauf', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page), head = await seed(page, state, { count: 4 });
   await page.reload();
   await page.locator('[data-open="' + head.id + '"]').click();
@@ -1915,9 +1915,14 @@ test('TC-F11-04: direkt bearbeitbare Artikelliste bleibt lesbar ohne horizontale
   expect(state.errors).toEqual([]);
 });
 
-for (const target of ['card', 'single', 'sheet', 'scale']) {
-  test(`TC-F11-08: ${target} direkt drehen, skalieren, Bilder einfügen und per Maus/Touch ändern`, async ({ page }, testInfo) => {
-    const state = await setup(page), head = await seed(page, state, { count: 2, publish: true });
+test('TC-F11-08: Ziel direkt drehen, skalieren, Bilder einfügen und per Maus/Touch ändern', { tag: '@layout' }, async ({ page }, testInfo) => {
+  /* Alle vier Ziele in einem Durchlauf: ein Setup statt vier, dieselben
+     Arbeitsschritte je Ziel. Der Test ist ansichtsabhaengig (Touch-Ziele,
+     Griffe, Arbeitsansicht) und traegt deshalb @layout. */
+  const state = await setup(page);
+  for (const target of ['card', 'single', 'sheet', 'scale']) {
+    state.actions.clear(); state.published.clear(); state.errors.length = 0;
+    const head = await seed(page, state, { count: 2, publish: true });
     const sourceId = uid();
     const image = await page.evaluate(() => {
       const canvas = document.createElement('canvas'); canvas.width = 120; canvas.height = 80;
@@ -2011,10 +2016,10 @@ for (const target of ['card', 'single', 'sheet', 'scale']) {
     await phoneView(page, 'picture');
     await page.locator('#an-preview').screenshot({ path: test.info().outputPath('direkte-gestaltung-' + target + '.png') });
     expect(state.errors).toEqual([]);
-  });
-}
+  }
+});
 
-test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Drehung/Transparenz', async ({ page }) => {
+test('TC-F3-04: echte freie Elemente, eigenes Bild, Duplikat und gespeicherte Drehung/Transparenz', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state);
   await page.locator('#an-items button[data-edit-item]').click();
   await page.getByLabel('Bilddatei wählen / ersetzen').setInputFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: PHOTO });
@@ -2086,7 +2091,7 @@ test('TC-F3-01..02/F3-05: sieben Artikel, freies Layout und echte A4-PDF-Seiten'
   expect(state.published.size).toBe(0);
 });
 
-test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zoom und Seiten', async ({ page }) => {
+test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zoom und Seiten', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   const head = await seed(page, state, { count: 7, publish: true });
   await seed(page, state, { publish: true, title: 'Zweite Getränkeaktion' });
@@ -2151,9 +2156,12 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   expect(state.errors).toEqual([]);
 });
 
-for (const count of [1, 2]) {
-  test(`TC-F29-01/02: Flyer in der Wochenleiste (${count} Aktionen)`, async ({ page }) => {
-    const state = await setup(page);
+test('TC-F29-01/02: Flyer in der Wochenleiste mit einer und mit zwei Aktionen', { tag: '@layout' }, async ({ page }) => {
+  /* Beide Faelle in einem Durchlauf: die veroeffentlichten Aktionen werden
+     je Durchlauf neu gesetzt, der Kunde laedt die Seite je Durchlauf neu. */
+  const state = await setup(page);
+  for (const count of [1, 2]) {
+    state.published.clear();
     let selected;
     for (let n = 0; n < count; n++) {
       selected = await seed(page, state, { publish: true, title: 'Unsere Angebote ' + (n + 1) });
@@ -2211,8 +2219,8 @@ for (const count of [1, 2]) {
     await expect(button).toBeVisible();
     expect(state.log.filter((r) => r.method !== 'GET' && r.path !== '/api/track')).toEqual([]);
     expect(state.errors).toEqual([]);
-  });
-}
+  }
+});
 
 test('TC-F4-04/F5-02: Lesefehler statt leerer Ersatzdaten, erneutes Laden und leerer Zeitraum', async ({ page }) => {
   const state = await setup(page);
@@ -2423,7 +2431,7 @@ test('Einzelflyer-Live-Vorschau lädt das Produktbild über die Artikelnummer un
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F60-03: moderne Bereichsauswahl erhält alle Ziele, Fokus und volle Bezeichnungen', async ({ page }) => {
+test('TC-F60-03: moderne Bereichsauswahl erhält alle Ziele, Fokus und volle Bezeichnungen', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await cms(page);
   async function checkSaveContrast() {
@@ -2533,7 +2541,7 @@ test('TC-F60-01: Objekteigenschaften restaurieren Feldbesitz und direkte Bildreg
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F60-02: Preisschilddialog gliedert echte Felder und erhält Transaktionen', async ({ page }) => {
+test('TC-F60-02: Preisschilddialog gliedert echte Felder und erhält Transaktionen', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await cms(page); await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
@@ -2760,7 +2768,7 @@ test('TC-F64-01: zielbezogene Markerform und Farbwelt erreichen den echten Konfi
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F55a: Preisschild-Dialog zeigt kompakte, gestapelte Felder ohne Riesenflächen', async ({ page }) => {
+test('TC-F55a: Preisschild-Dialog zeigt kompakte, gestapelte Felder ohne Riesenflächen', { tag: '@layout' }, async ({ page }) => {
   test.setTimeout(180000);
   const state = await setup(page);
   await seed(page, state, { count: 8, publish: true });
@@ -2863,7 +2871,7 @@ test('TC-F57-01: Designvorgaben erreichen die Live-Vorschau (Marker-Typ, Footer-
   await expect.poll(hash, { timeout: 15000 }).not.toBe(beforeFooter);
 });
 
-test('TC-F43-01/02/03 TC-F46-01/02/04: bildreine Vorschau, mindestens halbe Feldfläche und Splitter in allen Designern', async ({ page }) => {
+test('TC-F43-01/02/03 TC-F46-01/02/04: bildreine Vorschau, mindestens halbe Feldfläche und Splitter in allen Designern', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   await seed(page, state, { count: 8, publish: true });
   await cms(page);
@@ -2955,7 +2963,7 @@ test('TC-F43-01/02/03 TC-F46-01/02/04: bildreine Vorschau, mindestens halbe Feld
 });
 
 for (const kind of ['plakat', 'flyer']) {
-  test('TC-F44-01/02: identische Direktwerkzeuge, echtes Rendern, Undo und explizites Speichern ' + kind, async ({ page }) => {
+  test('TC-F44-01/02: identische Direktwerkzeuge, echtes Rendern, Undo und explizites Speichern ' + kind, { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
     state.previewImage = Buffer.from(await page.evaluate(() => {
       const canvas = document.createElement('canvas'); canvas.width = 200; canvas.height = 300;
@@ -3018,7 +3026,7 @@ for (const kind of ['plakat', 'flyer']) {
   });
 }
 
-test('TC-F52-04: echte Eingabefläche statt abgeschnittener mobiler Miniansicht', async ({ page }) => {
+test('TC-F52-04: echte Eingabefläche statt abgeschnittener mobiler Miniansicht', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   await cms(page);
   const root = page.locator('[data-designer=drinks]'), body = root.locator('.an-designer-body');
@@ -3049,7 +3057,7 @@ test('TC-F52-04: echte Eingabefläche statt abgeschnittener mobiler Miniansicht'
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F52-05: Mausaktionen sind tatsächlich 32 px hoch, Touchziele bleiben erreichbar', async ({ page }) => {
+test('TC-F52-05: Mausaktionen sind tatsächlich 32 px hoch, Touchziele bleiben erreichbar', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await cms(page);
   const root = page.locator('[data-designer=drinks]');
@@ -3101,7 +3109,7 @@ test('TC-F52-05: Mausaktionen sind tatsächlich 32 px hoch, Touchziele bleiben e
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F52-01/02/03: kompakte Eigenschaften sind live, verwerfbar und ein Gestaltungsschritt', async ({ page }) => {
+test('TC-F52-01/02/03: kompakte Eigenschaften sind live, verwerfbar und ein Gestaltungsschritt', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   await cms(page); await designTab(page, 'sec-plakat');
   const root = page.locator('[data-designer=plakat]');
@@ -3222,7 +3230,7 @@ test('TC-F53-02: Altbestand ohne Herkunft und geänderte Standards verändern ge
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F54-01: mobile Detailvorschau aus echten Motivpixeln', async ({ page }) => {
+test('TC-F54-01: mobile Detailvorschau aus echten Motivpixeln', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   const head = await seed(page, state, { count: 2 });
   await openEditor(page, head);
@@ -3508,7 +3516,7 @@ test('TC-F38-01/05/06: gemeinsame Arbeitsfläche, geschlossene Vorlagen und unab
 });
 
 for (const section of ['plakat', 'flyer']) {
-  test('TC-F38-02: Reiter ' + section + ' erhält Eingabefelder und Speichervertrag', async ({ page }) => {
+  test('TC-F38-02: Reiter ' + section + ' erhält Eingabefelder und Speichervertrag', { tag: '@layout' }, async ({ page }) => {
     const state = await setup(page);
     await cms(page);
     await designTab(page, 'sec-' + section);
@@ -3713,7 +3721,7 @@ test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nati
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F38-07: Bild- und Preisposition nutzen breite Container nebeneinander', async ({ page }) => {
+test('TC-F38-07: Bild- und Preisposition nutzen breite Container nebeneinander', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await cms(page);
   await designTab(page, 'sec-flyer');
@@ -3782,7 +3790,7 @@ test('TC-F38-04: Preisbild wartet auf lokale Anton-Schrift und setzt Cent eng an
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reitern und Undo', async ({ page }) => {
+test('TC-F40-01/02: HP-Designer mit echter bebilderter Vorschau, kompakten Reitern und Undo', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page, { legacyArticleNumber: 'LEGACY-IMAGE' });
   const action = await seed(page, state, { count: 8, publish: true });
   const id = uid(); state.images.set(id, PHOTO); state.published.get(action.id).data.items[0].image_id = id;
