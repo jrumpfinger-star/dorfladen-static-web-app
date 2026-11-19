@@ -214,10 +214,21 @@
     var message = '🏷️ *' + draft.title + '*\n_Gültig ' + M.date(draft.valid_from) + ' – ' + M.date(draft.valid_to) + '_';
     var mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     // Wie früher zuerst das System-Teilen-Menü (öffnet die WhatsApp-App); der Dialog ist nur der Ausweichweg.
-    var note = '';
+    // Ohne Freigabe-Oberfläche (z. B. Desktop ohne Share-Sheet, Kiosk) bleibt navigator.share
+    // sonst ewig ausstehend und sperrt die ganze Verwaltung - deshalb Zeitlimit + canShare-Prüfung.
+    var note = '', sharePending = null;
     if (navigator.share) {
-      try { await navigator.share({ files: files, text: message, title: draft.title }); return; }
-      catch (error) { if (error.name === 'AbortError') return; note = 'Das Teilen-Menü ist hier nicht verfügbar. Bitte eine der Möglichkeiten unten wählen.'; }
+      /* Immer versuchen (wie früher); ohne Freigabe-Oberfläche (Kiosk, Desktop
+         ohne Share-Sheet) bleibt navigator.share sonst ewig ausstehend und
+         sperrt die ganze Verwaltung - deshalb das Zeitlimit. */
+      sharePending = navigator.share({ files: files, text: message, title: draft.title });
+      sharePending.catch(function () {}); /* unbehandelte Ablehnung vermeiden */
+      var outcome = await Promise.race([
+        sharePending.then(function () { return 'ok'; }, function (error) { return error && error.name === 'AbortError' ? 'abort' : 'error'; }),
+        new Promise(function (resolve) { setTimeout(function () { resolve('timeout'); }, 5000); })
+      ]);
+      if (outcome === 'ok' || outcome === 'abort') return;
+      note = 'Das Teilen-Menü ist hier nicht verfügbar. Bitte eine der Möglichkeiten unten wählen.';
     }
     var urls = blobs.map(function (blob) { return URL.createObjectURL(blob); });
     var appLink = mobile ? 'https://wa.me/?text=' + encodeURIComponent(message) : 'whatsapp://send?text=' + encodeURIComponent(message);
@@ -265,6 +276,9 @@
       }
     });
     document.body.appendChild(dialog); dialog.showModal();
+    /* Liefert das Teilen-Menü doch noch (z. B. nach dem Zeitlimit), schließt der
+       Ausweich-Dialog automatisch. */
+    if (sharePending) sharePending.then(function () { if (dialog.open) dialog.close(); }, function () {});
   }
   async function previewAction(draft, share) {
     var canvases = await M.preflight(draft);
@@ -691,7 +705,9 @@
     }
     var density = $('an-style-controls').querySelector('[data-style=density]');
     if (density) density.closest('fieldset').hidden = ownStyle;
-    var noTargetItem = designTarget !== 'sheet' && !designItemId;
+    /* Veraltete Artikel-ID (z. B. nach dem Entfernen) rendert eine leere Fläche
+       statt einen Fehlerdialog zu werfen. */
+    var noTargetItem = designTarget !== 'sheet' && (!itemId || !draft.items.some(function (it) { return it.id === itemId; }));
     var result;
     if (noTargetItem) {
       var empty = document.createElement('canvas'), emptySize = activeSize();
@@ -1663,12 +1679,16 @@
       if (b.dataset.select) { selected = b.dataset.select; syncSelectedArticle(); renderInspector(); overlay(); }
       if (b.dataset.remove) {
         var removedIndex = data.items.findIndex(function (item) { return item.id === b.dataset.remove; });
+        var remaining = data.items.filter(function (it) { return it.id !== b.dataset.remove; });
+        /* Vor dem Umbau zurücksetzen, damit die Live-Vorschau nicht noch mit der
+           gelöschten Artikel-ID rendert (Fehlerdialog „Zielgestaltung nicht
+           vorhanden" blockierte dann die ganze Oberfläche). */
+        if (designItemId === b.dataset.remove) designItemId = remaining.length ? remaining[Math.min(removedIndex, remaining.length - 1)].id : '';
         edit(function () { data.items = data.items.filter(function (it) { return it.id !== b.dataset.remove; });
           data.layout.pages.forEach(function (p) { p.elements = p.elements.filter(function (e) { return e.item_id !== b.dataset.remove; }); });
           M.ensureTargets(data);
           if (data.layout.mode === 'template') M.applyTemplate(data); page = Math.min(page, data.layout.pages.length - 1);
         });
-        if (designItemId === b.dataset.remove) designItemId = data.items.length ? data.items[Math.min(removedIndex, data.items.length - 1)].id : '';
         pendingImages.delete(b.dataset.remove); pendingImageUrls.delete(b.dataset.remove);
         renderItems(); renderInspector();
       }

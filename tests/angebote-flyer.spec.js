@@ -48,6 +48,29 @@ async function setup(page, options = {}) {
     window.print = () => { window.__printCalled = (window.__printCalled || 0) + 1; };
   }, !!options.loggedOut);
   page.on('pageerror', (error) => state.errors.push(error.message));
+  if (process.env.DEBUG_CONSOLE) {
+    await page.addInitScript(() => {
+      window.addEventListener('load', () => {
+        const M = window.AngeboteModel, orig = M.renderTarget;
+        M.renderTarget = async function (data, target, itemId, scale, light) {
+          try { return await orig(data, target, itemId, scale, light); }
+          catch (e) {
+            try {
+              console.error('RT-DEBUG target=' + target + ' itemId=' + itemId + ' kind=' + data.kind
+                + ' items=' + JSON.stringify(data.items.map(i => i.id))
+                + ' targets=' + JSON.stringify(Object.fromEntries(Object.entries(data.layout.targets || {}).map(([k, v]) => [k, v.map(t => t.item_id)]))));
+            } catch (_) {}
+            throw e;
+          }
+        };
+      });
+    });
+  }
+  page.on('console', (msg) => {
+    if (process.env.DEBUG_CONSOLE && (msg.type() === 'error' || /DBG/.test(msg.text()))) {
+      require('fs').appendFileSync('debug-console.log', '--- [' + msg.type() + '] ' + msg.text() + '\n');
+    }
+  });
   await page.context().route('**/*', (route) => {
     if (new URL(route.request().url()).origin !== new URL(BASE).origin) return route.abort();
     return route.fallback();
@@ -197,6 +220,14 @@ async function saveDraft(page) {
   await page.getByRole('button', { name: 'Entwurf speichern', exact: true }).click();
   await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('#an-state')).toContainText('Entwurf gespeichert');
+}
+
+/* Im Ausgabe-Modus stecken Qualität und Freigabe hinter „Mehr" in der
+   Vorschauleiste (die alte Seitenleiste ist dort ausgeblendet). */
+async function outputAction(page, selector) {
+  const more = page.locator('.an-output-bar details.an-output-more');
+  await more.evaluate((node) => { node.open = true; });
+  await more.locator(selector).click();
 }
 
 async function customerView(page) {
@@ -1427,9 +1458,14 @@ test('TC-F15-01..02: kompakte Übersicht mit Wochenfiltern und Direktaktionen oh
   await row.getByRole('button', { name: 'Vorschau', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Aktionsvorschau' }).locator('canvas')).toBeVisible();
   await page.getByRole('button', { name: 'Vorschau schließen' }).click();
+  /* navigator.share bleibt in kopflosen Umgebungen ohne Freigabe-Oberfläche
+     hängen (die App fängt das mit einem Zeitlimit ab) - für den Test direkt
+     auf den Dialog-Fallback führen. */
+  await page.evaluate(() => { Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); });
   await row.getByRole('button', { name: 'Teilen', exact: true }).click();
+  await page.clock.runFor(2000); /* eingefrorene Uhr: das Vorschaubild (canvas.toBlob) braucht einen Takt */
   const shareDialog = page.getByRole('dialog', { name: 'Angebot teilen' });
-  await expect(shareDialog).toBeVisible();
+  await expect(shareDialog).toBeVisible({ timeout: 15000 });
   const download = page.waitForEvent('download'); await shareDialog.getByRole('button', { name: 'Herunterladen', exact: true }).click();
   expect((await download).suggestedFilename()).toBe('Angebot-1.png');
   await shareDialog.getByRole('button', { name: 'Schließen', exact: true }).click();
@@ -1455,10 +1491,11 @@ test('TC-F1-02..03/F2-01..03/F4-01: Artikelstamm, eigene Angebotspreise, Pfand u
   expect(draft.draft.items[0].price_cents).toBeNull();
   expect(JSON.stringify(draft)).not.toContain('14.99');
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-publish').click();
+  await outputAction(page, '[data-output-publish]');
   await expect(page.locator('dialog[open]')).toContainText('Angebotspreis');
   await page.locator('dialog[open]').getByRole('button', { name: 'Schließen', exact: true }).click();
   expect(state.published.size).toBe(0);
+  await page.locator('[data-output-back]').click();
   await page.getByRole('button', { name: '1 · Artikel und Bilder' }).click();
   await page.locator('#an-items button[data-edit-item]').click();
   await page.locator('dialog[open]').getByLabel('Angebotspreis €', { exact: true }).fill('12.49');
@@ -1505,12 +1542,13 @@ test('TC-F11: vier getrennte Ausgaben bearbeiten, speichern und als Kiosk-Kachel
   expect(saved.layout.pages[0].elements.some((element) => element.type === 'name' && element.x === 130)).toBe(false);
 
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-print-single').click();
+  await page.locator('[data-output-target]').selectOption('single');
+  await page.locator('[data-cms-print]').click();
   await expect.poll(() => page.evaluate(() => window.__printCalled || 0)).toBe(1);
   const singlePrint = await page.locator('#an-print img').evaluate((image) => [image.naturalWidth, image.naturalHeight]);
   expect(singlePrint).toEqual([1600, 2260]);
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
-  await page.locator('#an-publish').click();
+  await outputAction(page, '[data-output-publish]');
   await page.locator('dialog[open]').getByRole('button', { name: 'Jetzt freigeben' }).click();
   const customer = await customerView(page);
   await expect(customer.shell.locator('[data-offer-kind]')).toHaveCount(0);
@@ -2038,7 +2076,8 @@ test('TC-F3-01..02/F3-05: sieben Artikel, freies Layout und echte A4-PDF-Seiten'
   const state = await setup(page), head = await editSeed(page, state, { count: 7 });
   await saveDraft(page);
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-print-action').click();
+  await page.locator('[data-output-target]').selectOption('sheet');
+  await page.locator('[data-cms-print]').click();
   await expect.poll(() => page.evaluate(() => window.__printCalled || 0)).toBe(1);
   await expect(page.locator('body>#an-print .an-print-page')).toHaveCount(2);
   expect(await page.locator('[id=an-print]').count()).toBe(1);
@@ -2215,10 +2254,11 @@ test('TC-F4-02/F4-04: Entwurfsänderung bleibt privat, Freigabe explizit und Kon
   expect(state.published.get(head.id).data.items[0].price_cents).toBe(1249);
   expect(state.actions.get(head.id).draft.items[0].price_cents).toBe(1099);
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-publish').click();
+  await outputAction(page, '[data-output-publish]');
   await page.locator('dialog[open]').getByRole('button', { name: 'Jetzt freigeben' }).click();
   await expect(page.locator('#an-output-status')).toContainText('Freigegeben');
   expect(state.published.get(head.id).data.items[0].price_cents).toBe(1099);
+  await page.locator('[data-output-back]').click();
   await page.getByRole('button', { name: '1 · Artikel und Bilder' }).click();
   await page.locator('#an-items button[data-edit-item]').click();
   await page.locator('dialog[open]').getByLabel('Angebotspreis €', { exact: true }).fill('9.99');
@@ -2327,7 +2367,7 @@ test('TC-F1-02/F3-06: Wochenaktion duplizieren, Reihenfolge und fehlende Pflicht
   await page.getByLabel('Gestaltungselement').selectOption(price.id);
   await page.getByLabel('Ausblenden', { exact: true }).check();
   await page.getByRole('button', { name: '3 · Ausgeben' }).click();
-  await page.locator('#an-publish').click();
+  await outputAction(page, '[data-output-publish]');
   await expect(page.locator('dialog[open]')).toContainText('Pflichtfeld');
   expect(state.published.size).toBe(0);
   expect(state.actions.get(head.id).draft.items).toHaveLength(2);
@@ -3211,14 +3251,14 @@ test('TC-F56-01: Fehler blockieren, Hinweise führen gezielt zur Stelle', async 
   head.draft.items[0].name = 'Superlangername'.repeat(25);
   await openEditor(page, head);
   await stepTab(page, 'output');
-  await page.locator('#an-quality').click();
+  await outputAction(page, '[data-cms-quality]');
   const report = page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true });
   await expect(report.getByRole('status')).toContainText(/[1-9]\d* Fehler/);
   await expect(report).toContainText('wird abgeschnitten');
   await expect(report.getByRole('heading', { name: /Hinweise/ })).toBeVisible();
   await expect(report).toContainText('Das Bild ist nur');
   await report.getByRole('button', { name: 'Schließen', exact: true }).click();
-  await page.locator('#an-publish').click();
+  await outputAction(page, '[data-output-publish]');
   await expect(page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true })).toBeVisible();
   expect(state.log.some((entry) => entry.params.action === 'publish')).toBe(false);
   await page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true }).locator('.an-quality-list').first().getByRole('button', { name: 'Zur Stelle', exact: true }).first().click();
@@ -3229,14 +3269,14 @@ test('TC-F56-01: Fehler blockieren, Hinweise führen gezielt zur Stelle', async 
   const name = page.locator('[data-item-id="' + head.draft.items[0].id + '"] [data-prop=name]');
   await name.fill('Kurzer Name'); await name.dispatchEvent('change');
   await stepTab(page, 'output');
-  await page.locator('#an-quality').click();
+  await outputAction(page, '[data-cms-quality]');
   await expect(report.getByRole('status')).toContainText('0 Fehler');
   await expect(report.getByRole('heading', { name: /Hinweise/ })).toBeVisible();
   await expect(report.getByRole('button', { name: 'Hinweise bestätigen', exact: true })).toBeVisible();
   await report.getByRole('button', { name: 'Hinweise bestätigen', exact: true }).click();
   await expect(page.locator('#an-quality-note')).toContainText('Hinweise bestätigt');
   const published = page.waitForRequest((request) => request.url().includes('action=publish'));
-  await page.locator('#an-publish').click();
+  await outputAction(page, '[data-output-publish]');
   await page.getByRole('button', { name: 'Jetzt freigeben', exact: true }).click();
   await published;
   expect(state.errors).toEqual([]);
