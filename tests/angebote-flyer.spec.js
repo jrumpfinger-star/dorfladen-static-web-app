@@ -199,7 +199,7 @@ async function saveDraft(page) {
   await expect(page.locator('#an-state')).toContainText('Entwurf gespeichert');
 }
 
-/* Im Ausgabe-Modus stecken Qualität und Freigabe hinter „Mehr" in der
+/* Im Ausgabe-Modus steckt die Freigabe hinter „Mehr" in der
    Vorschauleiste (die alte Seitenleiste ist dort ausgeblendet). */
 async function outputAction(page, selector) {
   const more = page.locator('.an-output-bar details.an-output-more');
@@ -3337,43 +3337,6 @@ test('TC-F54-01: mobile Detailvorschau aus echten Motivpixeln', { tag: '@layout'
   await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).first().click();
   await expect(root.locator('[data-history=undo]').first()).toBeDisabled();
   expect(state.log.filter((entry) => ['POST', 'PUT'].includes(entry.method) && entry.path.startsWith('/api/angebote-verwaltung'))).toEqual([]);
-  expect(state.errors).toEqual([]);
-});
-
-test('TC-F56-01: Fehler blockieren, Hinweise führen gezielt zur Stelle', async ({ page }) => {
-  const state = await setup(page);
-  const head = await seed(page, state, { count: 2 });
-  head.draft.items[0].name = 'Superlangername'.repeat(25);
-  await openEditor(page, head);
-  await stepTab(page, 'output');
-  await outputAction(page, '[data-cms-quality]');
-  const report = page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true });
-  await expect(report.getByRole('status')).toContainText(/[1-9]\d* Fehler/);
-  await expect(report).toContainText('wird abgeschnitten');
-  await expect(report.getByRole('heading', { name: /Hinweise/ })).toBeVisible();
-  await expect(report).toContainText('Das Bild ist nur');
-  await report.getByRole('button', { name: 'Schließen', exact: true }).click();
-  await outputAction(page, '[data-output-publish]');
-  await expect(page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true })).toBeVisible();
-  expect(state.log.some((entry) => entry.params.action === 'publish')).toBe(false);
-  await page.getByRole('dialog', { name: 'Qualitätsprüfung', exact: true }).locator('.an-quality-list').first().getByRole('button', { name: 'Zur Stelle', exact: true }).first().click();
-  await expect(page.locator('#an-step-design')).toBeVisible();
-  await expect(page.locator('#an-design-item')).toHaveValue(head.draft.items[0].id);
-  await expect(page.locator('[data-layout-target][aria-pressed=true]')).toHaveCount(1);
-  await stepTab(page, 'articles');
-  const name = page.locator('[data-item-id="' + head.draft.items[0].id + '"] [data-prop=name]');
-  await name.fill('Kurzer Name'); await name.dispatchEvent('change');
-  await stepTab(page, 'output');
-  await outputAction(page, '[data-cms-quality]');
-  await expect(report.getByRole('status')).toContainText('0 Fehler');
-  await expect(report.getByRole('heading', { name: /Hinweise/ })).toBeVisible();
-  await expect(report.getByRole('button', { name: 'Hinweise bestätigen', exact: true })).toBeVisible();
-  await report.getByRole('button', { name: 'Hinweise bestätigen', exact: true }).click();
-  await expect(page.locator('#an-quality-note')).toContainText('Hinweise bestätigt');
-  const published = page.waitForRequest((request) => request.url().includes('action=publish'));
-  await outputAction(page, '[data-output-publish]');
-  await page.getByRole('button', { name: 'Jetzt freigeben', exact: true }).click();
-  await published;
   expect(state.errors).toEqual([]);
 });
 

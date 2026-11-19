@@ -1533,45 +1533,30 @@ vorhandene Feature-Freigabe und geladener Versionsstand.
 - Expected: B erhält verständlichen Konflikt ohne Teiländerungen; sein Entwurf
   bleibt offen. Bewusst neu geladener Stand kann wieder gespeichert werden.
 
-### F56: Qualitätsprüfung mit direktem Weg zur Fehlerstelle
+### F56: Qualitätsprüfung mit direktem Weg zur Fehlerstelle — ENTFERNT (19.11.2026)
 
 #### F56 Description
 
-Vor tatsächlicher Ausgabe prüft die Anwendung Daten und die echte
-Zielrenderausgabe. Eine kompakte erreichbare Prüfung trennt Fehler und Hinweise.
+Die Qualitätsprüfung wurde auf Nutzerentscheidung überall entfernt
+(Erfassungsdialog, Aktionseditor, Vorschau). Sie meldete in der Praxis
+Falschmeldungen für Nicht-Getränke-Artikel (z. B. gefordertes Pfand /
+Grundpreis im Sammelflyer) und blockierte Ausgaben zu Unrecht.
 
-#### F56 Inputs
-
-Angebotsdaten, Ausgabeziel, Bilddimensionen und tatsächliche Rendergeometrien.
+Weiterhin gelten die Basisprüfungen beim Speichern: Pflichtfelder
+(Artikelname), gültige Preise und Zeitraum sowie `M.validate`.
+`M.quality` bleibt als Modellfunktion für Grenzwert-Meldungen bestehen,
+hat aber keine Bedienoberfläche und blockiert nichts mehr.
 
 #### F56 Behaviour / Acceptance
 
-- Bestehende Pflichtdaten-/Zeitraum-/Preis-/Pfandprüfungen bleiben blockierend.
-- Abgeschnittene oder außerhalb der Ausgabe liegende Pflichttexte werden
-  blockierend gemeldet; Bildfehler bei zugeordnetem Bild ebenfalls.
-- Fehlendes optionales Bild, geringe effektive Bildauflösung und gemessener
-  geringer Text-/Hintergrundkontrast sind erkennbare Hinweise, kein pauschales
-  Speicherverbot. Hinweise dürfen bewusst bestätigt werden.
-- Meldungen nennen Artikel, Ziel und Grund in verständlichem Deutsch und bieten
-  eine direkte Auswahl der betroffenen Kachel/Eigenschaft beziehungsweise Zeile.
-- Keine Scheinergebnisse: nicht sicher prüfbare Kriterien nicht als bestanden
-  ausweisen. Vorschau, Prüfung und tatsächliche Ausgabe verwenden denselben Renderer.
-- Umsetzung: „Qualität prüfen“ steht in Erfassung, Ausgabeschritt und Vorschau
-  bereit. Vor Veröffentlichen, Drucken/PDF, Download, Waagenvorbereitung und
-  Speichern einer Dataverse-Aktion blockieren ausschließlich Fehler. Hinweise
-  werden getrennt aufgeführt und über „Hinweise bestätigen“ bewusst bestätigt.
-- Schwellen: Bild über etwa 143 % vergrößert (effektive Dichte unter 70 %) und
-  Schrift/Hintergrund unter 3 : 1 sind Hinweise. Kontrast wird nur gegen eindeutig
-  bestimmbare Flächen- oder Seitenfarben gemessen; Verläufe und die Originalwochen-
-  vorlage erscheinen unter „Nicht geprüft“, nicht als bestanden.
+- Kein „Qualität prüfen“-Knopf, kein Qualitätsdialog, keine
+  Qualitäts-Statuszeile, keine Blockierung vor Veröffentlichen,
+  Drucken/PDF, Download, Waagenvorbereitung oder Speichern.
+- Basisvalidierung (Pflichtfelder, Zeitraum, Preise) bleibt blockierend.
 
 #### F56 Test Cases
 
-**TC-F56-01: Fehler blockieren, Hinweise führen gezielt**
-- Setup: Ungültiger Zeitraum/Pfand, abgeschnittener Pflichttext und kleineres Bild.
-- Action: Prüfung öffnen und tatsächliche Ausgabe starten; Meldung auswählen.
-- Expected: Nur Fehler blockieren; Hinweise bleiben erkennbar. Gewählte Meldung
-  führt zur richtigen Stelle; Korrektur aktualisiert das tatsächliche Ergebnis.
+**TC-F56-01: entfallen** (Feature entfernt).
 
 ### F57: Schnellere wiederkehrende Arbeit ohne Überraschungen
 
@@ -1700,7 +1685,7 @@ Keine offenen fachlichen Klärungsmarker. Bestehende Sichtbarkeitslogik und
 | F53 | TC-F53-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
 | F54 | TC-F54-01 | Produktverbesserungen | Folgt im Planungsschritt |
 | F55 | TC-F55-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
-| F56 | TC-F56-01 | Produktverbesserungen | Folgt im Planungsschritt |
+| F56 | — (entfernt) | Produktverbesserungen | 19.11.2026 entfernt |
 | F57 | TC-F57-01/02 | Produktverbesserungen | Folgt im Planungsschritt |
 | F58 | TC-F58-01 | Produktverbesserungen | Folgt im Planungsschritt |
 | F59 | TC-F59-01 | Produktverbesserungen | Folgt im Planungsschritt |
@@ -1954,8 +1939,9 @@ Dieses Konzept gilt gleich fuer Sonder- und Getraenkeangebote.
   Artikel B erzeugt genau B als PNG/Druck, keine andere Ausgabe.
 - TC-F68-02: Auswahl B/C, Alle, Nullauswahl und Abbruch liefern exakt den
   angeforderten Umfang; danach Einzeldruck weiterhin einzeln.
-- TC-F68-03: Zieltreue fuer Kachel/Sammelseite/Waage, Qualitaetsgates,
-  eingefrorener Exportumfang und keine impliziten Schreibanfragen.
+- TC-F68-03: Zieltreue fuer Kachel/Sammelseite/Waage,
+  eingefrorener Exportumfang und keine impliziten Schreibanfragen
+  (Qualitaetsgates sind seit 19.11.2026 entfernt).
 
 ## F69: Ein Flyer pro A4-Seite ohne Restbogen
 

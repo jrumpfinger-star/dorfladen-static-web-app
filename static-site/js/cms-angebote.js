@@ -163,7 +163,6 @@ window.CMSAngebote = (function () {
       dlg.innerHTML = '<div class="an-dialog-top"><h2>' + (action ? 'Aktion bearbeiten' : 'Neue Aktion erstellen') + ' · '
         + (drinks ? 'Getränke' : 'Sonderangebote') + '</h2><div class="an-actions"><button class="an-primary" data-save>Speichern</button>'
         + (action ? '<button data-reload>Gespeicherten Stand laden</button>' : '')
-        + '<button data-quality>Qualität prüfen</button>'
         + '<button data-cancel>Abbrechen</button><button data-cancel aria-label="Erfassung schließen">×</button></div></div>'
         + '<div class="an-capture-body"><div class="an-capture-meta">'
         + '<label class="an-field"><span>Titel</span><input data-meta="title" value="' + M.esc(draft.title) + '" maxlength="120"></label>'
@@ -176,7 +175,7 @@ window.CMSAngebote = (function () {
         + '<div class="an-capture-items"></div><p class="an-muted" data-capture-status role="status">Angebotspreis separat eingeben. Speichern übernimmt die Aktion für den gewählten Gültigkeitszeitraum.</p></div>';
       var host = dlg.querySelector('.an-capture-items'), status = dlg.querySelector('[data-capture-status]');
       var states = new Map(), pending = new Map(), imageTasks = new Set(), imageRequests = new WeakMap();
-      var filePreviews = new Map(), workspaceState = null, selectedRow = null, blockedReport = null;
+      var filePreviews = new Map(), workspaceState = null, selectedRow = null;
       var phone = matchMedia('(max-width:599px), (max-width:899px) and (max-height:500px)');
       var top = dlg.querySelector('.an-dialog-top'), footer = document.createElement('footer');
       footer.className = 'an-capture-footer';
@@ -496,30 +495,6 @@ window.CMSAngebote = (function () {
       var arrangedItems = initialItems.map(function (item) { return item.id; }).join();
       initialItems.forEach(add);
       if (isNew) while (host.children.length < draft.layout.density) add();
-      async function inspect(report) {
-        var choice = await M.qualityDialog(report, { goto: true });
-        var issue = choice && choice.goto;
-        if (!issue) return;
-        var row = Array.from(host.children).find(function (candidate) { return states.get(candidate) && states.get(candidate).id === issue.item_id; });
-        var field = { name: 'produkt', old_price: 'statt_preis', units: 'units', deposit: 'deposit_cents' }[issue.field] || 'produkt';
-        if (!row) return;
-        if (phone.matches) selectRow(row);
-        row.scrollIntoView({ block: 'center' });
-        var target = ['no-image', 'low-resolution'].includes(issue.code) ? row.querySelector('.an-image-trigger') : input(row, field);
-        if (target && !target.disabled) target.focus();
-      }
-      async function probe() {
-        var copy = M.clone(draft);
-        copy.title = dlg.querySelector('[data-meta="title"]').value.trim();
-        copy.valid_from = dlg.querySelector('[data-meta="valid_from"]').value;
-        copy.valid_to = dlg.querySelector('[data-meta="valid_to"]').value;
-        copy.items = Array.from(host.children).filter(function (row) { return rowItem(row).name; }).map(function (row) { return M.clone(states.get(row)); });
-        if (!copy.items.length) return M.quality(copy);
-        var layoutChanged = changedRows || copy.items.map(function (it) { return it.id; }).join() !== arrangedItems;
-        if (layoutChanged || copy.layout.mode === 'template') M.applyTemplate(copy);
-        M.ensureTargets(copy);
-        return M.quality(copy);
-      }
       async function prepareDraft() {
         await Promise.all(Array.from(imageTasks));
         draft.title = dlg.querySelector('[data-meta="title"]').value.trim();
@@ -582,11 +557,6 @@ window.CMSAngebote = (function () {
       async function persist() {
         if (!(await prepareDraft())) return null;
         M.validate(draft);
-        var report = await M.quality(draft);
-        if (report.errors.length) {
-          status.textContent = 'Speichern nicht abgeschlossen · Qualitätsprüfung: ' + report.errors.length + ' Fehler. Eingaben bleiben erhalten.';
-          blockedReport = report; return null;
-        }
         for (var entry of pending) {
           var it = states.get(entry[0]); if (!draft.items.includes(it)) continue;
           Object.assign(it, await A.productImage(entry[1], it.barcode || 'ANG-' + it.id));
@@ -632,14 +602,12 @@ window.CMSAngebote = (function () {
             }
             dlg.classList.remove('an-capture-suspended');
             (area.checkVisibility() ? area : top.querySelector('[data-action-area=articles]')).focus();
-            if (blockedReport) { var report = blockedReport; blockedReport = null; await inspect(report); }
           }, {
             state: workspaceState, dirty: dirty,
             save: async function (value) {
               acceptPreview(value, temporaryImages);
               var saved = await persist();
               if (!saved) {
-                if (blockedReport) return null;
                 throw M.problem('Speichern abgebrochen · alle Eingaben bleiben erhalten.');
               }
               captureDirty = false; temporaryImages.clear();
@@ -796,18 +764,6 @@ window.CMSAngebote = (function () {
             close(); await capture(fresh);
           })().catch(M.error); return;
         }
-        if (b.hasAttribute('data-quality')) {
-          (async function () {
-            saving = true; status.textContent = 'Qualität wird geprüft …';
-            try {
-              var report = await probe();
-              status.textContent = 'Qualitätsprüfung: ' + report.errors.length + ' Fehler · ' + report.hints.length + ' Hinweise · ' + report.unchecked.length + ' nicht geprüft';
-              saving = false; await inspect(report);
-            } catch (error) { status.textContent = 'Qualitätsprüfung nicht abgeschlossen.'; await M.error(error); }
-            finally { saving = false; }
-          })();
-          return;
-        }
         if (b.hasAttribute('data-add')) { var added = add(); changedRows = true; mark(); if (phone.matches) selectRow(added); return; }
         var row = b.closest('.cms-ang-row'), cmd = b.dataset.offerAction;
         if (cmd === 'removeAngRow') {
@@ -854,7 +810,6 @@ window.CMSAngebote = (function () {
               saving = false; dlg.querySelectorAll('button,input,select').forEach(function (el) { el.disabled = false; });
               host.querySelectorAll('[data-f="deposit_mode"]').forEach(function (el) { input(el.closest('.cms-ang-row'), 'deposit_cents').disabled = el.value === 'no'; });
               renderMobile();
-              if (blockedReport) { var report = blockedReport; blockedReport = null; await inspect(report); }
             }
           })();
         }

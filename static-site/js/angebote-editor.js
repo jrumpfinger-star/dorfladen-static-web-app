@@ -822,8 +822,7 @@
       + '<section id="an-step-output" hidden><h2>Wie bei den bisherigen Angeboten ausgeben</h2><div id="an-output-previews">'
       + D.previewTabs(previewMode, 'data-editor-mode') + '</div><p>Speichern, Veröffentlichen, Drucken und Waagenversand sind getrennte Aktionen.</p>'
       + '<p class="an-status" id="an-output-status">' + (record && record.published_revision ? 'Eine veröffentlichte Fassung ist vorhanden. Änderungen bleiben bis zur nächsten Freigabe intern.' : 'Noch nicht veröffentlicht.') + '</p>'
-      + '<p class="an-muted" id="an-quality-note" role="status">Qualitätsprüfung noch nicht ausgeführt.</p>'
-      + '<div class="an-publish-actions"><button id="an-quality">Qualität prüfen</button><button id="an-publish" class="an-primary">Für Homepage veröffentlichen</button><button id="an-print-single">Einzelflyer drucken / PDF</button><button id="an-print-action">Sammelflyer A4 drucken / PDF</button><button id="an-scale">Für Waage vorbereiten</button></div>'
+      + '<div class="an-publish-actions"><button id="an-publish" class="an-primary">Für Homepage veröffentlichen</button><button id="an-print-single">Einzelflyer drucken / PDF</button><button id="an-print-action">Sammelflyer A4 drucken / PDF</button><button id="an-scale">Für Waage vorbereiten</button></div>'
       + '<p class="an-note">Freigabe gilt im gewählten Zeitraum (Europe/Berlin). Die Waage wird nur nach eigenem Versand aktualisiert.</p></section></section>'
       + '<section class="an-preview an-card" id="an-preview"><div class="an-preview-head"><h2>Gestaltbare Homepage-/Kioskansicht</h2><span class="an-muted" id="an-preview-hint">Element antippen oder ziehen</span></div>'
       + '<nav class="an-tabs an-target-tabs" aria-label="Gestaltungsziel">'
@@ -1061,11 +1060,9 @@
       + '<button type="button" data-cms-download>Als PNG speichern</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
       + '<button type="button" data-cms-all-pages>Alle Seiten als PNG</button><button type="button" data-cms-scale title="Einzelartikel im Wechsel auf die Waage">⚖ Waage</button></div>'
       + '<details class="an-output-more"><summary>Mehr</summary><div class="an-output-actions">'
-      + '<button type="button" data-cms-quality>Qualität prüfen</button>'
       + (!cmsAction ? '<button type="button" data-output-publish>Für Homepage veröffentlichen</button>' : '') + '</div></details>'
       + '<p data-export-state role="status"></p><button type="button" data-output-back>Zur Gestaltung</button>';
     picture.prepend(bar);
-    var note = $('an-quality-note'); if (note) bar.appendChild(note);
     bar.querySelector('[data-output-target]').onchange = function () {
       root.querySelector('[data-layout-target="' + this.value + '"]').click();
     };
@@ -1074,7 +1071,6 @@
     bar.querySelector('[data-cms-print]').onclick = function () { run(function () { return exportOutput('print'); }); };
     bar.querySelector('[data-cms-singles]').onclick = choosePrintArticles;
     bar.querySelector('[data-cms-scale]').onclick = function () { run(scale); };
-    bar.querySelector('[data-cms-quality]').onclick = function () { run(function () { return qualityGate(true); }); };
     var publishButton = bar.querySelector('[data-output-publish]');
     if (publishButton) publishButton.onclick = function () { run(publish); };
     bar.querySelector('[data-output-back]').onclick = function () {
@@ -1107,7 +1103,6 @@
     var draft = M.clone(data), target = itemIds ? 'single' : designTarget, currentPage = page;
     var ids = itemIds ? itemIds.slice() : [designItemId], names = [], canvases = [];
     if (!draft.items.length) throw M.problem('Bitte zuerst einen Artikel erfassen.');
-    if (!(await qualityGate(false, draft, target, ids))) return;
     if (target === 'sheet') {
       var pages = method === 'print' || allPages ? draft.layout.pages.map(function (_, index) { return index; }) : [currentPage];
       for (var n of pages) {
@@ -1398,40 +1393,6 @@
     record = response.action; data = M.clone(record.draft); config = response.config; dirty = false;
     renderEditor(); $('an-state').textContent = 'Entwurf gespeichert · Veröffentlichung bleibt getrennt';
   }
-  async function qualityGate(explicit, snapshot, target, ids) {
-    var result = await M.quality(snapshot || data), status = $('an-quality-note');
-    if (target) {
-      ['errors', 'hints', 'unchecked'].forEach(function (key) {
-        result[key] = result[key].filter(function (issue) {
-          return (!issue.target || issue.target === target) && (target === 'sheet' || !issue.item_id || ids.indexOf(issue.item_id) >= 0);
-        });
-      });
-    }
-    if (status) status.textContent = 'Qualitätsprüfung: ' + result.errors.length + ' Fehler · ' + result.hints.length + ' Hinweise · ' + result.unchecked.length + ' nicht geprüft';
-    if (!explicit && !result.errors.length) return true;
-    var choice = await M.qualityDialog(result, { goto: true, confirm: explicit });
-    if (choice && choice.goto) setTimeout(function () { goToIssue(choice.goto); }, 0);
-    if (choice === 'confirmed' && status) status.textContent += ' · Hinweise bestätigt';
-    return !result.errors.length && !explicit;
-  }
-  function goToIssue(issue) {
-    if (cmsAction && outputMode()) cmsTab = 'element';
-    var item = data.items.find(function (it) { return it.id === issue.item_id; });
-    if (issue.field === 'meta') { if (!cmsAction) { setStep('articles'); $('an-action-meta').open = true; $('an-title').focus(); } return; }
-    if (item && ['no-image', 'low-resolution'].includes(issue.code) || issue.code === 'data' && item && ['name', 'old_price', 'units', 'deposit'].includes(issue.field)) {
-      if (!cmsAction) setStep('articles');
-      openItemDialog(item.id); return;
-    }
-    if (!cmsAction) setStep('design');
-    var tab = root.querySelector('[data-layout-target="' + (issue.target || 'sheet') + '"]');
-    if (tab) tab.click();
-    if (item) designItemId = item.id;
-    page = Math.max(0, Math.min(issue.page || 0, data.layout.pages.length - 1));
-    selected = !weeklyTarget() && elements().some(function (e) { return e.id === issue.element_id; }) ? issue.element_id : '';
-    if ($('an-design-item')) $('an-design-item').value = designItemId;
-    renderInspector(); preview().catch(M.error);
-    var stage = $('an-stage'); if (stage && !stage.hidden) stage.scrollIntoView({ block: 'nearest' });
-  }
   async function transfer() {
     var target = designTarget, current = !weeklyTarget() && selection();
     var sourceId = current && current.item_id || designItemId, source = data.items.find(function (it) { return it.id === sourceId; });
@@ -1476,7 +1437,6 @@
     document.body.appendChild(dlg); dlg.showModal();
   }
   async function publish() {
-    if (!(await qualityGate())) return;
     await M.preflight(data);
     if (!(await M.dialog('Für Kunden veröffentlichen?', data.items.length + ' Angebote · ' + M.date(data.valid_from) + ' bis ' + M.date(data.valid_to)
         + '. Die bisherige Kundenfassung wird ersetzt. Druck und Waage werden nicht ausgelöst.', 'Jetzt freigeben'))) return;
@@ -1497,11 +1457,9 @@
     document.body.classList.add('an-printing'); window.print();
   }
   async function print() {
-    if (!(await qualityGate())) return;
     await printCanvases(await M.preflight(data), data.layout.pages.map(function () { return data.title; }));
   }
   async function printSingles() {
-    if (!(await qualityGate())) return;
     M.validate(data);
     var layouts = data.layout.targets && data.layout.targets.single;
     if (!Array.isArray(layouts) || layouts.length !== data.items.length) {
@@ -1564,7 +1522,6 @@
     run(function () { return applyWeeklyDesign(entry.data, entry.name); });
   }
   async function scale() {
-    if (!(await qualityGate())) return;
     await M.preflight(data);
     if (dirty || !record) await save();
     var mode = 'single';
@@ -1623,7 +1580,6 @@
     $('an-page-next').onclick = function () { page++; selected = ''; renderInspector(); preview().catch(M.error); };
     $('an-publish').onclick = function () { run(publish); }; $('an-print-single').onclick = function () { run(printSingles); };
     $('an-print-action').onclick = function () { run(print); };     $('an-scale').onclick = function () { run(scale); };
-    $('an-quality').onclick = function () { run(function () { return qualityGate(true); }); };
     $('an-transfer').onclick = function () { run(transfer); };
     root.onclick = async function (event) {
       var b = event.target.closest('button');
