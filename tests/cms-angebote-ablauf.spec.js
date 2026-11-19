@@ -90,7 +90,14 @@ async function focusRow(row) {
   const dlg = row.locator('xpath=ancestor::dialog'), id = await row.getAttribute('id');
   const back = dlg.locator('[data-capture-back]');
   if (await back.isVisible()) await back.click();
-  await dlg.locator('[data-capture-item="' + id + '"]').click();
+  if (await dlg.evaluate((node) => node.classList.contains('an-capture-phone'))) {
+    /* Handy-Listenansicht: die Zeile steckt hinter ihrer Karte. */
+    await dlg.locator('[data-capture-item="' + id + '"]').click();
+  } else {
+    /* Desktop: alle Zeilen sind direkt sichtbar - die Zeile erscheint mit
+       dem Aufbau des Dialogs und braucht nur etwas Zeit. */
+    await expect(row).toBeVisible({ timeout: 15000 });
+  }
 }
 
 async function allWeeks(page) {
@@ -101,7 +108,14 @@ async function allWeeks(page) {
 }
 
 async function showMeta(dlg) {
-  if (!(await dlg.locator('[data-meta=title]').isVisible())) await dlg.locator('[data-meta-toggle]').click();
+  /* Mobil sind die Aktionsdaten zugeklappt; nach einem Neu-Laden kann der
+     Zustand kippen - deshalb notfalls erneut aufklappen. */
+  const toggle = dlg.locator('[data-meta-toggle]');
+  for (let i = 0; i < 3 && !(await dlg.locator('[data-meta=title]').isVisible()); i++) {
+    await toggle.click();
+    await expect(dlg.locator('[data-meta=title]')).toBeVisible({ timeout: 3000 }).catch(() => {});
+  }
+  await expect(dlg.locator('[data-meta=title]')).toBeVisible();
 }
 async function selectArea(scope, value) {
   const select = scope.getByLabel('Aktionsbereich', { exact: true });
@@ -639,6 +653,7 @@ test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen
   await allWeeks(page);
   await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Sonderaktion erfassen', exact: true });
+  await focusRow(edit.locator('.cms-ang-row').first());
   await edit.locator('[data-f=produkt]').first().fill('Umbenannter Originalartikel');
   await edit.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(edit).toHaveCount(0);
@@ -718,7 +733,10 @@ test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelauf
   await page.goto(BASE + '/angebote.html');
   await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
   const dlg = page.getByRole('dialog', { name: 'Sonderaktion erfassen' });
-  await expect(dlg.locator('.cms-bild-preview:visible')).toHaveCount(3);
+  /* Die Vorschauen werden je Zeile erzeugt - mobil versteckt die Listenansicht
+     die Zeilen, entscheidend ist, dass alle drei geladen wurden. */
+  await expect(dlg.locator('.cms-bild-preview')).toHaveCount(3);
+  if (page.viewportSize().width >= 600) await expect(dlg.locator('.cms-bild-preview:visible')).toHaveCount(3);
   expect(state.imageLookups.map(it => it.artikelnummer).sort()).toEqual(['4001234567890', '4001234567891']);
   expect(state.imageLookups.every(it => it.edeka_nr && it.strichcode)).toBe(true);
   await dlg.getByRole('button', { name: 'Abbrechen', exact: true }).click();
@@ -1411,6 +1429,14 @@ test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat 
   };
   if (mobile) {
     await expect(canvas).toBeHidden();
+    if (process.env.DEBUG_CONSOLE) console.log('DBG-F19 ' + JSON.stringify(await modal.evaluate((el) => {
+      const dump = (sel) => { const n = el.querySelector(sel); return n ? Math.round(n.getBoundingClientRect().height) : null; };
+      const fields = el.querySelector('.an-task-fields'), tools = el.querySelector('.an-task-tools'), split = el.querySelector('.an-split-mobile');
+      return { modal: Math.round(el.getBoundingClientRect().height), split: split ? Math.round(split.getBoundingClientRect().height) : null,
+        tools: tools ? Math.round(tools.getBoundingClientRect().height) : null, fields: fields ? Math.round(fields.getBoundingClientRect().height) : null,
+        toolsKids: tools ? [...tools.children].map((c) => ({ cls: (c.className || c.tagName).slice(0, 40), h: Math.round(c.getBoundingClientRect().height) })) : null,
+        context: dump('.an-design-context'), footer: dump('.an-action-footer'), toolbar: dump('.an-toolbar') };
+    })));
     expect((await page.locator('.an-task-fields').boundingBox()).height).toBeGreaterThanOrEqual(view.height * .5);
     await workspaceView(workspace, 'picture');
     await expect(side).toBeHidden();
@@ -1952,9 +1978,19 @@ test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht'
   await expect(dlg).toBeVisible();
   await expect(dlg.locator('[data-meta=title]')).toHaveValue('Meine Fassung');
   expect(state.actions.get('AKT-ZWEI').title).toBe('Fassung des anderen Clients');
+  /* Mobil steckt der Knopf hinter „Weitere Aktionen". */
+  const mehr = dlg.locator('.an-capture-more');
+  if (!(await dlg.getByRole('button', { name: 'Gespeicherten Stand laden', exact: true }).isVisible())) {
+    await mehr.locator('summary').click();
+    await expect(mehr).toHaveAttribute('open', '');
+  }
   await dlg.getByRole('button', { name: 'Gespeicherten Stand laden', exact: true }).click();
   await page.getByRole('button', { name: 'Stand neu laden', exact: true }).click();
-  const fresh = page.getByRole('dialog', { name: 'Getränkeaktion erfassen', exact: true });
+  /* Das Nachladen baut die Erfassung neu auf: der alte Dialog verschwindet,
+     der neue wird geöffnet - auf den offenen, frisch geladenen warten. */
+  const fresh = page.locator('dialog.an-cms-capture[open][aria-label="Getränkeaktion erfassen"]');
+  await expect(fresh.locator('[data-meta=title]')).toHaveValue('Fassung des anderen Clients');
+  await showMeta(fresh);
   await expect(fresh.locator('[data-meta=title]')).toHaveValue('Fassung des anderen Clients');
   await fresh.locator('[data-meta=title]').fill('Zusammengeführt');
   await fresh.getByRole('button', { name: 'Speichern', exact: true }).click();

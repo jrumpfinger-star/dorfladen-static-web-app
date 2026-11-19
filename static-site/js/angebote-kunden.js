@@ -237,6 +237,10 @@ window.AngeboteKunden = (function () {
     if (!actions.length) return;
     if (currentViewer) currentViewer.close();
     var ai = 0;
+    /* Seitenzahl läuft über alle Flyer weiter: „2 / 3" heißt zweite Seite von
+       drei insgesamt (die Titelzeile nennt zusätzlich „Flyer 2/3"). */
+    var offsets = [], totalPages = 0;
+    actions.forEach(function (a) { offsets.push(totalPages); totalPages += a.data.layout.pages.length; });
     var dlg = document.createElement('dialog'); dlg.className = 'an-viewer'; dlg.setAttribute('aria-label', 'Original-Angebotsflyer');
     dlg.innerHTML = '<div class="an-viewer-shell"><div class="an-viewer-tools"><strong></strong><button data-viewer-close aria-label="Flyer schließen">Schließen ×</button></div>'
       + '<div class="an-viewer-tools"><div class="an-row"><button data-viewer-prev aria-label="Vorherige Flyerseite">←</button><span data-viewer-page-label></span><button data-viewer-next aria-label="Nächste Flyerseite">→</button></div>'
@@ -260,7 +264,7 @@ window.AngeboteKunden = (function () {
       canvas = rendered.canvas; canvas.setAttribute('aria-label', action.data.title + ' · Seite ' + (n + 1));
       page.replaceChildren(canvas); fit(); scroller.scrollTop = 0; scroller.scrollLeft = 0;
       titleEl.textContent = action.data.title + (actions.length > 1 ? ' · Flyer ' + (ai + 1) + '/' + actions.length : '');
-      dlg.querySelector('[data-viewer-page-label]').textContent = (n + 1) + ' / ' + action.data.layout.pages.length;
+      dlg.querySelector('[data-viewer-page-label]').textContent = (offsets[ai] + n + 1) + ' / ' + totalPages;
       dlg.querySelector('[data-viewer-prev]').disabled = ai === 0 && n === 0;
       dlg.querySelector('[data-viewer-next]').disabled = ai === actions.length - 1 && n === action.data.layout.pages.length - 1;
     }

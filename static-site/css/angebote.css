@@ -80,6 +80,10 @@ body.an-body{margin:0;background:#f7f5ed}
   .an-cms-capture.an-capture-phone .an-dialog-top h2{display:none}
   .an-cms-capture.an-capture-phone .an-dialog-top [data-capture-area]{width:0;flex:1;min-width:0;border-color:transparent;background:transparent;margin:0}
   .an-cms-capture.an-capture-phone .an-dialog-top button{height:44px;padding:0 8px;min-width:44px}
+  /* F63: Die Bereichs-Navigation muss neben dem Schließen-Knopf in eine
+     375-px-Zeile passen - kompakte Schrift, gleiche Klickhöhe. */
+  .an-cms-capture.an-capture-phone .an-dialog-top .an-main-steps{min-width:0;flex:1}
+  .an-cms-capture.an-capture-phone .an-dialog-top .an-main-steps button{flex:1;min-width:0;padding:4px 5px;font-size:12px;white-space:nowrap}
   .an-capture-phone .an-capture-body{flex:1;padding:0 8px 8px}
   .an-capture-phone:not(.an-meta-open) .an-capture-meta{display:none}
   .an-capture-phone .an-capture-meta{padding-top:8px}
@@ -89,8 +93,9 @@ body.an-body{margin:0;background:#f7f5ed}
   .an-capture-phone.an-capture-detail .an-overview-toolbar{display:none}
   .an-capture-phone .an-capture-stepper{height:44px}
   .an-capture-phone .an-capture-stepper button{padding:0 8px}
-  .an-capture-phone .an-capture-footer{height:56px;padding:6px 8px}
-  .an-capture-phone .an-capture-footer .an-actions{height:44px}
+  .an-capture-phone .an-capture-footer{min-height:56px;height:auto;padding:6px 8px}
+  .an-capture-phone .an-capture-footer .an-actions{height:auto;min-height:44px;flex-wrap:wrap}
+  .an-capture-phone .an-capture-footer .an-actions button{min-width:0;padding:0 8px;font-size:13px;white-space:nowrap}
   .an-capture-phone .an-capture-footer [data-save]{margin-left:auto}
   .an-capture-phone .an-capture-more[open]>summary{display:block}
   .an-capture-phone .an-capture-more>summary{font-size:0;width:44px;text-align:center}
@@ -1516,8 +1521,33 @@ body.an-body{margin:0;background:#f7f5ed}
   [data-designer] .an-designer-workspace.an-split-mobile[data-workspace-view=split]>.an-split-tools{grid-column:1!important;grid-row:1!important}
   [data-designer] .an-designer-workspace.an-split-mobile[data-workspace-view=split]>.an-split-picture{display:block;grid-column:2!important;grid-row:1!important}
 }
-@media(max-width:600px){
-  :is([data-designer=plakat],[data-designer=flyer]) .an-hit-layer{--an-handle-hit:44px}
+@media(max-width:599px){
+  .an-hit-layer{--an-handle-hit:44px}
+  /* F43/F49/F52: Die Eingabeflaeche muss mobil mindestens die halbe
+     Arbeitsflaeche bekommen. Kontextkarte und Aktionsleiste werden deshalb
+     einzeilig kompakt (Hinweis- und Statuszeile stehen auf breiten
+     Bildschirmen weiterhin zur Verfuegung). */
+  .an-split-mobile .an-design-context{flex-wrap:nowrap;min-height:44px;margin:2px 0;padding:2px 6px}
+  .an-split-mobile .an-design-context>[data-design-context],
+  .an-split-mobile .an-design-context>[data-action-design-context]{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .an-split-mobile .an-design-context>[data-save-hint]{display:none}
+  .an-split-mobile .an-designer-save>[role=status]{display:none}
+  [data-designer] .an-split-mobile .an-designer-save{flex-wrap:nowrap!important;gap:2px;padding-top:2px!important;margin-top:2px!important}
+  [data-designer] .an-split-mobile .an-designer-save>.an-primary{flex:1 1 auto!important;min-width:0;font-size:13px!important}
+  .an-split-mobile .an-designer-settings{padding:2px 6px;gap:1px}
+  /* F19: Dasselbe compact-Prinzip fuer den Editor im CMS-Vorschau-Modal -
+     seine Kontextkarte liegt au�erhalb des Split und frisst sonst die
+     Eingabeflaeche. */
+  .an-task-editor .an-design-context{flex-wrap:nowrap;min-height:44px;margin:2px 0;padding:2px 6px}
+  .an-task-editor .an-design-context>[data-action-design-context]{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .an-task-editor .an-design-context>[data-save-hint]{display:none}
+  /* F19: Im CMS-Vorschau-Modal bekommt die Eingabeflaeche den groesseren
+     Anteil; die Statuszeile duerfte dort Platz sparen. */
+  .an-cms-preview-modal .an-task-editor .an-split-mobile{grid-template-rows:minmax(60px,.3fr) minmax(300px,1.7fr)!important}
+  .an-cms-preview-modal .an-task-editor .an-action-footer #an-state{display:none}
+  .an-cms-preview-modal .an-task-editor .an-toolbar{flex-wrap:nowrap;min-height:44px}
+  .an-cms-preview-modal .an-task-editor .an-toolbar>.an-main-steps{order:0;flex:1 1 auto;min-width:0;margin:0}
+  .an-cms-preview-modal .an-task-editor .an-toolbar>.an-main-steps button{flex:1 1 auto;min-width:0;padding:4px 5px;font-size:12px;white-space:nowrap}
 }
 .an-task-tools{container:an-tools / inline-size}
 .an-task-editor select,.an-cms-capture select{box-sizing:border-box;line-height:1.2;padding-block:2px;appearance:auto;-webkit-appearance:menulist}

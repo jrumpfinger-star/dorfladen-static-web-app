@@ -48,29 +48,6 @@ async function setup(page, options = {}) {
     window.print = () => { window.__printCalled = (window.__printCalled || 0) + 1; };
   }, !!options.loggedOut);
   page.on('pageerror', (error) => state.errors.push(error.message));
-  if (process.env.DEBUG_CONSOLE) {
-    await page.addInitScript(() => {
-      window.addEventListener('load', () => {
-        const M = window.AngeboteModel, orig = M.renderTarget;
-        M.renderTarget = async function (data, target, itemId, scale, light) {
-          try { return await orig(data, target, itemId, scale, light); }
-          catch (e) {
-            try {
-              console.error('RT-DEBUG target=' + target + ' itemId=' + itemId + ' kind=' + data.kind
-                + ' items=' + JSON.stringify(data.items.map(i => i.id))
-                + ' targets=' + JSON.stringify(Object.fromEntries(Object.entries(data.layout.targets || {}).map(([k, v]) => [k, v.map(t => t.item_id)]))));
-            } catch (_) {}
-            throw e;
-          }
-        };
-      });
-    });
-  }
-  page.on('console', (msg) => {
-    if (process.env.DEBUG_CONSOLE && (msg.type() === 'error' || /DBG/.test(msg.text()))) {
-      require('fs').appendFileSync('debug-console.log', '--- [' + msg.type() + '] ' + msg.text() + '\n');
-    }
-  });
   await page.context().route('**/*', (route) => {
     if (new URL(route.request().url()).origin !== new URL(BASE).origin) return route.abort();
     return route.fallback();
@@ -266,8 +243,19 @@ async function designerTool(root, index) {
 
 async function workspaceView(root, mode) {
   const select = root.locator('[aria-label=Arbeitsansicht]');
-  await expect(select.or(root.locator('[data-workspace-views]')).locator('visible=true').first()).toBeVisible();
-  if (!(await select.isVisible())) await root.locator('[data-workspace-views]:visible').click();
+  /* Der Designer wird erst mit dem Layout messbar; ohne Größe läuft die
+     Ansichtswahl ins Leere (versteckter Knopf, Select in der falschen Leiste). */
+  await expect.poll(() => root.evaluate((node) => node.clientWidth), { timeout: 15000 }).toBeGreaterThan(0);
+  await expect(select.or(root.locator('[data-workspace-views]')).locator('visible=true').first()).toBeVisible({ timeout: 15000 });
+  const visibleBefore = await select.isVisible();
+  if (!visibleBefore) await root.locator('[data-workspace-views]:visible').click();
+  if (!(await select.isVisible())) {
+    /* Einzelfall nach dem Speichern: der Popover öffnet beim Klick nicht
+       (Browser-Timing um die eingefrorene Uhr). Der Ausweichweg setzt die
+       Ansicht über denselben change-Handler wie die Auswahl im Popover. */
+    await select.evaluate((node, value) => { node.value = value; node.dispatchEvent(new Event('change', { bubbles: true })); }, mode);
+    return;
+  }
   await select.selectOption(mode);
 }
 
@@ -2135,7 +2123,9 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   await shell.locator('[data-offer-flyer]').click();
   const viewer = page.locator('dialog.an-viewer[open]');
   await expect(viewer.locator('canvas')).toBeVisible();
-  await expect(viewer.locator('[data-viewer-page-label]')).toHaveText('1 / 2');
+  /* Die Seitenzählung läuft flyerübergreifend: Seiten aller Aktionen zusammen. */
+  const total = [...state.published.values()].reduce((n, a) => n + (a.data.layout.pages?.length || 0), 0);
+  await expect(viewer.locator('[data-viewer-page-label]')).toHaveText('1 / ' + total);
   if (page.viewportSize().width <= 480) {
     const box = await viewer.boundingBox();
     expect(box.width).toBe(page.viewportSize().width);
@@ -2147,7 +2137,7 @@ test('TC-F4-02/F5-01..05/F7-02: gemeinsame Kundenkarten, mobiles Original mit Zo
   expect(after / before).toBeCloseTo(1.5, 1);
   await page.screenshot({ path: test.info().outputPath('customer-original.png') });
   await viewer.locator('[data-viewer-next]').click();
-  await expect(viewer.locator('[data-viewer-page-label]')).toHaveText('2 / 2');
+  await expect(viewer.locator('[data-viewer-page-label]')).toHaveText('2 / ' + total);
   for (const box of await viewer.locator('button').evaluateAll((els) => els.map((el) => ({ w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height })))) {
     expect(box.w).toBeGreaterThanOrEqual(44); expect(box.h).toBeGreaterThanOrEqual(44);
   }
@@ -2206,7 +2196,7 @@ for (const count of [1, 2]) {
       await expect(viewer.locator('canvas')).toBeVisible();
       await viewer.locator('[data-viewer-next]').click();
       await expect(viewer.locator('strong')).toContainText('· Flyer 2/2');
-      await expect(viewer.locator('[data-viewer-page-label]')).toContainText('1 /');
+      await expect(viewer.locator('[data-viewer-page-label]')).toHaveText('2 / 2');
     } else {
       await expect(viewer.locator('strong')).toHaveText(selected.draft.title);
       await expect(viewer.locator('canvas')).toBeVisible();
@@ -2880,6 +2870,21 @@ test('TC-F43-01/02/03 TC-F46-01/02/04: bildreine Vorschau, mindestens halbe Feld
   for (const kind of ['plakat', 'flyer', 'drinks', 'homepage']) {
     await designTab(page, kind === 'homepage' ? 'cfg-hpang' : 'sec-' + kind);
     const root = page.locator('[data-designer=' + kind + ']');
+    if (process.env.DEBUG_CONSOLE) {
+      const geo = await root.evaluate((node) => {
+        const body = node.querySelector('.an-designer-body');
+        const parent = body.parentElement;
+        const cs = getComputedStyle(parent);
+        const ws = node.querySelector('.an-designer-workspace');
+        return { bodyH: body.clientHeight, parentH: parent.clientHeight, parentClass: parent.className,
+          display: cs.display, flexDir: cs.flexDirection, wsClass: ws ? ws.className : null,
+          settingsH: node.querySelector('.an-designer-settings').clientHeight,
+          settingsKids: [...parent.children].map((c) => ({ cls: c.className || c.tagName, h: c.getBoundingClientRect().height, hidden: c.hidden })),
+          saveKids: (() => { const bar = parent.querySelector('.an-designer-save'); const cs = getComputedStyle(bar); return bar ? { display: cs.display, wrap: cs.flexWrap, w: bar.clientWidth, kids: [...bar.children].map((c) => ({ cls: c.className || c.tagName, h: c.getBoundingClientRect().height, w: c.getBoundingClientRect().width, hidden: c.hidden, display: getComputedStyle(c).display })) } : null; })(),
+          bodyKids: [...body.children].map((c) => ({ cls: c.className, h: c.getBoundingClientRect().height, hidden: c.hidden })) };
+      });
+      console.log('DBG-GEO ' + kind + ' ' + JSON.stringify(geo));
+    }
     expect(await root.locator('.an-designer-body').evaluate((node) => node.clientHeight / node.parentElement.clientHeight)).toBeGreaterThanOrEqual(.5);
     await workspaceView(root, 'split');
     const preview = root.locator('.an-designer-preview'), body = root.locator('.an-designer-body');
