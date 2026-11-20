@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventur · Fortschritt — klickbarer Mockup</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+:root{--field-line:#708b7b;--secondary:#4d6557;--view-height:100dvh}
+html[data-theme="dark"]{--field-line:#879d90;--secondary:#b0bfb5}
+html,body{margin:0;height:100%;color:var(--ink);background:var(--flaeche)}
+body{font:16px/1.35 system-ui,"Segoe UI",-apple-system,sans-serif}
+button,select{font:inherit;color:inherit;cursor:pointer}
+button{min-height:48px;padding:8px 12px;border:1px solid var(--field-line);border-radius:var(--r-s);background:var(--karte);font-weight:600}
+:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+h1,h2,p{margin:0}
+h1{font-size:19px;font-weight:600}
+h2{font-size:16px;font-weight:600}
+[hidden]{display:none!important}
+.app{height:var(--view-height);display:flex;flex-direction:column;max-width:1440px;margin:auto}
+.header{flex:none;min-height:56px;padding:4px 12px;display:flex;align-items:center;gap:8px;background:var(--karte);border-bottom:1px solid var(--line)}
+.heading{flex:1;min-width:0}
+.heading small{display:block;color:var(--secondary);font-size:13px;overflow-wrap:anywhere}
+.icon-button{min-width:48px;padding:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.icon-button svg{width:20px;height:20px}
+.primary{background:var(--gr);border-color:var(--gr);color:#fff}
+html[data-theme="dark"] .primary{color:#132a1e}
+.screen{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px;overflow:auto;overscroll-behavior:contain}
+.context{flex:none;display:grid;gap:2px}
+.context label{font-size:13px;color:var(--secondary)}
+.context select{min-height:44px;padding-block:6px;border:1px solid var(--field-line);border-radius:var(--r-s);background:var(--karte)}
+/* Erfassung (vereinfachte Nachbildung) */
+.card{border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);padding:12px;display:flex;flex-direction:column;gap:8px}
+.article small{display:block;font-size:13px;color:var(--secondary);margin-top:4px}
+.amounts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.amounts label{font-size:16px}
+.amounts input{width:100%;min-height:52px;font:inherit;font-size:20px;font-weight:600;margin-top:4px;border:1px solid var(--field-line);border-radius:var(--r-s);background:var(--karte)}
+.actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.actions button{min-height:56px;font-size:17px}
+.status{min-height:24px;font-size:14px;color:var(--secondary);display:flex;gap:6px;align-items:center}
+/* Fortschritt */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none}
+.tile{border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);padding:10px 12px}
+.tile small{display:block;font-size:13px;color:var(--secondary)}
+.tile strong{font-size:24px;font-weight:600}
+.tile .hint{font-size:12px;color:var(--secondary)}
+.gauge{border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);padding:12px;display:flex;gap:14px;align-items:center;flex:none}
+.gauge svg{flex:none}
+.gauge .legend{display:grid;gap:4px;font-size:14px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.groups{border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);padding:12px;display:flex;flex-direction:column;gap:10px;flex:none}
+.group{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:baseline}
+.group small{font-size:13px;color:var(--secondary);grid-column:1/-1}
+.bar{grid-column:1/-1;height:10px;border-radius:6px;background:var(--gr-t);border:1px solid var(--field-line);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--gr)}
+.recent{border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);flex:1;min-height:120px;display:flex;flex-direction:column}
+.recent h2{padding:10px 12px 6px}
+.recent-list{overflow:auto;overscroll-behavior:contain;min-height:0}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.row strong{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.row small{grid-column:1;font-size:13px;color:var(--secondary)}
+.row .qty{font-weight:600;white-space:nowrap}
+.row time{font-size:13px;color:var(--secondary);white-space:nowrap}
+.note{flex:none;font-size:13px;color:var(--secondary)}
+@media (min-width:850px) and (min-height:600px){
+  .progress-body{display:grid;grid-template-columns:minmax(300px,2fr) minmax(360px,3fr);gap:16px;align-items:start}
+  .progress-left{display:grid;gap:10px}
+  .screen{padding:20px}
+  .recent{max-height:none}
+}
+@media (forced-colors:active){
+  button,.card,.tile,.gauge,.groups,.recent,.bar{border-color:ButtonText}
+  .primary,.bar span{background:Highlight;color:HighlightText}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <button class="icon-button" id="back" aria-label="Zurück zur Erfassung" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+    <div class="heading"><h1>Inventur</h1><small id="heading-note">Ladeninventur · 2025 · 31.12.2026</small></div>
+    <button class="icon-button" id="progress-open" aria-label="Fortschritt der Inventur anzeigen"><i data-lucide="chart-column" aria-hidden="true"></i><span>Fortschritt</span></button>
+  </header>
+
+  <main class="screen" id="capture" aria-label="Erfassung">
+    <section class="context" aria-label="Aktive Inventur">
+      <label for="inventory">Aktive Inventur</label>
+      <select id="inventory"><option>Ladeninventur</option><option>Lagerinventur</option></select>
+    </section>
+    <section class="card" aria-label="Artikelerfassung">
+      <div class="article"><h2 style="font-size:18px">Adelh.Miwa Sanft 0,75l MW</h2><small>Barcode 4005906003717</small></div>
+      <div class="amounts">
+        <label>Menge Stück<input value="6" inputmode="numeric"></label>
+        <label>Plus <small style="font-weight:400">(Hinzufügen)</small><input placeholder="" inputmode="numeric"></label>
+      </div>
+      <div class="actions">
+        <button>Hinzufügen</button>
+        <button class="primary">Speichern</button>
+      </div>
+      <div class="status"><span>✔</span><span>Gespeichert</span></div>
+    </section>
+    <p class="note">Vereinfachte Nachbildung der Erfassung. Das Symbol „Fortschritt“ oben rechts öffnet die neue Seite.</p>
+  </main>
+
+  <main class="screen" id="progress" aria-label="Fortschritt" hidden>
+    <div class="progress-body">
+      <div class="progress-left">
+        <section class="tiles" aria-label="Überblick">
+          <div class="tile"><small>Positionen erfasst</small><strong>12</strong><span class="hint">davon heute 5</span></div>
+          <div class="tile"><small>Artikel erfasst</small><strong>11</strong><span class="hint">eine Position pro Artikel</span></div>
+          <div class="tile"><small>Artikel im Sortiment</small><strong>63</strong><span class="hint">aktive Artikel</span></div>
+          <div class="tile"><small>Abgedeckt</small><strong>17 %</strong><span class="hint">11 von 63 Artikeln</span></div>
+        </section>
+        <section class="gauge" aria-label="Anteil erfasster Artikel">
+          <svg width="120" height="120" viewBox="0 0 42 42" role="img" aria-label="Ring: 17 Prozent der Artikel erfasst">
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--gr-t)" stroke-width="6"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--gr)" stroke-width="6"
+              stroke-dasharray="17 83" stroke-dashoffset="25" stroke-linecap="butt"></circle>
+            <text x="21" y="23.5" text-anchor="middle" font-size="9" font-weight="600" fill="currentColor">17 %</text>
+          </svg>
+          <div class="legend">
+            <h2>Wie weit ist die Inventur?</h2>
+            <span><span class="dot" style="background:var(--gr)"></span>11 Artikel erfasst</span>
+            <span><span class="dot" style="background:var(--gr-t);border:1px solid var(--field-line)"></span>52 Artikel offen</span>
+          </div>
+        </section>
+        <section class="groups" aria-label="Warengruppen">
+          <h2>Warengruppen</h2>
+          <div class="group"><strong>Getränke</strong><span class="qty" style="font-size:14px">5 / 14</span><div class="bar"><span style="width:36%"></span></div></div>
+          <div class="group"><strong>Backwaren</strong><span class="qty" style="font-size:14px">3 / 9</span><div class="bar"><span style="width:33%"></span></div></div>
+          <div class="group"><strong>Molkerei</strong><span class="qty" style="font-size:14px">2 / 8</span><div class="bar"><span style="width:25%"></span></div></div>
+          <div class="group"><strong>Konserven</strong><span class="qty" style="font-size:14px">1 / 12</span><div class="bar"><span style="width:8%"></span></div></div>
+          <div class="group"><strong>Drogerie</strong><span class="qty" style="font-size:14px">0 / 9</span><div class="bar"><span style="width:0%"></span></div></div>
+          <div class="group"><strong>Sonstiges</strong><span class="qty" style="font-size:14px">0 / 11</span><div class="bar"><span style="width:0%"></span></div></div>
+        </section>
+      </div>
+      <section class="recent" aria-label="Zuletzt erfasst">
+        <h2>Zuletzt erfasst</h2>
+        <div class="recent-list" id="recent-list">
+          <div class="row"><strong>Adelh.Miwa Sanft 0,75l MW</strong><span class="qty">6 Stück</span><time>16:24</time><small>Barcode 4005906003717</small></div>
+          <div class="row"><strong>Wasa Sesam</strong><span class="qty">1.112 Stück</span><time>16:19</time><small>Barcode 42040217</small></div>
+          <div class="row"><strong>Bio-Vollmilch 3,8 % 1 l</strong><span class="qty">17 Stück</span><time>16:12</time><small>Barcode 9000000000011</small></div>
+          <div class="row"><strong>Bauernbrot Natursauerteig</strong><span class="qty">1.250 g</span><time>16:05</time><small>Barcode 9000000000028</small></div>
+          <div class="row"><strong>Handseife Bio-Olivenöl 500 ml</strong><span class="qty">4 Stück</span><time>15:58</time><small>Barcode 9000000000035</small></div>
+          <div class="row"><strong>Apfelsaft naturtrüb 1 l</strong><span class="qty">12 Stück</span><time>15:41</time><small>Barcode 4000402110029</small></div>
+          <div class="row"><strong>Emmentaler gerieben 200 g</strong><span class="qty">3 Stück</span><time>15:33</time><small>Barcode 3017620422001</small></div>
+          <div class="row"><strong>Kaffeebohnen Espresso 1 kg</strong><span class="qty">2 Stück</span><time>15:20</time><small>Barcode 4006381333931</small></div>
+          <div class="row"><strong>Spülmittel Zitrone 500 ml</strong><span class="qty">6 Stück</span><time>15:02</time><small>Barcode 4015000950189</small></div>
+          <div class="row"><strong>Roggenmischbrot 1 kg</strong><span class="qty">840 g</span><time>14:47</time><small>Barcode 9000000000042</small></div>
+          <div class="row"><strong>Buttermilch 0,5 l</strong><span class="qty">9 Stück</span><time>14:31</time><small>Barcode 4029100123456</small></div>
+          <div class="row"><strong>Haferflocken 500 g</strong><span class="qty">5 Stück</span><time>14:12</time><small>Barcode 4013170111005</small></div>
+        </div>
+      </section>
+    </div>
+    <p class="note">Nur Beispieldaten · keine echten Inventurzähler.</p>
+  </main>
+</div>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  $('progress-open').onclick = () => {
+    $('capture').hidden = true;
+    $('progress').hidden = false;
+    $('back').hidden = false;
+    $('progress-open').hidden = true;
+    $('heading-note').textContent = 'Fortschritt · Ladeninventur';
+    if (window.lucide) window.lucide.createIcons();
+  };
+  $('back').onclick = () => {
+    $('progress').hidden = true;
+    $('capture').hidden = false;
+    $('back').hidden = true;
+    $('progress-open').hidden = false;
+    $('heading-note').textContent = 'Ladeninventur · 2025 · 31.12.2026';
+    if (window.lucide) window.lucide.createIcons();
+  };
+  window.inventurFortschrittDemo = Object.freeze({screen: () => $('progress').hidden ? 'capture' : 'progress'});
+  window.addEventListener('load', () => { if (window.lucide) window.lucide.createIcons(); });
+})();
+</script>
+</body>
+</html>

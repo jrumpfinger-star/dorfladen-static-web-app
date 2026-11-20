@@ -283,6 +283,23 @@ test('Speichern über die Schaltfläche beendet die Tastaturansicht ebenfalls', 
   await expect(page.locator('#search')).toBeVisible();
 });
 
+test('Speichern liegt rechts, ist die größte Aktion und mit dem Daumen erreichbar', async ({ page }) => {
+  await setup(page);
+  await choose(page, 'Vollmilch');
+  const m = await page.evaluate(() => {
+    const save = document.getElementById('save').getBoundingClientRect();
+    const add = document.getElementById('add').getBoundingClientRect();
+    return { saveRight: save.right, addRight: add.right, saveLeft: save.left, addLeft: add.left,
+      saveH: save.height, addH: add.height, saveW: save.width, addW: add.width, iw: innerWidth, ih: innerHeight };
+  });
+  expect(m.saveLeft).toBeGreaterThan(m.addLeft);
+  expect(m.saveRight).toBeGreaterThanOrEqual(m.addRight - 1);
+  expect(m.saveW).toBeGreaterThan(m.addW);
+  expect(m.saveH).toBeGreaterThanOrEqual(m.addH);
+  expect(m.saveH).toBeGreaterThanOrEqual(40);
+  expect(m.saveRight).toBeLessThanOrEqual(m.iw); // innerhalb des Bildschirms
+});
+
 test('Konflikt: aktueller Stand und Entwurf getrennt, Plus wird nicht automatisch neu gebucht', async ({ page }) => {
   const backend = await setup(page);
   backend.seed(INV1, MILK, 12);
@@ -473,11 +490,13 @@ test('Settings: veraltete Inventur zeigt Konflikt und behält den Entwurf', asyn
   await expect(page.locator('#inventory-year')).toHaveValue('2030');
 });
 
-test('Kiosk-Kopfzeile verlinkt die Inventur (Quelle, Generator und erzeugte Seiten)', async () => {
+test('Kiosk- und CMS-Kopfzeilen verlinken die Inventur', async () => {
   const fs = require('fs');
   const path = require('path');
   const read = rel => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
-  for (const file of ['static-site/kiosk-klassisch.html', 'static-site/kiosk.html', 'static-site/kiosk-neu.html', 'tools/build-kiosk-neu.js']) {
+  for (const file of ['static-site/kiosk-klassisch.html', 'static-site/kiosk.html', 'static-site/kiosk-neu.html',
+    'static-site/cms-klassisch.html', 'static-site/cms.html', 'static-site/cms-neu.html',
+    'tools/build-kiosk-neu.js', 'tools/build-cms-neu.js']) {
     expect(read(file), file).toContain('href="/inventur"');
   }
 });

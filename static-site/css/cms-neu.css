@@ -313,6 +313,8 @@ body.cmsneu-nav-auf .cmsneu-nav{ display:block }
   vertical-align:middle;
 }
 .cmsneu-nav .cms-tab:hover{ background:var(--gr-t) }
+/* Die Inventur ist ein Verweis auf eine eigene Seite, kein CMS-Bereich. */
+.cmsneu-nav a.cms-tab{text-decoration:none;color:inherit}
 .cmsneu-nav .cms-tab.active{
   background:var(--gr-l);
   color:var(--gr-d);

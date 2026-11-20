@@ -57,7 +57,7 @@ test.describe('CMS im Kiosk-Design', () => {
 
   test('TC-F3-01: Alle 15 Bereiche stehen in der Navigation', async ({ page }) => {
     await oeffne(page);
-    await expect(page.locator('.cmsneu-nav .cms-tab')).toHaveCount(15);
+    await expect(page.locator('.cmsneu-nav .cms-tab')).toHaveCount(16);
     const ids = await page.locator('.cmsneu-nav .cms-tab')
       .evaluateAll((els) => els.map((e) => e.getAttribute('data-id')));
     for (const id of BEREICHE) expect(ids).toContain(id);
@@ -188,6 +188,6 @@ test.describe('CMS im Kiosk-Design', () => {
     await expect(page.locator('#cms-app')).toBeAttached();
     // Sie trÃ¤gt die alte Reiterleiste, nicht die neue Navigation.
     await expect(page.locator('.cmsneu-nav')).toHaveCount(0);
-    await expect(page.locator('.cms-tab')).toHaveCount(15);
+    await expect(page.locator('.cms-tab')).toHaveCount(16);
   });
 });
