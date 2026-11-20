@@ -544,7 +544,9 @@ Fähigkeit fehlt. Deshalb gilt:
 5. **Zugang:** Jeder Aufruf – auch lesend – braucht ein gültiges
    Kiosk-/CMS-Token, unabhängig von `CMS_AUTH_ENFORCE`.
 
-### Abnahmepunkte vor produktiver Nutzung
+## Abnahmepunkte vor produktiver Nutzung
+
+Der geführte Livetest mit echten Daten steht in [livetest.md](livetest.md).
 
 - Echtes Mobilgerät (z. B. Samsung S24-Klasse): Kamera, Bildschirmtastatur,
   Speichern gegen ein isoliertes Testziel; Produktivumgebung ist kein
