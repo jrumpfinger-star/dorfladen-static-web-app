@@ -204,7 +204,7 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-cms-side .an-element-actions button,.an-cms-side .an-actions button{padding:3px 8px;font-size:12px}
 .an-cms-side .an-direct-tools legend{display:none}
 .an-cms-side details{margin:0}
-.an-cms-side summary,.an-cms-preview summary{min-height:28px;padding:4px 0;cursor:pointer;font-size:13px;font-weight:650}
+.an-cms-side summary,.an-cms-preview summary{min-height:28px;padding:4px 0;cursor:pointer;font-size:13px;font-weight:600}
 .an-cms-output{margin:0}
 .an-cms-output button{min-height:32px;padding:3px 10px;font-size:12px}
 .an-cms-stacked .an-cms-workspace,.an-cms-stacked .an-cms-weekly.an-cms-workspace{display:block}
@@ -233,7 +233,7 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-cms-style-options .an-compact-group .an-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px}
 .an-cms-style-options .an-compact-group .an-fields.an-fields-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:480px){.an-cms-style-options .an-compact-group .an-fields.an-fields-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.an-cms-style-options summary{min-height:28px;padding:4px 0;cursor:pointer;font-size:13px;font-weight:650}
+.an-cms-style-options summary{min-height:28px;padding:4px 0;cursor:pointer;font-size:13px;font-weight:600}
 .an-cms-tabbar{display:none}
 .an-cms-stacked .an-cms-tabbar{display:flex;flex-wrap:nowrap;gap:4px;margin:4px 0;order:0}
 .an-cms-tabbar button{flex:1 1 0;min-width:0;min-height:34px;padding:4px 6px;font-size:13px}
@@ -425,14 +425,14 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-choice-option>.an-choice{display:block}
 .an-app .an-template-enlarge,.an-design .an-template-enlarge{width:100%;font-size:12px;padding:5px;margin-top:4px}
 .an-fine{border-top:1px solid var(--an-line);margin:12px 0}
-.an-fine summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:650}
+.an-fine summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:600}
 .an-preview-tabs button{flex:1 1 140px}
 .an-preview-tabs button[aria-pressed=true]{background:var(--an-green);color:#fff;border-color:var(--an-green)}
 .an-card-preview{max-width:375px;margin:auto}
 .an-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #an-other-preview>canvas{display:block;width:100%;height:auto}
 .an-field{display:block;min-width:0;margin:10px 0}
-.an-field>span{display:block;font-size:13px;font-weight:650;margin-bottom:5px;overflow-wrap:anywhere}
+.an-field>span{display:block;font-size:13px;font-weight:600;margin-bottom:5px;overflow-wrap:anywhere}
 .an-field input:not([type=checkbox]),.an-field select,.an-field textarea{width:100%;min-width:0;min-height:44px;padding:9px;border:1px solid var(--an-field-border);border-radius:8px;background:var(--an-surface);color:var(--an-ink)}
 .an-field input[type=color]{padding:4px}
 .an-field input[type=checkbox]{width:22px;height:22px;accent-color:var(--an-green);vertical-align:middle}

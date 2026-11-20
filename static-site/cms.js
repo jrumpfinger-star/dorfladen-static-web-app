@@ -1582,6 +1582,12 @@
     xEl.dispatchEvent(new Event('input',{bubbles:true}));
     yEl.dispatchEvent(new Event('input',{bubbles:true}));
     xEl.dispatchEvent(new Event('change',{bubbles:true}));
+    /* Auch ohne Auto-Vorschau-Checkbox müssen die Pads sofort wirken
+       (entkoppelt von cfg-live-auto-*): gebündelt neu zeichnen. */
+    if(typeof window.cfgLivePreview==='function'){
+      clearTimeout(window.__anchorPreviewTimer);
+      window.__anchorPreviewTimer=setTimeout(function(){window.cfgLivePreview(sec);},150);
+    }
   };
   function cfgReadUI(){
     var c={}, existingConfig=cfgGet();
