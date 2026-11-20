@@ -479,9 +479,54 @@ test('Kamera verweigert: verständliche Meldung, Suche bleibt nutzbar', async ({
   await choose(page, 'Vollmilch');
 });
 
+test('Kamera ohne eingebaute Erkennung: mitgelieferter Leser erkennt einen echten EAN-13-Strichcode', async ({ page }) => {
+  await page.addInitScript(() => {
+    delete window.BarcodeDetector;
+    const L = ['0001101', '0011001', '0010011', '0111101', '0100011', '0110001', '0101111', '0111011', '0110111', '0001011'];
+    const G = ['0100111', '0110011', '0011011', '0100001', '0011101', '0111001', '0000101', '0010001', '0001001', '0010111'];
+    const R = ['1110010', '1100110', '1101100', '1000010', '1011100', '1001110', '1010000', '1000100', '1001000', '1110100'];
+    const P = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG', 'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL'];
+    const digits = '4006381333931'.split('').map(Number);
+    let bits = '101';
+    for (let i = 1; i <= 6; i++) bits += (P[digits[0]][i - 1] === 'L' ? L : G)[digits[i]];
+    bits += '01010';
+    for (let i = 7; i <= 12; i++) bits += R[digits[i]];
+    bits += '101';
+    window.__camera = { stopped: 0, queue: [], opened: 0 };
+    navigator.mediaDevices.getUserMedia = async () => {
+      window.__camera.opened++;
+      const canvas = document.createElement('canvas');
+      canvas.width = 640; canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      const draw = tick => {
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 640, 480);
+        ctx.fillStyle = '#000';
+        const module = 4, left = (640 - 95 * module) / 2;
+        [...bits].forEach((bit, index) => { if (bit === '1') ctx.fillRect(left + index * module, 100, module, 240); });
+        ctx.fillStyle = tick % 2 ? '#fefefe' : '#fff'; ctx.fillRect(0, 0, 2, 2);
+      };
+      let tick = 0; draw(tick);
+      const timer = setInterval(() => draw(++tick), 100);
+      const stream = canvas.captureStream(10);
+      stream.getTracks().forEach(track => { const stop = track.stop.bind(track); track.stop = () => { window.__camera.stopped++; clearInterval(timer); stop(); }; });
+      return stream;
+    };
+  });
+  const backend = makeBackend();
+  backend.articles.push({ id: 'ffffffff-ffff-ffff-ffff-ffffffffffff', name: 'Strichcode-Testartikel', code: '4006381333931', articleCode: '4006381333931', vk: 1, lastEk: 0.5, tax: 9, unit: '0', unitLabel: 'Stück', supported: true, ekSuggestion: 0.5 });
+  await setup(page, { backend });
+  expect(await page.evaluate(() => typeof window.BarcodeDetector)).toBe('undefined');
+  await page.locator('#scan-open').click();
+  await expect(page.locator('#article-name')).toContainText('Strichcode-Testartikel', { timeout: 15000 });
+  expect(await page.evaluate(() => Boolean(window.ZXing))).toBe(true);
+  expect(await page.evaluate(() => window.__camera.stopped)).toBeGreaterThan(0);
+  expect(saves(backend)).toHaveLength(0);
+});
+
 test('Kamera nicht unterstützt: Hinweis statt Fehler', async ({ page }) => {
   await page.addInitScript(() => { delete window.BarcodeDetector; });
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'mediaDevices', { value: undefined, configurable: true }); });
   await setup(page);
   await page.locator('#scan-open').click();
-  await expect(page.locator('#scanner-hint')).toContainText('nicht mit der Kamera');
+  await expect(page.locator('#scanner-hint')).toContainText('Kamera hier nicht benutzen');
 });

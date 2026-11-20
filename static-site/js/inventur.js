@@ -519,6 +519,59 @@
 
   // ---------- Kamera ----------
   const scanner = {stream: null, detector: null, timer: null, handled: false, detecting: false, token: 0};
+  let zxingPromise = null;
+  // Nicht jeder Browser hat die eingebaute Barcode-Erkennung (z. B. viele Samsung-Geräte):
+  // Dann wird eine mitgelieferte Bibliothek erst bei Bedarf geladen.
+  function loadZXing() {
+    if (window.ZXing) return Promise.resolve(window.ZXing);
+    if (!zxingPromise) {
+      zxingPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = '/js/vendor/zxing-library.min.js';
+        script.onload = () => window.ZXing ? resolve(window.ZXing) : reject(new Error('zxing'));
+        script.onerror = () => reject(new Error('zxing'));
+        document.head.append(script);
+      }).catch(error => { zxingPromise = null; throw error; });
+    }
+    return zxingPromise;
+  }
+  async function makeDetector() {
+    if (window.BarcodeDetector) {
+      try {
+        let formats = SCAN_FORMATS;
+        if (window.BarcodeDetector.getSupportedFormats) {
+          const supported = await window.BarcodeDetector.getSupportedFormats();
+          formats = SCAN_FORMATS.filter(f => supported.includes(f));
+        }
+        const native = new window.BarcodeDetector({formats});
+        return {detect: async video => {
+          const codes = await native.detect(video);
+          return codes.length ? String(codes[0].rawValue || '').trim() : null;
+        }};
+      } catch (e) { /* eingebaute Erkennung unbrauchbar: Bibliothek nutzen */ }
+    }
+    const ZX = await loadZXing();
+    const reader = new ZX.MultiFormatReader();
+    reader.setHints(new Map([
+      [ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A,
+        ZX.BarcodeFormat.UPC_E, ZX.BarcodeFormat.CODE_128, ZX.BarcodeFormat.CODE_39, ZX.BarcodeFormat.ITF]],
+      [ZX.DecodeHintType.TRY_HARDER, true],
+    ]));
+    const canvas = document.createElement('canvas');
+    return {detect: async video => {
+      const width = video.videoWidth, height = video.videoHeight;
+      if (!width || !height) return null;
+      const scale = Math.min(1, 1280 / width);
+      canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
+      canvas.getContext('2d', {willReadFrequently: true}).drawImage(video, 0, 0, canvas.width, canvas.height);
+      try {
+        const bitmap = new ZX.BinaryBitmap(new ZX.HybridBinarizer(new ZX.HTMLCanvasElementLuminanceSource(canvas)));
+        return String(reader.decode(bitmap).getText()).trim() || null;
+      } catch (e) {
+        return null; // kein Barcode im Bild
+      }
+    }};
+  }
   function stopScanner() {
     scanner.token++;
     clearInterval(scanner.timer); scanner.timer = null;
@@ -542,19 +595,22 @@
     $('scan-confirm').hidden = !$('manual-scan').checked;
     $('scanner-hint').textContent = 'Kamera wird gestartet …';
     showDialog('scanner', $('scan-open'));
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !('BarcodeDetector' in window)) {
-      $('scanner-hint').textContent = 'Dieses Gerät oder dieser Browser kann Barcodes nicht mit der Kamera lesen. Bitte die Artikelsuche nutzen.';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $('scanner-hint').textContent = 'Dieses Gerät oder dieser Browser kann die Kamera hier nicht benutzen. Bitte die Artikelsuche nutzen.';
       $('scan-confirm').hidden = true;
       return;
     }
     try {
-      let formats = SCAN_FORMATS;
-      if (window.BarcodeDetector.getSupportedFormats) {
-        const supported = await window.BarcodeDetector.getSupportedFormats();
-        formats = SCAN_FORMATS.filter(f => supported.includes(f));
+      try {
+        scanner.detector = await makeDetector();
+      } catch (e) {
+        $('scanner-hint').textContent = 'Der Barcode-Leser konnte nicht geladen werden. Bitte die Verbindung prüfen oder die Artikelsuche nutzen.';
+        $('scan-confirm').hidden = true;
+        return;
       }
-      scanner.detector = new window.BarcodeDetector({formats});
-      const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}}, audio: false});
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}, audio: false,
+      });
       if (run !== scanner.token || !$('scanner').open) { stream.getTracks().forEach(track => track.stop()); return; }
       scanner.stream = stream;
       const video = $('camera-video');
@@ -582,13 +638,12 @@
     if (scanner.handled || scanner.detecting || !scanner.stream) return;
     scanner.detecting = true;
     try {
-      const codes = await scanner.detector.detect($('camera-video'));
-      if (codes.length && !scanner.handled) {
+      const value = await scanner.detector.detect($('camera-video'));
+      if (value && !scanner.handled) {
         scanner.handled = true;
-        const value = String(codes[0].rawValue || '').trim();
         closeDialog('scanner');
-        if (value) await lookupBarcode(value);
-      } else if (manual && !codes.length) {
+        await lookupBarcode(value);
+      } else if (manual && !value) {
         $('scanner-hint').textContent = 'Kein Barcode erkannt. Bitte näher heranhalten und erneut auslösen.';
       }
     } catch (e) {
