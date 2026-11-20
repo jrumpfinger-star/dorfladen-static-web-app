@@ -4015,3 +4015,38 @@ test('TC-F41-02: Getränkevorschau meldet Bildfehler und fehlende Artikel ohne G
   await expect(root.locator('[data-design-preview] canvas')).toBeVisible();
   expect(state.errors).toEqual([]);
 });
+
+test('TC-F58a: Ersparnis-Marker-Form erreicht die Plakat-Vorschau; Speichern-Knopf kontrastreich', async ({ page }) => {
+  test.setTimeout(180000);
+  const state = await setup(page);
+  await seed(page, state, { count: 8, publish: true });
+  await cms(page, 'cfg&flyer=drinks');
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('[data-designer=plakat]');
+  await expect(root).toBeVisible();
+  await workspaceView(root, 'split');
+  // Kontrast: Speichern-Knopf muss hellen Text auf dunklem Grund tragen
+  // (Regression: dunkelgruene Schrift auf dunkelgruener Flaeche war unlesbar).
+  const save = page.locator('#cfg-plakat-save');
+  await expect(save).toBeVisible();
+  const kontrast = await save.evaluate((b) => {
+    const cs = getComputedStyle(b), before = getComputedStyle(b, '::before');
+    function rgb(str) { const m = /rgba?\((\d+), (\d+), (\d+)/.exec(str); return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0]; }
+    function helligkeit([r, g, bl]) { return (0.2126 * r + 0.7152 * g + 0.0722 * bl) / 255; }
+    const text = helligkeit(rgb(cs.color)), flaeche = helligkeit(rgb(before.backgroundColor));
+    return { text, flaeche, differenz: Math.abs(text - flaeche) };
+  });
+  expect(kontrast.differenz).toBeGreaterThan(0.35);
+  // Marker-Form (Feinabstimmung) muss die sichtbare Plakat-Vorschau sofort veraendern.
+  await designerTool(root, 2);
+  await page.waitForTimeout(800);
+  const canvas = root.locator('.an-designer-preview canvas:visible').first();
+  await expect(canvas).toBeVisible({ timeout: 20000 });
+  const hash = () => canvas.evaluate((c) => { const d = c.toDataURL(); let h = 0; for (let i = 0; i < d.length; i += 13) h = (h * 31 + d.charCodeAt(i)) | 0; return d.length + ':' + h; });
+  await expect.poll(hash, { timeout: 20000 }).not.toMatch(/^0:/);
+  const form = root.getByRole('group', { name: 'Ersparnis-Form' });
+  await expect(form).toBeVisible();
+  const vor = await hash();
+  await form.getByRole('button', { name: 'Herz' }).click();
+  await expect.poll(hash, { timeout: 15000 }).not.toBe(vor);
+});
