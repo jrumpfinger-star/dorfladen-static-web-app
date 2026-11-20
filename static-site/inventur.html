@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Inventur · Dorfladen</title>
+<script src="/js/theme.js"></script>
+<link rel="stylesheet" href="/css/dl-design.css">
+<link rel="stylesheet" href="/css/inventur.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="header">
+    <button class="icon-button" id="menu-open" aria-label="Menü öffnen" hidden><i data-lucide="menu" aria-hidden="true"></i><span>Menü</span></button>
+    <div class="heading"><h1>Inventur</h1><small id="heading-note">Dorfladen</small></div>
+  </header>
+
+  <main class="login" id="login-screen" aria-label="Anmeldung" hidden>
+    <h2>Anmeldung</h2>
+    <p>Bitte mit dem Laden-Passwort anmelden, um die Inventur zu öffnen.</p>
+    <form id="login-form" novalidate>
+      <label for="login-password">Passwort
+        <input id="login-password" type="password" autocomplete="current-password" required>
+      </label>
+      <p class="login-error" id="login-error" role="alert"></p>
+      <button type="submit" class="primary" id="login-submit" style="width:100%">Anmelden</button>
+    </form>
+  </main>
+
+  <section class="context" id="context" aria-label="Aktive Inventur" hidden>
+    <label for="inventory">Aktive Inventur</label>
+    <select id="inventory"></select>
+    <small id="inventory-meta"></small>
+  </section>
+
+  <main class="work" id="capture-screen" aria-label="Erfassung" hidden>
+    <section class="search-area" aria-label="Artikel suchen">
+      <label class="field-label" for="search">Artikel suchen</label>
+      <div class="search-row">
+        <input id="search" placeholder="Bezeichnung oder Barcode" autocomplete="off" role="combobox" aria-controls="results" aria-expanded="false" aria-autocomplete="list">
+        <button id="scan-open"><i data-lucide="scan-barcode" aria-hidden="true"></i> Barcode</button>
+      </div>
+      <div class="search-results" id="results" role="listbox" aria-label="Suchtreffer" hidden></div>
+    </section>
+    <section class="capture" id="capture-fields" aria-label="Artikelerfassung">
+      <div class="article"><h2 id="article-name">Welchen Artikel zählst du?</h2><small id="article-barcode">Artikel suchen oder Barcode scannen.</small></div>
+      <div class="prices">
+        <div class="price"><span>EK</span><output id="ek" aria-label="Einkaufspreis">—</output></div>
+        <div class="price"><span>VK</span><output id="vk" aria-label="Verkaufspreis">—</output></div>
+      </div>
+      <div class="amounts">
+        <label for="quantity">Menge <span class="unit" id="unit"></span><input id="quantity" inputmode="numeric" autocomplete="off" disabled></label>
+        <label for="plus">Plus <span class="unit">(Hinzufügen)</span><input id="plus" inputmode="numeric" autocomplete="off" disabled></label>
+      </div>
+      <div class="actions">
+        <button id="save" class="primary" disabled>Speichern</button>
+        <button id="add" disabled>Hinzufügen</button>
+      </div>
+      <div class="status" id="status" role="status"><span id="saved-check" class="check" aria-label="Menge gespeichert" hidden><i data-lucide="check" aria-hidden="true"></i><span class="icon-fallback">OK</span></span><span id="status-text">Noch kein Artikel ausgewählt</span></div>
+      <label class="scan-mode" for="manual-scan">
+        <input type="checkbox" id="manual-scan" role="switch">
+        <span>Manuell Scan<small id="scan-mode-text">Automatisch · erkannter Barcode wird übernommen</small></span>
+      </label>
+    </section>
+  </main>
+
+  <main class="settings" id="settings-screen" aria-label="Settings" hidden>
+    <div class="settings-top"><h2>Inventuren · Settings</h2><button id="new-inventory" class="primary">Neu</button></div>
+    <div class="settings-grid">
+      <div class="inventory-list" id="inventory-list" aria-label="Inventurenliste"></div>
+      <dialog class="inventory-dialog" id="inventory-editor" aria-labelledby="editor-title">
+        <div class="dialog-head"><h2 id="editor-title">Inventur bearbeiten</h2><button id="editor-close" aria-label="Inventurformular schließen">Schließen</button></div>
+        <div class="dialog-body">
+          <label for="inventory-name">Inventurname (Pflichtfeld)<input id="inventory-name" maxlength="850" required></label>
+          <p class="dialog-note" id="name-lock-note" hidden>Der Name kann nicht mehr geändert werden, weil bereits Positionen erfasst sind.</p>
+          <label for="inventory-year">Jahr<input id="inventory-year" maxlength="4000"></label>
+          <label for="inventory-date">Startdatum<input id="inventory-date" type="date"></label>
+          <label for="inventory-status">Status<select id="inventory-status"><option value="">Nicht festgelegt</option><option value="geplant">geplant</option><option value="aktiv">aktiv</option><option value="abgeschlossen">abgeschlossen</option></select></label>
+          <p class="dialog-note" id="editor-status" role="status"></p>
+        </div>
+        <div class="dialog-actions"><button id="inventory-save" class="primary" disabled>Speichern</button></div>
+      </dialog>
+    </div>
+  </main>
+</div>
+
+<dialog class="menu" id="menu" aria-labelledby="menu-title">
+  <div class="dialog-head"><h2 id="menu-title">Bereich wählen</h2><button id="menu-close" aria-label="Menü schließen">Schließen</button></div>
+  <button id="go-capture">Erfassung</button><button id="go-settings">Settings</button>
+  <p>Hinweis: Dieselbe Position nicht gleichzeitig in der Inventur-PowerApps und hier bearbeiten. Die Web-Seite erkennt Änderungen anderer Web-Nutzer, nicht aber spätere Änderungen aus der PowerApps.</p>
+</dialog>
+
+<dialog id="scanner" aria-labelledby="scanner-title">
+  <div class="dialog-head"><h2 id="scanner-title">Barcode scannen</h2><button id="scanner-close">Abbrechen</button></div>
+  <div class="dialog-body">
+    <div class="camera" id="camera" hidden><video id="camera-video" playsinline muted></video></div>
+    <p id="scanner-hint" role="status"></p>
+  </div>
+  <div class="dialog-actions"><button id="scan-confirm" class="primary" hidden>Scan auslösen</button></div>
+</dialog>
+
+<dialog id="message" aria-labelledby="message-title">
+  <div class="dialog-head"><h2 id="message-title">Bitte prüfen</h2></div>
+  <div class="dialog-body"><p id="message-text"></p></div>
+  <div class="dialog-actions"><button id="message-close" class="primary">Schließen</button></div>
+</dialog>
+
+<dialog id="conflict" aria-labelledby="conflict-title">
+  <div class="dialog-head"><h2 id="conflict-title">Stand geändert</h2></div>
+  <div class="dialog-body">
+    <p id="conflict-text"></p>
+    <div class="compare">
+      <div><small>Aktueller Stand</small><strong id="conflict-current">—</strong></div>
+      <div><small>Dein Entwurf</small><strong id="conflict-draft">—</strong></div>
+    </div>
+    <p class="dialog-note" id="conflict-note"></p>
+  </div>
+  <div class="dialog-actions">
+    <button id="conflict-take" class="primary">Aktuellen Stand übernehmen</button>
+    <button id="conflict-keep">Meine Menge behalten</button>
+  </div>
+</dialog>
+
+<script src="/js/inventur.js"></script>
+</body>
+</html>

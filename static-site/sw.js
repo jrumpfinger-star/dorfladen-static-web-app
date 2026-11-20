@@ -2,7 +2,7 @@
    loescht nur Zwischenspeicher, die anders heissen. Bleibt der Name
    gleich, behaelt jeder Browser seinen alten Inhalt — und damit unter
    Umstaenden Dateien aus einem Stand, den es laengst nicht mehr gibt. */
-var CACHE_NAME='dorfladen-v39';
+var CACHE_NAME='dorfladen-v40';
 var PRECACHE=[
   '/',
   '/tagesinfo.html',
@@ -99,6 +99,10 @@ self.addEventListener('fetch',function(e){
   try{ziel=new URL(url);}catch(x){ziel=null;}
   if(ziel&&ziel.origin!==self.location.origin
      &&(ziel.protocol==='http:'||/^\d{1,3}(\.\d{1,3}){3}$/.test(ziel.hostname))){
+    return;
+  }
+  // Inventurdaten gehen den Service Worker nichts an: nie aus dem Zwischenspeicher liefern.
+  if(url.indexOf('/api/inventur')!==-1){
     return;
   }
   // Network-first for API calls
