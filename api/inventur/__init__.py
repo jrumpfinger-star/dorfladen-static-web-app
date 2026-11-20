@@ -56,6 +56,8 @@ def handle(req, get_service):
                 return 200, {"article": service.article_by_barcode(req.params.get("barcode", ""))}
             if action == "position":
                 return 200, service.position(req.params.get("inventory", ""), req.params.get("article", ""))
+            if action == "progress":
+                return 200, service.progress(req.params.get("inventory", ""))
             return 400, {"error": "unknown_action", "message": "Unbekannte Anfrage."}
         try:
             data = req.get_json()

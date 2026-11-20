@@ -35,10 +35,11 @@ function makeBackend() {
     unauthorized: false,
     abortNext: false,
     applyThenAbort: false,
+    progressFail: false,
     counter: 0,
   };
   const posKey = (inv, art) => inv + '|' + art;
-  s.seed = (inv, art, quantity, version = 'p1') => { s.positions[posKey(inv, art)] = { id: 'p-' + (++s.counter), quantity, ek: 1.12, version }; };
+  s.seed = (inv, art, quantity, version = 'p1') => { s.positions[posKey(inv, art)] = { id: 'p-' + (++s.counter), quantity, ek: 1.12, version, articleId: art }; };
   s.external = (inv, art, quantity, version) => { Object.assign(s.positions[posKey(inv, art)], { quantity, version }); };
   s.pos = (inv, art) => s.positions[posKey(inv, art)];
   const pub = p => p && { id: p.id, quantity: p.quantity, ek: p.ek, version: p.version };
@@ -70,6 +71,30 @@ function makeBackend() {
           if (s.duplicates.has(posKey(inv, art))) return [409, { error: 'duplicate_position', message: 'Für diesen Artikel gibt es mehrere Positionen. Aus Sicherheitsgründen wird nichts geändert.' }];
           return [200, { position: pub(s.pos(inv, art)) || null }];
         }
+        case 'progress': {
+          const inv = s.inventories.find(i => i.id === params.get('inventory'));
+          if (!inv) return [404, { error: 'inventory_not_found', message: 'Die Inventur wurde nicht gefunden.' }];
+          if (s.progressFail) return [502, { error: 'load_failed', message: 'Die Daten konnten nicht geladen werden.' }];
+          if (s.progress) return [200, s.progress()];
+          const posEntries = Object.entries(s.positions).filter(([k]) => k.startsWith(inv.id));
+          const captured = new Set(posEntries.map(([, p]) => p.articleId).filter(Boolean));
+          const money = n => Math.round(n * 100) / 100;
+          return [200, {
+            inventory: inv,
+            articlesTotal: s.articles.length,
+            articlesCaptured: captured.size,
+            positions: posEntries.length,
+            valueEk: money(posEntries.reduce((sum, [, p]) => sum + (p.ek || 0) * (p.quantity || 0), 0)),
+            groups: [
+              { name: 'Molkerei', articlesTotal: 1, articlesCaptured: captured.has(MILK) ? 1 : 0, valueEk: money(posEntries.reduce((sum, [, p]) => sum + (p.articleId === MILK ? (p.ek || 0) * (p.quantity || 0) : 0), 0)) },
+              { name: 'Backwaren', articlesTotal: 1, articlesCaptured: captured.has(BREAD) ? 1 : 0, valueEk: money(posEntries.reduce((sum, [, p]) => sum + (p.articleId === BREAD ? (p.ek || 0) * (p.quantity || 0) : 0), 0)) },
+            ],
+            recent: posEntries.slice(-3).reverse().map(([, p]) => ({
+              article: (s.articles.find(a => a.id === p.articleId) || { name: 'Artikel' }).name,
+              quantity: p.quantity, unit: '0', value: p.ek === null ? null : money((p.ek || 0) * (p.quantity || 0)), at: '2026-11-20T16:19:00Z',
+            })),
+          }];
+        }
       }
       return [400, { error: 'unknown_action', message: 'Unbekannte Anfrage.' }];
     }
@@ -78,7 +103,7 @@ function makeBackend() {
       const total = body.plus === null ? body.quantity : (body.quantity || 0) + body.plus;
       const apply = () => {
         if (cur) { cur.quantity = total; cur.version = bump(cur.version); }
-        else s.positions[posKey(body.inventoryId, body.articleId)] = { id: 'p-' + (++s.counter), quantity: total, ek: 1.12, version: 'p1' };
+        else s.positions[posKey(body.inventoryId, body.articleId)] = { id: 'p-' + (++s.counter), quantity: total, ek: 1.12, version: 'p1', articleId: body.articleId };
         return pub(s.pos(body.inventoryId, body.articleId));
       };
       if (s.applyThenAbort) { s.applyThenAbort = false; apply(); return ['abort']; }
@@ -636,4 +661,74 @@ test('Kamera nicht unterstützt: Hinweis statt Fehler', async ({ page }) => {
   await setup(page);
   await page.locator('#scan-open').click();
   await expect(page.locator('#scanner-hint')).toContainText('Kamera hier nicht benutzen');
+});
+
+// ---------- Fortschritt ----------
+async function goProgress(page) {
+  await page.locator('#progress-open').click();
+  await expect(page.locator('#progress-screen')).toBeVisible();
+}
+
+test('Fortschritt zeigt Zähler, Warenwert und Warengruppen', async ({ page }) => {
+  const backend = await setup(page);
+  backend.seed(INV1, MILK, 12);
+  backend.seed(INV1, BREAD, 800);
+  await goProgress(page);
+  await expect(page.locator('#pg-positions')).toHaveText('2');
+  await expect(page.locator('#pg-captured')).toHaveText('2');
+  await expect(page.locator('#pg-total')).toHaveText('63');
+  await expect(page.locator('#pg-share')).toHaveText('3 %');
+  await expect(page.locator('#pg-value')).toContainText('909,44');
+  await expect(page.locator('#pg-legend-done')).toContainText('2 Artikel erfasst');
+  await expect(page.locator('#pg-legend-open')).toContainText('61 Artikel offen');
+  await expect(page.locator('#progress-ring-arc')).toHaveAttribute('stroke-dasharray', /^3 /);
+  await expect(page.locator('#group-list .group').first()).toContainText('Molkerei');
+  await expect(page.locator('#group-list .group').nth(1)).toContainText('Backwaren');
+  await expect(page.locator('#recent-list .row').first()).toContainText('Bauernbrot');
+  await expect(page.locator('#recent-list .row').first()).toContainText('896,00');
+  await expect(page.locator('#recent-list .row').nth(1)).toContainText('Bio-Vollmilch');
+});
+
+test('Fortschritt zeigt die Menge nur bei Einzelpositionen', async ({ page }) => {
+  const backend = await setup(page);
+  backend.seed(INV1, MILK, 1112);
+  await goProgress(page);
+  await expect(page.locator('#recent-list .row').first()).toContainText('1.112');
+  // Warengruppenzeilen zeigen Artikelzahl und Warenwert, keine Mengen
+  const groupRow = page.locator('#group-list .group').first();
+  await expect(groupRow).not.toContainText('Stück');
+  await expect(groupRow).not.toContainText('g ');
+});
+
+test('Fortschritt lädt nach und zeigt bei Fehler eine Meldung', async ({ page }) => {
+  const backend = await setup(page);
+  backend.progressFail = true;
+  await goProgress(page);
+  await expect(page.locator('#progress-note')).toContainText('nicht geladen');
+  await expect(page.locator('#progress-tiles')).toBeHidden();
+  backend.progressFail = false;
+  await page.locator('#progress-back').click();
+  await goProgress(page);
+  await expect(page.locator('#progress-tiles')).toBeVisible();
+});
+
+test('Fortschritt ohne Inventurwahl bleibt geschlossen', async ({ page }) => {
+  const backend = await setup(page, { token: false });
+  await page.locator('#login-password').fill('richtig');
+  await page.locator('#login-submit').click();
+  await expect(page.locator('#capture-screen')).toBeVisible();
+  backend.inventories = backend.inventories.filter(i => i.status !== 'aktiv');
+  await page.reload();
+  await expect(page.locator('#inventory')).toBeDisabled();
+  await expect(page.locator('#progress-open')).toBeHidden();
+});
+
+test('Zurück aus dem Fortschritt zeigt wieder die Erfassung', async ({ page }) => {
+  const backend = await setup(page);
+  await goProgress(page);
+  await page.locator('#progress-back').click();
+  await expect(page.locator('#capture-screen')).toBeVisible();
+  await expect(page.locator('#progress-screen')).toBeHidden();
+  await expect(page.locator('#progress-open')).toBeVisible();
+  await expect(page.locator('#context')).toBeVisible();
 });

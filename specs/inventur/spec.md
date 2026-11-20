@@ -416,6 +416,38 @@ noch die aktuellen Dataverse-Laufzeitberechtigungen.
   Erfassung/Speicherung/Fehlerrückmeldung erreichbar; realen Prüfstand
   getrennt vom simulierten Browser-Viewport ausweisen.
 
+### F11: Fortschritt der gewählten Inventur
+
+**Eingaben:** Fortschritt-Icon in der Kopfzeile (nur Erfassungsbereich, nur
+mit gewählter aktiver Inventur); Lesen `GET ?action=progress&inventory=…`,
+Tokenpflicht wie jeder andere Aufruf. Nur Lesen, kein Schreibweg.
+**Verhalten:**
+
+- Ansicht zeigt: Positionen erfasst, Artikel erfasst (eine Position pro
+  Artikel), Artikel im Sortiment (aktiv), Abdeckung in Prozent als Ring,
+  Warenwert erfasst als Summe von Menge × EK je Position (Positionen ohne
+  EK zählen 0 €, Hinweis sichtbar).
+- Warengruppen aus `cr5d4_warengruppebez` des Artikelstamms: je Gruppe
+  erfasste/gesamte Artikelzahl, Warenwert (EK) und Abdeckungsbalken.
+  Gruppensummen ergeben zusammen den Gesamtwert; Mengenangaben stehen nur
+  bei den Einzelpositionen („Zuletzt erfasst“, mit Uhrzeit und Warenwert).
+- Laden schlägt fehl oder keine aktive Inventur → verständliche Meldung,
+  keine leere Anzeige; Zurück-Knopf kehrt in die Erfassung zurück.
+- Stand wird beim Öffnen geladen (kein Dauerabruf); Icon erscheint erst
+  nach geladener Inventurwahl.
+- Kein Seitenscrollen auf 375 × 667 durch Listenbegrenzung; Ansicht folgt
+  F10 (Tokens, Modi, Touch-Ziele).
+
+**Testfälle:**
+
+- **TC-F11-01:** Öffnen mit Positionen → Zähler, Ring, Warenwert gesamt,
+  Warengruppen (Artikelzahl + Wert, keine Mengen) und zuletzt erfasste
+  Positionen mit Menge/Uhrzeit korrekt aus simulierter API.
+- **TC-F11-02:** Position ohne EK oder ohne Menge → zählt 0 € bzw. nicht
+  als erfasst; Summen bleiben stimmig (Fachlogik-Tests).
+- **TC-F11-03:** Lese- oder Konfigurationsfehler → Meldung, kein Inhalt;
+  ohne Inventurwahl kein Icon; Zurück zeigt Erfassung wieder vollständig.
+
 ## Datenverträge aus dem lokalen Export
 
 ### Inventuren

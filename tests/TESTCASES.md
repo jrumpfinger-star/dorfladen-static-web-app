@@ -68,6 +68,7 @@ Vertrag: [Spec](../specs/inventur/spec.md), [Plan](../specs/inventur/plan.md),
 | TC-F5/F6 | Menge, Plus, EK, ungültige Zahlen | Basis + Plus genau einmal; ungültig wird nicht gesendet |
 | TC-F7 | Konflikt, unklarer Ausgang | Stand und Entwurf getrennt, kein automatisches Neusenden |
 | TC-F8 | Settings, Namenssperre, doppelte/falsche Positionen | Name nach erster Position gesperrt, Mehrdeutigkeit blockiert |
+| TC-F11 | Fortschritt: Zähler, Warenwert (EK), Warengruppen, zuletzt erfasst; Fehler/ohne Inventur | Werte korrekt, Gruppen ohne Mengen, verständliche Meldung, kein Icon ohne Inventur |
 
 Alle Läufe verwenden Attrappen; es gibt weder Lese- noch Schreibzugriff auf
 Produktivdaten. **Noch nicht verifiziert:** echte Handykamera und

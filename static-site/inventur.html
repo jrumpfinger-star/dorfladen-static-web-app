@@ -12,8 +12,10 @@
 <body>
 <div class="app" id="app">
   <header class="header">
+    <button class="icon-button" id="progress-back" aria-label="Zurück zur Erfassung" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
     <button class="icon-button" id="menu-open" aria-label="Menü öffnen" hidden><i data-lucide="menu" aria-hidden="true"></i><span>Menü</span></button>
     <div class="heading"><h1>Inventur</h1><small id="heading-note">Dorfladen</small></div>
+    <button class="icon-button" id="progress-open" aria-label="Fortschritt anzeigen" hidden><i data-lucide="chart-column" aria-hidden="true"></i><span>Fortschritt</span></button>
   </header>
 
   <main class="login" id="login-screen" aria-label="Anmeldung" hidden>
@@ -65,8 +67,39 @@
     </section>
   </main>
 
-  <main class="settings" id="settings-screen" aria-label="Settings" hidden>
-    <div class="settings-top"><h2>Inventuren · Settings</h2><button id="new-inventory" class="primary">Neu</button></div>
+  <main class="progress" id="progress-screen" aria-label="Fortschritt" hidden>
+    <p class="progress-note" id="progress-note" role="status"></p>
+    <section class="tiles" aria-label="Überblick" id="progress-tiles" hidden>
+      <div class="tile"><small>Positionen erfasst</small><strong id="pg-positions">—</strong><span class="hint" id="pg-positions-hint"></span></div>
+      <div class="tile"><small>Artikel erfasst</small><strong id="pg-captured">—</strong><span class="hint">eine Position pro Artikel</span></div>
+      <div class="tile"><small>Artikel im Sortiment</small><strong id="pg-total">—</strong><span class="hint">aktive Artikel</span></div>
+      <div class="tile"><small>Abgedeckt</small><strong id="pg-share">—</strong><span class="hint" id="pg-share-hint"></span></div>
+      <div class="tile wide"><small>Warenwert erfasst (EK)</small><strong id="pg-value">—</strong><span class="hint">Menge × Einkaufspreis je Position · ohne EK zählt 0 €</span></div>
+    </section>
+    <section class="gauge" aria-label="Anteil erfasster Artikel" id="progress-gauge" hidden>
+      <svg width="120" height="120" viewBox="0 0 42 42" role="img" id="progress-ring" aria-label="Ring: Anteil der erfassten Artikel">
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--gr-t)" stroke-width="6"></circle>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--gr)" stroke-width="6"
+          stroke-dasharray="0 100" stroke-dashoffset="25" stroke-linecap="butt" id="progress-ring-arc"></circle>
+        <text x="21" y="23.5" text-anchor="middle" font-size="9" font-weight="600" fill="currentColor" id="progress-ring-text"></text>
+      </svg>
+      <div class="legend">
+        <h2>Wie weit ist die Inventur?</h2>
+        <span><span class="dot done"></span><span id="pg-legend-done">— Artikel erfasst</span></span>
+        <span><span class="dot open"></span><span id="pg-legend-open">— Artikel offen</span></span>
+      </div>
+    </section>
+    <section class="groups" aria-label="Warengruppen" id="progress-groups" hidden>
+      <h2>Warengruppen · Warenwert (EK)</h2>
+      <div id="group-list"></div>
+    </section>
+    <section class="recent" aria-label="Zuletzt erfasst" id="progress-recent" hidden>
+      <h2>Zuletzt erfasst</h2>
+      <div class="recent-list" id="recent-list"></div>
+    </section>
+  </main>
+
+  <main class="settings" id="settings-screen" aria-label="Settings" hidden>    <div class="settings-top"><h2>Inventuren · Settings</h2><button id="new-inventory" class="primary">Neu</button></div>
     <div class="settings-grid">
       <div class="inventory-list" id="inventory-list" aria-label="Inventurenliste"></div>
       <dialog class="inventory-dialog" id="inventory-editor" aria-labelledby="editor-title">

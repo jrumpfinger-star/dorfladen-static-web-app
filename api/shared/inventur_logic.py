@@ -157,6 +157,61 @@ class InventurService:
         pos = self._find_position(inv, article)
         return {"position": _public_position(pos) if pos else None}
 
+    def progress(self, inventory_id):
+        """Zähler, Warenwert (EK) gesamt/je Warengruppe und letzte Erfassungen."""
+        inv = self._inventory(inventory_id)
+        positions = self.repo.progress_positions(inv["id"])
+        articles = self.repo.progress_articles()
+
+        groups = {}  # Warengruppe -> {"total": Artikel gesamt, "captured": erfasst, "value": €}
+        by_lower = {}
+        for article in articles:
+            by_lower[article["id"].lower()] = article
+            group = groups.setdefault(article["warengruppe"] or "Ohne Warengruppe",
+                                      {"total": 0, "captured": 0, "value": 0.0})
+            group["total"] += 1
+
+        value_total = 0.0
+        recent = []
+        seen_articles = set()
+        for pos in positions:
+            article = by_lower.get((pos.get("articleId") or "").lower())
+            if pos.get("quantity") is not None and article is not None:
+                seen_articles.add(article["id"])
+            name = (article["warengruppe"] if article else "") or "Ohne Warengruppe"
+            group = groups.setdefault(name, {"total": 0, "captured": 0, "value": 0.0})
+            if pos.get("ek") is not None and pos.get("quantity") is not None:
+                value = float(pos["ek"]) * float(pos["quantity"])
+                value_total += value
+                group["value"] += value
+            if len(recent) < 12:
+                recent.append({
+                    "article": article["name"] if article else (pos.get("articleNumber") or "Artikel"),
+                    "quantity": pos.get("quantity"),
+                    "unit": (article["unit"] if article else "") or "",
+                    "value": (None if pos.get("ek") is None else _round2(float(pos["ek"]) * float(pos["quantity"])))
+                             if pos.get("quantity") is not None else None,
+                    "at": pos.get("at"),
+                })
+
+        for article_id in seen_articles:
+            article = by_lower[article_id]
+            groups[article["warengruppe"] or "Ohne Warengruppe"]["captured"] += 1
+
+        group_list = sorted(
+            ({"name": name, "articlesTotal": data["total"], "articlesCaptured": data["captured"],
+              "valueEk": _round2(data["value"])} for name, data in groups.items()),
+            key=lambda g: (-g["valueEk"], g["name"]))
+        return {
+            "inventory": _public_inventory(inv),
+            "articlesTotal": len(articles),
+            "articlesCaptured": len(seen_articles),
+            "positions": len(positions),
+            "valueEk": _round2(value_total),
+            "groups": group_list,
+            "recent": recent,
+        }
+
     # ---------- Schreiben: Positionen ----------
     def save_position(self, data):
         inv = self._inventory(data.get("inventoryId"))

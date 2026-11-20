@@ -133,6 +133,17 @@ class FakeRepo:
         self.writes.append(("delete_position", position_id))
         self.positions.pop(position_id, None)
 
+    # Fortschritt
+    def progress_positions(self, inventory_id):
+        rows = [p for p in self.positions.values() if p["inventoryId"] == inventory_id]
+        rows.sort(key=lambda p: p.get("at") or "", reverse=True)
+        return [{"quantity": p["quantity"], "ek": p["ek"], "articleId": p["articleId"],
+                 "articleNumber": None, "at": p.get("at")} for p in rows]
+
+    def progress_articles(self):
+        return [{"id": a["id"], "name": a["name"], "warengruppe": a.get("warengruppe") or "",
+                 "unit": a["unit"]} for a in self.articles.values()]
+
 
 def _service():
     repo = FakeRepo()
@@ -432,6 +443,64 @@ def test_odata_hilfen():
     raw.pop("@odata.etag")
     assert dv.DataverseRepo._pos(raw)["version"] == "m:t|3"
     assert dv.DataverseRepo._if_match('W/"1"') == 'W/"1"' and dv.DataverseRepo._if_match(None) == "*"
+
+
+# ---------- Fortschritt ----------
+def test_fortschritt_zaehler_und_warenwert():
+    repo, service = _service()
+    repo.articles[ART]["warengruppe"] = "Molkerei"
+    repo.articles[ART2]["warengruppe"] = "Backwaren"
+    pos = repo._add("Ladeninventur-0900", INV, ART, 10, 1.5, "0")
+    pos["at"] = "2026-11-20T16:00:00Z"
+    pos2 = repo._add("Ladeninventur-4500", INV, ART2, 800, 2.0, "3")
+    pos2["at"] = "2026-11-20T15:00:00Z"
+    data = service.progress(INV)
+    assert data["articlesTotal"] == 2 and data["articlesCaptured"] == 2 and data["positions"] == 2
+    assert data["valueEk"] == 1615.0  # 10*1,5 + 800*2,0
+    groups = {g["name"]: g for g in data["groups"]}
+    assert groups["Molkerei"]["articlesCaptured"] == 1 and groups["Molkerei"]["valueEk"] == 15.0
+    assert groups["Backwaren"]["valueEk"] == 1600.0
+    assert data["recent"][0]["article"] == "Milch" and data["recent"][0]["value"] == 15.0
+
+
+def test_fortschritt_gruppiert_ueber_gesamtes_sortiment():
+    repo, service = _service()
+    repo.articles[ART]["warengruppe"] = "Molkerei"
+    repo._add("Ladeninventur-0900", INV, ART, 10, 1.5, "0")
+    data = service.progress(INV)
+    # ART2 (keine Position) bleibt mit seiner Warengruppe erhalten
+    groups = {g["name"]: g for g in data["groups"]}
+    assert groups["Molkerei"]["articlesTotal"] == 1 and groups["Molkerei"]["articlesCaptured"] == 1
+    assert data["articlesCaptured"] == 1 and data["articlesTotal"] == 2
+
+
+def test_fortschritt_ohne_ek_zaehlt_null():
+    repo, service = _service()
+    repo.articles[ART]["warengruppe"] = "Molkerei"
+    repo._add("Ladeninventur-0900", INV, ART, 10, None, "0")
+    data = service.progress(INV)
+    assert data["valueEk"] == 0.0 and data["groups"][0]["valueEk"] == 0.0
+    assert data["recent"][0]["value"] is None
+
+
+def test_fortschritt_ohne_positionen_und_leere_menge():
+    repo, service = _service()
+    repo.articles[ART]["warengruppe"] = "Molkerei"
+    repo._add("Ladeninventur-0900", INV, ART, None, 1.5, "0")  # leere Menge: kein Wert, kein "erfasst"
+    data = service.progress(INV)
+    assert data["articlesCaptured"] == 0 and data["valueEk"] == 0.0
+    assert data["groups"][0]["articlesCaptured"] == 0
+
+
+def test_fortschritt_unbekannter_artikel_bekannt_geblieben():
+    repo, service = _service()
+    repo.articles[ART]["warengruppe"] = "Molkerei"
+    repo.articles[ART]["statecode"] = 1  # deaktivierter Artikel mit Position
+    repo.progress_articles = lambda: [{"id": ART2, "name": "Brot", "warengruppe": "", "unit": "3"}]
+    repo._add("Ladeninventur-0900", INV, ART, 4, 2.0, "0")
+    data = service.progress(INV)
+    assert data["articlesTotal"] == 1 and data["articlesCaptured"] == 0
+    assert data["recent"][0]["article"] == "Artikel"  # Name nicht ermittelbar, Position trotzdem sichtbar
 
 
 if __name__ == "__main__":

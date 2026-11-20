@@ -24,6 +24,10 @@ ARTICLES = "cr5d4_tables"
 INV_SELECT = "cr5d4_inventurid,cr5d4_inventur1,cr5d4_jahr,cr5d4_startdatum,cr5d4_status,modifiedon"
 DET_SELECT = ("cr5d4_inventurdetailsid,cr5d4_newcolumn,cr5d4_menge,cr5d4_ekpreis,cr5d4_mengenerfassung,"
               "_cr5d4_inventur_value,_cr5d4_artikelstamm_value,modifiedon")
+PROG_POS_SELECT = ("cr5d4_inventurdetailsid,cr5d4_menge,cr5d4_ekpreis,cr5d4_mengenerfassung,"
+                   "cr5d4_artikelnummer,_cr5d4_artikelstamm_value,modifiedon")
+PROG_ART_SELECT = ("cr5d4_tableid,cr5d4_bezeichnungtotal,cr5d4_artikelbezeichnung,"
+                   "cr5d4_warengruppebez,cr5d4_mengenerfassung")
 ART_SELECT = ("cr5d4_tableid,cr5d4_bezeichnungtotal,cr5d4_artikelbezeichnung,cr5d4_strichcode,"
               "cr5d4_artikelstrichcode,cr5d4_search,cr5d4_vk_dorf,cr5d4_letzterek,cr5d4_mwstkz,"
               "cr5d4_mengenerfassung")
@@ -145,6 +149,22 @@ class DataverseRepo:
                 "articleCode": raw.get("cr5d4_artikelstrichcode"), "search": raw.get("cr5d4_search"),
                 "vk": raw.get("cr5d4_vk_dorf"), "lastEk": raw.get("cr5d4_letzterek"),
                 "tax": raw.get("cr5d4_mwstkz"), "unit": raw.get("cr5d4_mengenerfassung")}
+
+    # ---------- Fortschritt (nur lesen) ----------
+    def progress_positions(self, inventory_id):
+        flt = f"_cr5d4_inventur_value eq {inventory_id}"
+        rows = self._get_all(DETAILS, {"$select": PROG_POS_SELECT, "$filter": flt,
+                                       "$orderby": "modifiedon desc"}, limit=10000)
+        return [{"quantity": r.get("cr5d4_menge"), "ek": r.get("cr5d4_ekpreis"),
+                 "articleId": r.get("_cr5d4_artikelstamm_value"), "articleNumber": r.get("cr5d4_artikelnummer"),
+                 "at": r.get("modifiedon")} for r in rows]
+
+    def progress_articles(self):
+        rows = self._get_all(ARTICLES, {"$select": PROG_ART_SELECT, "$filter": "statecode eq 0"}, limit=20000)
+        return [{"id": r["cr5d4_tableid"],
+                 "name": r.get("cr5d4_bezeichnungtotal") or r.get("cr5d4_artikelbezeichnung") or "",
+                 "warengruppe": (r.get("cr5d4_warengruppebez") or "").strip(),
+                 "unit": r.get("cr5d4_mengenerfassung")} for r in rows]
 
     # ---------- Inventuren ----------
     def list_inventories(self):

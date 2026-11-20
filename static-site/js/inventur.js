@@ -19,6 +19,7 @@
     inventories: [], inventoryId: null, article: null, position: null,
     loaded: false, loadError: '', busy: false, inflight: null, pendingCommit: false,
     unclear: null, dirty: false, section: 'capture', started: false,
+    progress: null, progressSeq: 0,
   };
   let matches = [], after = null, hasMore = false, activeResult = -1;
   let searchSeq = 0, searchAbort = null, searchTimer = null, positionSeq = 0;
@@ -99,7 +100,9 @@
 
   // ---------- Anmeldung ----------
   function showLogin() {
-    for (const id of ['context', 'capture-screen', 'settings-screen', 'menu-open']) $(id).hidden = true;
+    for (const id of ['context', 'capture-screen', 'settings-screen', 'progress-screen', 'menu-open']) $(id).hidden = true;
+    $('progress-back').hidden = true;
+    state.section = 'capture';
     for (const id of ['menu', 'scanner', 'conflict', 'inventory-editor']) if ($(id).open) $(id).close();
     document.body.classList.remove('modal-open');
     $('login-screen').hidden = false;
@@ -184,6 +187,7 @@
     $('inventory-meta').textContent = inv ? (inv.year || 'Kein Jahr') + ' · ' + dateLabel(inv.date) : 'In Settings eine Inventur aktivieren.';
     $('search').disabled = !inv;
     $('scan-open').disabled = !inv;
+    $('progress-open').hidden = state.section !== 'capture' || !inv;
     return before !== state.inventoryId;
   }
   $('inventory').onchange = () => {
@@ -689,9 +693,13 @@
   $('menu-close').onclick = () => closeDialog('menu');
   function applySection() {
     const capture = state.section === 'capture';
+    const progress = state.section === 'progress';
     $('capture-screen').hidden = !capture;
     $('context').hidden = !capture;
-    $('settings-screen').hidden = capture;
+    $('settings-screen').hidden = capture || progress;
+    $('progress-screen').hidden = !progress;
+    $('progress-open').hidden = !capture || !inventory();
+    $('progress-back').hidden = !progress;
   }
   function go(next) {
     closeDialog('menu');
@@ -701,7 +709,11 @@
       renderList();
       if (editorKey && wide()) showEditor();
       else $('new-inventory').focus();
+    } else if (next === 'progress') {
+      $('heading-note').textContent = 'Fortschritt · ' + ((inventory() || {}).name || '');
+      loadProgress();
     } else {
+      $('heading-note').textContent = 'Dorfladen';
       if ($('inventory-editor').open) $('inventory-editor').close();
       document.body.classList.toggle('modal-open', Boolean(document.querySelector('dialog:modal')));
       if (permanentResults()) runSearch();
@@ -710,6 +722,82 @@
   }
   $('go-capture').onclick = () => go('capture');
   $('go-settings').onclick = () => go('settings');
+
+  // ---------- Fortschritt ----------
+  function renderProgress(data) {
+    const captured = data.articlesCaptured, total = data.articlesTotal;
+    const share = total ? Math.round(captured * 100 / total) : 0;
+    $('pg-positions').textContent = String(data.positions);
+    $('pg-positions-hint').textContent = 'Inventur ' + (data.inventory.name || '');
+    $('pg-captured').textContent = String(captured);
+    $('pg-total').textContent = String(total);
+    $('pg-share').textContent = total ? share + ' %' : '—';
+    $('pg-share-hint').textContent = total ? captured + ' von ' + total + ' Artikeln' : 'Keine Artikel im Sortiment';
+    $('pg-value').textContent = money(data.valueEk);
+    $('pg-legend-done').textContent = captured + ' Artikel erfasst';
+    $('pg-legend-open').textContent = Math.max(total - captured, 0) + ' Artikel offen';
+    $('progress-ring').setAttribute('aria-label', 'Ring: ' + share + ' Prozent der Artikel erfasst');
+    $('progress-ring-arc').setAttribute('stroke-dasharray', share + ' ' + (100 - share));
+    $('progress-ring-text').textContent = total ? share + ' %' : '';
+    const list = $('group-list');
+    list.replaceChildren();
+    if (!data.groups.length) {
+      const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'Keine Warengruppen im Sortiment.';
+      list.append(p);
+    }
+    for (const group of data.groups) {
+      const row = document.createElement('div'); row.className = 'group';
+      const name = document.createElement('strong'); name.textContent = group.name;
+      const qty = document.createElement('span'); qty.className = 'qty';
+      qty.textContent = group.articlesCaptured + ' / ' + group.articlesTotal + ' Artikel · ' + money(group.valueEk);
+      const bar = document.createElement('div'); bar.className = 'bar';
+      const fill = document.createElement('span');
+      fill.style.width = (group.articlesTotal ? Math.min(100, Math.round(group.articlesCaptured * 100 / group.articlesTotal)) : 0) + '%';
+      bar.append(fill); row.append(name, qty, bar); list.append(row);
+    }
+    const recent = $('recent-list');
+    recent.replaceChildren();
+    if (!data.recent.length) {
+      const p = document.createElement('p'); p.className = 'empty-results'; p.textContent = 'Noch nichts erfasst.';
+      recent.append(p);
+    }
+    for (const item of data.recent) {
+      const row = document.createElement('div'); row.className = 'row';
+      const name = document.createElement('strong'); name.textContent = item.article;
+      const qty = document.createElement('span'); qty.className = 'qty';
+      qty.textContent = item.quantity === null ? '—' : item.quantity.toLocaleString('de-DE') +
+        (item.unit === '3' ? ' g' : ' Stück');
+      const time = document.createElement('time');
+      time.textContent = item.at ? item.at.slice(11, 16) : '';
+      const value = document.createElement('small');
+      value.textContent = item.value === null || item.value === undefined ? 'ohne EK' : money(item.value);
+      row.append(name, qty, time, value); recent.append(row);
+    }
+    for (const id of ['progress-tiles', 'progress-gauge', 'progress-groups', 'progress-recent']) $(id).hidden = false;
+  }
+  async function loadProgress() {
+    const seq = ++state.progressSeq;
+    if (!inventory()) {
+      $('progress-note').textContent = 'Keine aktive Inventur gewählt.';
+      return;
+    }
+    $('progress-note').textContent = 'Fortschritt wird geladen …';
+    $('progress-note').className = 'progress-note';
+    for (const id of ['progress-tiles', 'progress-gauge', 'progress-groups', 'progress-recent']) $(id).hidden = true;
+    try {
+      const data = await api('GET', {action: 'progress', inventory: state.inventoryId});
+      if (seq !== state.progressSeq || state.section !== 'progress') return;
+      state.progress = data;
+      $('progress-note').textContent = 'Stand vom ' + new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'}) + ' Uhr · zum Aktualisieren erneut öffnen';
+      renderProgress(data);
+    } catch (e) {
+      if (seq !== state.progressSeq || ignorable(e) || state.section !== 'progress') return;
+      $('progress-note').textContent = failureText(e) + ' Bitte zurückgehen und erneut öffnen.';
+      $('progress-note').className = 'progress-note error';
+    }
+  }
+  $('progress-open').onclick = () => go('progress');
+  $('progress-back').onclick = () => go('capture');
 
   // ---------- Settings: Inventuren ----------
   function renderList() {
