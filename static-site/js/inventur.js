@@ -710,16 +710,31 @@
       if (editorKey && wide()) showEditor();
       else $('new-inventory').focus();
     } else if (next === 'progress') {
+      // Android-Zurück-Taste soll zur Erfassung zurückkehren, nicht die Seite verlassen.
+      history.pushState({inventur: 'progress'}, '');
       $('heading-note').textContent = 'Fortschritt · ' + ((inventory() || {}).name || '');
       loadProgress();
     } else {
-      $('heading-note').textContent = 'Dorfladen';
-      if ($('inventory-editor').open) $('inventory-editor').close();
-      document.body.classList.toggle('modal-open', Boolean(document.querySelector('dialog:modal')));
-      if (permanentResults()) runSearch();
-      $('inventory').focus();
+      showCapture();
+      leaveProgressHistory();
     }
   }
+  function showCapture() {
+    $('heading-note').textContent = 'Dorfladen';
+    if ($('inventory-editor').open) $('inventory-editor').close();
+    document.body.classList.toggle('modal-open', Boolean(document.querySelector('dialog:modal')));
+    if (permanentResults()) runSearch();
+    $('inventory').focus();
+  }
+  function leaveProgressHistory() {
+    if (history.state && history.state.inventur === 'progress') history.back();
+  }
+  window.addEventListener('popstate', () => {
+    if (state.section !== 'progress') return;
+    state.section = 'capture';
+    applySection();
+    showCapture();
+  });
   $('go-capture').onclick = () => go('capture');
   $('go-settings').onclick = () => go('settings');
 
@@ -797,7 +812,12 @@
     }
   }
   $('progress-open').onclick = () => go('progress');
-  $('progress-back').onclick = () => go('capture');
+  $('progress-back').onclick = () => {
+    state.section = 'capture';
+    applySection();
+    showCapture();
+    leaveProgressHistory();
+  };
 
   // ---------- Settings: Inventuren ----------
   function renderList() {

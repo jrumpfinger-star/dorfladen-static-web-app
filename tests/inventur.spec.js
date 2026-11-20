@@ -732,3 +732,13 @@ test('Zurück aus dem Fortschritt zeigt wieder die Erfassung', async ({ page }) 
   await expect(page.locator('#progress-open')).toBeVisible();
   await expect(page.locator('#context')).toBeVisible();
 });
+
+test('Browser-Zurück (Android) kehrt aus dem Fortschritt zur Erfassung zurück', async ({ page }) => {
+  const backend = await setup(page);
+  await goProgress(page);
+  await expect(page.locator('#progress-screen')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#capture-screen')).toBeVisible();
+  await expect(page.locator('#progress-screen')).toBeHidden();
+  await expect(page.locator('#inventory')).toBeVisible();
+});
