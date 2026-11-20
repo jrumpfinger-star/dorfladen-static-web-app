@@ -467,6 +467,28 @@ test('Kamera manuell: erst der Knopf löst den Scan aus', async ({ page }) => {
   await expect(page.locator('#unit')).toHaveText('Gramm');
 });
 
+test('Kamerabereich ist groß genug und der Dialog passt in den Bildschirm', async ({ page }) => {
+  await page.addInitScript(cameraStub);
+  await setup(page);
+  await page.locator('#manual-scan').check();
+  await page.locator('#scan-open').click();
+  await expect(page.locator('#camera')).toBeVisible();
+  const m = await page.evaluate(() => {
+    const camera = document.getElementById('camera').getBoundingClientRect();
+    const dialog = document.getElementById('scanner').getBoundingClientRect();
+    const confirm = document.getElementById('scan-confirm').getBoundingClientRect();
+    return { cw: camera.width, ch: camera.height, dTop: dialog.top, dBottom: dialog.bottom, dLeft: dialog.left, dRight: dialog.right,
+      cBottom: confirm.bottom, iw: innerWidth, ih: innerHeight };
+  });
+  expect(m.cw).toBeGreaterThanOrEqual(300);
+  expect(m.ch).toBeGreaterThanOrEqual(300);
+  expect(m.dTop).toBeGreaterThanOrEqual(0);
+  expect(m.dBottom).toBeLessThanOrEqual(m.ih);
+  expect(m.dLeft).toBeGreaterThanOrEqual(0);
+  expect(m.dRight).toBeLessThanOrEqual(m.iw);
+  expect(m.cBottom).toBeLessThanOrEqual(m.ih);
+});
+
 test('Kamera verweigert: verständliche Meldung, Suche bleibt nutzbar', async ({ page }) => {
   await page.addInitScript(() => {
     window.BarcodeDetector = class { static async getSupportedFormats() { return ['ean_13']; } async detect() { return []; } };
