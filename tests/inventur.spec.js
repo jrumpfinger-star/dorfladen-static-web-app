@@ -412,6 +412,15 @@ test('Settings: veraltete Inventur zeigt Konflikt und behält den Entwurf', asyn
   await expect(page.locator('#inventory-year')).toHaveValue('2030');
 });
 
+test('Kiosk-Kopfzeile verlinkt die Inventur (Quelle, Generator und erzeugte Seiten)', async () => {
+  const fs = require('fs');
+  const path = require('path');
+  const read = rel => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
+  for (const file of ['static-site/kiosk-klassisch.html', 'static-site/kiosk.html', 'static-site/kiosk-neu.html', 'tools/build-kiosk-neu.js']) {
+    expect(read(file), file).toContain('href="/inventur"');
+  }
+});
+
 // ---------- Kamera ----------
 const cameraStub = () => {
   window.__camera = { stopped: 0, queue: [], opened: 0 };
