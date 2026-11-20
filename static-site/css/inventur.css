@@ -114,8 +114,10 @@ dialog[open]{display:flex;flex-direction:column}
 .login label{font-weight:600}
 .login input{margin-top:4px}
 .login-error{color:var(--red);font-weight:600;min-height:22px}
-.keyboard .context,.keyboard .search-area,.keyboard .article,.keyboard .prices{display:none}
+.keyboard .header,.keyboard .context,.keyboard .search-area,.keyboard .prices{display:none}
+.keyboard .work{padding-top:8px}
 .keyboard .capture{flex:none}
+.keyboard .article h2{font-size:18px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .keyboard .scan-mode{display:none}
 @media (min-width:850px) and (min-height:600px){
   .context{grid-template-columns:120px minmax(240px,450px) 1fr;align-items:center;gap:12px}

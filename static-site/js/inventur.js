@@ -423,6 +423,13 @@
       $('saved-check').hidden = true;
     });
     $(id).addEventListener('change', commit);
+    // Eingabetaste schließt die Eingabe ab: speichern, danach Tastatur schließen.
+    $(id).addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (state.dirty || state.busy) commit();
+      else $(id).blur();
+    });
   }
   $('save').onclick = () => { if (state.unclear) checkUnclear(); else commit(); };
   $('add').onclick = commit;

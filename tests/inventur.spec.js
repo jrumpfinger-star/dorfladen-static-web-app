@@ -222,6 +222,45 @@ test('ungültige Eingaben werden abgelehnt und nicht gesendet', async ({ page })
   expect(saves(backend)).toHaveLength(0);
 });
 
+test('Eingabetaste speichert Menge oder Plus und schließt die Eingabe', async ({ page }) => {
+  const backend = await setup(page);
+  await choose(page, 'Vollmilch');
+  await page.locator('#quantity').fill('7');
+  await page.locator('#quantity').press('Enter');
+  await expect(page.locator('#status-text')).toHaveText('Gespeichert');
+  expect(saves(backend)).toEqual([{ action: 'savePosition', inventoryId: INV1, articleId: MILK, quantity: 7, plus: null, baseVersion: null }]);
+  expect(await page.evaluate(() => document.activeElement.id)).not.toBe('quantity');
+  await page.locator('#plus').fill('3');
+  await page.locator('#plus').press('Enter');
+  await expect(page.locator('#quantity')).toHaveValue('10');
+  expect(saves(backend)).toHaveLength(2);
+  expect(saves(backend)[1]).toMatchObject({ quantity: 7, plus: 3, baseVersion: 'p1' });
+  await page.locator('#quantity').focus();
+  await page.locator('#quantity').press('Enter');
+  expect(saves(backend)).toHaveLength(2);
+  expect(await page.evaluate(() => document.activeElement.id)).not.toBe('quantity');
+});
+
+test('Bei geöffneter Tastatur bleibt der Artikel sichtbar', async ({ page }) => {
+  await setup(page);
+  await choose(page, 'Vollmilch');
+  await page.setViewportSize({ width: 375, height: 340 });
+  await page.locator('#quantity').click();
+  await expect(page.locator('#app')).toHaveClass(/keyboard/);
+  await expect(page.locator('#article-name')).toBeVisible();
+  const m = await page.evaluate(() => {
+    const box = id => { const r = document.getElementById(id).getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; };
+    return { name: box('article-name'), quantity: box('quantity'), save: box('save'), status: box('status'), ih: innerHeight,
+      scrollHeight: document.documentElement.scrollHeight };
+  });
+  for (const part of ['name', 'quantity', 'save', 'status']) {
+    expect(m[part].top, part).toBeGreaterThanOrEqual(0);
+    expect(m[part].bottom, part).toBeLessThanOrEqual(m.ih);
+  }
+  expect(m.name.bottom).toBeLessThanOrEqual(m.quantity.top);
+  await expect(page.locator('#article-name')).toContainText('Vollmilch');
+});
+
 test('Konflikt: aktueller Stand und Entwurf getrennt, Plus wird nicht automatisch neu gebucht', async ({ page }) => {
   const backend = await setup(page);
   backend.seed(INV1, MILK, 12);
