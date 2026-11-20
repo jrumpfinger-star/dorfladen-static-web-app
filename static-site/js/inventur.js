@@ -565,18 +565,30 @@
       [ZX.DecodeHintType.TRY_HARDER, true],
     ]));
     const canvas = document.createElement('canvas');
+    const turned = document.createElement('canvas');
+    const read = source => {
+      try {
+        const bitmap = new ZX.BinaryBitmap(new ZX.HybridBinarizer(new ZX.HTMLCanvasElementLuminanceSource(source)));
+        return String(reader.decodeWithState(bitmap).getText()).trim() || null;
+      } catch (e) {
+        return null; // kein Barcode im Bild
+      }
+    };
     return {detect: async video => {
       const width = video.videoWidth, height = video.videoHeight;
       if (!width || !height) return null;
       const scale = Math.min(1, 1280 / width);
       canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
       canvas.getContext('2d', {willReadFrequently: true}).drawImage(video, 0, 0, canvas.width, canvas.height);
-      try {
-        const bitmap = new ZX.BinaryBitmap(new ZX.HybridBinarizer(new ZX.HTMLCanvasElementLuminanceSource(canvas)));
-        return String(reader.decode(bitmap).getText()).trim() || null;
-      } catch (e) {
-        return null; // kein Barcode im Bild
-      }
+      const upright = read(canvas);
+      if (upright) return upright;
+      // Hochkant gehaltene Codes: Bild um 90° drehen und erneut lesen (die Lage des Codes ist egal).
+      turned.width = canvas.height; turned.height = canvas.width;
+      const context = turned.getContext('2d', {willReadFrequently: true});
+      context.translate(turned.width / 2, turned.height / 2);
+      context.rotate(Math.PI / 2);
+      context.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+      return read(turned);
     }};
   }
   function stopScanner() {

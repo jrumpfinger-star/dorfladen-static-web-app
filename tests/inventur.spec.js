@@ -540,8 +540,9 @@ test('Kamera verweigert: verständliche Meldung, Suche bleibt nutzbar', async ({
   await choose(page, 'Vollmilch');
 });
 
-test('Kamera ohne eingebaute Erkennung: mitgelieferter Leser erkennt einen echten EAN-13-Strichcode', async ({ page }) => {
-  await page.addInitScript(() => {
+for (const angle of [0, 90, 270]) {
+test(`Kamera ohne eingebaute Erkennung: Leser erkennt einen EAN-13-Strichcode in Lage ${angle}°`, async ({ page }) => {
+  await page.addInitScript(rotation => {
     delete window.BarcodeDetector;
     const L = ['0001101', '0011001', '0010011', '0111101', '0100011', '0110001', '0101111', '0111011', '0110111', '0001011'];
     const G = ['0100111', '0110011', '0011011', '0100001', '0011101', '0111001', '0000101', '0010001', '0001001', '0010111'];
@@ -560,10 +561,13 @@ test('Kamera ohne eingebaute Erkennung: mitgelieferter Leser erkennt einen echte
       canvas.width = 640; canvas.height = 480;
       const ctx = canvas.getContext('2d');
       const draw = tick => {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 640, 480);
+        ctx.translate(320, 240); ctx.rotate(rotation * Math.PI / 180);
         ctx.fillStyle = '#000';
-        const module = 4, left = (640 - 95 * module) / 2;
-        [...bits].forEach((bit, index) => { if (bit === '1') ctx.fillRect(left + index * module, 100, module, 240); });
+        const module = 4, left = -95 * module / 2;
+        [...bits].forEach((bit, index) => { if (bit === '1') ctx.fillRect(left + index * module, -100, module, 200); });
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = tick % 2 ? '#fefefe' : '#fff'; ctx.fillRect(0, 0, 2, 2);
       };
       let tick = 0; draw(tick);
@@ -572,7 +576,7 @@ test('Kamera ohne eingebaute Erkennung: mitgelieferter Leser erkennt einen echte
       stream.getTracks().forEach(track => { const stop = track.stop.bind(track); track.stop = () => { window.__camera.stopped++; clearInterval(timer); stop(); }; });
       return stream;
     };
-  });
+  }, angle);
   const backend = makeBackend();
   backend.articles.push({ id: 'ffffffff-ffff-ffff-ffff-ffffffffffff', name: 'Strichcode-Testartikel', code: '4006381333931', articleCode: '4006381333931', vk: 1, lastEk: 0.5, tax: 9, unit: '0', unitLabel: 'Stück', supported: true, ekSuggestion: 0.5 });
   await setup(page, { backend });
@@ -583,6 +587,7 @@ test('Kamera ohne eingebaute Erkennung: mitgelieferter Leser erkennt einen echte
   expect(await page.evaluate(() => window.__camera.stopped)).toBeGreaterThan(0);
   expect(saves(backend)).toHaveLength(0);
 });
+}
 
 test('Kamera nicht unterstützt: Hinweis statt Fehler', async ({ page }) => {
   await page.addInitScript(() => { delete window.BarcodeDetector; });
