@@ -259,6 +259,28 @@ test('Bei geöffneter Tastatur bleibt der Artikel sichtbar', async ({ page }) =>
   }
   expect(m.name.bottom).toBeLessThanOrEqual(m.quantity.top);
   await expect(page.locator('#article-name')).toContainText('Vollmilch');
+  // Nach Eingabe und Eingabetaste: gespeichert, Tastaturansicht endet, volle Ansicht kehrt zurück.
+  await page.locator('#quantity').fill('5');
+  await page.locator('#quantity').press('Enter');
+  await expect(page.locator('#status-text')).toHaveText('Gespeichert');
+  await expect(page.locator('#app')).not.toHaveClass(/keyboard/);
+  expect(await page.evaluate(() => document.activeElement.id)).not.toMatch(/^(quantity|plus)$/);
+  await expect(page.locator('#search')).toBeVisible();
+  await expect(page.locator('#context')).toBeVisible();
+  await expect(page.locator('#ek')).toBeVisible();
+});
+
+test('Speichern über die Schaltfläche beendet die Tastaturansicht ebenfalls', async ({ page }) => {
+  await setup(page);
+  await choose(page, 'Vollmilch');
+  await page.setViewportSize({ width: 375, height: 340 });
+  await page.locator('#quantity').click();
+  await expect(page.locator('#app')).toHaveClass(/keyboard/);
+  await page.locator('#quantity').fill('6');
+  await page.locator('#save').click();
+  await expect(page.locator('#status-text')).toHaveText('Gespeichert');
+  await expect(page.locator('#app')).not.toHaveClass(/keyboard/);
+  await expect(page.locator('#search')).toBeVisible();
 });
 
 test('Konflikt: aktueller Stand und Entwurf getrennt, Plus wird nicht automatisch neu gebucht', async ({ page }) => {

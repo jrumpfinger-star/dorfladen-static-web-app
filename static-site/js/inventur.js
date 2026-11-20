@@ -299,6 +299,17 @@
     state.inflight = doSave(quantity, plus);
     return state.inflight;
   }
+  // Nach dem Speichern: Eingabefeld verlassen, damit die Tastatur zugeht und die volle Ansicht zurückkommt.
+  function finishEntry() {
+    const active = document.activeElement;
+    if (active === $('quantity') || active === $('plus')) active.blur();
+    viewport();
+    setTimeout(() => {
+      if (document.activeElement === document.body && !$('manual-scan').closest('[hidden]') && $('manual-scan').getClientRects().length) {
+        $('manual-scan').focus();
+      }
+    }, 60);
+  }
   async function doSave(quantity, plus) {
     const draft = {quantity, plus, baseVersion: state.position ? state.position.version : null};
     const sent = {q: $('quantity').value, p: $('plus').value};
@@ -317,7 +328,7 @@
       renderArticle(false);
       feedback('Gespeichert');
       $('saved-check').hidden = !(Number(data.position.quantity) > 0);
-      $('manual-scan').focus();
+      finishEntry();
     } catch (e) {
       state.busy = false;
       state.dirty = true;
