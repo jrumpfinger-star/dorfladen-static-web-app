@@ -1929,6 +1929,7 @@
        Bedarf. (Spec bestellliste-schuetzen) -->
   <script src="/js/admin-auth.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
+  <link rel="stylesheet" href="/css/angebote.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -1945,6 +1946,7 @@
     <button class="k-header-admin" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden-Verwaltung"><i data-lucide="users"></i> <span class="k-header-admin-lbl">Kunden</span></button>
     <a class="k-header-link" href="/index.html" title="Zur Website"><i data-lucide="house"></i> <span class="k-header-link-lbl">Website</span></a>
     <a class="k-header-link" href="/cms.html" title="Zum CMS"><i data-lucide="settings"></i> <span class="k-header-link-lbl">CMS</span></a>
+    <a class="k-header-link" href="/inventur" title="Zur Inventur"><i data-lucide="clipboard-list"></i> <span class="k-header-link-lbl">Inventur</span></a>
     <span class="k-header-sep"></span>
     <button class="k-btn k-btn-outline" id="k-mute-btn" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.toggleMute()" title="Ton ein/aus"><i data-lucide="volume-2" style="width:20px;height:20px"></i></button>
     <button class="k-btn k-btn-outline" style="min-height:40px;min-width:40px;padding:8px;border-radius:10px;font-size:18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="K.openModal('modal-help')" title="Hilfe & Workflows"><i data-lucide="help-circle" style="width:20px;height:20px"></i></button>
@@ -2117,6 +2119,12 @@
   <!-- Werbebilder der PC-Waage (specs/kiosk-werbebilder-upload/spec.md). -->
   <div class="k-panel" id="panel-werbebilder">
     <div id="wb-root"><div class="k-empty">Laden…</div></div>
+  </div>
+
+  <div class="k-panel" id="panel-angebote">
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
+      <p role="status">Die Angebotsverwaltung wird geladen …</p>
+    </section>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -3023,6 +3031,7 @@ var K = (function(){
     if(id==='getraenke' && window.KGetraenke) window.KGetraenke.onShow();
     if(id==='drax' && window.KDrax) window.KDrax.onShow();
     if(id==='werbebilder' && window.KWerbebilder) window.KWerbebilder.onShow();
+    if(id==='angebote' && window.KAngebote) window.KAngebote.onShow();
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -7856,6 +7865,14 @@ var K = (function(){
 <script src="/js/kiosk-getraenke.js"></script>
 <script src="/js/kiosk-drax.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
+<script src="/js/wochenangebote-renderer.js"></script>
+<script src="/js/angebote-vorschau-editor.js"></script>
+<script src="/js/angebote-modell.js"></script>
+<script src="/js/angebote-design.js"></script>
+<script src="/js/cms-angebote-form.js"></script>
+<script src="/js/angebote-dataverse.js"></script>
+<script src="/js/cms-angebote.js"></script>
+<script src="/js/angebote-editor.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script>
@@ -7929,7 +7946,8 @@ var K = (function(){
     // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
+    if(window.KAngebote && window.KAngebote.hasUnsavedChanges()) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-angebote' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen

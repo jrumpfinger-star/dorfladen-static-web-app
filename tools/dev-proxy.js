@@ -33,11 +33,15 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 
-const args = process.argv.slice(2).filter((a) => a !== '--umbau');
+const NUR_LESEN = process.argv.includes('--nur-lesen');
+const ZIEL_ARG = process.argv.find((a) => a.startsWith('--ziel='));
+const args = process.argv
+  .slice(2)
+  .filter((a) => a !== '--umbau' && a !== '--nur-lesen' && !a.startsWith('--ziel='));
 const UMBAU = process.argv.indexOf('--umbau') > 0;
 const PORT = parseInt(args[0] || '8787', 10);
 const WURZEL = path.resolve(args[1] || path.join(__dirname, '..', 'static-site'));
-const LIVE = 'https://www.dorfladen-oberornau.de';
+const LIVE = ZIEL_ARG ? ZIEL_ARG.slice(7) : 'https://www.dorfladen-oberornau.de';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -56,6 +60,12 @@ const MIME = {
 };
 
 function weiterreichen(req, res) {
+  // --nur-lesen: Schreibzugriffe erreichen die echte Seite nie.
+  if (NUR_LESEN && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: 'Lokal gesperrt: nur lesender Zugriff.' }));
+    return;
+  }
   const ziel = new URL(req.url, LIVE);
   const anfrage = https.request(
     ziel,

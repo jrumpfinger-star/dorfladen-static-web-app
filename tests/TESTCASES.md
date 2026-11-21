@@ -12,6 +12,70 @@
 
 ---
 
+## Inventur-Mockup und Handy-Vorschau
+
+Vertrag: [Spec](../specs/inventur-mockup/spec.md),
+[Funktionsbeschreibung](../specs/inventur-funktionen.md).
+Testdatei: [inventur-mockup.spec.js](inventur-mockup.spec.js).
+Nur lokale synthetische Daten, kein Live-Test und keine echten Schreibzugriffe.
+
+| Testfälle | Aktion / Prüfung | Erwartung |
+| --- | --- | --- |
+| TC-F1-01/02, TC-F2-01/02 | Bereiche, Entwürfe und aktive Inventuren wechseln | Entwurf bleibt erhalten, nur aktive auswählbar, erklärter Leerzustand |
+| TC-F3-01/02, TC-F4-01/02 | Suchtext/Barcode, Tastatur, lange Treffer, beide Scan-Simulationen | Richtiger Artikel, erster Barcode entscheidet, unbekanntes Ergebnis sperrt Erfassung |
+| TC-F5-01/02/03 | Neue/bestehende Position und Preise/Einheiten prüfen | Positions-EK bleibt erhalten, Ersatzberechnung 7/19 % korrekt, unbekannte Einheit erklärt |
+| TC-F6-01/02/03, TC-F7-01/02/03 | Menge, Plus, Blur/Klick, leer/0/negativ/Grenzen/Fehler | Genau eine Addition, kein stilles Runden, ungültige Werte überschreiben nicht |
+| TC-F8-01/02 | Referenzen und Inventurwechsel prüfen | Originalschlüssel/Referenzen und getrennte Mengen erhalten |
+| TC-F9-01/02/03 | Neu/Edit, Pflichtname, optionale Felder, Datum und lange Liste | Nur explizit lokal speichern; ursprüngliche Zeit erhalten; Liste intern scrollbar |
+| TC-F10-01/02 | Fokus, Escape, Tab-Zyklus, Hell/Dunkel, forced-colors, Touch und Kontrast | Erreichbare Kontrollen, Rückkehrfokus, gesperrter modaler Hintergrund, ausreichender Kontrast |
+| TC-F11-01/02/03 | Rechtecke/hit testing, Dokumentmaße, interne Listen, Netz/Storage/Reload | Kein innerer Seitenüberlauf, echte Arbeitsfläche, keine Writes/Persistenz |
+| TC-F11-04 automatisierter Teil | Reduzierte Eingabehöhe | Fokussiertes Feld und Aktion erreichbar |
+| TC-F12-01/02 | Normaler PC-Aufruf, Vorschau-Größenwechsel, Vollansicht und Handyaufruf | PC startet mit echten 375 × 667, alternativ 384 × 832; keine Skalierung/Datenänderung |
+
+Prüflauf 20.11.2026 gegen temporären lokalen read-only HTTP-Server:
+**44/44 bestanden** auf `mobile` (375 × 667), `ipad-mini` (768 × 1024),
+`desktop` (1280 × 800) und `tablet-hoch` (686 × 1095, Touch).
+Nur diese Testdatei wurde ausgeführt; keine Gesamtsuite.
+
+Aufruf mit lokalem `TEST_URL`:
+`npx playwright test inventur-mockup.spec.js --project=mobile --project=ipad-mini --project=desktop --project=tablet-hoch --workers=4`.
+Die echten Inhaltsmaße der PC-Handyvorschau wurden zusätzlich im Browser
+als 375 × 667 ohne inneren Dokumentüberlauf geprüft.
+
+Gefundene und behobene Mockup-Fehler: Fokusverlust beim Schließen des
+Verwaltungsformulars, fehlender Tab-Zyklus im Dialog und zu frühes Schließen
+der Suchliste beim Fokussieren eines Treffers. Regressionen sind enthalten.
+
+**Noch nicht verifiziert:** echte Samsung-/Mobil-Bildschirmtastatur
+(manueller Teil TC-F11-04), Hardware-Scanner und Produktiv-Dataverse.
+Die beiden letzten Punkte sind nicht Bestandteil dieses Mockups.
+
+---
+
+## Inventur-Web-App (/inventur)
+
+Vertrag: [Spec](../specs/inventur/spec.md), [Plan](../specs/inventur/plan.md),
+[Aufgaben](../specs/inventur/tasks.md). Testdateien:
+[inventur.spec.js](inventur.spec.js) (echte Seite, simulierte API, 4 Ansichten) und
+[test_inventur.py](test_inventur.py) (Fachlogik und HTTP-Schicht, Attrappe statt Dataverse).
+
+| TC | Szenario | Erwartung |
+| --- | --- | --- |
+| TC-F1 | Ohne/mit abgelaufener Anmeldung; falsches Token; Schalter aus | Nur Anmeldung sichtbar, kein Datenabruf, Entwurf bleibt, nichts wird nachgebucht |
+| TC-F2 | Inventurwechsel | Menge der Zielinventur wird geladen |
+| TC-F3, F10 | Lange Trefferliste, kein Seitenscrollen | Liste scrollt intern, lädt nach, Seite scrollt nicht |
+| TC-F4 | Kamera automatisch/manuell/verweigert/nicht unterstützt | Ein Scan wählt nur den Artikel, Kamera wird freigegeben, verständliche Meldungen |
+| TC-F5/F6 | Menge, Plus, EK, ungültige Zahlen | Basis + Plus genau einmal; ungültig wird nicht gesendet |
+| TC-F7 | Konflikt, unklarer Ausgang | Stand und Entwurf getrennt, kein automatisches Neusenden |
+| TC-F8 | Settings, Namenssperre, doppelte/falsche Positionen | Name nach erster Position gesperrt, Mehrdeutigkeit blockiert |
+| TC-F11 | Fortschritt: Zähler, Warenwert (EK), Warengruppen, zuletzt erfasst; Fehler/ohne Inventur | Werte korrekt, Gruppen ohne Mengen, verständliche Meldung, kein Icon ohne Inventur |
+
+Alle Läufe verwenden Attrappen; es gibt weder Lese- noch Schreibzugriff auf
+Produktivdaten. **Noch nicht verifiziert:** echte Handykamera und
+Bildschirmtastatur, `If-Match`-Erzwingung und Laufzeitrechte in Dataverse.
+
+---
+
 ## Mittagstisch: Laufkundschaft, Mengen und kompakter Kunden-Mockup
 
 Vertrag: [Spec](../specs/mittagstisch-laufkundschaft/spec.md).

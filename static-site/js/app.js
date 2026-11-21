@@ -235,11 +235,11 @@ window._dlFlagsReady=new Promise(function(resolveFlags){
     var ov=(dc.tplColors&&dc.tplColors[tpl])||{};
     var v=function(k){return ov[k]||ad[k];};
     var css=[];
-    css.push('.ang-img{background:'+v('imgBg')+'!important}');
-    css.push('.ang-item{background:'+v('cardBg')+'!important;border-color:'+v('cardBorder')+'!important}');
-    css.push('.ang-name{color:'+v('textColor')+'!important}');
-    css.push('.ang-det{color:'+v('detailsColor')+'!important}');
-    css.push('.ang-tag .ang-tag-inner{background:'+v('tagColor')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-img{background:'+v('imgBg')+'!important}');
+    css.push('.ang-item:not(.an-hp-card){background:'+v('cardBg')+'!important;border-color:'+v('cardBorder')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-name{color:'+v('textColor')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-det{color:'+v('detailsColor')+'!important}');
+    css.push('.ang-item:not(.an-hp-card) .ang-tag .ang-tag-inner{background:'+v('tagColor')+'!important}');
     var s=document.getElementById('ang-tile-colors');
     if(!s){s=document.createElement('style');s.id='ang-tile-colors';document.head.appendChild(s);}
     s.textContent=css.join('');
@@ -701,37 +701,7 @@ window.closeDtModal = function(id) {
 var allAngebote = [];
 
 (function(){
-  fetch(API_BASE+'/angebote')
-    .then(function(r){return r.json();})
-    .then(function(payload){
-      var items=unwrapApiData(payload);
-      if(!items||!items.length) return;
-      allAngebote = items.map(function(item){
-        return {
-          id: item.dl_angeboteid||item.id||'',
-          produkt: item.dl_produkt||item.name||'',
-          details: item.dl_details||item.details||'',
-          preis: item.dl_preis||item.price||0,
-          statt: item.dl_statt_preis||item.old_price||0,
-          titel: item.dl_aktion_titel||item.aktion_titel||'',
-          aktion: item.dl_aktion_id||item.aktion_id||'',
-          artnr: item.dl_artikelnummer||item.artikelnummer||'',
-          von: (item.dl_gueltig_von||item.valid_from)?((item.dl_gueltig_von||item.valid_from).substring(0,10)):'',
-          bis: (item.dl_gueltig_bis||item.valid_to)?((item.dl_gueltig_bis||item.valid_to).substring(0,10)):''
-        };
-      });
-      // Show promo bar link (only count valid-this-week items)
-      var promoLink=document.getElementById('promo-ang-link');
-      renderAngebote('this');
-      var thisWeek=filterByWeek('this');
-      if(promoLink){
-        if(thisWeek.items.length>0){promoLink.style.display='';document.getElementById('promo-ang-count').textContent=thisWeek.items.length;}
-        else{promoLink.style.display='none';}
-      }
-      // Show angebote card
-      document.getElementById('angebote').style.display=thisWeek.items.length>0?'':'none';
-    })
-    .catch(function(e){console.log('ANG-API:',e);});
+  if(document.getElementById('ang-grid'))renderAngebote('this');
 })();
 
 function getWeekStart(d){var dt=new Date(d);dt.setDate(dt.getDate()-dt.getDay());dt.setHours(0,0,0,0);return dt;}
@@ -753,54 +723,12 @@ function filterByWeek(mode){
 }
 
 function renderAngebote(mode){
-  var r=filterByWeek(mode);
-  var grid=document.getElementById('ang-grid');
-  var empty=document.getElementById('ang-empty');
-  var card=document.getElementById('angebote');
-  var title=document.getElementById('ang-title');
-  var sub=document.getElementById('ang-sub');
-  var label=document.getElementById('ang-week-label');
-  document.getElementById('ang-btn-this').className='ang-week-btn'+(mode==='this'?' active':'');
-  document.getElementById('ang-btn-next').className='ang-week-btn'+(mode==='next'?' active':'');
-  label.textContent=fmtDE(r.mon)+' \u2013 '+fmtDE(r.sun);
-  if(r.items.length===0){
-    grid.style.display='none';
-    empty.style.display='';
-    title.textContent='Sonderangebote';
-    sub.textContent='';
-    card.style.display='';
-    return;
-  }
-  empty.style.display='none';
-  grid.style.display='';
-  card.style.display='';
-  var first=r.items[0];
-  title.textContent='Sonderangebote';
-  sub.textContent=(first.von?first.von.slice(8,10)+'.'+first.von.slice(5,7)+'.':'')+' \u2013 '+(first.bis?first.bis.slice(8,10)+'.'+first.bis.slice(5,7)+'.'+first.bis.slice(0,4):'');
-  var html='';
-  r.items.forEach(function(a){
-    var badge='';
-    if(a.statt>0&&a.preis>0){var pct=Math.round((a.statt-a.preis)/a.statt*100);if(pct>0) badge='<div class="ang-badge">-'+pct+'%</div>';}
-    html+='<div class="ang-item"'+(a.artnr?' data-artnr="'+esc(a.artnr)+'"':'')+'>';
-    html+='<span class="ang-leaf">\uD83C\uDF3F</span>';
-    html+=badge;
-    html+='<div class="ang-img"></div>';
-    html+='<div class="ang-info">';
-    html+='<div class="ang-name">'+esc(a.produkt)+'</div>';
-    if(a.details) html+='<div class="ang-det">'+esc(a.details)+'</div>';
-    html+='</div>';
-    if(a.preis){
-      var pi=Math.floor(a.preis);var pf=Math.round((a.preis-pi)*100);
-      var cs=pf<10?'0'+pf:String(pf);
-      html+='<div class="ang-tag"><div class="ang-tag-inner">'+pi+','+cs+'<span class="ang-euro">\u20AC</span></div>';
-      if(a.statt) html+='<span class="ang-statt">'+fmtPrice(a.statt)+'</span>';
-      html+='</div>';
-    }
-    html+='<span class="ang-basket">\uD83D\uDED2</span>';
-    html+='</div>';
-  });
-  grid.innerHTML=html;
-  loadAngBilder(grid);
+  return window.AngeboteKunden.mount({grid:'ang-grid',label:'ang-week-label',week:mode,onLoaded:function(result){
+    allAngebote=result.legacy;
+    var promo=document.getElementById('promo-ang-link'),count=document.getElementById('promo-ang-count');
+    if(promo)promo.style.display=result.count?'':'none';
+    if(count)count.textContent=result.count;
+  }});
 }
 
 window.angSetWeek=function(mode){renderAngebote(mode);};

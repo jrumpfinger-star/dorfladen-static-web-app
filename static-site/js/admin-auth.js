@@ -1,11 +1,13 @@
 // admin-auth.js — Admin-/CMS-Auth (SEC-2)
 //
-// 1) fetch-Wrapper: hängt `X-CMS-Auth` an mutierende /api/-Requests.
+// 1) fetch-Wrapper: hängt `X-CMS-Auth` an mutierende und geschützte lesende API-Requests.
 // 2) dlAdminLogin(password): holt das Token via /api/cms-auth.
 // 3) 401-Fallback: fragt einmalig nach dem Passwort und wiederholt den Request.
+// 4) dlCheckAdminSession(): prüft die gespeicherte Serversitzung ohne Passwortdialog.
 (function () {
   var TOKEN_KEY = 'cms_auth_token';
   var MUT = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  var _fetch = window.fetch;
 
   // localStorage: Login bleibt ueber Browser-/Tab-Neustarts erhalten
   // (sessionStorage wurde beim Schliessen geloescht -> staendiges Neu-Anmelden).
@@ -23,13 +25,34 @@
     return h;
   }
 
+  function loginError(status) {
+    var error = new Error('CMS-Anmeldung fehlgeschlagen: ' + status);
+    error.userMessage = status === 401
+      ? 'Das Passwort stimmt nicht. Bitte erneut versuchen.'
+      : 'Die CMS-Anmeldung ist gerade nicht erreichbar. Bitte erneut versuchen.';
+    return error;
+  }
+  window.dlCheckAdminSession = function () {
+    var token = getToken();
+    if (!token) return Promise.resolve(false);
+    return _fetch.call(window, '/api/cms-auth', {
+      cache: 'no-store', headers: { 'X-CMS-Auth': token },
+    }).then(function (r) {
+      if (r.status === 401) { setToken(''); return false; }
+      if (!r.ok) throw loginError(r.status);
+      return r.json().then(function (data) {
+        if (data.authenticated !== true) throw loginError(r.status);
+        return true;
+      });
+    });
+  };
   window.dlAdminLogin = function (password) {
-    return fetch('/api/cms-auth', {
+    return _fetch.call(window, '/api/cms-auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: password }),
     }).then(function (r) {
-      if (!r.ok) throw new Error('login failed');
+      if (!r.ok) throw loginError(r.status);
       return r.json();
     }).then(function (d) {
       if (d && d.token) { setToken(d.token); return d.token; }
@@ -91,7 +114,6 @@
   }
   window.dlAdminPassword = dlAdminPassword;
 
-  var _fetch = window.fetch;
   window.fetch = function (input, init) {
     init = init || {};
     var method = ((init && init.method) ||
@@ -114,8 +136,10 @@
       && url.indexOf('/api/lunch-order') !== -1
       && url.indexOf('mode=my') === -1
       && url.indexOf('nr=') === -1;
+    var isAngeboteRead = method === 'GET'
+      && /\/api\/angebote(?:-(?:verwaltung|bilder))?(?:[/?#]|$)/.test(url);
 
-    if (isAdminCall || isKalenderRead || isLunchListe) {
+    if (isAdminCall || isKalenderRead || isLunchListe || isAngeboteRead) {
       var tok = getToken();
       if (tok) {
         var h = headersToObj(init.headers);
@@ -127,7 +151,7 @@
     var call = _fetch.call(this, input, init);
     // 401-Fallback (Login-Dialog + Retry) gilt auch für lesende Kalender-GETs,
     // damit reine Betrachter sich anmelden können und nicht nur bei Schreib-Aktionen.
-    if (!isAdminCall && !isKalenderRead && !isLunchListe) return call;
+    if (!isAdminCall && !isKalenderRead && !isLunchListe && !isAngeboteRead) return call;
 
     return call.then(function (resp) {
       if (resp.status !== 401) return resp;

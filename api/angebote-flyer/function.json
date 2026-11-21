@@ -1,0 +1,10 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "authLevel": "anonymous", "type": "httpTrigger", "direction": "in",
+      "name": "req", "methods": ["get", "options"], "route": "angebote-flyer"
+    },
+    {"type": "http", "direction": "out", "name": "$return"}
+  ]
+}

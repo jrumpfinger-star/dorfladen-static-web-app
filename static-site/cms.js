@@ -37,36 +37,55 @@
   var CMS_PW_KEY='cms_auth_ok';
   var cmsPwEl=document.getElementById('cms-pw-hash');
   var cmsPwHash=cmsPwEl?JSON.parse(cmsPwEl.textContent):'';
-  function cmsShowApp(){document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';}
+  var _angeboteEntryApplied=false,_cmsAdminLogin=null;
+  function cmsShowApp(){
+    document.getElementById('cms-login').style.display='none';document.getElementById('cms-app').style.display='';
+    if(!_angeboteEntryApplied){
+      _angeboteEntryApplied=true;
+      setTimeout(function(){
+        var q=new URLSearchParams(location.search);
+        if(q.get('tab')==='ang')cmsTab('ang');
+        if(q.get('tab')==='cfg'&&q.get('flyer')==='drinks'){
+          cmsTab('cfg');cmsCfgSubTab('cfg-plakat');cfgSwitchSection('sec-drinks');
+        }
+      },0);
+    }
+  }
   function cmsShowLogin(){document.getElementById('cms-login').style.display='';document.getElementById('cms-app').style.display='none';}
 
-  function sha256(str){
-    var buf=new TextEncoder().encode(str);
-    return crypto.subtle.digest('SHA-256',buf).then(function(h){
-      return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-    });
+  function cmsLoginBusy(value,text){
+    document.getElementById('cms-login-pw').disabled=value;
+    document.getElementById('cms-login-btn').disabled=value;
+    var status=document.getElementById('cms-login-status');
+    status.hidden=!value;status.textContent=text||'';
   }
-
-  // Check session
-  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
+  function cmsLoginError(error){
+    console.error('[CMS] Server-Anmeldung fehlgeschlagen',error);
+    var el=document.getElementById('cms-login-err');
+    el.textContent=error.userMessage||'Die CMS-Anmeldung ist gerade nicht erreichbar. Bitte erneut versuchen.';
+    el.style.display='block';
+  }
+  function cmsAuthenticated(){
+    sessionStorage.setItem(CMS_PW_KEY,cmsPwHash);
+    document.getElementById('cms-login-pw').value='';
     cmsShowApp();
-  } else {
-    cmsShowLogin();
+    init();
   }
+  cmsShowLogin();
+  cmsLoginBusy(true,'Die CMS-Anmeldung wird geprüft …');
 
   // Login button
   document.getElementById('cms-login-btn').addEventListener('click',function(){
     var pw=document.getElementById('cms-login-pw').value;
-    sha256(pw).then(function(hash){
-      if(hash===cmsPwHash){
-        sessionStorage.setItem(CMS_PW_KEY,hash);
-        if(window.dlAdminLogin){window.dlAdminLogin(pw).catch(function(){});}
-        document.getElementById('cms-login-err').style.display='none';
-        cmsShowApp();
-        init();
-      } else {
-        document.getElementById('cms-login-err').style.display='block';
-        document.getElementById('cms-login-pw').value='';
+    if(document.getElementById('cms-login-btn').disabled)return;
+    document.getElementById('cms-login-err').style.display='none';
+    cmsLoginBusy(true,'Die CMS-Anmeldung wird abgeschlossen …');
+    var login=window.dlAdminLogin(pw);
+    _cmsAdminLogin=login;
+    login.then(cmsAuthenticated).catch(cmsLoginError).finally(function(){
+      if(_cmsAdminLogin===login)_cmsAdminLogin=null;
+      cmsLoginBusy(false);
+      if(document.getElementById('cms-login').style.display!=='none'){
         document.getElementById('cms-login-pw').focus();
       }
     });
@@ -183,30 +202,9 @@
     document.getElementById('cms-ang-empty').style.display='none';
 
     filtered.forEach(function(g){
-      var card=document.createElement('div');
-      card.className='cms-card';
-      var h='';
-      h+='<div class="cms-flex cms-between cms-ang-toggle" style="padding:12px 12px 10px 12px" data-action="toggleAngItems">';
-      h+='<div style="display:flex;align-items:center"><div><div style="font-weight:600;color:var(--ink)">'+esc(g.titel||'Angebot')+'</div>';
-      h+='<div class="cms-ang-meta">'+toIsoDateOnly(g.von)+' bis '+toIsoDateOnly(g.bis)+' · '+g.items.length+' Artikel</div></div>';
-      h+='<span class="cms-ang-chevron collapsed">&#9660;</span></div>';
-      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
-      h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="editAktion" data-id="'+esc(g.aktion_id)+'">Bearbeiten</button>';
-      h+='<button class="cms-btn-preview" data-action="previewAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button>';
-      h+='<button class="cms-btn-wa" data-action="shareAktion" data-id="'+esc(g.aktion_id)+'"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Teilen</button>';
-      h+='<button class="cms-btn cms-btn-sm cms-btn-gray" data-action="waageAktion" data-id="'+esc(g.aktion_id)+'" title="Als Querformat-Bilder auf die Waage">\u2696\ufe0f Waage</button>';
-      h+='<button class="cms-btn-trash" data-action="deleteAktion" data-id="'+esc(g.aktion_id)+'" title="Löschen"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></button>';
-      h+='</div></div>';
-      h+='<div class="cms-ang-items collapsed">';
-      g.items.forEach(function(a){
-        h+='<div class="cms-ang-item">';
-        h+='<div class="cms-ang-name">'+esc(a.produkt)+'</div>';
-        if(a.preis!=null)h+='<div class="cms-ang-price">'+fmtP(Number(a.preis)||0)+'</div>';
-        if(a.statt_preis!=null)h+='<div class="cms-ang-old">statt '+fmtP(Number(a.statt_preis)||0)+'</div>';
-        h+='</div>';
-      });
-      h+='</div>';
-      card.innerHTML=h;
+      var card=window.CMSAngeboteForm.action(Object.assign({},g,{
+        von:toIsoDateOnly(g.von),bis:toIsoDateOnly(g.bis)
+      }),esc,function(value){return fmtP(Number(value)||0);});
       c.appendChild(card);
     });
   }
@@ -271,37 +269,7 @@
     angRowCounter++;
     var c=document.getElementById('cms-akt-items');
     if(!c) return;
-    var row=document.createElement('div');
-    row.className='cms-ang-row';
-    row.id='cms-ar-'+angRowCounter;
-    var produktVal=esc((item&&item.produkt)||'');
-    var hasBild=!!(item&&item.bild_data);
-    row.setAttribute('draggable','false');
-    row.innerHTML=''
-      +'<div class="cms-ang-row-num">'+angRowCounter+'</div>'
-      +'<span class="cms-ang-drag" title="Reihenfolge ändern (ziehen)">&#9776;</span>'
-      +'<button type="button" class="cms-ang-row-close" data-action="removeAngRow">&times;</button>'
-      +'<div class="cms-ang-fields">'
-      +'<input type="hidden" data-f="id" value="'+esc((item&&item.id)||'')+'">'
-      +'<input type="hidden" data-f="bild_data" data-bild-dirty="" value="'+esc((item&&item.bild_data)||'')+'">'
-      +'<input type="hidden" data-f="dl_werbebildid" value="'+esc((item&&item.dl_werbebildid)||'')+'">'
-      +'<div class="cms-ang-row-img">'
-      +'<img class="cms-bild-preview" src="'+(hasBild?esc(item.bild_data):'')+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;background:#fff;'+(hasBild?'':'display:none')+'">'
-      +'<button class="cms-bild-clear" type="button" title="Bild entfernen" data-action="clearBild" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0 2px;'+(hasBild?'':'display:none')+'">✕</button>'
-      // Bild zum Strichcode holen. Ohne diesen Knopf laesst sich das Bild
-      // nur ueber die Vorschlagsliste laden - wer einen Artikel von Hand
-      // eintraegt (weil er nicht in der Preisliste steht), kam nie daran.
-      // (Spec cms-aktion-bild, F1)
-      +'<button class="cms-bild-load-sp" type="button" title="Bild zum Strichcode suchen" data-action="loadBildSharePoint" data-row="'+angRowCounter+'" style="font-size:11px;background:none;border:none;cursor:pointer;padding:0 2px">&#128269;</button>'
-      +'<button class="cms-bild-upload-sp" data-action="uploadBildSP" data-row="'+angRowCounter+'" type="button" title="Bild ausw\u00e4hlen & in StrichcodeBilder hochladen" style="font-size:var(--schrift-normal);background:none;border:none;cursor:pointer;padding:0 2px;color:var(--mut)">\uD83D\uDCC1</button>'
-+'<button class="cms-bild-paste-sp" data-action="pasteBildSP" data-row="'+angRowCounter+'" type="button" title="Bild aus Zwischenablage einf\u00fcgen (Klick + Strg+V)" style="font-size:var(--schrift-klein);background:none;border:1px solid var(--line);border-radius:var(--r-s);cursor:pointer;padding:1px 4px;color:var(--mut)">\uD83D\uDCCB</button>'
-      +'</div>'
-      +'<div class="cms-art-wrap"><input class="cms-input cms-art-input" data-f="produkt" placeholder="Produkt..." value="'+produktVal+'" autocomplete="off" spellcheck="false"><div class="cms-art-dd"></div></div>'
-      +'<input class="cms-input" data-f="details" placeholder="Details" value="'+esc((item&&item.details)||'')+'">'
-      +'<input class="cms-input cms-price" data-f="preis" placeholder="Preis" value="'+((item&&item.preis!=null)?fmtDePrice(item.preis):'')+'">'
-      +'<input class="cms-input cms-price" data-f="statt_preis" placeholder="statt" value="'+((item&&item.statt_preis!=null)?fmtDePrice(item.statt_preis):'')+'">'
-      +'<input class="cms-input" data-f="artikelnummer" placeholder="Strichcode" value="'+esc((item&&item.artikelnummer)||'')+'" title="Strichcode">'
-      +'</div>';
+    var row=window.CMSAngeboteForm.row(item,angRowCounter,esc);
     c.appendChild(row);
     var prodInp=row.querySelector('.cms-art-input');
     if(prodInp){
@@ -1145,7 +1113,7 @@
     if(name==='settings' && !_mbcfgLoaded) loadMetzgerBestConfig();
     if(name==='settings' && !_gkcfgLoaded) loadGetraenkeConfig();
     if(name==='settings' && !_dxcfgLoaded) loadDraxConfig();
-    if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
+    if(name==='cfg'){ if(window.AngeboteDesign)window.AngeboteDesign.prepareCms(document.getElementById('cms-panel-cfg')); cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
     if(name==='metzger' && !window._fmCfgLoaded) cmsLoadFleischConfig();
@@ -1180,6 +1148,10 @@
       var mobRoot=document.getElementById('einzelflyer-mob-root');
       if(mobRoot){mobRoot.remove();return;}
 
+      // Native Dialoge (z. B. Teilen, Vorschau) ebenfalls per Zurück schließen
+      var openDlg=document.querySelector('dialog[open]');
+      if(openDlg){openDlg.close();return;}
+
       if(e.state&&e.state.cmsTab){
         cmsTab(e.state.cmsTab,true);
         return;
@@ -1197,6 +1169,7 @@
 
   // ── Design Sub-Tabs ──
   window.cmsCfgSubTab = function(id){
+    if(window.AngeboteDesign)window.AngeboteDesign.prepareCms(document.getElementById('cms-panel-cfg'));
     ['cfg-hp','cfg-wp','cfg-plakat','cfg-hpang'].forEach(function(t){
       var panel=document.getElementById('cms-'+t);
       if(panel) panel.style.display = t===id?'':'none';
@@ -1210,8 +1183,11 @@
     // Auto-trigger live preview when switching to Plakate & Flyer tab
     if(id==='cfg-plakat'){
       var sec=_activeCfgSection?_activeCfgSection():null;
+      var workspaceNav=document.querySelector('[data-offer-workspaces] .cfg-section-btn.active');
+      if(workspaceNav)cfgSwitchSection(workspaceNav.getAttribute('data-id'));
       if(sec)_scheduleAutoPreview('cfg-subtab',function(){cfgLivePreview(sec);},300);
     }
+    if(id==='cfg-wp')wpCfgSwitchSection(_activeWpSection()==='flyer'?'wp-sec-flyer':'wp-sec-home');
   };
 
   // ── Seiteninhalte Tab ──
@@ -1344,50 +1320,104 @@
   // ── Design Config ──
   var CFG_KEY='dl_design_cfg';
   var CFG_COMPACT_KEY='dl_cms_cfg_compact';
-  var CFG_DEFAULTS={
-    bgColor:'#f4f1ea',tagColor:'#a51d2d',leafColor:'#4a7c3f',titleColor:'#a51d2d',decoFooterColor:'#8aad7e',
-    imgRotation:15,imgFreistellen:true,imgThreshold:230,imgMaxScale:4,
-    priceFontFlyer:72,priceFontPlakat:36,stattColor:'#555555',tagSkew:18,tagShape:'rect',tagRadius:0,tagPreset:'',
-    showLeaf:false,leafSize:34,showBag:false,showTexture:true,
-    savingsMarkerType:'starburst',savingsPalette:'harmonie',
-    savingsScalePlakat:95,savingsScaleFlyer:120,
-    plakatTemplate:'classic-red',flyerTemplate:'classic-red',
-    plakat_tagPreset:'',plakat_tagShape:'rect',plakat_tagRadius:0,plakat_tagSkew:18,plakat_tagScale:100,
-    plakat_decoLeafColor:'#4a7c3f',plakat_decoTitleColor:'#a51d2d',plakat_decoBgColor:'#f4f1ea',plakat_decoFooterColor:'#8aad7e',plakat_vorratColor:'#888888',
-    plakat_showLeaf:false,plakat_leafSize:34,plakat_showBag:false,plakat_showTexture:true,plakat_imgScale:100,
-    flyer_tagPreset:'',flyer_tagShape:'rect',flyer_tagRadius:0,flyer_tagSkew:18,flyer_tagScale:100,
-    flyer_decoLeafColor:'#4a7c3f',flyer_decoTitleColor:'#a51d2d',flyer_decoBgColor:'#f4f1ea',flyer_decoFooterColor:'#8aad7e',flyer_vorratColor:'#888888',
-    flyer_showLeaf:false,flyer_leafSize:34,flyer_showBag:false,flyer_showTexture:true,flyer_imgScale:100,
-    flyer_imgAnchorX:10,flyer_imgAnchorY:10,flyer_priceAnchorX:10,flyer_priceAnchorY:10,
-    flyer_imgWidthPct:50,
-    plakat_borderWidth:0,plakat_borderColor:'#2e7d32',
-    flyer_borderWidth:0,flyer_borderColor:'#2e7d32'
-  };
+  var _weeklyRenderer=window.WochenangeboteRenderer.create({
+    cfgGet:cfgGet,
+    flyerArtOverrideGet:flyerArtOverrideGet,
+    plakatArtOverrideGet:plakatArtOverrideGet
+  });
+  var CFG_DEFAULTS=window.WochenangeboteRenderer.CFG_DEFAULTS;
   var PERSEC_SECTIONS=['plakat','flyer'];
-  var PERSEC_COLORS=['decoLeafColor','decoTitleColor','decoBgColor','decoFooterColor','vorratColor','borderColor'];
-  var PERSEC_RANGES=['tagRadius','tagSkew','leafSize','tagScale','imgScale','imgAnchorX','imgAnchorY','priceAnchorX','priceAnchorY','imgWidthPct','borderWidth'];
-  var PERSEC_CHECKS=['showLeaf','showBag','showTexture'];
-  var PERSEC_SELECTS=['tagPreset','tagShape'];
+  var PERSEC_COLORS=window.WochenangeboteRenderer.PERSEC_COLORS;
+  var PERSEC_RANGES=window.WochenangeboteRenderer.PERSEC_RANGES;
+  var PERSEC_CHECKS=window.WochenangeboteRenderer.PERSEC_CHECKS;
+  var PERSEC_SELECTS=window.WochenangeboteRenderer.PERSEC_SELECTS;
   var PERSEC_RANGE_UNITS={tagRadius:'px',tagSkew:'%',leafSize:'px',tagScale:'%',imgScale:'%',imgAnchorX:'px',imgAnchorY:'px',priceAnchorX:'px',priceAnchorY:'px',imgWidthPct:'%',borderWidth:'px'};
   // Merge per-section values into global keys for rendering (e.g. cfg.flyer_tagShape → cfg.tagShape)
-  var PERSEC_COLOR_MAP={decoLeafColor:'leafColor',decoTitleColor:'titleColor',decoBgColor:'bgColor',decoFooterColor:'decoFooterColor'};
-  function cfgForKind(cfg,kind){
-    if(!kind)return cfg;
-    var c=Object.assign({},cfg);
-    PERSEC_COLORS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[PERSEC_COLOR_MAP[k]||k]=v;});
-    PERSEC_RANGES.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
-    PERSEC_CHECKS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
-    PERSEC_SELECTS.forEach(function(k){var v=c[kind+'_'+k];if(v!=null)c[k]=v;});
-    return c;
-  }
+  var PERSEC_COLOR_MAP=window.WochenangeboteRenderer.PERSEC_COLOR_MAP;
+  var cfgForKind=_weeklyRenderer.cfgForKind;
   var _cfgCurrent=null;
+  var _offerHistories={};
+  var _cfgInline={plakat:{},flyer:{}};
+  var _cfgPreviewSurfaces={};
+  var _offerTemplateBefore={},_offerPalettePickers={};
+  function offerEffectiveColors(kind,config){
+    return window.AngeboteDesign.cmsEffectiveColors(config,kind);
+  }
+  function cfgEnsurePalette(kind){
+    if(!document.querySelector('[data-offer-workspaces]')||!window.AngeboteDesign)return;
+    var colorRoot=document.getElementById('cfg-tpl-'+kind+'-colors');if(!colorRoot)return;
+    if(!document.getElementById('cfg-tpl-'+kind+'-detailsTextColor')){
+      var details=document.createElement('input');details.type='hidden';details.id='cfg-tpl-'+kind+'-detailsTextColor';colorRoot.appendChild(details);
+    }
+    var names={headerBg:'Kopffläche',headerAccent:'Kopf-Akzent',dateColor:'Datum',dividerColor:'Trennlinie',
+      priceBarBg:'Preisleiste',priceBarBorder:'Preisleistenkontur',stattColor:'Stattpreis',footerColor:'Fußzeile',
+      vorratColor:'Vorratshinweis',priceTextColor:'Preisschrift'};
+    Object.keys(names).forEach(function(key){
+      if(document.getElementById('cfg-tpl-'+kind+'-'+key))return;
+      var label=document.createElement('label');label.className='an-cfield';
+      label.innerHTML='<input type="color" id="cfg-tpl-'+kind+'-'+key+'" aria-label="'+names[key]+'"><span class="an-cfield-lab">'+names[key]+'</span>';
+      colorRoot.appendChild(label);
+    });
+    if(_offerPalettePickers[kind])return;
+    var picker=document.createElement('fieldset');picker.className='an-choice-group';
+    picker.innerHTML='<legend>Farbpalette</legend><div></div>';colorRoot.before(picker);
+    _offerPalettePickers[kind]=window.AngeboteDesign.palettePicker(picker.lastElementChild,{
+      read:function(){return offerEffectiveColors(kind,cfgReadUI());},
+      map:function(colors){
+        return window.AngeboteDesign.cmsPaletteValues(colors,cfgReadUI(),kind);
+      },
+      defaults:Object.keys(TPL_COLOR_DEFAULTS).map(function(id){
+        var c=_clone(CFG_DEFAULTS);c[kind+'Template']=id;return offerEffectiveColors(kind,c);
+      }),
+      write:function(values){
+        cfgApplyUI(window.AngeboteDesign.applyCmsPaletteValues(cfgReadUI(),kind,values));
+      },
+      changed:function(){cfgOfferHistory(kind).record();_triggerCfgAutoPreview();}
+    });
+  }
+  function cfgChangeTemplate(kind){
+    var select=document.getElementById('cfg-'+kind+'Template'),next=select.value,old=_offerTemplateBefore[kind]||next;
+    select.value=old;var config=cfgReadUI(),colors=offerEffectiveColors(kind,config);select.value=next;
+    config[kind+'Template']=next;
+    config.tplColors[kind+':'+next]=Object.assign({},colors);
+    _offerTemplateBefore[kind]=next;
+    cfgSyncTplColors(kind,config);cfgSyncOfferTplPreviews();
+    if(_offerPalettePickers[kind])_offerPalettePickers[kind].refresh();
+    _triggerCfgAutoPreview();
+  }
+  function cfgSyncPaletteField(target){
+    var match=/^cfg-(tpl-)?(plakat|flyer)-(\w+)$/.exec(target.id||'');if(!match)return;
+    var template=!!match[1],kind=match[2],key=match[3],mapping={
+      bgColor:'decoBgColor',titleColor:'decoTitleColor',footerColor:'decoFooterColor',
+      textColor:'nameColor',priceBarBg:'priceStripColor',priceBarBorder:'priceOutlineColor',
+      priceTextColor:'priceImageColor',stattColor:'priceOldColor',vorratColor:'vorratColor'
+    };
+    var shape=document.getElementById('cfg-'+kind+'-tagShape');
+    function priceRole(role){return /^(priceBar|priceText|statt)/.test(role);}
+    if(template){
+      target.dataset.paletteExplicit='true';
+      var other=mapping[key]&&document.getElementById('cfg-'+kind+'-'+mapping[key]);
+      if(other&&!(shape&&shape.value==='price-image'&&priceRole(key)))other.value=target.value;
+      if(key==='detailsColor'){
+        var details=document.getElementById('cfg-tpl-'+kind+'-detailsTextColor');details.value=target.value;details.dataset.paletteExplicit='true';
+      }
+    }else{
+      Object.keys(mapping).forEach(function(role){
+        if(mapping[role]!==key||shape&&shape.value==='price-image'&&priceRole(role))return;
+        var field=document.getElementById('cfg-tpl-'+kind+'-'+role);if(field){field.value=target.value;field.dataset.paletteExplicit='true';}
+      });
+    }
+  }
   function cfgGet(){
     if(_cfgCurrent){var r2={};for(var k2 in CFG_DEFAULTS)r2[k2]=_cfgCurrent.hasOwnProperty(k2)?_cfgCurrent[k2]:CFG_DEFAULTS[k2];
-      if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;return r2;}
+      if(_cfgCurrent.tplColors)r2.tplColors=_cfgCurrent.tplColors;
+      if(_cfgCurrent.design_provenance)r2.design_provenance=_cfgCurrent.design_provenance;return r2;}
     return _clone(CFG_DEFAULTS);
   }
+  var _cfgSaved=null;
   function cfgSave(o){
     _cfgCurrent=_clone(o);
+    _cfgSaved=_clone(o);
     // Persist to Dataverse
     _dvSave('design_config',o)
       .then(function(res){if(!res.success)console.warn('Design save to Dataverse failed',res.error);})
@@ -1399,7 +1429,7 @@
     return _cfgCustomDefaults||null;
   }
   function cfgGetEffectiveDefaults(){
-    return cfgGetCustomDefaults()||CFG_DEFAULTS;
+    return CFG_DEFAULTS;
   }
   function cfgSaveCustomDefaults(o){
     _cfgCustomDefaults=_clone(o);
@@ -1429,6 +1459,10 @@
         if(dvCustomDef&&typeof dvCustomDef==='object'){
           _cfgCustomDefaults=dvCustomDef;
         }
+        var dvPresets=res.data['design_presets'];
+        if(dvPresets&&typeof dvPresets==='object'){_cfgPresets=_presetLists(dvPresets,['plakat','flyer','shared']);cfgPresetsRenderAll();}
+        var dvWpPresets=res.data['wp_design_presets'];
+        if(dvWpPresets&&typeof dvWpPresets==='object'){_wpPresets=_presetLists(dvWpPresets,['wp-home','wp-flyer']);if(typeof wpPresetsRenderAll==='function')wpPresetsRenderAll();}
         // Load per-article flyer overrides
         var dvArtOv=res.data['flyer_article_overrides'];
         if(dvArtOv&&typeof dvArtOv==='object'){
@@ -1447,8 +1481,11 @@
           // Dataverse is always the source of truth
           var merged={};for(var k in CFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:CFG_DEFAULTS[k];
           if(dvCfg.tplColors)merged.tplColors=dvCfg.tplColors;
+          if(dvCfg.design_provenance)merged.design_provenance=dvCfg.design_provenance;
           _cfgCurrent=merged;
+          _cfgSaved=_clone(merged);
           cfgApplyUI(merged);
+          Object.keys(_offerHistories).forEach(function(kind){_offerHistories[kind].reset();});
         }
         // Pre-load HP design config (Wochenplan colors) so previews work without opening Design tab
         var dvHpDef=res.data['hp_design_config_defaults'];
@@ -1459,6 +1496,7 @@
         if(dvHpCfg&&typeof dvHpCfg==='object'){
           var hpMerged={};for(var hk in HPCFG_DEFAULTS)hpMerged[hk]=dvHpCfg.hasOwnProperty(hk)?dvHpCfg[hk]:HPCFG_DEFAULTS[hk];
           if(dvHpCfg.wpTplColors)hpMerged.wpTplColors=dvHpCfg.wpTplColors;
+          if(dvHpCfg.design_provenance)hpMerged.design_provenance=dvHpCfg.design_provenance;
           _hpCfgCurrent=hpMerged;
           _hpCfgSaved=_clone(hpMerged);
         }
@@ -1475,6 +1513,7 @@
     cfgLoadFromDataverse();
   }
   function cfgApplyUI(c){
+    PERSEC_SECTIONS.forEach(function(kind){_cfgInline[kind]=_clone(c[kind+'_inline']||{});});
     ['bgColor','tagColor','leafColor','titleColor','stattColor','decoFooterColor'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)el.value=c[k];
     });
@@ -1495,8 +1534,9 @@
     var pl=document.getElementById('cfg-savingsPalette');if(pl)pl.value=c.savingsPalette||'harmonie';
     var pt=document.getElementById('cfg-plakatTemplate');if(pt)pt.value=c.plakatTemplate||'classic-red';
     var ft=document.getElementById('cfg-flyerTemplate');if(ft)ft.value=c.flyerTemplate||'classic-red';
+    ['plakat','flyer'].forEach(function(kind){_offerTemplateBefore[kind]=c[kind+'Template']||'classic-red';cfgEnsurePalette(kind);});
     cfgSyncOfferTplPreviews();
-    cfgSyncAllTplColors();
+    cfgSyncAllTplColors(c);
     // Sync global tagColor from the active flyer template tagColor
     var _ftcEl=document.getElementById('cfg-tpl-flyer-tagColor');
     var _gtcEl=document.getElementById('cfg-tagColor');
@@ -1522,6 +1562,8 @@
         var el=document.getElementById('cfg-'+sec+'-'+sk);if(el)el.value=c[sec+'_'+sk]||'';
       });
     });
+    cfgSyncPriceImageFields();
+    Object.keys(_offerPalettePickers).forEach(function(kind){_offerPalettePickers[kind].refresh();});
   }
   function cfgUpdateVal(k,v){
     var el=document.getElementById('cfg-'+k+'-val');if(!el)return;
@@ -1544,9 +1586,16 @@
     xEl.dispatchEvent(new Event('input',{bubbles:true}));
     yEl.dispatchEvent(new Event('input',{bubbles:true}));
     xEl.dispatchEvent(new Event('change',{bubbles:true}));
+    /* Auch ohne Auto-Vorschau-Checkbox müssen die Pads sofort wirken
+       (entkoppelt von cfg-live-auto-*): gebündelt neu zeichnen. */
+    if(typeof window.cfgLivePreview==='function'){
+      clearTimeout(window.__anchorPreviewTimer);
+      window.__anchorPreviewTimer=setTimeout(function(){window.cfgLivePreview(sec);},150);
+    }
   };
   function cfgReadUI(){
-    var c={};
+    var c={}, existingConfig=cfgGet();
+    if(existingConfig.design_provenance)c.design_provenance=_clone(existingConfig.design_provenance);
     ['bgColor','tagColor','leafColor','titleColor','stattColor','decoFooterColor'].forEach(function(k){
       var el=document.getElementById('cfg-'+k);if(el)c[k]=el.value;
     });
@@ -1576,10 +1625,11 @@
       var tpl=c[tKey]||'classic-red';
       var kind=tKey.replace('Template','');
       var storeKey=kind+':'+tpl;
-      if(!tc[storeKey])tc[storeKey]={};
+      if(!tc[storeKey])tc[storeKey]=_clone((cfgGet().tplColors||{})[storeKey]||{});
       TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
-        if(el)tc[storeKey][ck]=el.value;
+        if(el&&el.value&&(TPL_COLOR_DEFAULTS[tpl]&&TPL_COLOR_DEFAULTS[tpl][ck]!=null||el.dataset.paletteExplicit==='true'))tc[storeKey][ck]=el.value;
+        else if(el)delete tc[storeKey][ck];
       });
       TPL_GRAD_KEYS.forEach(function(gk){
         var tgl=document.querySelector('.cfg-tpl-grad-toggle[data-kind="'+kind+'"][data-key="'+gk+'"]');
@@ -1595,6 +1645,7 @@
     c.tplColors=tc;
     // Read per-section controls (Plakat + Flyer)
     PERSEC_SECTIONS.forEach(function(sec){
+      c[sec+'_inline']=_clone(_cfgInline[sec]);
       PERSEC_COLORS.forEach(function(ck){
         var el=document.getElementById('cfg-'+sec+'-'+ck);if(el)c[sec+'_'+ck]=el.value;
       });
@@ -1610,12 +1661,159 @@
     });
     return c;
   }
+  function designStableValue(value){
+    if(Array.isArray(value))return value.map(designStableValue);
+    if(value&&typeof value==='object'){
+      var result={};Object.keys(value).sort().forEach(function(key){result[key]=designStableValue(value[key]);});return result;
+    }
+    return value;
+  }
+  function designStableJson(value){return JSON.stringify(designStableValue(value));}
+  function areaProvenance(config){
+    var value=config&&config.design_provenance;
+    return value&&value.schema===1&&value.targets&&typeof value.targets==='object'
+      ?_clone(value):{schema:1,targets:{}};
+  }
+  function setAreaProvenance(config,area,name,snapshot){
+    var value=areaProvenance(config);
+    if(name)value.targets[area]={name:String(name).trim().slice(0,80),snapshot:_clone(snapshot)};
+    else delete value.targets[area];
+    config.design_provenance=value;
+  }
+  function offerAreaSnapshot(config,kind){
+    var snapshot={template:config[kind+'Template']||'classic-red',fields:{},colors:{}};
+    PERSEC_COLORS.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    PERSEC_RANGES.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    PERSEC_CHECKS.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    PERSEC_SELECTS.forEach(function(key){if(config[kind+'_'+key]!=null)snapshot.fields[key]=config[kind+'_'+key];});
+    snapshot.colors=_clone((config.tplColors||{})[kind+':'+snapshot.template]
+      ||(config.tplColors||{})[snapshot.template]||getTplColors(snapshot.template,config,kind));
+    return snapshot;
+  }
+  function weekAreaSnapshot(config,kind){
+    var root=document.getElementById('wp-sec-'+kind), snapshot={fields:{},colors:{}};
+    if(root)root.querySelectorAll('[id^=hcfg-]').forEach(function(field){
+      var key=field.id.slice(5);
+      if(config[key]!=null)snapshot.fields[key]=config[key];
+    });
+    var prefix=kind+':';
+    Object.keys(config.wpTplColors||{}).forEach(function(key){
+      if(key.indexOf(prefix)===0)snapshot.colors[key]=_clone(config.wpTplColors[key]);
+    });
+    return snapshot;
+  }
+  function areaContext(config,area,layout,savedSnapshot){
+    var provenance=areaProvenance(config),entry=provenance.targets[area];
+    var current=area.indexOf('week-')===0?weekAreaSnapshot(config,area.slice(5)):offerAreaSnapshot(config,area);
+    var changed=entry?designStableJson(entry.snapshot)!==designStableJson(current)
+      :savedSnapshot?designStableJson(savedSnapshot)!==designStableJson(current):false;
+    return {area:area==='plakat'?'Sonderangebote · Plakat':area==='flyer'?'Sonderangebote · Einzelflyer'
+      :area==='week-home'?'Wochenplan · Homepage':'Wochenplan · Druck',
+      layout:layout||'',name:entry&&entry.name||'',source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',changed:changed,
+      sessionLoaded:!!_loadedPresets[area],
+      preset:_loadedPresets[area]||'',saveStandard:function(){return saveAreaAsStandard(area);}};
+  }
+  // In dieser Sitzung geladene eigene Vorlage je Bereich: „Speichern" aktualisiert dann nur die Vorlage, nicht den Standard.
+  var _loadedPresets={};
+  function refreshAreaContexts(){
+    ['cfg-sec-plakat','cfg-sec-flyer','wp-sec-home','wp-sec-flyer'].forEach(function(id){
+      var root=document.getElementById(id);
+      if(root&&window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(root);
+    });
+  }
+  function saveAreaAsStandard(area){
+    if(area.indexOf('week-')===0)window.saveHPCfgAsStandard();else window.cmsSaveCfgAsStandard();
+  }
+  function mergeOfferArea(current,source,kind){
+    var merged=_clone(current),templateKey=kind+'Template',template=source[templateKey]||current[templateKey]||'classic-red';
+    merged[templateKey]=template;
+    [].concat(PERSEC_COLORS,PERSEC_RANGES,PERSEC_CHECKS,PERSEC_SELECTS).forEach(function(key){
+      var name=kind+'_'+key;
+      if(Object.prototype.hasOwnProperty.call(source,name))merged[name]=_clone(source[name]);
+    });
+    /* Freie Positionierung des Bereichs (Preisschild/Bild im Vorschau-Editor)
+       gehört zur Vorlage — ohne sie „kommt die geänderte Vorlage nicht an“. */
+    var inlineKey=kind+'_inline';
+    if(Object.prototype.hasOwnProperty.call(source,inlineKey))merged[inlineKey]=_clone(source[inlineKey]);
+    else delete merged[inlineKey];
+    merged.tplColors=_clone(current.tplColors||{});
+    var colors=source.tplColors||{},key=kind+':'+template;
+    if(Object.prototype.hasOwnProperty.call(colors,key))merged.tplColors[key]=_clone(colors[key]);
+    else if(Object.prototype.hasOwnProperty.call(colors,template))merged.tplColors[key]=_clone(colors[template]);
+    else delete merged.tplColors[key];
+    var provenance=areaProvenance(current),sourceProvenance=areaProvenance(source).targets[kind];
+    if(sourceProvenance)provenance.targets[kind]=_clone(sourceProvenance);else delete provenance.targets[kind];
+    merged.design_provenance=provenance;
+    return merged;
+  }
+  function mergeWeekArea(current,source,kind){
+    var merged=_clone(current),root=document.getElementById('wp-sec-'+kind);
+    if(root)root.querySelectorAll('[id^=hcfg-]').forEach(function(field){
+      var key=field.id.slice(5);
+      if(Object.prototype.hasOwnProperty.call(source,key))merged[key]=_clone(source[key]);
+    });
+    var templateKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate',template=source[templateKey]||current[templateKey]||'classic-red';
+    merged[templateKey]=template;
+    var currentColors=_clone(current.wpTplColors||{}),sourceColors=source.wpTplColors||{},prefix=kind+':';
+    Object.keys(currentColors).forEach(function(key){if(key.indexOf(prefix)===0)delete currentColors[key];});
+    var specific=prefix+template;
+    if(sourceColors[specific])currentColors[specific]=_clone(sourceColors[specific]);
+    else if(sourceColors[template])currentColors[specific]=_clone(sourceColors[template]);
+    merged.wpTplColors=currentColors;
+    var provenance=areaProvenance(current),sourceProvenance=areaProvenance(source).targets['week-'+kind];
+    if(sourceProvenance)provenance.targets['week-'+kind]=_clone(sourceProvenance);else delete provenance.targets['week-'+kind];
+    merged.design_provenance=provenance;
+    return merged;
+  }
+  async function loadCmsConfig(){
+    var response=await fetch(API+'/cms-config'),result=await response.json();
+    if(!response.ok||!result.success||!result.data)throw new Error('Die gespeicherten Designstandards konnten nicht geladen werden.');
+    return result.data;
+  }
+  function offerAreaContext(kind){
+    var config=cfgReadUI(),select=document.getElementById('cfg-'+kind+'Template');
+    var label=select&&select.options[select.selectedIndex]?select.options[select.selectedIndex].textContent:'';
+    return areaContext(config,kind,label,offerAreaSnapshot(_cfgSaved||CFG_DEFAULTS,kind));
+  }
+  async function loadOfferAreaStandard(kind){
+    var data=await loadCmsConfig(),source=data.design_config||CFG_DEFAULTS,current=cfgReadUI();
+    var standard=mergeOfferArea(current,source,kind);
+    if(designStableJson(offerAreaSnapshot(current,kind))!==designStableJson(offerAreaSnapshot(standard,kind))
+        &&!(await cmsConfirm('Standard-Gestaltung laden? Ungespeicherte Änderungen im Bereich „'
+          +(kind==='plakat'?'Plakat':'Einzelflyer')+'“ werden durch die aktuell gespeicherte Standard-Gestaltung ersetzt.')))return;
+    cfgApplyUI(standard);_cfgCurrent=_clone(standard);
+    delete _loadedPresets[kind];
+    cfgOfferHistory(kind).record();_triggerCfgAutoPreview();
+    refreshAreaContexts();
+  }
+  function weekAreaContext(kind){
+    var config=hpCfgReadUI(),templateKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate';
+    var select=document.getElementById('hcfg-'+templateKey),label=select&&select.options[select.selectedIndex]?select.options[select.selectedIndex].textContent:'';
+    return areaContext(config,'week-'+kind,label,weekAreaSnapshot(_hpCfgSaved||HPCFG_DEFAULTS,kind));
+  }
+  async function loadWeekAreaStandard(kind){
+    var data=await loadCmsConfig(),source=data.hp_design_config||HPCFG_DEFAULTS,current=hpCfgReadUI();
+    var standard=mergeWeekArea(current,source,kind);
+    if(designStableJson(weekAreaSnapshot(current,kind))!==designStableJson(weekAreaSnapshot(standard,kind))
+        &&!(await cmsConfirm('Standard-Gestaltung laden? Ungespeicherte Änderungen im Wochenplanbereich „'
+          +(kind==='home'?'Homepage':'Druck')+'“ werden durch den aktuell gespeicherten Standard ersetzt.')))return;
+    hpCfgApplyUI(standard);_hpCfgCurrent=_clone(standard);
+    delete _loadedPresets['week-'+kind];
+    weekHistory(kind).record();_triggerWpAutoPreview();
+    refreshAreaContexts();
+  }
   function cfgSyncOfferTplPreviews(){
     function sync(selId,boxId){
       var sel=document.getElementById(selId);if(!sel)return;
       var v=(sel.value||'classic-red').toLowerCase();
       var btns=document.querySelectorAll('#'+boxId+' .cms-wp-preview');
-      btns.forEach(function(b){b.classList.toggle('active',((b.getAttribute('data-value')||'').toLowerCase()===v));});
+      btns.forEach(function(b){
+        var active=(b.getAttribute('data-value')||'').toLowerCase()===v;
+        b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));
+      });
+      var picker=document.getElementById(boxId);
+      var label=picker&&picker.parentElement.querySelector('[data-template-label]');
+      if(label)label.textContent=sel.options[sel.selectedIndex].textContent;
     }
     sync('cfg-plakatTemplate','cfg-plakatTemplate-preview');
     sync('cfg-flyerTemplate','cfg-flyerTemplate-preview');
@@ -1635,16 +1833,20 @@
     var c1=c1El.value,c2=c2El.value,dir=dirEl?dirEl.value:'to bottom',pct=pctEl?pctEl.value:50;
     prev.style.background='linear-gradient('+dir+','+c1+' 0%,'+c1+' '+pct+'%,'+c2+' 100%)';
   }
-  function cfgSyncTplColors(kind){
+  function cfgSyncTplColors(kind,cfg){
     // kind = 'plakat' or 'flyer'
     var selId=kind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
     var sel=document.getElementById(selId);if(!sel)return;
     var tpl=sel.value||'classic-red';
-    var cfg=cfgGet();
-    var colors=getTplColors(tpl,cfg,kind);
+    cfg=cfg||cfgGet();
+    var rawColors=getTplColors(tpl,cfg,kind);
+    var colors=offerEffectiveColors(kind,Object.assign({},cfg,{[kind+'Template']:tpl}));
     TPL_COLOR_KEYS.forEach(function(ck){
       var el=document.getElementById('cfg-tpl-'+kind+'-'+ck);
-      if(el)el.value=colors[ck]||'#000000';
+      if(el){
+        el.value=el.type==='hidden'?(rawColors[ck]||''):(colors[ck]||'#000000');
+        if(rawColors[ck]!=null)el.dataset.paletteExplicit='true';else delete el.dataset.paletteExplicit;
+      }
     });
     TPL_GRAD_KEYS.forEach(function(gk){
       var isGrad=colors[gk+'_grad']||false;
@@ -1657,7 +1859,7 @@
       if(isGrad)cfgTplUpdateGradPreview(kind,gk);
     });
   }
-  function cfgSyncAllTplColors(){cfgSyncTplColors('plakat');cfgSyncTplColors('flyer');}
+  function cfgSyncAllTplColors(cfg){cfgSyncTplColors('plakat',cfg);cfgSyncTplColors('flyer',cfg);}
   function cfgRenderSavingsPreview(){
     var cv=document.getElementById('cfg-savingsPreviewCanvas');if(!cv)return;
     var ctx=cv.getContext('2d');if(!ctx)return;
@@ -1695,40 +1897,97 @@
     ctx.font='9px Arial, sans-serif';
     ctx.fillText(samplePreis.toFixed(2).replace('.',',')+'€ statt '+sampleStatt.toFixed(2).replace('.',',')+'€',112,68);
   }
-  window.cmsSaveCfg=function(){
+  // Mit geladener Vorlage aktualisiert „Speichern" nur diese Vorlage; der Standard für neue Angebote bleibt unverändert.
+  function saveLoadedOfferPreset(kind){
+    var name=_loadedPresets[kind],all=cfgPresetsGet(),list=all[kind]||[];
+    var index=name?list.findIndex(function(p){return p.name===name;}):-1;
+    if(index<0){delete _loadedPresets[kind];return false;}
+    var c=cfgReadUI(),data=_clone(c);delete data.design_provenance;
+    list[index]={name:name,data:data,ts:Date.now()};
+    setAreaProvenance(c,kind,name,offerAreaSnapshot(c,kind));_cfgCurrent=_clone(c);
+    cfgPresetsSave(all);cfgPresetsRenderAll();refreshAreaContexts();
+    toast('Vorlage \u201e'+name+'\u201c gespeichert \u2013 Standard unver\u00e4ndert','ok');
+    return true;
+  }
+  window.cmsSaveCfgAsStandard=function(){
     var c=cfgReadUI();
     cfgSave(c);
-    // savingsStarStyle is persisted as part of cfgSave to Dataverse
-    toast('Design-Einstellungen gespeichert','ok');
+    // Der Standard gilt ab jetzt ohne geladene Vorlage weiter: „Speichern“
+    // schreibt sonst still nur die Vorlage fort, während der Standard gleich aussieht.
+    delete _loadedPresets.plakat;delete _loadedPresets.flyer;
+    refreshAreaContexts();
+    toast('Als Standard f\u00fcr neue Angebote gespeichert','ok');
+  };
+  window.cmsSaveCfg=function(){
+    var sec=_activeCfgSection();
+    if(sec&&_loadedPresets[sec]&&saveLoadedOfferPreset(sec))return;
+    window.cmsSaveCfgAsStandard();
   };
   window.cmsResetCfg=function(){
     var defaults=_clone(cfgGetEffectiveDefaults());
     cfgSave(defaults);
     // savingsStarStyle reset through cfgSave
     cfgApplyUI(defaults);
-    var hasCustom=!!cfgGetCustomDefaults();
-    toast(hasCustom?'Auf eigene Standardwerte zur\u00fcckgesetzt':'Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
-  };
-  window.cmsSaveAsDefault=function(){
-    cmsConfirm('Aktuelle Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.').then(function(ok){
-      if(!ok)return;
-      var c=cfgReadUI();
-      cfgSaveCustomDefaults(c);
-      toast('\u2705 Aktuelle Einstellungen als Standard gespeichert','ok');
-    });
-  };
-  window.cmsClearCustomDefault=function(){
-    cmsConfirm('Eigene Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?').then(function(ok){
-      if(!ok)return;
-      _cfgCustomDefaults=null;
-      _dvSave('design_config_defaults',null).catch(function(){});
-      toast('Eigene Standards gel\u00f6scht \u2013 Werkseinstellungen aktiv','ok');
-    });
+    delete _loadedPresets.plakat;delete _loadedPresets.flyer;
+    _triggerCfgAutoPreview();refreshAreaContexts();
+    toast('Auf Werks-Standardwerte zur\u00fcckgesetzt','ok');
   };
 
   // ── Section Navigation (Plakat / Flyer / Gemeinsam) ──
+  var _offerWorkspacePreview=null;
+  function cfgOfferHistory(kind){
+    if(_offerHistories[kind])return _offerHistories[kind];
+    var root=document.getElementById('cfg-sec-'+kind);
+    var suffix=kind==='plakat'?'Plakat':'Flyer';
+    var changes=window.AngeboteDesign.history(function(){
+      var config=cfgReadUI(),values={},colors={};
+      Object.keys(config).forEach(function(key){
+        if(key.indexOf(kind+'_')===0||key===kind+'Template'||key==='priceFont'+suffix||key==='savingsScale'+suffix)values[key]=config[key];
+      });
+      Object.keys(config.tplColors).forEach(function(key){if(key.indexOf(kind+':')===0)colors[key]=config.tplColors[key];});
+      return {values:values,colors:colors,presets:cfgPresetsGet()[kind]||[],
+        provenance:areaProvenance(config).targets[kind]||null};
+    },function(state){
+      var config=cfgReadUI();
+      Object.assign(config,state.values);
+      Object.keys(config.tplColors).forEach(function(key){if(key.indexOf(kind+':')===0)delete config.tplColors[key];});
+      Object.assign(config.tplColors,state.colors);
+      setAreaProvenance(config,kind,state.provenance&&state.provenance.name,state.provenance&&state.provenance.snapshot);
+      _cfgCurrent=_clone(config);
+      cfgApplyUI(config);
+      var presets=cfgPresetsGet();presets[kind]=state.presets;cfgPresetsSave(presets);cfgPresetsRenderAll();
+      _triggerCfgAutoPreview();
+    });
+    ['input','change','click'].forEach(function(type){
+      document.addEventListener(type,function(event){
+        if(root.contains(event.target))changes.record();
+      });
+    });
+    root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))changes.begin();});
+    document.addEventListener('pointerup',changes.end);
+    document.addEventListener('pointercancel',changes.end);
+    _offerHistories[kind]=changes;return changes;
+  }
   window.cfgSwitchSection=function(secId){
-    ['sec-plakat','sec-flyer','sec-shared'].forEach(function(s){
+    var modern=document.querySelector('[data-offer-workspaces]');
+    if(modern&&window.AngeboteDesign){
+      var right=modern.querySelector('#cfg-offer-legacy>.cfg-split-right');
+      if(!_offerWorkspacePreview)_offerWorkspacePreview=right.querySelector('.cfg-lp-inner');
+      if(secId==='sec-plakat'||secId==='sec-flyer'){
+        var kind=secId==='sec-flyer'?'flyer':'plakat';
+        window.AngeboteDesign.mountCms(document.getElementById('cfg-'+secId),_offerWorkspacePreview,
+          document.getElementById('cfg-offer-legacy-save'),kind,cfgOfferHistory(kind),{
+            read:function(){return offerAreaContext(kind);},
+            loadStandard:function(){return loadOfferAreaStandard(kind);}
+          });
+      }else if(secId==='sec-shared'){
+        right.appendChild(_offerWorkspacePreview);
+        window.AngeboteDesign.mountShared(document.getElementById('cfg-sec-shared'),_offerWorkspacePreview,
+          document.getElementById('cfg-offer-legacy-save'));
+      }
+      right.hidden=secId!=='sec-shared';
+    }
+    ['sec-plakat','sec-flyer','sec-shared','sec-drinks'].forEach(function(s){
       var panel=document.getElementById('cfg-'+s);
       if(panel)panel.style.display=s===secId?'':'none';
     });
@@ -1739,6 +1998,24 @@
       btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
       btn.style.color=active?'var(--c-m-pri)':'#6b7280';
     });
+    var legacy=document.getElementById('cfg-offer-legacy');
+    var legacySave=document.getElementById('cfg-offer-legacy-save');
+    if(legacy)legacy.style.display=secId==='sec-drinks'?'none':'';
+    if(legacySave)legacySave.style.display=secId==='sec-drinks'?'none':'flex';
+    if(secId==='sec-drinks'){
+      var drinksRoot=document.getElementById('an-design-root');
+      if(window.AngeboteDesign&&drinksRoot){
+        var mountDrinks=function(){return window.AngeboteDesign.mount(drinksRoot);};
+        if(_cmsAdminLogin){
+          drinksRoot.innerHTML='<p class="an-status" role="status">Die CMS-Anmeldung wird abgeschlossen …</p>';
+          _cmsAdminLogin.then(mountDrinks).catch(function(error){
+            drinksRoot.innerHTML='<p class="an-status an-error" role="alert">Die CMS-Anmeldung konnte nicht abgeschlossen werden. Bitte den Getränkeflyer-Reiter erneut öffnen.</p>';
+            window.AngeboteModel.error(error);
+          });
+        }else mountDrinks();
+      }
+      return;
+    }
     // Toggle sticky sidebar preview container
     var lpPlakat=document.getElementById('cfg-live-preview-plakat');
     var lpFlyer=document.getElementById('cfg-live-preview-flyer');
@@ -1754,11 +2031,70 @@
     }
     // Auto-trigger preview for the newly activated section
     var target=secId==='sec-flyer'?'flyer':'plakat';
-    _scheduleAutoPreview('cfg-switch',function(){cfgLivePreview(target);},200);
+    if(_livePreviewTimers['cfg-switch'])clearTimeout(_livePreviewTimers['cfg-switch']);
+    cfgLivePreview(target);
   };
 
   // ── WP Section Navigation (Homepage / Flyer / Elemente) ──
+  var _weekPreview=null,_weekHistories={},_weekPalettePickers={},_weekTemplateBefore={};
+  function weekHistory(kind){
+    if(_weekHistories[kind])return _weekHistories[kind];
+    var root=document.getElementById('wp-sec-'+kind),tplKey=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate';
+    var changes=window.AngeboteDesign.history(function(){
+      var config=hpCfgReadUI(),values={};root.querySelectorAll('[id^=hcfg-]').forEach(function(field){
+        var key=field.id.slice(5);if(config[key]!=null)values[key]=config[key];
+      });
+      var colors={};Object.keys(config.wpTplColors).forEach(function(key){if(key.indexOf(kind+':')===0)colors[key]=config.wpTplColors[key];});
+      return {values:values,colors:colors,provenance:areaProvenance(config).targets['week-'+kind]||null};
+    },function(state){
+      var config=hpCfgReadUI();Object.assign(config,state.values);config[tplKey]=state.values[tplKey]||config[tplKey];
+      Object.keys(config.wpTplColors).forEach(function(key){if(key.indexOf(kind+':')===0)delete config.wpTplColors[key];});
+      Object.assign(config.wpTplColors,state.colors);
+      setAreaProvenance(config,'week-'+kind,state.provenance&&state.provenance.name,state.provenance&&state.provenance.snapshot);
+      _hpCfgCurrent=_clone(config);hpCfgApplyUI(config);_triggerWpAutoPreview();
+    });
+    ['input','change'].forEach(function(type){root.addEventListener(type,function(){changes.record();if(_weekPalettePickers[kind])_weekPalettePickers[kind].refresh();});});
+    root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))changes.begin();});
+    document.addEventListener('pointerup',changes.end);document.addEventListener('pointercancel',changes.end);
+    _weekHistories[kind]=changes;return changes;
+  }
+  function weekPaletteValues(c){
+    return {wpHeaderFrom:c.header,wpHeaderTo:c.accent,wpDishColor:c.text,wpPriceColor:c.accent,
+      wpStripeColor:c.stripe,wpDayColor:c.title,wpDayBg:c.card,wpBgColor:c.bg};
+  }
+  function ensureWeekPalette(kind){
+    if(_weekPalettePickers[kind])return;
+    var colors=document.getElementById(kind==='home'?'hcfg-wpHome-colors':'hcfg-wpFlyer-colors');
+    var host=document.createElement('fieldset');host.className='an-choice-group';host.innerHTML='<legend>Farbpalette</legend><div></div>';colors.before(host);
+    var prefix='hcfg-wpTpl-'+kind+'-';
+    _weekPalettePickers[kind]=window.AngeboteDesign.palettePicker(host.lastElementChild,{
+      read:function(){var result={};Object.keys(weekPaletteValues(window.AngeboteModel.palettes[0].colors)).forEach(function(key){result[key]=document.getElementById(prefix+key).value;});return result;},
+      map:weekPaletteValues,defaults:Object.values(WP_TPL_COLOR_DEFAULTS),
+      write:function(values){Object.keys(values).forEach(function(key){document.getElementById(prefix+key).value=values[key];});wpTplGradPreview(kind);},
+      changed:function(){weekHistory(kind).record();_triggerWpAutoPreview();}
+    });
+  }
+  function weekChangeTemplate(kind){
+    var key=kind==='home'?'wpHomeTemplate':'wpFlyerTemplate',select=document.getElementById('hcfg-'+key);
+    var next=select.value,old=_weekTemplateBefore[kind]||next;
+    select.value=old;var config=hpCfgReadUI(),colors=getWpTplColors(old,config,kind);select.value=next;
+    config[key]=next;config.wpTplColors[kind+':'+next]=colors;_weekTemplateBefore[kind]=next;
+    hpCfgSyncWpTplColors(kind,config);hpCfgSyncWpPreview();hpCfgSyncWpFlyerPreview();_triggerWpAutoPreview();
+    if(_weekPalettePickers[kind])_weekPalettePickers[kind].refresh();
+  }
   window.wpCfgSwitchSection=function(secId){
+    var modern=document.querySelector('[data-offer-workspaces]'),kind=secId==='wp-sec-flyer'?'flyer':'home';
+    if(modern&&window.AngeboteDesign){
+      var right=document.querySelector('#cms-cfg-wp>.cfg-split>.cfg-split-right');
+      if(!_weekPreview)_weekPreview=right.querySelector('.cfg-lp-inner');
+      if(!_weekPreview._workspaceTools)_weekPreview._workspaceTools=document.querySelector('#cms-cfg-wp .an-preview-options');
+      ensureWeekPalette(kind);
+      window.AngeboteDesign.mountWeek(document.getElementById('wp-sec-'+kind),_weekPreview,kind,weekHistory(kind),{
+        read:function(){return weekAreaContext(kind);},
+        loadStandard:function(){return loadWeekAreaStandard(kind);}
+      });
+      right.hidden=true;
+    }
     ['wp-sec-home','wp-sec-flyer','wp-sec-elemente'].forEach(function(s){
       var panel=document.getElementById(s);
       if(panel)panel.style.display=s===secId?'':'none';
@@ -1783,12 +2119,15 @@
       if(lpFlyer)lpFlyer.style.display='none';
       if(refreshBtn)refreshBtn.setAttribute('data-kind','home');
     }
+    _triggerWpAutoPreview();
   };
 
   // ── Revert Unsaved Changes ──
   window.cfgRevertUnsaved=function(){
     var saved=cfgGet();
     cfgApplyUI(saved);
+    Object.keys(_offerHistories).forEach(function(kind){_offerHistories[kind].reset();});
+    _triggerCfgAutoPreview();
     toast('\u00c4nderungen verworfen \u2013 gespeicherter Stand wiederhergestellt','ok');
   };
 
@@ -1796,28 +2135,58 @@
   var CFG_PRESETS_KEY='dl_design_presets';
   var _cfgPresets=null;
   function cfgPresetsGet(){
-    return _cfgPresets||{plakat:[],flyer:[],shared:[]};
+    return _clone(_cfgPresets||{plakat:[],flyer:[],shared:[]});
   }
   function cfgPresetsSave(all){
+    var changed=JSON.stringify(cfgPresetsGet())!==JSON.stringify(all);
     _cfgPresets=_clone(all);
+    if(changed)_dvSave('design_presets',_cfgPresets).then(function(res){if(!res.success)throw new Error(res.error||'Speichern abgelehnt');}).catch(function(e){console.warn('Vorlagen speichern fehlgeschlagen',e);toast('Vorlagen konnten nicht dauerhaft gespeichert werden','warn');});
+  }
+  function _presetLists(raw,keys){
+    var out={};
+    keys.forEach(function(key){out[key]=raw&&Array.isArray(raw[key])?raw[key].filter(function(p){return p&&typeof p.name==='string'&&p.data&&typeof p.data==='object';}):[];});
+    return out;
   }
   window.cfgPresetSave=function(section){
-    var name=prompt('Name f\u00fcr die Vorlage:');
+    var field=document.querySelector('[data-global-preset-name="'+section+'"]');
+    var name=field?field.value:prompt('Name f\u00fcr die Vorlage:');
     if(!name||!name.trim())return;
-    var c=cfgReadUI();
+    name=name.trim();
+    var c=cfgReadUI();delete c.design_provenance;
     var all=cfgPresetsGet();
     if(!all[section])all[section]=[];
-    all[section].push({name:name.trim(),data:_clone(c),ts:Date.now()});
-    cfgPresetsSave(all);
-    cfgPresetsRenderAll();
-    toast('Vorlage "'+name.trim()+'" gespeichert','ok');
+    var index=all[section].findIndex(function(p){return p.name===name;});
+    function store(){
+      var entry={name:name,data:_clone(c),ts:Date.now()};
+      if(index>=0)all[section][index]=entry;else all[section].push(entry);
+      cfgPresetsSave(all);
+      cfgPresetsRenderAll();
+      if(field)field.value='';
+      if(section==='plakat'||section==='flyer'){
+        var cur=cfgReadUI();setAreaProvenance(cur,section,name,offerAreaSnapshot(cur,section));_cfgCurrent=_clone(cur);
+        _loadedPresets[section]=name;
+        refreshAreaContexts();
+      }
+      if(_offerHistories[section])_offerHistories[section].record();
+      toast('Vorlage "'+name+'" '+(index>=0?'ersetzt':'gespeichert'),'ok');
+    }
+    if(index>=0)cmsConfirm('Vorlage \u201e'+name+'\u201c ersetzen? Die gespeicherte Vorlage wird durch die aktuellen Einstellungen \u00fcberschrieben.',{ok:'Vorlage ersetzen'}).then(function(ok){if(ok)store();});
+    else store();
   };
   window.cfgPresetLoad=function(section,idx){
     var all=cfgPresetsGet();
     if(!all[section]||!all[section][idx])return;
-    var preset=all[section][idx].data;
-    cfgApplyUI(preset);
-    toast('Vorlage "'+all[section][idx].name+'" geladen','ok');
+    var entry=all[section][idx],preset=entry.data,current=cfgReadUI();
+    if(section==='plakat'||section==='flyer'){
+      preset=mergeOfferArea(current,preset,section);
+      setAreaProvenance(preset,section,entry.name,offerAreaSnapshot(preset,section));
+    }
+    _cfgCurrent=_clone(preset);cfgApplyUI(preset);
+    if(section==='plakat'||section==='flyer')_loadedPresets[section]=entry.name;
+    if(_offerHistories[section])_offerHistories[section].record();
+    _triggerCfgAutoPreview();
+    refreshAreaContexts();
+    toast('Vorlage "'+entry.name+'" geladen','ok');
   };
   window.cfgPresetDelete=function(section,idx){
     var all=cfgPresetsGet();
@@ -1848,7 +2217,7 @@
       var d=new Date(p.ts);
       var dateStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
       html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-s)">';
-      html+='<span style="flex:1;font-size:var(--schrift-klein);font-weight:600;color:var(--ink)" title="'+dateStr+'">'+p.name+'</span>';
+      html+='<span style="flex:1;font-size:var(--schrift-klein);font-weight:600;color:var(--ink)" title="'+dateStr+'">'+esc(p.name)+'</span>';
       html+='<span style="font-size:9px;color:var(--mut)">'+dateStr+'</span>';
       html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px" data-action="cfgPresetLoad" data-section="'+section+'" data-idx="'+i+'">Laden</button>';
       html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:var(--red)" data-action="cfgPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
@@ -1860,6 +2229,7 @@
   // Live-Update der Slider-Werte
   document.addEventListener('input',function(e){
     var id=e.target.id;if(!id||id.indexOf('cfg-')!==0)return;
+    cfgSyncPaletteField(e.target);
     var k=id.replace('cfg-','');cfgUpdateVal(k,e.target.value);
     if(id==='cfg-savingsScalePlakat'||id==='cfg-savingsScaleFlyer'||id==='cfg-tagColor'||id==='cfg-tagRadius')cfgRenderSavingsPreview();
     // Sync deco color pickers ↔ global config pickers
@@ -1876,8 +2246,8 @@
     if(id.indexOf('cfg-tpl-')===0){_triggerCfgAutoPreview();}
   });
   document.addEventListener('change',function(e){
-    if(e.target.id==='cfg-plakatTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');_triggerCfgAutoPreview();}
-    if(e.target.id==='cfg-flyerTemplate'){cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');_triggerCfgAutoPreview();}
+    if(e.target.id==='cfg-plakatTemplate')cfgChangeTemplate('plakat');
+    if(e.target.id==='cfg-flyerTemplate')cfgChangeTemplate('flyer');
     // Offer template gradient toggle
     if(e.target.classList.contains('cfg-tpl-grad-toggle')){
       var gk=e.target.getAttribute('data-key'),gkind=e.target.getAttribute('data-kind');
@@ -1902,15 +2272,62 @@
 
   // ── Live Preview System (Angebote + Wochenplan) ──
   var _livePreviewTimers={};
-  var _livePreviewGen=0;
+  var _livePreviewGen={plakat:0,flyer:0};
+  function loadOfferPreviewImage(sample){
+    var key=(sample.artikelnummer||'').trim();
+    if(sample.bild_data||!key)return Promise.resolve();
+    return loadImageFromSharePoint(key,key).then(function(b64){
+      if(b64)sample.bild_data=b64;
+    });
+  }
+  function cfgShowOfferPreview(target,canvas,firstKey){
+    var container=document.getElementById('cfg-live-preview-'+target);
+    var root=document.getElementById('cfg-sec-'+target);
+    if(!root.dataset.designer){
+      container.innerHTML='<img src="'+canvas.toDataURL('image/png')+'" style="max-width:100%" alt="Vorschau">';
+      return;
+    }
+    var changes=cfgOfferHistory(target),surface=_cfgPreviewSurfaces[target];
+    if(!surface){
+      var host=document.createElement('div');host.dataset.cfgInline=target;container.replaceChildren(host);
+      surface=window.AngeboteVorschauEditor.mount(host,{
+        toolsHost:root.querySelector('.an-designer-direct'),begin:changes.begin,end:changes.end,
+        select:function(element){root._designerUi.select(element.ovKey==='name'?2:root.querySelectorAll('[data-designer-tab]').length-1);},
+        change:function(element,delta){
+          var prefix=element.ovKey,values=_cfgInline[target];
+          values[prefix+'Dx']=Math.max(-1000,Math.min(1000,(values[prefix+'Dx']||0)+(delta.dx||0)));
+          values[prefix+'Dy']=Math.max(-1500,Math.min(1500,(values[prefix+'Dy']||0)+(delta.dy||0)));
+          values[prefix+'Scale']=Math.max(20,Math.min(200,(values[prefix+'Scale']||100)*(delta.scale||1)));
+          values[prefix+'Rot']=(((values[prefix+'Rot']||0)+(delta.rotation||0)*element.rotationSign+540)%360)-180;
+          changes.record();
+          _scheduleAutoPreview('cfg-inline-'+target,function(){cfgLivePreview(target);},30);
+        }
+      });
+      window.AngeboteDesign.compactHelp(root,root.querySelector('.an-designer-help'));
+      surface.host=host;
+      _cfgPreviewSurfaces[target]=surface;
+    }
+    if(surface.host.parentNode!==container)container.replaceChildren(surface.host);
+    var magazine=/^modern-mag/.test(cfgReadUI()[target+'Template']),values=_cfgInline[target];
+    var elements=(canvas._elMeta||[]).filter(function(element){
+      return (element.ovKey==='img'||element.ovKey==='price'||element.ovKey==='name'
+        ||element.ovKey==='discount'||element.ovKey==='old_price')&&(!element.itemKey||element.itemKey===firstKey);
+    }).map(function(element){
+      var sign=!magazine&&element.ovKey==='img'?-1:1;
+      var base=!magazine&&element.ovKey==='img'?-cfgReadUI().imgRotation*(target==='plakat'?.85:1):0;
+      return Object.assign({},element,{id:element.ovKey,type:element.ovKey==='img'?'image':element.ovKey,
+        rotation:base+(values[element.ovKey+'Rot']||0)*sign,rotationSign:sign});
+    });
+    surface.update(canvas,elements,794,1123);
+  }
   function cfgLivePreview(target){
     target=(target||'plakat').toLowerCase();
     var container=document.getElementById('cfg-live-preview-'+target);
     if(!container)return;
-    container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--mut)">Wird generiert\u2026</span>';
-    var gen=++_livePreviewGen;
+    if(!_cfgPreviewSurfaces[target])container.innerHTML='<span role="status" style="font-size:var(--schrift-klein);color:var(--mut)">Wird generiert\u2026</span>';
+    var gen=++_livePreviewGen[target];
     ensureAngeboteForPreview().then(function(){
-      if(gen!==_livePreviewGen)return;
+      if(gen!==_livePreviewGen[target])return;
       var cfg=Object.assign({},cfgGet(),cfgReadUI());
       var now=new Date();var plus6=new Date(now.getTime()+6*86400000);
       var fallback=[
@@ -1922,24 +2339,29 @@
         {produkt:'Beispielprodukt 6',details:'750g',preis:5.99,statt_preis:6.99,artikelnummer:'',bild_data:''}
       ];
       var src=(angebote&&angebote.length)?angebote.slice(0,6):fallback;
-      var previewItems=src.map(function(a,i){var f=fallback[i]||fallback[0];return{produkt:(a&&a.produkt)||f.produkt,details:(a&&a.details)||f.details,preis:(a&&a.preis!=null)?a.preis:f.preis,statt_preis:(a&&a.statt_preis!=null)?a.statt_preis:f.statt_preis,artikelnummer:(a&&a.artikelnummer)||'',bild_data:(a&&a.bild_data)||''};});
+      var previewItems=src.map(function(a,i){var f=fallback[i]||fallback[0];return{key:'design-muster-'+i,produkt:(a&&a.produkt)||f.produkt,details:(a&&a.details)||f.details,preis:(a&&a.preis!=null)?a.preis:f.preis,statt_preis:(a&&a.statt_preis!=null)?a.statt_preis:f.statt_preis,artikelnummer:(a&&a.artikelnummer)||'',bild_data:(a&&a.bild_data)||''};});
       var data={von:now.toISOString().slice(0,10),bis:plus6.toISOString().slice(0,10),items:previewItems};
       if(target==='flyer'){
         var sample=data.items[0]||fallback[0];
-        generateEinzelflyer(sample,data,cfg).then(function(canvas){
-          if(gen!==_livePreviewGen)return;
-          canvas.toBlob(function(blob){
-            if(!blob||gen!==_livePreviewGen)return;
-            var url=URL.createObjectURL(blob);
-            container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Flyer-Vorschau">';
-          },'image/png');
-        }).catch(function(){container.innerHTML='<span style="font-size:var(--schrift-klein);color:var(--red)">Fehler</span>';});
+        loadOfferPreviewImage(sample).then(function(){
+          if(gen!==_livePreviewGen[target])return;
+          return generateEinzelflyer(sample,data,cfg);
+        }).then(function(canvas){
+          if(!canvas)return;
+          if(gen!==_livePreviewGen[target])return;
+          cfgShowOfferPreview(target,canvas,data.items[0].key);
+        }).catch(function(error){
+          console.error('Einzelflyer-Vorschau konnte nicht geladen werden',error);
+          if(gen===_livePreviewGen[target])container.innerHTML='<span role="alert" style="font-size:var(--schrift-klein);color:var(--red)">Einzelflyer-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
+        });
       }else{
-        generateAngebotPlakat(data,function(blob){
-          if(!blob||gen!==_livePreviewGen)return;
-          var url=URL.createObjectURL(blob);
-          container.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:var(--r-s)" alt="Plakat-Vorschau">';
-        },cfg);
+        generateAngebotPlakat(data,function(canvas){
+          if(!canvas||gen!==_livePreviewGen[target])return;
+          cfgShowOfferPreview(target,canvas,data.items[0].key);
+        },cfg,{returnCanvas:true}).catch(function(error){
+          console.error('Plakat-Vorschau konnte nicht geladen werden',error);
+          if(gen===_livePreviewGen[target])container.innerHTML='<span role="alert">Plakat-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
+        });
       }
     });
   }
@@ -1968,8 +2390,22 @@
     return null;
   }
 
+  function cfgSyncPriceImageFields(){
+    ['plakat','flyer'].forEach(function(kind){
+      var shape=document.getElementById('cfg-'+kind+'-tagShape');
+      var colors=document.querySelector('#cfg-sec-'+kind+' .an-price-image-colors');
+      if(colors&&shape){
+        colors.hidden=false;
+        colors.querySelector('legend').textContent='Preisschild-Farben';
+        var labels=['Preisfarbe','Konturfarbe','Hintergrund / Stattpreis-Streifen','Stattpreisfarbe','Durchstreichungsfarbe'];
+        colors.querySelectorAll('label>span').forEach(function(label,index){label.textContent=labels[index];});
+      }
+    });
+  }
   // Auto-trigger for Angebote design panel
   function _triggerCfgAutoPreview(){
+    cfgSyncPriceImageFields();
+    Object.keys(_offerPalettePickers).forEach(function(kind){_offerPalettePickers[kind].refresh();});
     var sec=_activeCfgSection();
     if(!sec)return;
     if(!_autoCheckEnabled('cfg-live-auto-'+sec))return;
@@ -2021,21 +2457,32 @@
   });
 
   // --- HP-Sonderangebote Card Design ---
-  var HPANG_KEY='dl_hpang_design';
-  var HPANG_DEFAULTS={
-    gridBg:'#f4f1ea',cardBg:'#ffffff',cardBorder:'#e8e5de',nameColor:'#111111',detColor:'#555555',
-    tagBg:'#a51d2d',tagText:'#ffffff',badgeBg:'#a51d2d',stattColor:'#666666',
-    tagSkew:-4,tagRadius:5,headerBg:'#c62828',headerText:'#ffffff',
-    cardRadius:16,imgSize:95,showLeaf:true,showBasket:true
-  };
+  var HPANG_DEFAULTS=window.AngeboteKunden.homepageDefaults;
   var _hpangViewMode='desktop';
 
-  var _hpangCurrent=null;
+  var _hpangCurrent=null, _hpangDocument=null;
+  var _hpangPreviewItems=null, _hpangPreviewError=null, _hpangHistory=null;
   function hpangGet(){
     if(_hpangCurrent){var r2={};for(var k2 in HPANG_DEFAULTS)r2[k2]=_hpangCurrent[k2]!=null?_hpangCurrent[k2]:HPANG_DEFAULTS[k2];return r2;}
     return _clone(HPANG_DEFAULTS);
   }
-  function hpangSave(cfg){_hpangCurrent=_clone(cfg);}
+  async function hpangLoad(){
+    _hpangPreviewItems=null;_hpangPreviewError=null;hpangRenderPreview();
+    var results=await Promise.all([window.AngeboteModel.request('/api/angebote-verwaltung?view=design'),
+      window.AngeboteKunden.homepagePreviewItems(true)]);
+    var result=results[0];_hpangPreviewItems=results[1];
+    _hpangDocument=result.design;
+    _hpangCurrent=Object.assign({},HPANG_DEFAULTS,result.design.homepage);
+    hpangApplyUI(hpangGet());
+    if(_hpangHistory)_hpangHistory.reset();
+  }
+  async function hpangSave(cfg){
+    if(!_hpangDocument)throw window.AngeboteModel.problem('Bitte die Homepage-Gestaltung zuerst erneut öffnen.');
+    var M=window.AngeboteModel, data=M.clone(_hpangDocument);data.homepage=cfg;
+    var result=await M.request('/api/angebote-verwaltung?view=design',M.json('PUT',{version:_hpangDocument.version,data:data}));
+    _hpangDocument=result.design;_hpangCurrent=M.clone(result.design.homepage);
+    hpangApplyUI(hpangGet());
+  }
 
   function hpangReadUI(){
     var c={};
@@ -2050,6 +2497,35 @@
     });
     return c;
   }
+  function hpangHistoryRead(){
+    return {settings:hpangReadUI(),provenance:_hpangDocument&&_hpangDocument.design_provenance
+      ?_clone(_hpangDocument.design_provenance.targets&&_hpangDocument.design_provenance.targets.homepage||null):null};
+  }
+  function hpangHistoryRestore(state){
+    if(_hpangDocument){
+      setAreaProvenance(_hpangDocument,'homepage',state.provenance&&state.provenance.name,state.provenance&&state.provenance.snapshot);
+    }
+    hpangApplyUI(state.settings||state);
+  }
+  function homepageAreaContext(){
+    var config=hpangReadUI(),entry=areaProvenance(_hpangDocument).targets.homepage;
+    var saved=_hpangDocument&&_hpangDocument.homepage||HPANG_DEFAULTS;
+    return {area:'Homepage-Sonderangebote',layout:'Angebotskarten',name:entry&&entry.name||'',
+      source:entry?'':'Gespeicherte Gestaltung · Vorlage unbekannt',
+      changed:entry?designStableJson(entry.snapshot)!==designStableJson(config)
+        :designStableJson(saved)!==designStableJson(config)};
+  }
+  async function loadHomepageAreaStandard(){
+    var result=await window.AngeboteModel.request('/api/angebote-verwaltung?view=design'),latest=result.design;
+    var standard=latest.homepage||HPANG_DEFAULTS,current=hpangReadUI();
+    if(designStableJson(current)!==designStableJson(standard)
+        &&!(await window.AngeboteModel.dialog('Standard-Gestaltung laden?',
+          'Ungespeicherte Homepage-Gestaltung wird durch die aktuell gespeicherte Gestaltung für neue Angebote ersetzt. Getraenke- und Wochenplanbereiche bleiben unverändert.',
+          'Standard-Gestaltung laden')))return;
+    _hpangDocument=latest;_hpangCurrent=_clone(standard);hpangApplyUI(standard);
+    if(_hpangHistory)_hpangHistory.record();
+    if(window.AngeboteDesign)window.AngeboteDesign.refreshDesignContext(document.getElementById('cms-cfg-hpang'));
+  }
   function hpangApplyUI(c){
     ['gridBg','cardBg','cardBorder','nameColor','detColor','tagBg','tagText','badgeBg','stattColor','headerBg','headerText'].forEach(function(k){
       var el=document.getElementById('hpang-'+k);if(el)el.value=c[k]||HPANG_DEFAULTS[k];
@@ -2063,70 +2539,33 @@
       var el=document.getElementById('hpang-'+k);if(el)el.checked=c[k]!=null?c[k]:HPANG_DEFAULTS[k];
     });
     hpangRenderPreview();
+    document.querySelectorAll('#cms-cfg-hpang .an-palette-group').forEach(function(host){if(host._palettePicker)host._palettePicker.refresh();});
   }
-
-  // Sample data for the live preview
-  var HPANG_SAMPLES=[
-    {produkt:'Bio Alpenmilch 3,5%',details:'1L Packung',preis:1.89,statt:2.49,artnr:'12345'},
-    {produkt:'Bauernbrot Vollkorn',details:'750g',preis:3.49,statt:4.29,artnr:'23456'},
-    {produkt:'Freiland-Eier 10er',details:'Gr\u00f6\u00dfe M',preis:3.29,statt:3.99,artnr:'34567'},
-    {produkt:'Bergk\u00e4se W\u00fcrzig',details:'200g',preis:4.49,statt:5.79,artnr:'45678'}
-  ];
 
   function hpangRenderPreview(){
     var wrap=document.getElementById('hpang-preview-wrap');
     var container=document.getElementById('hpang-preview');
     if(!container||!wrap)return;
-    var c=hpangReadUI();
-    var isMobile=_hpangViewMode==='mobile';
-
-    wrap.style.background=c.gridBg;
-    container.style.maxWidth=isMobile?'380px':'100%';
-
-    // Build header
-    var html='<div style="background:linear-gradient(135deg,'+c.headerBg+' 0%,'+c.headerBg+' 50%,'+adjustColor(c.headerBg,20)+' 100%);color:'+c.headerText+';padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;border-radius:12px 12px 0 0">';
-    html+='<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:'+c.headerText+'"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>';
-    html+='<span>Sonderangebote</span>';
-    html+='<span style="font-size:var(--schrift-klein);font-weight:400;opacity:.85;margin-left:auto">'+HPANG_SAMPLES.length+' Artikel</span>';
-    html+='</div>';
-
-    // Build grid
-    var cols=isMobile?'1fr':'repeat(auto-fill,minmax(320px,1fr))';
-    html+='<div style="display:grid;grid-template-columns:'+cols+';gap:14px;padding:14px;background:'+c.gridBg+';border-radius:0 0 12px 12px">';
-
-    HPANG_SAMPLES.forEach(function(a){
-      var pct=a.statt>0&&a.preis>0?Math.round((a.statt-a.preis)/a.statt*100):0;
-      var pi=Math.floor(a.preis);var pf=Math.round((a.preis-pi)*100);var cs=pf<10?'0'+pf:String(pf);
-      var imgSz=isMobile?'70':String(c.imgSize);
-      var cardMinH=isMobile?'90':'110';
-
-      html+='<div style="background:'+c.cardBg+';border:1px solid '+c.cardBorder+';border-radius:'+c.cardRadius+'px;padding:'+(isMobile?'10':'14')+'px 12px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.06);display:grid;grid-template-columns:'+imgSz+'px 1fr auto;gap:0 10px;overflow:visible;min-height:'+cardMinH+'px">';
-      // Leaf
-      if(c.showLeaf) html+='<span style="position:absolute;top:6px;right:6px;opacity:.15;font-size:1.4rem;pointer-events:none">\uD83C\uDF3F</span>';
-      // Badge
-      if(pct>0) html+='<div style="position:absolute;top:-4px;left:6px;background:'+c.badgeBg+';color:#fff;font-size:.68rem;font-weight:600;padding:3px 9px;border-radius:0 0 8px 8px;letter-spacing:.3px;z-index:3">-'+pct+'%</div>';
-      // Image placeholder
-      html+='<div style="width:'+imgSz+'px;height:'+imgSz+'px;overflow:hidden;border-radius:10px;background:#faf9f6;display:flex;align-items:center;justify-content:center;grid-row:1/3">';
-      html+='<span style="font-size:2rem;opacity:.4">\uD83D\uDED2</span></div>';
-      // Info
-      html+='<div style="min-width:0;display:flex;flex-direction:column;justify-content:flex-start;grid-column:2;grid-row:1/3;padding-top:2px">';
-      html+='<div style="font-weight:600;font-size:'+(isMobile?'1rem':'1.02rem')+';color:'+c.nameColor+';margin-bottom:3px;line-height:1.22">'+a.produkt+'</div>';
-      if(a.details) html+='<div style="font-size:.88rem;color:'+c.detColor+';font-weight:500">'+a.details+'</div>';
-      html+='</div>';
-      // Price tag
-      html+='<div style="grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:'+(isMobile?'75':'82')+'px;gap:6px">';
-      html+='<div style="background:'+c.tagBg+';color:'+c.tagText+';font-weight:600;font-size:'+(isMobile?'1.2rem':'1.6rem')+';padding:'+(isMobile?'10px 12px':'14px 18px')+';border-radius:'+c.tagRadius+'px;transform:rotate('+c.tagSkew+'deg) skewY('+(c.tagSkew*0.75)+'deg);box-shadow:5px 5px 0 rgba(80,0,0,.35);text-align:center;line-height:1;white-space:nowrap;position:relative">';
-      html+=pi+','+cs+'<span style="font-size:.5em;vertical-align:super;margin-left:1px">\u20AC</span>';
-      html+='<div style="position:absolute;top:0;left:0;right:0;bottom:50%;background:linear-gradient(to bottom,rgba(255,255,255,.15),transparent);border-radius:'+c.tagRadius+'px '+c.tagRadius+'px 0 0"></div>';
-      html+='</div>';
-      if(a.statt) html+='<span style="font-size:.78rem;color:'+c.stattColor+';text-decoration:line-through;font-weight:400;font-style:italic;transform:rotate(-2deg)">'+a.statt.toFixed(2).replace('.',',')+' \u20AC</span>';
-      html+='</div>';
-      // Basket
-      if(c.showBasket) html+='<span style="position:absolute;bottom:4px;right:12px;opacity:.12;font-size:1.6rem;pointer-events:none">\uD83D\uDED2</span>';
-      html+='</div>';
+    var c=hpangReadUI(), K=window.AngeboteKunden;
+    container.style.maxWidth=_hpangViewMode==='mobile'?'375px':'100%';
+    K.applyHomepage(container,c);
+    if(_hpangPreviewError){
+      container.innerHTML='<p class="an-status an-error" role="alert">Die Homepage-Vorschau konnte nicht geladen werden.</p><button type="button" data-hpang-retry>Erneut laden</button>';
+      container.querySelector('[data-hpang-retry]').onclick=function(){window.cmsCfgSubTab('cfg-hpang');};
+      return;
+    }
+    if(!_hpangPreviewItems){container.innerHTML='<p class="an-status" role="status">Homepage-Angebote werden geladen …</p>';return;}
+    container.innerHTML='<div class="ang-header" style="padding:12px;font-weight:600">Sonderangebote</div><div class="an-customer-grid">'
+      +_hpangPreviewItems.map(function(entry){return K.homepageCard(entry.item,entry.kind);}).join('')
+      +(_hpangPreviewItems.length?'':'<p class="an-status">Aktuell keine Angebote in diesem Zeitraum.</p>')+'</div>';
+    container.querySelectorAll('.an-hp-image').forEach(function(box,index){
+      var item=_hpangPreviewItems[index].item;
+      if(!item.image_id){
+        if(item.barcode||item.article_number)box.dataset.hpLookup=JSON.stringify({barcode:item.barcode,article_number:item.article_number});
+        else box.textContent='Kein Produktbild hinterlegt';
+      }
     });
-    html+='</div>';
-    container.innerHTML=html;
+    K.paintHomepage(container).catch(window.AngeboteModel.error);
   }
 
   function adjustColor(hex,amt){
@@ -2148,20 +2587,19 @@
   };
 
   // Save / Revert / Reset
-  window.hpangSaveCfg=function(){
-    var c=hpangReadUI();
-    hpangSave(c);
-    toast('HP-Sonderangebote Design gespeichert','ok');
+  window.hpangSaveCfg=async function(){
+    try{await hpangSave(hpangReadUI());toast('Homepage-Gestaltung gespeichert','ok');}
+    catch(e){window.AngeboteModel.error(e);}
   };
   window.hpangRevert=function(){
     hpangApplyUI(hpangGet());
+    if(_hpangHistory)_hpangHistory.reset();
     toast('\u00c4nderungen verworfen','ok');
   };
   window.hpangReset=function(){
-    var d=_clone(HPANG_DEFAULTS);
-    hpangSave(d);
-    hpangApplyUI(d);
-    toast('Auf Standardwerte zur\u00fcckgesetzt','ok');
+    hpangApplyUI(_clone(HPANG_DEFAULTS));
+    if(_hpangHistory)_hpangHistory.record();
+    toast('Standardwerte eingestellt. Zum Übernehmen bitte speichern.','ok');
   };
 
   // Live update on input
@@ -2175,9 +2613,12 @@
       valEl.textContent=e.target.value+(u[k]||'');
     }
     hpangRenderPreview();
+    if(_hpangHistory)_hpangHistory.record();
   });
   document.addEventListener('change',function(e){
-    if(e.target.classList.contains('hpang-ctl'))hpangRenderPreview();
+    if(e.target.classList.contains('hpang-ctl')){
+      hpangRenderPreview();if(_hpangHistory)_hpangHistory.record();
+    }
   });
 
   // Load on tab switch
@@ -2186,8 +2627,26 @@
   window.cmsCfgSubTab=function(id){
     _origCmsCfgSubTab(id);
     if(id==='cfg-hpang'&&!_hpangLoaded){
+      var root=document.getElementById('cms-cfg-hpang');
+      if(window.AngeboteDesign&&!root.dataset.designer){
+        _hpangHistory=window.AngeboteDesign.history(hpangHistoryRead,hpangHistoryRestore);
+        window.AngeboteDesign.mountHomepage(root,_hpangHistory,{
+          read:hpangReadUI,defaults:[HPANG_DEFAULTS],
+          map:function(c){return {gridBg:c.bg,cardBg:c.card,cardBorder:c.border,nameColor:c.text,detColor:c.muted,
+            tagBg:c.price,tagText:c.priceText,badgeBg:c.accent,stattColor:c.muted,headerBg:c.header,headerText:c.title};},
+          write:function(values){hpangApplyUI(Object.assign(hpangReadUI(),values));},
+          changed:function(){_hpangHistory.record();}
+        },{
+          read:homepageAreaContext,loadStandard:loadHomepageAreaStandard
+        });
+        root.addEventListener('pointerdown',function(event){if(event.target.matches('input[type=range]'))_hpangHistory.begin();});
+        document.addEventListener('pointerup',_hpangHistory.end);
+        document.addEventListener('pointercancel',_hpangHistory.end);
+      }
       _hpangLoaded=true;
-      hpangApplyUI(hpangGet());
+      hpangLoad().catch(function(e){
+        _hpangLoaded=false;_hpangPreviewError=e;hpangRenderPreview();console.error('Homepage-Vorschau konnte nicht geladen werden',e);
+      });
     }
   };
 
@@ -2237,7 +2696,7 @@
   function hpCfgGetCustomDefaults(){
     return _hpCfgCustomDefaults||null;
   }
-  function hpCfgGetEffectiveDefaults(){return hpCfgGetCustomDefaults()||HPCFG_DEFAULTS;}
+  function hpCfgGetEffectiveDefaults(){return HPCFG_DEFAULTS;}
   function hpCfgSaveCustomDefaults(o){
     _hpCfgCustomDefaults=_clone(o);
     _dvSave('hp_design_config_defaults',o)
@@ -2246,7 +2705,7 @@
   var _hpCfgCurrent=null;
   var _hpCfgSaved=null;
   function hpCfgGet(){
-    if(_hpCfgCurrent){var r2={};for(var k2 in HPCFG_DEFAULTS)r2[k2]=_hpCfgCurrent.hasOwnProperty(k2)?_hpCfgCurrent[k2]:HPCFG_DEFAULTS[k2];if(_hpCfgCurrent.wpTplColors)r2.wpTplColors=_hpCfgCurrent.wpTplColors;return r2;}
+    if(_hpCfgCurrent){var r2={};for(var k2 in HPCFG_DEFAULTS)r2[k2]=_hpCfgCurrent.hasOwnProperty(k2)?_hpCfgCurrent[k2]:HPCFG_DEFAULTS[k2];if(_hpCfgCurrent.wpTplColors)r2.wpTplColors=_hpCfgCurrent.wpTplColors;if(_hpCfgCurrent.design_provenance)r2.design_provenance=_hpCfgCurrent.design_provenance;return r2;}
     return _clone(HPCFG_DEFAULTS);
   }
   function hpCfgSave(o){
@@ -2257,7 +2716,8 @@
       .catch(function(e){console.warn('HP Design save error',e);});
   }
   function hpCfgReadUI(){
-    var c={};
+    var c={},existingConfig=hpCfgGet();
+    if(existingConfig.design_provenance)c.design_provenance=_clone(existingConfig.design_provenance);
     ['priColor','priHover','accColor','bgColor','textColor'].forEach(function(k){
       var el=document.getElementById('hcfg-'+k);if(el)c[k]=el.value;
     });
@@ -2306,8 +2766,7 @@
       WP_TPL_COLOR_KEYS.forEach(function(ck){
         var el=document.getElementById('hcfg-wpTpl-'+kind+'-'+ck);
         var v=el?el.value:'';
-        // If input is uninitialized (#000000), use template default
-        if(!v||v==='#000000')v=tplDef[ck]||'';
+        if(!v)v=tplDef[ck]||'';
         if(v)tplColors[storeKey][ck]=v;
       });
     });
@@ -2376,6 +2835,8 @@
     hpCfgSyncWpFlyerPreview();
     hpCfgSyncWpTplColors('home',c);
     hpCfgSyncWpTplColors('flyer',c);
+    _weekTemplateBefore.home=c.wpHomeTemplate||'classic-red';_weekTemplateBefore.flyer=c.wpFlyerTemplate||'classic-red';
+    Object.keys(_weekPalettePickers).forEach(function(kind){_weekPalettePickers[kind].refresh();});
   }
   function hpCfgToggleGrad(k,on){
     var row=document.querySelector('.hcfg-grad-row[data-key="'+k+'"]');if(!row)return;
@@ -2424,6 +2885,8 @@
       .then(function(r){return r.json();})
       .then(function(res){
         if(!res.success||!res.data)return;
+        var dvWpPresets=res.data['wp_design_presets'];
+        if(dvWpPresets&&typeof dvWpPresets==='object'){_wpPresets=_presetLists(dvWpPresets,['wp-home','wp-flyer']);wpPresetsRenderAll();}
         var dvHpDef=res.data['hp_design_config_defaults'];
         if(dvHpDef&&typeof dvHpDef==='object'){
           _hpCfgCustomDefaults=dvHpDef;
@@ -2432,6 +2895,7 @@
         if(dvCfg&&typeof dvCfg==='object'){
           var merged={};for(var k in HPCFG_DEFAULTS)merged[k]=dvCfg.hasOwnProperty(k)?dvCfg[k]:HPCFG_DEFAULTS[k];
           if(dvCfg.wpTplColors)merged.wpTplColors=dvCfg.wpTplColors;
+          if(dvCfg.design_provenance)merged.design_provenance=dvCfg.design_provenance;
           _hpCfgCurrent=merged;
           _hpCfgSaved=_clone(merged);
           hpCfgApplyUI(merged);
@@ -2482,36 +2946,38 @@
     if(!e.target.classList.contains('wpTpl-grad-input'))return;
     var kind=e.target.getAttribute('data-kind');if(kind)wpTplGradPreview(kind);
   });
-  window.saveHPCfg=function(){
+  function saveLoadedWeekPreset(kind){
+    var name=_loadedPresets['week-'+kind],all=wpPresetsGet(),list=all['wp-'+kind]||[];
+    var index=name?list.findIndex(function(p){return p.name===name;}):-1;
+    if(index<0){delete _loadedPresets['week-'+kind];return false;}
+    var c=hpCfgReadUI(),data=_clone(c);delete data.design_provenance;
+    list[index]={name:name,data:data,ts:Date.now()};
+    setAreaProvenance(c,'week-'+kind,name,weekAreaSnapshot(c,kind));_hpCfgCurrent=_clone(c);
+    wpPresetsSave(all);wpPresetsRenderAll();refreshAreaContexts();
+    toast('Vorlage \u201e'+name+'\u201c gespeichert \u2013 Standard unver\u00e4ndert','ok');
+    return true;
+  }
+  window.saveHPCfgAsStandard=function(){
     var c=hpCfgReadUI();
     hpCfgSave(c);
     hpCfgSyncWpTplColors('home',c);
     hpCfgSyncWpTplColors('flyer',c);
-    toast('Design gespeichert','ok');
+    refreshAreaContexts();
+    toast('Als Standard gespeichert','ok');
+  };
+  window.saveHPCfg=function(){
+    var sec=_activeWpSection();
+    if(sec&&_loadedPresets['week-'+sec]&&saveLoadedWeekPreset(sec))return;
+    window.saveHPCfgAsStandard();
   };
   window.resetHPCfg=function(){
     var defaults=_clone(hpCfgGetEffectiveDefaults());
     if(!defaults.wpTplColors)defaults.wpTplColors={};
     hpCfgSave(defaults);
     hpCfgApplyUI(defaults);
-    var hasCustom=!!hpCfgGetCustomDefaults();
-    toast(hasCustom?'Auf eigene Standards zur\u00fcckgesetzt':'Auf Werks-Standards zur\u00fcckgesetzt','ok');
-  };
-  window.hpSaveAsDefault=function(){
-    cmsConfirm('Aktuelle HP-Einstellungen als neuen Standard speichern?\n\nDer bisherige Standard wird \u00fcberschrieben.').then(function(ok){
-      if(!ok)return;
-      var c=hpCfgReadUI();
-      hpCfgSaveCustomDefaults(c);
-      toast('\u2705 HP-Einstellungen als Standard gespeichert','ok');
-    });
-  };
-  window.hpClearCustomDefault=function(){
-    cmsConfirm('Eigene HP-Standards l\u00f6schen und auf Werkseinstellungen zur\u00fcckfallen?').then(function(ok){
-      if(!ok)return;
-      _hpCfgCustomDefaults=null;
-      _dvSave('hp_design_config_defaults',null).catch(function(){});
-      toast('Eigene HP-Standards gel\u00f6scht','ok');
-    });
+    delete _loadedPresets['week-home'];delete _loadedPresets['week-flyer'];
+    _triggerWpAutoPreview();refreshAreaContexts();
+    toast('Auf Werks-Standards zur\u00fcckgesetzt','ok');
   };
   window.resetWpTplColors=function(kind){
     kind=kind||'home';
@@ -2587,28 +3053,50 @@
   var WP_PRESETS_KEY='dl_wp_design_presets';
   var _wpPresets=null;
   function wpPresetsGet(){
-    return _wpPresets||{'wp-home':[],'wp-flyer':[]};
+    return _clone(_wpPresets||{'wp-home':[],'wp-flyer':[]});
   }
   function wpPresetsSave(all){
+    var changed=JSON.stringify(wpPresetsGet())!==JSON.stringify(all);
     _wpPresets=_clone(all);
+    if(changed)_dvSave('wp_design_presets',_wpPresets).then(function(res){if(!res.success)throw new Error(res.error||'Speichern abgelehnt');}).catch(function(e){console.warn('Vorlagen speichern fehlgeschlagen',e);toast('Vorlagen konnten nicht dauerhaft gespeichert werden','warn');});
   }
   window.wpPresetSave=function(section){
-    var name=prompt('Name f\u00fcr die Vorlage:');
+    var field=document.querySelector('[data-global-preset-name="'+section+'"]');
+    var name=field?field.value:prompt('Name f\u00fcr die Vorlage:');
     if(!name||!name.trim())return;
-    var c=hpCfgReadUI();
+    name=name.trim();
+    var c=hpCfgReadUI();delete c.design_provenance;
     var all=wpPresetsGet();
     if(!all[section])all[section]=[];
-    all[section].push({name:name.trim(),data:_clone(c),ts:Date.now()});
-    wpPresetsSave(all);
-    wpPresetsRenderAll();
-    toast('Vorlage "'+name.trim()+'" gespeichert','ok');
+    var index=all[section].findIndex(function(p){return p.name===name;});
+    function store(){
+      var entry={name:name,data:_clone(c),ts:Date.now()};
+      if(index>=0)all[section][index]=entry;else all[section].push(entry);
+      wpPresetsSave(all);
+      wpPresetsRenderAll();
+      if(field)field.value='';
+      var weekKind=section==='wp-flyer'?'flyer':'home';
+      var weekCurrent=hpCfgReadUI();
+      setAreaProvenance(weekCurrent,'week-'+weekKind,name,weekAreaSnapshot(weekCurrent,weekKind));_hpCfgCurrent=_clone(weekCurrent);
+      _loadedPresets['week-'+weekKind]=name;
+      refreshAreaContexts();
+      toast('Vorlage "'+name+'" '+(index>=0?'ersetzt':'gespeichert'),'ok');
+    }
+    if(index>=0)cmsConfirm('Vorlage \u201e'+name+'\u201c ersetzen? Die gespeicherte Vorlage wird durch die aktuellen Einstellungen \u00fcberschrieben.',{ok:'Vorlage ersetzen'}).then(function(ok){if(ok)store();});
+    else store();
   };
   window.wpPresetLoad=function(section,idx){
     var all=wpPresetsGet();
     if(!all[section]||!all[section][idx])return;
-    var preset=all[section][idx].data;
-    hpCfgApplyUI(preset);
-    toast('Vorlage "'+all[section][idx].name+'" geladen','ok');
+    var entry=all[section][idx],kind=section==='wp-flyer'?'flyer':'home';
+    var preset=mergeWeekArea(hpCfgReadUI(),entry.data,kind);
+    setAreaProvenance(preset,'week-'+kind,entry.name,weekAreaSnapshot(preset,kind));
+    _hpCfgCurrent=_clone(preset);hpCfgApplyUI(preset);
+    _loadedPresets['week-'+kind]=entry.name;
+    if(_weekHistories[kind])_weekHistories[kind].record();
+    _triggerWpAutoPreview();
+    refreshAreaContexts();
+    toast('Vorlage "'+entry.name+'" geladen','ok');
   };
   window.wpPresetDelete=function(section,idx){
     var all=wpPresetsGet();
@@ -2640,7 +3128,7 @@
       var d=new Date(p.ts);
       var dateStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
       html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-s)">';
-      html+='<span style="flex:1;font-size:var(--schrift-klein);font-weight:600;color:var(--ink)" title="'+dateStr+'">'+p.name+'</span>';
+      html+='<span style="flex:1;font-size:var(--schrift-klein);font-weight:600;color:var(--ink)" title="'+dateStr+'">'+esc(p.name)+'</span>';
       html+='<span style="font-size:9px;color:var(--mut)">'+dateStr+'</span>';
       html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px" data-action="wpPresetLoad" data-section="'+section+'" data-idx="'+i+'">Laden</button>';
       html+='<button class="cms-btn cms-btn-gray cms-btn-sm" style="font-size:9px;padding:1px 5px;color:var(--red)" data-action="wpPresetDelete" data-section="'+section+'" data-idx="'+i+'">&times;</button>';
@@ -2651,8 +3139,8 @@
 
   // Sync WP template colors when dropdown changes
   document.addEventListener('change',function(e){
-    if(e.target.id==='hcfg-wpHomeTemplate'){hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');_triggerWpAutoPreview();}
-    if(e.target.id==='hcfg-wpFlyerTemplate'){hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');_triggerWpAutoPreview();}
+    if(e.target.id==='hcfg-wpHomeTemplate')weekChangeTemplate('home');
+    if(e.target.id==='hcfg-wpFlyerTemplate')weekChangeTemplate('flyer');
   });
   // WP template color pickers: live-preview only, no auto-save (user must click Speichern)
   document.addEventListener('input',function(e){
@@ -3757,29 +4245,10 @@
      logischen Massen (z. B. 794 x 1123): setTransform skaliert alles. Schatten (shadowBlur/-Offset) werden
      von der Transformation NICHT erfasst; deshalb werden sie hier beim Setzen mit S multipliziert, damit
      das Aussehen gleich bleibt und der Zeichencode nicht an 20 Stellen angefasst werden muss. */
-  function hdKontext(c,S){
-    var ctx=c.getContext('2d');
-    ctx.setTransform(S,0,0,S,0,0);
-    if(S!==1){
-      ['shadowBlur','shadowOffsetX','shadowOffsetY'].forEach(function(p){
-        var d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,p);
-        if(!d||!d.set)return;
-        Object.defineProperty(ctx,p,{
-          get:function(){return d.get.call(ctx)/S;},
-          set:function(v){d.set.call(ctx,v*S);},
-          configurable:true
-        });
-      });
-    }
-    return ctx;
-  }
+  var hdKontext=_weeklyRenderer.hdKontext;
 
   // Logo: bei HD die grosse Datei (die Kopfzeilen-Grafik ist nur klein), sonst wie bisher.
-  function hdLogoSrc(S){
-    if(S>1)return '/images/dorfladen-logo.png';
-    var hdr=document.querySelector('#cms-app img[src^="data:image"]');
-    return hdr?hdr.src:'/Logo-sm-64.png';
-  }
+  var hdLogoSrc=_weeklyRenderer.hdLogoSrc;
 
   // --- WhatsApp Share ---
   function fmtPriceWA(v){return v?Number(v).toFixed(2).replace('.',',')+' \u20AC':'';}
@@ -5404,232 +5873,26 @@
     reader.readAsDataURL(blob);
   }
 
-  function getOfferTemplate(kind,cfg){
-    var raw=kind==='flyer'?(cfg.flyerTemplate||'classic-red'):(cfg.plakatTemplate||'classic-red');
-    var tpl=(raw||'classic-red').toLowerCase();
-    var ok={
-      'classic-red':1,
-      'minimal-clean':1,
-      'dark-modern':1,
-      'organic-market':1,
-      'bold-poster':1,
-      'modern-magazine':1,
-      'modern-mag-fresh':1,
-      'modern-mag-bold':1,
-      'modern-mag-xl':1
-    };
-    return ok[tpl]?tpl:'classic-red';
-  }
+  var getOfferTemplate=_weeklyRenderer.getOfferTemplate;
 
   // Template color defaults – used as base, can be overridden per template in config
-  var TPL_COLOR_DEFAULTS={
-    'classic-red':{bgColor:'#f4f1ea',titleColor:'#a51d2d',tagColor:'#a51d2d',cardBg:'#ffffff',cardBorder:'#eeeeee',textColor:'#1a1a1a',detailsColor:'#444444',imgBg:'#faf9f6'},
-    'minimal-clean':{bgColor:'#ffffff',titleColor:'#111827',tagColor:'#047857',cardBg:'#ffffff',cardBorder:'#e5e7eb',textColor:'#1a1a1a',detailsColor:'#444444',imgBg:'#f9fafb'},
-    'dark-modern':{bgColor:'#0f172a',titleColor:'#e5e7eb',tagColor:'#0ea5e9',cardBg:'#f5f5f5',cardBorder:'#94a3b8',textColor:'#111827',detailsColor:'#334155',imgBg:'#e2e8f0'},
-    'organic-market':{bgColor:'#f7f2e7',titleColor:'#355e3b',tagColor:'#8b1e3f',cardBg:'#fffdf8',cardBorder:'#e9dfcf',textColor:'#2f3d2f',detailsColor:'#6b5b48',imgBg:'#faf5eb'},
-    'bold-poster':{bgColor:'#fff7ed',titleColor:'#b91c1c',tagColor:'#ea580c',cardBg:'#fffaf2',cardBorder:'#fdba74',textColor:'#7c2d12',detailsColor:'#9a3412',imgBg:'#fff5e6'},
-    'modern-magazine':{bgColor:'#edf4ea',titleColor:'#5e7057',tagColor:'#6f835f',cardBg:'#f6fbf5',cardBorder:'#d2e0cf',textColor:'#2c3a2a',detailsColor:'#5b6d54',imgBg:'#eef5eb'},
-    'modern-mag-fresh':{bgColor:'#e8f6f8',titleColor:'#0e7490',tagColor:'#0891b2',cardBg:'#f0fdfa',cardBorder:'#a7f3d0',textColor:'#134e4a',detailsColor:'#4d7c6e',imgBg:'#ecfdf5'},
-    'modern-mag-bold':{bgColor:'#faf5ff',titleColor:'#7c3aed',tagColor:'#db2777',cardBg:'#fefcff',cardBorder:'#e9d5ff',textColor:'#1e1b4b',detailsColor:'#6b21a8',imgBg:'#f5f3ff'},
-    'modern-mag-xl':{bgColor:'#f0f4f8',titleColor:'#1e40af',tagColor:'#2563eb',cardBg:'#ffffff',cardBorder:'#bfdbfe',textColor:'#1e293b',detailsColor:'#475569',imgBg:'#eff6ff'}
-  };
-  var TPL_COLOR_KEYS=['bgColor','titleColor','tagColor','cardBg','cardBorder','textColor','detailsColor','imgBg'];
-  var TPL_GRAD_KEYS=['bgColor','imgBg'];
+  var TPL_COLOR_DEFAULTS=window.WochenangeboteRenderer.TPL_COLOR_DEFAULTS;
+  var TPL_COLOR_KEYS=window.WochenangeboteRenderer.TPL_COLOR_KEYS;
+  var TPL_GRAD_KEYS=window.WochenangeboteRenderer.TPL_GRAD_KEYS;
 
-  function getTplColors(tplName,cfg,kind){
-    var defaults=TPL_COLOR_DEFAULTS[tplName]||TPL_COLOR_DEFAULTS['classic-red'];
-    // Look up kind-prefixed key first (e.g. 'plakat:classic-red'), fall back to legacy non-prefixed key
-    var tc=cfg.tplColors||{};
-    var overrides=(kind&&tc[kind+':'+tplName])||tc[tplName]||{};
-    var result={};
-    TPL_COLOR_KEYS.forEach(function(k){result[k]=overrides[k]||defaults[k];});
-    TPL_GRAD_KEYS.forEach(function(k){
-      result[k+'_grad']=overrides[k+'_grad']||false;
-      result[k+'_c2']=overrides[k+'_c2']||defaults[k];
-      result[k+'_dir']=overrides[k+'_dir']||'to bottom';
-      result[k+'_pct']=overrides[k+'_pct']!=null?overrides[k+'_pct']:50;
-    });
-    return result;
-  }
+  var getTplColors=_weeklyRenderer.getTplColors;
 
   // Canvas gradient helper: returns a CanvasGradient or solid color string
-  function tplGradFill(ctx,theme,key,x,y,w,h){
-    if(!theme[key+'_grad'])return theme[key];
-    var dir=theme[key+'_dir']||'to bottom',c1=theme[key],c2=theme[key+'_c2']||c1,pct=theme[key+'_pct']!=null?theme[key+'_pct']:50;
-    var x0=x,y0=y,x1=x,y1=y+h;
-    if(dir==='to right'){x1=x+w;y1=y;}
-    else if(dir==='to bottom right'||dir==='135deg'){x1=x+w;y1=y+h;}
-    var g=ctx.createLinearGradient(x0,y0,x1,y1);
-    g.addColorStop(0,c1);g.addColorStop(pct/100,c1);g.addColorStop(1,c2);
-    return g;
-  }
+  var tplGradFill=_weeklyRenderer.tplGradFill;
 
-  function getOfferTheme(kind,cfg){
-    var tpl=getOfferTemplate(kind,cfg);
-    var colors=getTplColors(tpl,cfg,kind);
-    var base={
-      tpl:tpl,
-      bgColor:colors.bgColor,
-      titleColor:colors.titleColor,
-      titleFont:'900 60px Arial Black, Arial, sans-serif',
-      titleY:72,
-      dateColor:'#1a1a1a',
-      dateFont:'900 22px Arial, sans-serif',
-      cardBg:colors.cardBg,
-      cardBorder:colors.cardBorder,
-      cardRadius:kind==='flyer'?32:28,
-      textColor:colors.textColor,
-      detailsColor:colors.detailsColor,
-      footerColor:'#1a1a1a',
-      tagColor:colors.tagColor,
-      imgBg:colors.imgBg||colors.cardBg,
-      bgColor_grad:colors.bgColor_grad,bgColor_c2:colors.bgColor_c2,bgColor_dir:colors.bgColor_dir,bgColor_pct:colors.bgColor_pct,
-      imgBg_grad:colors.imgBg_grad,imgBg_c2:colors.imgBg_c2,imgBg_dir:colors.imgBg_dir,imgBg_pct:colors.imgBg_pct,
-      showTexture:cfg.showTexture,
-      // Extended theme keys for full configurability
-      headerBg:null, headerAccent:null, dividerColor:null,
-      priceBarBg:null, priceBarBorder:null, stattColor:null,
-      borderWidth:cfg.borderWidth||0, borderColor:cfg.borderColor||'#000000',
-      vorratColor:cfg.vorratColor||'#888888'
-    };
-    if(tpl==='minimal-clean'){
-      base.dateColor='#374151';base.cardRadius=kind==='flyer'?20:18;
-      base.showTexture=false;base.titleFont='900 54px Arial Black, Arial, sans-serif';
-    }else if(tpl==='dark-modern'){
-      base.dateColor='#93c5fd';base.footerColor='#e5e7eb';
-      base.showTexture=false;base.titleFont='900 56px Arial Black, Arial, sans-serif';
-    }else if(tpl==='organic-market'){
-      base.dateColor='#7a6a55';base.footerColor='#6b5b48';
-      base.cardRadius=kind==='flyer'?36:30;base.titleFont='900 58px Arial, sans-serif';
-    }else if(tpl==='bold-poster'){
-      base.dateColor='#7c2d12';base.footerColor='#7c2d12';
-      base.cardRadius=kind==='flyer'?24:22;base.titleFont='900 62px Arial Black, Arial, sans-serif';
-    }else if(tpl==='modern-magazine'){
-      base.dateColor='#4b5f45';base.footerColor='#4e5f47';
-      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
-      base.showTexture=false;
-      base.headerBg='#d6e5d0';base.headerAccent='#8aad7e';
-      base.dividerColor='#e2eade';
-      base.priceBarBg='#eaf3e6';base.priceBarBorder='#c5dbbe';
-      base.stattColor='#8a9e80';
-    }else if(tpl==='modern-mag-fresh'){
-      base.dateColor='#155e75';base.footerColor='#0e7490';
-      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
-      base.showTexture=false;
-      base.headerBg='#cffafe';base.headerAccent='#06b6d4';
-      base.dividerColor='#a5f3fc';
-      base.priceBarBg='#ecfeff';base.priceBarBorder='#67e8f9';
-      base.stattColor='#0891b2';
-    }else if(tpl==='modern-mag-bold'){
-      base.dateColor='#581c87';base.footerColor='#7c3aed';
-      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
-      base.showTexture=false;
-      base.headerBg='#ede9fe';base.headerAccent='#8b5cf6';
-      base.dividerColor='#ddd6fe';
-      base.priceBarBg='#f5f3ff';base.priceBarBorder='#c4b5fd';
-      base.stattColor='#7c3aed';
-    }else if(tpl==='modern-mag-xl'){
-      base.dateColor='#1e3a5f';base.footerColor='#1e40af';
-      base.cardRadius=kind==='flyer'?34:30;base.titleFont='900 56px Arial Black, Arial, sans-serif';
-      base.showTexture=false;
-      base.headerBg='#dbeafe';base.headerAccent='#3b82f6';
-      base.dividerColor='#bfdbfe';
-      base.priceBarBg='#eff6ff';base.priceBarBorder='#93c5fd';
-      base.stattColor='#2563eb';
-      base.imgZonePct=0.65;
-    }
-    // ── Apply per-section deco color overrides on top of template defaults ──
-    // cfg already has per-section values merged by cfgForKind, check against per-section defaults
-    var secPfx=kind?kind+'_':'';
-    var rawBg=cfg[secPfx+'decoBgColor']||cfg.bgColor;
-    var rawTitle=cfg[secPfx+'decoTitleColor']||cfg.titleColor;
-    var rawFooter=cfg[secPfx+'decoFooterColor']||cfg.decoFooterColor;
-    var defBg=CFG_DEFAULTS[secPfx+'decoBgColor']||CFG_DEFAULTS.bgColor;
-    var defTitle=CFG_DEFAULTS[secPfx+'decoTitleColor']||CFG_DEFAULTS.titleColor;
-    var defFooter=CFG_DEFAULTS[secPfx+'decoFooterColor']||CFG_DEFAULTS.decoFooterColor;
-    if(rawBg && rawBg!==defBg){base.bgColor=rawBg;if(base.headerBg)base.headerBg=rawBg;}
-    if(rawTitle && rawTitle!==defTitle) base.titleColor=rawTitle;
-    if(cfg.leafColor) base.leafColor=cfg.leafColor;
-    if(rawFooter && rawFooter!==defFooter){
-      base.footerColor=rawFooter;
-      if(base.headerAccent) base.headerAccent=rawFooter;
-    }
-    return base;
-  }
+  var getOfferTheme=_weeklyRenderer.getOfferTheme;
 
   // ── Einzelflyer Generator (A4 pro Artikel) ──
-  function wrapTextCMS(ctx,text,maxW){
-    if(!text)return[''];
-    var words=text.split(' '),lines=[],line='';
-    words.forEach(function(w){var test=line?line+' '+w:w;if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=w;}else{line=test;}});
-    if(line)lines.push(line);return lines;
-  }
+  var wrapTextCMS=_weeklyRenderer.wrapTextCMS;
 
   // ── Preisschild-Form zeichnen (centered at 0,0) ──
-  function drawTagShapePath(ctx,w,h,shape,radius){
-    var hw=w/2,hh=h/2,r=Math.min(radius,hw,hh);
-    ctx.beginPath();
-    if(shape==='circle'){
-      var cr=Math.max(hw,hh);
-      ctx.arc(0,0,cr,0,Math.PI*2);
-    }else if(shape==='pill'){
-      var pr=hh;
-      ctx.moveTo(-hw+pr,   -hh);ctx.lineTo(hw-pr, -hh);
-      ctx.arc(hw-pr, 0, pr, -Math.PI/2, Math.PI/2);
-      ctx.lineTo(-hw+pr, hh);
-      ctx.arc(-hw+pr, 0, pr, Math.PI/2, -Math.PI/2);
-    }else if(shape==='banner'){
-      var notch=hw*0.12;
-      ctx.moveTo(-hw,-hh);ctx.lineTo(hw,-hh);ctx.lineTo(hw,hh);
-      ctx.lineTo(0,hh-notch);ctx.lineTo(-hw,hh);
-    }else if(shape==='star'){
-      var spikes=5,outerR=Math.max(hw,hh),innerR=outerR*0.5;
-      var rot=Math.PI/2*3,step=Math.PI/spikes;
-      ctx.moveTo(0,-outerR);
-      for(var si=0;si<spikes;si++){
-        ctx.lineTo(Math.cos(rot)*outerR,Math.sin(rot)*outerR);rot+=step;
-        ctx.lineTo(Math.cos(rot)*innerR,Math.sin(rot)*innerR);rot+=step;
-      }
-    }else if(shape==='hexagon'){
-      for(var hi=0;hi<6;hi++){
-        var ha=Math.PI/3*hi-Math.PI/6;
-        var hx=hw*Math.cos(ha),hy=hh*Math.sin(ha);
-        if(hi===0)ctx.moveTo(hx,hy);else ctx.lineTo(hx,hy);
-      }
-    }else if(shape==='diamond'){
-      ctx.moveTo(0,-hh);ctx.lineTo(hw,0);ctx.lineTo(0,hh);ctx.lineTo(-hw,0);
-    }else if(shape==='ticket'){
-      var tn=hh*0.22;
-      ctx.moveTo(-hw,-hh);ctx.lineTo(hw,-hh);ctx.lineTo(hw,-tn);
-      ctx.arc(hw,0,tn,Math.PI*1.5,Math.PI*0.5,true);
-      ctx.lineTo(hw,hh);ctx.lineTo(-hw,hh);ctx.lineTo(-hw,tn);
-      ctx.arc(-hw,0,tn,Math.PI*0.5,Math.PI*1.5,true);
-    }else if(shape==='explosion'){
-      var eSpikes=12,eOuter=Math.max(hw,hh),eInner=eOuter*0.72;
-      var eRot=-Math.PI/2,eStep=Math.PI/eSpikes;
-      ctx.moveTo(Math.cos(eRot)*eOuter,Math.sin(eRot)*eOuter);
-      for(var ei=0;ei<eSpikes;ei++){
-        eRot+=eStep;ctx.lineTo(Math.cos(eRot)*eInner,Math.sin(eRot)*eInner);
-        eRot+=eStep;ctx.lineTo(Math.cos(eRot)*eOuter,Math.sin(eRot)*eOuter);
-      }
-    }else if(shape==='trapez'){
-      var tInset=hw*0.22;
-      ctx.moveTo(-hw,-hh);ctx.lineTo(hw,-hh);ctx.lineTo(hw-tInset,hh);ctx.lineTo(-hw+tInset,hh);
-    }else if(shape==='rounded'||r>0){
-      var rr=shape==='rounded'?Math.min(16,hw,hh):r;
-      ctx.moveTo(-hw+rr,-hh);ctx.lineTo(hw-rr,-hh);ctx.quadraticCurveTo(hw,-hh,hw,-hh+rr);
-      ctx.lineTo(hw,hh-rr);ctx.quadraticCurveTo(hw,hh,hw-rr,hh);
-      ctx.lineTo(-hw+rr,hh);ctx.quadraticCurveTo(-hw,hh,-hw,hh-rr);
-      ctx.lineTo(-hw,-hh+rr);ctx.quadraticCurveTo(-hw,-hh,-hw+rr,-hh);
-    }else{
-      ctx.rect(-hw,-hh,w,h);
-    }
-    ctx.closePath();
-  }
-  function fillTagShape(ctx,w,h,cfg){
-    drawTagShapePath(ctx,w,h,cfg.tagShape||'rect',cfg.tagRadius||0);
-    ctx.fill();
-  }
+  var drawTagShapePath=_weeklyRenderer.drawTagShapePath;
+  var fillTagShape=_weeklyRenderer.fillTagShape;
 
   // ── Per-Article Flyer Layout Overrides ──
   var _flyerArtOverrides=null;
@@ -5723,28 +5986,14 @@
   function _selZoneToElKey(){return _zoneToElKey(_selZone);}
 
   // ── Shared Freistellen (white background removal) ──
-  function _freistellCanvas(imgEl, cfg){
-    var ofc=document.createElement('canvas');ofc.width=imgEl.width;ofc.height=imgEl.height;
-    var ox=ofc.getContext('2d');ox.drawImage(imgEl,0,0);
-    if(cfg.imgFreistellen){
-      try{var id=ox.getImageData(0,0,ofc.width,ofc.height),d=id.data;
-      var thr=cfg.imgThreshold,fade=30;
-      for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-      ox.putImageData(id,0,0);}catch(e){}
-    }
-    return ofc;
-  }
+  var _freistellCanvas=_weeklyRenderer._freistellCanvas;
 
   // Default per-article override object
-  function flyerArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,priceScale:100,ghostMode:'auto',ghostDx:150,ghostDy:-120,ghostAlpha:0.45,ghostScale:100,ghostRot:0,dupDx:-150,dupDy:100,dupOn:false,dupScale:100,dupRot:0,copies:[],customImg:null,customImgDx:0,customImgDy:0,customImgScale:100,customImgAlpha:100,customImgRot:0};
-  }
+  var flyerArtOverrideDefault=_weeklyRenderer.flyerArtOverrideDefault;
 
   // ── Per-Article PLAKAT (Kachel) Layout Overrides ──
   var _plakatArtOverrides=null;
-  function plakatArtOverrideDefault(){
-    return {imgDx:0,imgDy:0,imgScale:100,imgRot:0,priceDx:0,priceDy:0,ghostMode:'off',ghostDx:80,ghostDy:-60,ghostAlpha:0.50,ghostScale:100,ghostRot:0,dupOn:false,dupDx:-70,dupDy:50,dupScale:100,dupRot:0,copies:[]};
-  }
+  var plakatArtOverrideDefault=_weeklyRenderer.plakatArtOverrideDefault;
   // Create a new extra copy object (ghost or dup)
   var _copyIdCounter=0;
   function newCopy(type,existingCount){
@@ -5753,35 +6002,9 @@
     return {id:_copyIdCounter,type:type||'ghost',dx:(type==='dup'?-60-spread:60+spread),dy:(type==='dup'?40+spread:-40-spread),scale:100,alpha:type==='ghost'?0.35:1.0,rot:0};
   }
   // Render all extra copies on a canvas context (shared helper for all layouts)
-  function drawExtraCopies(ctx,copies,ofc,imgX,imgY,iw,ih,baseRotRad,clipFn){
-    if(!copies||!copies.length)return;
-    copies.forEach(function(cp){
-      var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
-      var cx2=imgX+(cp.dx||0),cy2=imgY+(cp.dy||0);
-      var cRot=baseRotRad+((cp.rot||0)*Math.PI/180);
-      ctx.save();
-      if(clipFn)clipFn();
-      if(cp.type==='ghost')ctx.globalAlpha=cp.alpha!=null?cp.alpha:0.35;
-      if(cRot){ctx.translate(cx2+cw/2,cy2+ch/2);ctx.rotate(cRot);ctx.drawImage(ofc,-cw/2,-ch/2,cw,ch);}
-      else{ctx.drawImage(ofc,cx2,cy2,cw,ch);}
-      ctx.globalAlpha=1.0;ctx.restore();
-    });
-  }
+  var drawExtraCopies=_weeklyRenderer.drawExtraCopies;
   // Same but for center-based rendering (classic layout)
-  function drawExtraCopiesCenter(ctx,copies,ofc,imgCX,imgCY,iw,ih,baseRotRad,clipFn){
-    if(!copies||!copies.length)return;
-    copies.forEach(function(cp){
-      var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
-      var cx2=imgCX+(cp.dx||0),cy2=imgCY+(cp.dy||0);
-      var cRot=baseRotRad+((cp.rot||0)*Math.PI/180);
-      ctx.save();
-      if(clipFn)clipFn();
-      if(cp.type==='ghost')ctx.globalAlpha=cp.alpha!=null?cp.alpha:0.35;
-      ctx.translate(cx2,cy2);ctx.rotate(cRot);
-      ctx.drawImage(ofc,-cw/2,-ch/2,cw,ch);
-      ctx.globalAlpha=1.0;ctx.restore();
-    });
-  }
+  var drawExtraCopiesCenter=_weeklyRenderer.drawExtraCopiesCenter;
   function plakatArtOverridesGetAll(){
     if(!_plakatArtOverrides)_plakatArtOverrides={};
     return _plakatArtOverrides;
@@ -5854,483 +6077,7 @@
     });
   }
 
-  function generateEinzelflyer(item,data,cfgOverride,opts){
-    return new Promise(function(resolve){
-      var S=(opts&&opts.scale)||1;
-      var W=794,H=1123;
-      var _elMeta=[];
-      var cfg=cfgForKind(cfgOverride||cfgGet(),'flyer');
-      var theme=getOfferTheme('flyer',cfg);
-      var c=document.createElement('canvas');c.width=Math.round(W*S);c.height=Math.round(H*S);
-      var ctx=hdKontext(c,S);
-      // ── Papier-Hintergrund (gleicher Stil wie Plakat) ──
-      ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
-      if(theme.showTexture){ctx.globalAlpha=0.04;
-      for(var ty=0;ty<1123;ty+=3){for(var tx=0;tx<794;tx+=3){
-        if(Math.random()>0.5){ctx.fillStyle=Math.random()>0.5?'#000':'#fff';ctx.fillRect(tx,ty,2,2);}
-      }}}
-      ctx.globalAlpha=1.0;
-      // ── Hilfsfunktion runde Ecken ──
-      function rrect(rx,ry,rw,rh,r){
-        ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
-        ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
-        ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
-        ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
-      }
-      // ── Blatt-Deko ──
-      function drawLeaf(lx,ly,sz){
-        ctx.save();ctx.globalAlpha=1.0;ctx.fillStyle=cfg.leafColor;
-        ctx.translate(lx,ly);ctx.rotate(-0.4);
-        ctx.beginPath();ctx.moveTo(0,0);
-        ctx.bezierCurveTo(sz*0.3,-sz*0.6,sz*0.7,-sz*0.6,sz,0);
-        ctx.bezierCurveTo(sz*0.7,sz*0.6,sz*0.3,sz*0.6,0,0);ctx.fill();
-        ctx.strokeStyle=cfg.leafColor;ctx.lineWidth=1;ctx.globalAlpha=0.6;
-        ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz*0.9,0);ctx.stroke();ctx.restore();
-      }
-      var von=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      var bis=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      var logoLoaded=Promise.resolve();
-
-      // ── Border helper (drawn last, on top of everything) ──
-      function drawFlyerBorder(){
-        var bw=theme.borderWidth;
-        if(bw&&bw>0){
-          ctx.save();ctx.strokeStyle=theme.borderColor||'#000';ctx.lineWidth=bw;
-          ctx.strokeRect(bw/2,bw/2,W-bw,H-bw);ctx.restore();
-        }
-      }
-      var artOv=flyerArtOverrideGet(item)||flyerArtOverrideDefault();
-      var isMagLayout=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
-      if(isMagLayout){
-        // ── Modern Magazine Einzelflyer: clean centered card layout ──
-        ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
-        // Header bar
-        ctx.fillStyle=theme.headerBg||'#d6e5d0';ctx.fillRect(0,0,W,140);
-        ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,138,W,3);
-
-        // Date right (draw first so we know its width)
-        ctx.fillStyle=theme.dateColor;ctx.font='900 24px Arial Black, Arial, sans-serif';
-        var dateStr=von+' \u2013 '+bis;
-        var dateW=ctx.measureText(dateStr).width;
-        var dateRight=W-42;
-        ctx.textAlign='right';
-        ctx.fillText(dateStr,dateRight,82);
-        ctx.font='700 18px Arial, sans-serif';
-        ctx.fillText('Gültig:',dateRight,52);
-        ctx.textAlign='left';
-        var dateLeftEdge=dateRight-Math.max(dateW,ctx.measureText('Gültig:').width)-16;
-
-        // Logo + 'Angebote' dominant (capped to not overlap date)
-        var mgLogoEl=document.querySelector('#cms-app img[src^="data:image"]');
-        var mgLogoP=new Promise(function(rl){
-          if(!mgLogoEl){rl();return;}
-          var li=new Image();li.onload=function(){
-            var lh=80,lw=lh*(li.width/li.height);
-            var maxLogoW=180;
-            if(lw>maxLogoW){lh=lh*(maxLogoW/lw);lw=maxLogoW;}
-            ctx.drawImage(li,28,30,lw,lh);
-            // 'Angebote' dominant next to logo, capped before date
-            var titleX=28+lw+16;
-            ctx.fillStyle=theme.titleColor;ctx.textAlign='left';
-            var fontSize=44;
-            ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
-            while(fontSize>24&&titleX+ctx.measureText('Angebote').width>dateLeftEdge){
-              fontSize-=2;ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
-            }
-            ctx.fillText('Angebote',titleX,78);
-            rl();
-          };li.onerror=function(){rl();};li.src=(S>1)?hdLogoSrc(S):mgLogoEl.src;
-        });
-
-        // ── Main product card ──
-        var cardMX=40, cardMY=170, cardMW=W-80, cardMH=H-170-80;
-        var cardMR=20;
-        function mgFlyerRR(rx,ry,rw,rh,r){
-          ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
-          ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
-          ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
-          ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
-        }
-        // Card shadow + fill
-        ctx.save();ctx.shadowColor='rgba(0,0,0,0.1)';ctx.shadowBlur=12;ctx.shadowOffsetY=6;
-        ctx.fillStyle=theme.cardBg;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.fill();ctx.restore();
-        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgFlyerRR(cardMX,cardMY,cardMW,cardMH,cardMR);ctx.stroke();
-
-        // Image area (top portion of card) – fill with imgBg color
-        var imgZoneH=Math.floor(cardMH*(theme.imgZonePct||0.55));
-        ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-        ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardMX,cardMY,cardMW,imgZoneH);ctx.fillRect(cardMX,cardMY,cardMW,imgZoneH);ctx.restore();
-        var mgImgPromise=Promise.resolve();
-        if(item.bild_data){
-          mgImgPromise=new Promise(function(resImg){
-            var img=new Image();
-            img.onload=function(){
-              var ofc=_freistellCanvas(img,cfg);
-              var fImgSc=(cfg.imgScale||100)/100*((artOv.imgScale||100)/100);
-              var maxIW=cardMW-40, maxIH=imgZoneH-20;
-              var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc;
-              var iw=ofc.width*scI,ih=ofc.height*scI;
-              var imgX=cardMX+cardMW/2-iw/2+(artOv.imgDx||0), imgY=cardMY+10+(imgZoneH-ih)/2+(artOv.imgDy||0);
-              var mgImgRotRad=(artOv.imgRot||0)*Math.PI/180;
-              ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-              if(mgImgRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(mgImgRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-              else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-              ctx.restore();
-              _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgX,y:imgY,w:iw,h:ih,ovKey:'img'});
-              
-              // Ghost overlay (behind main image)
-              if(artOv.ghostMode==='on'){
-                var gSc=(artOv.ghostScale||100)/100;var giw=iw*gSc,gih=ih*gSc;
-                var gx=imgX+(artOv.ghostDx||0),gy=imgY+(artOv.ghostDy||0);
-                var gRot=mgImgRotRad+((artOv.ghostRot||0)*Math.PI/180);
-                ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-                ctx.globalAlpha=artOv.ghostAlpha||0.35;
-                if(gRot){ctx.translate(gx+giw/2,gy+gih/2);ctx.rotate(gRot);ctx.drawImage(ofc,-giw/2,-gih/2,giw,gih);}
-                else{ctx.drawImage(ofc,gx,gy,giw,gih);}
-                ctx.globalAlpha=1.0;ctx.restore();
-                _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:gx,y:gy,w:giw,h:gih,ovKey:'ghost'});
-              }
-              // Duplicate overlay (behind main image)
-              if(artOv.dupOn){
-                var dSc=(artOv.dupScale||100)/100;var diw=iw*dSc,dih=ih*dSc;
-                var dx2=imgX+(artOv.dupDx||0),dy2=imgY+(artOv.dupDy||0);
-                var dRot=mgImgRotRad+((artOv.dupRot||0)*Math.PI/180);
-                ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-                if(dRot){ctx.translate(dx2+diw/2,dy2+dih/2);ctx.rotate(dRot);ctx.drawImage(ofc,-diw/2,-dih/2,diw,dih);}
-                else{ctx.drawImage(ofc,dx2,dy2,diw,dih);}
-                ctx.restore();
-                _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dx2,y:dy2,w:diw,h:dih,ovKey:'dup'});
-              }
-              // Extra copies (multi-ghost/dup)
-              drawExtraCopies(ctx,artOv.copies,ofc,imgX,imgY,iw,ih,mgImgRotRad,function(){mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();});
-              if(artOv.copies&&artOv.copies.length){artOv.copies.forEach(function(cp,ci){
-                var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
-                _elMeta.push({id:'copy-'+ci,label:(cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd')+' Kopie '+(ci+1),x:imgX+(cp.dx||0),y:imgY+(cp.dy||0),w:cw,h:ch,ovKey:'copy',copyIdx:ci});
-              });}
-              
-              resImg();
-            };img.onerror=function(){resImg();};img.src=item.bild_data;
-          });
-        }
-
-        // Custom image overlay
-        var ciPromise=Promise.resolve();
-        if(artOv.customImg){
-          ciPromise=new Promise(function(resCI){
-            var ci=new Image();ci.onload=function(){
-              var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
-              var cio=ciOfc.getContext('2d');cio.drawImage(ci,0,0);
-              if(cfg.imgFreistellen){
-                try{var id=cio.getImageData(0,0,ciOfc.width,ciOfc.height),d=id.data;
-                var thr=cfg.imgThreshold,fade=30;
-                for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-                cio.putImageData(id,0,0);}catch(e){}
-              }
-              var ciSc=(artOv.customImgScale||100)/100;
-              var maxCIW=cardMW-40, maxCIH=imgZoneH-20;
-              var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
-              var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
-              var ciX=cardMX+cardMW/2-ciW/2+(artOv.customImgDx||0),ciY=cardMY+10+(imgZoneH-ciH)/2+(artOv.customImgDy||0);
-              var ciRotRad=(artOv.customImgRot||0)*Math.PI/180;
-              ctx.save();mgFlyerRR(cardMX+2,cardMY+2,cardMW-4,imgZoneH,cardMR);ctx.clip();
-              ctx.globalAlpha=(artOv.customImgAlpha!=null?artOv.customImgAlpha:100)/100;
-              if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
-              else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
-              ctx.globalAlpha=1.0;ctx.restore();
-              _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
-              resCI();
-            };ci.onerror=function(){resCI();};ci.src=artOv.customImg;
-          });
-        }
-
-        Promise.all([mgImgPromise,ciPromise]).then(function(){
-          // Savings badge top-right
-          var savePct=getSavingsPercent(item);
-          if(savePct){
-            var bR=34;
-            ctx.fillStyle=theme.tagColor;
-            ctx.beginPath();ctx.arc(cardMX+cardMW-28-bR,cardMY+28+bR,bR,0,Math.PI*2);ctx.fill();
-            ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 26px Arial Black, Arial, sans-serif';
-            ctx.fillText('-'+savePct+'%',cardMX+cardMW-28-bR,cardMY+28+bR+8);
-            ctx.textAlign='left';
-          }
-
-          // Divider line
-          var divY=cardMY+imgZoneH+4;
-          ctx.strokeStyle=theme.dividerColor||'#e2eade';ctx.lineWidth=1;
-          ctx.beginPath();ctx.moveTo(cardMX+24,divY);ctx.lineTo(cardMX+cardMW-24,divY);ctx.stroke();
-
-          // Text area
-          var tPad=32, tY=divY+36;
-
-          // Product name
-          ctx.fillStyle=theme.textColor;ctx.font='900 42px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-          var pName=(item.produkt||'Produkt').trim();
-          var pLines=wrapTextCMS(ctx,pName,cardMW-tPad*2).slice(0,2);
-          pLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=50;});
-
-          // Details
-          if(item.details){
-            tY+=4;
-            ctx.fillStyle=theme.detailsColor;ctx.font='600 24px Arial, sans-serif';
-            var dLines=wrapTextCMS(ctx,item.details,cardMW-tPad*2).slice(0,2);
-            dLines.forEach(function(l){ctx.fillText(l,cardMX+tPad,tY);tY+=30;});
-          }
-
-          // Price section at bottom of card
-          var pDx=artOv.priceDx||0, pDy=artOv.priceDy||0;
-          var priceBarY=cardMY+cardMH-100+pDy;
-          var priceBarX=cardMX+24+pDx;
-          ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.fill();
-          ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgFlyerRR(priceBarX,priceBarY,cardMW-48,72,14);ctx.stroke();
-          _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:priceBarX,y:priceBarY,w:cardMW-48,h:72,ovKey:'price'});
-
-          if(item.preis){
-            var pp=Number(item.preis).toFixed(2).split('.');
-            ctx.fillStyle=theme.tagColor;ctx.font='900 52px Arial Black, Arial, sans-serif';
-            ctx.fillText(pp[0]+','+pp[1],priceBarX+16,priceBarY+52);
-            var mw=ctx.measureText(pp[0]+','+pp[1]).width;
-            ctx.font='700 30px Arial, sans-serif';
-            ctx.fillText('\u20AC',priceBarX+16+mw+6,priceBarY+48);
-          }
-          if(item.statt_preis){
-            var uvp='statt '+Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-            var stc=theme.stattColor||'#8a9e80';
-            ctx.textAlign='right';ctx.fillStyle=stc;ctx.font='600 24px Arial, sans-serif';
-            ctx.fillText(uvp,cardMX+cardMW-40+pDx,priceBarY+48);
-            var uvpW=ctx.measureText(uvp).width;
-            ctx.strokeStyle=stc;ctx.lineWidth=2;
-            ctx.beginPath();ctx.moveTo(cardMX+cardMW-40+pDx-uvpW,priceBarY+40);ctx.lineTo(cardMX+cardMW-40+pDx,priceBarY+40);ctx.stroke();
-            ctx.textAlign='left';
-          }
-
-          // Footer
-          ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
-          ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
-          ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
-          ctx.textAlign='left';
-
-          return mgLogoP.then(function(){return logoLoaded;});
-        }).then(function(){
-          drawFlyerBorder();
-          c._elMeta=_elMeta;
-          resolve(c);
-        });
-        return;
-      }
-      // ── Header: ANGEBOT + Datum + Logo (default templates only) ──
-      ctx.textAlign='left';
-      ctx.fillStyle=theme.titleColor;ctx.font=theme.titleFont;
-      ctx.fillText('ANGEBOT',40,theme.titleY);
-      ctx.fillStyle=theme.dateColor;ctx.font=theme.dateFont;
-      ctx.fillText(von+' \u2013 '+bis,44,104);
-      // Logo oben rechts (capped width to avoid overlap with title)
-      var logoImg=new Image();
-      logoLoaded=new Promise(function(resLogo){
-        logoImg.onload=function(){
-          var lh=90,lw=lh*(logoImg.width/logoImg.height);
-          var maxLw=W*0.35;
-          if(lw>maxLw){lh=lh*(maxLw/lw);lw=maxLw;}
-          ctx.drawImage(logoImg,W-lw-30,14,lw,lh);resLogo();
-        };
-        logoImg.onerror=function(){resLogo();};
-        logoImg.src=hdLogoSrc(S);
-      });
-      // ── Weisse Karte (grosser Bereich für Produkt) ──
-      var cardX=30,cardY=130,cardW=W-60,cardH=H-130-60;
-      ctx.save();
-      ctx.shadowColor='rgba(0,0,0,0.06)';ctx.shadowBlur=2;ctx.shadowOffsetX=8;ctx.shadowOffsetY=8;
-      ctx.fillStyle=theme.cardBg;rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.fill();ctx.restore();
-      ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.stroke();
-      // Blatt-Deko oben rechts auf Karte
-      if(cfg.showLeaf) drawLeaf(cardX+cardW-60,cardY+36,36);
-      // ── Produktname + Details auf Karte ──
-      var pad=36;
-      var textY=cardY+pad+28;
-      ctx.fillStyle=theme.textColor;ctx.font='900 48px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-      var prodLines=wrapTextCMS(ctx,item.produkt||'',cardW-pad*2-40);
-      prodLines.forEach(function(line){ctx.fillText(line,cardX+pad,textY);textY+=56;});
-      if(item.details){
-        ctx.fillStyle=theme.detailsColor;ctx.font='28px Arial, sans-serif';
-        var detLines=wrapTextCMS(ctx,item.details,cardW-pad*2);
-        textY+=4;detLines.forEach(function(line){ctx.fillText(line,cardX+pad,textY);textY+=34;});
-      }
-      // ── Bild + Preisschild: Bild zuerst (volle Fläche), dann Tag darüber ──
-      var imgAreaTop=textY+6;
-      var imgAreaH=cardH-(imgAreaTop-cardY)-pad-10;
-      // Ensure image area is at least 55% of card height
-      var minImgH=Math.round(cardH*0.55);
-      if(imgAreaH<minImgH){imgAreaTop=cardY+cardH-pad-10-minImgH;imgAreaH=minImgH;}
-      // Fill image area with imgBg color
-      ctx.save();rrect(cardX,imgAreaTop,cardW,imgAreaH+pad,theme.cardRadius);ctx.clip();
-      ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.fillRect(cardX,imgAreaTop,cardW,imgAreaH+pad);ctx.restore();
-      // ── Anchor-based layout: image bottom-left, price block top-right ──
-      var artOv=flyerArtOverrideGet(item)||flyerArtOverrideDefault();
-      var imgAncX=cfg.imgAnchorX||10, imgAncY=cfg.imgAnchorY||10;
-      var priceAncX=cfg.priceAnchorX||10, priceAncY=cfg.priceAnchorY||10;
-      var imgAreaBot=imgAreaTop+imgAreaH;
-      var tagSc=(cfg.tagScale||100)/100*((artOv.priceScale||100)/100);
-      var tagW=Math.round(280*tagSc),tagH=Math.round(130*tagSc);
-      // Price block anchor + per-article offset
-      var tagCX=cardX+cardW-priceAncX-tagW/2+(artOv.priceDx||0);
-      var tagCY=imgAreaTop+priceAncY+tagH/2+(artOv.priceDy||0);
-      // Image: scale to imgWidthPct% of card width, anchor bottom-left
-      var imgWidthFrac=(cfg.imgWidthPct||50)/100;
-      var imgPromise;
-      if(item.bild_data){
-        imgPromise=new Promise(function(resImg){
-          var img=new Image();
-          img.onload=function(){
-            var imgSc=(cfg.imgScale||100)/100*((artOv.imgScale||100)/100);
-            var targetImgW=cardW*imgWidthFrac*imgSc;
-            var scale=targetImgW/img.width;
-            // Clamp height so image stays in image area
-            if(img.height*scale>imgAreaH*0.92){scale=imgAreaH*0.92/img.height;}
-            scale=Math.min(scale,cfg.imgMaxScale);
-            var iw=img.width*scale,ih=img.height*scale;
-            // Anchor: bottom-left corner of image + per-article offset
-            var imgLeft=cardX+imgAncX+(artOv.imgDx||0);
-            var imgBot=imgAreaBot-imgAncY+(artOv.imgDy||0);
-            // Freistellen: weissen Hintergrund entfernen (soft-edge feathering)
-            var ofc=_freistellCanvas(img,cfg);
-            // Clip to card so image does not overflow
-            ctx.save();rrect(cardX,cardY,cardW,cardH,theme.cardRadius);ctx.clip();
-            var rotRad=(cfg.imgRotation+(artOv.imgRot||0))*Math.PI/180;
-            var cx=imgLeft+iw/2, cy=imgBot-ih/2;
-            var aspectRatio=img.width/img.height;
-            // ── Ghost: auto (flat images) or manual ──
-            var gm=artOv.ghostMode||'auto';
-            var _ghostActive=false;
-            if(gm==='on'||(gm==='auto'&&aspectRatio>1.8&&ih<imgAreaH*0.45)){
-              _ghostActive=true;
-              var gAlpha=(artOv.ghostAlpha!=null)?artOv.ghostAlpha:0.45;
-              var gSc=(artOv.ghostScale||100)/100;var giw=iw*gSc,gih=ih*gSc;
-              var ghostCx,ghostCy;
-              if(gm==='on'){ghostCx=cx+(artOv.ghostDx||0);ghostCy=cy+(artOv.ghostDy||0);}
-              else{ghostCx=cx+iw*0.20;ghostCy=cy-ih*0.55;}
-              if(ghostCy-gih/2<imgAreaTop) ghostCy=imgAreaTop+gih/2+4;
-              var ghostRotRad=(artOv.ghostRot||0)*Math.PI/180;
-              ctx.save();ctx.globalAlpha=gAlpha;
-              ctx.translate(ghostCx,ghostCy);ctx.rotate(-rotRad*0.6-ghostRotRad);
-              ctx.drawImage(ofc,-giw/2,-gih/2,giw,gih);
-              ctx.restore();
-              _elMeta.push({id:'ghost',label:'\ud83d\udc7b Ghost',x:ghostCx-giw/2,y:ghostCy-gih/2,w:giw,h:gih,ovKey:'ghost'});
-            }
-            // ── Full duplicate (100% opacity) ──
-            if(artOv.dupOn){
-              var dSc=(artOv.dupScale||100)/100;var diw=iw*dSc,dih=ih*dSc;
-              var dupCx=cx+(artOv.dupDx||0), dupCy=cy+(artOv.dupDy||0);
-              var dupRotRad=(artOv.dupRot||0)*Math.PI/180;
-              ctx.save();ctx.globalAlpha=1.0;
-              ctx.translate(dupCx,dupCy);ctx.rotate(-rotRad-dupRotRad);
-              ctx.drawImage(ofc,-diw/2,-dih/2,diw,dih);
-              ctx.restore();
-              _elMeta.push({id:'dup',label:'\ud83d\udcdd Duplikat',x:dupCx-diw/2,y:dupCy-dih/2,w:diw,h:dih,ovKey:'dup'});
-            }
-            // Extra copies (multi-ghost/dup)
-            drawExtraCopiesCenter(ctx,artOv.copies,ofc,cx,cy,iw,ih,-rotRad,null);
-            if(artOv.copies&&artOv.copies.length){artOv.copies.forEach(function(cp,ci){
-              var sc=(cp.scale||100)/100;var cw=iw*sc,ch=ih*sc;
-              var cpx=cx+(cp.dx||0),cpy=cy+(cp.dy||0);
-              _elMeta.push({id:'copy-'+ci,label:(cp.type==='ghost'?'\ud83d\udc7b':'\ud83d\udcdd')+' Kopie '+(ci+1),x:cpx-cw/2,y:cpy-ch/2,w:cw,h:ch,ovKey:'copy',copyIdx:ci});
-            });}
-            // Draw main image
-            ctx.translate(cx,cy);ctx.rotate(-rotRad);
-            ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
-            _elMeta.push({id:'img',label:'\ud83d\uddbc Bild',x:imgLeft,y:imgBot-ih,w:iw,h:ih,ovKey:'img'});
-            resImg();
-          };
-          img.onerror=function(){resImg();};img.src=item.bild_data;
-        });
-      }else{imgPromise=Promise.resolve();}
-      // Price block OVER the image (anchored top-right in image area)
-      imgPromise.then(function(){
-      if(item.preis){
-        var savingsPct=getSavingsPercent(item);
-        var preisStr=Number(item.preis).toFixed(2).split('.');
-        var skewVal=cfg.tagSkew/100;
-        ctx.save();
-        ctx.translate(tagCX,tagCY);
-        ctx.rotate(-0.05);ctx.transform(1,-skewVal,0,1,0,0);
-        ctx.shadowColor='rgba(100,0,0,0.4)';ctx.shadowBlur=3;ctx.shadowOffsetX=8;ctx.shadowOffsetY=8;
-        ctx.fillStyle=theme.tagColor;fillTagShape(ctx,tagW,tagH,cfg);
-        ctx.restore();
-        // Glanz + Preis-Text
-        ctx.save();
-        ctx.translate(tagCX,tagCY);
-        ctx.rotate(-0.05);ctx.transform(1,-skewVal,0,1,0,0);
-        var glanz=ctx.createLinearGradient(-tagW/2,-tagH/2,tagW/2,tagH/2);
-        glanz.addColorStop(0,'rgba(255,255,255,0.12)');glanz.addColorStop(0.5,'rgba(255,255,255,0)');
-        ctx.fillStyle=glanz;fillTagShape(ctx,tagW,tagH,cfg);
-        ctx.fillStyle='#ffffff';ctx.textAlign='left';
-        ctx.transform(1,skewVal,0,1,0,0);
-        var fs=cfg.priceFontFlyer,cs=Math.round(fs*0.55),es=Math.round(fs*0.35);
-        var mainStr=preisStr[0]+',';var centStr=preisStr[1];
-        ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';var mw=ctx.measureText(mainStr).width;
-        ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';var cw=ctx.measureText(centStr).width;
-        ctx.font='bold '+es+'px Arial, sans-serif';var ew=ctx.measureText('\u20AC').width;
-        var tw=mw+cw+ew+4;
-        if(tw>tagW-40){var sc2=(tagW-40)/tw;fs=Math.round(fs*sc2);cs=Math.round(cs*sc2);es=Math.round(es*sc2);
-          ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';mw=ctx.measureText(mainStr).width;
-          ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';cw=ctx.measureText(centStr).width;
-          ctx.font='bold '+es+'px Arial, sans-serif';ew=ctx.measureText('\u20AC').width;tw=mw+cw+ew+4;}
-        var px=-tw/2,py=fs*0.35;
-        ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';ctx.fillText(mainStr,px,py);
-        ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';ctx.fillText(centStr,px+mw+2,py-fs*0.3);
-        ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+mw+cw+4,py-fs*0.28);
-        ctx.restore();
-        _elMeta.push({id:'price',label:'\ud83c\udff7 Preis',x:tagCX-tagW/2,y:tagCY-tagH/2,w:tagW,h:tagH,ovKey:'price'});
-        // Statt-Preis unter dem Tag
-        if(item.statt_preis){
-          var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-          var stFs=Math.round(26*tagSc);
-          ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
-          var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
-          var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(42*tagSc);
-          ctx.fillText(stattStr,stattX,stattY);
-          var stW=ctx.measureText(stattStr).width;
-          ctx.strokeStyle=theme.tagColor;ctx.lineWidth=2.5;ctx.beginPath();
-          ctx.moveTo(stattX-stW/2-4,stattY-Math.round(7*tagSc));ctx.lineTo(stattX+stW/2+4,stattY-Math.round(7*tagSc));ctx.stroke();
-        }
-        if(savingsPct){
-          // Savings burst: top-left of the price tag, clamped inside image area
-          var burstX=tagCX-tagW/2+8;
-          var burstY=Math.max(tagCY-tagH/2-Math.round(14*tagSc), imgAreaTop+Math.round(16*tagSc));
-          drawSavingsBurst(ctx,burstX,burstY,Math.round(36*tagSc),Math.round(22*tagSc),'-'+savingsPct+'%','flyer');
-        }
-      }
-        ctx.textAlign='left';
-        // ── Custom overlay image ──
-        var ciPromise;
-        if(artOv.customImg){
-          ciPromise=new Promise(function(resCI){
-            var ci=new Image();ci.onload=function(){
-              var ciOfc=_freistellCanvas(ci,cfg);
-              var ciSc=(artOv.customImgScale||100)/100;
-              var ciW=ciOfc.width*ciSc,ciH=ciOfc.height*ciSc;
-              if(ciW>W*0.8){var f2=W*0.8/ciW;ciW*=f2;ciH*=f2;}
-              if(ciH>H*0.6){var f3=H*0.6/ciH;ciW*=f3;ciH*=f3;}
-              var ciX=W/2-ciW/2+(artOv.customImgDx||0);
-              var ciY=H/2-ciH/2+(artOv.customImgDy||0);
-              var ciRotRad=(artOv.customImgRot||0)*Math.PI/180;
-              ctx.save();ctx.globalAlpha=(artOv.customImgAlpha!=null?artOv.customImgAlpha:100)/100;
-              ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);
-              ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);ctx.restore();
-              _elMeta.push({id:'customImg',label:'\ud83d\uddbc Eigenes Bild',x:ciX,y:ciY,w:ciW,h:ciH,ovKey:'customImg'});
-              resCI();
-            };ci.onerror=function(){resCI();};ci.src=artOv.customImg;
-          });
-        }else{ciPromise=Promise.resolve();}
-        return ciPromise.then(function(){
-        // Footer
-        ctx.fillStyle=theme.vorratColor||'#888888';ctx.globalAlpha=1.0;ctx.font='600 14px Arial, sans-serif';ctx.textAlign='center';
-        ctx.fillText('*Solange Vorrat reicht',W/2,H-24);
-        ctx.textAlign='left';
-        return logoLoaded;
-        });
-      }).then(function(){drawFlyerBorder();c._elMeta=_elMeta;resolve(c);});
-    });
-  }
+  var generateEinzelflyer=_weeklyRenderer.generateEinzelflyer;
 
   function showEinzelflyer(focusIdx){
     if(!_currentPreviewAktion||!_currentPreviewAktion.items)return;
@@ -7388,71 +7135,15 @@
     }).catch(function(e){toast(_cmsErr(e),'error');});
   }
 
-  function truncText(ctx,text,maxW){
-    if(ctx.measureText(text).width<=maxW)return text;
-    while(text.length>0&&ctx.measureText(text+'...').width>maxW)text=text.slice(0,-1);
-    return text+'...';
-  }
+  var truncText=_weeklyRenderer.truncText;
 
-  function loadItemImage(bildData){
-    return new Promise(function(resolve){
-      if(!bildData){resolve(null);return;}
-      var img=new Image();
-      if(bildData.indexOf('data:')!==0)img.crossOrigin='anonymous';
-      img.onload=function(){resolve(img);};
-      img.onerror=function(){resolve(null);};
-      img.src=bildData;
-    });
-  }
+  var loadItemImage=_weeklyRenderer.loadItemImage;
 
-  function getSavingsPercent(item){
-    var preis=Number(item&&item.preis),statt=Number(item&&item.statt_preis);
-    if(!isFinite(preis)||!isFinite(statt)||statt<=0||preis<=0||preis>=statt)return null;
-    var pct=Math.round((1-(preis/statt))*100);
-    return pct>0?pct:null;
-  }
+  var getSavingsPercent=_weeklyRenderer.getSavingsPercent;
 
-  function getSavingsBurstTheme(cfgOverride){
-    var style='harmonie';
-    try{
-      var cfg=cfgOverride||cfgGet();
-      style=(cfg&&cfg.savingsPalette?cfg.savingsPalette:(cfg&&cfg.savingsStarStyle?cfg.savingsStarStyle:'harmonie')).toLowerCase();
-    }catch(e){
-      style='harmonie';
-    }
-    if(style==='classic-red'||style==='red'||style==='classic'){
-      return {name:'classic-red',g1:'#ff4b3a',g2:'#e11d1d',stroke:'rgba(255,255,255,0.65)',text:'#ffffff',textStroke:'rgba(0,0,0,0.3)'};
-    }
-    if(style==='warm-copper'||style==='copper'||style==='warm'){
-      return {name:'warm-copper',g1:'#c77b3e',g2:'#9a5a2c',stroke:'rgba(255,244,220,0.7)',text:'#fff7ea',textStroke:'rgba(56,31,17,0.35)'};
-    }
-    if(style==='berry-purple'||style==='purple'||style==='berry'){
-      return {name:'berry-purple',g1:'#8b5cf6',g2:'#6d28d9',stroke:'rgba(243,232,255,0.8)',text:'#ffffff',textStroke:'rgba(49,18,107,0.35)'};
-    }
-    if(style==='ocean-blue'||style==='blue'||style==='ocean'){
-      return {name:'ocean-blue',g1:'#38bdf8',g2:'#0369a1',stroke:'rgba(224,242,254,0.8)',text:'#ffffff',textStroke:'rgba(8,47,73,0.38)'};
-    }
-    if(style==='sunset-orange'||style==='orange'||style==='sunset'){
-      return {name:'sunset-orange',g1:'#fb923c',g2:'#c2410c',stroke:'rgba(255,237,213,0.8)',text:'#ffffff',textStroke:'rgba(67,20,7,0.35)'};
-    }
-    if(style==='fresh-lime'||style==='lime'||style==='fresh'){
-      return {name:'fresh-lime',g1:'#a3e635',g2:'#4d7c0f',stroke:'rgba(236,252,203,0.8)',text:'#ffffff',textStroke:'rgba(26,46,5,0.38)'};
-    }
-    if(style==='deep-rose'||style==='rose'||style==='deep'){
-      return {name:'deep-rose',g1:'#fb7185',g2:'#be123c',stroke:'rgba(255,228,230,0.8)',text:'#ffffff',textStroke:'rgba(76,5,25,0.35)'};
-    }
-    if(style==='midnight-gold'||style==='gold'||style==='midnight'){
-      return {name:'midnight-gold',g1:'#fbbf24',g2:'#b45309',stroke:'rgba(254,243,199,0.8)',text:'#ffffff',textStroke:'rgba(69,26,3,0.4)'};
-    }
-    if(style==='arctic-teal'||style==='teal'||style==='arctic'){
-      return {name:'arctic-teal',g1:'#2dd4bf',g2:'#0f766e',stroke:'rgba(204,251,241,0.8)',text:'#ffffff',textStroke:'rgba(4,47,46,0.38)'};
-    }
-    return {name:'harmonie',g1:'#72b38b',g2:'#3e7f61',stroke:'rgba(255,255,255,0.65)',text:'#ffffff',textStroke:'rgba(0,0,0,0.28)'};
-  }
+  var getSavingsBurstTheme=_weeklyRenderer.getSavingsBurstTheme;
 
-  function getSavingsMarkerType(cfgOverride){
-    try{var c=cfgOverride||cfgGet();return (c&&c.savingsMarkerType?c.savingsMarkerType:'starburst');}catch(e){return 'starburst';}
-  }
+  var getSavingsMarkerType=_weeklyRenderer.getSavingsMarkerType;
 
   window.cmsSetSavingsStarStyle=function(style){
     var allowed={'harmonie':1,'classic-red':1,'warm-copper':1,'berry-purple':1,'ocean-blue':1,'sunset-orange':1,'fresh-lime':1,'deep-rose':1,'midnight-gold':1,'arctic-teal':1};
@@ -7465,130 +7156,7 @@
     }
   };
 
-  function drawSavingsBurst(ctx,cx,cy,outerR,innerR,text,contextType,cfgOverride){
-    var th=getSavingsBurstTheme(cfgOverride);
-    var markerType=getSavingsMarkerType(cfgOverride);
-    var scaleFactor=1;
-    try{
-      var c=cfgOverride||cfgGet();
-      var key=(contextType==='flyer')?'savingsScaleFlyer':'savingsScalePlakat';
-      scaleFactor=Math.max(0.8,Math.min(1.8,(Number(c[key])||100)/100));
-    }catch(e){}
-    outerR*=scaleFactor;innerR*=scaleFactor;
-    var spikes=10;
-    var rot=-Math.PI/2;
-    var step=Math.PI/spikes;
-    ctx.save();
-    if(markerType==='badge'){
-      ctx.beginPath();ctx.arc(cx,cy,outerR,0,Math.PI*2);ctx.closePath();
-    }else if(markerType==='pill'){
-      var pw=outerR*2.3,ph=outerR*1.15,pr=ph/2;
-      ctx.beginPath();
-      ctx.moveTo(cx-pw/2+pr,cy-ph/2);
-      ctx.lineTo(cx+pw/2-pr,cy-ph/2);
-      ctx.quadraticCurveTo(cx+pw/2,cy-ph/2,cx+pw/2,cy-ph/2+pr);
-      ctx.lineTo(cx+pw/2,cy+ph/2-pr);
-      ctx.quadraticCurveTo(cx+pw/2,cy+ph/2,cx+pw/2-pr,cy+ph/2);
-      ctx.lineTo(cx-pw/2+pr,cy+ph/2);
-      ctx.quadraticCurveTo(cx-pw/2,cy+ph/2,cx-pw/2,cy+ph/2-pr);
-      ctx.lineTo(cx-pw/2,cy-ph/2+pr);
-      ctx.quadraticCurveTo(cx-pw/2,cy-ph/2,cx-pw/2+pr,cy-ph/2);
-      ctx.closePath();
-    }else if(markerType==='flag'){
-      var fw=outerR*2.2,fh=outerR*1.25;
-      ctx.translate(cx,cy);ctx.rotate(-0.14);
-      ctx.beginPath();
-      ctx.moveTo(-fw/2,-fh/2);
-      ctx.lineTo(fw/2-10,-fh/2);
-      ctx.lineTo(fw/2,0);
-      ctx.lineTo(fw/2-10,fh/2);
-      ctx.lineTo(-fw/2,fh/2);
-      ctx.closePath();
-      cx=0;cy=0;
-    }else if(markerType==='hexburst'){
-      var hSpikes=6,hRot=-Math.PI/2,hStep=Math.PI/hSpikes,hInner=outerR*0.7;
-      ctx.beginPath();
-      for(var hi=0;hi<hSpikes;hi++){
-        ctx.lineTo(cx+Math.cos(hRot)*outerR,cy+Math.sin(hRot)*outerR);hRot+=hStep;
-        ctx.lineTo(cx+Math.cos(hRot)*hInner,cy+Math.sin(hRot)*hInner);hRot+=hStep;
-      }
-      ctx.closePath();
-    }else if(markerType==='diamond'){
-      ctx.beginPath();
-      ctx.moveTo(cx,cy-outerR);ctx.lineTo(cx+outerR*0.75,cy);
-      ctx.lineTo(cx,cy+outerR);ctx.lineTo(cx-outerR*0.75,cy);
-      ctx.closePath();
-    }else if(markerType==='shield'){
-      ctx.beginPath();
-      ctx.moveTo(cx-outerR*0.8,cy-outerR*0.85);
-      ctx.lineTo(cx+outerR*0.8,cy-outerR*0.85);
-      ctx.lineTo(cx+outerR*0.8,cy+outerR*0.15);
-      ctx.quadraticCurveTo(cx+outerR*0.8,cy+outerR*0.7,cx,cy+outerR);
-      ctx.quadraticCurveTo(cx-outerR*0.8,cy+outerR*0.7,cx-outerR*0.8,cy+outerR*0.15);
-      ctx.closePath();
-    }else if(markerType==='ribbon'){
-      var rw=outerR*2.4,rh=outerR*1.1,rNotch=outerR*0.25;
-      ctx.translate(cx,cy);
-      ctx.beginPath();
-      ctx.moveTo(-rw/2,  -rh/2);
-      ctx.lineTo( rw/2,  -rh/2);
-      ctx.lineTo( rw/2,   rh/2);
-      ctx.lineTo( 0,      rh/2-rNotch);
-      ctx.lineTo(-rw/2,   rh/2);
-      ctx.closePath();
-      cx=0;cy=0;
-    }else if(markerType==='explosion'){
-      var eSpikes=16,eRot=-Math.PI/2,eStep=Math.PI/eSpikes,eInner=outerR*0.78;
-      ctx.beginPath();
-      for(var ei=0;ei<eSpikes;ei++){
-        ctx.lineTo(cx+Math.cos(eRot)*outerR,cy+Math.sin(eRot)*outerR);eRot+=eStep;
-        ctx.lineTo(cx+Math.cos(eRot)*eInner,cy+Math.sin(eRot)*eInner);eRot+=eStep;
-      }
-      ctx.closePath();
-    }else if(markerType==='heart'){
-      ctx.translate(cx,cy);
-      var hs=outerR*0.62;
-      ctx.beginPath();
-      ctx.moveTo(0,hs*0.6);
-      ctx.bezierCurveTo(-hs*0.1,hs*0.3,-hs*1.1,-hs*0.3,-hs*0.0,-hs*0.85);
-      ctx.bezierCurveTo(hs*0.5,-hs*1.3,hs*0.8,-hs*0.7,hs*0.5,-hs*0.2);
-      ctx.bezierCurveTo(hs*0.5,-hs*0.2,hs*0.2,hs*0.2,0,hs*0.6);
-      ctx.closePath();
-      cx=0;cy=0;
-    }else{
-      ctx.beginPath();
-      for(var i=0;i<spikes;i++){
-        var x1=cx+Math.cos(rot)*outerR, y1=cy+Math.sin(rot)*outerR;
-        ctx.lineTo(x1,y1);rot+=step;
-        var x2=cx+Math.cos(rot)*innerR, y2=cy+Math.sin(rot)*innerR;
-        ctx.lineTo(x2,y2);rot+=step;
-      }
-      ctx.closePath();
-    }
-    var g=ctx.createLinearGradient(cx-outerR,cy-outerR,cx+outerR,cy+outerR);
-    g.addColorStop(0,th.g1);
-    g.addColorStop(1,th.g2);
-    ctx.fillStyle=g;
-    ctx.shadowColor='rgba(0,0,0,0.18)';ctx.shadowBlur=3;ctx.shadowOffsetX=2;ctx.shadowOffsetY=3;
-    ctx.fill();
-    // feiner Rand für bessere Lesbarkeit
-    ctx.lineWidth=Math.max(1,Math.round(outerR*0.08));
-    ctx.strokeStyle=th.stroke;
-    ctx.stroke();
-    ctx.shadowColor='transparent';
-    var label=String(text||'');
-    if(label.charAt(0)==='-') label='−'+label.slice(1); // typografisches Minus
-    if(label.charAt(0)!=='−') label='−'+label;
-    ctx.fillStyle=th.text;
-    ctx.textAlign='center';
-    ctx.font='900 '+Math.round(outerR*0.74)+'px Arial Black, Arial, sans-serif';
-    var ty=cy+Math.round(outerR*0.26);
-    ctx.lineWidth=Math.max(2,Math.round(outerR*0.11));
-    ctx.strokeStyle=th.textStroke;
-    ctx.strokeText(label,cx,ty);
-    ctx.fillText(label,cx,ty);
-    ctx.restore();
-  }
+  var drawSavingsBurst=_weeklyRenderer.drawSavingsBurst;
 
   function generateAngebotPlakat(data,callback,cfgOverride,opts){
     var items=data.items||[];
@@ -7603,7 +7171,9 @@
         if(b64) it.bild_data=b64;
       }).catch(function(){});
     });
-    Promise.all(fetchPromises).then(function(){
+    var fontReady=cfgForKind(cfgOverride||cfgGet(),'plakat').tagShape==='price-image'
+      ?window.WochenangeboteRenderer.loadPriceFont():Promise.resolve();
+    return fontReady.then(function(){return Promise.all(fetchPromises);}).then(function(){
       // Pre-load all images into Image objects for canvas drawing
       var imgPromises=items.map(function(it){return loadItemImage(it.bild_data);});
       return Promise.all(imgPromises);
@@ -7612,468 +7182,10 @@
     });
   }
 
-  function drawAngebotPlakat(data,items,images,callback,cfgOverride,opts){
-    var S=(opts&&opts.scale)||1;
-    var cols=2,maxRows=3,perPage=maxRows*cols;
-    var W=794,H=1123;
-    var cfg=cfgForKind(cfgOverride||cfgGet(),'plakat');
-    var theme=getOfferTheme('plakat',cfg);
-    var headerH=130,footerH=36,cardGap=18,cardPad=22;
-    var gridTop=headerH+10,gridBot=H-footerH-10;
-    var gridW=W-40,gridH=gridBot-gridTop;
-    var cellW=Math.floor((gridW-cardGap)/cols);
-    var cellH=Math.floor((gridH-(maxRows-1)*cardGap)/maxRows);
-    var c=document.createElement('canvas');c.width=Math.round(W*S);c.height=Math.round(H*S);
-    var ctx=hdKontext(c,S);
-    // Bei Speichermangel (z. B. aelteres iPad) eine Stufe kleiner erneut versuchen.
-    var _cb=callback;
-    callback=function(blob){
-      if(!blob&&S>1){drawAngebotPlakat(data,items,images,_cb,cfgOverride,{scale:S-1});return;}
-      _cb(blob);
-    };
-    var isMagPlakat=theme.tpl==='modern-magazine'||theme.tpl==='modern-mag-fresh'||theme.tpl==='modern-mag-bold'||theme.tpl==='modern-mag-xl';
-    if(isMagPlakat){
-      // ── Modern Magazine: Clean grid card layout ──
-      ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
-
-      // Header bar
-      ctx.fillStyle=theme.headerBg||'#d6e5d0';ctx.fillRect(0,0,W,140);
-      // Thin accent line
-      ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,138,W,3);
-
-      // Date right (draw first so we know its width)
-      var vonTxt=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      var bisTxt=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-      ctx.fillStyle=theme.dateColor;ctx.font='900 24px Arial Black, Arial, sans-serif';
-      var mgDateStr=vonTxt+' \u2013 '+bisTxt;
-      var mgDateW=ctx.measureText(mgDateStr).width;
-      var mgDateRight=W-30;
-      ctx.textAlign='right';
-      ctx.fillText(mgDateStr,mgDateRight,82);
-      ctx.font='700 18px Arial, sans-serif';
-      ctx.fillText('G\u00fcltig:',mgDateRight,52);
-      ctx.textAlign='left';
-      var mgDateLeftEdge=mgDateRight-Math.max(mgDateW,ctx.measureText('G\u00fcltig:').width)-16;
-
-      // Logo + store name left (capped to not overlap date)
-      var logoEl=document.querySelector('#cms-app img[src^="data:image"]');
-      var logoP=new Promise(function(rl){
-        if(!logoEl){rl();return;}
-        var li=new Image();li.onload=function(){
-          var lh=80,lw=lh*(li.width/li.height);
-          var maxLogoW=180;
-          if(lw>maxLogoW){lh=lh*(maxLogoW/lw);lw=maxLogoW;}
-          ctx.drawImage(li,28,30,lw,lh);
-          // 'Angebote' dominant next to logo, capped before date
-          var titleX=28+lw+16;
-          ctx.fillStyle=theme.titleColor;ctx.textAlign='left';
-          var fontSize=44;
-          ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
-          while(fontSize>24&&titleX+ctx.measureText('Angebote').width>mgDateLeftEdge){
-            fontSize-=2;ctx.font='900 '+fontSize+'px Arial Black, Arial, sans-serif';
-          }
-          ctx.fillText('Angebote',titleX,78);
-          rl();
-        };
-        li.onerror=function(){rl();};
-        li.src=(S>1)?hdLogoSrc(S):logoEl.src;
-      });
-
-      // ── Prepare items (sort by savings, max 6) ──
-      var renderPairs=(items||[]).map(function(it,idx){
-        var sp=getSavingsPercent(it);
-        return {it:it,img:(images&&images[idx])?images[idx]:null,sp:(sp==null?-1:sp),idx:idx};
-      });
-      renderPairs.sort(function(a,b){return b.sp!==a.sp?b.sp-a.sp:a.idx-b.idx;});
-      renderPairs=renderPairs.slice(0,6);
-      var renderItems=renderPairs.map(function(p){return p.it;});
-      var renderImages=renderPairs.map(function(p){return p.img;});
-
-      // ── 2x3 Grid cards ──
-      var mgCols=2, mgRows=3;
-      var mgGap=16, mgPadX=24, mgPadTop=156, mgPadBot=50;
-      var mgCellW=Math.floor((W-mgPadX*2-mgGap)/mgCols);
-      var mgCellH=Math.floor((H-mgPadTop-mgPadBot-(mgRows-1)*mgGap)/mgRows);
-      var mgRad=16;
-
-      function mgRRect(rx,ry,rw,rh,r){
-        ctx.beginPath();ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
-        ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
-        ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
-        ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
-      }
-
-      var _ciPromises=[];
-      for(var ci=0;ci<Math.min(mgCols*mgRows,renderItems.length);ci++){
-        var col=ci%mgCols, row=Math.floor(ci/mgCols);
-        var cx=mgPadX+col*(mgCellW+mgGap);
-        var cy=mgPadTop+row*(mgCellH+mgGap);
-        var it=renderItems[ci], img=renderImages[ci];
-
-        // Card shadow
-        ctx.save();ctx.shadowColor='rgba(0,0,0,0.08)';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
-        ctx.fillStyle=theme.cardBg;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.fill();ctx.restore();
-        // Card border
-        ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;mgRRect(cx,cy,mgCellW,mgCellH,mgRad);ctx.stroke();
-
-        var cardPadI=14;
-        // Image area (top half of card) – fill with imgBg
-        var imgAreaH=Math.floor(mgCellH*0.48);
-        ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-        ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,cy,mgCellW,imgAreaH);ctx.fillRect(cx,cy,mgCellW,imgAreaH);ctx.restore();
-        // Per-card overrides
-        var pOv=plakatArtOverrideGet(it)||plakatArtOverrideDefault();
-        console.log('[drawAngebotPlakat] card',ci,it.produkt,'pOv.customImg:',pOv.customImg?'YES ('+pOv.customImg.length+' chars)':'NO','keys:',Object.keys(pOv).join(','));
-        if(img){
-          var ofc=_freistellCanvas(img,cfg);
-          var fImgSc2=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
-          var maxIW=mgCellW-cardPadI*2, maxIH=imgAreaH-10;
-          var scI=Math.min(maxIW/ofc.width,maxIH/ofc.height,cfg.imgMaxScale||3)*fImgSc2;
-          var iw=ofc.width*scI,ih=ofc.height*scI;
-          var imgX=cx+mgCellW/2-iw/2+(pOv.imgDx||0), imgY=cy+cardPadI+(imgAreaH-ih)/2+(pOv.imgDy||0);
-          var pRotRad=(pOv.imgRot||0)*Math.PI/180;
-          // Ghost overlay
-          if(pOv.ghostMode==='on'){
-            var gSc3=(pOv.ghostScale||100)/100;var giw3=iw*gSc3,gih3=ih*gSc3;
-            var gx=imgX+(pOv.ghostDx||0),gy=imgY+(pOv.ghostDy||0);
-            var gRot=pRotRad+((pOv.ghostRot||0)*Math.PI/180);
-            ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-            ctx.globalAlpha=pOv.ghostAlpha||0.35;
-            if(gRot){ctx.translate(gx+giw3/2,gy+gih3/2);ctx.rotate(gRot);ctx.drawImage(ofc,-giw3/2,-gih3/2,giw3,gih3);}
-            else{ctx.drawImage(ofc,gx,gy,giw3,gih3);}
-            ctx.globalAlpha=1.0;ctx.restore();
-          }
-          // Duplicate overlay
-          if(pOv.dupOn){
-            var dSc3=(pOv.dupScale||100)/100;var diw3=iw*dSc3,dih3=ih*dSc3;
-            var dx2=imgX+(pOv.dupDx||0),dy2=imgY+(pOv.dupDy||0);
-            var dRot=pRotRad+((pOv.dupRot||0)*Math.PI/180);
-            ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-            if(dRot){ctx.translate(dx2+diw3/2,dy2+dih3/2);ctx.rotate(dRot);ctx.drawImage(ofc,-diw3/2,-dih3/2,diw3,dih3);}
-            else{ctx.drawImage(ofc,dx2,dy2,diw3,dih3);}
-            ctx.restore();
-          }
-          // Extra copies (multi-ghost/dup)
-          drawExtraCopies(ctx,pOv.copies,ofc,imgX,imgY,iw,ih,pRotRad,function(){mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();});
-          // Main image
-          ctx.save();mgRRect(cx+2,cy+2,mgCellW-4,imgAreaH,mgRad);ctx.clip();
-          if(pRotRad){ctx.translate(imgX+iw/2,imgY+ih/2);ctx.rotate(pRotRad);ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);}
-          else{ctx.drawImage(ofc,imgX,imgY,iw,ih);}
-          ctx.restore();
-          
-          // Custom image overlay (collected as promise for async rendering)
-          if(pOv.customImg){
-            _ciPromises.push((function(_pOv,_cx,_cy,_mgCellW,_imgAreaH,_cardPadI,_mgRad){
-              return new Promise(function(resCI){
-                var ci=new Image();ci.onload=function(){
-                  var ciOfc=document.createElement('canvas');ciOfc.width=ci.width;ciOfc.height=ci.height;
-                  var cio=ciOfc.getContext('2d');cio.drawImage(ci,0,0);
-                  if(cfg.imgFreistellen){
-                    try{var id=cio.getImageData(0,0,ciOfc.width,ciOfc.height),d=id.data;
-                    var thr=cfg.imgThreshold,fade=30;
-                    for(var pi=0;pi<d.length;pi+=4){var mn=Math.min(d[pi],d[pi+1],d[pi+2]);if(mn>thr)d[pi+3]=0;else if(mn>thr-fade)d[pi+3]=Math.round(255*(thr-mn)/fade);}
-                    cio.putImageData(id,0,0);}catch(e){}
-                  }
-                  var ciSc=(_pOv.customImgScale||100)/100;
-                  var maxCIW=_mgCellW-_cardPadI*2, maxCIH=_imgAreaH-10;
-                  var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
-                  var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
-                  var ciX=_cx+_mgCellW/2-ciW/2+(_pOv.customImgDx||0),ciY=_cy+_cardPadI+(_imgAreaH-ciH)/2+(_pOv.customImgDy||0);
-                  var ciRotRad=(_pOv.customImgRot||0)*Math.PI/180;
-                  ctx.save();mgRRect(_cx+2,_cy+2,_mgCellW-4,_imgAreaH,_mgRad);ctx.clip();
-                  ctx.globalAlpha=(_pOv.customImgAlpha!=null?_pOv.customImgAlpha:100)/100;
-                  if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
-                  else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
-                  ctx.globalAlpha=1.0;ctx.restore();resCI();
-                };ci.onerror=function(){resCI();};ci.src=_pOv.customImg;
-              });
-            })(pOv,cx,cy,mgCellW,imgAreaH,cardPadI,mgRad));
-          }
-        }
-
-        // Savings badge top-right
-        var sp=getSavingsPercent(it);
-        if(sp){
-          var badgeR=22;
-          ctx.fillStyle=theme.tagColor;
-          ctx.beginPath();ctx.arc(cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR-4,badgeR,0,Math.PI*2);ctx.fill();
-          ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 18px Arial Black, Arial, sans-serif';
-          ctx.fillText('-'+sp+'%',cx+mgCellW-cardPadI-badgeR+4,cy+cardPadI+badgeR+2);
-          ctx.textAlign='left';
-        }
-
-        // Text area (bottom half)
-        var textTop=cy+imgAreaH+8;
-
-        // Product name
-        ctx.fillStyle=theme.textColor;ctx.font='700 20px Arial, sans-serif';
-        var nameLines=wrapTextCMS(ctx,(it&&it.produkt)||'Produkt',mgCellW-cardPadI*2).slice(0,2);
-        var ny=textTop+20;
-        nameLines.forEach(function(l){ctx.fillText(l,cx+cardPadI,ny);ny+=24;});
-
-        // Details
-        if(it&&it.details){
-          ctx.fillStyle=theme.detailsColor;ctx.font='600 15px Arial, sans-serif';
-          ctx.fillText(truncText(ctx,it.details,mgCellW-cardPadI*2),cx+cardPadI,ny+2);
-          ny+=22;
-        }
-
-        // Price area at bottom of card (with override offsets)
-        var ppDx=pOv.priceDx||0,ppDy=pOv.priceDy||0;
-        var priceY=cy+mgCellH-cardPadI;
-        if(it&&it.preis!=null){
-          var p=Number(it.preis);
-          if(isFinite(p)){
-            var pp=p.toFixed(2).split('.');
-            // Price tag area
-            ctx.fillStyle=theme.priceBarBg||'#eaf3e6';mgRRect(cx+cardPadI-4+ppDx,priceY-42+ppDy,mgCellW-cardPadI*2+8,46,10);ctx.fill();
-            ctx.strokeStyle=theme.priceBarBorder||'#c5dbbe';ctx.lineWidth=1;mgRRect(cx+cardPadI-4+ppDx,priceY-42+ppDy,mgCellW-cardPadI*2+8,46,10);ctx.stroke();
-            // Main price
-            ctx.fillStyle=theme.tagColor;ctx.font='900 34px Arial Black, Arial, sans-serif';
-            ctx.fillText(pp[0]+','+pp[1],cx+cardPadI+4+ppDx,priceY-6+ppDy);
-            ctx.font='700 20px Arial, sans-serif';
-            var mw=ctx.measureText(pp[0]+','+pp[1]).width;
-            ctx.fillText('\u20AC',cx+cardPadI+4+mw+4+ppDx,priceY-8+ppDy);
-            // Statt-Preis right-aligned
-            if(it.statt_preis!=null){
-              var uvp=Number(it.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-              var stcP=theme.stattColor||'#8a9e80';
-              ctx.textAlign='right';ctx.fillStyle=stcP;ctx.font='600 17px Arial, sans-serif';
-              ctx.fillText('statt '+uvp,cx+mgCellW-cardPadI+ppDx,priceY-18+ppDy);
-              // Strikethrough
-              var uvpW=ctx.measureText('statt '+uvp).width;
-              ctx.strokeStyle=stcP;ctx.lineWidth=1.5;
-              ctx.beginPath();ctx.moveTo(cx+mgCellW-cardPadI-uvpW+ppDx,priceY-23+ppDy);ctx.lineTo(cx+mgCellW-cardPadI+ppDx,priceY-23+ppDy);ctx.stroke();
-              ctx.textAlign='left';
-            }
-          }
-        }
-      }
-
-      // Footer
-      ctx.fillStyle=theme.headerAccent||'#8aad7e';ctx.fillRect(0,H-36,W,36);
-      ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='600 14px Arial, sans-serif';
-      ctx.fillText('*Solange Vorrat reicht \u00b7 \u00c4nderungen vorbehalten',W/2,H-24);
-      ctx.textAlign='left';
-
-      Promise.all([logoP].concat(_ciPromises)).then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
-      return;
-    }
-    // ── Papier-Hintergrund (warm beige) ──
-    ctx.fillStyle=tplGradFill(ctx,theme,'bgColor',0,0,W,H);ctx.fillRect(0,0,W,H);
-    // Subtile Papierstruktur simulieren
-    if(theme.showTexture){ctx.globalAlpha=0.04;
-    for(var ty=0;ty<H;ty+=3){for(var tx=0;tx<W;tx+=3){
-      if(Math.random()>0.5){ctx.fillStyle=Math.random()>0.5?'#000':'#fff';ctx.fillRect(tx,ty,2,2);}
-    }}}
-    ctx.globalAlpha=1.0;
-    // ── ANGEBOT Titel (rot, gross, links) ──
-    ctx.textAlign='left';
-    ctx.fillStyle=theme.titleColor;ctx.font=theme.titleFont;
-    ctx.fillText('ANGEBOT',30,68);
-    // Datum darunter
-    var von=data.von?new Date(data.von).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-    var bis=data.bis?new Date(data.bis).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-    ctx.fillStyle=theme.dateColor;ctx.font=theme.dateFont;
-    ctx.fillText(von+' \u2013 '+bis,34,100);
-    // ── Logo oben rechts (capped width to avoid overlap with title) ──
-    var logoImg=new Image();
-    var logoLoaded=new Promise(function(res){
-      logoImg.onload=function(){
-        var lh=90,lw=lh*(logoImg.width/logoImg.height);
-        var maxLw=W*0.35;
-        if(lw>maxLw){lh=lh*(maxLw/lw);lw=maxLw;}
-        ctx.drawImage(logoImg,W-lw-30,14,lw,lh);res();
-      };
-      logoImg.onerror=function(){res();};
-      logoImg.src=hdLogoSrc(S);
-    });
-    ctx.textAlign='left';
-    // ── Hilfsfunktion: Runde-Ecken Rechteck ──
-    function roundRect(rx,ry,rw,rh,r){
-      ctx.beginPath();
-      ctx.moveTo(rx+r,ry);ctx.lineTo(rx+rw-r,ry);ctx.quadraticCurveTo(rx+rw,ry,rx+rw,ry+r);
-      ctx.lineTo(rx+rw,ry+rh-r);ctx.quadraticCurveTo(rx+rw,ry+rh,rx+rw-r,ry+rh);
-      ctx.lineTo(rx+r,ry+rh);ctx.quadraticCurveTo(rx,ry+rh,rx,ry+rh-r);
-      ctx.lineTo(rx,ry+r);ctx.quadraticCurveTo(rx,ry,rx+r,ry);ctx.closePath();
-    }
-    // ── Hilfsfunktion: Blatt-Deko ──
-    function drawLeaf(lx,ly,sz){
-      ctx.save();ctx.globalAlpha=1.0;ctx.fillStyle=cfg.leafColor;
-      ctx.translate(lx,ly);ctx.rotate(-0.4);
-      ctx.beginPath();ctx.moveTo(0,0);
-      ctx.bezierCurveTo(sz*0.3,-sz*0.6,sz*0.7,-sz*0.6,sz,0);
-      ctx.bezierCurveTo(sz*0.7,sz*0.6,sz*0.3,sz*0.6,0,0);
-      ctx.fill();
-      // Blattader
-      ctx.strokeStyle=cfg.leafColor;ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
-      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz*0.9,0);ctx.stroke();
-      ctx.restore();
-    }
-    // ── Produktkarten ──
-    var _clCiPromises=[];
-    items.forEach(function(item,i){
-      if(i>=perPage) return;
-      var col=i%cols,row=Math.floor(i/cols);
-      var cx=20+col*(cellW+cardGap);
-      var cy=gridTop+row*(cellH+cardGap);
-      // Weisse Karte mit runden Ecken + Schatten
-      ctx.save();
-      ctx.shadowColor='rgba(0,0,0,0.06)';ctx.shadowBlur=2;ctx.shadowOffsetX=8;ctx.shadowOffsetY=8;
-      ctx.fillStyle=theme.cardBg;
-      roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.fill();ctx.restore();
-      // Rand
-      ctx.strokeStyle=theme.cardBorder;ctx.lineWidth=1;roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.stroke();
-      // Blatt-Deko oben rechts
-      if(cfg.showLeaf) drawLeaf(cx+cellW-45,cy+30,cfg.leafSize);
-      // ── Produktname + Details oben (fixed height: 2 lines name + 1 line details) ──
-      var textX=cx+cardPad,textY=cy+cardPad+20;
-      var fixedTextH=28*2+26; // 2 name lines (28px each) + 1 detail line (26px)
-      ctx.fillStyle=theme.textColor;ctx.font='900 24px Arial Black, Arial, sans-serif';ctx.textAlign='left';
-      var nameLines=wrapTextCMS(ctx,item.produkt||'',cellW-cardPad*2-30).slice(0,2);
-      nameLines.forEach(function(ln){ctx.fillText(ln,textX,textY);textY+=28;});
-      if(item.details){
-        ctx.fillStyle=theme.detailsColor;ctx.font='16px Arial, sans-serif';
-        ctx.fillText(truncText(ctx,item.details,cellW-cardPad*2),textX,textY+4);
-      }
-      // ── Bild links (freigestellt, gedreht, geclippt) ──
-      var img=images[i];
-      var imgAreaTop=cy+cardPad+fixedTextH+8;
-      var imgAreaH=cellH-fixedTextH-cardPad*2-8;
-      // Fill image area with imgBg color
-      ctx.save();roundRect(cx,imgAreaTop,cellW,imgAreaH+cardPad,theme.cardRadius);ctx.clip();
-      ctx.fillStyle=tplGradFill(ctx,theme,'imgBg',cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.fillRect(cx,imgAreaTop,cellW,imgAreaH+cardPad);ctx.restore();
-      // Per-card overrides
-      var pOv=plakatArtOverrideGet(item)||plakatArtOverrideDefault();
-      if(img){
-        var pImgSc=(cfg.imgScale||100)/100*((pOv.imgScale||100)/100);
-        var maxImgW=cellW*0.52,maxImgH=imgAreaH*0.88;
-        var scale=Math.min(maxImgW/img.width,maxImgH/img.height,cfg.imgMaxScale)*pImgSc;
-        var iw=img.width*scale,ih=img.height*scale;
-        var imgCX=cx+cardPad+maxImgW*0.45+(pOv.imgDx||0);
-        var imgCY=imgAreaTop+imgAreaH*0.5+(pOv.imgDy||0);
-        // Freistellen: weissen Hintergrund entfernen
-        var ofc=_freistellCanvas(img,cfg);
-        // Clip auf Karte, drehen, zeichnen
-        var pRotRad=cfg.imgRotation*Math.PI/180*0.85+(pOv.imgRot||0)*Math.PI/180;
-        // Ghost overlay
-        if(pOv.ghostMode==='on'){
-          var gSc4=(pOv.ghostScale||100)/100;var giw4=iw*gSc4,gih4=ih*gSc4;
-          var gx=imgCX+(pOv.ghostDx||0),gy=imgCY+(pOv.ghostDy||0);
-          var gRot=-pRotRad+((pOv.ghostRot||0)*Math.PI/180);
-          ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
-          ctx.globalAlpha=pOv.ghostAlpha||0.35;
-          ctx.translate(gx,gy);ctx.rotate(gRot);
-          ctx.drawImage(ofc,-giw4/2,-gih4/2,giw4,gih4);ctx.globalAlpha=1.0;ctx.restore();
-        }
-        // Duplicate overlay
-        if(pOv.dupOn){
-          var dSc4=(pOv.dupScale||100)/100;var diw4=iw*dSc4,dih4=ih*dSc4;
-          var dx2=imgCX+(pOv.dupDx||0),dy2=imgCY+(pOv.dupDy||0);
-          var dRot=-pRotRad+((pOv.dupRot||0)*Math.PI/180);
-          ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
-          ctx.translate(dx2,dy2);ctx.rotate(dRot);
-          ctx.drawImage(ofc,-diw4/2,-dih4/2,diw4,dih4);ctx.restore();
-        }
-        // Extra copies (multi-ghost/dup)
-        drawExtraCopiesCenter(ctx,pOv.copies,ofc,imgCX,imgCY,iw,ih,-pRotRad,function(){roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();});
-        // Main image
-        ctx.save();roundRect(cx,cy,cellW,cellH,theme.cardRadius);ctx.clip();
-        ctx.translate(imgCX,imgCY);ctx.rotate(-pRotRad);
-        ctx.drawImage(ofc,-iw/2,-ih/2,iw,ih);ctx.restore();
-      }
-      // Custom image overlay (classic layout)
-      if(pOv.customImg){
-        _clCiPromises.push((function(_pOv,_cx,_cy,_cellW,_cellH,_imgAreaTop,_imgAreaH,_cardPad){
-          return new Promise(function(resCI){
-            var ci=new Image();ci.onload=function(){
-              var ciOfc=_freistellCanvas(ci,cfg);
-              var ciSc=(_pOv.customImgScale||100)/100;
-              var maxCIW=_cellW-_cardPad*2, maxCIH=_imgAreaH*0.88;
-              var ciScI=Math.min(maxCIW/ciOfc.width,maxCIH/ciOfc.height,cfg.imgMaxScale||3)*ciSc;
-              var ciW=ciOfc.width*ciScI,ciH=ciOfc.height*ciScI;
-              var ciX=_cx+_cardPad+maxCIW*0.45-ciW/2+(_pOv.customImgDx||0);
-              var ciY=_imgAreaTop+_imgAreaH*0.5-ciH/2+(_pOv.customImgDy||0);
-              var ciRotRad=(_pOv.customImgRot||0)*Math.PI/180;
-              ctx.save();roundRect(_cx,_cy,_cellW,_cellH,theme.cardRadius);ctx.clip();
-              ctx.globalAlpha=(_pOv.customImgAlpha!=null?_pOv.customImgAlpha:100)/100;
-              if(ciRotRad){ctx.translate(ciX+ciW/2,ciY+ciH/2);ctx.rotate(-ciRotRad);ctx.drawImage(ciOfc,-ciW/2,-ciH/2,ciW,ciH);}
-              else{ctx.drawImage(ciOfc,ciX,ciY,ciW,ciH);}
-              ctx.globalAlpha=1.0;ctx.restore();resCI();
-            };ci.onerror=function(){resCI();};ci.src=_pOv.customImg;
-          });
-        })(pOv,cx,cy,cellW,cellH,imgAreaTop,imgAreaH,cardPad));
-      }
-      // ── Schräges rotes Preisschild rechts (with override offsets) ──
-      var clPDx=pOv.priceDx||0,clPDy=pOv.priceDy||0;
-      if(item.preis){
-        var cardSavingsPct=getSavingsPercent(item);
-        var preisStr=Number(item.preis).toFixed(2).split('.');
-        var tagSc=(cfg.tagScale||100)/100;
-        var tagW=Math.round(130*tagSc),tagH=Math.round(58*tagSc);
-        var tagCX=cx+cellW-cardPad-tagW/2-10+clPDx;
-        var tagCY=imgAreaTop+imgAreaH*0.4+clPDy;
-        ctx.save();
-        ctx.translate(tagCX,tagCY);
-        var pSkew=cfg.tagSkew/100;
-        ctx.rotate(-0.05);ctx.transform(1,-pSkew,0,1,0,0);
-        // Dunkler Schatten
-        ctx.shadowColor='rgba(100,0,0,0.4)';ctx.shadowBlur=2;ctx.shadowOffsetX=6;ctx.shadowOffsetY=6;
-        ctx.fillStyle=theme.tagColor;
-        fillTagShape(ctx,tagW,tagH,cfg);
-        ctx.restore();
-        // Glanz-Overlay
-        ctx.save();
-        ctx.translate(tagCX,tagCY);
-        ctx.rotate(-0.05);ctx.transform(1,-pSkew,0,1,0,0);
-        var glanz=ctx.createLinearGradient(-tagW/2,-tagH/2,tagW/2,tagH/2);
-        glanz.addColorStop(0,'rgba(255,255,255,0.12)');glanz.addColorStop(0.5,'rgba(255,255,255,0)');
-        ctx.fillStyle=glanz;fillTagShape(ctx,tagW,tagH,cfg);
-        // Preis-Text im gedrehten Kontext
-        ctx.fillStyle='#ffffff';ctx.textAlign='left';
-        // Skew rückgängig für lesbaren Text
-        ctx.transform(1,pSkew,0,1,0,0);
-        var fs=cfg.priceFontPlakat,cs=Math.round(fs*0.55),es=Math.round(fs*0.35);
-        ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';
-        var mainStr=preisStr[0]+',';var mw=ctx.measureText(mainStr).width;
-        ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';
-        var centStr=preisStr[1];var cw=ctx.measureText(centStr).width;
-        ctx.font='bold '+es+'px Arial, sans-serif';
-        var ew=ctx.measureText('\u20AC').width;
-        var tw=mw+cw+ew+3;
-        if(tw>tagW-20){var sc2=(tagW-20)/tw;fs=Math.round(fs*sc2);cs=Math.round(cs*sc2);es=Math.round(es*sc2);
-          ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';mw=ctx.measureText(mainStr).width;
-          ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';cw=ctx.measureText(centStr).width;
-          ctx.font='bold '+es+'px Arial, sans-serif';ew=ctx.measureText('\u20AC').width;tw=mw+cw+ew+3;}
-        var px=-tw/2,py=fs*0.35;
-        ctx.font='900 '+fs+'px Arial Black, Arial, sans-serif';ctx.fillText(mainStr,px,py);
-        ctx.font='900 '+cs+'px Arial Black, Arial, sans-serif';ctx.fillText(centStr,px+mw+2,py-fs*0.3);
-        ctx.font='bold '+es+'px Arial, sans-serif';ctx.fillText('\u20AC',px+mw+cw+3,py-fs*0.28);
-        ctx.restore();
-        // Statt-Preis unter dem Tag
-        if(item.statt_preis){
-          var stattStr=Number(item.statt_preis).toFixed(2).replace('.',',')+' \u20AC';
-          var stFs=Math.round(16*tagSc);
-          ctx.fillStyle=cfg.stattColor;ctx.font='bold '+stFs+'px Arial, sans-serif';ctx.textAlign='center';
-          var tagBottom=cfg.tagShape==='explosion'?Math.max(tagW/2,tagH/2):tagH/2;
-          var stattX=tagCX,stattY=tagCY+tagBottom+Math.round(30*tagSc);
-          ctx.fillText(stattStr,stattX,stattY);
-          var stW=ctx.measureText(stattStr).width;
-          ctx.strokeStyle=theme.tagColor;ctx.lineWidth=1.5;ctx.beginPath();
-          ctx.moveTo(stattX-stW/2-2,stattY-Math.round(5*tagSc));ctx.lineTo(stattX+stW/2+2,stattY-Math.round(5*tagSc));ctx.stroke();
-        }
-        if(cardSavingsPct){
-          drawSavingsBurst(ctx,tagCX-tagW/2+6,tagCY-tagH/2-12,Math.round(24*tagSc),Math.round(15*tagSc),'-'+cardSavingsPct+'%','plakat');
-        }
-      }
-      // Einkaufstaschen-Deko unten rechts
-      if(cfg.showBag){ctx.save();ctx.globalAlpha=1.0;ctx.font='36px Arial, sans-serif';ctx.textAlign='right';
-      ctx.fillStyle=cfg.leafColor;ctx.fillText('\uD83D\uDECD',cx+cellW-cardPad+4,cy+cellH-cardPad+2);ctx.restore();}
-      ctx.textAlign='left';
-    });
-    // Footer removed per user request
-    ctx.textAlign='left';
-    Promise.all([logoLoaded].concat(_clCiPromises)).then(function(){c.toBlob(function(blob){callback(blob);},'image/png');});
+  var drawAngebotPlakat=_weeklyRenderer.drawAngebotPlakat;
+  function reportOfferRenderError(error){
+    console.error('Plakat konnte nicht erzeugt werden',error);
+    toast('Plakat konnte nicht erzeugt werden. Bitte erneut versuchen.','error');
   }
 
   window.cmsShareAktion=function(aktId){
@@ -8086,7 +7198,7 @@
     // Generate plakat image + share directly
     generateAngebotPlakat(ak,function(blob){
       shareBlob(blob,'Angebot_'+(ak.von||'aktuell')+'.png',msg);
-    },undefined,{scale:HD_FAKTOR});
+    },undefined,{scale:HD_FAKTOR}).catch(reportOfferRenderError);
   };
 
   var _currentPreviewAktion=null;
@@ -8096,7 +7208,7 @@
     _currentPreviewAktion=ak;
     generateAngebotPlakat(ak,function(blob){
       showSharePreview(blob,'Angebot_'+(ak.von||'aktuell')+'.png',{showEinzelflyer:true,waage:'aktion'});
-    },undefined,{scale:HD_FAKTOR});
+    },undefined,{scale:HD_FAKTOR}).catch(reportOfferRenderError);
   };
 
   // ══════════════════════════════════════════════════════════════
@@ -8525,10 +7637,17 @@
       .catch(function(){return angebote||[];});
   }
 
-  window.cmsPreviewOfferTpl=function(target){
+  window.cmsPreviewOfferTpl=function(target,template){
     target=(target||'plakat').toLowerCase();
-    ensureAngeboteForPreview().then(function(){
+    function showCanvas(canvas,filename){
+      // Vorlagenvorschauen dürfen nicht auf Chromiums verzögertes toBlob-Idle-Encoding warten.
+      var png=canvas.toDataURL('image/png').split(',')[1];
+      var bytes=Uint8Array.from(atob(png),function(character){return character.charCodeAt(0);});
+      showSharePreview(new Blob([bytes],{type:'image/png'}),filename);
+    }
+    return ensureAngeboteForPreview().then(function(){
       var cfg=Object.assign({},cfgGet(),cfgReadUI());
+      if(template)cfg[target+'Template']=template;
       var now=new Date();
       var plus6=new Date(now.getTime()+6*86400000);
       var fallback=[
@@ -8558,24 +7677,15 @@
       };
       var sample=data.items[0]||fallback[0];
       if(target==='flyer'){
-        var p=Promise.resolve();
-        if(!sample.bild_data){
-          var key=(sample.artikelnummer||'').trim();
-          if(key) p=loadImageFromSharePoint(key,key).then(function(b64){if(b64)sample.bild_data=b64;});
-        }
-        p.then(function(){
+        return loadOfferPreviewImage(sample).then(function(){
           return generateEinzelflyer(sample,data,cfg).then(function(canvas){
-            canvas.toBlob(function(blob){
-              if(!blob){toast('Vorschau konnte nicht erzeugt werden','error');return;}
-              showSharePreview(blob,'Template-Vorschau-Einzelflyer.png');
-            },'image/png');
+            showCanvas(canvas,'Template-Vorschau-Einzelflyer.png');
           });
         }).catch(function(e){toast('Fehler: '+(e&&e.message?e.message:e),'error');});
-        return;
       }
-      generateAngebotPlakat(data,function(blob){
-        showSharePreview(blob,'Template-Vorschau-Plakat.png');
-      },cfg);
+      return generateAngebotPlakat(data,function(canvas){
+        showCanvas(canvas,'Template-Vorschau-Plakat.png');
+      },cfg,{returnCanvas:true}).catch(reportOfferRenderError);
     });
   };
 
@@ -8644,13 +7754,13 @@
       case 'pickWpHomeTpl':
         var tpl=t.getAttribute('data-value')||'classic-red';
         var sel=document.getElementById('hcfg-wpHomeTemplate');
-        if(sel){sel.value=tpl;hpCfgSyncWpPreview();hpCfgSyncWpTplColors('home');}
+        if(sel){sel.value=tpl;sel.dispatchEvent(new Event('change',{bubbles:true}));}
         _triggerWpAutoPreview();
         break;
       case 'pickWpFlyerTpl':
         var tpl2=t.getAttribute('data-value')||'classic-red';
         var sel2=document.getElementById('hcfg-wpFlyerTemplate');
-        if(sel2){sel2.value=tpl2;hpCfgSyncWpFlyerPreview();hpCfgSyncWpTplColors('flyer');}
+        if(sel2){sel2.value=tpl2;sel2.dispatchEvent(new Event('change',{bubbles:true}));}
         _triggerWpAutoPreview();
         break;
       case 'resetWpTplColors':
@@ -8660,19 +7770,20 @@
       case 'pickPlakatTpl':
         var pt=t.getAttribute('data-value')||'classic-red';
         var psel=document.getElementById('cfg-plakatTemplate');
-        if(psel){psel.value=pt;cfgSyncOfferTplPreviews();cfgSyncTplColors('plakat');_triggerCfgAutoPreview();}
+        if(psel){psel.value=pt;psel.dispatchEvent(new Event('change',{bubbles:true}));}
         break;
       case 'pickFlyerTpl':
         var ft=t.getAttribute('data-value')||'classic-red';
         var fsel=document.getElementById('cfg-flyerTemplate');
-        if(fsel){fsel.value=ft;cfgSyncOfferTplPreviews();cfgSyncTplColors('flyer');_triggerCfgAutoPreview();}
+        if(fsel){fsel.value=ft;fsel.dispatchEvent(new Event('change',{bubbles:true}));}
         break;
       case 'resetTplColors':
         var rKind=t.getAttribute('data-kind')||'plakat';
         var rSelId=rKind==='flyer'?'cfg-flyerTemplate':'cfg-plakatTemplate';
         var rSel=document.getElementById(rSelId);
         var rTpl=rSel?rSel.value:'classic-red';
-        var rDefaults=TPL_COLOR_DEFAULTS[rTpl]||TPL_COLOR_DEFAULTS['classic-red'];
+        var resetConfig=_clone(CFG_DEFAULTS);resetConfig[rKind+'Template']=rTpl;
+        var rDefaults=offerEffectiveColors(rKind,resetConfig);
         TPL_COLOR_KEYS.forEach(function(ck){
           var el=document.getElementById('cfg-tpl-'+rKind+'-'+ck);
           if(el)el.value=rDefaults[ck]||'#000000';
@@ -8681,10 +7792,9 @@
         toast('Farben zur\u00fcckgesetzt (Speichern nicht vergessen)','info');
         break;
       case 'savePlakatCfg':
-        cfgSave(cfgReadUI());
+        cmsSaveCfg();
         var _hint=document.getElementById('cfg-plakat-saved-hint');
         if(_hint){_hint.style.display='inline';setTimeout(function(){_hint.style.display='none';},2500);}
-        toast('Plakat-Design gespeichert','ok');
         break;
       case 'previewOfferTpl':
         cmsPreviewOfferTpl(t.getAttribute('data-target')||'plakat');
@@ -8814,18 +7924,7 @@
       if(sp&&sp.querySelector('option[value="'+e.target.value+'"]'))sp.value=e.target.value;
     }
     if(e.target&&(e.target.id==='cfg-savingsMarkerType'||e.target.id==='cfg-savingsPalette'||e.target.id==='cfg-savingsStarStyle'||e.target.id==='cfg-tagShape'))cfgRenderSavingsPreview();
-    var TAG_PRESETS={
-      'classic-red-rect':{tagColor:'#a51d2d',tagShape:'rect',tagRadius:0},
-      'green-rounded':{tagColor:'#3d7a4a',tagShape:'rounded',tagRadius:16},
-      'dark-pill':{tagColor:'#1e293b',tagShape:'pill',tagRadius:0},
-      'gold-banner':{tagColor:'#b8860b',tagShape:'banner',tagRadius:0},
-      'blue-circle':{tagColor:'#1d4ed8',tagShape:'circle',tagRadius:0},
-      'orange-star':{tagColor:'#ea580c',tagShape:'star',tagRadius:0},
-      'purple-hexagon':{tagColor:'#7c3aed',tagShape:'hexagon',tagRadius:0},
-      'teal-ticket':{tagColor:'#0d9488',tagShape:'ticket',tagRadius:0},
-      'rose-diamond':{tagColor:'#e11d48',tagShape:'diamond',tagRadius:0},
-      'copper-explosion':{tagColor:'#b45309',tagShape:'explosion',tagRadius:0}
-    };
+    var TAG_PRESETS=window.WochenangeboteRenderer.TAG_PRESETS;
     if(e.target&&e.target.id==='cfg-tagPreset'){
       var preset=TAG_PRESETS[e.target.value];
       if(preset){
@@ -8842,6 +7941,9 @@
         if(preset){
           var ts=document.getElementById('cfg-'+sec+'-tagShape');if(ts)ts.value=preset.tagShape;
           var tr=document.getElementById('cfg-'+sec+'-tagRadius');if(tr){tr.value=preset.tagRadius;cfgUpdateVal(sec+'-tagRadius',preset.tagRadius);}
+          var bg=document.getElementById('cfg-'+sec+'-priceStripColor');if(bg)bg.value=preset.tagShape==='price-image'?'#fff000':preset.tagColor;
+          var ink=document.getElementById('cfg-'+sec+'-priceImageColor');if(ink)ink.value=preset.tagShape==='price-image'?preset.tagColor:'#ffffff';
+          cfgSyncPriceImageFields();
         }
       }
     });
@@ -8863,7 +7965,7 @@
   // Close autocomplete dropdowns on outside click
   document.addEventListener('click',function(e){
     if(!e.target.closest('.cms-art-wrap') && !e.target.closest('.cms-art-dd')){
-      document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
+      document.querySelectorAll('.cms-art-dd.open:not([popover])').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
     }
   },true);
 
@@ -8871,7 +7973,7 @@
   // But ignore scroll events originating from inside the dropdown itself
   document.addEventListener('scroll',function(e){
     if(e.target && (e.target.classList && e.target.classList.contains('cms-art-dd') || e.target.closest && e.target.closest('.cms-art-dd'))) return;
-    document.querySelectorAll('.cms-art-dd.open').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
+    document.querySelectorAll('.cms-art-dd.open:not([popover])').forEach(function(dd){dd.className='cms-art-dd';dd.innerHTML='';});
   },true);
 
   // --- Force German locale for date/time pickers ---
@@ -11985,8 +11087,12 @@
     });
   }
 
-  // --- Init (only if already authenticated via session) ---
-  if(sessionStorage.getItem(CMS_PW_KEY)===cmsPwHash){
-    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+  function cmsResumeSession(){
+    window.dlCheckAdminSession().then(function(authenticated){
+      if(authenticated)cmsAuthenticated();
+      else sessionStorage.removeItem(CMS_PW_KEY);
+    }).catch(cmsLoginError).finally(function(){cmsLoginBusy(false);});
   }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',cmsResumeSession);}
+  else cmsResumeSession();
 })();

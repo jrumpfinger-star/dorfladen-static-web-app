@@ -14,14 +14,50 @@
 // Constitution Prinzip 7: UI-Änderungen werden auf mobile (375×667),
 // iPad mini (768×1024) und desktop (1280×800) getestet.
 //
+// Seit der Test-Beschleunigung: Tests ohne Layoutbezug laufen nur auf dem
+// Desktop (`test:schnell`/`--project=desktop`); ansichtsabhängige Tests
+// tragen { tag: '@layout' } und laufen zusätzlich auf ansichten-mobil und
+// ansichten-tablet. Details: README „Test-Arbeitsregel".
+//
 // Dazu kommt das ECHTE Ladentablett (`tablet-hoch`): ein Lenovo TAB P12
 // mit 1200×2000 Bildpunkten, das im Laden im Hochformat bedient wird.
 // Es ist die Auflösung, auf der der Kiosk täglich läuft — Fehler dort
 // treffen den Betrieb sofort.
+const fs = require('fs');
+const path = require('path');
+
+// Viewport-unabhaengige Dateien werden ausschliesslich explizit markiert:
+//   // @ansichten: alle      immer auf allen vier Ansichten
+//   // @ansichten: desktop   immer nur auf dem Desktop
+// ALLE_ANSICHTEN=1 erzwingt alle Ansichten fuer alle Dateien.
+function nurDesktop() {
+  if (process.env.ALLE_ANSICHTEN) return [];
+  const verzeichnis = path.join(__dirname, 'tests');
+  return fs.readdirSync(verzeichnis).filter((f) => f.endsWith('.spec.js')).filter((f) => {
+    const text = fs.readFileSync(path.join(verzeichnis, f), 'utf8');
+    const marke = /\/\/\s*@ansichten:\s*(alle|desktop)/.exec(text);
+    return marke ? marke[1] === 'desktop' : false;
+  });
+}
+const OHNE_LAYOUT = nurDesktop();
+
+/* S2 Viewport-Matrix: Tests ohne Layoutbezug laufen nur auf dem Desktop.
+   Ansichtsabhaengige Tests tragen den Tag @layout und laufen zusaetzlich
+   auf den beiden Ansichts-Projekten unten (mobil + Ladentablett).
+   Die beiden Angebots-Specs sind vollstaendig auf dieses System umgestellt
+   und daher aus den alten Ansichts-Projekten ausgeschlossen. */
+const ANGEBOTS_SPECS = ['tests/angebote-flyer.spec.js', 'tests/cms-angebote-ablauf.spec.js'];
+
 module.exports = {
   testDir: './tests',
   timeout: 60000,
   retries: 0,
+  // Tests innerhalb einer Datei laufen parallel auf eigene Worker (jeder Test
+  // hat eigene Page, Context und Mocks). Ausnahme: cms-waage-werbung.spec.js
+  // setzt beschreib-serial test.describe.configure({ mode: 'serial' }).
+  fullyParallel: true,
+  // 75 % der Kerne statt der Haelfte - die Suite ist der Engpass beim Entwickeln.
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : '75%',
   // Reporter: Liste im Terminal + HTML-Report (im VS-Code Simple Browser
   // ansehbar via `npm run test:report` -> http://127.0.0.1:9323).
   reporter: [
@@ -59,10 +95,14 @@ module.exports = {
   projects: [
     {
       name: 'mobile',
+      grepInvert: /@ohne-layout/,
+      testIgnore: [...OHNE_LAYOUT, ...ANGEBOTS_SPECS],
       use: { viewport: { width: 375, height: 667 } },
     },
     {
       name: 'ipad-mini',
+      grepInvert: /@ohne-layout/,
+      testIgnore: [...OHNE_LAYOUT, ...ANGEBOTS_SPECS],
       use: { viewport: { width: 768, height: 1024 } },
     },
     {
@@ -82,6 +122,29 @@ module.exports = {
        wird. */
     {
       name: 'tablet-hoch',
+      grepInvert: /@ohne-layout/,
+      testIgnore: [...OHNE_LAYOUT, ...ANGEBOTS_SPECS],
+      use: {
+        viewport: { width: 686, height: 1095 },
+        deviceScaleFactor: 1.75,
+        hasTouch: true,
+      },
+    },
+    /* Ansichts-Projekte fuer die mit @layout markierten Tests: dieselben
+       Viewports wie mobil und Ladentablett, aber ausschliesslich die
+       Tests, die tatsaechlich ansichtsabhaengige Zusicherungen machen. */
+    {
+      name: 'ansichten-mobil',
+      grep: /@layout/,
+      grepInvert: /@ohne-layout/,
+      testIgnore: OHNE_LAYOUT,
+      use: { viewport: { width: 375, height: 667 } },
+    },
+    {
+      name: 'ansichten-tablet',
+      grep: /@layout/,
+      grepInvert: /@ohne-layout/,
+      testIgnore: OHNE_LAYOUT,
       use: {
         viewport: { width: 686, height: 1095 },
         deviceScaleFactor: 1.75,

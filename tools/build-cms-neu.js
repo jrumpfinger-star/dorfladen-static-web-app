@@ -56,6 +56,19 @@ const GRUPPEN = [
   { name: 'System',  farbe: '#688073', ids: ['settings', 'help'] },
 ];
 
+/* Verweise auf eigene Seiten statt CMS-Bereiche: Sie stehen in der genannten
+   Gruppe, sind aber Links (kein data-id, kein Umschalten). In der Quelle
+   (cms-klassisch.html) stehen sie ebenfalls - dort als <a class="cms-tab">,
+   das von U3 nicht als Reiter gezaehlt wird. */
+const VERWEISE = [
+  { gruppe: 'Verkauf', html:
+    '      <a class="cms-tab" href="/inventur" title="Zur Inventur">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;">'
+    + '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>'
+    + '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>'
+    + '<path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Inventur</a>' },
+];
+
 /* ── Werkzeug-Gerüst ─────────────────────────────────────────────────── */
 
 const regeln = [];
@@ -190,6 +203,8 @@ function navigation(reiter) {
       zeilen.push('      <button class="cms-tab' + (aktiv ? ' active' : '') + '"'
         + attr + '>' + r.innen + '</button>');
     });
+    VERWEISE.filter(function (v) { return v.gruppe === g.name; })
+      .forEach(function (v) { zeilen.push(v.html); });
     zeilen.push('    </div>');
   });
 
@@ -403,6 +418,19 @@ regel('U5b', 'Kartenköpfe vereinheitlichen', function (t) {
    Sie ergaenzt die Oberflaeche von aussen (Navigationsblatt auf dem
    Telefon) und ruft nichts in cms.js auf.
    ══════════════════════════════════════════════════════════════════════ */
+
+regel('U5c', 'Angebotsgestaltung im gemeinsamen Designerstil', function (t) {
+  const start = t.indexOf('<div id="cms-cfg-plakat"');
+  const end = t.indexOf('<!-- ============ SUB-TAB: HP-Sonderangebote', start);
+  if (start < 0 || end < 0) throw new Error('U5c: Angebotsdesign nicht gefunden');
+  const section = t.slice(start, end).replace('<div id="cms-cfg-plakat"', '<div data-offer-workspaces id="cms-cfg-plakat"').replace(/(<div class="cms-card-header"[^>]*>)([^<]*)(<\/div>)/g, (_, before, title, after) => {
+    const label = /Template/.test(title) ? 'Vorlage' : /Farben/.test(title) ? 'Farben'
+      : /Preisschild-Form/.test(title) ? 'Preisschildform' : /Preisschild/.test(title) ? 'Preisschild und Marker'
+      : /Dekoration/.test(title) ? 'Dekoration' : title.replace(/&#\d+;\s*/g, '');
+    return before + label + after;
+  });
+  return { text: t.slice(0, start) + section + t.slice(end), info: 'Feldkennungen und Funktionen erhalten' };
+});
 
 regel('U6', 'Hilfeschicht einbinden', function (t) {
   const anker = '</body>';
