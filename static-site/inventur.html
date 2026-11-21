@@ -14,9 +14,9 @@
   <header class="header">
     <button class="icon-button" id="exit-inventur" aria-label="Zurück zur vorherigen Seite" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
     <button class="icon-button" id="progress-back" aria-label="Zurück zur Erfassung" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
-    <button class="icon-button" id="menu-open" aria-label="Menü öffnen" hidden><i data-lucide="menu" aria-hidden="true"></i><span>Menü</span></button>
+    <button class="icon-button" id="menu-open" aria-label="Menü öffnen" hidden><i data-lucide="menu" aria-hidden="true"></i><span class="wort">Menü</span></button>
     <div class="heading"><h1>Inventur</h1><small id="heading-note">Dorfladen</small></div>
-    <button class="icon-button" id="progress-open" aria-label="Fortschritt anzeigen" hidden><i data-lucide="chart-column" aria-hidden="true"></i><span>Fortschritt</span></button>
+    <button class="icon-button" id="progress-open" aria-label="Fortschritt anzeigen" hidden><i data-lucide="chart-column" aria-hidden="true"></i><span class="wort">Fortschritt</span></button>
   </header>
 
   <main class="login" id="login-screen" aria-label="Anmeldung" hidden>
@@ -32,8 +32,7 @@
   </main>
 
   <section class="context" id="context" aria-label="Aktive Inventur" hidden>
-    <label for="inventory">Aktive Inventur</label>
-    <select id="inventory"></select>
+    <select id="inventory" aria-label="Aktive Inventur"></select>
     <small id="inventory-meta"></small>
   </section>
 

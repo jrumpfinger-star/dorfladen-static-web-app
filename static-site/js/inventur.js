@@ -230,6 +230,7 @@
     const article = state.article, inv = inventory(), pos = state.position;
     $('article-name').textContent = article ? article.name : 'Welchen Artikel zählst du?';
     $('article-barcode').textContent = article ? 'Barcode ' + article.code : 'Artikel suchen oder Barcode scannen.';
+    $('article-barcode').className = article ? 'strichcode' : '';
     $('ek').textContent = article ? money(pos ? pos.ek : article.ekSuggestion) : '—';
     $('vk').textContent = article ? money(article.vk) : '—';
     $('unit').textContent = article ? (article.unitLabel || 'nicht unterstützt') : '';

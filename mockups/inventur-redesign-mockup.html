@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOCKUP · Inventur Redesign — klickbar</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+/* MOCKUP-Variante der Inventur: kräftigere Farben, kompaktere Kopfzeile,
+   keine überlappenden Texte. Grundlage: dl-design.css Tokens. */
+*{box-sizing:border-box}
+:root{
+  --feld:#3c5a4a;          /* kräftiges Feldgrün (Kontrast zu Karte) */
+  --feld-line:#4c6d5b;
+  --akzent:#1b5e3a;
+  --signal:#b3541e;        /* frischer Kontrast-Akzent */
+}
+html[data-theme="dark"]{
+  --feld:#74c777;--feld-line:#8fd394;--akzent:#74c777;--signal:#e58a4f;
+}
+html,body{margin:0;height:100%;color:var(--ink);background:var(--gr-l)}
+body{font:16px/1.4 system-ui,"Segoe UI",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,p{margin:0}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+
+.app{height:100dvh;display:flex;flex-direction:column;max-width:1440px;margin:auto}
+
+/* Kopfzeile: solides Tiefgrün, weiße Schrift, nie überblendet */
+.kopf{flex:none;display:flex;align-items:center;gap:6px;background:var(--gr-d);color:#fff;padding:8px 10px;min-height:60px}
+.kopf .icon-button{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff}
+.kopf .icon-button:hover{background:rgba(255,255,255,.15)}
+.titel{flex:1;min-width:0;text-align:center}
+.titel h1{font-size:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titel small{display:block;font-size:12px;color:#d9eadf;font-weight:400}
+.kopf .icon-button svg{width:22px;height:22px}
+@media (max-width:420px){
+  .kopf .wort{display:none}   /* am Handy: Icons statt Wortmarken, Titel bleibt ganz lesbar */
+}
+.icon-button{min-width:48px;min-height:48px;padding:8px 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--r-s);border:1px solid var(--feld-line);background:var(--karte);color:var(--ink);font-weight:600}
+.icon-button svg{width:20px;height:20px}
+
+/* Aktive Inventur als schmale Statusleiste */
+.inventur-leiste{flex:none;display:flex;align-items:center;gap:8px;background:var(--karte);border-bottom:1px solid var(--line);padding:8px 12px}
+.inventur-leiste .punkt{width:10px;height:10px;border-radius:50%;background:var(--gr);flex:none;box-shadow:0 0 0 3px var(--gr-l)}
+.inventur-leiste strong{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inventur-leiste small{color:var(--secondary);font-size:13px;white-space:nowrap}
+.inventur-leiste select{margin-left:auto;max-width:44%;min-height:40px;border:1px solid var(--feld-line);border-radius:var(--r-s);background:var(--karte);padding:4px 8px}
+
+main.bereich{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:12px}
+@media (min-width:850px) and (min-height:600px){
+  main.bereich{flex-direction:row;align-items:start;padding:20px}
+  .suchspalte{flex:1 1 34%;position:sticky;top:0}
+  .erfassungsspalte{flex:2 1 66%}
+}
+
+/* Suche */
+.feld-label{font-size:14px;font-weight:600;color:var(--feld);letter-spacing:.02em;text-transform:uppercase}
+.suche{display:flex;flex-direction:column;gap:8px}
+.suche input{width:100%;min-height:56px;font-size:17px;border:2px solid var(--feld-line);border-radius:var(--r-m);background:var(--karte);padding:10px 14px}
+.suche input:focus{border-color:var(--gr);box-shadow:0 0 0 3px var(--gr-l)}
+.treffer{display:flex;flex-direction:column;border:1px solid var(--feld-line);border-radius:var(--r-m);background:var(--karte);overflow:hidden}
+.treffer button{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:56px;padding:8px 14px;border:0;border-bottom:1px solid var(--line);background:var(--karte);text-align:left}
+.treffer button:last-child{border-bottom:0}
+.treffer button:hover{background:var(--gr-t)}
+.treffer strong{font-weight:600;overflow-wrap:anywhere}
+.treffer small{color:var(--secondary);font-size:13px}
+
+/* Erfassungskarte */
+.karte{border-radius:var(--r-l);background:var(--karte);box-shadow:0 2px 10px rgba(19,42,30,.08),0 0 0 1px var(--line);padding:14px;display:flex;flex-direction:column;gap:12px}
+.artikel{display:flex;flex-direction:column;gap:6px}
+.artikel h2{font-size:21px;font-weight:600;overflow-wrap:anywhere}
+.strichcode{align-self:start;font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--feld);background:var(--gr-l);border:1px solid var(--feld-line);border-radius:999px;padding:3px 10px}
+.mengen{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mengen label{font-size:15px;font-weight:600;display:flex;flex-direction:column;gap:4px}
+.mengen .unit{font-size:12px;color:var(--secondary);font-weight:400}
+.mengen input{width:100%;min-height:60px;font-size:24px;font-weight:600;text-align:left;border:2px solid var(--feld-line);border-radius:var(--r-m);background:var(--gr-t);padding:8px 12px}
+.mengen input:focus{border-color:var(--gr);background:var(--karte);box-shadow:0 0 0 3px var(--gr-l)}
+.aktionen{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.aktionen button{min-height:60px;font-size:17px;font-weight:600;border-radius:var(--r-m);border:2px solid var(--feld-line);background:var(--karte)}
+.aktionen .speichern{background:var(--gr);border-color:var(--gr);color:#fff}
+html[data-theme="dark"] .aktionen .speichern{color:#132a1e}
+.aktionen button:disabled{background:var(--flaeche);border-color:var(--line);color:var(--secondary)}
+.statuszeile{display:flex;align-items:center;gap:8px;min-height:26px;font-size:15px}
+.statuszeile .pill{display:inline-flex;align-items:center;gap:6px;background:var(--gr-l);color:var(--akzent);border:1px solid var(--feld-line);border-radius:999px;padding:3px 12px;font-weight:600;font-size:14px}
+.preise{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preis{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:6px 12px;border-radius:var(--r-m);background:var(--gr-t);border:1px solid var(--feld-line)}
+.preis span{font-size:13px;font-weight:600;color:var(--feld);letter-spacing:.06em}
+.preis output{font-size:17px;font-weight:600}
+
+/* Scan-Zeile: Schalter links, Knopf rechts, nichts überlappt */
+.scanzeile{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px}
+.scan-schalter{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.scan-schalter input{appearance:none;width:44px;height:28px;min-height:28px;margin:0;border-radius:20px;border:1px solid var(--feld-line);background:var(--flaeche);position:relative;flex:none}
+.scan-schalter input::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:var(--secondary);top:3px;left:3px}
+.scan-schalter input:checked{background:var(--gr-l);border-color:var(--gr)}
+.scan-schalter input:checked::after{left:19px;background:var(--gr)}
+.scan-schalter .text{min-width:0}
+.scan-schalter .text strong{display:block;font-size:15px;font-weight:600}
+.scan-schalter .text small{display:block;font-size:12px;color:var(--secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scan-knopf{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;min-width:56%;padding:8px 18px;font-size:17px;font-weight:600;border-radius:var(--r-m);border:2px solid var(--gr);background:var(--gr-l);color:var(--akzent)}
+html[data-theme="dark"] .scan-knopf{color:#132a1e}
+.scan-knopf svg{width:22px;height:22px}
+
+.hinweis{font-size:13px;color:var(--secondary)}
+
+/* Fortschritt */
+.kacheln{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kachel{border-radius:var(--r-l);background:var(--karte);box-shadow:0 2px 10px rgba(19,42,30,.08),0 0 0 1px var(--line);padding:12px}
+.kachel small{display:block;font-size:13px;color:var(--secondary);font-weight:600}
+.kachel strong{font-size:26px;font-weight:600}
+.kachel .zusatz{font-size:12px;color:var(--secondary)}
+.kachel.wert{grid-column:1/-1;background:var(--gr);color:#fff}
+html[data-theme="dark"] .kachel.wert{color:#132a1e}
+.kachel.wert small,.kachel.wert .zusatz{color:inherit;opacity:.85}
+.ringzeile{display:flex;gap:14px;align-items:center;padding:14px}
+.ringzeile .legende{display:grid;gap:4px;font-size:14px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.gruppen{display:flex;flex-direction:column;gap:10px}
+.gruppe{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:baseline}
+.gruppe .balken{grid-column:1/-1;height:12px;border-radius:8px;background:var(--gr-t);border:1px solid var(--feld-line);overflow:hidden}
+.gruppe .balken span{display:block;height:100%;background:var(--gr)}
+.liste{display:flex;flex-direction:column}
+.zeile{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 10px;align-items:center;padding:10px 2px;border-top:1px solid var(--line)}
+.zeile strong{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.zeile small{grid-column:1;font-size:13px;color:var(--secondary)}
+.zeile .menge{font-weight:600;white-space:nowrap;color:var(--feld)}
+.zeile time{font-size:13px;color:var(--secondary)}
+
+.mockup-band{position:fixed;left:12px;bottom:12px;z-index:20;background:#1f2937;color:#fde68a;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;letter-spacing:.04em}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="kopf">
+    <button class="icon-button" id="zurueck" aria-label="Zurück"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+    <button class="icon-button" aria-label="Menü"><i data-lucide="menu" aria-hidden="true"></i><span class="wort">Menü</span></button>
+    <div class="titel"><h1 id="titel-text">Inventur</h1><small id="titel-note">Dorfladen Oberornau</small></div>
+    <button class="icon-button" id="fortschritt" aria-label="Fortschritt anzeigen"><i data-lucide="chart-column" aria-hidden="true"></i><span class="wort">Fortschritt</span></button>
+  </header>
+
+  <div class="inventur-leiste">
+    <span class="punkt" aria-hidden="true"></span>
+    <strong>Test2026</strong>
+    <small>2025 · 31.12.2026</small>
+    <select aria-label="Aktive Inventur"><option>Test2026</option><option>Ladeninventur</option></select>
+  </div>
+
+  <main class="bereich" id="erfassung">
+    <div class="suchspalte">
+      <div class="suche">
+        <label class="feld-label" for="suche">Artikel suchen</label>
+        <input id="suche" placeholder="Bezeichnung oder Barcode">
+        <div class="treffer">
+          <button type="button"><strong>Bahlsen Hazelnut Cream&amp;Choc 100g</strong><small>4017100405518</small></button>
+          <button type="button"><strong>Bahlsen Choco Moment</strong><small>4017100405525</small></button>
+          <button type="button"><strong>Bahlsen Waffeletten</strong><small>4017100405532</small></button>
+        </div>
+      </div>
+    </div>
+    <div class="erfassungsspalte">
+      <section class="karte" aria-label="Artikelerfassung">
+        <div class="artikel">
+          <h2>Bahlsen Hazelnut Cream&amp;Choc 100g</h2>
+          <span class="strichcode">Barcode 4017100405518</span>
+        </div>
+        <div class="mengen">
+          <label>Menge <span class="unit">Stück</span><input value="2563" inputmode="numeric"></label>
+          <label>Plus <span class="unit">Hinzufügen</span><input inputmode="numeric" placeholder=""></label>
+        </div>
+        <div class="aktionen">
+          <button type="button">Hinzufügen</button>
+          <button type="button" class="speichern">Speichern</button>
+        </div>
+        <div class="statuszeile"><span class="pill"><i data-lucide="check" aria-hidden="true"></i> Gespeichert</span></div>
+        <div class="preise">
+          <div class="preis"><span>EK</span><output>2,34 €</output></div>
+          <div class="preis"><span>VK</span><output>3,69 €</output></div>
+        </div>
+        <div class="scanzeile">
+          <label class="scan-schalter">
+            <input type="checkbox" role="switch">
+            <span class="text"><strong>Manuell Scan</strong><small>Automatisch · Barcode wird übernommen</small></span>
+          </label>
+          <button type="button" class="scan-knopf"><i data-lucide="scan-barcode" aria-hidden="true"></i> Barcode scannen</button>
+        </div>
+      </section>
+      <p class="hinweis">MOCKUP · frisches Design · keine echten Daten.</p>
+    </div>
+  </main>
+
+  <main class="bereich" id="fortschritt-bereich" hidden>
+    <div class="erfassungsspalte">
+      <div class="kacheln">
+        <div class="kachel"><small>Positionen erfasst</small><strong>12</strong><span class="zusatz">davon heute 5</span></div>
+        <div class="kachel"><small>Artikel erfasst</small><strong>11</strong><span class="zusatz">von 63 im Sortiment</span></div>
+        <div class="kachel"><small>Abgedeckt</small><strong>17 %</strong><span class="zusatz">11 von 63 Artikeln</span></div>
+        <div class="kachel"><small>Offen</small><strong>52</strong><span class="zusatz">Artikel ohne Position</span></div>
+        <div class="kachel wert"><small>Warenwert erfasst (EK)</small><strong>671,96 €</strong><span class="zusatz">Menge × EK je Position · Getränke 296,12 € · Backwaren 187,44 €</span></div>
+      </div>
+      <section class="karte ringzeile" aria-label="Anteil erfasster Artikel">
+        <svg width="120" height="120" viewBox="0 0 42 42" role="img" aria-label="Ring: 17 Prozent erfasst">
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--gr-t)" stroke-width="6"></circle>
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--gr)" stroke-width="6" stroke-dasharray="17 83" stroke-dashoffset="25"></circle>
+          <text x="21" y="23.5" text-anchor="middle" font-size="9" font-weight="600" fill="currentColor">17 %</text>
+        </svg>
+        <div class="legende">
+          <h2 style="font-size:16px">Wie weit ist die Inventur?</h2>
+          <span><span class="dot" style="background:var(--gr)"></span>11 erfasst</span>
+          <span><span class="dot" style="background:var(--gr-t);border:1px solid var(--feld-line)"></span>52 offen</span>
+        </div>
+      </section>
+      <section class="karte gruppen" aria-label="Warengruppen">
+        <h2 style="font-size:16px">Warengruppen · Warenwert (EK)</h2>
+        <div class="gruppe"><strong>Getränke</strong><small style="font-size:14px;color:var(--secondary)">5 / 14 Artikel · 296,12 €</small><div class="balken"><span style="width:36%"></span></div></div>
+        <div class="gruppe"><strong>Backwaren</strong><small style="font-size:14px;color:var(--secondary)">3 / 9 Artikel · 187,44 €</small><div class="balken"><span style="width:33%"></span></div></div>
+        <div class="gruppe"><strong>Molkerei</strong><small style="font-size:14px;color:var(--secondary)">2 / 8 Artikel · 118,50 €</small><div class="balken"><span style="width:25%"></span></div></div>
+        <div class="gruppe"><strong>Drogerie</strong><small style="font-size:14px;color:var(--secondary)">0 / 9 Artikel · —</small><div class="balken"><span style="width:0%"></span></div></div>
+      </section>
+      <section class="karte" aria-label="Zuletzt erfasst">
+        <h2 style="font-size:16px;margin-bottom:6px">Zuletzt erfasst</h2>
+        <div class="liste">
+          <div class="zeile"><strong>Bahlsen Hazelnut Cream&amp;Choc</strong><span class="menge">2.563 Stück</span><time>14:38</time><small>Barcode 4017100405518</small></div>
+          <div class="zeile"><strong>Wasa Sesam</strong><span class="menge">1.112 Stück</span><time>14:19</time><small>Barcode 42040217</small></div>
+          <div class="zeile"><strong>Bio-Vollmilch 3,8 % 1 l</strong><span class="menge">17 Stück</span><time>14:12</time><small>Barcode 9000000000011</small></div>
+          <div class="zeile"><strong>Bauernbrot Natursauerteig</strong><span class="menge">1.250 g</span><time>14:05</time><small>Barcode 9000000000028</small></div>
+        </div>
+      </section>
+      <p class="hinweis">MOCKUP · frisches Design · keine echten Daten.</p>
+    </div>
+  </main>
+</div>
+<span class="mockup-band">MOCKUP · Inventur Redesign</span>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  $('fortschritt').onclick = () => {
+    $('erfassung').hidden = true;
+    $('fortschritt-bereich').hidden = false;
+    $('titel-text').textContent = 'Fortschritt';
+    $('titel-note').textContent = 'Test2026';
+    if (window.lucide) window.lucide.createIcons();
+  };
+  $('zurueck').onclick = () => {
+    $('fortschritt-bereich').hidden = true;
+    $('erfassung').hidden = false;
+    $('titel-text').textContent = 'Inventur';
+    $('titel-note').textContent = 'Dorfladen Oberornau';
+    if (window.lucide) window.lucide.createIcons();
+  };
+  window.addEventListener('load', () => { if (window.lucide) window.lucide.createIcons(); });
+})();
+</script>
+</body>
+</html>
