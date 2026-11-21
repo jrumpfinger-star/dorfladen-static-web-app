@@ -12,6 +12,7 @@
 <body>
 <div class="app" id="app">
   <header class="header">
+    <button class="icon-button" id="exit-inventur" aria-label="Zurück zur vorherigen Seite" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
     <button class="icon-button" id="progress-back" aria-label="Zurück zur Erfassung" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
     <button class="icon-button" id="menu-open" aria-label="Menü öffnen" hidden><i data-lucide="menu" aria-hidden="true"></i><span>Menü</span></button>
     <div class="heading"><h1>Inventur</h1><small id="heading-note">Dorfladen</small></div>
@@ -46,10 +47,6 @@
     </section>
     <section class="capture" id="capture-fields" aria-label="Artikelerfassung">
       <div class="article"><h2 id="article-name">Welchen Artikel zählst du?</h2><small id="article-barcode">Artikel suchen oder Barcode scannen.</small></div>
-      <div class="prices">
-        <div class="price"><span>EK</span><output id="ek" aria-label="Einkaufspreis">—</output></div>
-        <div class="price"><span>VK</span><output id="vk" aria-label="Verkaufspreis">—</output></div>
-      </div>
       <div class="amounts">
         <label for="quantity">Menge <span class="unit" id="unit"></span><input id="quantity" inputmode="numeric" enterkeyhint="done" autocomplete="off" disabled></label>
         <label for="plus">Plus <span class="unit">(Hinzufügen)</span><input id="plus" inputmode="numeric" enterkeyhint="done" autocomplete="off" disabled></label>
@@ -59,6 +56,10 @@
         <button id="save" class="primary" disabled>Speichern</button>
       </div>
       <div class="status" id="status" role="status"><span id="saved-check" class="check" aria-label="Menge gespeichert" hidden><i data-lucide="check" aria-hidden="true"></i><span class="icon-fallback">OK</span></span><span id="status-text">Noch kein Artikel ausgewählt</span></div>
+      <div class="prices">
+        <div class="price"><span>EK</span><output id="ek" aria-label="Einkaufspreis">—</output></div>
+        <div class="price"><span>VK</span><output id="vk" aria-label="Verkaufspreis">—</output></div>
+      </div>
       <div class="scan-row">
         <label class="scan-mode" for="manual-scan">
           <input type="checkbox" id="manual-scan" role="switch">

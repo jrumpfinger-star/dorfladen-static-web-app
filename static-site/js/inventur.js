@@ -19,7 +19,7 @@
     inventories: [], inventoryId: null, article: null, position: null,
     loaded: false, loadError: '', busy: false, inflight: null, pendingCommit: false,
     unclear: null, dirty: false, section: 'capture', started: false,
-    progress: null, progressSeq: 0,
+    progress: null, progressSeq: 0, canExit: false,
   };
   let matches = [], after = null, hasMore = false, activeResult = -1;
   let searchSeq = 0, searchAbort = null, searchTimer = null, positionSeq = 0;
@@ -58,15 +58,28 @@
   const ignorable = e => e instanceof Unauthorized || (e && e.name === 'AbortError');
 
   // ---------- Dialoge ----------
+  // Dialoge liegen im Browserverlauf: die Android-Zurück-Taste schließt sie,
+  // statt die Seite zu verlassen. Ein eigenes history.back() wird über
+  // expectDialogPop von der Behandlung im popstate ausgenommen.
+  let dialogEntry = null, expectDialogPop = false;
   function showDialog(id, trigger) {
     dialogReturn.set(id, trigger || document.activeElement);
     $(id).showModal();
     document.body.classList.add('modal-open');
+    if (!dialogEntry) {
+      dialogEntry = id;
+      history.pushState({inventur: 'dialog', dialog: id}, '');
+    }
   }
   function closeDialog(id) {
     const dlg = $(id);
     if (dlg.open) dlg.close();
     document.body.classList.toggle('modal-open', Boolean(document.querySelector('dialog:modal')));
+    if (dialogEntry === id) {
+      dialogEntry = null;
+      expectDialogPop = true;
+      history.back();
+    }
     const previous = dialogReturn.get(id);
     if (previous && previous.isConnected && previous.getClientRects().length) previous.focus();
     else if (id === 'inventory-editor') {
@@ -135,9 +148,20 @@
   });
 
   // ---------- Start / Inventuren ----------
+  // Zurück zur aufrufenden Seite (CMS/Kiosk): über den Browserverlauf, sonst zur CMS-Seite.
+  const cameFromSameSite = () => {
+    try { return Boolean(document.referrer) && new URL(document.referrer).origin === location.origin; }
+    catch (e) { return false; }
+  };
+  $('exit-inventur').onclick = () => {
+    if (cameFromSameSite() && history.length > 1) history.back();
+    else location.assign('/cms');
+  };
   async function start() {
     $('login-screen').hidden = true;
     $('menu-open').hidden = false;
+    state.canExit = true; // Rück-Knopf immer anbieten: Verlauf zurück, sonst zur CMS-Seite
+    state.started = true;
     applySection();
     try {
       await loadInventories();
@@ -145,7 +169,6 @@
       if (!ignorable(e)) { setContextError(failureText(e)); }
       return;
     }
-    state.started = true;
     if (state.section === 'capture' && permanentResults()) runSearch();
   }
   function setContextError(text) {
@@ -700,6 +723,7 @@
     $('progress-screen').hidden = !progress;
     $('progress-open').hidden = !capture || !inventory();
     $('progress-back').hidden = !progress;
+    $('exit-inventur').hidden = progress || !state.started || !state.canExit;
   }
   function go(next) {
     closeDialog('menu');
@@ -729,11 +753,29 @@
   function leaveProgressHistory() {
     if (history.state && history.state.inventur === 'progress') history.back();
   }
-  window.addEventListener('popstate', () => {
-    if (state.section !== 'progress') return;
-    state.section = 'capture';
-    applySection();
-    showCapture();
+  window.addEventListener('popstate', e => {
+    if (expectDialogPop) { expectDialogPop = false; return; }
+    // Zurück mit offenem Dialog: Dialog schließen, Ansicht bleibt.
+    if (dialogEntry) {
+      const id = dialogEntry;
+      dialogEntry = null;
+      const dlg = $(id);
+      if (dlg.open) closeDialog(id);
+    }
+    if (e.state && e.state.inventur === 'progress') {
+      if (state.section !== 'progress') {
+        state.section = 'progress';
+        applySection();
+        $('heading-note').textContent = 'Fortschritt · ' + ((inventory() || {}).name || '');
+        loadProgress();
+      }
+      return;
+    }
+    if (state.section === 'progress') {
+      state.section = 'capture';
+      applySection();
+      showCapture();
+    }
   });
   $('go-capture').onclick = () => go('capture');
   $('go-settings').onclick = () => go('settings');

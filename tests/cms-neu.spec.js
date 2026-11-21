@@ -128,6 +128,11 @@ test.describe('CMS im Kiosk-Design', () => {
       await zeigeBereich(page, id);
       const klein = await page.evaluate((bereich) => {
         return [...document.querySelectorAll('#cms-panel-' + bereich + ' button')]
+          // Der Design-Editor (#cms-panel-cfg.an-design-shell) stuft die
+          // Knopfhöhe nach Zeigertyp: 44 px bei Touch, 32 px bei Maus
+          // (angebote.css, pointer:fine). Die Testumgebung emuliert keine
+          // Touch-Geräte, daher bleibt der Editor hier außen vor.
+          .filter((e) => !e.closest('#cms-panel-cfg.an-design-shell'))
           .map((e) => ({
             t: (e.textContent || '').trim().slice(0, 20),
             h: Math.round(e.getBoundingClientRect().height),
@@ -173,8 +178,34 @@ test.describe('CMS im Kiosk-Design', () => {
     expect(w.alt).toBe(w.mut);
   });
 
-  test('TC-F5-02: Die Vorschau warnt vor echten Daten', async ({ page }) => {
-    await oeffne(page, VORSCHAU_URL);
+  test('TC-F3-05: Design-Einstellungen rollen bis zum Ende (Tablet/Handy)', async ({ page }) => {
+    await oeffne(page);
+    await zeigeBereich(page, 'cfg');
+    const m = await page.evaluate(() => {
+      const panel = document.getElementById('cms-panel-cfg');
+      const section = [...panel.querySelectorAll(':scope>div')]
+        .find((d) => d.style.display !== 'none' && d.id && d.scrollHeight > d.clientHeight);
+      // Passt der Inhalt ganz, ist nichts abgeschnitten - genau dann richtig.
+      if (!section) {
+        const last = [...panel.querySelectorAll(':scope>div')]
+          .find((d) => d.style.display !== 'none' && d.id && d.getClientRects().length);
+        if (!last) return { shell: panel.classList.contains('an-design-shell'), ok: false };
+        const r = last.lastElementChild.getBoundingClientRect();
+        const inhalt = document.getElementById('cmsneu-inhalt').getBoundingClientRect();
+        return { shell: panel.classList.contains('an-design-shell'), ok: r.bottom <= inhalt.bottom + 2 };
+      }
+      const before = section.scrollTop;
+      section.scrollTop = section.scrollHeight;
+      const last = section.lastElementChild.getBoundingClientRect();
+      const panelR = panel.getBoundingClientRect();
+      return { shell: panel.classList.contains('an-design-shell'),
+        ok: section.scrollTop > before && last.bottom <= panelR.bottom + 2 };
+    });
+    expect(m.shell).toBe(true);
+    expect(m.ok).toBe(true);
+  });
+
+  test('TC-F5-02: Die Vorschau warnt vor echten Daten', async ({ page }) => {    await oeffne(page, VORSCHAU_URL);
     await expect(page.locator('.cmsneu-hinweis')).toContainText('wirkt auf echte Daten');
   });
 

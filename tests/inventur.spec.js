@@ -270,6 +270,9 @@ test('Bei geöffneter Tastatur bleibt der Artikel sichtbar', async ({ page }) =>
   await setup(page);
   await choose(page, 'Vollmilch');
   await page.setViewportSize({ width: 375, height: 340 });
+  // Nach dem Verkleinern bleibt die (im Breitbildmodus dauerhafte) Trefferliste
+  // als Überlagerung stehen; auf einem echten Telefon passiert das nicht.
+  await page.evaluate(() => { document.getElementById('results').hidden = true; });
   await page.locator('#quantity').click();
   await expect(page.locator('#app')).toHaveClass(/keyboard/);
   await expect(page.locator('#article-name')).toBeVisible();
@@ -295,10 +298,44 @@ test('Bei geöffneter Tastatur bleibt der Artikel sichtbar', async ({ page }) =>
   await expect(page.locator('#ek')).toBeVisible();
 });
 
+test('Menge liegt über EK/VK: Preise stehen unten als Info', async ({ page }) => {
+  await setup(page);
+  await choose(page, 'Vollmilch');
+  const m = await page.evaluate(() => {
+    const box = id => { const r = document.getElementById(id).getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom) }; };
+    return {
+      quantity: box('quantity'), save: box('save'), ek: box('ek'), vk: box('vk'),
+      scan: box('scan-open'), ih: innerHeight,
+    };
+  });
+  expect(m.quantity.bottom).toBeLessThanOrEqual(m.save.top);
+  expect(m.save.bottom).toBeLessThanOrEqual(m.ek.top + 1);
+  expect(m.ek.bottom).toBeLessThanOrEqual(m.scan.top + 1);
+  // Auf dem Handy ohne Seitenscrollen: der Warenwert-Info-Block bleibt erreichbar
+  if (m.ih < 700) expect(m.ek.bottom).toBeLessThanOrEqual(m.ih + 1);
+});
+
+test('Bei geöffneter Tastatur bleibt die Suche sichtbar und das Eingabefeld oben', async ({ page }) => {
+  await setup(page);
+  await choose(page, 'Vollmilch');
+  await page.setViewportSize({ width: 375, height: 340 });
+  await page.evaluate(() => { document.getElementById('results').hidden = true; });
+  await page.locator('#quantity').focus();
+  await expect(page.locator('#app')).toHaveClass(/keyboard/);
+  await expect(page.locator('#search')).toBeVisible();
+  await expect(page.locator('#ek')).toBeVisible();
+  const m = await page.evaluate(() => {
+    const q = document.getElementById('quantity').getBoundingClientRect();
+    return { qBottom: q.bottom, ih: innerHeight };
+  });
+  expect(m.qBottom).toBeLessThanOrEqual(m.ih - 60);
+});
+
 test('Speichern über die Schaltfläche beendet die Tastaturansicht ebenfalls', async ({ page }) => {
   await setup(page);
   await choose(page, 'Vollmilch');
   await page.setViewportSize({ width: 375, height: 340 });
+  await page.evaluate(() => { document.getElementById('results').hidden = true; });
   await page.locator('#quantity').click();
   await expect(page.locator('#app')).toHaveClass(/keyboard/);
   await page.locator('#quantity').fill('6');
@@ -741,4 +778,47 @@ test('Browser-Zurück (Android) kehrt aus dem Fortschritt zur Erfassung zurück'
   await expect(page.locator('#capture-screen')).toBeVisible();
   await expect(page.locator('#progress-screen')).toBeHidden();
   await expect(page.locator('#inventory')).toBeVisible();
+});
+
+test('Browser-Zurück (Android) schließt den Scanner-Dialog', async ({ page }) => {
+  const backend = await setup(page);
+  await page.locator('#scan-open').click();
+  await expect(page.locator('#scanner')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#scanner')).toBeHidden();
+  await expect(page.locator('#capture-screen')).toBeVisible();
+});
+
+test('Browser-Zurück (Android) schließt das Menü und den Konflikt-Dialog', async ({ page }) => {
+  const backend = await setup(page);
+  await page.locator('#menu-open').click();
+  await expect(page.locator('#menu')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#menu')).toBeHidden();
+  backend.seed(INV1, MILK, 12);
+  await choose(page, 'Vollmilch');
+  await page.locator('#plus').fill('5');
+  backend.external(INV1, MILK, 20, 'p2');
+  await page.locator('#plus').press('Tab');
+  await expect(page.locator('#conflict')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#conflict')).toBeHidden();
+  await expect(page.locator('#capture-screen')).toBeVisible();
+});
+
+test('Rück-Knopf im Header kehrt zur vorherigen Seite zurück', async ({ page }) => {
+  const backend = await setup(page);
+  await expect(page.locator('#exit-inventur')).toBeVisible();
+  await page.goto('/cms.html', { waitUntil: 'domcontentloaded' });
+  await page.goto('/inventur', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#exit-inventur')).toBeVisible();
+  await page.locator('#exit-inventur').click();
+  await expect(page).toHaveURL(/cms/);
+});
+
+test('Rück-Knopf ohne Verlauf öffnet die CMS-Seite', async ({ page }) => {
+  const backend = await setup(page);
+  await expect(page.locator('#exit-inventur')).toBeVisible();
+  await page.locator('#exit-inventur').click();
+  await expect(page).toHaveURL(/cms/);
 });

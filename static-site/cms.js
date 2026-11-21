@@ -1113,7 +1113,7 @@
     if(name==='settings' && !_mbcfgLoaded) loadMetzgerBestConfig();
     if(name==='settings' && !_gkcfgLoaded) loadGetraenkeConfig();
     if(name==='settings' && !_dxcfgLoaded) loadDraxConfig();
-    if(name==='cfg'){ cfgLoadUI(); hpCfgLoadUI(); }
+    if(name==='cfg'){ if(window.AngeboteDesign)window.AngeboteDesign.prepareCms(document.getElementById('cms-panel-cfg')); cfgLoadUI(); hpCfgLoadUI(); }
     if(name==='stats' && !_statsLoaded) statsLoad();
     if(name==='orders'){ if(!_ordersLoaded) cmsLoadOrders(); if(!window._bsCfgLoaded) cmsLoadBestellConfig(); }
     if(name==='metzger' && !window._fmCfgLoaded) cmsLoadFleischConfig();
@@ -1147,6 +1147,10 @@
       // Close Einzelflyer mobile overlay
       var mobRoot=document.getElementById('einzelflyer-mob-root');
       if(mobRoot){mobRoot.remove();return;}
+
+      // Native Dialoge (z. B. Teilen, Vorschau) ebenfalls per Zurück schließen
+      var openDlg=document.querySelector('dialog[open]');
+      if(openDlg){openDlg.close();return;}
 
       if(e.state&&e.state.cmsTab){
         cmsTab(e.state.cmsTab,true);
