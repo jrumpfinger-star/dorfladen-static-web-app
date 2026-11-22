@@ -59,7 +59,7 @@ window.AngeboteDataverse = (function () {
       } else M.applyTemplate(data);
       result.push({ id: entry[0], data: data, needs_weekly_template: !first.action_layout && kind === 'weekly',
         revision: first.action_revision,
-        restore_images: !first.action_layout, original_ids: data.items.map(function (item) { return item.id; }) });
+        restore_images: !first.action_layout || data.items.some(function (item) { return !item.image_id && (item.barcode || item.article_number); }), original_ids: data.items.map(function (item) { return item.id; }) });
     }
     return result.sort(function (a, b) { return b.data.valid_from.localeCompare(a.data.valid_from); });
   }
@@ -133,8 +133,10 @@ window.AngeboteDataverse = (function () {
   }
   async function restoreImages(data) {
     await Promise.all(data.items.filter(function (item) { return !item.image_id; }).map(async function (item) {
-      var found = await findImage(item);
-      if (found) Object.assign(item, found);
+      try {
+        var found = await findImage(item);
+        if (found) Object.assign(item, found);
+      } catch (error) { console.warn('[Angebote] Artikelbild nicht wiederhergestellt', item.name, error); }
     }));
   }
   return { actions: actions, load: load, save: save, remove: remove, productImage: productImage, findImage: findImage,

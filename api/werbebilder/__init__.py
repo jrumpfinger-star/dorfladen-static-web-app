@@ -103,6 +103,7 @@ def _load_sharepoint_urls(article_infos):
     Tries jpg, png, jpeg extensions per article."""
     token = get_graph_token()
     if not token:
+        logging.warning("[werbebilder] SharePoint lookup skipped: no Graph token")
         return []
     batch_requests = []
     id_to_artnr = {}

@@ -167,10 +167,7 @@
       + '<a class="an-btn" id="an-legacy" href="/cms.html?tab=ang">Bisherige Angebote öffnen</a>'
       + '<a class="an-btn" href="/cms.html?tab=cfg&amp;flyer=drinks">Getränkeflyer-Designstandards</a></details>';
     function filterRows() {
-      var today = new Date(M.today() + 'T12:00:00Z'), day = (today.getUTCDay() + 6) % 7;
-      today.setUTCDate(today.getUTCDate() - day + (overviewFilter === 'next' ? 7 : 0));
-      var start = today.toISOString().slice(0, 10); today.setUTCDate(today.getUTCDate() + 6);
-      var end = today.toISOString().slice(0, 10), visible = 0;
+      var range = M.weekRange(overviewFilter), start = range.from, end = range.to, visible = 0;
       root.querySelectorAll('[data-action-id]').forEach(function (row) {
         row.hidden = overviewFilter !== 'all' && (!row.dataset.validFrom || !row.dataset.validTo || row.dataset.validFrom > end || row.dataset.validTo < start);
         if (!row.hidden) visible++;

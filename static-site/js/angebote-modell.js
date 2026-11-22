@@ -268,6 +268,14 @@ window.AngeboteModel = (function () {
       + '<p class="an-muted">' + date(data.valid_from) + ' – ' + date(data.valid_to) + '</p></article>';
   }
   function today() { return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date()); }
+  // Wie im bisherigen CMS: Ab Samstag zeigt „Diese Woche“ bereits die kommende Woche (Mo–So).
+  function weekRange(filter) {
+    var d = new Date(today() + 'T12:00:00Z'), weekday = d.getUTCDay();
+    if (weekday === 6 || weekday === 0) d.setUTCDate(d.getUTCDate() + (weekday === 0 ? 1 : 2));
+    d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7 + (filter === 'next' ? 7 : 0));
+    var from = d.toISOString().slice(0, 10); d.setUTCDate(d.getUTCDate() + 6);
+    return { from: from, to: d.toISOString().slice(0, 10) };
+  }
   function blank(kind, defaults) {
     return { kind: kind, title: kind === 'drinks' ? 'Unsere Getränkeangebote' : 'Unsere Wochenangebote',
       valid_from: today(), valid_to: today(), items: [],
@@ -1732,7 +1740,7 @@ window.AngeboteModel = (function () {
     adoptWeekly: adoptWeekly, weeklyKey: weeklyKey, weeklySnapshot: weeklySnapshot,
     changeWeekly: changeWeekly,
     litres: litres, millilitres: millilitres, base: base, pack: pack, date: date,
-    today: today, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
+    today: today, weekRange: weekRange, blank: blank, item: item, request: request, json: json, el: el, applyTemplate: applyTemplate,
     ensureTargets: ensureTargets, applyTargetTemplate: applyTargetTemplate, textFor: textFor,
     render: render, renderTarget: renderTarget, paintCards: paintCards, validate: validate, quality: quality, qualityDialog: qualityDialog, dataIssues: dataIssues,
     preflight: preflight, scaleImages: scaleImages, image: image, imageFor: imageFor, registerImage: registerImage,

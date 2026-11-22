@@ -1032,3 +1032,14 @@ test('GF102: every original global design field retains its data key and reachab
   expect(state.writes).toEqual([]);
   expect(state.errors).toEqual([]);
 });
+
+test('TC-AEA-F2-02: Design-Bereich teilt Werkzeuge und Vorschau standardmaessig mit rund 40 % Vorschau', async ({ page }) => {
+  await offlineCms(page);
+  const root = await area(page, 'cfg-plakat', 'sec-plakat', '#cfg-sec-plakat');
+  const workspace = root.locator('.an-designer-workspace');
+  await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
+  const tools = await root.locator('.an-split-tools').boundingBox(), picture = await root.locator('.an-split-picture').boundingBox();
+  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  const share = mobile ? picture.height / (tools.height + picture.height) : picture.width / (tools.width + picture.width);
+  expect(share).toBeGreaterThan(.36); expect(share).toBeLessThanOrEqual(mobile ? .401 : Math.max(.401, 262 / (tools.width + picture.width)));
+});

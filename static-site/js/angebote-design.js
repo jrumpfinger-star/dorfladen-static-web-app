@@ -911,7 +911,7 @@ window.AngeboteDesign = (function () {
   function split(root, left, right) {
     if (root._splitView) return root._splitView;
     root.classList.add('an-split'); left.classList.add('an-split-tools'); right.classList.add('an-split-picture');
-    var handle = document.createElement('div'), ratio = root.classList.contains('an-designer-workspace') ? .66 : .6, dragging = false, explicitView = false;
+    var handle = document.createElement('div'), ratio = .6, dragging = false, explicitView = false;
     var viewbar = document.createElement('div');
     viewbar.className = 'an-workspace-view';
     viewbar.innerHTML = '<span class="an-workspace-context"></span><select aria-label="Arbeitsansicht">'
@@ -941,7 +941,7 @@ window.AngeboteDesign = (function () {
       if (!width) { viewButton.hidden = true; return; }
       var mobile = width < 612 && !(innerWidth >= 600 && innerHeight >= 900 && width >= 480);
       root.classList.toggle('an-split-mobile', mobile);
-      if (!explicitView) view.value = mobile && !root.classList.contains('an-designer-workspace') ? 'inputs' : 'split';
+      if (!explicitView) view.value = 'split';
       root.dataset.workspaceView = view.value;
       var global = root.classList.contains('an-designer-workspace');
       viewButton.hidden = (!mobile && !global) || !actions;

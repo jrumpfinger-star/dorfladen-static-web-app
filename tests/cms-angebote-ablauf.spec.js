@@ -1292,7 +1292,8 @@ test('TC-F66-09: Waage ist in der Aktionsliste direkt erreichbar und oeffnet ohn
   await allWeeks(page);
   const scaleButton = page.locator('[data-scale-action]').first();
   await expect(scaleButton).toBeVisible();
-  await expect(page.locator('.an-action-more [data-delete-action]').first()).toContainText('Löschen');
+  await expect(page.locator('.cms-akt-btns [data-delete-action]').first()).toBeVisible();
+  await expect(page.locator('.an-action-more').first()).toContainText('⋯');
   await scaleButton.click();
   await expect(page.locator('#wb-ueb')).toBeVisible();
   await expect(page.locator('#an-scale-prepare')).toHaveCount(0);
@@ -1428,15 +1429,10 @@ test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat 
     return stage;
   };
   if (mobile) {
+    await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
+    await expect(canvas).toBeVisible();
+    await workspaceView(workspace, 'inputs');
     await expect(canvas).toBeHidden();
-    if (process.env.DEBUG_CONSOLE) console.log('DBG-F19 ' + JSON.stringify(await modal.evaluate((el) => {
-      const dump = (sel) => { const n = el.querySelector(sel); return n ? Math.round(n.getBoundingClientRect().height) : null; };
-      const fields = el.querySelector('.an-task-fields'), tools = el.querySelector('.an-task-tools'), split = el.querySelector('.an-split-mobile');
-      return { modal: Math.round(el.getBoundingClientRect().height), split: split ? Math.round(split.getBoundingClientRect().height) : null,
-        tools: tools ? Math.round(tools.getBoundingClientRect().height) : null, fields: fields ? Math.round(fields.getBoundingClientRect().height) : null,
-        toolsKids: tools ? [...tools.children].map((c) => ({ cls: (c.className || c.tagName).slice(0, 40), h: Math.round(c.getBoundingClientRect().height) })) : null,
-        context: dump('.an-design-context'), footer: dump('.an-action-footer'), toolbar: dump('.an-toolbar') };
-    })));
     expect((await page.locator('.an-task-fields').boundingBox()).height).toBeGreaterThanOrEqual(view.height * .5);
     await workspaceView(workspace, 'picture');
     await expect(side).toBeHidden();
@@ -1520,7 +1516,7 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   await expect(tools).toBeVisible();
   const toolsBox = await tools.boundingBox();
   if (mobile) {
-    await expect(surface.locator('canvas')).toBeHidden();
+    await expect(surface.locator('canvas')).toBeVisible();
     await workspaceView(workspace, 'picture');
   }
   await expect(surface.locator('canvas')).toBeVisible();
@@ -1557,8 +1553,8 @@ for (const [surface, path] of SURFACES) {
         const stage = page.locator('.an-task-picture .an-stage:visible');
         const tools = page.locator('.an-task-tools');
         await modal.evaluate((node) => { node.scrollTop = 0; });
-        // Mobil stehen zuerst die Eingaben im Vordergrund; das Motiv ist separat erreichbar.
-        if (mobile) { await expect(stage).toBeHidden(); await expect(tools).toBeVisible(); }
+        // Mobil sind Eingaben (60 %) und Motiv (40 %) standardmäßig geteilt sichtbar; das Motiv ist zusätzlich separat erreichbar.
+        if (mobile) { await workspaceView(workspace, 'split'); await expect(stage, 'Motiv ' + kind + ' ' + target).toBeVisible(); await expect(tools).toBeVisible(); }
         const fields = await tools.boundingBox();
         const working = await page.locator('.an-task-fields').boundingBox();
         expect(working.height).toBeGreaterThanOrEqual(fields.height * .5);
@@ -1616,7 +1612,7 @@ for (const [surface, path] of SURFACES) {
     await openPreview(page, 'weekly', 1, true);
     const surfaceBox = page.locator('.an-cms-side'), workspace = page.locator('.an-cms-workspace'), canvas = page.locator('.an-weekly-surface canvas');
     const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
-    if (mobile) { await expect(canvas).toBeHidden(); await workspaceView(workspace, 'picture'); }
+    if (mobile) { await expect(canvas).toBeVisible(); await workspaceView(workspace, 'picture'); }
     await expect(canvas).toBeVisible();
     if (mobile) await workspaceView(workspace, 'inputs');
     const select = surfaceBox.locator('[data-preview-element]');
@@ -1999,7 +1995,6 @@ test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht'
   await page.locator('#an-overview').click();
   await allWeeks(page);
   state.revisions.set('AKT-ZWEI', 9);
-  await page.locator('.an-action-more > summary').click();
   await page.getByRole('button', { name: 'Aktion löschen', exact: true }).click();
   await page.getByRole('button', { name: 'Aktion löschen', exact: true }).last().click();
   await expect(page.getByRole('dialog').last()).toContainText('nicht gelöscht');
@@ -2199,3 +2194,64 @@ test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennung
   expect(state.actions.get(source.aktion_id).title).toBe(source.title);
   expect(state.errors).toEqual([]);
 });
+
+test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt, die Vorschau nimmt rund 40 % ein', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 2);
+  const workspace = page.locator('.an-cms-workspace');
+  await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
+  const tools = page.locator('.an-split-tools'), picture = page.locator('.an-split-picture');
+  await expect(tools).toBeVisible(); await expect(picture).toBeVisible();
+  const [t, p] = [await tools.boundingBox(), await picture.boundingBox()];
+  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  const share = mobile ? p.height / (t.height + p.height) : p.width / (t.width + p.width);
+  expect(share).toBeGreaterThan(mobile ? .28 : .36); expect(share).toBeLessThanOrEqual(.401);
+  if (mobile) expect(t.height).toBeGreaterThan(p.height);
+  else expect(t.width).toBeGreaterThan(p.width);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-AEA-F4-01: gespeicherte Aktion sucht fehlende Artikelbilder erneut und uebersteht Fehler einzelner Artikel', async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const result = await page.evaluate(async () => {
+    const M = window.AngeboteModel, D = window.AngeboteDataverse, layout = M.blank('weekly').layout;
+    const row = (id, extra) => Object.assign({ dl_angeboteid: id, dl_aktion_id: 'A1', dl_aktion_titel: 'Test', dl_gueltig_von: '2026-11-23',
+      dl_gueltig_bis: '2026-11-28', dl_preis: 0.99, action_kind: 'weekly', action_layout: layout }, extra);
+    const rows = [row('r1', { dl_produkt: 'Haribo Weinland 175g', dl_artikelnummer: '4001686327692', article_number: '5389173002' }),
+      row('r2', { dl_produkt: 'Cream&Choc ohne Kennung' }), row('r3', { dl_produkt: 'Mit Bild', dl_artikelnummer: '4017100405518', image_key: '4017100405518', bild_data: 'data:image/png;base64,AAAA' })];
+    const [action] = await D.actions(rows);
+    const flag = action.restore_images;
+    await D.restoreImages(action.data);
+    const done = await D.actions(rows.map((r) => Object.assign({}, r, { bild_data: 'data:image/png;base64,AAAA', image_key: r.dl_artikelnummer || 'x' })));
+    return { flag, ids: action.data.items.map((it) => it.image_id), fullFlag: done[0].restore_images };
+  });
+  expect(result.flag).toBe(true);
+  expect(result.ids[0]).toBe('cms:4001686327692');
+  expect(result.ids[1]).toBe('');
+  expect(result.ids[2]).toBe('cms:4017100405518');
+  expect(result.fullFlag).toBe(false);
+  expect(state.imageLookups.some((entry) => entry.strichcode === '4001686327692' && entry.edeka_nr === '5389173002')).toBe(true);
+  expect(state.errors).toEqual([]);
+});
+
+for (const [now, current, later] of [['2026-11-20T12:00:00Z', 'Alt', 'Neu'], ['2026-11-21T12:00:00Z', 'Neu', 'Spaeter'], ['2026-11-22T12:00:00Z', 'Neu', 'Spaeter'], ['2026-11-23T12:00:00Z', 'Neu', 'Spaeter']]) {
+  test(`TC-WO-F1-01: Diese Woche beginnt ab Samstag mit der kommenden Woche (${now.slice(0, 10)})`, async ({ page }) => {
+    const state = await setup(page);
+    [['AKT-ALT', 'Alt', '2026-11-16', '2026-11-21'], ['AKT-NEU', 'Neu', '2026-11-23', '2026-11-28'], ['AKT-SPAETER', 'Spaeter', '2026-11-30', '2026-12-05']]
+      .forEach((entry) => state.actions.set(entry[0], seededAction(...entry)));
+    await page.clock.setFixedTime(new Date(now));
+    await page.goto(BASE + '/angebote.html');
+    const list = page.locator('.an-action-list');
+    await expect(list.locator('.cms-card')).toHaveCount(1);
+    for (const [filter, shown] of [['this', current], ['next', later]]) {
+      const button = page.locator('[data-week=' + filter + ']');
+      if (!(await button.isVisible())) await page.locator('[data-filter-toggle]').click();
+      await button.click();
+      await expect(page.locator('.an-cms-overview .cms-card')).toHaveCount(1);
+      await expect(list.locator('.cms-card').first()).toContainText(shown);
+    }
+    expect(state.errors).toEqual([]);
+  });
+}

@@ -15,10 +15,8 @@ window.CMSAngebote = (function () {
     }
     function overlaps(data) {
       if (filter === 'all') return true;
-      var d = new Date(M.today() + 'T12:00:00Z'), day = (d.getUTCDay() + 6) % 7;
-      d.setUTCDate(d.getUTCDate() - day + (filter === 'next' ? 7 : 0));
-      var from = d.toISOString().slice(0, 10); d.setUTCDate(d.getUTCDate() + 6);
-      return data.valid_from <= d.toISOString().slice(0, 10) && data.valid_to >= from;
+      var range = M.weekRange(filter);
+      return data.valid_from <= range.to && data.valid_to >= range.from;
     }
     async function overview() {
       root.innerHTML = '<p role="status">Die Angebote werden geladen …</p>';
@@ -33,7 +31,9 @@ window.CMSAngebote = (function () {
       root.classList.add('an-cms-overview');
       root.classList.remove('an-filters-open');
       var selected = list.filter(function (action) { return overlaps(action.data); });
-      root.innerHTML = '<div class="an-overview-toolbar"><h2>Angebote</h2>'
+      var help = typeof window.cmsSwitchHelpTopic === 'function'
+        ? ' <span class="an-overview-help" role="button" tabindex="0" title="Hilfe anzeigen" aria-label="Hilfe anzeigen" data-help-topic="ang-help">?</span>' : '';
+      root.innerHTML = '<div class="an-overview-toolbar"><h2>Sonderangebote' + help + '</h2>'
         + '<button type="button" data-filter-toggle aria-expanded="false">Zeitraum: ' + ({ this: 'Diese Woche', next: 'Nächste Woche', all: 'Alle' })[filter] + '</button>'
         + '<div class="an-new-actions"><button class="an-primary" data-create-kind="weekly">+ Sonderaktion</button>'
         + '<button data-create-kind="drinks">+ Getränkeaktion</button></div></div>'
@@ -61,30 +61,22 @@ window.CMSAngebote = (function () {
           var toggle = card.querySelector('[data-cms-toggle]');
           toggle.removeAttribute('data-cms-toggle'); toggle.removeAttribute('role'); toggle.removeAttribute('tabindex'); toggle.removeAttribute('aria-expanded');
           summary.dataset.cmsToggle = ''; summary.setAttribute('role', 'button'); summary.tabIndex = 0; summary.setAttribute('aria-expanded', 'false');
-          var badge = document.createElement('span'); badge.className = 'an-action-kind';
-          badge.textContent = data.kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion';
-          summary.firstElementChild.prepend(badge);
-          var art = document.createElement('span'); art.className = 'an-action-art'; art.setAttribute('aria-hidden', 'true');
-          art.innerHTML = '<svg viewBox="0 0 32 40" fill="none" stroke="currentColor" stroke-width="1.5">'
-            + (data.kind === 'drinks' ? '<path d="M12 3h8v8l4 7v17a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3V18l4-7z"/><path d="M12 7h8M8 22h16v10H8"/>'
-              : '<rect x="3" y="2" width="26" height="36" rx="3"/><path d="M8 9h16M8 15h16M8 22h6v9H8zM19 22h5v9h-5z"/>') + '</svg>';
-          summary.prepend(art);
           var more = document.createElement('details'); more.className = 'an-action-more';
           var moreLabel = document.createElement('summary'); moreLabel.textContent = '⋯'; moreLabel.setAttribute('aria-label', 'Weitere Aktionsfunktionen');
           var menu = document.createElement('div'); more.append(moreLabel, menu);
-          buttons.querySelectorAll('[data-delete-action]').forEach(function (button) {
-            button.append(' Löschen'); menu.appendChild(button);
-          });
           menu.prepend(duplicate); buttons.appendChild(more);
           card.classList.add('an-overview-action');
           var state = document.createElement('span'); state.className = 'an-save-state';
-          state.textContent = ' · ' + M.savedState(data, false); card.querySelector('.cms-ang-meta').appendChild(state);
+          state.textContent = ' · ' + (data.kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion') + ' · ' + M.savedState(data, false);
+          card.querySelector('.cms-ang-meta').appendChild(state);
           return card.outerHTML;
         }).join('') + (selected.length ? '' : '<p>Keine Aktionen in diesem Zeitraum.</p>') + '</div>'
         + '<details class="an-legacy-links"><summary>Bereits gespeicherte Feature-Aktionen</summary>'
         + '<p>Die bisherigen Feature-Entwürfe und Freigaben bleiben unverändert erhalten. Neue Aktionen werden im gemeinsamen CMS-Angebotsbestand gespeichert.</p>'
         + '<button data-feature-stock>Feature-Bestand öffnen</button></details>';
       root.onclick = function (event) {
+        var helpLink = event.target.closest('[data-help-topic]');
+        if (helpLink) { window.cmsTab('help'); window.cmsSwitchHelpTopic(helpLink.dataset.helpTopic); return; }
         var b = event.target.closest('button');
         var toggle = event.target.closest('[data-cms-toggle]');
         if (!b && toggle) {
@@ -119,7 +111,7 @@ window.CMSAngebote = (function () {
         } else options.preview(action, b.dataset.scaleAction ? 'scale' : b.dataset.shareAction ? 'share' : 'preview', overview);
       };
       root.onkeydown = function (event) {
-        if (event.target.matches('[data-cms-toggle]') && (event.key === 'Enter' || event.key === ' ')) {
+        if (event.target.matches('[data-cms-toggle],[data-help-topic]') && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault(); event.target.click();
         }
       };
