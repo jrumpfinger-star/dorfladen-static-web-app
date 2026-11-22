@@ -1591,7 +1591,10 @@ window.AngeboteDesign = (function () {
       }
       function fitPad() {
         var box = zoombar.getBoundingClientRect();
-        return 16 + (box.height ? box.height + 8 : 0);
+        var pad = 16 + (box.height ? box.height + 8 : 0);
+        var bar = preview.querySelector(':scope>.an-output-bar');
+        if (bar && !bar.hidden) pad += bar.offsetHeight + 8;
+        return pad;
       }
       function step(direction) {
         var scale = currentScale(), value = null;

@@ -1339,6 +1339,7 @@
   var _offerHistories={};
   var _cfgInline={plakat:{},flyer:{}};
   var _cfgPreviewSurfaces={};
+  var _cfgSampleOv={};
   var _offerTemplateBefore={},_offerPalettePickers={};
   function offerEffectiveColors(kind,config){
     return window.AngeboteDesign.cmsEffectiveColors(config,kind);
@@ -2291,7 +2292,15 @@
     if(!surface){
       var host=document.createElement('div');host.dataset.cfgInline=target;container.replaceChildren(host);
       surface=window.AngeboteVorschauEditor.mount(host,{
-        toolsHost:root.querySelector('.an-designer-direct'),begin:changes.begin,end:changes.end,
+        toolsHost:root.querySelector('.an-designer-direct'),begin:changes.begin,
+        end:function(){
+          var sample=_cfgSampleOv[target];
+          if(sample&&sample.dirty&&sample.item&&sample.ov){
+            sample.dirty=false;
+            (target==='plakat'?plakatArtOverrideSave:flyerArtOverrideSave)(sample.item,sample.ov);
+          }
+          changes.end();
+        },
         select:function(element){root._designerUi.select(element.ovKey==='name'?2:root.querySelectorAll('[data-designer-tab]').length-1);},
         change:function(element,delta){
           var prefix=element.ovKey,values=_cfgInline[target];
@@ -2299,6 +2308,18 @@
           values[prefix+'Dy']=Math.max(-1500,Math.min(1500,(values[prefix+'Dy']||0)+(delta.dy||0)));
           values[prefix+'Scale']=Math.max(20,Math.min(200,(values[prefix+'Scale']||100)*(delta.scale||1)));
           values[prefix+'Rot']=(((values[prefix+'Rot']||0)+(delta.rotation||0)*element.rotationSign+540)%360)-180;
+          var sample=_cfgSampleOv[target];
+          if(sample&&sample.ov&&sample.item){
+            var ov=sample.ov;
+            ov[prefix+'Dx']=Math.max(-1000,Math.min(1000,(ov[prefix+'Dx']||0)+(delta.dx||0)));
+            ov[prefix+'Dy']=Math.max(-1500,Math.min(1500,(ov[prefix+'Dy']||0)+(delta.dy||0)));
+            ov[prefix+'Scale']=Math.max(20,Math.min(200,(ov[prefix+'Scale']||100)*(delta.scale||1)));
+            ov[prefix+'Rot']=(((ov[prefix+'Rot']||0)+(delta.rotation||0)*element.rotationSign+540)%360)-180;
+            var store=target==='plakat'?plakatArtOverridesGetAll():flyerArtOverridesGetAll();
+            var key=_flyerArtKey(sample.item);
+            if(key)store[key]=ov;
+            sample.dirty=true;
+          }
           changes.record();
           _scheduleAutoPreview('cfg-inline-'+target,function(){cfgLivePreview(target);},30);
         }
@@ -2310,6 +2331,8 @@
     if(surface.host.parentNode!==container)container.replaceChildren(surface.host);
     var ovItem=arguments[3],ovGet=target==='plakat'?plakatArtOverrideGet:flyerArtOverrideGet;
     var hasOv=!!(ovItem&&ovItem.produkt&&ovGet&&ovGet(ovItem));
+    var sample=_cfgSampleOv[target]||(_cfgSampleOv[target]={dirty:false});
+    sample.item=ovItem||null;sample.ov=hasOv?ovGet(ovItem):null;
     var reset=container.querySelector('[data-muster-reset]');
     if(!reset){
       reset=document.createElement('button');reset.type='button';reset.className='cms-btn cms-btn-sm cms-btn-gray';
@@ -2317,7 +2340,6 @@
       reset.textContent='Eigene Anpassungen der Musterkachel zur\u00fccksetzen';
       reset.title='L\u00f6scht Position, Gr\u00f6\u00dfe, Drehung und eigenes Bild, die fr\u00fcher f\u00fcr genau diese Kachel gespeichert wurden. Danach folgt die Kachel wieder der globalen Gestaltung.';
       reset.onclick=function(){
-        if(!window.confirm('Eigene Anpassungen dieser Kachel (Position, Gr\u00f6\u00dfe, Drehung, eigenes Bild) zur\u00fccksetzen?'))return;
         (target==='plakat'?plakatArtOverrideDelete:flyerArtOverrideDelete)(ovItem);
         toast('Kachel-Anpassungen zur\u00fcckgesetzt','success');
         cfgLivePreview(target);
@@ -6236,7 +6258,7 @@
             +'</div>';
         }
         var _flyerEdCss='@page{margin:0;size:A4 portrait}'
-          +'@media print{.no-print{display:none!important}.flyer-page{page-break-after:always;page-break-inside:avoid}}'
+          +'@media print{.no-print{display:none!important}.flyer-page{page-break-after:always;page-break-inside:avoid;margin:0 auto!important;width:100%!important;max-width:100%!important;box-shadow:none!important}}'
           +'.fe-root{margin:0;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif;background:#f5f5f5}'
           +'.toolbar{position:sticky;top:0;background:#fff;padding:12px 24px;border-bottom:1px solid #e0e0e0;display:flex;gap:12px;z-index:10;align-items:center;flex-wrap:wrap}'
           +'.toolbar button{padding:8px 20px;border-radius:8px;border:none;font-weight:600;cursor:pointer;font-size:14px}'
@@ -6609,13 +6631,44 @@
               return;
             }
             ev.preventDefault();
-            if(act==='print-all'){if(isMobile){printOne(0);}else{
-              // Druck in HD: die versteckten Druckbilder zuerst durch die 3x-Fassung ersetzen.
+            if(act==='print-all'){
+              /* Alle Flyer nacheinander als HD-Bild erzeugen und je eines pro A4-Seite drucken
+                 (mobil wie desktop über ein Druck-Overlay im Editor-Fenster). */
               Promise.all(items.map(function(_,i){return hdFlyerUrl(i);})).then(function(urls){
-                urls.forEach(function(u,i){var pi=doc.getElementById('fimg-print-'+i);if(pi)pi.src=u;});
-                return new Promise(function(r){setTimeout(r,300);});
-              }).then(function(){try{win.focus();win.print();}catch(e){}});
-            }}
+                if(!isMobile){
+                  urls.forEach(function(u,i){var pi=doc.getElementById('fimg-print-'+i);if(pi)pi.src=u;});
+                  return new Promise(function(r){setTimeout(r,300);}).then(function(){try{win.focus();win.print();}catch(e){}});
+                }
+                var oldPo=document.getElementById('_flyPrintOverlay');if(oldPo)oldPo.remove();
+                if(!document.getElementById('_flyPrintCSS')){
+                  var pCss=document.createElement('style');pCss.id='_flyPrintCSS';
+                  pCss.textContent='@media print{body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay .fly-print-page{page-break-after:always;page-break-inside:avoid;width:100%;margin:0}#_flyPrintOverlay .fly-print-page:last-child{page-break-after:auto}#_flyPrintOverlay img{width:100%;height:auto;display:block}}';
+                  document.head.appendChild(pCss);
+                }
+                var po=document.createElement('div');
+                po.id='_flyPrintOverlay';
+                po.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:100000;background:#fff;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px';
+                urls.forEach(function(u){
+                  var pg=document.createElement('div');pg.className='fly-print-page';
+                  var pImg=document.createElement('img');pImg.src=u;pg.appendChild(pImg);po.appendChild(pg);
+                });
+                var btnRow=document.createElement('div');
+                btnRow.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:16px 0';
+                var printBtn=document.createElement('button');
+                printBtn.textContent='\uD83D\uDDA8\uFE0F Alle '+urls.length+' Flyer drucken';
+                printBtn.style.cssText='padding:12px 32px;font-size:16px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer';
+                printBtn.onclick=function(){
+                  btnRow.style.display='none';
+                  setTimeout(function(){window.print();btnRow.style.display='';},100);
+                };
+                var backBtn=document.createElement('button');
+                backBtn.textContent='Zur\u00fcck';
+                backBtn.style.cssText='padding:12px 24px;font-size:16px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer';
+                backBtn.onclick=function(){po.remove();};
+                btnRow.appendChild(printBtn);btnRow.appendChild(backBtn);po.appendChild(btnRow);
+                document.body.appendChild(po);
+              });
+            }
             else if(act==='close'){closeEditor();}
             else if(act==='print'){printOne(parseInt(t.getAttribute('data-idx'),10)||0);}
             else if(act==='art-save'){

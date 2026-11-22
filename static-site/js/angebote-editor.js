@@ -61,6 +61,8 @@
     if (outputTarget) outputTarget.value = designTarget;
     var batch = root.querySelector('[data-cms-singles]');
     if (batch) batch.hidden = designTarget !== 'single';
+    var printAll = root.querySelector('[data-cms-print-all]');
+    if (printAll) printAll.hidden = designTarget !== 'single' || data.items.length < 2;
     var allPages = root.querySelector('[data-cms-all-pages]');
     if (allPages) allPages.hidden = designTarget !== 'sheet';
     syncDesignContext();
@@ -1055,6 +1057,7 @@
       + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option></select></label>'
       + '<div class="an-output-actions"><button type="button" class="an-primary" data-cms-print>Drucken / PDF</button>'
       + '<button type="button" data-cms-download>Als PNG speichern</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
+      + '<button type="button" data-cms-print-all hidden title="Druckt jeden Einzelflyer auf einer eigenen A4-Seite">Alle Einzelflyer drucken</button>'
       + '<button type="button" data-cms-all-pages>Alle Seiten als PNG</button><button type="button" data-cms-scale title="Einzelartikel im Wechsel auf die Waage">⚖ Waage</button></div>'
       + '<details class="an-output-more"><summary>Mehr</summary><div class="an-output-actions">'
       + (!cmsAction ? '<button type="button" data-output-publish>Für Homepage veröffentlichen</button>' : '') + '</div></details>'
@@ -1066,6 +1069,9 @@
     bar.querySelector('[data-cms-download]').onclick = function () { run(function () { return exportOutput('png'); }); };
     bar.querySelector('[data-cms-all-pages]').onclick = function () { run(function () { return exportOutput('png', null, true); }); };
     bar.querySelector('[data-cms-print]').onclick = function () { run(function () { return exportOutput('print'); }); };
+    bar.querySelector('[data-cms-print-all]').onclick = function () {
+      run(function () { return exportOutput('print', data.items.map(function (item) { return item.id; })); });
+    };
     bar.querySelector('[data-cms-singles]').onclick = choosePrintArticles;
     bar.querySelector('[data-cms-scale]').onclick = function () { run(scale); };
     var publishButton = bar.querySelector('[data-output-publish]');
@@ -1093,7 +1099,14 @@
     dlg.querySelector('[data-batch-none]').onclick = function () { dlg.querySelectorAll('input').forEach(function (box) { box.checked = false; }); update(); };
     dlg.querySelector('[data-batch-cancel]').onclick = close;
     dlg.oncancel = function (event) { event.preventDefault(); close(); };
-    dlg.querySelector('form').onsubmit = function (event) { event.preventDefault(); var chosen = ids(); if (!chosen.length) return; close(); run(function () { return exportOutput('print', chosen); }); };
+    dlg.querySelector('form').onsubmit = function (event) {
+      event.preventDefault();
+      var chosen = ids();
+      if (!chosen.length) return;
+      if (chosen.length >= data.items.length) chosen = data.items.map(function (item) { return item.id; });
+      close();
+      run(function () { return exportOutput('print', chosen); });
+    };
     document.body.appendChild(dlg); dlg.showModal(); update();
   }
   async function exportOutput(method, itemIds, allPages) {

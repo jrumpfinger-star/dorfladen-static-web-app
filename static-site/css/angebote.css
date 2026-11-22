@@ -1584,9 +1584,20 @@ body.an-body{margin:0;background:#f7f5ed}
   .an-design-context>[data-action-preset]{min-height:44px;flex:1 1 160px}
   [data-designer] .an-designer-settings label.an-field>select,.an-object-dialog .an-object-grid select{height:44px;min-height:44px!important;padding-block:4px}
 }
+/* Nur der eigenständige Editor und der CMS-Aktionseditor im Split auf dem Handy:
+   Gestaltung oben, Vorschau als unterer Anteil (rund 34 %). Der Ausgabe-Tab
+   überschreibt das weiter unten mit voller Vorschauhöhe. */
 .an-mobile-views.an-split-mobile.an-split:not(.an-designer-workspace)[data-workspace-view=split]{grid-template-rows:minmax(0,1fr) minmax(120px,34%)!important}
 .an-mobile-views.an-split-mobile.an-split:not(.an-designer-workspace)[data-workspace-view=split]>.an-split-tools{grid-column:1!important;grid-row:1!important}
 .an-mobile-views.an-split-mobile.an-split:not(.an-designer-workspace)[data-workspace-view=split]>.an-split-picture{grid-column:1!important;grid-row:2!important}
+/* CMS-Aktionseditor auf dem Handy: die Flyervorschau braucht eine nutzbare Höhe, sonst landet sie
+   eingeklemmt unter dem Werkzeugbereich außerhalb des sichtbaren Dialogs (leere Vorschaufläche). */
+/* CMS-Aktionseditor auf dem Handy: im Ausgabe-Tab ist das Werkzeugfeld leer – die volle
+   Höhe gehört der Vorschau, sonst wird der Flyer auf eine Miniatur eingeklemmt. */
+.an-cms-phone .an-cms-workspace.an-mobile-views[data-an-tab=output].an-split-mobile.an-split{grid-template-rows:minmax(0,1fr)!important}
+.an-cms-phone .an-cms-workspace.an-mobile-views[data-an-tab=output].an-split-mobile.an-split>.an-split-picture{grid-row:1!important;grid-column:1!important}
+.an-cms-phone .an-cms-workspace.an-mobile-views.an-split-mobile.an-split>.an-split-tools{grid-row:1!important;grid-column:1!important}
+.an-cms-phone .an-cms-workspace.an-mobile-views.an-split-mobile.an-split>.an-split-picture{grid-row:2!important;grid-column:1!important}
 .an-share{width:min(94vw,560px)}
 .an-share-pages{display:flex;gap:8px;justify-content:center;overflow:auto;max-height:48dvh;margin:8px 0}
 .an-share-pages img{max-width:100%;max-height:46dvh;border:1px solid var(--an-line,#d5dfd6);border-radius:8px}
