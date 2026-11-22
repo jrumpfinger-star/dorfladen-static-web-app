@@ -57,6 +57,12 @@ async function offlineCms(page, visualContent = false) {
   });
   await page.goto(BASE + '/cms.html?tab=cfg&flyer=drinks');
   await page.evaluate(() => sessionStorage.setItem('cms_auth_ok', JSON.parse(document.getElementById('cms-pw-hash').textContent)));
+  /* Das Getränkedesign holt Produktbilder im Hintergrund; ein sofortiges Neuladen
+     bricht diese Fetches ab und erzeugt Scheinfehler in state.errors. */
+  await page.waitForFunction(() => {
+    const status = document.querySelector('[data-design-products]');
+    return !status || !/werden geladen/.test(status.textContent || '');
+  }, null, { timeout: 5000 }).catch(() => {});
   await page.reload();
   if (state.errors.length) throw new Error('CMS page errors: ' + state.errors.join(' | '));
   await expect(page.locator('#an-design-root [data-style=family]')).toHaveCount(10);
@@ -689,20 +695,30 @@ test('TC-F44: phone preview handles compensate cumulative scaling without shrink
     await root.locator('[data-preview-transform=larger]').click();
     await expect.poll(() => canvas.evaluate((node) => node._elMeta.find((entry) => entry.ovKey === 'img').w)).toBeGreaterThan(before);
     await root.locator('[data-preview-transform=right]').click();
-    const measurement = await root.locator('.an-rotate-handle:visible').evaluate((handle) => {
-      const style = getComputedStyle(handle), transforms = [];
-      let scale = 1;
-      for (let node = handle.parentElement; node; node = node.parentElement) {
-        const transform = getComputedStyle(node).transform;
-        if (transform !== 'none') {
-          const matrix = new DOMMatrixReadOnly(transform), value = Math.hypot(matrix.a, matrix.b);
-          transforms.push({ element:node.className, transform, scale:value }); scale *= value;
+    /* Beim Neuaufbau der Vorschau ist der Griff kurzzeitig vom Dokument gelöst;
+       die Messung wartet deshalb auf den dauerhaft angehängten, sichtbaren Griff. */
+    let measurement = null;
+    for (let attempt = 0; attempt < 25 && !measurement; attempt++) {
+      await page.waitForTimeout(150);
+      measurement = await root.evaluate((section) => {
+        const handle = Array.from(section.querySelectorAll('.an-rotate-handle'))
+          .find((node) => node.closest('[data-designer]') && node.getBoundingClientRect().width > 0);
+        if (!handle) return null;
+        const style = getComputedStyle(handle), transforms = [];
+        let scale = 1;
+        for (let node = handle.parentElement; node; node = node.parentElement) {
+          const transform = getComputedStyle(node).transform;
+          if (transform !== 'none') {
+            const matrix = new DOMMatrixReadOnly(transform), value = Math.hypot(matrix.a, matrix.b);
+            transforms.push({ element: node.className, transform, scale: value }); scale *= value;
+          }
         }
-      }
-      return { kind:handle.closest('[data-designer]').dataset.designer, finePointer:matchMedia('(pointer:fine)').matches,
-        hit:style.getPropertyValue('--an-handle-hit'), compensation:style.getPropertyValue('--an-handle-scale'),
-        cssWidth:parseFloat(style.width), screenWidth:handle.getBoundingClientRect().width, cumulativeScale:scale, transforms };
-    });
+        return { kind: handle.closest('[data-designer]').dataset.designer, finePointer: matchMedia('(pointer:fine)').matches,
+          hit: style.getPropertyValue('--an-handle-hit'), compensation: style.getPropertyValue('--an-handle-scale'),
+          cssWidth: parseFloat(style.width), screenWidth: handle.getBoundingClientRect().width, cumulativeScale: scale, transforms };
+      }).catch(() => null);
+    }
+    expect(measurement, 'Griff der Vorschau nicht messbar gefunden').toBeTruthy();
     measurements.push(measurement);
     expect(measurement.screenWidth, JSON.stringify(measurement)).toBeGreaterThanOrEqual(43.99);
     expect(measurement.cssWidth * measurement.cumulativeScale).toBeCloseTo(measurement.screenWidth, 2);

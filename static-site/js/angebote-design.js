@@ -940,7 +940,12 @@ window.AngeboteDesign = (function () {
       var width = root.clientWidth;
       if (!width) { viewButton.hidden = true; return; }
       var mobile = width < 612 && !(innerWidth >= 600 && innerHeight >= 900 && width >= 480);
-      root.classList.toggle('an-split-mobile', mobile);
+      /* Sehr flache Fenster (z. B. 686×432): das gestapelte Layout braucht für
+         Werkzeuge, Vorschau und Speichern mehr Höhe, als vorhanden ist – seitlich
+         teilen bleibt hier bedienbar, während untereinander alles geklemmt wäre. */
+      var shallow = width >= 480 && innerHeight < 480 && width / innerHeight > 1.4;
+      root.classList.toggle('an-split-mobile', mobile && !shallow);
+      root.classList.toggle('an-split-shallow', shallow);
       if (!explicitView) view.value = 'split';
       root.dataset.workspaceView = view.value;
       var global = root.classList.contains('an-designer-workspace');

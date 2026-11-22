@@ -881,7 +881,13 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-object-grid input[type=number]{width:88px!important}
 .an-object-grid input[type=color]{width:44px!important;height:44px!important;padding:7px 3px!important}
 .an-object-grid>[hidden]{display:none!important}
-.an-split .an-designer-body,.an-task-editor .an-task-fields{min-height:0}
+.an-task-editor .an-task-fields{min-height:0}
+/* Flache Ansichten (z. B. 686×432): die Einstellkarte behält einen bedienbaren
+   Körper (intern scrollend) und klebt den Speichern-Block an den sichtbaren
+   Kartenboden, statt ihn unter den Falz rutschen zu lassen. */
+.an-split .an-designer-body{min-height:60px}
+.an-split>.an-designer-settings{overflow:auto}
+.an-split>.an-designer-settings>.an-designer-save{position:sticky;bottom:0;z-index:2}
 .an-designer-tool-select,.an-designer-scope,.an-workspace-picture-status{display:none}
 .an-design-location{display:flex;flex:1;min-width:0;margin:0}
 .an-workspace-views[hidden]{display:none!important}
