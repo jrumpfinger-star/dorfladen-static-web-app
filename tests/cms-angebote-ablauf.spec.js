@@ -460,6 +460,7 @@ test('TC-F18-10: Gestaltung direkt nach dem Erfassen mehrfach speichern ohne Kon
   await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dlg).toHaveCount(0);
+  await toDesign(page);
   for (let i = 0; i < 2; i++) {
     await page.getByRole('button', { name: 'Gestaltung speichern', exact: true }).click();
     await expect(page.locator('#an-root')).toHaveAttribute('aria-busy', 'false');
@@ -749,7 +750,7 @@ test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelauf
   expect(state.errors).toEqual([]);
 });
 
-async function openPreview(page, kind, count, withImage, density) {
+async function openPreview(page, kind, count, withImage, density, stayOnOutput) {
   const dlg = await create(page, kind), rows = dlg.locator('.cms-ang-row');
   if (density) await dlg.locator('[data-density]').selectOption(String(density));
   while (await rows.count() < count) {
@@ -772,6 +773,8 @@ async function openPreview(page, kind, count, withImage, density) {
   }
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dlg).toHaveCount(0);
+  /* Der Editor öffnet im Standardbereich Ausgabe; die meisten Tests prüfen die Gestaltung. */
+  if (!stayOnOutput) await toDesign(page);
 }
 const middle = async (locator) => { const b = await locator.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
 async function drag(page, from, to) {
@@ -800,11 +803,17 @@ async function workspaceView(root, mode) {
   if (!(await select.isVisible())) await toggle.click();
   await select.selectOption(mode);
 }
+/* Ausgabe ist der Standardbereich; Gestaltungsprüfungen schalten vorher um. */
+async function toDesign(page) {
+  const root = page.locator('#an-root');
+  await selectArea(root, 'design');
+}
 
 test('TC-F65-03: Aktion laedt benannten Bereichsstandard bestaetigt und behaelt fremde Ziele', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
+  await toDesign(page);
   const root = page.locator('#an-root');
   const standard = await page.evaluate(() => {
     const M = window.AngeboteModel, layout = M.blank('drinks').layout;
@@ -1066,6 +1075,7 @@ test('TC-F19-01: Elemente direkt verschieben, vergrößern und frei drehen', { t
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
+  await toDesign(page);
   const stage = page.locator('#an-stage'), selected = page.locator('#an-hit-layer .an-selected'), workspace = page.locator('.an-cms-workspace');
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
   // Mobil sind Eingaben und Motiv getrennte Arbeitsansichten; verborgene Felder sind weiterhin lesbar.
@@ -1418,6 +1428,7 @@ test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat 
   await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
+  await toDesign(page);
   const modal = page.locator('.an-cms-preview-modal'), canvas = page.locator('.an-cms-canvas'), side = page.locator('.an-cms-side');
   const workspace = page.locator('.an-cms-workspace'), view = page.viewportSize(), dialogBox = await modal.boundingBox();
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
@@ -1469,6 +1480,7 @@ test('TC-F19-03/TC-F39-04: Artikel, Farbe und Undo/Redo in der Vorschau bearbeit
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
+  await toDesign(page);
   const undo = page.locator('.an-compact-actions [data-history=undo]'), redo = page.locator('.an-compact-actions [data-history=redo]');
   await expect(undo).toBeVisible(); await expect(redo).toBeVisible();
   await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
@@ -1510,6 +1522,7 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'weekly', 1);
+  await toDesign(page);
   const surface = page.locator('.an-weekly-surface'), workspace = page.locator('.an-cms-workspace');
   const tools = page.locator('.an-cms-side .an-direct-tools');
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
@@ -1544,6 +1557,7 @@ for (const [surface, path] of SURFACES) {
     await openSurface(page, path);
     for (const kind of ['weekly', 'drinks']) {
       await openPreview(page, kind, 2);
+      await toDesign(page);
       const modal = page.locator('.an-cms-preview-modal'), workspace = page.locator('.an-cms-workspace');
       const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
       const writes = state.writes.length;
@@ -2198,7 +2212,10 @@ test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennung
 test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt, die Vorschau nimmt rund 40 % ein', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
-  await openPreview(page, 'weekly', 2);
+  await openPreview(page, 'weekly', 2, false, null, true);
+  /* Ausgabe ist Standard und erster Bereich; der Test prüft die geteilte Gestaltung. */
+  await expect(page.locator('.an-main-steps [data-action-area=output]')).toHaveAttribute('aria-pressed', 'true');
+  await selectArea(page.locator('#an-root'), 'design');
   const workspace = page.locator('.an-cms-workspace');
   await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
   const tools = page.locator('.an-split-tools'), picture = page.locator('.an-split-picture');

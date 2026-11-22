@@ -2308,6 +2308,22 @@
       _cfgPreviewSurfaces[target]=surface;
     }
     if(surface.host.parentNode!==container)container.replaceChildren(surface.host);
+    var ovItem=arguments[3],ovGet=target==='plakat'?plakatArtOverrideGet:flyerArtOverrideGet;
+    var hasOv=!!(ovItem&&ovItem.produkt&&ovGet&&ovGet(ovItem));
+    var reset=container.querySelector('[data-muster-reset]');
+    if(!reset){
+      reset=document.createElement('button');reset.type='button';reset.className='cms-btn cms-btn-sm cms-btn-gray';
+      reset.dataset.musterReset='';reset.style.cssText='display:block;margin:0 0 6px';
+      reset.textContent='Eigene Anpassungen der Musterkachel zur\u00fccksetzen';
+      reset.title='L\u00f6scht Position, Gr\u00f6\u00dfe, Drehung und eigenes Bild, die fr\u00fcher f\u00fcr genau diese Kachel gespeichert wurden. Danach folgt die Kachel wieder der globalen Gestaltung.';
+      reset.onclick=function(){
+        if(!window.confirm('Eigene Anpassungen dieser Kachel (Position, Gr\u00f6\u00dfe, Drehung, eigenes Bild) zur\u00fccksetzen?'))return;
+        (target==='plakat'?plakatArtOverrideDelete:flyerArtOverrideDelete)(ovItem);
+        toast('Kachel-Anpassungen zur\u00fcckgesetzt','success');
+        cfgLivePreview(target);
+      };
+    }
+    container.prepend(reset);reset.hidden=!hasOv;
     var magazine=/^modern-mag/.test(cfgReadUI()[target+'Template']),values=_cfgInline[target];
     var elements=(canvas._elMeta||[]).filter(function(element){
       return (element.ovKey==='img'||element.ovKey==='price'||element.ovKey==='name'
@@ -2349,7 +2365,7 @@
         }).then(function(canvas){
           if(!canvas)return;
           if(gen!==_livePreviewGen[target])return;
-          cfgShowOfferPreview(target,canvas,data.items[0].key);
+          cfgShowOfferPreview(target,canvas,data.items[0].key,data.items[0]);
         }).catch(function(error){
           console.error('Einzelflyer-Vorschau konnte nicht geladen werden',error);
           if(gen===_livePreviewGen[target])container.innerHTML='<span role="alert" style="font-size:var(--schrift-klein);color:var(--red)">Einzelflyer-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';
@@ -2357,7 +2373,7 @@
       }else{
         generateAngebotPlakat(data,function(canvas){
           if(!canvas||gen!==_livePreviewGen[target])return;
-          cfgShowOfferPreview(target,canvas,data.items[0].key);
+          cfgShowOfferPreview(target,canvas,data.items[0].key,data.items[0]);
         },cfg,{returnCanvas:true}).catch(function(error){
           console.error('Plakat-Vorschau konnte nicht geladen werden',error);
           if(gen===_livePreviewGen[target])container.innerHTML='<span role="alert">Plakat-Vorschau konnte nicht geladen werden. Bitte erneut aktualisieren.</span>';

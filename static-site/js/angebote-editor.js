@@ -510,7 +510,7 @@
   function cmsTabs() {
     var tabs = [['element', 'Element'], ['article', 'Artikel'], ['design', 'Vorlage']]
       .concat(weeklyTarget() ? [['marker', 'Marker']] : []).concat([['view', 'Ansicht'], ['output', 'Ausgabe']]);
-    if (!tabs.some(function (tab) { return tab[0] === cmsTab; })) cmsTab = 'element';
+    if (!tabs.some(function (tab) { return tab[0] === cmsTab; })) cmsTab = 'output';
     var wanted = tabs.map(function (tab) { return tab[0]; }).join();
     if (cmsTabbar.dataset.tabs !== wanted) {
       cmsTabbar.dataset.tabs = wanted;
@@ -872,7 +872,7 @@
       cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
       cmsDialog.addEventListener('cancel', function (event) { event.preventDefault(); run(closeCmsPreview); });
       cmsDialog.showModal();
-      cmsTab = mode === 'output' ? 'output' : cmsSession && cmsSession.state ? cmsSession.state.cmsTab : 'element'; cmsNarrow = null;
+      cmsTab = mode === 'preview' || mode === 'output' ? 'output' : (cmsSession && cmsSession.state ? cmsSession.state.cmsTab : 'element'); cmsNarrow = null;
       if (window.ResizeObserver) {
         cmsObserver = new ResizeObserver(function () {
           if (!cmsDialog || !cmsPanel || cmsNarrow === (cmsDialog.clientWidth < 1000)) return;
@@ -999,7 +999,7 @@
     $('an-overview').onclick = function () { run(closeCmsPreview); };
     {
       var area = document.createElement('select'); area.className = 'an-workspace-area'; area.setAttribute('aria-label', 'Aktionsbereich');
-      area.innerHTML = (cmsSession ? '<option value="articles">Artikel / Bilder</option>' : '') + '<option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
+      area.innerHTML = (cmsSession ? '<option value="articles">Artikel / Bilder</option>' : '') + '<option value="output">Ausgabe</option><option value="design">Gestaltung</option>';
       area.value = cmsTab === 'output' ? 'output' : 'design';
       area.onchange = function () {
         if (area.value === 'articles') run(closeCmsPreview);
