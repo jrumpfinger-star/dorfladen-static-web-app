@@ -5847,7 +5847,7 @@
         var oldPo=document.getElementById('_pcePrintOverlay');if(oldPo)oldPo.remove();
         if(!document.getElementById('_pcePrintCSS')){
           var pCss=document.createElement('style');pCss.id='_pcePrintCSS';
-          pCss.textContent='@media print{body>*:not(#_pcePrintOverlay){display:none!important}#_pcePrintOverlay{position:static!important;padding:0!important}#_pcePrintOverlay button{display:none!important}#_pcePrintOverlay img{max-width:100%;height:auto}}';
+          pCss.textContent='@media print{html,body{height:auto!important;max-height:none!important;overflow:visible!important;display:block!important}body>*:not(#_pcePrintOverlay){display:none!important}#_pcePrintOverlay{position:static!important;padding:0!important}#_pcePrintOverlay button{display:none!important}#_pcePrintOverlay img{max-width:100%;height:auto}}';
           document.head.appendChild(pCss);
         }
         var po=document.createElement('div');po.id='_pcePrintOverlay';
@@ -5888,7 +5888,7 @@
         var oldPo=document.getElementById('_printOverlay');if(oldPo)oldPo.remove();
         if(!document.getElementById('_printCSS')){
           var pCss=document.createElement('style');pCss.id='_printCSS';
-          pCss.textContent='@media print{body>*:not(#_printOverlay){display:none!important}#_printOverlay{position:static!important;padding:0!important}#_printOverlay button{display:none!important}#_printOverlay img{max-width:100%;height:auto}}';
+          pCss.textContent='@media print{html,body{height:auto!important;max-height:none!important;overflow:visible!important;display:block!important}body>*:not(#_printOverlay){display:none!important}#_printOverlay{position:static!important;padding:0!important}#_printOverlay button{display:none!important}#_printOverlay img{max-width:100%;height:auto}}';
           document.head.appendChild(pCss);
         }
         var po=document.createElement('div');po.id='_printOverlay';
@@ -6422,7 +6422,7 @@
               // Inject print-only CSS if not already present
               if(!document.getElementById('_flyPrintCSS')){
                 var pCss=document.createElement('style');pCss.id='_flyPrintCSS';
-                pCss.textContent='@media print{body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay img{max-width:100%;height:auto}}';
+                pCss.textContent='@media print{html,body{height:auto!important;max-height:none!important;overflow:visible!important;display:block!important}body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay img{max-width:100%;height:auto}}';
                 document.head.appendChild(pCss);
               }
               var po=document.createElement('div');
@@ -6459,7 +6459,7 @@
                 if(oldPo2)oldPo2.remove();
                 if(!doc.getElementById('_flyPrintCSS')){
                   var pCss2=doc.createElement('style');pCss2.id='_flyPrintCSS';
-                  pCss2.textContent='@media print{body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay img{max-width:100%;height:auto}}';
+                  pCss2.textContent='@media print{html,body{height:auto!important;max-height:none!important;overflow:visible!important;display:block!important}body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay img{max-width:100%;height:auto}}';
                   doc.head.appendChild(pCss2);
                 }
                 var po2=doc.createElement('div');
@@ -6642,7 +6642,7 @@
                 var oldPo=document.getElementById('_flyPrintOverlay');if(oldPo)oldPo.remove();
                 if(!document.getElementById('_flyPrintCSS')){
                   var pCss=document.createElement('style');pCss.id='_flyPrintCSS';
-                  pCss.textContent='@media print{body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay .fly-print-page{page-break-after:always;page-break-inside:avoid;width:100%;margin:0}#_flyPrintOverlay .fly-print-page:last-child{page-break-after:auto}#_flyPrintOverlay img{width:100%;height:auto;display:block}}';
+                  pCss.textContent='@media print{html,body{height:auto!important;max-height:none!important;overflow:visible!important;display:block!important}body>*:not(#_flyPrintOverlay){display:none!important}#_flyPrintOverlay{position:static!important;padding:0!important}#_flyPrintOverlay button{display:none!important}#_flyPrintOverlay .fly-print-page{page-break-after:always;page-break-inside:avoid;width:100%;margin:0}#_flyPrintOverlay .fly-print-page:last-child{page-break-after:auto}#_flyPrintOverlay img{width:100%;height:auto;display:block}}';
                   document.head.appendChild(pCss);
                 }
                 var po=document.createElement('div');

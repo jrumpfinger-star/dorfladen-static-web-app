@@ -1955,6 +1955,9 @@ Druckzustand. Physischer Druckertreiber bleibt manuelle Gegenprobe.
 - TC-F69-01: Original-CMS-Einzelflyer mit Rahmen und Getraenkeflyer im echten
   modalen Ausgabeweg als PDF: exakt eine Seite; ausgewaehlte zwei Flyer
   exakt zwei Seiten, Motiv vollstaendig. Sammelflyer-Regression erhalten.
+- TC-F69-02: Druck aus dem eingebetteten CMS-Modal (cms.html) liefert je
+  angefordertem Einzelflyer eine eigene A4-Seite; das html/body-Druck-
+  Zuruecksetzen verhindert, dass Chrome nach der ersten Seite abschneidet.
 
 ## Verifikation und offene Fragen
 

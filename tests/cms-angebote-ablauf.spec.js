@@ -2272,3 +2272,36 @@ for (const [now, current, later] of [['2026-11-20T12:00:00Z', 'Alt', 'Neu'], ['2
     expect(state.errors).toEqual([]);
   });
 }
+
+test('TC-F69-02: Einzelflyer-Druck aus dem CMS-Modal ergibt je Artikel eine eigene A4-Seite', async ({ page }, testInfo) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  const dlg = await create(page, 'drinks');
+  await dlg.locator('[data-meta=title]').fill('Probe Druckseiten');
+  const rows = dlg.locator('.cms-ang-row');
+  await dlg.getByRole('button', { name: '+ Artikel', exact: true }).click();
+  await fillDrink(rows.nth(0), 1);
+  await fillDrink(rows.nth(1), 2);
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+  await page.locator('#an-root').getByRole('button', { name: 'Schließen', exact: true }).click();
+  await page.waitForTimeout(500);
+  await page.goto(BASE + '/cms.html?tab=ang');
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: 'Alle', exact: true }).click();
+  await page.waitForTimeout(800);
+  await page.getByRole('button', { name: 'Vorschau', exact: true }).first().click();
+  await page.waitForTimeout(1200);
+  await page.locator('[data-output-target]').selectOption('single');
+  await page.waitForTimeout(800);
+  await page.evaluate(() => { window.__printed = 0; window.print = function () { window.__printed++; }; });
+  await page.getByRole('button', { name: 'Alle Einzelflyer drucken' }).click();
+  await page.waitForSelector('#an-print .an-print-page img', { state: 'attached' });
+  await page.waitForTimeout(1200);
+  const pdf = await page.pdf({ path: testInfo.outputPath('cms-modal-einzelflyer.pdf'), preferCSSPageSize: true, printBackground: true });
+  expect((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length).toBe(2);
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await expect(page.locator('#an-print .an-print-page')).toHaveCount(0);
+  await expect(page.locator('body')).not.toHaveClass(/an-printing/);
+  expect(state.errors).toEqual([]);
+});

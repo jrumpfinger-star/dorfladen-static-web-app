@@ -553,6 +553,10 @@ body.an-body{margin:0;background:#f7f5ed}
 @media(max-width:480px){.an-app{padding:16px 12px}.an-head h1{font-size:26px}.an-card{padding:15px}.an-fields,.an-overview{grid-template-columns:1fr}.an-inspector .an-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.an-tabs{gap:5px}.an-tabs button{font-size:13px;padding:9px 6px}.an-viewer{width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding:10px}.an-viewer-tools strong{font-size:14px}.an-viewer-tools button{font-size:14px;padding:8px}.an-viewer-tools .an-row{gap:5px}.an-product{padding:18px}.an-list .an-actions{width:100%}.an-list .an-actions>*{flex:1}}
 @page angebote{size:A4;margin:12mm}
 @media print{
+  /* cms.html setzt html/body auf height:100%/100svh + overflow:hidden + display:flex
+     (cms-neu.css) – ohne dieses Zurücksetzen clippt Chrome den Druck nach einer
+     Seite und die Folgeseiten gehen verloren (nur „1 Blatt", Rest abgeschnitten). */
+  html:has(body.an-printing), body.an-printing{height:auto!important;max-height:none!important;overflow:visible!important;display:block!important}
   body.an-printing{margin:0!important;padding:0!important}
   body.an-printing>*{display:none!important}
   body.an-printing>#an-print{display:block!important;margin:0;padding:0}
