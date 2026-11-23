@@ -1098,6 +1098,27 @@
       var target = dockTarget(button.dataset.dockKind, button.dataset.dockKey);
       button.disabled = !target || target.disabled;
     });
+    placeDock();
+  }
+  /* Die Schnellleiste liegt als Überlage auf der Vorschau und weicht dem gewählten Element
+     nach oben oder unten aus, statt es zu verdecken. */
+  function placeDock() {
+    var dock = root.querySelector('.an-motiv-dock'), picture = root.querySelector('.an-cms-workspace>.an-split-picture');
+    if (!dock || !picture || !dock.offsetParent) return;
+    var selectedBox = picture.querySelector('.an-selected'); if (!selectedBox) { dock.classList.remove('an-dock-top'); return; }
+    var element = selectedBox.getBoundingClientRect(), area = picture.getBoundingClientRect();
+    var height = dock.offsetHeight + 8, topEdge = area.top + 56;
+    function overlap(from, to) { return Math.max(0, Math.min(element.bottom, to) - Math.max(element.top, from)); }
+    var onBottom = overlap(area.bottom - height - 8, area.bottom), onTop = overlap(topEdge, topEdge + height);
+    dock.classList.toggle('an-dock-top', onBottom > onTop);
+  }
+  function watchDock(workspace, dock) {
+    var picture = workspace.querySelector('.an-split-picture'), frame = 0;
+    function later() { cancelAnimationFrame(frame); frame = requestAnimationFrame(placeDock); }
+    picture.addEventListener('scroll', later, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(later).observe(picture);
+    if (window.MutationObserver) new MutationObserver(later).observe(picture, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    dock.addEventListener('transitionend', later);
   }
   function dockControls() {
     var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
@@ -1133,14 +1154,15 @@
   function phoneMotifBar(workspace, sideColumn) {
     var bar = document.createElement('div'); bar.className = 'an-motiv-bar'; bar.hidden = true;
     bar.setAttribute('aria-label', 'Motiv-Werkzeuge');
-    bar.appendChild(dockControls());
-    bar.insertAdjacentHTML('beforeend', '<div class="an-article-navigation">'
+    bar.innerHTML = '<div class="an-article-navigation">'
       + '<button type="button" data-motiv-prev aria-label="Vorheriger Artikel">←</button>'
       + '<span data-motiv-position role="status"></span>'
       + '<button type="button" data-motiv-next aria-label="Nächster Artikel">→</button></div>'
       + '<button type="button" class="an-primary an-motiv-save" data-motiv-save>Speichern</button>'
-      + '<button type="button" class="an-motiv-toggle" data-motiv-tools aria-expanded="false" title="Alle Werkzeuge: Artikel, Vorlage, Marker, Ansicht">Mehr</button>');
+      + '<button type="button" class="an-motiv-toggle" data-motiv-tools aria-expanded="false" title="Alle Werkzeuge: Artikel, Vorlage, Marker, Ansicht">Mehr</button>';
     workspace.appendChild(bar);
+    var dock = dockControls();
+    workspace.appendChild(dock); watchDock(workspace, dock);
     var toggle = bar.querySelector('[data-motiv-tools]');
     function setOpen(open) {
       phoneSheetOpen = open;

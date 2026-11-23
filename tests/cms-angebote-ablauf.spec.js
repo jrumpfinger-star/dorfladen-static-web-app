@@ -2278,16 +2278,39 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     const dock = page.locator('.an-motiv-dock'), sheet = page.locator('.an-cms-workspace>.an-split-tools');
     await expect(dock, kind).toBeVisible();
     await expect(sheet).toBeHidden();
-    /* TC-F71-01: alle Schnellwerkzeuge sichtbar, 44 px hoch, Motiv bleibt gross, kein Seitenscrollen */
+    /* TC-F71-01: Schnellleiste liegt IN der Vorschau, alle Knoepfe 44 px hoch, kein Seitenscrollen */
     const buttons = dock.getByRole('button');
     await expect(buttons).toHaveCount(10);
     for (const box of await buttons.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().toJSON()))) expect(box.height).toBeGreaterThanOrEqual(43.5);
     const canvasBox = await page.locator('.an-split-picture canvas:visible').first().boundingBox();
-    expect(canvasBox.height).toBeGreaterThan(250);
+    expect(canvasBox.height).toBeGreaterThan(300);
+    const within = async () => {
+      const [d, p] = [await dock.boundingBox(), await page.locator('.an-cms-workspace>.an-split-picture').boundingBox()];
+      expect(d.y).toBeGreaterThanOrEqual(p.y - 1); expect(d.y + d.height).toBeLessThanOrEqual(p.y + p.height + 1);
+    };
+    await within();
     await page.screenshot({ path: test.info().outputPath('f71-' + kind + '.png') });
+    test.info().attachments.push({ name: 'f71-' + kind, path: test.info().outputPath('f71-' + kind + '.png'), contentType: 'image/png' });
     const barBox = await page.locator('.an-motiv-bar').boundingBox();
     expect(barBox.y + barBox.height).toBeLessThanOrEqual(667);
+    expect(barBox.height).toBeLessThan(70);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    /* Die Leiste verdeckt das gewaehlte Element nie - auch nicht beim ersten und letzten Artikel */
+    for (const target of ['first', 'last']) {
+      const nextButton = page.locator('.an-motiv-bar [data-motiv-next]'), prevButton = page.locator('.an-motiv-bar [data-motiv-prev]');
+      for (let i = 0; i < 3; i++) { const nav = target === 'last' ? nextButton : prevButton; if (await nav.isEnabled()) await nav.click(); }
+      await expect(page.locator('.an-motiv-bar [data-motiv-position]')).toHaveText(target === 'last' ? '4 / 4' : '1 / 4');
+      const options = await dock.locator('select option').allTextContents();
+      await dock.locator('select').selectOption({ label: options.find((text) => /preis/i.test(text)) });
+      await page.waitForTimeout(300);
+      const clear = await page.evaluate(() => {
+        const d = document.querySelector('.an-motiv-dock').getBoundingClientRect();
+        const e = document.querySelector('.an-split-picture .an-selected').getBoundingClientRect();
+        return d.bottom <= e.top + 1 || d.top >= e.bottom - 1;
+      });
+      expect(clear, kind + ' ' + target).toBe(true);
+      await page.screenshot({ path: test.info().outputPath('f71-' + kind + '-' + target + '.png') });
+    }
     /* TC-F71-02: Element waehlen, schieben, Rueckgaengig - ohne das Blatt zu oeffnen */
     const select = dock.locator('select');
     const option = (await select.locator('option').allTextContents()).find((text) => /preis/i.test(text));
@@ -2419,7 +2442,7 @@ test('TC-F70-01..03: Motiv zuerst am Telefon (Leiste, Blatt, Elementkontext)', a
   const hit = page.locator('#an-hit-layer [data-select]').first();
   await expect(hit).toBeVisible();
   await hit.click();
-  await expect(bar.locator('[data-dock-element]')).not.toHaveValue('');
+  await expect(page.locator('.an-motiv-dock [data-dock-element]')).not.toHaveValue('');
   await bar.locator('[data-motiv-tools]').click();
   await expect(sheet).toBeVisible();
   await expect(sheet.locator('.an-cms-tabbar [aria-pressed=true]')).toHaveText('Element');

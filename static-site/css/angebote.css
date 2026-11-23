@@ -1622,8 +1622,17 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation span{font-size:13px;font-weight:600;white-space:nowrap}
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation button{min-width:44px;min-height:44px}
 .an-motiv-dock{display:none}
-.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-motiv-bar>.an-motiv-dock{
-  display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;flex:1 1 100%;min-width:0}
+/* F71: die Schnellleiste liegt als Überlagerung auf der Vorschau (gleiche Gridzelle) und weicht
+   dem gewählten Element nach oben aus (.an-dock-top), damit Werkzeuge und Motiv nicht getrennt sind. */
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-motiv-dock,
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-motiv-dock{
+  display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;min-width:0;
+  grid-row:1!important;grid-column:1!important;align-self:end;justify-self:stretch;z-index:25;
+  margin:0 8px 8px;padding:6px;box-sizing:border-box;border-radius:14px;
+  background:rgba(255,255,255,.94);border:1px solid var(--an-line,#d5dfd6);box-shadow:0 6px 24px rgba(16,40,28,.22);
+  backdrop-filter:blur(6px)}
+.an-cms-phone .an-cms-workspace.an-motiv-first .an-motiv-dock.an-dock-top{align-self:start;margin-top:64px}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-motiv-dock{grid-row:2!important}
 .an-motiv-dock select{grid-column:span 6;min-width:0;min-height:44px;font-size:14px;margin:0}
 .an-motiv-dock button{min-height:44px;min-width:0;padding:0;font-size:20px;line-height:1;touch-action:manipulation}
 .an-cms-phone .an-cms-workspace .an-motiv-toggle{flex:none;min-height:44px;padding:6px 10px;font-size:14px}

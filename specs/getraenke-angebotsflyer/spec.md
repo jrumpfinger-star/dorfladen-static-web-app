@@ -1997,7 +1997,11 @@ Groesse und Drehen waren nur nach Scrollen im Blatt und ohne sichtbares
 Motiv erreichbar. Deshalb gilt am Telefon (Gestaltungstab, geteilte
 Ansicht, Blatt geschlossen):
 
-- Unter dem Motiv liegt eine **Schnellleiste** mit Elementauswahl,
+- Unter dem Motiv liegt eine **Schnellleiste**; sie ist als Ueberlagerung
+  Teil der Vorschau (Werkzeuge und Motiv sind nicht getrennt), sitzt
+  standardmaessig am unteren Rand der Vorschau und weicht dem gewaehlten
+  Element nach oben aus, sodass sie es nie verdeckt (TC-F71-01). Sie
+  enthaelt Elementauswahl,
   Rueckgaengig/Wiederholen, Verschieben (4 Pfeile), Groesse (− / +) und
   Drehen (↺ ↻ je 15°). Alle Knoepfe sind mindestens 44 px hoch,
   Verschieben/Groesse/Drehen wiederholen beim Gedrueckthalten.
@@ -2016,9 +2020,11 @@ Ansicht, Blatt geschlossen):
   die Elementauswahl der Schnellleiste zeigt das gewaehlte Element.
 
 - TC-F71-01: Auf 375x667 sind fuer Wochen- und Getraenkeaktion die
-  10 Schnellknoepfe sichtbar und mindestens 44 px hoch, das Motiv ist
-  hoeher als 250 px, die Leiste liegt im Viewport, kein Seiten-Scrollen,
-  das Blatt ist geschlossen.
+  10 Schnellknoepfe sichtbar, mindestens 44 px hoch und liegen innerhalb
+  der Vorschau; das Motiv ist hoeher als 300 px, die Leiste darunter ist
+  einzeilig (< 70 px), kein Seiten-Scrollen, das Blatt ist geschlossen;
+  die Schnellleiste ueberdeckt das gewaehlte Preis-Element beim ersten
+  und beim letzten Artikel nicht.
 - TC-F71-02: Element „Preis" waehlen, nach links schieben und vergroessern
   setzt den Gestaltungsstand auf „geaendert"; Rueckgaengig der
   Schnellleiste macht beides rueckgaengig (ohne das Blatt zu oeffnen);
