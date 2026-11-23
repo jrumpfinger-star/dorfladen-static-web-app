@@ -790,7 +790,8 @@ test('TC-F16-01/04: CMS-Vorschau direkt bearbeiten, Standards speichern und Vorl
   await tools.locator('[data-preview-element]').selectOption('sheet:0:image:0');
   await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
   await tools.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
-  const hit = host.locator('[data-preview-select="sheet:0:image:0"]'), box = await hit.boundingBox();
+  /* F72: Touch verschiebt nur am Griff, nicht am Element selbst. */
+  const hit = host.locator('[data-preview-move]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 71, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 71, pointerType: 'touch', clientX: box.x + 20, clientY: box.y + 15 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 71, pointerType: 'touch' });
@@ -1248,7 +1249,7 @@ test('TC-F34-02: Preisbild rendert echte Beträge, Kontur und optionalen durchge
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F16-02: Original-Wochenvorschau mit Bild-/Preis-Drehung, Skalierung und Touch-Verschieben', async ({ page }) => {
+test('TC-F16-02: Original-Wochenvorschau mit Bild-/Preis-Drehung, Skalierung und Touch-Verschieben am Griff', async ({ page }) => {
   const state = await setup(page), head = await editSeed(page, state, { kind: 'weekly' });
   await page.locator('[data-step=design]').first().click(); await templatePanel(page); await page.locator('#an-defaults').click();
   await page.getByRole('dialog').getByRole('button', { name: 'CMS-Vorlage übernehmen', exact: true }).click();
@@ -1259,7 +1260,7 @@ test('TC-F16-02: Original-Wochenvorschau mit Bild-/Preis-Drehung, Skalierung und
   await tools.locator('select').first().selectOption(imageId);
   await tools.getByRole('button', { name: 'Vorschauelement nach rechts drehen', exact: true }).click();
   await tools.getByRole('button', { name: 'Vorschauelement vergrößern', exact: true }).click();
-  const hit = host.locator('[data-preview-select="' + imageId + '"]'), box = await hit.boundingBox();
+  const hit = host.locator('[data-preview-move]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 72, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   await page.dispatchEvent('body', 'pointermove', { pointerId: 72, pointerType: 'touch', clientX: box.x + 15, clientY: box.y + 12 });
   await page.dispatchEvent('body', 'pointerup', { pointerId: 72, pointerType: 'touch' });
@@ -3739,7 +3740,7 @@ test('TC-F39-01/02: Getränkedesign mit Farbverlauf, gruppiertem Ziehen und nati
   await undo.click(); await setField(page, root, color, '#223344'); await expect(redo).toBeDisabled();
   await designerTool(root, 'tools');
   await root.locator('[data-preview-element]').selectOption('sheet:0:image:0');
-  const hit = host.locator('[data-preview-select="sheet:0:image:0"]'), box = await hit.boundingBox();
+  const hit = host.locator('[data-preview-move]'), box = await hit.boundingBox();
   await hit.dispatchEvent('pointerdown', { pointerId: 81, pointerType: 'touch', button: 0, clientX: box.x + 5, clientY: box.y + 5 });
   for (const step of [10, 20, 30]) await page.dispatchEvent('body', 'pointermove', {
     pointerId: 81, pointerType: 'touch', clientX: box.x + 5 + step, clientY: box.y + 15,

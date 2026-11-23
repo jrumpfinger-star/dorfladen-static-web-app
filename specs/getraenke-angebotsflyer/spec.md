@@ -468,7 +468,8 @@ Designvorschau enthält positive Stattpreise, damit der Marker tatsächlich
 sichtbar und seine Wirkung prüfbar ist. Kein Marker ohne positive Ersparnis.
 Vorschau, gespeicherte Aktion, Druck und Waage verwenden dieselben Werte.
 
-- TC-F16-01: In CMS-Designvorschau ein Element mit Maus/Touch verschieben,
+- TC-F16-01: In CMS-Designvorschau ein Element mit Maus (am Element) bzw.
+  Touch (am ✥-Griff, siehe F72) verschieben,
   drehen und skalieren, speichern und neu laden; neue Aktionen übernehmen
   das Layout, bestehende Aktionen bleiben unverändert.
 - TC-F16-02: Bilder und Preise einer Original-Wochenvorlage direkt auswählen,
@@ -1988,49 +1989,68 @@ Telefon; eigenstaendige Editoren und breite Ansichten bleiben unveraendert
   mit der Auswahl im Blatt synchron; im Ausgabe-Tab ist die Motivleiste
   ausgeblendet.
 
-## F71: Schnellleiste am Telefon (Aktionseditor)
+## F71/F72: Werkzeuge in der Vorschau, feste Hauptleiste, Touch und Zurück-Taste (Telefon)
 
 Praxistest von F70 auf 375x667 mit echter Bedienung (Sammelflyer): Das
 Werkzeugblatt zeigte nur ca. 204 px von 588 px Werkzeuginhalt und
-verdeckte oder verkleinerte das Motiv auf wenige Pixel; Verschieben,
-Groesse und Drehen waren nur nach Scrollen im Blatt und ohne sichtbares
-Motiv erreichbar. Deshalb gilt am Telefon (Gestaltungstab, geteilte
-Ansicht, Blatt geschlossen):
+verdeckte oder verkleinerte das Motiv auf wenige Pixel. Rueckmeldung zu
+F71: Werkzeuge und Vorschau duerfen nicht getrennt sein; der Knopf „Mehr"
+neben Speichern ist sinnlos, Rueckgaengig usw. gehoeren auf die Hauptseite;
+jede Beruehrung eines Elements wurde sofort aktiv, sodass man nicht scrollen
+konnte; die Android-Zurueck-Taste verliess die Seite bzw. schloss den
+ganzen Editor. Deshalb gilt am Telefon (Gestaltungstab, geteilte Ansicht):
 
-- Unter dem Motiv liegt eine **Schnellleiste**; sie ist als Ueberlagerung
-  Teil der Vorschau (Werkzeuge und Motiv sind nicht getrennt), sitzt
-  standardmaessig am unteren Rand der Vorschau und weicht dem gewaehlten
-  Element nach oben aus, sodass sie es nie verdeckt (TC-F71-01). Sie
-  enthaelt Elementauswahl,
-  Rueckgaengig/Wiederholen, Verschieben (4 Pfeile), Groesse (− / +) und
-  Drehen (↺ ↻ je 15°). Alle Knoepfe sind mindestens 44 px hoch,
-  Verschieben/Groesse/Drehen wiederholen beim Gedrueckthalten.
-- Die Schnellleiste loest die Knoepfe der vorhandenen Werkzeugspalte aus
-  (gleiche Logik, kein zweiter Code-Pfad); sie gilt fuer Wochen- und
-  Getraenkeaktionen.
-- Die Leiste darunter hat eine Zeile: Artikelnavigation („1 / 6"),
-  Speichern, **Mehr**, Arbeitsansicht. „Mehr" oeffnet das Blatt ueber dem
-  ganzen Arbeitsbereich fuer Formularaufgaben (Artikel, Vorlage, Marker,
-  Ansicht, Gestaltungsziel); „Fertig" schliesst es und stellt die
-  Schnellleiste wieder her. Im Blatt entfaellt die doppelte
-  Artikelnavigation.
-- Alle bisherigen Werkzeuge bleiben erhalten (Mapping: Verschieben,
-  Groesse, Drehen, Rueckgaengig, Elementwahl → Schnellleiste und Blatt;
-  alles andere → Blatt). Die Elementkontext-Chip-Anzeige aus F70 entfaellt,
-  die Elementauswahl der Schnellleiste zeigt das gewaehlte Element.
+- **Reiterleiste oben** (Element, Artikel, Vorlage, [Marker nur Wochenaktion],
+  Ansicht): oeffnet das Werkzeugblatt mit dem gewaehlten Reiter; erneutes
+  Antippen des aktiven Reiters oder „Fertig" schliesst es. „Mehr" entfaellt.
+- **Schnellleiste als Ueberlagerung auf der Vorschau**: Elementauswahl,
+  Verschieben (4 Pfeile), Groesse (− / +), Drehen (↺ ↻ je 15°); sitzt am
+  unteren Rand der Vorschau und weicht dem gewaehlten Element nach oben aus,
+  sodass sie es nie verdeckt. Knoepfe mindestens 44 px; Verschieben, Groesse
+  und Drehen wiederholen beim Gedrueckthalten. Sie loest die Knoepfe der
+  vorhandenen Werkzeugspalte aus (gleiche Logik, kein zweiter Code-Pfad).
+- **Feste Hauptleiste unten** (einzeilig, immer sichtbar, nie hinter einem
+  Menue): Rueckgaengig, Wiederholen, Artikelnavigation („1 / 6"),
+  Speichern, Arbeitsansicht. Das Blatt nutzt den ganzen Arbeitsbereich fuer
+  Formularaufgaben; die Hauptleiste bleibt dabei sichtbar.
+- **Touch**: Antippen eines Elements waehlt es aus. Ziehen mit dem Finger
+  an einem Element scrollt die Vorschau und aendert nichts. Verschieben,
+  Groesse und Drehen starten nur an den Griffen (✥ verschieben, ↘ Groesse,
+  ↻ drehen; `touch-action:none`) oder ueber die Schnellleiste. Maus und
+  Stift behalten das Ziehen am Element.
+- **Zurueck-Taste (Android)**: Editor und geoeffnetes Blatt sind Ebenen im
+  Browserverlauf. Zurueck schliesst zuerst einen offenen Dialog, dann das
+  Blatt, dann den Editor; mit ungespeicherten Aenderungen erscheint die
+  Rueckfrage, „Abbrechen" laesst den Editor offen und die naechste
+  Zurueck-Taste fragt wieder. Die Seite wird nie verlassen, solange ein
+  Editor offen ist; eigene Schliesswege (Schliessen, Artikel/Bilder,
+  Uebersicht) geben die Verlaufseintraege wieder frei.
+- Alle bisherigen Werkzeuge bleiben erhalten. Mapping: Verschieben, Groesse,
+  Drehen, Elementwahl → Schnellleiste und Griffe, zusaetzlich Blatt;
+  Rueckgaengig/Wiederholen/Speichern/Artikelwechsel/Arbeitsansicht →
+  Hauptleiste; Reiter → Reiterleiste; „Gestalten fuer", „Standard-Gestaltung
+  laden", „Eigene Vorlage laden" und alle uebrigen Felder → Blatt (der
+  Gestaltungskontext zieht am Telefon in das Blatt). Die Chip-Anzeige aus
+  F70 entfaellt (die Elementauswahl der Schnellleiste zeigt das Element).
 
-- TC-F71-01: Auf 375x667 sind fuer Wochen- und Getraenkeaktion die
-  10 Schnellknoepfe sichtbar, mindestens 44 px hoch und liegen innerhalb
-  der Vorschau; das Motiv ist hoeher als 300 px, die Leiste darunter ist
-  einzeilig (< 70 px), kein Seiten-Scrollen, das Blatt ist geschlossen;
-  die Schnellleiste ueberdeckt das gewaehlte Preis-Element beim ersten
-  und beim letzten Artikel nicht.
+- TC-F71-01: Auf 375x667 sind fuer Wochen- und Getraenkeaktion die 8
+  Schnellknoepfe sichtbar, mindestens 44 px hoch und liegen innerhalb der
+  Vorschau; das Motiv ist hoeher als 300 px, die Hauptleiste ist einzeilig
+  (< 70 px) und enthaelt die Arbeitsansicht, kein Seiten-Scrollen, das Blatt
+  ist geschlossen; die Schnellleiste ueberdeckt das gewaehlte Preis-Element
+  beim ersten und beim letzten Artikel nicht.
 - TC-F71-02: Element „Preis" waehlen, nach links schieben und vergroessern
-  setzt den Gestaltungsstand auf „geaendert"; Rueckgaengig der
-  Schnellleiste macht beides rueckgaengig (ohne das Blatt zu oeffnen);
-  „Mehr" blendet die Schnellleiste aus und oeffnet das Blatt, „Fertig"
-  stellt sie wieder her.
-
+  setzt den Gestaltungsstand auf „geaendert"; Rueckgaengig der Hauptleiste
+  macht beides rueckgaengig (ohne das Blatt zu oeffnen); ein Reiter oeffnet
+  das Blatt und blendet die Schnellleiste aus (Rueckgaengig und Speichern
+  bleiben sichtbar), „Fertig" stellt sie wieder her.
+- TC-F72-01: Touch-Ziehen am Element (Wochen- und Getraenkeaktion) laesst
+  den Gestaltungsstand unveraendert; Antippen waehlt das Element; Ziehen am
+  ✥-Griff aendert die Gestaltung; Elementflaechen erlauben natives Scrollen,
+  Griffe nicht.
+- TC-F72-02: Zurueck-Taste schliesst erst das Blatt, dann (mit Rueckfrage)
+  den Editor; „Abbrechen" haelt den Editor offen, die naechste Zurueck-Taste
+  fragt erneut; die URL bleibt unveraendert.
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

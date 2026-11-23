@@ -791,23 +791,30 @@ const showTab = async (page, name) => {
   const root = page.locator('#an-root');
   if (name === 'Ausgabe') { await selectArea(root, 'output'); return; }
   if (await root.getAttribute('data-output-mode') === 'true') await selectArea(root, 'design');
+  /* Telefon: die Reiter liegen in der Reiterleiste und oeffnen das Werkzeugblatt. */
+  const strip = page.locator('.an-motiv-tabs');
+  if (await strip.isVisible().catch(() => false)) {
+    const button = strip.getByRole('button', { name, exact: true });
+    if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-pressed', 'true');
+    return;
+  }
   const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
-  if (!(await tab.isVisible().catch(() => false))) await openSheet(page);
   await tab.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
   if (await tab.isVisible()) await tab.click();
 };
-/* F70 Motiv zuerst am Telefon: die Werkzeugspalte ist ein geschlossenes Blatt;
-   Tests, die Felder im Blatt bedienen, öffnen es zuerst. */
+/* F70-F72 Motiv zuerst am Telefon: die Werkzeugspalte ist ein geschlossenes Blatt, das die Reiterleiste
+   oeffnet; Tests, die Felder im Blatt bedienen, oeffnen es zuerst (behaelt den aktuellen Reiter). */
 const openSheet = async (page) => {
-  const toggle = page.locator('.an-motiv-bar [data-motiv-tools]');
-  if (!(await toggle.isVisible().catch(() => false))) return;
+  const strip = page.locator('.an-motiv-tabs');
+  if (!(await strip.isVisible().catch(() => false))) return;
   const ws = page.locator('.an-cms-workspace');
   if (!await ws.evaluate((node) => node.classList.contains('an-motiv-sheet-open'))) {
-    await toggle.click();
+    const tab = await ws.getAttribute('data-an-tab');
+    await strip.locator('[data-motiv-tab="' + tab + '"]').click();
     await expect(ws).toHaveClass(/an-motiv-sheet-open/);
   }
-};
-// Mausbedienung ab 600 px: 32 px hohe Kontrollen; Touch und Telefone behalten mindestens 44 px.
+};// Mausbedienung ab 600 px: 32 px hohe Kontrollen; Touch und Telefone behalten mindestens 44 px.
 const compactMouse = (page) => page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
 async function workspaceView(root, mode) {
   const select = root.locator('[aria-label=Arbeitsansicht]');
@@ -1817,8 +1824,12 @@ for (const kind of ['weekly', 'drinks']) {
     };
     // Die Gestaltungsbereiche stehen auf allen Breiten hinter Reitern; Vorlage und Marker sind eigene Reiter.
     await openSheet(page);
-    await expect(page.locator('.an-cms-tabbar')).toBeVisible();
-    await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 6 : 5);
+    const phoneTabs = page.locator('.an-motiv-tabs button[data-motiv-tab]');
+    if (await phoneTabs.first().isVisible().catch(() => false)) await expect(phoneTabs).toHaveCount(kind === 'weekly' ? 5 : 4);
+    else {
+      await expect(page.locator('.an-cms-tabbar')).toBeVisible();
+      await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 6 : 5);
+    }
     await expect(panel).toBeHidden();
     await showTab(page, 'Vorlage');
     await expect(panel).toBeVisible();
@@ -2079,7 +2090,9 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await selectArea(workspace, 'articles');
   await expect(row.locator('[data-f=produkt]')).toHaveValue('Korrigierter Artikel');
   await selectArea(dlg, 'design');
-  await workspace.locator('#an-save').click();
+  /* Am Telefon liegt Speichern in der Hauptleiste, sonst im Fuss der Werkzeugspalte. */
+  const phoneSave = workspace.locator('[data-motiv-save]');
+  await ((await phoneSave.isVisible()) ? phoneSave : workspace.locator('#an-save')).click();
   await expect.poll(() => state.writes.length).toBe(1);
   expect(state.images).toBe(1);
   expect(state.writes[0].items[0].name).toBe('Korrigierter Artikel');
@@ -2280,7 +2293,7 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     await expect(sheet).toBeHidden();
     /* TC-F71-01: Schnellleiste liegt IN der Vorschau, alle Knoepfe 44 px hoch, kein Seitenscrollen */
     const buttons = dock.getByRole('button');
-    await expect(buttons).toHaveCount(10);
+    await expect(buttons).toHaveCount(8);
     for (const box of await buttons.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().toJSON()))) expect(box.height).toBeGreaterThanOrEqual(43.5);
     const canvasBox = await page.locator('.an-split-picture canvas:visible').first().boundingBox();
     expect(canvasBox.height).toBeGreaterThan(300);
@@ -2289,6 +2302,7 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
       expect(d.y).toBeGreaterThanOrEqual(p.y - 1); expect(d.y + d.height).toBeLessThanOrEqual(p.y + p.height + 1);
     };
     await within();
+    await expect(page.locator('.an-motiv-bar [data-workspace-views]'), kind).toBeVisible();
     await page.screenshot({ path: test.info().outputPath('f71-' + kind + '.png') });
     test.info().attachments.push({ name: 'f71-' + kind, path: test.info().outputPath('f71-' + kind + '.png'), contentType: 'image/png' });
     const barBox = await page.locator('.an-motiv-bar').boundingBox();
@@ -2316,7 +2330,7 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     const option = (await select.locator('option').allTextContents()).find((text) => /preis/i.test(text));
     expect(option, kind).toBeTruthy();
     await select.selectOption({ label: option });
-    const undo = dock.getByRole('button', { name: 'Rückgängig', exact: true });
+    const undo = page.locator('.an-motiv-bar [data-motiv-history=undo]');
     await expect(undo).toBeDisabled();
     await dock.getByRole('button', { name: 'Element nach links schieben', exact: true }).click();
     await expect(page.locator('#an-state')).toContainText('geändert');
@@ -2326,11 +2340,13 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     await undo.click();
     await expect(undo).toBeDisabled();
     await expect(sheet).toBeHidden();
-    /* Mehr oeffnet das Blatt und ersetzt die Schnellleiste, Fertig stellt sie wieder her */
-    await page.locator('.an-motiv-bar [data-motiv-tools]').click();
+    /* Ein Reiter oeffnet das Blatt und ersetzt die Schnellleiste, Fertig stellt sie wieder her; Rueckgaengig und Speichern bleiben sichtbar */
+    await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Vorlage', exact: true }).click();
     await expect(sheet).toBeVisible();
     await expect(dock).toBeHidden();
-    await page.locator('.an-motiv-bar [data-motiv-tools]').click();
+    await expect(undo).toBeVisible();
+    await expect(page.locator('.an-motiv-bar [data-motiv-save]')).toBeVisible();
+    await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Fertig', exact: true }).click();
     await expect(dock).toBeVisible();
     await page.getByRole('button', { name: 'Schließen', exact: true }).click();
     const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
@@ -2416,7 +2432,86 @@ test('TC-F69-02: Einzelflyer-Druck aus dem CMS-Modal ergibt je Artikel eine eige
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F70-01..03: Motiv zuerst am Telefon (Leiste, Blatt, Elementkontext)', async ({ page }, testInfo) => {
+/* Synthetische Touch-Zeigerfolge: Antippen am Ziel, optional Ziehen um dx/dy, dann Loslassen. */
+async function touchGesture(page, selector, dx, dy, { tap = false } = {}) {
+  await page.evaluate(({ selector, dx, dy, tap }) => {
+    const target = document.querySelector(selector), r = target.getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2, base = { pointerId: 77, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, button: 0 };
+    target.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ clientX: x, clientY: y }, base)));
+    for (let i = 1; i <= 6; i++) document.dispatchEvent(new PointerEvent('pointermove', Object.assign({ clientX: x + dx * i / 6, clientY: y + dy * i / 6 }, base)));
+    document.dispatchEvent(new PointerEvent('pointerup', Object.assign({ clientX: x + dx, clientY: y + dy }, base)));
+    if (tap) target.click();
+  }, { selector, dx, dy, tap });
+}
+
+test('TC-F72-01: Touch - Antippen waehlt, Ziehen am Element veraendert nichts, Verschieben nur am Griff', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  for (const kind of ['drinks', 'weekly']) {
+    await openPreview(page, kind, 2, true, null, true);
+    await selectArea(page.locator('#an-root'), 'design');
+    const body = kind === 'weekly' ? '.an-weekly-surface [data-preview-select]' : '#an-hit-layer [data-select]';
+    const handle = kind === 'weekly' ? '.an-weekly-surface [data-preview-move]' : '#an-hit-layer [data-move]';
+    const stateText = () => page.locator('#an-state').textContent();
+    await expect(page.locator(body).first()).toBeVisible();
+    /* Elementflaechen lassen das native Scrollen zu, Griffe nicht */
+    expect(await page.locator(body).first().evaluate((node) => getComputedStyle(node).touchAction), kind).toMatch(/manipulation|pan-y/);
+    expect(await page.locator(handle).evaluate((node) => getComputedStyle(node).touchAction), kind).toBe('none');
+    /* Ziehen mit dem Finger am Element (= Scrollen) veraendert nichts und waehlt nicht */
+    const before = await stateText();
+    await touchGesture(page, body + ':nth-of-type(3)', 40, 60);
+    await page.waitForTimeout(300);
+    expect(await stateText(), kind).toBe(before);
+    expect(await stateText()).not.toContain('geändert');
+    /* Antippen waehlt das Element */
+    const second = page.locator(body).nth(4);
+    await touchGesture(page, body + ':nth-of-type(5)', 0, 0, { tap: true });
+    await expect(page.locator('.an-split-picture .an-selected'), kind).toHaveCount(1);
+    expect(await stateText()).not.toContain('geändert');
+    void second;
+    /* Am Griff veraendert Ziehen die Gestaltung */
+    await touchGesture(page, handle, 30, 20);
+    await expect(page.locator('#an-state'), kind).toContainText('geändert');
+    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
+    if (await discard.isVisible().catch(() => false)) await discard.click();
+    await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
+  }
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F72-02: Zurueck-Taste schliesst erst das Blatt, dann den Editor (mit Rueckfrage) und verlaesst die Seite nie', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  const url = page.url();
+  await openPreview(page, 'drinks', 2);
+  const modal = page.locator('.an-cms-preview-modal'), sheet = page.locator('.an-cms-workspace>.an-split-tools'), strip = page.locator('.an-motiv-tabs');
+  await expect(strip).toBeVisible();
+  await page.locator('.an-motiv-dock').getByRole('button', { name: 'Element nach links schieben', exact: true }).click();
+  await expect(page.locator('#an-state')).toContainText('geändert');
+  await strip.getByRole('button', { name: 'Vorlage', exact: true }).click();
+  await expect(sheet).toBeVisible();
+  /* Zurueck 1: nur das Blatt */
+  await page.goBack();
+  await expect(sheet).toBeHidden();
+  await expect(modal).toHaveCount(1);
+  /* Zurueck 2: Rueckfrage wegen ungespeicherter Aenderungen; Abbrechen laesst den Editor offen */
+  await page.goBack();
+  const ask = page.locator('dialog[open]').filter({ hasText: 'Ungespeicherte Änderungen' });
+  await expect(ask).toBeVisible();
+  await ask.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await expect(modal).toHaveCount(1);
+  /* Zurueck 3: die Ebene wurde neu gesichert - wieder Rueckfrage, dieses Mal verwerfen */
+  await page.goBack();
+  await expect(ask).toBeVisible();
+  await ask.getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
+  await expect(modal).toHaveCount(0);
+  expect(page.url()).toBe(url);
+  expect(state.errors).toEqual([]);
+});
+test('TC-F70-01..03: Motiv zuerst am Telefon (Reiterleiste, Blatt, Hauptleiste)', async ({ page }, testInfo) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
@@ -2424,31 +2519,33 @@ test('TC-F70-01..03: Motiv zuerst am Telefon (Leiste, Blatt, Elementkontext)', a
   await page.setViewportSize({ width: 375, height: 667 });
   await expect(page.locator('#an-root')).toHaveClass(/an-cms-phone/, { timeout: 10000 });
   await page.waitForTimeout(600);
-  /* TC-F70-01: Motiv füllt, Blatt zu, Leiste sichtbar, Werkzeuge öffnet Blatt */
+  /* TC-F70-01: Motiv fuellt, Blatt zu; ein Reiter oeffnet das Blatt, Fertig und erneutes Antippen schliessen es */
   const rootBox = await page.locator('.an-cms-workspace').boundingBox();
   const pictureBox = await page.locator('.an-cms-workspace>.an-split-picture').boundingBox();
-  expect(pictureBox.height).toBeGreaterThan(rootBox.height * .5);
-  const bar = page.locator('.an-motiv-bar');
+  expect(pictureBox.height).toBeGreaterThan(rootBox.height * .6);
+  const bar = page.locator('.an-motiv-bar'), strip = page.locator('.an-motiv-tabs');
   await expect(bar).toBeVisible();
+  await expect(strip).toBeVisible();
+  await expect(bar.getByRole('button', { name: 'Mehr', exact: true })).toHaveCount(0);
   const sheet = page.locator('.an-cms-workspace>.an-split-tools');
   expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
-  await bar.locator('[data-motiv-tools]').click();
+  await strip.getByRole('button', { name: 'Vorlage', exact: true }).click();
   await expect(sheet).toBeVisible();
-  await expect(sheet.locator('.an-cms-tabbar')).toBeVisible();
-  await bar.locator('[data-motiv-tools]').click();
+  await expect(strip.getByRole('button', { name: 'Vorlage', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await strip.getByRole('button', { name: 'Fertig', exact: true }).click();
   await page.waitForTimeout(350);
   expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
-  /* TC-F70-02: Element antippen waehlt es in der Schnellleiste; Mehr oeffnet das Blatt */
+  await strip.getByRole('button', { name: 'Artikel', exact: true }).click();
+  await expect(sheet).toBeVisible();
+  await strip.getByRole('button', { name: 'Artikel', exact: true }).click();
+  await page.waitForTimeout(350);
+  expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
+  /* TC-F70-02: Element antippen waehlt es; die Schnellleiste zeigt es */
   const hit = page.locator('#an-hit-layer [data-select]').first();
   await expect(hit).toBeVisible();
   await hit.click();
   await expect(page.locator('.an-motiv-dock [data-dock-element]')).not.toHaveValue('');
-  await bar.locator('[data-motiv-tools]').click();
-  await expect(sheet).toBeVisible();
-  await expect(sheet.locator('.an-cms-tabbar [aria-pressed=true]')).toHaveText('Element');
-  await page.evaluate(() => document.querySelector('.an-motiv-bar [data-motiv-tools]').click());
-  await page.waitForTimeout(350);
-  /* TC-F70-03: Artikelnavigation in der Leiste, synchron, Ausgabe-Tab ohne Leiste */
+  /* TC-F70-03: Artikelnavigation in der Hauptleiste, synchron, Ausgabe-Tab ohne Leisten */
   const position = bar.locator('[data-motiv-position]');
   await expect(position).toHaveText('1 / 2');
   await bar.locator('[data-motiv-next]').click();
@@ -2456,9 +2553,9 @@ test('TC-F70-01..03: Motiv zuerst am Telefon (Leiste, Blatt, Elementkontext)', a
   await expect(bar.locator('[data-motiv-next]')).toBeDisabled();
   await bar.locator('[data-motiv-prev]').click();
   await expect(position).toHaveText('1 / 2');
-  await bar.locator('[data-motiv-tools]').click();
   await page.locator('[data-action-area=output]').click();
   await page.waitForTimeout(300);
   await expect(bar).toBeHidden();
+  await expect(strip).toBeHidden();
   expect(state.errors).toEqual([]);
 });

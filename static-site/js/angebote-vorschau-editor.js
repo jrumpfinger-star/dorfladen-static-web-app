@@ -6,7 +6,8 @@ window.AngeboteVorschauEditor = (function () {
     var cx = entry.x + entry.w / 2, cy = entry.y + entry.h / 2, reach = entry.h / 2 + Math.max(30, width * .045);
     return {
       resize: { x: (cx + cos * entry.w / 2 - sin * entry.h / 2) / width * 100, y: (cy + sin * entry.w / 2 + cos * entry.h / 2) / height * 100 },
-      rotate: { x: (cx + sin * reach) / width * 100, y: (cy - cos * reach) / height * 100 }
+      rotate: { x: (cx + sin * reach) / width * 100, y: (cy - cos * reach) / height * 100 },
+      move: { x: (cx - cos * entry.w / 2 + sin * entry.h / 2) / width * 100, y: (cy - sin * entry.w / 2 - cos * entry.h / 2) / height * 100 }
     };
   }
   function pointerAngle(centerX, centerY, event) { return Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI; }
@@ -80,6 +81,11 @@ window.AngeboteVorschauEditor = (function () {
         turn.title = 'Ziehen zum Drehen';
         turn.style.left = 'clamp(var(--an-handle-edge,22px),' + points.rotate.x + '%,calc(100% - var(--an-handle-edge,22px)))';
         turn.style.top = 'clamp(var(--an-handle-edge,22px),' + points.rotate.y + '%,calc(100% - var(--an-handle-edge,22px)))'; layer.appendChild(turn);
+        var grab = document.createElement('button'); grab.type = 'button'; grab.className = 'an-move-handle';
+        grab.dataset.previewMove = chosen; grab.textContent = '✥'; grab.setAttribute('aria-label', 'Vorschauelement verschieben');
+        grab.title = 'Ziehen zum Verschieben';
+        grab.style.left = 'clamp(var(--an-handle-edge,22px),' + points.move.x + '%,calc(100% - var(--an-handle-edge,22px)))';
+        grab.style.top = 'clamp(var(--an-handle-edge,22px),' + points.move.y + '%,calc(100% - var(--an-handle-edge,22px)))'; layer.appendChild(grab);
       }
       select.value = chosen;
       tools.querySelectorAll('[data-preview-transform],[data-preview-nudge]').forEach(function (button) { button.disabled = !selected; });
@@ -203,10 +209,19 @@ window.AngeboteVorschauEditor = (function () {
       change({ dx: delta[0] * (event.shiftKey ? 10 : 1), dy: delta[1] * (event.shiftKey ? 10 : 1) });
       if (options.end) options.end();
     };
+    /* Touch: Antippen wählt (stage.onclick), Ziehen am Element scrollt die Vorschau. Verschieben,
+       Größe und Drehen starten nur an den Griffen – so ändert reines Berühren nie etwas. */
+    stage.onclick = function (event) {
+      var hit = event.target.closest('[data-preview-select]');
+      if (!hit || hit.dataset.previewSelect === chosen) return;
+      chosen = hit.dataset.previewSelect; overlay();
+      var entry = current(); if (entry && options.select) options.select(entry);
+    };
     stage.onpointerdown = function (event) {
-      var hit = event.target.closest('[data-preview-select],[data-preview-resize],[data-preview-rotate]');
+      var hit = event.target.closest('[data-preview-select],[data-preview-resize],[data-preview-rotate],[data-preview-move]');
       if (!hit || event.button !== 0) return;
-      event.preventDefault(); chosen = hit.dataset.previewSelect || hit.dataset.previewResize || hit.dataset.previewRotate; overlay();
+      if (event.pointerType === 'touch' && hit.hasAttribute('data-preview-select')) return;
+      event.preventDefault(); chosen = hit.dataset.previewSelect || hit.dataset.previewResize || hit.dataset.previewRotate || hit.dataset.previewMove; overlay();
       var entry = current(); if (!entry) return;
       if (options.select) options.select(entry);
       if (options.begin) options.begin();
