@@ -793,6 +793,7 @@ const showTab = async (page, name) => {
   if (await root.getAttribute('data-output-mode') === 'true') await selectArea(root, 'design');
   const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
   if (!(await tab.isVisible().catch(() => false))) await openSheet(page);
+  await tab.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
   if (await tab.isVisible()) await tab.click();
 };
 /* F70 Motiv zuerst am Telefon: die Werkzeugspalte ist ein geschlossenes Blatt;
@@ -1692,6 +1693,7 @@ for (const [surface, path] of SURFACES) {
     expect(saved.ghostAlpha).toBeCloseTo(.6);
     expect(saved.customImg).toMatch(/^data:image\/png;base64,/);
     // Alles zurücksetzen
+    if (mobile) await openSheet(page);
     await surfaceBox.getByRole('button', { name: 'Alles zurücksetzen', exact: true }).click();
     await page.getByRole('dialog').last().getByRole('button', { name: 'Zurücksetzen', exact: true }).click();
     await expect(surfaceBox.getByRole('button', { name: 'Ghost', exact: true })).toHaveAttribute('aria-pressed', 'false');
@@ -2237,8 +2239,7 @@ test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennung
 test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt; am Telefon Motiv zuerst mit Blatt', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
-  /* Wochenaktionen behalten am Telefon ihr eigenes Stapellayout; Getränkeaktionen
-     nutzen ab F70 „Motiv zuerst" mit geschlossenem Werkzeugblatt. */
+  /* Ab F70 nutzen Wochen- und Getränkeaktionen am Telefon „Motiv zuerst" mit geschlossenem Werkzeugblatt. */
   for (const kind of ['weekly', 'drinks']) {
     await openPreview(page, kind, 2, false, null, true);
     await selectArea(page.locator('#an-root'), 'design');
@@ -2246,8 +2247,7 @@ test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt; am Telefon Motiv zuers
     await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
     const tools = page.locator('.an-split-tools'), picture = page.locator('.an-split-picture');
     const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
-    const weekly = await workspace.evaluate((node) => node.classList.contains('an-cms-weekly'));
-    if (mobile && !weekly) {
+    if (mobile) {
       await expect(tools).toBeHidden();
       await expect(picture).toBeVisible();
       const wsBox = await workspace.boundingBox(), p = await picture.boundingBox();

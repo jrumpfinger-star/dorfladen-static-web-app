@@ -1970,14 +1970,16 @@ zusaetzlich Elementname und einen Eigenschaften-Knopf, der das Blatt
 oeffnet. Der Ausgabe-Tab behaelt seine eigene Ausgabeleiste mit voller
 Vorschauhoehe; Vollbild bleibt der bestehende Knopf. Alle Werkzeuge,
 Felder, Undo/Redo und Speichern bleiben unveraendert erreichbar —
-nur die Anordnung aendert sich. Gilt nur fuer den Aktionseditor am
+nur die Anordnung aendert sich. Gilt fuer alle Aktionen (auch Wochen- und
+Sonderaktionen mit CMS-Vorlage), aber nur fuer den Aktionseditor am
 Telefon; eigenstaendige Editoren und breite Ansichten bleiben unveraendert
 (TC-F19-02 gilt dort weiter).
 
 - TC-F70-01: Auf 375x667 zeigt der Gestaltungstab das Motiv mit mehr als
   der halben Dialoghoehe, das Blatt ist geschlossen und die Motivleiste
   sichtbar; „Werkzeuge" oeffnet das Blatt mit den Reitern
-  Element/Artikel/Vorlage/Marker/Ansicht und „Fertig" schliesst es.
+  Element/Artikel/Vorlage/Marker/Ansicht und „Fertig" schliesst es. Gilt
+  fuer Getraenke- und Wochenaktionen (TC-AEA-F1-01 prueft beide Arten).
 - TC-F70-02: Antippen eines Elements im Motiv zeigt Elementname und
   Eigenschaften-Knopf in der Motivleiste und schliesst ein offenes Blatt;
   der Eigenschaften-Knopf oeffnet das Blatt mit dem Element-Reiter.

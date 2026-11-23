@@ -956,7 +956,7 @@ window.AngeboteDesign = (function () {
       /* F70 Motiv zuerst: am Telefon ist die Werkzeugspalte ein geschlossenes Blatt –
          der Arbeitsansichtswechsel bleibt in der Motivleiste erreichbar. */
       var motivBar = root.querySelector(':scope>.an-motiv-bar');
-      if (motivBar && mobile && view.value === 'split' && root.dataset.anTab !== 'output' && !root.classList.contains('an-cms-weekly')) motivBar.appendChild(viewButton);
+      if (motivBar && mobile && view.value === 'split' && root.dataset.anTab !== 'output' && root.classList.contains('an-motiv-first')) motivBar.appendChild(viewButton);
       if ((mobile || global) && actions) viewLabel.appendChild(view);
       else if (view.parentElement !== viewbar) { viewPopup.hidePopover(); viewbar.appendChild(view); }
       handle.hidden = mobile || view.value !== 'split';

@@ -1089,6 +1089,9 @@
       renderInspector(); preview().catch(M.error);
     };
     bar._motivSetOpen = setOpen;
+    /* Das Flag gilt für alle Aktionen; der Splitter verschiebt den Ansichtsknopf erst danach in die Leiste. */
+    workspace.classList.add('an-motiv-first');
+    if (workspace._splitView) workspace._splitView.resize();
     if (phoneSheetOpen) setOpen(true);
   }
   function updateMotivBar() {

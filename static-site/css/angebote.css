@@ -1606,34 +1606,34 @@ body.an-body{margin:0;background:#f7f5ed}
    Höhe gehört der Vorschau, sonst wird der Flyer auf eine Miniatur eingeklemmt. */
 .an-cms-phone .an-cms-workspace.an-mobile-views[data-an-tab=output].an-split-mobile.an-split{grid-template-rows:minmax(0,1fr)!important}
 .an-cms-phone .an-cms-workspace.an-mobile-views[data-an-tab=output].an-split-mobile.an-split>.an-split-picture{grid-row:1!important;grid-column:1!important}
-/* F70 Motiv zuerst am Telefon (nicht-Wochen-Aktionen): Motiv füllt die Arbeitshöhe,
-   die Werkzeugspalte wird zum aufschiebbaren Blatt über dem Motiv; dazwischen liegt
-   die Motivleiste mit Artikelnavigation, Speichern und Werkzeuge-Umschalter.
-   Wochenaktionen behalten ihr eigenes gestapeltes Layout (an-cms-weekly). */
+/* F70 Motiv zuerst am Telefon (alle Aktionen, auch Wochen-/Sonderaktionen mit CMS-Vorlage):
+   Motiv füllt die Arbeitshöhe, die Werkzeugspalte wird zum aufschiebbaren Blatt über dem
+   Motiv; dazwischen liegt die Motivleiste mit Artikelnavigation, Speichern und
+   Werkzeuge-Umschalter. Das Flag an-motiv-first setzt der Editor am Workspace. */
 .an-motiv-bar{display:none}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly).an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output]){
+.an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output]){
   grid-template-rows:minmax(0,1fr) auto auto!important}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly).an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output])>.an-split-picture{grid-row:1!important;grid-column:1!important}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly).an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar{
+.an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output])>.an-split-picture{grid-row:1!important;grid-column:1!important}
+.an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar{
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-row:2!important;grid-column:1!important;
   min-height:52px;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px));
   background:var(--an-surface,#fff);border-top:1px solid var(--an-line,#d5dfd6)}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation span{font-size:13px;font-weight:600;white-space:nowrap}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation button{min-width:44px;min-height:44px}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation span{font-size:13px;font-weight:600;white-space:nowrap}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation button{min-width:44px;min-height:44px}
 .an-motiv-chip{display:inline-flex;align-items:center;gap:8px;min-width:0;flex:0 1 auto;overflow:hidden}
 .an-motiv-chip strong{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .an-motiv-chip button{flex:none;min-height:44px;padding:4px 10px;font-size:13px}
 .an-cms-phone .an-cms-workspace .an-motiv-toggle{flex:none;min-height:44px;padding:6px 14px;font-size:14px}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools{
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools{
   grid-row:3!important;grid-column:1!important;max-height:0;overflow:hidden;visibility:hidden;z-index:30;
   transition:max-height .25s ease,visibility .25s;
   background:var(--an-surface,#fff);border-top:1px solid var(--an-line,#d5dfd6);
   border-radius:14px 14px 0 0;box-shadow:0 -8px 32px rgba(16,40,28,.18);
   margin:0;padding:0 10px}
 /* Im Blatt verliert die alte Sticky-Ausrichtung ihre Bedeutung und überlappt sonst den Inhalt. */
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools .an-cms-tabbar,
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools .an-zoombar{position:static}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools .an-cms-tabbar,
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools .an-zoombar{position:static}
 .an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-workspace-view=split]:not([data-an-tab=output])>.an-split-tools{
   /* Prozenthöhen lösen in Grid-Auto-Zeilen zyklisch auf – deshalb vh. */
   max-height:58vh;overflow:auto;overscroll-behavior:contain;visibility:visible;
@@ -1641,13 +1641,13 @@ body.an-body{margin:0;background:#f7f5ed}
 /* Blatt offen: Leisten-Speichern aus, das Blatt enthält die volle Fussleiste mit Status. */
 .an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar [data-motiv-save]{display:none}
 /* Nur Eingaben (Nur-Eingaben-Ansicht) bleibt volles Werkzeugstacking; Nur Motiv behält die Leiste. */
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly).an-mobile-views.an-split-mobile.an-split[data-workspace-view=inputs]{grid-template-rows:minmax(0,1fr)!important}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly).an-mobile-views.an-split-mobile.an-split[data-workspace-view=picture]{grid-template-rows:44px minmax(0,1fr) auto!important}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly).an-mobile-views.an-split-mobile.an-split[data-workspace-view=picture]>.an-motiv-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-row:3!important;grid-column:1!important;min-height:52px;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px));background:var(--an-surface,#fff);border-top:1px solid var(--an-line,#d5dfd6)}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation span{font-size:13px;font-weight:600;white-space:nowrap}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation button{min-width:44px;min-height:44px}
-.an-cms-phone .an-cms-workspace:not(.an-cms-weekly)[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar [data-motiv-tools]{display:none}
+.an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=inputs]{grid-template-rows:minmax(0,1fr)!important}
+.an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=picture]{grid-template-rows:44px minmax(0,1fr) auto!important}
+.an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=picture]>.an-motiv-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-row:3!important;grid-column:1!important;min-height:52px;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px));background:var(--an-surface,#fff);border-top:1px solid var(--an-line,#d5dfd6)}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation span{font-size:13px;font-weight:600;white-space:nowrap}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar .an-article-navigation button{min-width:44px;min-height:44px}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output])>.an-motiv-bar [data-motiv-tools]{display:none}
 .an-cms-phone .an-cms-workspace.an-mobile-views.an-split-mobile.an-split>.an-split-tools{grid-row:1!important;grid-column:1!important}
 .an-cms-phone .an-cms-workspace.an-mobile-views.an-split-mobile.an-split>.an-split-picture{grid-row:2!important;grid-column:1!important}
 .an-share{width:min(94vw,560px)}
