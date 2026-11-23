@@ -1988,6 +1988,43 @@ Telefon; eigenstaendige Editoren und breite Ansichten bleiben unveraendert
   mit der Auswahl im Blatt synchron; im Ausgabe-Tab ist die Motivleiste
   ausgeblendet.
 
+## F71: Schnellleiste am Telefon (Aktionseditor)
+
+Praxistest von F70 auf 375x667 mit echter Bedienung (Sammelflyer): Das
+Werkzeugblatt zeigte nur ca. 204 px von 588 px Werkzeuginhalt und
+verdeckte oder verkleinerte das Motiv auf wenige Pixel; Verschieben,
+Groesse und Drehen waren nur nach Scrollen im Blatt und ohne sichtbares
+Motiv erreichbar. Deshalb gilt am Telefon (Gestaltungstab, geteilte
+Ansicht, Blatt geschlossen):
+
+- Unter dem Motiv liegt eine **Schnellleiste** mit Elementauswahl,
+  Rueckgaengig/Wiederholen, Verschieben (4 Pfeile), Groesse (− / +) und
+  Drehen (↺ ↻ je 15°). Alle Knoepfe sind mindestens 44 px hoch,
+  Verschieben/Groesse/Drehen wiederholen beim Gedrueckthalten.
+- Die Schnellleiste loest die Knoepfe der vorhandenen Werkzeugspalte aus
+  (gleiche Logik, kein zweiter Code-Pfad); sie gilt fuer Wochen- und
+  Getraenkeaktionen.
+- Die Leiste darunter hat eine Zeile: Artikelnavigation („1 / 6"),
+  Speichern, **Mehr**, Arbeitsansicht. „Mehr" oeffnet das Blatt ueber dem
+  ganzen Arbeitsbereich fuer Formularaufgaben (Artikel, Vorlage, Marker,
+  Ansicht, Gestaltungsziel); „Fertig" schliesst es und stellt die
+  Schnellleiste wieder her. Im Blatt entfaellt die doppelte
+  Artikelnavigation.
+- Alle bisherigen Werkzeuge bleiben erhalten (Mapping: Verschieben,
+  Groesse, Drehen, Rueckgaengig, Elementwahl → Schnellleiste und Blatt;
+  alles andere → Blatt). Die Elementkontext-Chip-Anzeige aus F70 entfaellt,
+  die Elementauswahl der Schnellleiste zeigt das gewaehlte Element.
+
+- TC-F71-01: Auf 375x667 sind fuer Wochen- und Getraenkeaktion die
+  10 Schnellknoepfe sichtbar und mindestens 44 px hoch, das Motiv ist
+  hoeher als 250 px, die Leiste liegt im Viewport, kein Seiten-Scrollen,
+  das Blatt ist geschlossen.
+- TC-F71-02: Element „Preis" waehlen, nach links schieben und vergroessern
+  setzt den Gestaltungsstand auf „geaendert"; Rueckgaengig der
+  Schnellleiste macht beides rueckgaengig (ohne das Blatt zu oeffnen);
+  „Mehr" blendet die Schnellleiste aus und oeffnet das Blatt, „Fertig"
+  stellt sie wieder her.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

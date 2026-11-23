@@ -2268,6 +2268,54 @@ test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt; am Telefon Motiv zuers
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen (weekly, drinks)', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  for (const kind of ['weekly', 'drinks']) {
+    await openPreview(page, kind, 4, true, null, true);
+    await selectArea(page.locator('#an-root'), 'design');
+    const dock = page.locator('.an-motiv-dock'), sheet = page.locator('.an-cms-workspace>.an-split-tools');
+    await expect(dock, kind).toBeVisible();
+    await expect(sheet).toBeHidden();
+    /* TC-F71-01: alle Schnellwerkzeuge sichtbar, 44 px hoch, Motiv bleibt gross, kein Seitenscrollen */
+    const buttons = dock.getByRole('button');
+    await expect(buttons).toHaveCount(10);
+    for (const box of await buttons.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().toJSON()))) expect(box.height).toBeGreaterThanOrEqual(43.5);
+    const canvasBox = await page.locator('.an-split-picture canvas:visible').first().boundingBox();
+    expect(canvasBox.height).toBeGreaterThan(250);
+    await page.screenshot({ path: test.info().outputPath('f71-' + kind + '.png') });
+    const barBox = await page.locator('.an-motiv-bar').boundingBox();
+    expect(barBox.y + barBox.height).toBeLessThanOrEqual(667);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    /* TC-F71-02: Element waehlen, schieben, Rueckgaengig - ohne das Blatt zu oeffnen */
+    const select = dock.locator('select');
+    const option = (await select.locator('option').allTextContents()).find((text) => /preis/i.test(text));
+    expect(option, kind).toBeTruthy();
+    await select.selectOption({ label: option });
+    const undo = dock.getByRole('button', { name: 'Rückgängig', exact: true });
+    await expect(undo).toBeDisabled();
+    await dock.getByRole('button', { name: 'Element nach links schieben', exact: true }).click();
+    await expect(page.locator('#an-state')).toContainText('geändert');
+    await expect(undo).toBeEnabled();
+    await dock.getByRole('button', { name: 'Element vergrößern', exact: true }).click();
+    await undo.click();
+    await undo.click();
+    await expect(undo).toBeDisabled();
+    await expect(sheet).toBeHidden();
+    /* Mehr oeffnet das Blatt und ersetzt die Schnellleiste, Fertig stellt sie wieder her */
+    await page.locator('.an-motiv-bar [data-motiv-tools]').click();
+    await expect(sheet).toBeVisible();
+    await expect(dock).toBeHidden();
+    await page.locator('.an-motiv-bar [data-motiv-tools]').click();
+    await expect(dock).toBeVisible();
+    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
+    if (await discard.isVisible().catch(() => false)) await discard.click();
+    await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
+  }
+  expect(state.errors).toEqual([]);
+});
 test('TC-AEA-F4-01: gespeicherte Aktion sucht fehlende Artikelbilder erneut und uebersteht Fehler einzelner Artikel', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
@@ -2367,25 +2415,24 @@ test('TC-F70-01..03: Motiv zuerst am Telefon (Leiste, Blatt, Elementkontext)', a
   await bar.locator('[data-motiv-tools]').click();
   await page.waitForTimeout(350);
   expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
-  /* TC-F70-02: Element antippen → Chip in der Leiste, Eigenschaften öffnet Blatt */
+  /* TC-F70-02: Element antippen waehlt es in der Schnellleiste; Mehr oeffnet das Blatt */
   const hit = page.locator('#an-hit-layer [data-select]').first();
   await expect(hit).toBeVisible();
   await hit.click();
-  await expect(bar.locator('[data-motiv-chip]')).toBeVisible();
-  expect((await bar.locator('[data-motiv-name]').textContent()).length).toBeGreaterThan(0);
-  await bar.locator('[data-motiv-properties]').click();
+  await expect(bar.locator('[data-dock-element]')).not.toHaveValue('');
+  await bar.locator('[data-motiv-tools]').click();
   await expect(sheet).toBeVisible();
   await expect(sheet.locator('.an-cms-tabbar [aria-pressed=true]')).toHaveText('Element');
   await page.evaluate(() => document.querySelector('.an-motiv-bar [data-motiv-tools]').click());
   await page.waitForTimeout(350);
   /* TC-F70-03: Artikelnavigation in der Leiste, synchron, Ausgabe-Tab ohne Leiste */
   const position = bar.locator('[data-motiv-position]');
-  await expect(position).toHaveText('Artikel 1 von 2');
+  await expect(position).toHaveText('1 / 2');
   await bar.locator('[data-motiv-next]').click();
-  await expect(position).toHaveText('Artikel 2 von 2');
+  await expect(position).toHaveText('2 / 2');
   await expect(bar.locator('[data-motiv-next]')).toBeDisabled();
   await bar.locator('[data-motiv-prev]').click();
-  await expect(position).toHaveText('Artikel 1 von 2');
+  await expect(position).toHaveText('1 / 2');
   await bar.locator('[data-motiv-tools]').click();
   await page.locator('[data-action-area=output]').click();
   await page.waitForTimeout(300);

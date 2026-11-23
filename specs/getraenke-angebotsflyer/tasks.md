@@ -229,5 +229,7 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | --- | --- | --- |
 | GF121 Motivleiste und aufschiebbares Werkzeugblatt im Telefon-Aktionseditor | F70-Spec | TC-F70-01..02 |
 | GF122 Artikelsynchronisation Motivleiste/Blatt, Ausgabe-Tab unverändert | GF121 | TC-F70-03 |
+| GF123 Schnellleiste (Element, Rückgängig, Verschieben, Größe, Drehen) mit Halten-Wiederholung, Proxy auf vorhandene Werkzeugknöpfe | GF121, F71-Spec | TC-F71-01..02 |
+| GF124 Einzeilige Leiste mit „Mehr"; Blatt über vollem Arbeitsbereich, doppelte Artikelnavigation im Blatt entfällt | GF123 | TC-F70-01..03, TC-F71-02 |
 
 Abgenommen: Globale Designer F65/F66 17/17 und CMS-Aktionseditor F65–F69 (Einzel-/Sammelausgabe, PNG, Navigation, Live) jeweils auf den vier Pflichtansichten grün; API-Provenienz (`test_angebote.py`) grün. Der echte Scrollbalken-Test läuft nur Desktop/iPad (Headless-Einschränkung).

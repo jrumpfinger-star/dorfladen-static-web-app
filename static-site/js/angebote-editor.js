@@ -42,7 +42,10 @@
     picker.value = designItemId;
     var label = index < 0 ? 'Keine Artikel' : 'Artikel ' + (index + 1) + ' von ' + data.items.length;
     root.querySelectorAll('[data-article-position]').forEach(function (node) { node.textContent = label; });
-    root.querySelectorAll('[data-motiv-position]').forEach(function (node) { node.textContent = label; });
+    root.querySelectorAll('[data-motiv-position]').forEach(function (node) {
+      node.textContent = index < 0 ? '–' : (index + 1) + ' / ' + data.items.length;
+      node.setAttribute('aria-label', label);
+    });
     var atStart = index <= 0, atEnd = index < 0 || index >= data.items.length - 1;
     root.querySelectorAll('[data-article-prev]').forEach(function (node) { node.disabled = atStart; });
     root.querySelectorAll('[data-article-next]').forEach(function (node) { node.disabled = atEnd; });
@@ -50,6 +53,7 @@
     root.querySelectorAll('[data-motiv-next]').forEach(function (node) { node.disabled = atEnd; });
     if ($('an-cms-item')) $('an-cms-item').value = designItemId;
     syncOutput();
+    syncDock();
   }
   function syncOutput() {
     root.dataset.outputMode = String(outputMode());
@@ -1058,36 +1062,95 @@
     phoneMotifBar(workspace, sideColumn);
     renderCmsArticle(); cmsLayout();
   }
-  /* F70 Motiv zuerst am Telefon: schmale Leiste unter dem Motiv mit Artikelnavigation
-     und Werkzeuge-Umschalter; das Blatt selbst ist die vorhandene Werkzeugspalte. */
+  /* F70/F71 Motiv zuerst am Telefon: Leiste unter dem Motiv mit Schnellwerkzeugen
+     (Element, Drehen, Verschieben, Größe), Artikelnavigation und „Mehr“. Die
+     Schnellwerkzeuge lösen die Knöpfe der vorhandenen Werkzeugspalte aus, die als Blatt
+     alle weiteren Werkzeuge enthält – dadurch bleibt die Logik an einer Stelle. */
+  var DOCK_ACTIONS = [
+    ['history', 'undo', '↶', 'Rückgängig'], ['history', 'redo', '↷', 'Wiederholen'],
+    ['nudge', 'links', '←', 'Element nach links schieben'], ['nudge', 'oben', '↑', 'Element nach oben schieben'],
+    ['nudge', 'unten', '↓', 'Element nach unten schieben'], ['nudge', 'rechts', '→', 'Element nach rechts schieben'],
+    ['transform', 'smaller', '−', 'Element verkleinern'], ['transform', 'larger', '+', 'Element vergrößern'],
+    ['transform', 'left', '↺', 'Element nach links drehen'], ['transform', 'right', '↻', 'Element nach rechts drehen']];
+  function dockTarget(kind, key) {
+    var tools = root.querySelector('.an-split-tools'); if (!tools) return null;
+    if (kind === 'history') return tools.querySelector('[data-history="' + key + '"]');
+    return kind === 'transform'
+      ? tools.querySelector('[data-transform="' + key + '"],[data-preview-transform="' + key + '"]')
+      : tools.querySelector('[data-nudge][aria-label$="nach ' + key + '"],[data-preview-nudge][aria-label$="nach ' + key + '"]');
+  }
+  function dockElementSource() {
+    return root.querySelector('.an-split-tools [data-preview-element], .an-split-tools #an-select-element');
+  }
+  function syncDock() {
+    var dock = root.querySelector('.an-motiv-dock'); if (!dock) return;
+    var source = dockElementSource(), select = dock.querySelector('[data-dock-element]');
+    if (source) {
+      var signature = Array.from(source.options).map(function (option) { return option.value + '|' + option.textContent; }).join('\n');
+      if (select.dataset.signature !== signature) {
+        select.replaceChildren();
+        Array.from(source.options).forEach(function (option) { select.add(new Option(option.textContent, option.value)); });
+        select.dataset.signature = signature;
+      }
+      select.value = source.value; select.disabled = false;
+    } else { select.replaceChildren(new Option('Kein Element', '')); select.dataset.signature = ''; select.disabled = true; }
+    dock.querySelectorAll('[data-dock-kind]').forEach(function (button) {
+      var target = dockTarget(button.dataset.dockKind, button.dataset.dockKey);
+      button.disabled = !target || target.disabled;
+    });
+  }
+  function dockControls() {
+    var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
+    dock.setAttribute('aria-label', 'Schnellwerkzeuge für das gewählte Element');
+    dock.innerHTML = '<select data-dock-element aria-label="Element wählen"></select>'
+      + DOCK_ACTIONS.map(function (action) {
+        return '<button type="button" data-dock-kind="' + action[0] + '" data-dock-key="' + action[1] + '" aria-label="' + action[3] + '">' + action[2] + '</button>';
+      }).join('');
+    function fire(button) {
+      var target = dockTarget(button.dataset.dockKind, button.dataset.dockKey);
+      if (target && !target.disabled) target.click();
+    }
+    var delay = 0, repeat = 0;
+    function stop() { clearTimeout(delay); clearInterval(repeat); }
+    dock.addEventListener('pointerdown', function (event) {
+      var button = event.target.closest('[data-dock-kind]');
+      if (!button || button.disabled || event.button > 0) return;
+      event.preventDefault(); stop(); fire(button);
+      if (button.dataset.dockKind === 'history') return;
+      delay = setTimeout(function () { repeat = setInterval(function () { fire(button); }, 160); }, 420);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (name) { dock.addEventListener(name, stop); });
+    dock.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-dock-kind]');
+      if (button && event.detail === 0) fire(button);
+    });
+    dock.querySelector('[data-dock-element]').onchange = function () {
+      var source = dockElementSource(); if (!source) return;
+      source.value = this.value; source.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    return dock;
+  }
   function phoneMotifBar(workspace, sideColumn) {
     var bar = document.createElement('div'); bar.className = 'an-motiv-bar'; bar.hidden = true;
     bar.setAttribute('aria-label', 'Motiv-Werkzeuge');
-    bar.innerHTML = '<div class="an-article-navigation">'
+    bar.appendChild(dockControls());
+    bar.insertAdjacentHTML('beforeend', '<div class="an-article-navigation">'
       + '<button type="button" data-motiv-prev aria-label="Vorheriger Artikel">←</button>'
       + '<span data-motiv-position role="status"></span>'
       + '<button type="button" data-motiv-next aria-label="Nächster Artikel">→</button></div>'
-      + '<span class="an-motiv-chip" data-motiv-chip hidden><strong data-motiv-name></strong>'
-      + '<button type="button" data-motiv-properties>Eigenschaften</button></span>'
       + '<button type="button" class="an-primary an-motiv-save" data-motiv-save>Speichern</button>'
-      + '<button type="button" class="an-primary an-motiv-toggle" data-motiv-tools aria-expanded="false">Werkzeuge</button>';
+      + '<button type="button" class="an-motiv-toggle" data-motiv-tools aria-expanded="false" title="Alle Werkzeuge: Artikel, Vorlage, Marker, Ansicht">Mehr</button>');
     workspace.appendChild(bar);
     var toggle = bar.querySelector('[data-motiv-tools]');
     function setOpen(open) {
       phoneSheetOpen = open;
       workspace.classList.toggle('an-motiv-sheet-open', open);
       toggle.setAttribute('aria-expanded', String(open));
-      toggle.textContent = open ? 'Fertig' : 'Werkzeuge';
+      toggle.textContent = open ? 'Fertig' : 'Mehr';
       if (open) sideColumn.scrollTop = 0;
     }
     toggle.onclick = function () { setOpen(!workspace.classList.contains('an-motiv-sheet-open')); };
     bar.querySelector('[data-motiv-save]').onclick = function () { var save = $('an-save'); if (save) save.click(); };
-    bar.querySelector('[data-motiv-properties]').onclick = function () {
-      if (!selected) return;
-      cmsTab = 'element'; setOpen(true);
-      bar.dataset.motivAutoClosed = '1';
-      renderInspector(); preview().catch(M.error);
-    };
     bar._motivSetOpen = setOpen;
     /* Das Flag gilt für alle Aktionen; der Splitter verschiebt den Ansichtsknopf erst danach in die Leiste. */
     workspace.classList.add('an-motiv-first');
@@ -1098,9 +1161,6 @@
     var bar = root.querySelector('.an-motiv-bar'); if (!bar) return;
     var current = !weeklyTarget() && selection();
     var active = !outputMode() && !!current;
-    var chip = bar.querySelector('[data-motiv-chip]'), name = bar.querySelector('[data-motiv-name]');
-    chip.hidden = !active;
-    if (active) name.textContent = roleNames[current.type] || current.type;
     /* Nur ein neu angetipptes Element schliesst das offene Blatt; Reiterwechsel lassen es offen. */
     var selId = active ? current.id : '';
     if (selId !== bar.dataset.motivSel) {
