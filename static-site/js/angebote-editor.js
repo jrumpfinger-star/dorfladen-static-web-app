@@ -15,6 +15,7 @@
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
   var cmsSession = null;
+  var phoneSheetOpen = false;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -39,10 +40,14 @@
     var index = data.items.findIndex(function (item) { return item.id === designItemId; });
     if (index < 0 && data.items.length) { index = 0; designItemId = data.items[0].id; }
     picker.value = designItemId;
-    if (position) position.textContent = index < 0 ? 'Keine Artikel' : 'Artikel ' + (index + 1) + ' von ' + data.items.length;
-    var back = root.querySelector('[data-article-prev]'), next = root.querySelector('[data-article-next]');
-    if (back) back.disabled = index <= 0;
-    if (next) next.disabled = index < 0 || index >= data.items.length - 1;
+    var label = index < 0 ? 'Keine Artikel' : 'Artikel ' + (index + 1) + ' von ' + data.items.length;
+    root.querySelectorAll('[data-article-position]').forEach(function (node) { node.textContent = label; });
+    root.querySelectorAll('[data-motiv-position]').forEach(function (node) { node.textContent = label; });
+    var atStart = index <= 0, atEnd = index < 0 || index >= data.items.length - 1;
+    root.querySelectorAll('[data-article-prev]').forEach(function (node) { node.disabled = atStart; });
+    root.querySelectorAll('[data-article-next]').forEach(function (node) { node.disabled = atEnd; });
+    root.querySelectorAll('[data-motiv-prev]').forEach(function (node) { node.disabled = atStart; });
+    root.querySelectorAll('[data-motiv-next]').forEach(function (node) { node.disabled = atEnd; });
     if ($('an-cms-item')) $('an-cms-item').value = designItemId;
     syncOutput();
   }
@@ -490,7 +495,7 @@
       + '<label class="an-field"><span>Statt €</span><input data-cms-article="old_price_cents" inputmode="decimal" value="' + (item.old_price_cents == null ? '' : M.money(item.old_price_cents)) + '"></label></div></details>';
   }
   function renderInspector() {
-    renderInspectorBody(); renderCmsArticle(); cmsLayout();
+    renderInspectorBody(); renderCmsArticle(); cmsLayout(); updateMotivBar();
     if (taskFrame) {
       D.compactHelp($('an-inspector'), taskFrame.help);
       D.expandGroups($('an-inspector'));
@@ -528,6 +533,8 @@
     var article = $('an-cms-article');
     if (article) article.hidden = cmsTab !== 'article';
     var outputBar = root.querySelector('.an-output-bar'), itemPicker = $('an-design-item-wrap');
+    var motivBar = root.querySelector('.an-motiv-bar');
+    if (motivBar) { motivBar.hidden = outputMode(); if (outputMode() && motivBar._motivSetOpen) motivBar._motivSetOpen(false); }
     if (outputBar && itemPicker) {
       if (outputMode()) outputBar.prepend(itemPicker);
       else root.querySelector('.an-task-fields').prepend(itemPicker);
@@ -1048,7 +1055,70 @@
     if (!weeklyTarget()) $('an-inspector').before(article);
     finishTaskFrame(workspace, sideColumn, canvasColumn, view);
     createOutputControls(canvasColumn);
+    phoneMotifBar(workspace, sideColumn);
     renderCmsArticle(); cmsLayout();
+  }
+  /* F70 Motiv zuerst am Telefon: schmale Leiste unter dem Motiv mit Artikelnavigation
+     und Werkzeuge-Umschalter; das Blatt selbst ist die vorhandene Werkzeugspalte. */
+  function phoneMotifBar(workspace, sideColumn) {
+    var bar = document.createElement('div'); bar.className = 'an-motiv-bar'; bar.hidden = true;
+    bar.setAttribute('aria-label', 'Motiv-Werkzeuge');
+    bar.innerHTML = '<div class="an-article-navigation">'
+      + '<button type="button" data-motiv-prev aria-label="Vorheriger Artikel">←</button>'
+      + '<span data-motiv-position role="status"></span>'
+      + '<button type="button" data-motiv-next aria-label="Nächster Artikel">→</button></div>'
+      + '<span class="an-motiv-chip" data-motiv-chip hidden><strong data-motiv-name></strong>'
+      + '<button type="button" data-motiv-properties>Eigenschaften</button></span>'
+      + '<button type="button" class="an-primary an-motiv-save" data-motiv-save>Speichern</button>'
+      + '<button type="button" class="an-primary an-motiv-toggle" data-motiv-tools aria-expanded="false">Werkzeuge</button>';
+    workspace.appendChild(bar);
+    var toggle = bar.querySelector('[data-motiv-tools]');
+    function setOpen(open) {
+      phoneSheetOpen = open;
+      workspace.classList.toggle('an-motiv-sheet-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.textContent = open ? 'Fertig' : 'Werkzeuge';
+      if (open) sideColumn.scrollTop = 0;
+    }
+    toggle.onclick = function () { setOpen(!workspace.classList.contains('an-motiv-sheet-open')); };
+    bar.querySelector('[data-motiv-save]').onclick = function () { var save = $('an-save'); if (save) save.click(); };
+    bar.querySelector('[data-motiv-properties]').onclick = function () {
+      if (!selected) return;
+      cmsTab = 'element'; setOpen(true);
+      bar.dataset.motivAutoClosed = '1';
+      renderInspector(); preview().catch(M.error);
+    };
+    bar._motivSetOpen = setOpen;
+    if (phoneSheetOpen) setOpen(true);
+  }
+  function updateMotivBar() {
+    var bar = root.querySelector('.an-motiv-bar'); if (!bar) return;
+    var current = !weeklyTarget() && selection();
+    var active = !outputMode() && !!current;
+    var chip = bar.querySelector('[data-motiv-chip]'), name = bar.querySelector('[data-motiv-name]');
+    chip.hidden = !active;
+    if (active) name.textContent = roleNames[current.type] || current.type;
+    /* Nur ein neu angetipptes Element schliesst das offene Blatt; Reiterwechsel lassen es offen. */
+    var selId = active ? current.id : '';
+    if (selId !== bar.dataset.motivSel) {
+      var first = bar.dataset.motivSel === undefined;
+      var fromTap = bar.dataset.motivFromTap === '1';
+      bar.dataset.motivSel = selId;
+      bar.dataset.motivFromTap = '';
+      if (active && fromTap && !first && workspaceSheetOpen(bar) && bar.dataset.motivAutoClosed !== '1') {
+        bar.dataset.motivAutoClosed = '1';
+        if (bar._motivSetOpen) bar._motivSetOpen(false);
+      }
+    }
+    if (!active) bar.dataset.motivAutoClosed = '';
+  }
+  function workspaceSheetOpen(bar) {
+    return bar.parentElement.classList.contains('an-motiv-sheet-open');
+  }
+  /* Direktes Antippen am Motiv (nicht Undo/Redo/Reiterwechsel) schliesst das Blatt. */
+  function motivTapSelect() {
+    var bar = root.querySelector('.an-motiv-bar');
+    if (bar) bar.dataset.motivFromTap = '1';
   }
   function createOutputControls(picture) {
     var bar = document.createElement('section'); bar.className = 'an-output-bar'; bar.hidden = true;
@@ -1594,9 +1664,11 @@
     root.onclick = async function (event) {
       var b = event.target.closest('button');
       if (!b || b.disabled || busy) return;
-      if (b.hasAttribute('data-article-prev') || b.hasAttribute('data-article-next')) {
+      if (b.hasAttribute('data-article-prev') || b.hasAttribute('data-article-next')
+        || b.hasAttribute('data-motiv-prev') || b.hasAttribute('data-motiv-next')) {
         var index = data.items.findIndex(function (item) { return item.id === designItemId; });
-        var next = data.items[index + (b.hasAttribute('data-article-prev') ? -1 : 1)];
+        var back = b.hasAttribute('data-article-prev') || b.hasAttribute('data-motiv-prev');
+        var next = data.items[index + (back ? -1 : 1)];
         if (next) selectArticle(next.id);
         return;
       }
@@ -1642,7 +1714,7 @@
       }
       if (b.dataset.step) setStep(b.dataset.step);
       if (outputMode()) return;
-      if (b.dataset.select) { selected = b.dataset.select; syncSelectedArticle(); renderInspector(); overlay(); }
+      if (b.dataset.select) { selected = b.dataset.select; motivTapSelect(); syncSelectedArticle(); renderInspector(); overlay(); }
       if (b.dataset.remove) {
         var removedIndex = data.items.findIndex(function (item) { return item.id === b.dataset.remove; });
         var remaining = data.items.filter(function (it) { return it.id !== b.dataset.remove; });
@@ -1910,7 +1982,7 @@
       if (!hit || busy || event.button !== 0) return;
       event.preventDefault();
       selected = resize ? hit.dataset.resize : rotate ? hit.dataset.rotate : hit.dataset.select;
-      syncSelectedArticle(); renderInspector();
+      motivTapSelect(); syncSelectedArticle(); renderInspector();
       var e = selection(), size = activeSize(), rect = $('an-stage').getBoundingClientRect(), startX = event.clientX, startY = event.clientY, x = e.x, y = e.y, w = e.w, h = e.h, moved = false;
       var surface = window.AngeboteVorschauEditor;
       var centerX = rect.left + (x + w / 2) / size.w * rect.width, centerY = rect.top + (y + h / 2) / size.h * rect.height;

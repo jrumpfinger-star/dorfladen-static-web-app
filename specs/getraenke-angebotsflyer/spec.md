@@ -1959,6 +1959,33 @@ Druckzustand. Physischer Druckertreiber bleibt manuelle Gegenprobe.
   angefordertem Einzelflyer eine eigene A4-Seite; das html/body-Druck-
   Zuruecksetzen verhindert, dass Chrome nach der ersten Seite abschneidet.
 
+## F70: Motiv zuerst am Telefon (Aktionseditor)
+
+Die Telefonansicht (unter 640 CSS-px Dialogbreite) des eingebetteten
+Aktionseditors kehrt die bisherige Stapelung um: Das Motiv fuellt die
+Arbeitshoehe, die Werkzeugspalte wird zu einem aufschiebbaren Blatt
+(Bottom-Sheet) ueber dem Motiv. Eine schmale Motivleiste unten enthaelt
+Artikelnavigation und den Werkzeuge-Umschalter; bei gewaehltem Element
+zusaetzlich Elementname und einen Eigenschaften-Knopf, der das Blatt
+oeffnet. Der Ausgabe-Tab behaelt seine eigene Ausgabeleiste mit voller
+Vorschauhoehe; Vollbild bleibt der bestehende Knopf. Alle Werkzeuge,
+Felder, Undo/Redo und Speichern bleiben unveraendert erreichbar —
+nur die Anordnung aendert sich. Gilt nur fuer den Aktionseditor am
+Telefon; eigenstaendige Editoren und breite Ansichten bleiben unveraendert
+(TC-F19-02 gilt dort weiter).
+
+- TC-F70-01: Auf 375x667 zeigt der Gestaltungstab das Motiv mit mehr als
+  der halben Dialoghoehe, das Blatt ist geschlossen und die Motivleiste
+  sichtbar; „Werkzeuge" oeffnet das Blatt mit den Reitern
+  Element/Artikel/Vorlage/Marker/Ansicht und „Fertig" schliesst es.
+- TC-F70-02: Antippen eines Elements im Motiv zeigt Elementname und
+  Eigenschaften-Knopf in der Motivleiste und schliesst ein offenes Blatt;
+  der Eigenschaften-Knopf oeffnet das Blatt mit dem Element-Reiter.
+- TC-F70-03: Die Artikelnavigation in der Motivleiste blaettert wie die
+  bisherige Navigation (Positionstext, Grenzen deaktiviert) und bleibt
+  mit der Auswahl im Blatt synchron; im Ausgabe-Tab ist die Motivleiste
+  ausgeblendet.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

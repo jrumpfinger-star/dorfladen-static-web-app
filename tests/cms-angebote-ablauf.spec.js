@@ -792,7 +792,19 @@ const showTab = async (page, name) => {
   if (name === 'Ausgabe') { await selectArea(root, 'output'); return; }
   if (await root.getAttribute('data-output-mode') === 'true') await selectArea(root, 'design');
   const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
+  if (!(await tab.isVisible().catch(() => false))) await openSheet(page);
   if (await tab.isVisible()) await tab.click();
+};
+/* F70 Motiv zuerst am Telefon: die Werkzeugspalte ist ein geschlossenes Blatt;
+   Tests, die Felder im Blatt bedienen, öffnen es zuerst. */
+const openSheet = async (page) => {
+  const toggle = page.locator('.an-motiv-bar [data-motiv-tools]');
+  if (!(await toggle.isVisible().catch(() => false))) return;
+  const ws = page.locator('.an-cms-workspace');
+  if (!await ws.evaluate((node) => node.classList.contains('an-motiv-sheet-open'))) {
+    await toggle.click();
+    await expect(ws).toHaveClass(/an-motiv-sheet-open/);
+  }
 };
 // Mausbedienung ab 600 px: 32 px hohe Kontrollen; Touch und Telefone behalten mindestens 44 px.
 const compactMouse = (page) => page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
@@ -1481,6 +1493,7 @@ test('TC-F19-03/TC-F39-04: Artikel, Farbe und Undo/Redo in der Vorschau bearbeit
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
   await toDesign(page);
+  await openSheet(page);
   const undo = page.locator('.an-compact-actions [data-history=undo]'), redo = page.locator('.an-compact-actions [data-history=redo]');
   await expect(undo).toBeVisible(); await expect(redo).toBeVisible();
   await expect(undo).toBeDisabled(); await expect(redo).toBeDisabled();
@@ -1526,6 +1539,7 @@ test('TC-F19-04: Original-Wochenvorschau mit Seitenleiste und frei ziehbarem Dre
   const surface = page.locator('.an-weekly-surface'), workspace = page.locator('.an-cms-workspace');
   const tools = page.locator('.an-cms-side .an-direct-tools');
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  await openSheet(page);
   await expect(tools).toBeVisible();
   const toolsBox = await tools.boundingBox();
   if (mobile) {
@@ -1561,17 +1575,23 @@ for (const [surface, path] of SURFACES) {
       const modal = page.locator('.an-cms-preview-modal'), workspace = page.locator('.an-cms-workspace');
       const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
       const writes = state.writes.length;
+        if (mobile) await openSheet(page);
       for (const target of ['card', 'single', 'sheet', 'scale']) {
         await page.locator('[data-action-target]').selectOption(target);
         await showTab(page, 'Element');
         const stage = page.locator('.an-task-picture .an-stage:visible');
         const tools = page.locator('.an-task-tools');
         await modal.evaluate((node) => { node.scrollTop = 0; });
-        // Mobil sind Eingaben (60 %) und Motiv (40 %) standardmäßig geteilt sichtbar; das Motiv ist zusätzlich separat erreichbar.
-        if (mobile) { await workspaceView(workspace, 'split'); await expect(stage, 'Motiv ' + kind + ' ' + target).toBeVisible(); await expect(tools).toBeVisible(); }
+        // F70 Motiv zuerst: mobil ist das Motiv voll sichtbar und die Werkzeuge liegen als Blatt darüber.
+        if (mobile) {
+          await workspaceView(workspace, 'split');
+          await expect(stage, 'Motiv ' + kind + ' ' + target).toBeVisible();
+          await openSheet(page);
+          await expect(tools).toBeVisible();
+        }
         const fields = await tools.boundingBox();
         const working = await page.locator('.an-task-fields').boundingBox();
-        expect(working.height).toBeGreaterThanOrEqual(fields.height * .5);
+        if (!mobile) expect(working.height).toBeGreaterThanOrEqual(fields.height * .5);
         if (mobile) await workspaceView(workspace, 'picture');
         await expect(stage.locator('canvas')).toBeVisible();
         const picture = await stage.boundingBox(), dialog = await modal.boundingBox();
@@ -1794,6 +1814,7 @@ for (const kind of ['weekly', 'drinks']) {
       if (mobile) await workspaceView(workspace, 'inputs');
     };
     // Die Gestaltungsbereiche stehen auf allen Breiten hinter Reitern; Vorlage und Marker sind eigene Reiter.
+    await openSheet(page);
     await expect(page.locator('.an-cms-tabbar')).toBeVisible();
     await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 6 : 5);
     await expect(panel).toBeHidden();
@@ -1829,6 +1850,7 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
   await openPreview(page, 'weekly', 2);
   const surface = page.locator('.an-weekly-surface'), side = page.locator('.an-cms-side'), workspace = page.locator('.an-cms-workspace');
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+  await openSheet(page);
   for (const target of ['card', 'single', 'sheet', 'scale']) {
     await page.locator('[data-action-target]').selectOption(target);
     await showTab(page, 'Element');
@@ -1867,6 +1889,7 @@ test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
   const tools = page.locator('#an-inspector');
+  await openSheet(page);
   for (const target of ['card', 'single', 'sheet', 'scale']) {
     await page.locator('[data-action-target]').selectOption(target);
     await showTab(page, 'Element');
@@ -2032,6 +2055,7 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await expect(workspace.locator('#an-stage-canvas')).toBeVisible();
   if (page.viewportSize().width < 600) await workspaceView(workspace, 'inputs');
   expect(state.writes).toHaveLength(0); expect(state.images).toBe(0);
+  await openSheet(page);
   await showTab(page, 'Vorlage');
   const color = page.locator('input[data-style=background]');
   await color.fill('#336699');
@@ -2043,6 +2067,7 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await selectArea(dlg, 'output');
   await expect(workspace.locator('[data-cms-download]')).toBeVisible();
   expect(state.writes).toHaveLength(0); expect(state.images).toBe(0);
+  await openSheet(page);
   await showTab(page, 'Vorlage');
   await expect(page.locator('input[data-style=background]')).toHaveValue('#336699');
   const undo = page.locator('.an-compact-actions [data-history=undo]');
@@ -2209,23 +2234,37 @@ test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennung
   expect(state.errors).toEqual([]);
 });
 
-test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt, die Vorschau nimmt rund 40 % ein', { tag: '@layout' }, async ({ page }) => {
+test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt; am Telefon Motiv zuerst mit Blatt', { tag: '@layout' }, async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
-  await openPreview(page, 'weekly', 2, false, null, true);
-  /* Ausgabe ist Standard und erster Bereich; der Test prüft die geteilte Gestaltung. */
-  await expect(page.locator('.an-main-steps [data-action-area=output]')).toHaveAttribute('aria-pressed', 'true');
-  await selectArea(page.locator('#an-root'), 'design');
-  const workspace = page.locator('.an-cms-workspace');
-  await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
-  const tools = page.locator('.an-split-tools'), picture = page.locator('.an-split-picture');
-  await expect(tools).toBeVisible(); await expect(picture).toBeVisible();
-  const [t, p] = [await tools.boundingBox(), await picture.boundingBox()];
-  const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
-  const share = mobile ? p.height / (t.height + p.height) : p.width / (t.width + p.width);
-  expect(share).toBeGreaterThan(mobile ? .28 : .36); expect(share).toBeLessThanOrEqual(.401);
-  if (mobile) expect(t.height).toBeGreaterThan(p.height);
-  else expect(t.width).toBeGreaterThan(p.width);
+  /* Wochenaktionen behalten am Telefon ihr eigenes Stapellayout; Getränkeaktionen
+     nutzen ab F70 „Motiv zuerst" mit geschlossenem Werkzeugblatt. */
+  for (const kind of ['weekly', 'drinks']) {
+    await openPreview(page, kind, 2, false, null, true);
+    await selectArea(page.locator('#an-root'), 'design');
+    const workspace = page.locator('.an-cms-workspace');
+    await expect(workspace).toHaveAttribute('data-workspace-view', 'split');
+    const tools = page.locator('.an-split-tools'), picture = page.locator('.an-split-picture');
+    const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
+    const weekly = await workspace.evaluate((node) => node.classList.contains('an-cms-weekly'));
+    if (mobile && !weekly) {
+      await expect(tools).toBeHidden();
+      await expect(picture).toBeVisible();
+      const wsBox = await workspace.boundingBox(), p = await picture.boundingBox();
+      expect(p.height).toBeGreaterThan(wsBox.height * .5);
+      await openSheet(page);
+      await expect(tools).toBeVisible();
+    } else {
+      await expect(tools).toBeVisible(); await expect(picture).toBeVisible();
+      const [t, p] = [await tools.boundingBox(), await picture.boundingBox()];
+      const share = mobile ? p.height / (t.height + p.height) : p.width / (t.width + p.width);
+      expect(share).toBeGreaterThan(mobile ? .28 : .36); expect(share).toBeLessThanOrEqual(.401);
+      if (mobile) expect(t.height).toBeGreaterThan(p.height);
+      else expect(t.width).toBeGreaterThan(p.width);
+    }
+    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
+  }
   expect(state.errors).toEqual([]);
 });
 
@@ -2303,5 +2342,53 @@ test('TC-F69-02: Einzelflyer-Druck aus dem CMS-Modal ergibt je Artikel eine eige
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
   await expect(page.locator('#an-print .an-print-page')).toHaveCount(0);
   await expect(page.locator('body')).not.toHaveClass(/an-printing/);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F70-01..03: Motiv zuerst am Telefon (Leiste, Blatt, Elementkontext)', async ({ page }, testInfo) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  /* Telefonansicht: der Dialog passt sich per ResizeObserver an. */
+  await page.setViewportSize({ width: 375, height: 667 });
+  await expect(page.locator('#an-root')).toHaveClass(/an-cms-phone/, { timeout: 10000 });
+  await page.waitForTimeout(600);
+  /* TC-F70-01: Motiv füllt, Blatt zu, Leiste sichtbar, Werkzeuge öffnet Blatt */
+  const rootBox = await page.locator('.an-cms-workspace').boundingBox();
+  const pictureBox = await page.locator('.an-cms-workspace>.an-split-picture').boundingBox();
+  expect(pictureBox.height).toBeGreaterThan(rootBox.height * .5);
+  const bar = page.locator('.an-motiv-bar');
+  await expect(bar).toBeVisible();
+  const sheet = page.locator('.an-cms-workspace>.an-split-tools');
+  expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
+  await bar.locator('[data-motiv-tools]').click();
+  await expect(sheet).toBeVisible();
+  await expect(sheet.locator('.an-cms-tabbar')).toBeVisible();
+  await bar.locator('[data-motiv-tools]').click();
+  await page.waitForTimeout(350);
+  expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
+  /* TC-F70-02: Element antippen → Chip in der Leiste, Eigenschaften öffnet Blatt */
+  const hit = page.locator('#an-hit-layer [data-select]').first();
+  await expect(hit).toBeVisible();
+  await hit.click();
+  await expect(bar.locator('[data-motiv-chip]')).toBeVisible();
+  expect((await bar.locator('[data-motiv-name]').textContent()).length).toBeGreaterThan(0);
+  await bar.locator('[data-motiv-properties]').click();
+  await expect(sheet).toBeVisible();
+  await expect(sheet.locator('.an-cms-tabbar [aria-pressed=true]')).toHaveText('Element');
+  await page.evaluate(() => document.querySelector('.an-motiv-bar [data-motiv-tools]').click());
+  await page.waitForTimeout(350);
+  /* TC-F70-03: Artikelnavigation in der Leiste, synchron, Ausgabe-Tab ohne Leiste */
+  const position = bar.locator('[data-motiv-position]');
+  await expect(position).toHaveText('Artikel 1 von 2');
+  await bar.locator('[data-motiv-next]').click();
+  await expect(position).toHaveText('Artikel 2 von 2');
+  await expect(bar.locator('[data-motiv-next]')).toBeDisabled();
+  await bar.locator('[data-motiv-prev]').click();
+  await expect(position).toHaveText('Artikel 1 von 2');
+  await bar.locator('[data-motiv-tools]').click();
+  await page.locator('[data-action-area=output]').click();
+  await page.waitForTimeout(300);
+  await expect(bar).toBeHidden();
   expect(state.errors).toEqual([]);
 });

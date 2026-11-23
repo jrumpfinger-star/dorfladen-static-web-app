@@ -223,4 +223,11 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 | GF117 Live-Rendering kontinuierlicher Eingaben erhalten | F66-Spec/Plan | TC-F66-03 |
 | GF118 Responsive Fussleiste an Werkzeugbreite anpassen | F66-Spec/Plan | TC-F66-05 |
 
+# Folgeauftrag F70: Motiv zuerst am Telefon
+
+| Aufgabe | Abhaengigkeit | Testvertrag |
+| --- | --- | --- |
+| GF121 Motivleiste und aufschiebbares Werkzeugblatt im Telefon-Aktionseditor | F70-Spec | TC-F70-01..02 |
+| GF122 Artikelsynchronisation Motivleiste/Blatt, Ausgabe-Tab unverändert | GF121 | TC-F70-03 |
+
 Abgenommen: Globale Designer F65/F66 17/17 und CMS-Aktionseditor F65–F69 (Einzel-/Sammelausgabe, PNG, Navigation, Live) jeweils auf den vier Pflichtansichten grün; API-Provenienz (`test_angebote.py`) grün. Der echte Scrollbalken-Test läuft nur Desktop/iPad (Headless-Einschränkung).
