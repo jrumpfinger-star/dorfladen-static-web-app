@@ -2295,8 +2295,8 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     const buttons = dock.getByRole('button');
     await expect(buttons).toHaveCount(8);
     for (const box of await buttons.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().toJSON()))) expect(box.height).toBeGreaterThanOrEqual(43.5);
-    const canvasBox = await page.locator('.an-split-picture canvas:visible').first().boundingBox();
-    expect(canvasBox.height).toBeGreaterThan(300);
+    /* Das Motiv passt sich nach dem Aufbau der Leisten an (Einpassen); es muss danach gross bleiben. */
+    await expect.poll(async () => (await page.locator('.an-split-picture canvas:visible').first().boundingBox()).height, { timeout: 8000 }).toBeGreaterThan(300);
     const within = async () => {
       const [d, p] = [await dock.boundingBox(), await page.locator('.an-cms-workspace>.an-split-picture').boundingBox()];
       expect(d.y).toBeGreaterThanOrEqual(p.y - 1); expect(d.y + d.height).toBeLessThanOrEqual(p.y + p.height + 1);
