@@ -1147,15 +1147,16 @@
       var target = dockTarget(button.dataset.dockKind, button.dataset.dockKey);
       button.disabled = !target || target.disabled;
     });
-    placeDock();
+    placeDock(true);
   }
-  /* Die Schnellleiste liegt als Überlagerung auf der Vorschau und weicht dem gewählten Element
-     nach oben oder unten aus, statt es zu verdecken. Auf der Seite, an der sie liegt, reserviert
-     die scrollbare Vorschau Platz in ihrer Höhe – so bleibt beim Scrollen auch das untere bzw.
-     obere Ende des Motivs über der Leiste erreichbar. */
-  /* Chromium erzeugt in Flex-Scrollcontainern keinen Laufbereich unter dem Inhalt
-     (Padding-Bug) – deshalb ein echter Abstandshalter am Ende, den reserveDockSpace
-     je nach Leistenposition füllt oder leert. */
+  /* Die Schnellleiste liegt als Überlagerung am unteren Rand der Vorschau und reserviert
+     dort konstant Scrollraum in ihrer Höhe – so bleibt auch das untere Ende des Motivs
+     über der Leiste erreichbar, ohne dass die Leiste den Inhalt beim Scrollen verdeckt.
+     Das gewählte Element wird gegebenenfalls über die Leiste hinaus gescrollt
+     (scrollIntoView), statt dass die Leiste nach oben ausweicht: Ein pendelnder Ausgleich
+     ließ die Zoomleiste „mittig" kleben (Sticky-Anker unter dem Padding) und die Vorschau
+     flackern. Chromium erzeugt in Flex-Scrollcontainern keinen Laufbereich unter dem Inhalt
+     (Padding-Bug) – deshalb ein echter Abstandshalter am Ende des Containers. */
   function dockSpacer(picture) {
     var spacer = picture.querySelector(':scope>.an-dock-spacer');
     if (!spacer) {
@@ -1165,34 +1166,33 @@
     }
     return spacer;
   }
-  function reserveDockSpace(picture, height, atTop) {
+  function reserveDockSpace(picture, height) {
     var spacer = dockSpacer(picture);
-    spacer.style.height = height + 'px';
-    spacer.style.order = atTop ? -1 : 1;
-    var top = height && atTop ? height + 'px' : '';
-    if (picture.style.paddingTop !== top) picture.style.paddingTop = top;
+    if (spacer.style.height !== height + 'px') spacer.style.height = height + 'px';
   }
-  function placeDock() {
+  function placeDock(adjust) {
     var dock = root.querySelector('.an-motiv-dock'), picture = root.querySelector('.an-cms-workspace>.an-split-picture');
     if (!dock || !picture) return;
-    if (!dock.offsetParent) { reserveDockSpace(picture, 0); dock.classList.remove('an-dock-top'); return; }
-    var selectedBox = picture.querySelector('.an-selected'), top = false;
-    var height = dock.offsetHeight + 8;
-    if (selectedBox) {
-      var element = selectedBox.getBoundingClientRect(), area = picture.getBoundingClientRect();
-      var topEdge = area.top + 56;
-      function overlap(from, to) { return Math.max(0, Math.min(element.bottom, to) - Math.max(element.top, from)); }
-      top = overlap(area.bottom - height - 8, area.bottom) > overlap(topEdge, topEdge + height);
+    if (!dock.offsetParent) { reserveDockSpace(picture, 0); return; }
+    reserveDockSpace(picture, dock.offsetHeight + 16);
+    if (!adjust) return;
+    var selectedBox = picture.querySelector('.an-selected');
+    if (!selectedBox) return;
+    var element = selectedBox.getBoundingClientRect(), limit = dock.getBoundingClientRect().top - 4;
+    if (element.bottom > limit) {
+      var max = picture.scrollHeight - picture.clientHeight;
+      picture.scrollTop = Math.min(picture.scrollTop + (element.bottom - limit), max);
     }
-    dock.classList.toggle('an-dock-top', top);
-    reserveDockSpace(picture, top ? height + 32 : height + 16, top);
-  }  function watchDock(workspace, dock) {
+  }
+  function watchDock(workspace, dock) {
     var picture = workspace.querySelector('.an-split-picture'), frame = 0;
-    function later() { cancelAnimationFrame(frame); frame = requestAnimationFrame(placeDock); }
-    picture.addEventListener('scroll', later, { passive: true });
-    if (window.ResizeObserver) new ResizeObserver(later).observe(picture);
-    if (window.MutationObserver) new MutationObserver(later).observe(picture, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
-    dock.addEventListener('transitionend', later);
+    /* Beimnutzer-Scrollen nur den Laufraum pflegen; das gewählte Element nur nach
+       Auswahl- oder Layout-Änderungen über die Leiste schieben, nie gegen das Scrollen. */
+    function later(adjust) { cancelAnimationFrame(frame); frame = requestAnimationFrame(function () { placeDock(adjust); }); }
+    picture.addEventListener('scroll', function () { later(false); }, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(function () { later(true); }).observe(picture);
+    if (window.MutationObserver) new MutationObserver(function () { later(true); }).observe(picture, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    dock.addEventListener('transitionend', function () { later(true); });
   }
   function dockControls() {    var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
     dock.setAttribute('aria-label', 'Schnellwerkzeuge für das gewählte Element');

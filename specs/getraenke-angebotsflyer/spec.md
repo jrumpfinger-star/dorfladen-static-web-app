@@ -2004,12 +2004,13 @@ ganzen Editor. Deshalb gilt am Telefon (Gestaltungstab, geteilte Ansicht):
   Ansicht): oeffnet das Werkzeugblatt mit dem gewaehlten Reiter; erneutes
   Antippen des aktiven Reiters oder „Fertig" schliesst es. „Mehr" entfaellt.
 - **Schnellleiste als Ueberlagerung auf der Vorschau**: Elementauswahl,
-  Verschieben (4 Pfeile), Groesse (− / +), Drehen (↺ ↻ je 15°); sitzt am
-  unteren Rand der Vorschau und weicht dem gewaehlten Element nach oben aus,
-sodass sie es nie verdeckt. Die scrollbare Vorschau reserviert auf der
-Seite der Leiste Scrollraum in ihrer Hoehe, damit auch das untere bzw.
-obere Ende des Motivs beim Scrollen ueber der Leiste bleibt und „Einpassen"
-das Motiv vollstaendig neben der Leiste skaliert. Knoepfe mindestens 44 px;
+Verschieben (4 Pfeile), Groesse (− / +), Drehen (↺ ↻ je 15°); sitzt immer
+am unteren Rand der Vorschau und weicht nicht mehr aus. Die scrollbare
+Vorschau reserviert unten konstant Scrollraum in Leistenhoehe, damit auch
+das untere Ende des Motivs beim Scrollen ueber der Leiste bleibt; nach
+Auswahl oder Layoutaenderung wird das gewaehlte Element gegebenenfalls
+ueber die Leiste gescrollt (nie waehrend des eigenen Scrollens, damit die
+Leiste nicht gegen den Nutzer arbeitet). Knoepfe mindestens 44 px;
 Verschieben, Groesse
   und Drehen wiederholen beim Gedrueckthalten. Sie loest die Knoepfe der
   vorhandenen Werkzeugspalte aus (gleiche Logik, kein zweiter Code-Pfad).
@@ -2049,11 +2050,12 @@ Verschieben, Groesse
   das Blatt und blendet die Schnellleiste aus (Rueckgaengig und Speichern
   bleiben sichtbar), „Fertig" stellt sie wieder her.
 - TC-F71-03: Beim Scrollen der Vorschau verdeckt die Schnellleiste keinen
-  Inhalt: die scrollbare Vorschau reserviert auf der Seite der Leiste Platz
-  in ihrer Hoehe, sodass sich das untere (bzw. obere) Ende des Motivs ueber
-  die Leiste hinaus scrollen laesst; „Einpassen" skaliert das Motiv so, dass
-  es vollstaendig neben der Leiste sichtbar bleibt; beim Oeffnen des Blatts
-  wird der reservierte Platz freigegeben.
+  Inhalt: die scrollbare Vorschau reserviert unten konstant Platz in
+  Leistenhoehe, sodass sich das untere Ende des Motivs ueber die Leiste
+  hinaus scrollen laesst und die Zoomleiste (Sticky) nach dem Scrollen oben
+  bleibt statt mittig zu kleben; nach Auswahl wird das gewaehlte Element
+  ueber die Leiste gescrollt; beim Oeffnen des Blatts wird der reservierte
+  Platz freigegeben.
 - TC-F72-01: Touch-Ziehen am Element (Wochen- und Getraenkeaktion) laesst
   den Gestaltungsstand unveraendert; Antippen waehlt das Element; Ziehen am
   ✥-Griff aendert die Gestaltung; Elementflaechen erlauben natives Scrollen,

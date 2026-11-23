@@ -2383,6 +2383,14 @@ test('TC-F71-03: Schnellleiste verdeckt beim Scrollen keinen Inhalt - unteres En
     return canvas.getBoundingClientRect().bottom <= dock.top + 1;
   });
   expect(clear).toBe(true);
+  /* Die Zoomleiste klebt nach dem Scrollen oben an der Vorschau (Sticky), nicht mittig */
+  const zoomTop = await page.evaluate(() => {
+    const picture = document.querySelector('.an-cms-workspace>.an-split-picture');
+    const bar = picture.querySelector('.an-zoombar');
+    return bar.getBoundingClientRect().top - picture.getBoundingClientRect().top;
+  });
+  expect(zoomTop).toBeGreaterThanOrEqual(0);
+  expect(zoomTop).toBeLessThanOrEqual(16);
   /* Blatt öffnen: reservierter Platz wird freigegeben, „Fertig" stellt ihn wieder her */
   await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Vorlage', exact: true }).click();
   await expect(dock).toBeHidden();
