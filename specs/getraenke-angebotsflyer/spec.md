@@ -2006,7 +2006,11 @@ ganzen Editor. Deshalb gilt am Telefon (Gestaltungstab, geteilte Ansicht):
 - **Schnellleiste als Ueberlagerung auf der Vorschau**: Elementauswahl,
   Verschieben (4 Pfeile), Groesse (− / +), Drehen (↺ ↻ je 15°); sitzt am
   unteren Rand der Vorschau und weicht dem gewaehlten Element nach oben aus,
-  sodass sie es nie verdeckt. Knoepfe mindestens 44 px; Verschieben, Groesse
+sodass sie es nie verdeckt. Die scrollbare Vorschau reserviert auf der
+Seite der Leiste Scrollraum in ihrer Hoehe, damit auch das untere bzw.
+obere Ende des Motivs beim Scrollen ueber der Leiste bleibt und „Einpassen"
+das Motiv vollstaendig neben der Leiste skaliert. Knoepfe mindestens 44 px;
+Verschieben, Groesse
   und Drehen wiederholen beim Gedrueckthalten. Sie loest die Knoepfe der
   vorhandenen Werkzeugspalte aus (gleiche Logik, kein zweiter Code-Pfad).
 - **Feste Hauptleiste unten** (einzeilig, immer sichtbar, nie hinter einem
@@ -2044,6 +2048,12 @@ ganzen Editor. Deshalb gilt am Telefon (Gestaltungstab, geteilte Ansicht):
   macht beides rueckgaengig (ohne das Blatt zu oeffnen); ein Reiter oeffnet
   das Blatt und blendet die Schnellleiste aus (Rueckgaengig und Speichern
   bleiben sichtbar), „Fertig" stellt sie wieder her.
+- TC-F71-03: Beim Scrollen der Vorschau verdeckt die Schnellleiste keinen
+  Inhalt: die scrollbare Vorschau reserviert auf der Seite der Leiste Platz
+  in ihrer Hoehe, sodass sich das untere (bzw. obere) Ende des Motivs ueber
+  die Leiste hinaus scrollen laesst; „Einpassen" skaliert das Motiv so, dass
+  es vollstaendig neben der Leiste sichtbar bleibt; beim Oeffnen des Blatts
+  wird der reservierte Platz freigegeben.
 - TC-F72-01: Touch-Ziehen am Element (Wochen- und Getraenkeaktion) laesst
   den Gestaltungsstand unveraendert; Antippen waehlt das Element; Ziehen am
   ✥-Griff aendert die Gestaltung; Elementflaechen erlauben natives Scrollen,

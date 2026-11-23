@@ -2355,6 +2355,50 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
   }
   expect(state.errors).toEqual([]);
 });
+test('TC-F71-03: Schnellleiste verdeckt beim Scrollen keinen Inhalt - unteres Ende bleibt bearbeitbar (drinks)', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 4, true, null, true);
+  await selectArea(page.locator('#an-root'), 'design');
+  const dock = page.locator('.an-motiv-dock'), picture = page.locator('.an-cms-workspace>.an-split-picture');
+  await expect(dock).toBeVisible();
+  /* Die scrollbare Vorschau reserviert auf der Leistenseite Platz in Leistenhoehe */
+  const pad = await picture.evaluate((node) => {
+    const spacer = node.querySelector('.an-dock-spacer');
+    return spacer ? parseFloat(getComputedStyle(spacer).height) : 0;
+  });
+  const dockBox = await dock.boundingBox();
+  expect(pad).toBeGreaterThanOrEqual(dockBox.height);
+  /* Vergrößern, bis die Vorschau scrollt, und ans untere Ende scrollen: der untere Motivrand
+     liegt dann über der Schnellleiste (nichts wird verdeckt) */
+  await dock.getByRole('button', { name: 'Element vergrößern', exact: true }).click();
+  await expect.poll(async () => picture.evaluate((node) => node.scrollHeight > node.clientHeight + 4)).toBe(true);
+  await picture.evaluate((node) => { node.scrollTop = node.scrollHeight; });
+  await page.waitForTimeout(150);
+  const clear = await page.evaluate(() => {
+    const picture = document.querySelector('.an-cms-workspace>.an-split-picture');
+    const canvas = picture.querySelector('.an-selected') || picture.querySelector('canvas');
+    const dock = document.querySelector('.an-motiv-dock').getBoundingClientRect();
+    return canvas.getBoundingClientRect().bottom <= dock.top + 1;
+  });
+  expect(clear).toBe(true);
+  /* Blatt öffnen: reservierter Platz wird freigegeben, „Fertig" stellt ihn wieder her */
+  await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Vorlage', exact: true }).click();
+  await expect(dock).toBeHidden();
+  await expect.poll(async () => picture.evaluate((node) => {
+    const spacer = node.querySelector('.an-dock-spacer');
+    return spacer ? parseFloat(getComputedStyle(spacer).height) : 0;
+  })).toBe(0);
+  await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Fertig', exact: true }).click();
+  await expect(dock).toBeVisible();
+  await expect.poll(async () => picture.evaluate((node) => parseFloat(getComputedStyle(node.querySelector('.an-dock-spacer')).height))).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+  const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
+  if (await discard.isVisible().catch(() => false)) await discard.click();
+  await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
+  expect(state.errors).toEqual([]);
+});
 test('TC-AEA-F4-01: gespeicherte Aktion sucht fehlende Artikelbilder erneut und uebersteht Fehler einzelner Artikel', async ({ page }) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');

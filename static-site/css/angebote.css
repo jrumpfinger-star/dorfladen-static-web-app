@@ -1647,6 +1647,9 @@ body.an-body{margin:0;background:#f7f5ed}
   background:rgba(255,255,255,.94);border:1px solid var(--an-line,#d5dfd6);box-shadow:0 6px 24px rgba(16,40,28,.22);
   backdrop-filter:blur(6px)}
 .an-cms-phone .an-cms-workspace.an-motiv-first .an-motiv-dock.an-dock-top{align-self:start;margin-top:64px}
+/* Abstandshalter am Ende der scrollbaren Vorschau: schafft Laufraum, damit der Inhalt
+   über die Schnellleiste hinaus gescrollt werden kann (Chromium-Padding-Bug in Flex). */
+.an-cms-phone .an-cms-workspace .an-dock-spacer{flex:none;width:100%;pointer-events:none}
 .an-motiv-dock select{grid-column:1/-1;min-width:0;min-height:44px;font-size:14px;margin:0}
 .an-motiv-dock button{min-height:44px;min-width:0;padding:0;font-size:20px;line-height:1;touch-action:manipulation}
 /* Werkzeugblatt */

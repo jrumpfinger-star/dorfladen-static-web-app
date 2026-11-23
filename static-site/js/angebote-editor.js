@@ -1150,18 +1150,43 @@
     placeDock();
   }
   /* Die Schnellleiste liegt als Überlagerung auf der Vorschau und weicht dem gewählten Element
-     nach oben oder unten aus, statt es zu verdecken. */
+     nach oben oder unten aus, statt es zu verdecken. Auf der Seite, an der sie liegt, reserviert
+     die scrollbare Vorschau Platz in ihrer Höhe – so bleibt beim Scrollen auch das untere bzw.
+     obere Ende des Motivs über der Leiste erreichbar. */
+  /* Chromium erzeugt in Flex-Scrollcontainern keinen Laufbereich unter dem Inhalt
+     (Padding-Bug) – deshalb ein echter Abstandshalter am Ende, den reserveDockSpace
+     je nach Leistenposition füllt oder leert. */
+  function dockSpacer(picture) {
+    var spacer = picture.querySelector(':scope>.an-dock-spacer');
+    if (!spacer) {
+      spacer = document.createElement('div'); spacer.className = 'an-dock-spacer';
+      spacer.setAttribute('aria-hidden', 'true');
+      picture.appendChild(spacer);
+    }
+    return spacer;
+  }
+  function reserveDockSpace(picture, height, atTop) {
+    var spacer = dockSpacer(picture);
+    spacer.style.height = height + 'px';
+    spacer.style.order = atTop ? -1 : 1;
+    var top = height && atTop ? height + 'px' : '';
+    if (picture.style.paddingTop !== top) picture.style.paddingTop = top;
+  }
   function placeDock() {
     var dock = root.querySelector('.an-motiv-dock'), picture = root.querySelector('.an-cms-workspace>.an-split-picture');
-    if (!dock || !picture || !dock.offsetParent) return;
-    var selectedBox = picture.querySelector('.an-selected'); if (!selectedBox) { dock.classList.remove('an-dock-top'); return; }
-    var element = selectedBox.getBoundingClientRect(), area = picture.getBoundingClientRect();
-    var height = dock.offsetHeight + 8, topEdge = area.top + 56;
-    function overlap(from, to) { return Math.max(0, Math.min(element.bottom, to) - Math.max(element.top, from)); }
-    var onBottom = overlap(area.bottom - height - 8, area.bottom), onTop = overlap(topEdge, topEdge + height);
-    dock.classList.toggle('an-dock-top', onBottom > onTop);
-  }
-  function watchDock(workspace, dock) {
+    if (!dock || !picture) return;
+    if (!dock.offsetParent) { reserveDockSpace(picture, 0); dock.classList.remove('an-dock-top'); return; }
+    var selectedBox = picture.querySelector('.an-selected'), top = false;
+    var height = dock.offsetHeight + 8;
+    if (selectedBox) {
+      var element = selectedBox.getBoundingClientRect(), area = picture.getBoundingClientRect();
+      var topEdge = area.top + 56;
+      function overlap(from, to) { return Math.max(0, Math.min(element.bottom, to) - Math.max(element.top, from)); }
+      top = overlap(area.bottom - height - 8, area.bottom) > overlap(topEdge, topEdge + height);
+    }
+    dock.classList.toggle('an-dock-top', top);
+    reserveDockSpace(picture, top ? height + 32 : height + 16, top);
+  }  function watchDock(workspace, dock) {
     var picture = workspace.querySelector('.an-split-picture'), frame = 0;
     function later() { cancelAnimationFrame(frame); frame = requestAnimationFrame(placeDock); }
     picture.addEventListener('scroll', later, { passive: true });
@@ -1169,8 +1194,7 @@
     if (window.MutationObserver) new MutationObserver(later).observe(picture, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
     dock.addEventListener('transitionend', later);
   }
-  function dockControls() {
-    var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
+  function dockControls() {    var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
     dock.setAttribute('aria-label', 'Schnellwerkzeuge für das gewählte Element');
     dock.innerHTML = '<select data-dock-element aria-label="Element wählen"></select>'
       + DOCK_ACTIONS.map(function (action) {
@@ -1248,6 +1272,7 @@
       workspace.classList.toggle('an-motiv-sheet-open', open);
       if (open) sideColumn.scrollTop = 0;
       motivTabs();
+      placeDock();
     }
     strip.onclick = function (event) {
       var button = event.target.closest('button'); if (!button) return;
