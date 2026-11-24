@@ -43,9 +43,9 @@ Zielgrößen, vorhandene Wochenplan-/HD-/Waagenregressionen sowie Sichtprüfung.
 Feature-Preview nur mit vollständig abgefangenen Testdaten prüfen; keine
 Produktionsdaten ändern. Mockup-Freigabe autorisiert keine Funktionsentfernung.
 
-F8-Stand: lokal umgesetzt und mit 33 gezielten Tests abgenommen; Veröffentlichung
-in der Feature-Preview steht noch aus. Ergebnisse und gesonderter Altbefund
-stehen in [tasks.md](./tasks.md).
+F8-Stand: umgesetzt und in der PR-15-Feature-Preview veröffentlicht. 33 gezielte
+lokale Tests und 14 Wochenplan-Live-Tests bestanden. Ergebnisse, CI-Nachweise
+und gesonderter Altbefund stehen in [tasks.md](./tasks.md).
 
 ## 1. Das Designschema — festgehalten
 

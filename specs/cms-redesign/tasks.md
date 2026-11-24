@@ -11,8 +11,8 @@ Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
 
 ## Lokale Abnahme
 
-WP1–WP4 sind lokal umgesetzt und geprüft. Veröffentlichung und Live-Abnahme
-in der Feature-Preview stehen bis zur Freigabe von Commit/Push aus.
+WP1–WP4 sind umgesetzt, lokal geprüft und nach ausdrücklicher Commit-/Push-
+Freigabe auch in der Feature-Preview veröffentlicht und abgenommen.
 
 - **33/33 gezielte Playwright-Tests bestanden:** neue Wochenplan-Suite
   14/14, freigegebenes Mockup 11/11, betroffene CMS- und Ausgabe-Regressionen
@@ -37,6 +37,19 @@ in der Feature-Preview stehen bis zur Freigabe von Commit/Push aus.
 - Generator erneut ausgeführt: beide HTML-Ausgaben bytegleich.
   Maschineller Funktionsabgleich für Betriebs- und Entwurfsseite jeweils
   **0 Fehlstellen**; JavaScript-Syntax und `git diff --check` fehlerfrei.
+
+## Feature-Live-Abnahme
+
+- [PR-15-Feature-Vorschau](https://kind-pebble-072605b03-15.westeurope.7.azurestaticapps.net/cms.html):
+  **14/14 Wochenplan-Tests bestanden**, einschließlich aller vier Zielgrößen.
+  Sämtliche API-Zugriffe waren abgefangen; keine echten Schreibzugriffe.
+- [Deployment 45459700157](https://github.com/jrumpfinger-star/dorfladen-static-web-app/actions/runs/45459700157)
+  einschließlich isolierter Preview-Einstellungen erfolgreich.
+- [Read-only Smoke 45459700663](https://github.com/jrumpfinger-star/dorfladen-static-web-app/actions/runs/45459700663)
+  erfolgreich.
+- Ausgelieferte Betriebs-/Entwurfsseite, CMS-JavaScript und neues CSS per
+  SHA-256 gegen den Code-Commit `d66fc714` abgeglichen; Zeilenenden normalisiert.
+- Produktion unverändert; keine API-, Renderer- oder Datenmodelländerung.
 
 Zusätzlicher, nicht durch F8 verursachter Befund:
 [cms-waage-werbung.spec.js, TC-F3-01](../../tests/cms-waage-werbung.spec.js)
