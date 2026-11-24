@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Mobile Angebotsnavigation</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--flaeche);color:var(--ink);font:16px/1.4 system-ui,"Segoe UI",sans-serif}
+[hidden]{display:none!important}
+h1,h2,h3,p{margin:0}
+h1,h2,h3,strong{font-weight:600}
+button,input{font:inherit;color:inherit}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);cursor:pointer}
+button:hover{background:var(--gr-t);border-color:var(--gr)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+svg{flex:none;width:20px;height:20px;pointer-events:none}
+.primary{background:var(--gr-d);border-color:var(--gr-d);color:var(--karte)}
+.primary:hover{background:var(--gr);color:var(--karte)}
+.danger{color:var(--red);background:var(--red-l);border-color:var(--red-b)}
+.icon-button{flex:none;width:44px;padding:8px}
+.mockup-note{flex:none;min-height:24px;padding:3px 8px;text-align:center;font-size:13px;color:var(--amb);background:var(--amb-l);border-top:1px solid var(--amb-b)}
+.screen{flex:1;min-height:0;overflow:auto}
+.overview{max-width:1080px;width:100%;margin:auto;padding:16px}
+.overview-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.overview-head h1{flex:1;font-size:20px}
+.overview-head .new-actions{display:flex;gap:8px}
+.period{display:flex;align-items:center;gap:6px;margin-bottom:12px;color:var(--ink)}
+.period button[aria-pressed=true]{background:var(--gr-l);border-color:var(--gr);color:var(--gr-d)}
+.action-list{display:grid;gap:12px}
+.action-card{container-type:inline-size;border:1px solid var(--line);border-radius:var(--r-m);padding:16px;background:var(--karte)}
+.card-heading{display:flex;gap:12px;align-items:flex-start}
+.card-heading>div{flex:1;min-width:0}
+.card-heading h2{font-size:17px}
+.meta{margin-top:4px;color:var(--ink);font-size:13px;line-height:1.5}
+.state{display:inline-flex;align-items:center;gap:4px;margin-top:8px;color:var(--gr-d);font-size:13px}
+.state svg{width:15px;height:15px}
+.card-actions{display:flex;flex-wrap:nowrap;gap:6px;margin-top:12px}
+.card-actions>button{flex:1;white-space:nowrap;min-width:44px}
+.card-actions>.icon-button{flex:0 0 44px}
+.card-actions>button:first-child{color:var(--gr-d);border-color:var(--gr);background:var(--gr-l)}
+.card-actions .action-label{font-size:16px}
+.card-items{margin:12px 0 0;padding:12px 0 0 20px;border-top:1px solid var(--line);font-size:15px}
+@container(max-width:560px){
+  .card-actions .action-label{display:none}
+  .card-actions{gap:4px}
+  .card-actions>button,.card-actions>.icon-button{flex:1;padding:8px}
+}
+.legacy{margin-top:20px;color:var(--ink);font-size:14px}
+.legacy summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.legacy summary::before{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg)}
+.legacy[open] summary::before{transform:rotate(45deg)}
+.legacy p{padding:8px 0}
+.editor{display:flex;flex-direction:column;overflow:hidden}
+.editor-head{flex:none;display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--karte);border-bottom:1px solid var(--line)}
+.steps{display:flex;gap:4px;flex:1;min-width:0}
+.steps button{justify-content:center;min-width:44px;white-space:nowrap;border-color:transparent;background:transparent}
+.steps button[aria-pressed=true]{border-color:var(--gr);background:var(--gr-l);color:var(--gr-d)}
+.head-tools{display:flex;gap:4px;flex:none;border-left:1px solid var(--line);padding-left:8px}
+.head-tools button{border-color:transparent;background:transparent}
+.editor-body{flex:1;min-height:0;overflow:auto;padding:16px;max-width:1080px;width:100%;margin:auto}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.section-head h1{font-size:18px}
+.article-list{display:grid;gap:8px}
+.article{display:flex;align-items:center;gap:12px;width:100%;text-align:left;justify-content:flex-start;padding:12px}
+.article .name{display:grid;gap:4px;flex:1;min-width:0}
+.article .name>span{font-size:14px;color:var(--ink)}
+.article .number{font-size:13px;align-self:flex-start;margin-top:2px;color:var(--ink);min-width:12px}
+.product{display:flex;align-items:center;justify-content:center;flex:none;width:38px;height:48px;border-radius:4px;background:var(--gr-l);border:1px solid var(--line);color:var(--gr-d);font-size:11px;font-weight:600}
+.editor-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px calc(8px + var(--sab));background:var(--karte);border-top:1px solid var(--line)}
+.editor-foot span{font-size:13px;min-width:0}
+.preview-panel{padding:16px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte)}
+.preview-panel p{margin:8px 0;color:var(--ink)}
+.preview-panel .view-actions{display:flex;gap:8px;flex-wrap:wrap}
+.paper{padding:16px;border:1px solid var(--line);border-radius:4px;background:var(--karte);margin-top:16px;max-width:560px}
+.paper h2{font-size:20px;color:var(--gr-d);padding-bottom:12px;border-bottom:2px solid var(--gr)}
+.paper-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:12px}
+.paper-items>div{display:grid;gap:8px;min-width:0}
+.paper-items strong{font-size:18px}
+dialog{max-width:min(460px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);color:var(--ink);box-shadow:var(--schatten-2)}
+dialog::backdrop{background:rgba(16,40,28,.25)}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.dialog-head h2{font-size:18px}
+.dialog-body{padding:16px;overflow:auto}
+.dialog-body p+p{margin-top:10px}
+.dialog-body label{display:grid;gap:6px;margin-bottom:14px}
+.dialog-body input{width:100%;min-height:44px;padding:8px;border:1px solid var(--gr);border-radius:var(--r-s);background:var(--karte)}
+.dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+.menu-actions{display:grid;gap:8px}
+.menu-actions button{justify-content:flex-start}
+#notice{position:fixed;left:12px;right:12px;bottom:36px;margin:auto;max-width:480px;padding:12px;background:var(--ink);color:var(--karte);border-radius:var(--r-s);box-shadow:var(--schatten-2);z-index:5}
+@media(max-width:599px){
+  .overview{padding:12px 8px}
+  .overview-head{margin-bottom:12px}
+  .overview-head h1{font-size:18px}
+  .overview-head .new-actions{flex-basis:100%}
+  .overview-head .new-actions button{flex:1;padding:8px;font-size:15px}
+  .action-card{padding:12px}
+  .editor-head{padding:6px;gap:4px}
+  .steps button{flex:0 0 44px;padding:8px;gap:6px}
+  .steps button[aria-pressed=true]{flex:1;min-width:0}
+  .steps .step-label{display:none}
+  .steps button[aria-pressed=true] .step-label{display:inline}
+  .head-tools{padding-left:4px;gap:0}
+  .editor-body{padding:12px 8px}
+  .article{padding:10px 8px}
+}
+@media(min-width:600px) and (pointer:fine){
+  .overview button,.editor-head button{height:32px;min-height:32px;padding-block:3px}
+  .overview .icon-button,.editor-head .icon-button{height:32px}
+}
+</style>
+</head>
+<body>
+<main id="overview" class="screen overview" aria-label="Aktionsübersicht">
+  <div class="overview-head">
+    <h1>Sonderangebote</h1>
+    <div class="new-actions">
+      <button class="primary" data-new="Sonderaktion"><i data-lucide="plus" aria-hidden="true"></i>Sonderaktion</button>
+      <button data-new="Getränkeaktion"><i data-lucide="plus" aria-hidden="true"></i>Getränkeaktion</button>
+    </div>
+  </div>
+  <nav class="period" aria-label="Aktionszeitraum">
+    <button aria-pressed="true" data-period="Diese Woche">Diese Woche</button>
+    <button aria-pressed="false" data-period="Nächste Woche">Nächste Woche</button>
+    <button aria-pressed="false" data-period="Alle">Alle</button>
+  </nav>
+  <div id="actions" class="action-list"></div>
+  <details class="legacy"><summary>Bereits gespeicherte Feature-Aktionen</summary>
+    <p>Der bisherige Feature-Bestand bleibt unverändert erreichbar. Dieser Entwurf zeigt nur die neue Navigation.</p>
+    <button data-demo="Feature-Bestand">Feature-Bestand öffnen</button>
+  </details>
+  <details class="legacy"><summary>Entwurfsnotizen: Funktionserhalt</summary>
+    <p>Bearbeiten → Stift · Vorschau → Auge · Teilen → Teilen-Symbol · Waage → Waage · Löschen → Papierkorb · Weitere Aktionen → drei Punkte. Alle sechs bleiben direkt in derselben Zeile. Duplizieren bleibt unter „Weitere Aktionen“.</p>
+    <p>Artikel/Bilder, Gestaltung und Ausgabe bleiben drei getrennte Bereiche. Am Handy erhält nur der aktive Bereich einen sichtbaren Text. Aktionsdaten → Kalender; Schließen → X. Nichts wird zusammengelegt oder entfernt.</p>
+    <p>Dieser Navigationsentwurf ersetzt weder die Artikelpflege noch die freigegebene Gestaltung. Ausgabe und Bild-/Artikeldialoge sind hier nur als Navigationsziele dargestellt. Android-Zurück schließt erst den Dialog, dann die Erfassung.</p>
+  </details>
+</main>
+<section id="editor" class="screen editor" aria-label="Aktion erfassen" hidden>
+  <header class="editor-head">
+    <nav class="steps" aria-label="Aktionsbereiche">
+      <button data-area="articles" aria-pressed="true" aria-label="Artikel und Bilder" title="Artikel und Bilder"><i data-lucide="list" aria-hidden="true"></i><span class="step-label">Artikel</span></button>
+      <button data-area="design" aria-pressed="false" aria-label="Gestaltung" title="Gestaltung"><i data-lucide="palette" aria-hidden="true"></i><span class="step-label">Gestaltung</span></button>
+      <button data-area="output" aria-pressed="false" aria-label="Ausgabe" title="Ausgabe"><i data-lucide="printer" aria-hidden="true"></i><span class="step-label">Ausgabe</span></button>
+    </nav>
+    <div class="head-tools">
+      <button class="icon-button" data-modal="data" aria-label="Aktionsdaten" title="Aktionsdaten"><i data-lucide="calendar-days" aria-hidden="true"></i></button>
+      <button class="icon-button" data-back aria-label="Erfassung schließen" title="Erfassung schließen"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+  </header>
+  <div class="editor-body">
+    <div id="articles">
+      <div class="section-head"><h1>Artikel und Bilder</h1><button data-demo="Artikel hinzufügen"><i data-lucide="plus" aria-hidden="true"></i>Artikel</button></div>
+      <div id="article-list" class="article-list"></div>
+    </div>
+    <div id="design" hidden>
+      <div class="section-head"><h1>Gestaltung</h1></div>
+      <div class="preview-panel"><strong>Der aktive Bereich bleibt lesbar.</strong><p>Dieser Entwurf überarbeitet nur den Kopf. Die bereits freigegebene Gestaltung mit großer Vorschau und Eigenschaftenblättern bleibt erhalten.</p><button data-demo="Bisherige Gestaltung">Gestaltung ansehen</button></div>
+    </div>
+    <div id="output" hidden>
+      <div class="section-head"><h1>Ausgabe</h1></div>
+      <div class="preview-panel"><p>Bestehende Ausgabeziele und Funktionen bleiben unverändert.</p><div class="view-actions"><button data-modal="preview"><i data-lucide="eye" aria-hidden="true"></i>Vorschau</button><button data-modal="share"><i data-lucide="share-2" aria-hidden="true"></i>Teilen</button><button data-modal="scale"><i data-lucide="scale" aria-hidden="true"></i>Waage</button></div></div>
+    </div>
+  </div>
+  <footer class="editor-foot"><span>Nur lokale Beispieldaten</span><button class="primary" data-save>Speichern</button></footer>
+</section>
+<div class="mockup-note">Mockup · keine echten Schreibzugriffe</div>
+<dialog id="modal" aria-labelledby="modal-title">
+  <header class="dialog-head"><h2 id="modal-title"></h2><button class="icon-button" data-back aria-label="Dialog schließen" title="Dialog schließen"><i data-lucide="x" aria-hidden="true"></i></button></header>
+  <div id="modal-body" class="dialog-body"></div>
+  <footer id="modal-foot" class="dialog-foot"></footer>
+</dialog>
+<div id="notice" role="status" hidden></div>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var modal = document.getElementById('modal'), noticeTimer;
+  var items = [
+    { name: 'Feiner Zucker', size: '1 kg', price: '0,99 €' },
+    { name: 'Fruchtgummi', size: '175 g', price: '0,99 €' },
+    { name: 'Butterschmalz', size: '500 g', price: '6,99 €' },
+    { name: 'Glühwein', size: '1 l', price: '1,99 €' },
+    { name: 'Quarktasche', size: '1 Stück', price: '1,50 €' },
+    { name: 'Schinkenwurst', size: '100 g', price: '1,65 €' }
+  ];
+  var actions = [{ id: 1, title: 'Sonderangebote', kind: 'Sonderaktion' }], nextId = 2;
+  var commands = [
+    ['edit', 'square-pen', 'Bearbeiten'], ['preview', 'eye', 'Vorschau'],
+    ['share', 'share-2', 'Teilen'], ['scale', 'scale', 'Waage'],
+    ['delete', 'trash-2', 'Aktion löschen'], ['more', 'ellipsis', 'Weitere Aktionsfunktionen']
+  ];
+  function esc(value) { return String(value).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function icon(name) { return '<i data-lucide="' + name + '" aria-hidden="true"></i>'; }
+  function icons() {
+    if (!window.lucide) throw new Error('Die Lucide-Symbole konnten nicht geladen werden.');
+    window.lucide.createIcons();
+  }
+  function message(text) {
+    clearTimeout(noticeTimer);
+    var notice = document.getElementById('notice');
+    notice.textContent = text; notice.hidden = false;
+    noticeTimer = setTimeout(function () { notice.hidden = true; }, 3500);
+  }
+  function cards() {
+    document.getElementById('actions').innerHTML = actions.map(function (action) {
+      return '<article class="action-card" data-id="' + action.id + '"><div class="card-heading"><div><h2>' + esc(action.title) + '</h2>'
+        + '<p class="meta">23.11.2026 bis 28.11.2026 · 6 Artikel · ' + esc(action.kind) + '</p>'
+        + '<span class="state">' + icon('circle-check') + 'Gespeichert · Aktiv</span></div>'
+        + '<button class="icon-button" data-expand aria-label="Artikel anzeigen" aria-expanded="false" title="Artikel anzeigen">' + icon('chevron-down') + '</button></div>'
+        + '<div class="card-actions" role="group" aria-label="Aktionsfunktionen">'
+        + commands.map(function (entry, i) {
+          return '<button data-command="' + entry[0] + '" aria-label="' + entry[2] + '" title="' + entry[2] + '"'
+            + (i >= 4 ? ' class="icon-button' + (i === 4 ? ' danger' : '') + '"' : '') + '>'
+            + icon(entry[1]) + (i < 4 ? '<span class="action-label">' + entry[2] + '</span>' : '') + '</button>';
+        }).join('') + '</div><ul class="card-items" hidden>' + items.map(function (item) { return '<li>' + item.name + ' · ' + item.price + '</li>'; }).join('') + '</ul></article>';
+    }).join('') || '<p>Keine Aktionen. Lege eine neue Beispielaktion an.</p>';
+    icons();
+  }
+  function paper() {
+    return '<div class="paper"><h2>Sonderangebote</h2><div class="paper-items">'
+      + items.map(function (item) { return '<div><span>' + item.name + '</span><small>' + item.size + '</small><strong>' + item.price + '</strong></div>'; }).join('') + '</div></div>';
+  }
+  function openDialog(type, id) {
+    history.pushState(Object.assign({}, history.state, { modal: type, id: id || history.state.id }), '');
+    sync();
+  }
+  function openEditor(id) {
+    history.pushState({ view: 'editor', area: 'articles', id: id }, '');
+    sync(); document.querySelector('[data-area=articles]').focus();
+  }
+  function sync() {
+    var state = history.state, editing = state.view === 'editor';
+    document.getElementById('overview').hidden = editing;
+    document.getElementById('editor').hidden = !editing;
+    document.querySelectorAll('[data-area]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.area === state.area)); });
+    ['articles', 'design', 'output'].forEach(function (id) { document.getElementById(id).hidden = id !== state.area; });
+    if (!state.modal) { if (modal.open) modal.close(); return; }
+    var action = actions.find(function (entry) { return entry.id === state.id; }), body = '', foot = '';
+    var titles = { data: 'Aktionsdaten', preview: 'Vorschau', share: 'Teilen', scale: 'Waagenvorschau', delete: 'Aktion löschen?', more: 'Weitere Aktionen', article: 'Artikel und Bilder' };
+    if (state.modal === 'data') {
+      body = '<label>Aktionsname<input id="action-title" value="' + esc(action.title) + '"></label><label>Gültig von<input type="date" value="2026-11-23"></label><label>Gültig bis<input type="date" value="2026-11-28"></label>';
+      foot = '<button data-back>Abbrechen</button><button class="primary" data-data-save>Übernehmen</button>';
+    } else if (state.modal === 'more') {
+      body = '<div class="menu-actions"><button data-duplicate>' + icon('copy') + 'Aktion duplizieren</button></div>';
+    } else if (state.modal === 'delete') {
+      body = '<p>„' + esc(action.title) + '“ mit allen Artikeln löschen?</p><p>Dies betrifft nur diese lokale Beispielkarte.</p>';
+      foot = '<button data-back>Abbrechen</button><button class="danger" data-delete>Aktion löschen</button>';
+    } else if (state.modal === 'share') {
+      body = '<p>Hier bleibt die bestehende Teilen-Funktion erreichbar.</p><p>Das Mockup verschickt keine Inhalte und öffnet keine externen Dienste.</p>';
+    } else if (state.modal === 'article') {
+      body = '<p>Artikelbearbeitung und Bildpflege bleiben unverändert. Dieser Entwurf zeigt ausschließlich Kopf und Aktionsleiste.</p>';
+    } else {
+      body = '<p>' + (state.modal === 'scale' ? 'Lokale Motivvorschau. Es wird nichts an die Waage gesendet.' : 'Lokale Beispieldaten, keine echte Ausgabe.') + '</p>' + paper();
+    }
+    document.getElementById('modal-title').textContent = titles[state.modal];
+    document.getElementById('modal-body').innerHTML = body;
+    document.getElementById('modal-foot').innerHTML = foot || '<button data-back>Schließen</button>';
+    icons(); if (!modal.open) modal.showModal();
+  }
+  document.getElementById('article-list').innerHTML = items.map(function (item, i) {
+    return '<button class="article" data-modal="article"><span class="number">' + (i + 1) + '</span><span class="product">' + item.size + '</span>'
+      + '<span class="name"><strong>' + item.name + '</strong><span>' + item.price + ' · ' + item.size + '</span></span>' + icon('chevron-right') + '</button>';
+  }).join('');
+  document.addEventListener('click', function (event) {
+    var b = event.target.closest('button'); if (!b) return;
+    var state = history.state, card = b.closest('[data-id]'), id = card ? Number(card.dataset.id) : state.id;
+    if (b.hasAttribute('data-back')) { history.back(); return; }
+    if (b.hasAttribute('data-command')) {
+      if (b.dataset.command === 'edit') openEditor(id);
+      else openDialog(b.dataset.command, id);
+    } else if (b.hasAttribute('data-expand')) {
+      var expanded = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(expanded)); b.setAttribute('aria-label', expanded ? 'Artikel ausblenden' : 'Artikel anzeigen');
+      card.querySelector('.card-items').hidden = !expanded;
+    } else if (b.dataset.area) {
+      history.replaceState(Object.assign({}, state, { area: b.dataset.area }), ''); sync();
+    } else if (b.dataset.modal) openDialog(b.dataset.modal);
+    else if (b.hasAttribute('data-duplicate')) {
+      var source = actions.find(function (action) { return action.id === id; });
+      actions.push({ id: nextId++, title: source.title + ' (Kopie)', kind: source.kind });
+      cards(); history.back(); message('Beispielkarte lokal dupliziert.');
+    } else if (b.hasAttribute('data-delete')) {
+      actions = actions.filter(function (action) { return action.id !== id; });
+      cards(); history.back(); message('Nur die lokale Beispielkarte wurde gelöscht.');
+    } else if (b.hasAttribute('data-data-save')) {
+      actions.find(function (action) { return action.id === id; }).title = document.getElementById('action-title').value;
+      cards(); history.back(); message('Aktionsname nur im Mockup übernommen.');
+    } else if (b.hasAttribute('data-save')) { history.back(); message('Mockup geschlossen. Keine echten Daten gespeichert.'); }
+    else if (b.dataset.new) {
+      var created = { id: nextId++, title: 'Neue ' + b.dataset.new, kind: b.dataset.new };
+      actions.push(created); cards(); openEditor(created.id);
+    } else if (b.dataset.period) {
+      document.querySelectorAll('[data-period]').forEach(function (button) { button.setAttribute('aria-pressed', String(button === b)); });
+      message('Beispielansicht: ' + b.dataset.period + '.');
+    } else if (b.dataset.demo) message(b.dataset.demo + ': bestehende Funktion bleibt erhalten; hier nur Navigationsentwurf.');
+  });
+  modal.addEventListener('cancel', function (event) { event.preventDefault(); history.back(); });
+  window.addEventListener('popstate', sync);
+  history.replaceState({ view: 'overview', area: 'articles' }, '');
+  cards(); sync();
+  if (new URLSearchParams(location.search).get('screen') === 'capture') openEditor(1);
+})();
+</script>
+</body>
+</html>

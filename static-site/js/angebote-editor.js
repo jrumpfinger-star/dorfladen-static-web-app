@@ -1036,7 +1036,9 @@
     context.setAttribute('aria-label', 'Aktuelle Gestaltung');
     context.innerHTML = '<span data-action-design-context role="status"></span>'
       + '<select data-action-preset aria-label="Eigene Vorlage laden" hidden><option value="">Eigene Vorlage laden …</option></select>';
-    var standard = $('an-defaults'); standard.textContent = 'Standard-Gestaltung laden'; standard.title = 'Zurück zur gespeicherten Standard-Gestaltung dieses Bereichs'; standard.dataset.designLoadStandard = ''; context.appendChild(standard);
+    var standard = $('an-defaults'); standard.setAttribute('aria-label', 'Standard-Gestaltung laden');
+    standard.innerHTML = '<span class="an-standard-full">Standard-Gestaltung laden</span><span class="an-standard-short" aria-hidden="true">Standard<br>laden</span>';
+    standard.title = 'Zurück zur gespeicherten Standard-Gestaltung dieses Bereichs'; standard.dataset.designLoadStandard = ''; context.appendChild(standard);
     toolbar.after(context);
     actions.appendChild($('an-stage-info'));
     D.compactActions(actions); D.compactHelp(root, help); D.expandGroups(root);

@@ -2138,6 +2138,55 @@ Tablet und Desktop behalten ihre Reiter unveraendert.
   ▼ im Kopf und Kopf-Tipp schalten die Rastpunkte; im Ausgabe-Bereich ist das
   Blatt ausgeblendet. Tablet und Desktop behalten die Reiter.
 
+## F74: Freigegebene mobile Aktionsnavigation
+
+Referenz: `mockups/angebote-mobile-navigation-mockup.html`. Freigegeben sind
+die Aktionszeile der Bestandskarten und der Erfassungskopf, nicht eine neue
+Artikelpflege oder ein Ersatz der bereits freigegebenen Gestaltung.
+
+- Die sechs Kartenaktionen bleiben in einer Zeile: Bearbeiten/Stift,
+  Vorschau/Auge, Teilen/Teilen-Symbol, Waage/Waage, Löschen/Papierkorb,
+  Weitere Aktionen/drei Punkte. Bei knapper Kartenbreite nur Lucide-Symbole;
+  mit genügend Platz bleiben die vier bisherigen Texte sichtbar.
+  Duplizieren bleibt unter Weitere Aktionen. Keine Funktion entfällt.
+- Der Erfassungskopf zeigt am Telefon drei Bereichsknöpfe: nur der aktive
+  Bereich mit Symbol und kurzem Text, die übrigen als Symbole. Rechts stehen
+  Aktionsdaten/Kalender und Schließen/X optisch getrennt. Keine Nummern,
+  gequetschten Kleinsttexte oder zweite Kopfzeile. Die freigegebene Kopfhöhe
+  von 56 px ersetzt hier die frühere 44-px-Vorgabe aus TC-F63-01.
+- Namen für assistive Technik, Titel, Tastaturfokus und bestehende Handler
+  bleiben erhalten. Touchziele mindestens 44 x 44 px, Mausaktionen ab 600 px
+  32 px hoch. Der Metadatenknopf behält die vorhandene Ein-/Ausklappfunktion.
+  Kein neuer Speicherpfad, kein Speichern durch Navigation.
+- Nachfreigabe: In der mobilen Aktionsgestaltung entfällt die doppelte
+  Auswahl „Gestalten für“. Das zuvor unter Ausgabe gewählte Ziel bleibt
+  erhalten und im Gestaltungskopf lesbar. Wechsel erfolgen unter Ausgabe.
+  Globale Designer und die Zielwahl unter Ausgabe bleiben unverändert.
+- Weitere Nachfreigabe: Die Vorlagenauswahl im mobilen Gestaltungsblatt
+  erhält den freien Platz statt auf wenige Zeichen zu schrumpfen. Der
+  gleich hohe Knopf zeigt zweizeilig „Standard“ / „laden“; sein vollständiger
+  zugänglicher Name und seine bisherige Lade-/Bestätigungsfunktion bleiben.
+  Herkunft/Zusammenfassung steht bei sichtbarer Auswahl darüber.
+
+### Testfälle
+
+- TC-F74-01: Übersicht auf den vier Pflichtansichten messen: sechs echte
+  Aktionen in einer Zeile, passende Text-/Symbolzustände, zugängliche Namen,
+  Mindestmaße und kein horizontaler Überlauf. Weitere Aktionen und
+  Löschabbruch erhalten die Bestandsaktion ohne Schreibzugriff.
+- TC-F74-02: Erfassungskopf auf vier Ansichten und am Telefon mit beiden
+  Aktionsarten: fünf erreichbare Knöpfe in einer Zeile, aktiver Bereich
+  mit Text, übrige mobil ohne Text; Aktionsdaten auf/zu und Schließen bleiben
+  funktionsfähig. Navigation erhält Daten, Bilder und Historie (TC-F62-02).
+- TC-F74-03: Mobil unter Ausgabe Waage wählen, Gestaltung öffnen: kein
+  sichtbares Gestaltungsziel-Select, Zielanzeige Waage und unveränderte
+  Zielgestaltung. Blatt/Objektfenster und Android-Zurück bleiben funktionsfähig
+  (TC-F72-02, TC-F73-03b/05); Rückkehr zu Ausgabe erlaubt weiterhin Zielwahl.
+- TC-F74-04: Bei sichtbarer eigener Vorlagenauswahl im 375-px-Gestaltungsblatt
+  ist das Select mindestens 160 px breit; „Standard / laden“ maximal 100 px
+  breit und wie das Select 44 px hoch. Beide Textzeilen vollständig sichtbar,
+  kein Überlauf; eigene Vorlage und Standardladefunktion bleiben erreichbar.
+
 ## Verifikation und offene Fragen
 
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800

@@ -251,3 +251,20 @@ F73-Nachfreigabe lokal geprueft: CMS-Angebotsablauf 173/173 auf Desktop,
 Telefon und Laden-Tablet sowie 42/42 Layouttests bei 768x1024.
 Objektblatt-Footer und Android-Zurueck zusaetzlich in allen vier Projekten
 geprueft. Dies ist kein Live-Deploymentnachweis.
+
+# Folgeauftrag F74: Mobile Aktionsnavigation
+
+| Aufgabe | Abhängigkeit | Testvertrag |
+| --- | --- | --- |
+| GF133 Kartenaktionen einzeilig, Lucide-Symbole und zugängliche Namen; Text nach Kartenbreite | F74-Spec/Plan, Mockup-Freigabe | TC-F74-01 |
+| GF134 Erfassungskopf mit aktiver Beschriftung und rechter Daten-/Schließen-Gruppe | GF133 | TC-F74-02, TC-F63-01, TC-F62-02 |
+| GF135 Doppelte mobile Zielauswahl aus Gestaltung entfernen, Ausgabeziel erhalten | F74-Nachfreigabe | TC-F74-03, TC-F72-02, TC-F73-03b/05 |
+| GF137 Vorlagenauswahl verbreitern und gleich hohen Standardknopf zweizeilig setzen | F74-Nachfreigabe | TC-F74-04 |
+| GF136 Vier Zielansichten, Touch und Bestandsregression prüfen; freigegebenen Stand bereitstellen | GF133, GF134, GF135, GF137 | TC-F74-01..04 |
+
+F74 lokal abgenommen: CMS-Angebotsablauf 228/228 auf Desktop, Telefon,
+Laden-Tablet und Touch-iPad. Kartenaktionen, aktive Bereichsbeschriftung,
+Zielerhalt und Vorlagenzeile bestehen einschließlich Browser-Zurück.
+Alle zehn Getränkefelder passen weiterhin ab 360x640 vollständig in den
+Arbeitsraum; die Eingabeflächen bleiben mindestens 44 px hoch.
+Browser-Zurück emuliert Android-Zurück; kein physisches Androidgerät getestet.

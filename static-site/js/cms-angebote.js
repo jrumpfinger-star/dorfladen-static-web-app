@@ -62,7 +62,8 @@ window.CMSAngebote = (function () {
           toggle.removeAttribute('data-cms-toggle'); toggle.removeAttribute('role'); toggle.removeAttribute('tabindex'); toggle.removeAttribute('aria-expanded');
           summary.dataset.cmsToggle = ''; summary.setAttribute('role', 'button'); summary.tabIndex = 0; summary.setAttribute('aria-expanded', 'false');
           var more = document.createElement('details'); more.className = 'an-action-more';
-          var moreLabel = document.createElement('summary'); moreLabel.textContent = '⋯'; moreLabel.setAttribute('aria-label', 'Weitere Aktionsfunktionen');
+          var moreLabel = document.createElement('summary'); moreLabel.innerHTML = window.CMSAngeboteForm.icon('ellipsis');
+          moreLabel.setAttribute('aria-label', 'Weitere Aktionsfunktionen'); moreLabel.title = 'Weitere Aktionsfunktionen';
           var menu = document.createElement('div'); more.append(moreLabel, menu);
           menu.prepend(duplicate); buttons.appendChild(more);
           card.classList.add('an-overview-action');
@@ -176,10 +177,21 @@ window.CMSAngebote = (function () {
       var area = document.createElement('select'); area.dataset.captureArea = ''; area.setAttribute('aria-label', 'Aktionsbereich');
       area.innerHTML = '<option value="articles">Artikel / Bilder</option><option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
       top.insertBefore(area, closeButton);
-      window.CMSAngeboteForm.areaNavigation(area);
+      var areaNav = window.CMSAngeboteForm.areaNavigation(area);
+      areaNav.classList.add('an-capture-nav');
+      areaNav.querySelectorAll('button').forEach(function (button) {
+        button.setAttribute('aria-label', button.textContent);
+        var value = button.dataset.actionArea, label = value === 'articles' ? 'Artikel' : area.querySelector('[value=' + value + ']').textContent;
+        button.title = value === 'articles' ? 'Artikel und Bilder' : label;
+        button.innerHTML = window.CMSAngeboteForm.icon({ articles: 'list', design: 'palette', output: 'printer' }[value])
+          + '<span class="an-step-label">' + label + '</span>';
+      });
       var metaToggle = document.createElement('button'); metaToggle.type = 'button'; metaToggle.dataset.metaToggle = '';
-      metaToggle.textContent = 'Daten'; metaToggle.setAttribute('aria-label', 'Aktionsdaten ein- oder ausblenden');
-      metaToggle.setAttribute('aria-expanded', String(isNew)); top.insertBefore(metaToggle, closeButton);
+      metaToggle.innerHTML = window.CMSAngeboteForm.icon('calendar-days'); metaToggle.setAttribute('aria-label', 'Aktionsdaten ein- oder ausblenden');
+      metaToggle.title = 'Aktionsdaten'; metaToggle.setAttribute('aria-expanded', String(isNew));
+      closeButton.innerHTML = window.CMSAngeboteForm.icon('x'); closeButton.title = 'Erfassung schließen';
+      var headerTools = document.createElement('div'); headerTools.className = 'an-capture-header-tools';
+      headerTools.append(metaToggle, closeButton); top.appendChild(headerTools);
       var mobileList = document.createElement('div'); mobileList.className = 'an-capture-mobile-list';
       host.before(mobileList);
       var stepper = document.createElement('div'); stepper.className = 'an-capture-stepper';

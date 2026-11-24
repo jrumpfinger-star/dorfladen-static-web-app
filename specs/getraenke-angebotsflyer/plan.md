@@ -1069,3 +1069,33 @@ bloss ein verstecktes Select. Layouttests vergleichen Canvas und Vorschau
 vor/nach Blattwechsel; Android-Zurueck behandelt zuerst den innersten Dialog.
 Dateien: `static-site/js/angebote-editor.js`, `static-site/css/angebote.css`,
 `tests/cms-angebote-ablauf.spec.js`.
+
+## F74: Mobile Aktionsnavigation nach freigegebenem Mockup
+
+1. `cms-angebote-form.js`: gemeinsame kleine Lucide-SVG-Hilfe für Karten,
+   Kopf und Mehr-Knopf; Kartenhandlerattribute unverändert, sichtbare Texte
+   in eigene Spans und vollständige zugängliche Namen auf die Knöpfe.
+2. `cms-angebote.js`: ausschließlich den Erfassungskopf dekorieren.
+   Bestehende Bereichsbuttons, Select und Handler bleiben dieselben Nodes.
+   Metadaten und Schließen in eine rechte Werkzeuggruppe verschieben;
+   Kalender/X ersetzen Textdarstellung. Gestaltungskopf nicht neu entwerfen.
+3. `angebote.css`: Kartenbreite per Container Query für Texte/Symbole;
+   sechs Aktionen ohne Umbruch und ohne kleinere Touchziele. Erfassung
+   wie Mockup: aktive Beschriftung, rechte Werkzeuggruppe, 56-px-Telefonkopf.
+   `.an-phone-design .an-action-context` blendet ausschließlich die redundante
+   mobile Zielwahl aus; bestehender Zielzustand und Ausgabehandler bleiben.
+   Der Vorlagenkontext verwendet mobil eine flexible Auswahlspalte plus
+   96-px-Standardknopf. Die Herkunft erhält bei sichtbarem Select eine
+   eigene Zeile; zugänglicher Langname und Ladehandler bleiben erhalten.
+   `angebote.html` lädt auch im Standalone-Einstieg das gemeinsame
+   `dl-design.css`, damit dieselben Tokens wie im Mockup verfügbar sind.
+   Kleinere vertikale Feldabstände kompensieren den 56-px-Kopf, ohne
+   die mobilen 44-px-Eingabeflächen zu verkleinern.
+4. `cms-angebote-ablauf.spec.js`: TC-F74-01..04 ergänzen und Kopfmaß in
+   TC-F63-01 aktualisieren. Vier Pflichtansichten einschließlich Touch,
+   bestehende Roundtrips und Android-Zurück testen, schreibfreier Live-Nachweis.
+
+Vorher/Nachher: alle fünf primären Kartenhandler unverändert; Mehr/Duplizieren
+bleibt Details-Menü; drei Bereichswechsel bleiben Select-Change-Delegation;
+Aktionsdaten bleiben `metaToggle.onclick`, Schließen bleibt `cancel()`.
+Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.

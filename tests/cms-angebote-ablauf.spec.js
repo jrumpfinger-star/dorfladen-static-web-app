@@ -838,10 +838,17 @@ const openSheet = async (page) => {
   if (!(await page.locator('.an-motiv-sheet-head').isVisible().catch(() => false))) return;
   if (await sheetRest(page) === 'peek') await setSheetRest(page, 'half');
 };
-/* Am Telefon (F73) liegt das Gestaltungsziel im Eigenschaften-Blatt; das Blatt öffnet sich bei Bedarf. */
+/* Am Telefon wird das Gestaltungsziel ausschliesslich unter Ausgabe gewaehlt. */
 const setTarget = async (page, value) => {
+  const root = page.locator('#an-root');
+  if (await root.evaluate(node => node.classList.contains('an-cms-phone'))) {
+    const designing = await root.evaluate(node => node.classList.contains('an-phone-design'));
+    await selectArea(root, 'output');
+    await page.locator('[data-output-target]').selectOption(value);
+    if (designing) await selectArea(root, 'design');
+    return;
+  }
   const select = page.locator('[data-action-target]');
-  if (!(await select.isVisible().catch(() => false))) await openSheet(page);
   await select.scrollIntoViewIfNeeded();
   await select.selectOption(value);
 };
@@ -1354,7 +1361,7 @@ test('TC-F66-09: Waage ist in der Aktionsliste direkt erreichbar und oeffnet ohn
   const scaleButton = page.locator('[data-scale-action]').first();
   await expect(scaleButton).toBeVisible();
   await expect(page.locator('.cms-akt-btns [data-delete-action]').first()).toBeVisible();
-  await expect(page.locator('.an-action-more').first()).toContainText('⋯');
+  await expect(page.locator('.an-action-more>summary').first()).toHaveAttribute('aria-label', 'Weitere Aktionsfunktionen');
   await scaleButton.click();
   await expect(page.locator('#wb-ueb')).toBeVisible();
   await expect(page.locator('#an-scale-prepare')).toHaveCount(0);
@@ -1667,7 +1674,9 @@ for (const [surface, path] of SURFACES) {
           }
         }
         await expect(page.locator('[data-action-target] option')).toHaveCount(4);
-        await expect(page.locator('[data-action-target]')).toBeVisible();
+        if (await page.locator('#an-root').evaluate(node => node.classList.contains('an-phone-design'))) {
+          await expect(page.locator('[data-action-target]')).toBeHidden();
+        } else await expect(page.locator('[data-action-target]')).toBeVisible();
         expect(await modal.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
         expect(state.writes).toHaveLength(writes);
       }
@@ -2187,7 +2196,7 @@ test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten
     first: el.querySelector('[data-capture-item]').getBoundingClientRect().top,
     overflow: el.scrollWidth > el.clientWidth
   }));
-  expect(geometry.header).toBe(44); expect(geometry.body).toBeGreaterThanOrEqual(550);
+  expect(geometry.header).toBe(56); expect(geometry.body).toBeGreaterThanOrEqual(550);
   expect(geometry.first).toBeLessThanOrEqual(164); expect(geometry.overflow).toBe(false);
   for (const [width, height] of [[320, 568], [360, 640], [375, 667], [390, 844]]) {
     await page.setViewportSize({ width, height });
@@ -2198,7 +2207,7 @@ test('TC-F63-01: kompakte Handyliste, Einzelartikel und Größenwechsel behalten
           const box = node.getBoundingClientRect(); return { top: box.top, bottom: box.bottom, visible: box.top >= body.top && box.bottom <= body.bottom };
         }) };
     });
-    expect(list.header).toBe(44); expect(list.height).toBeGreaterThanOrEqual(height * .75);
+    expect(list.header).toBe(56); expect(list.height).toBeGreaterThanOrEqual(height * .75);
     expect(list.cards[0].top).toBeLessThanOrEqual(164); expect(list.cards.every(card => card.visible)).toBe(true);
     await page.screenshot({ path: test.info().outputPath('artikelliste-' + width + '.png') });
   }
@@ -2694,11 +2703,11 @@ test('TC-F73-01..04: Telefon ohne Reiter - Kopf mit Zielzeile, Bereichs-Chips, B
   await expect(page.locator('#an-state')).toContainText('geändert');
   await page.locator('.an-motiv-bar [data-motiv-history=undo]').click();
   await expect(color).toHaveValue(before);
-  /* TC-F73-03: Gestaltungsziel und Standard-Gestaltung liegen im Blatt; der Zielwechsel wirkt ohne Popup */
+  /* F74: Zielwechsel nur unter Ausgabe; Standard-Gestaltung bleibt im Blatt. */
   const ziel = page.locator('[data-action-target]');
-  await expect(ziel).toBeVisible();
+  await expect(ziel).toBeHidden();
   await expect(page.locator('[data-design-load-standard]')).toBeVisible();
-  await ziel.selectOption('single');
+  await setTarget(page, 'single');
   await expect(ziel).toHaveValue('single');
   await expect(head).toBeVisible();
   expect(state.errors).toEqual([]);
@@ -2796,4 +2805,109 @@ test('TC-F73-05b: Tablet und Desktop behalten die Reiter', { tag: '@layout' }, a
   await expect(page.locator('.an-motiv-sheet-head')).toBeHidden();
   await expect(page.locator('.an-cms-tabbar').getByRole('button', { name: 'Vorlage', exact: true })).toBeVisible();
   expect(state.errors).toEqual([]);
+});
+
+test('TC-F74-01: Kartenaktionen bleiben einzeilig, lesbar und als Touchziele erreichbar', async ({ browser }) => {
+  for (const [width, height, touch] of [[375, 667, true], [768, 1024, true], [1280, 800, false], [686, 1095, true]]) {
+    const context = await browser.newContext({ viewport: { width, height }, hasTouch: touch, serviceWorkers: 'block' });
+    try {
+      const page = await context.newPage(), state = await setup(page);
+      state.actions.set('AKT-NAV', seededAction('AKT-NAV', 'Navigationsprobe', '2026-11-16', '2026-11-21'));
+      await page.goto(BASE + '/angebote.html');
+      const card = page.locator('.an-overview-action'), controls = card.locator('.cms-akt-btns>button,.an-action-more>summary');
+      await expect(controls).toHaveCount(6);
+      const boxes = await controls.evaluateAll(nodes => nodes.map(node => {
+        const r = node.getBoundingClientRect();
+        return { x: r.x, y: r.y, width: r.width, height: r.height, name: node.getAttribute('aria-label') };
+      }));
+      expect(boxes.every(b => b.name && b.width >= 44 && b.height >= (touch ? 44 : 32)
+        && Math.abs(b.y - boxes[0].y) <= 1 && b.x >= 0 && b.x + b.width <= width), JSON.stringify(boxes)).toBe(true);
+      const texts = await card.locator('.an-action-label').evaluateAll(nodes => nodes.filter(n => getComputedStyle(n).display !== 'none').length);
+      expect(texts).toBe(width === 375 ? 0 : 4);
+      await page.screenshot({ path: test.info().outputPath('navigation-overview-' + width + '.png') });
+      await card.locator('.an-action-more>summary').click();
+      await expect(card.getByRole('button', { name: 'Duplizieren', exact: true })).toBeVisible();
+      await card.locator('.an-action-more>summary').click();
+      await card.getByRole('button', { name: 'Aktion löschen', exact: true }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Abbrechen', exact: true }).click();
+      await expect(card).toHaveCount(1);
+      expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
+    } finally { await context.close(); }
+  }
+});
+
+for (const kind of ['drinks', 'weekly']) {
+  test(`TC-F74-02/03: Erfassungskopf und feste mobile Zielwahl (${kind})`, { tag: '@layout' }, async ({ page }) => {
+    const state = await setup(page);
+    state.actions.set('AKT-NAV', { ...seededAction('AKT-NAV', 'Navigationsprobe', '2026-11-16', '2026-11-21'), kind });
+    await page.goto(BASE + '/angebote.html');
+    await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+    const dlg = page.locator('.an-cms-capture'), nav = dlg.locator('.an-capture-nav');
+    await expect(nav).toBeVisible();
+    const mobile = await dlg.evaluate(n => n.classList.contains('an-capture-phone'));
+    const boxes = await dlg.locator('.an-dialog-top button').evaluateAll(nodes => nodes.map(n => {
+      const r = n.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height };
+    }));
+    expect(boxes).toHaveLength(5);
+    expect(boxes.every(b => b.width >= 44 && b.height >= (mobile ? 44 : 32)
+      && Math.abs(b.y - boxes[0].y) <= 1 && b.x >= 0 && b.x + b.width <= page.viewportSize().width)).toBe(true);
+    const labels = await nav.locator('.an-step-label').evaluateAll(nodes => nodes.filter(n => getComputedStyle(n).display !== 'none').length);
+    expect(labels).toBe(mobile ? 1 : 3);
+    await dlg.locator('[data-meta-toggle]').click();
+    await expect(dlg.locator('[data-meta=title]')).toBeVisible();
+    await dlg.locator('[data-meta-toggle]').click();
+    if (mobile) await expect(dlg.locator('[data-meta=title]')).toBeHidden();
+    await page.screenshot({ path: test.info().outputPath('navigation-capture-' + kind + '.png') });
+    await selectArea(dlg, 'output');
+    await expect(page.locator('[data-output-target]')).toBeVisible();
+    await page.locator('[data-output-target]').selectOption('scale');
+    await selectArea(page.locator('#an-root'), 'design');
+    await expect(page.locator('[data-action-target]')).toHaveValue('scale');
+    if (mobile) {
+      await expect(page.locator('[data-action-target]')).toBeHidden();
+      await expect(page.locator('[data-phone-target]')).toHaveText('Waage');
+      await openSheet(page);
+      await page.goBack();
+      await expect(page.locator('.an-cms-workspace')).toHaveAttribute('data-sheet-rest', 'peek');
+      await page.goBack();
+      await expect(dlg).toBeVisible();
+      expect(page.url()).toBe(BASE + '/angebote.html');
+    } else await page.locator('#an-overview').click();
+    await expect(dlg.locator('.cms-ang-row').first().locator('[data-f=produkt]')).toHaveValue('Seed Navigationsprobe');
+    await dlg.getByRole('button', { name: 'Erfassung schließen', exact: true }).click();
+    await expect(dlg).toHaveCount(0);
+    expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F74-04: Vorlagenauswahl erhaelt Breite, Standardknopf bleibt zweizeilig und gleich hoch', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.route('**/api/cms-config', route => route.fulfill({ json: { success: true, data: {
+    feature_flags: { kiosk_werbebilder: true }, design_config: {},
+    design_presets: { plakat: [{ name: 'Meine gut lesbare Vorlage', ts: 1, data: { plakat_decoBgColor: '#123456' } }], flyer: [] }
+  } } }));
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 2);
+  await openSheet(page);
+  const picker = page.locator('[data-action-preset]'), standard = page.getByRole('button', { name: 'Standard-Gestaltung laden', exact: true });
+  await expect(picker).toBeVisible();
+  await expect(standard).toBeVisible();
+  const p = await picker.boundingBox(), s = await standard.boundingBox();
+  expect(p.width).toBeGreaterThanOrEqual(160); expect(s.width).toBeLessThanOrEqual(100);
+  expect(p.height).toBe(44); expect(s.height).toBe(44);
+  await expect(standard.locator('.an-standard-short')).toBeVisible();
+  await expect(standard.locator('.an-standard-full')).toBeHidden();
+  await page.screenshot({ path: test.info().outputPath('navigation-vorlagen.png') });
+  const writes = state.writes.length;
+  await picker.selectOption('0');
+  await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Eigene Vorlage laden?', exact: true })).toBeVisible();
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await standard.click();
+  const confirmation = page.getByRole('dialog').last().filter({ has: page.getByRole('heading', { name: 'CMS-Wochenvorlage übernehmen?', exact: true }) });
+  await expect(confirmation).toBeVisible();
+  await page.goBack();
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.locator('.an-cms-preview-modal')).toBeVisible();
+  expect(state.writes).toHaveLength(writes); expect(state.errors).toEqual([]);
 });
