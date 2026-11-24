@@ -1722,3 +1722,7 @@ body.an-body{margin:0;background:#f7f5ed}
 [data-designer] .an-designer-settings fieldset.an-choice-group:has(>label.an-field:not(.an-cfield))>label.an-cfield>.an-cfield-lab{order:1;flex:none!important}
 [data-designer] .an-designer-settings fieldset.an-choice-group:has(>label.an-field:not(.an-cfield))>label.an-cfield>input[type=color]{order:2}
 [data-designer] .an-designer-settings fieldset.an-choice-group:has(>label.an-field:not(.an-cfield))>label.an-cfield>.an-color-hex{order:3;margin-left:0}
+
+/* Direkt-Tools: Label ueber dem Feld - nichts wird abgeschnitten */
+.an-designer-settings .an-designer-direct label.an-field{display:block!important;border:0;background:none;padding:0;margin:0 0 6px}
+.an-designer-settings .an-designer-direct label.an-field>span{display:block!important;flex:none!important;width:auto!important;max-width:none!important;white-space:normal!important;overflow:visible!important;margin-bottom:5px}

@@ -3944,6 +3944,23 @@ test('TC-F38-10: Funktions-Audit — Plakat-Controls verändern die Live-Vorscha
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F38-11: Direkt-Tools-Label wird im Designer-Werkzeuge-Tab nicht abgeschnitten', { timeout: 90_000 }, async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'ART2001' });
+  await cms(page);
+  await designTab(page, 'sec-flyer');
+  const root = page.locator('#cfg-sec-flyer');
+  await designerTool(root, 2);
+  const stage = root.locator('[data-cfg-inline=flyer] .an-stage');
+  await expect(stage).toBeVisible({ timeout: 15000 });
+  await expect(stage.locator('[data-preview-select=img]').first()).toBeVisible({ timeout: 20000 });
+  await designerTool(root, 'tools');
+  const span = root.locator('.an-designer-direct label.an-field>span').first();
+  await expect(span).toBeVisible();
+  const info = await span.evaluate((s) => ({ text: s.textContent, sw: s.scrollWidth, cw: s.clientWidth }));
+  expect(info.sw, '„Element in der Vorschau" wird abgeschnitten').toBeLessThanOrEqual(info.cw + 1);
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F38-04: Preisbild wartet auf lokale Anton-Schrift und setzt Cent eng an', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page);
   let release;
