@@ -3831,6 +3831,119 @@ test('TC-F38-08: Bild- und Preisposition-Pads wirken sofort — auch bei ausgesc
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F38-09: Funktions-Audit — jedes Flyer-Control verändert die Live-Vorschau', { timeout: 150_000 }, async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'ART2001' });
+  await cms(page);
+  await designTab(page, 'sec-flyer');
+  const root = page.locator('#cfg-sec-flyer');
+  await designerTool(root, 2);
+  const stage = root.locator('[data-cfg-inline=flyer] .an-stage');
+  await expect(stage).toBeVisible({ timeout: 15000 });
+  const fingerprint = () => stage.evaluate((node) => {
+    const c = node.querySelector('canvas');
+    if (!c) return 'kein-canvas';
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let s = 0; for (let i = 0; i < d.length; i += 997) s = (s + d[i] * 31 + d[i + 1]) % 1e9;
+    return c.width + 'x' + c.height + ':' + s;
+  });
+  const set = async (id, kind, value) => {
+    const el = root.locator('#' + id);
+    /* Auch versteckte Controls (Dialog-gesteuert) müssen die Kette bedienen:
+       Wert setzen + input/change feuern, ohne Sichtbarkeitsanforderung. */
+    await el.evaluate((node, v) => {
+      if (node.type === 'checkbox') node.checked = v;
+      else node.value = v;
+      node.dispatchEvent(new Event('input', { bubbles: true }));
+      node.dispatchEvent(new Event('change', { bubbles: true }));
+    }, value);
+  };
+  const controls = [
+    ['cfg-flyer-tagShape', 'select', 'explosion'],
+    ['cfg-flyer-tagRadius', 'range', '40'],
+    ['cfg-flyer-tagSkew', 'range', '0'],
+    ['cfg-flyer-leafSize', 'range', '70'],
+    ['cfg-flyer-tagScale', 'range', '140'],
+    ['cfg-flyer-imgScale', 'range', '150'],
+    ['cfg-flyer-imgWidthPct', 'range', '75'],
+    ['cfg-flyer-borderWidth', 'range', '8'],
+    ['cfg-flyer-nameSize', 'range', '44'],
+    ['cfg-flyer-nameFont', 'select', 'Georgia'],
+    ['cfg-flyer-nameWeight', 'select', '400'],
+    ['cfg-flyer-detailsWeight', 'select', '900'],
+    ['cfg-flyer-showLeaf', 'check', true],
+    ['cfg-flyer-showBag', 'check', true],
+    ['cfg-flyer-decoLeafColor', 'color', '#ff0044'],
+    ['cfg-flyer-priceOldColor', 'color', '#00ff88'],
+    ['cfg-flyer-priceStrikeColor', 'color', '#0000ff'],
+    ['cfg-priceFontFlyer', 'range', '80'],
+    ['cfg-savingsScaleFlyer', 'range', '160'],
+  ];
+  const dead = [];
+  for (const [id, kind, value] of controls) {
+    const el = root.locator('#' + id);
+    if (!(await el.count())) { dead.push(id + ' (fehlt)'); continue; }
+    const before = await fingerprint();
+    await set(id, kind, value);
+    await page.clock.runFor(2500);
+    const after = await fingerprint();
+    if (after === before) dead.push(id);
+    await set(id, kind, kind === 'check' ? false : kind === 'select' ? await el.evaluate((n) => n.options[0].value) : '10');
+    await page.clock.runFor(1200);
+  }
+  expect(dead, 'Controls ohne sichtbare Vorschau-Wirkung: ' + dead.join(', ')).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F38-10: Funktions-Audit — Plakat-Controls verändern die Live-Vorschau', { timeout: 150_000 }, async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'ART2001' });
+  await cms(page);
+  await designTab(page, 'sec-plakat');
+  const root = page.locator('#cfg-sec-plakat');
+  await designerTool(root, 2);
+  const stage = root.locator('[data-cfg-inline=plakat] .an-stage');
+  await expect(stage).toBeVisible({ timeout: 15000 });
+  const fingerprint = () => stage.evaluate((node) => {
+    const c = node.querySelector('canvas');
+    if (!c) return 'kein-canvas';
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let s = 0; for (let i = 0; i < d.length; i += 997) s = (s + d[i] * 31 + d[i + 1]) % 1e9;
+    return c.width + 'x' + c.height + ':' + s;
+  });
+  const set = (id, value) => root.locator('#' + id).evaluate((node, v) => {
+    if (node.type === 'checkbox') node.checked = v; else node.value = v;
+    node.dispatchEvent(new Event('input', { bubbles: true }));
+    node.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+  const controls = [
+    ['cfg-plakat-tagShape', 'explosion'],
+    ['cfg-plakat-tagRadius', '40'],
+    ['cfg-plakat-tagScale', '140'],
+    ['cfg-plakat-nameFont', 'Georgia'],
+    ['cfg-plakat-nameWeight', '400'],
+    ['cfg-plakat-nameSize', '44'],
+    ['cfg-plakat-showLeaf', true],
+    ['cfg-plakat-decoLeafColor', '#ff0044'],
+    ['cfg-plakat-priceOldColor', '#00ff88'],
+    ['cfg-plakat-leafSize', '70'],
+    ['cfg-priceFontPlakat', '80'],
+    ['cfg-savingsScalePlakat', '160'],
+  ];
+  const dead = [];
+  for (const [id, value] of controls) {
+    const el = root.locator('#' + id);
+    if (!(await el.count())) { dead.push(id + ' (fehlt)'); continue; }
+    const before = await fingerprint();
+    await set(id, value);
+    await page.clock.runFor(2500);
+    const after = await fingerprint();
+    if (after === before) dead.push(id);
+    await set(id, Array.isArray(value) ? false : '10');
+    await page.clock.runFor(1200);
+  }
+  expect(dead, 'Plakat-Controls ohne sichtbare Vorschau-Wirkung: ' + dead.join(', ')).toEqual([]);
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F38-04: Preisbild wartet auf lokale Anton-Schrift und setzt Cent eng an', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page);
   let release;
