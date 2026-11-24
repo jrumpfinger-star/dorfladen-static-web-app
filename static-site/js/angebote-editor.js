@@ -15,7 +15,7 @@
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
   var cmsSession = null;
-  var phoneSheetOpen = false;
+  var phoneSheetOpen = false, phoneSheetRest = 'peek', phoneMenuOpen = false;
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -151,16 +151,28 @@
   /* F72 Android-Zurück: Editor und offenes Werkzeugblatt sind Ebenen im Browserverlauf. Zurück schließt zuerst
      einen offenen Dialog, dann das Blatt, dann den Editor (mit Rückfrage bei ungespeicherten Änderungen),
      statt die Seite zu verlassen. Eigene Schließwege geben ihre Einträge über dropLayer wieder frei. */
-  var layers = [], expectedPops = 0;
+  var layers = [], expectedPops = 0, deferredLayers = [];
   function pushLayer(name) {
     if (layers.indexOf(name) >= 0) return;
     layers.push(name);
+    /* Läuft noch ein history.go(), wird der Eintrag erst danach angelegt; sonst landet er in der Vorwärtsliste und Zurück verlässt die Seite. */
+    if (expectedPops) { deferredLayers.push(name); return; }
     try { history.pushState({ angeboteLayer: name }, ''); } catch (e) { layers.pop(); }
   }
   function dropLayer(name) {
     var index = layers.lastIndexOf(name); if (index < 0) return;
-    var count = layers.length - index; layers.length = index;
-    expectedPops++; history.go(-count);
+    var real = layers.splice(index).filter(function (layer) {
+      var pending = deferredLayers.indexOf(layer);
+      if (pending < 0) return true;
+      deferredLayers.splice(pending, 1); return false;
+    });
+    if (!real.length) return;
+    expectedPops++; history.go(-real.length);
+  }
+  function flushLayers() {
+    deferredLayers.splice(0).forEach(function (name) {
+      try { history.pushState({ angeboteLayer: name }, ''); } catch (e) { layers.splice(layers.lastIndexOf(name), 1); }
+    });
   }
   function nestedDialog() {
     var open = Array.prototype.filter.call(document.querySelectorAll('dialog[open]'), function (dlg) {
@@ -172,10 +184,15 @@
     var bar = root.querySelector('.an-motiv-bar');
     if (bar && bar._motivSetOpen) bar._motivSetOpen(false);
   }
+  function closeMenu(popped) {
+    var bar = root.querySelector('.an-motiv-bar');
+    if (bar && bar._motivCloseMenu) bar._motivCloseMenu(popped);
+  }
   window.addEventListener('popstate', function () {
-    if (expectedPops) { expectedPops--; return; }
+    if (expectedPops) { expectedPops--; if (!expectedPops) flushLayers(); return; }
     if (!layers.length) return;
     var name = layers.pop(), nested = nestedDialog();
+    if (!nested && name === 'menu') { closeMenu(true); return; }
     if (!nested && name === 'sheet') { closeSheet(); return; }
     pushLayer(name);
     if (nested) { if (nested.dispatchEvent(new Event('cancel', { cancelable: true }))) nested.close(); return; }
@@ -558,6 +575,10 @@
   function cmsTabs() {
     var tabs = [['element', 'Element'], ['article', 'Artikel'], ['design', 'Vorlage']]
       .concat(weeklyTarget() ? [['marker', 'Marker']] : []).concat([['view', 'Ansicht'], ['output', 'Ausgabe']]);
+    /* F73: Am Telefon gibt es in der Gestaltung keine Reiter; alle Bereiche stehen gleichzeitig im Blatt. */
+    var phone = !!cmsAction && root.classList.contains('an-cms-phone');
+    if (phone && cmsTab !== 'output') cmsTab = 'element';
+    var unified = phone && cmsTab !== 'output';
     if (!tabs.some(function (tab) { return tab[0] === cmsTab; })) cmsTab = 'output';
     var wanted = tabs.map(function (tab) { return tab[0]; }).join();
     if (cmsTabbar.dataset.tabs !== wanted) {
@@ -566,20 +587,21 @@
     }
     cmsTabbar.querySelectorAll('button').forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.cmsTab === cmsTab)); });
     var workspaceNode = root.querySelector('.an-cms-workspace');
-    workspaceNode.dataset.anTab = cmsTab;
+    workspaceNode.dataset.anTab = unified ? 'phone' : cmsTab;
     if (workspaceNode._splitView) workspaceNode._splitView.resize();
     root.querySelectorAll('[data-task-panel]').forEach(function (panel) {
-      panel.hidden = panel.dataset.taskPanel !== cmsTab;
+      panel.hidden = unified ? panel.dataset.taskPanel === 'output' : panel.dataset.taskPanel !== cmsTab;
     });
-    $('an-inspector').hidden = previewMode !== 'paper' || cmsTab === 'view' || cmsTab === 'output';
-    cmsPanel.hidden = cmsTab !== 'design' && cmsTab !== 'marker';
+    $('an-inspector').hidden = previewMode !== 'paper' || (!unified && cmsTab === 'view') || cmsTab === 'output';
+    cmsPanel.hidden = !unified && cmsTab !== 'design' && cmsTab !== 'marker';
     var article = $('an-cms-article');
-    if (article) article.hidden = cmsTab !== 'article';
+    if (article) article.hidden = !unified && cmsTab !== 'article';
+    var markerToggle = root.querySelector('[data-group=marker]');
+    if (markerToggle) markerToggle.hidden = !weeklyTarget();
     var outputBar = root.querySelector('.an-output-bar'), itemPicker = $('an-design-item-wrap');
-    var motivBar = root.querySelector('.an-motiv-bar'), motivStrip = root.querySelector('.an-motiv-tabs');
+    var motivBar = root.querySelector('.an-motiv-bar');
     if (motivBar) { motivBar.hidden = outputMode(); if (outputMode() && motivBar._motivSetOpen) motivBar._motivSetOpen(false); }
-    if (motivStrip) motivStrip.hidden = outputMode();
-    motivTabs(tabs);
+    syncSheetHead();
     if (outputBar && itemPicker) {
       if (outputMode()) outputBar.prepend(itemPicker);
       else root.querySelector('.an-task-fields').prepend(itemPicker);
@@ -930,7 +952,7 @@
       cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
       cmsDialog.addEventListener('cancel', function (event) {
         event.preventDefault();
-        if (phoneSheetOpen) closeSheet(); else run(closeCmsPreview);
+        if (phoneMenuOpen) closeMenu(false); else if (phoneSheetOpen) closeSheet(); else run(closeCmsPreview);
       });
       cmsDialog.showModal(); pushLayer('editor');
       cmsTab = mode === 'preview' || mode === 'output' ? 'output' : (cmsSession && cmsSession.state ? cmsSession.state.cmsTab : 'element'); cmsNarrow = null;
@@ -967,7 +989,7 @@
     if (cmsObserver) { cmsObserver.disconnect(); cmsObserver = null; }
     if (taskFrame) { taskFrame.destroy(); taskFrame = null; }
     root.classList.remove('an-task-editor'); root.style.removeProperty('height');
-    cmsPanel = null; cmsTabbar = null; cmsNarrow = null; phoneSheetOpen = false;
+    cmsPanel = null; cmsTabbar = null;     cmsNarrow = null; phoneSheetOpen = false; phoneSheetRest = 'peek'; phoneMenuOpen = false;
   }
   async function closeCmsPreview() {
     if (!cmsSession && !(await discard())) return;
@@ -1112,16 +1134,16 @@
     phoneMotifBar(workspace, sideColumn);
     renderCmsArticle(); cmsLayout();
   }
-  /* F70-F72 Motiv zuerst am Telefon. Oben öffnen Reiter (Element, Artikel, Vorlage, Marker, Ansicht)
-     das Werkzeugblatt; auf der Vorschau liegt die Schnellleiste (Element, Verschieben, Größe, Drehen);
-     unten bleibt immer die Hauptleiste mit Rückgängig, Wiederholen, Artikelwechsel und Speichern.
+  /* F70-F73 Motiv zuerst am Telefon. Das Eigenschaften-Blatt unter der Vorschau hat die Rastpunkte Peek,
+     Halb und Voll (Kopf mit Auswahlname, Ziel-Menü und Kurzwahl-Chips statt Reitern); auf der Vorschau liegt
+     die Schnellleiste (Element, Verschieben, Größe, Drehen); unten bleibt immer die Hauptleiste mit
+     Rückgängig, Wiederholen, Artikelwechsel und Speichern.
      Die Schnellleiste löst die Knöpfe der vorhandenen Werkzeugspalte aus – die Logik bleibt an einer Stelle. */
   var DOCK_ACTIONS = [
     ['nudge', 'links', '←', 'Element nach links schieben'], ['nudge', 'oben', '↑', 'Element nach oben schieben'],
     ['nudge', 'unten', '↓', 'Element nach unten schieben'], ['nudge', 'rechts', '→', 'Element nach rechts schieben'],
     ['transform', 'smaller', '−', 'Element verkleinern'], ['transform', 'larger', '+', 'Element vergrößern'],
     ['transform', 'left', '↺', 'Element nach links drehen'], ['transform', 'right', '↻', 'Element nach rechts drehen']];
-  var motivTabList = [];
   function dockTarget(kind, key) {
     var tools = root.querySelector('.an-split-tools'); if (!tools) return null;
     return kind === 'transform'
@@ -1148,6 +1170,18 @@
       button.disabled = !target || target.disabled;
     });
     placeDock(true);
+    syncSheetHead();
+  }
+  /* F73: Kopf des Eigenschaften-Blatts – Name der Auswahl, Ziel-Chip und Kurzwahl-Chips. */
+  function syncSheetHead() {
+    var head = root.querySelector('.an-motiv-sheet-head'); if (!head) return;
+    var source = dockElementSource();
+    var selection = source && source.value && source.selectedOptions[0] ? source.selectedOptions[0].textContent : '';
+    head.querySelector('[data-sheet-title]').textContent = selection || 'Seite';
+    var target = root.querySelector('[data-action-target]');
+    head.querySelector('[data-menu-label]').textContent = target && target.selectedOptions[0] ? target.selectedOptions[0].textContent : '';
+    head.querySelectorAll('[data-sheet-chip=article],[data-sheet-chip=element]').forEach(function (chip) { chip.hidden = !selection; });
+    head.querySelector('[data-sheet-chip=marker]').hidden = !weeklyTarget();
   }
   /* Die Schnellleiste liegt als Überlagerung am unteren Rand der Vorschau und reserviert
      dort konstant Scrollraum in ihrer Höhe – so bleibt auch das untere Ende des Motivs
@@ -1223,37 +1257,45 @@
     };
     return dock;
   }
-  /* Reiterleiste am Telefon: spiegelt die Reiter des Werkzeugblatts; erneutes Antippen des aktiven Reiters
-     oder „Fertig“ schließt das Blatt. */
-  function motivTabs(tabs) {
-    if (tabs) motivTabList = tabs.filter(function (tab) { return tab[0] !== 'output'; });
-    var strip = root.querySelector('.an-motiv-tabs'); if (!strip) return;
-    var wanted = motivTabList.map(function (tab) { return tab[0]; }).join();
-    if (strip.dataset.tabs !== wanted) {
-      strip.dataset.tabs = wanted;
-      strip.innerHTML = motivTabList.map(function (tab) { return '<button type="button" data-motiv-tab="' + tab[0] + '">' + tab[1] + '</button>'; }).join('')
-        + '<button type="button" class="an-primary" data-motiv-done hidden>Fertig</button>';
-    }
-    strip.querySelectorAll('[data-motiv-tab]').forEach(function (button) {
-      button.setAttribute('aria-pressed', String(phoneSheetOpen && button.dataset.motivTab === cmsTab));
-    });
-    strip.querySelector('[data-motiv-done]').hidden = !phoneSheetOpen;
-  }
-  /* Der Gestaltungskontext (Standard laden, eigene Vorlage) wandert am Telefon ins Blatt und kehrt sonst zurück. */
+  /* F73: Der Gestaltungskontext („Gestalten für“, Standard laden, eigene Vorlage) wandert am Telefon
+     in das Ziel-Menü des Blattkopfs und kehrt sonst an seinen Platz zurück. */
   function placeContext(workspace) {
-    var context = root.querySelector('.an-design-context'), slot = workspace.querySelector('.an-motiv-context-slot');
-    if (!context || !slot) return;
-    var phone = root.classList.contains('an-cms-phone');
-    if (phone && context.parentElement !== slot) slot.appendChild(context);
-    else if (!phone && context.parentElement === slot) root.querySelector('.an-toolbar').after(context);
+    var panel = workspace.querySelector('.an-motiv-menu-panel'); if (!panel) return;
+    /* Nur in der geteilten Ansicht gibt es den Blattkopf mit Ziel-Menü; „Nur Eingaben“ und Ausgabe behalten den Kontext im Werkzeugstapel. */
+    var inMenu = root.classList.contains('an-cms-phone') && workspace.dataset.workspaceView === 'split' && workspace.dataset.anTab !== 'output';
+    [root.querySelector('.an-action-context'), root.querySelector('.an-design-context')].forEach(function (node) {
+      if (!node) return;
+      if (inMenu && node.parentElement !== panel) {
+        if (!node._home) { node._home = document.createComment('context'); node.before(node._home); }
+        panel.insertBefore(node, panel.querySelector('[data-menu-close]'));
+      } else if (!inMenu && node.parentElement === panel && node._home) node._home.after(node);
+    });
+    if (!inMenu && phoneMenuOpen) closeMenu(false);
   }
+  var SHEET_REST = ['peek', 'half', 'full'], SHEET_GROUPS = ['style', 'marker', 'view'];
+  var SHEET_CHIPS = [['article', 'Artikel'], ['element', 'Element'], ['marker', 'Marker'], ['style', 'Vorlage'], ['view', 'Ansicht']];
+  var GROUP_LABELS = { style: 'Vorlage und Stil', marker: 'Ersparnis-Marker', view: 'Ansicht' };
   function phoneMotifBar(workspace, sideColumn) {
-    var strip = document.createElement('nav'); strip.className = 'an-motiv-tabs'; strip.hidden = true;
-    strip.setAttribute('aria-label', 'Werkzeugbereiche');
-    workspace.appendChild(strip);
-    var slot = document.createElement('div'); slot.className = 'an-motiv-context-slot';
-    var contextLabel = sideColumn.querySelector('.an-action-context');
-    if (contextLabel) contextLabel.after(slot); else sideColumn.prepend(slot);
+    var head = document.createElement('div'); head.className = 'an-motiv-sheet-head';
+    head.innerHTML = '<div class="an-sheet-row">'
+      + '<button type="button" class="an-sheet-cycle" data-sheet-cycle aria-expanded="false"><span class="an-sheet-grip" aria-hidden="true"></span>'
+      + '<strong data-sheet-title>Seite</strong><span class="an-sheet-caret" aria-hidden="true">▲</span></button>'
+      + '<button type="button" class="an-target-chip" data-menu-toggle aria-haspopup="true" aria-expanded="false"><span data-menu-label></span><span aria-hidden="true"> ▾</span></button>'
+      + '<button type="button" class="an-sheet-close" data-sheet-close aria-label="Eigenschaften einklappen" hidden>▼</button></div>'
+      + '<div class="an-sheet-chips" role="group" aria-label="Kurzwahl">'
+      + SHEET_CHIPS.map(function (chip) { return '<button type="button" data-sheet-chip="' + chip[0] + '">' + chip[1] + '</button>'; }).join('') + '</div>';
+    sideColumn.prepend(head);
+    var menu = document.createElement('div'); menu.className = 'an-motiv-menu'; menu.hidden = true;
+    menu.innerHTML = '<div class="an-motiv-menu-panel" role="group" aria-label="Gestaltungsziel und Vorlage"></div>';
+    var menuPanel = menu.firstChild;
+    var menuClose = document.createElement('button'); menuClose.type = 'button'; menuClose.className = 'an-menu-close'; menuClose.dataset.menuClose = '';
+    menuClose.textContent = 'Schließen';
+    menuPanel.appendChild(menuClose);
+    workspace.appendChild(menu);
+    if (window.MutationObserver && !workspace._contextObserver) {
+      workspace._contextObserver = new MutationObserver(function () { placeContext(workspace); });
+      workspace._contextObserver.observe(workspace, { attributes: true, attributeFilter: ['data-workspace-view', 'data-an-tab'] });
+    }
     var bar = document.createElement('div'); bar.className = 'an-motiv-bar'; bar.hidden = true;
     bar.setAttribute('aria-label', 'Hauptfunktionen');
     bar.innerHTML = '<button type="button" data-motiv-history="undo" aria-label="Rückgängig" title="Rückgängig"' + (undo.length ? '' : ' disabled') + '>↶</button>'
@@ -1266,32 +1308,91 @@
     workspace.appendChild(bar);
     var dock = dockControls();
     workspace.appendChild(dock); watchDock(workspace, dock);
-    function setOpen(open) {
-      phoneSheetOpen = open;
-      if (open) pushLayer('sheet'); else dropLayer('sheet');
-      workspace.classList.toggle('an-motiv-sheet-open', open);
-      if (open) sideColumn.scrollTop = 0;
-      motivTabs();
+    /* Gruppen: aufklappbare Bereiche des Blatts. Zustand als Klasse am Workspace, damit er Neurendern überlebt. */
+    var fields = sideColumn.querySelector('.an-task-fields'), options = $('an-design-options'), viewPanel = sideColumn.querySelector('[data-task-panel=view]');
+    function toggle(group) {
+      var button = document.createElement('button'); button.type = 'button'; button.className = 'an-g-toggle';
+      button.dataset.group = group; button.textContent = GROUP_LABELS[group]; button.setAttribute('aria-expanded', 'false');
+      return button;
+    }
+    if (options) { options.prepend(toggle('marker')); options.querySelector('[data-group=marker]').after(toggle('style')); }
+    if (viewPanel) viewPanel.before(toggle('view'));
+    workspace.classList.add(weeklyTarget() ? 'an-g-marker' : 'an-g-style');
+    function syncGroups() {
+      SHEET_GROUPS.forEach(function (group) {
+        var button = sideColumn.querySelector('[data-group=' + group + ']');
+        if (button) button.setAttribute('aria-expanded', String(workspace.classList.contains('an-g-' + group)));
+      });
+    }
+    function setGroup(group, open) {
+      workspace.classList.toggle('an-g-' + group, open); syncGroups();
+    }
+    syncGroups();
+    function applyRest() {
+      workspace.dataset.sheetRest = phoneSheetRest;
+      workspace.classList.toggle('an-motiv-sheet-open', phoneSheetOpen);
+      head.querySelector('[data-sheet-cycle]').setAttribute('aria-expanded', String(phoneSheetOpen));
+      head.querySelector('.an-sheet-caret').textContent = phoneSheetRest === 'full' ? '▼' : '▲';
+      head.querySelector('[data-sheet-close]').hidden = !phoneSheetOpen;
       placeDock();
     }
-    strip.onclick = function (event) {
-      var button = event.target.closest('button'); if (!button) return;
-      if (button.hasAttribute('data-motiv-done')) { setOpen(false); return; }
-      var tab = button.dataset.motivTab; if (!tab) return;
-      if (phoneSheetOpen && cmsTab === tab) { setOpen(false); return; }
-      cmsTab = tab; setOpen(true); renderInspector(); preview().catch(M.error);
+    function setRest(next) {
+      var hadSheet = layers.indexOf('sheet') >= 0;
+      if (phoneMenuOpen) closeMenuNow(hadSheet && next === 'peek');
+      if (next === phoneSheetRest) return;
+      phoneSheetRest = next; phoneSheetOpen = next !== 'peek';
+      if (phoneSheetOpen) pushLayer('sheet'); else { dropLayer('sheet'); sideColumn.scrollTop = 0; }
+      applyRest();
+    }
+    function closeMenuNow(popped) {
+      if (!phoneMenuOpen) return;
+      phoneMenuOpen = false; menu.hidden = true;
+      head.querySelector('[data-menu-toggle]').setAttribute('aria-expanded', 'false');
+      if (!popped) dropLayer('menu');
+    }
+    function openMenu() {
+      phoneMenuOpen = true; menu.hidden = false;
+      head.querySelector('[data-menu-toggle]').setAttribute('aria-expanded', 'true');
+      pushLayer('menu');
+      var first = menuPanel.querySelector('select:not([hidden]),button'); if (first) first.focus();
+    }
+    head.querySelector('[data-sheet-cycle]').onclick = function () {
+      setRest(SHEET_REST[(SHEET_REST.indexOf(phoneSheetRest) + 1) % SHEET_REST.length]);
     };
+    head.querySelector('[data-sheet-close]').onclick = function () { setRest('peek'); };
+    head.querySelector('[data-menu-toggle]').onclick = function () { if (phoneMenuOpen) closeMenuNow(false); else openMenu(); };
+    head.querySelector('.an-sheet-chips').onclick = function (event) {
+      var chip = event.target.closest('[data-sheet-chip]'); if (!chip) return;
+      var key = chip.dataset.sheetChip;
+      if (SHEET_GROUPS.indexOf(key) >= 0) setGroup(key, true);
+      if (phoneSheetRest === 'peek') setRest('half');
+      var anchor = key === 'article' ? ($('an-cms-article') && !$('an-cms-article').hidden && $('an-cms-article').offsetParent ? $('an-cms-article') : $('an-design-item-wrap'))
+        : key === 'element' ? $('an-inspector') : sideColumn.querySelector('[data-group=' + key + ']');
+      if (anchor) requestAnimationFrame(function () { anchor.scrollIntoView({ block: 'start' }); });
+    };
+    sideColumn.addEventListener('click', function (event) {
+      var button = event.target.closest('.an-g-toggle'); if (!button) return;
+      var open = !workspace.classList.contains('an-g-' + button.dataset.group);
+      setGroup(button.dataset.group, open);
+      if (open) requestAnimationFrame(function () { button.scrollIntoView({ block: 'nearest' }); });
+    });
+    menu.addEventListener('click', function (event) {
+      if (event.target === menu || event.target.closest('[data-menu-close]')) { closeMenuNow(false); return; }
+      if (event.target.closest('button')) setTimeout(function () { closeMenuNow(false); }, 0);
+    });
+    menu.addEventListener('change', function () { closeMenuNow(false); });
     bar.querySelector('[data-motiv-save]').onclick = function () { var save = $('an-save'); if (save) save.click(); };
     bar.addEventListener('click', function (event) {
       var button = event.target.closest('[data-motiv-history]'); if (!button || button.disabled) return;
       var target = root.querySelector('.an-split-tools [data-history="' + button.dataset.motivHistory + '"]');
       if (target && !target.disabled) target.click();
     });
-    bar._motivSetOpen = setOpen;
+    bar._motivSetOpen = function (open) { setRest(open ? (phoneSheetRest === 'peek' ? 'half' : phoneSheetRest) : 'peek'); };
+    bar._motivCloseMenu = closeMenuNow;
     /* Das Flag gilt für alle Aktionen; der Splitter verschiebt den Ansichtsknopf erst danach in die Leiste. */
     workspace.classList.add('an-motiv-first');
     if (workspace._splitView) workspace._splitView.resize();
-    if (phoneSheetOpen) setOpen(true);
+    applyRest();
   }
   function createOutputControls(picture) {
     var bar = document.createElement('section'); bar.className = 'an-output-bar'; bar.hidden = true;

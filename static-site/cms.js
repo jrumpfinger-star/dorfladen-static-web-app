@@ -1136,6 +1136,8 @@
     window.addEventListener('popstate',function(e){
       // Close any open modal on back button
       if(e.state&&e.state.cmsModal) return; // just consumed the modal-open pushState
+      // Die Ebenen des Angebote-Editors (Editor, Blatt, Menü) behandelt angebote-editor.js selbst.
+      if(e.state&&e.state.angeboteLayer) return;
       var modalWrap=document.getElementById('cms-modal-wrap');
       if(modalWrap&&modalWrap.style.display!=='none'&&modalWrap.innerHTML!==''){
         // Try Kachel-Editor close (X button = discard)

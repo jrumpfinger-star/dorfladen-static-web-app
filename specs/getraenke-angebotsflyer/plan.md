@@ -1045,3 +1045,20 @@ Globale Designer und einzelne Aktionen verwenden dieselbe Zusage.
 exakter Name, Codepraefix, Namenspraefix, Wortanfang, sonstiger Teiltreffer.
 Die bestehende sichtbare Trefferbegrenzung auf zwoelf bleibt, wird aber erst
 nach der Relevanzsortierung angewandt.
+
+## F73: Gestaltung am Telefon ohne Reiterleiste
+
+Nur Telefon (`an-cms-phone`, Gestaltung): `cmsTabs()` setzt dort `data-an-tab="phone"`
+(kein Reiter blendet Bereiche aus), `#an-inspector`, `#an-cms-article`, das
+Stil-Panel (`cmsPanel`) und das Ansicht-Panel sind gleichzeitig sichtbar; die
+Aufklappzustaende (Stil, Marker, Ansicht) liegen als Klassen `an-g-*` am
+Workspace, damit sie Neurendern ueberstehen. Das Blatt `.an-cms-side` wird eine
+eigene Gridzeile (`minmax(0,1fr) auto auto`) mit `data-rest=peek|half|full`;
+`phoneSheetOpen` bleibt als „Rast ungleich Peek" erhalten (Zurueck-Ebene
+`sheet`, Dock nur im Peek). Der neue Kopf `.an-motiv-sheet-head` (Titel,
+Ziel-Chip, ▲/▼, Chips) wird in `phoneMotifBar` angelegt und von `syncDock`
+mit dem Auswahlnamen versorgt. `placeContext` setzt „Gestalten fuer" und den
+Gestaltungskontext in das Ziel-Menue (`.an-motiv-menu`); Logik und
+Bedienelemente bleiben dieselben. Die Reiterleiste (`motivTabs`) entfaellt.
+Dateien: `static-site/js/angebote-editor.js`, `static-site/css/angebote.css`,
+`tests/cms-angebote-ablauf.spec.js`.

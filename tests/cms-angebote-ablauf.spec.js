@@ -791,30 +791,46 @@ const showTab = async (page, name) => {
   const root = page.locator('#an-root');
   if (name === 'Ausgabe') { await selectArea(root, 'output'); return; }
   if (await root.getAttribute('data-output-mode') === 'true') await selectArea(root, 'design');
-  /* Telefon: die Reiter liegen in der Reiterleiste und oeffnen das Werkzeugblatt. */
-  const strip = page.locator('.an-motiv-tabs');
-  if (await strip.isVisible().catch(() => false)) {
-    const button = strip.getByRole('button', { name, exact: true });
-    if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
-    await expect(button).toHaveAttribute('aria-pressed', 'true');
+  /* Telefon (F73): keine Reiter; der Blattkopf zeigt die Kurzwahl, Vorlage, Marker und Ansicht sind aufklappbare Gruppen im Blatt. */
+  if (await page.locator('.an-cms-workspace[data-an-tab=phone]').count()) {
+    await openSheet(page);
+    /* Die Reiter von Tablet und Desktop schließen einander aus; die Gruppen im Telefonblatt bilden das nach. */
+    const group = { Vorlage: 'style', Marker: 'marker', Ansicht: 'view' }[name];
+    for (const other of ['marker', 'style', 'view']) {
+      if (other === group) continue;
+      const toggle = page.locator('[data-group="' + other + '"]');
+      if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') === 'true') await toggle.click();
+    }
+    if (group) {
+      const toggle = page.locator('[data-group="' + group + '"]');
+      if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    }
     return;
   }
   const tab = page.locator('.an-cms-tabbar').getByRole('button', { name, exact: true });
   await tab.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
   if (await tab.isVisible()) await tab.click();
 };
-/* F70-F72 Motiv zuerst am Telefon: die Werkzeugspalte ist ein geschlossenes Blatt, das die Reiterleiste
-   oeffnet; Tests, die Felder im Blatt bedienen, oeffnen es zuerst (behaelt den aktuellen Reiter). */
+/* F73 Motiv zuerst am Telefon: das Eigenschaften-Blatt steht im Peek (nur Kopf); Tests, die Felder darin
+   bedienen, ziehen es zuerst auf Halb. */
+const sheetRest = (page) => page.locator('.an-cms-workspace').getAttribute('data-sheet-rest');
+const setSheetRest = async (page, rest) => {
+  for (let step = 0; step < 3 && await sheetRest(page) !== rest; step++) await page.locator('[data-sheet-cycle]').click();
+  await expect(page.locator('.an-cms-workspace')).toHaveAttribute('data-sheet-rest', rest);
+};
 const openSheet = async (page) => {
-  const strip = page.locator('.an-motiv-tabs');
-  if (!(await strip.isVisible().catch(() => false))) return;
-  const ws = page.locator('.an-cms-workspace');
-  if (!await ws.evaluate((node) => node.classList.contains('an-motiv-sheet-open'))) {
-    const tab = await ws.getAttribute('data-an-tab');
-    await strip.locator('[data-motiv-tab="' + tab + '"]').click();
-    await expect(ws).toHaveClass(/an-motiv-sheet-open/);
-  }
-};// Mausbedienung ab 600 px: 32 px hohe Kontrollen; Touch und Telefone behalten mindestens 44 px.
+  if (!(await page.locator('.an-motiv-sheet-head').isVisible().catch(() => false))) return;
+  if (await sheetRest(page) === 'peek') await setSheetRest(page, 'half');
+};
+/* Am Telefon (F73) liegt das Gestaltungsziel im Ziel-Menü des Blattkopfs; das Menü schließt nach der Wahl. */
+const setTarget = async (page, value) => {
+  const select = page.locator('[data-action-target]');
+  const toggle = page.locator('[data-menu-toggle]');
+  if (!(await select.isVisible()) && await toggle.isVisible().catch(() => false)) await toggle.click();
+  await select.selectOption(value);
+};
+// Mausbedienung ab 600 px: 32 px hohe Kontrollen; Touch und Telefone behalten mindestens 44 px.
 const compactMouse = (page) => page.evaluate(() => innerWidth >= 600 && matchMedia('(hover:hover) and (pointer:fine)').matches && !matchMedia('(any-pointer:coarse)').matches);
 async function workspaceView(root, mode) {
   const select = root.locator('[aria-label=Arbeitsansicht]');
@@ -993,7 +1009,7 @@ for (const kind of ['weekly', 'drinks']) {
     await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
     await expect(root.locator('[data-article-position]')).toHaveText('Artikel 2 von 3');
     await root.getByRole('button', { name: 'Vorheriger Artikel', exact: true }).click();
-    await root.locator('[data-action-target]').selectOption('single');
+    await setTarget(page, 'single');
     await expect(root.locator('[data-article-position]')).toHaveText('Artikel 1 von 3');
     await expect(root.getByRole('button', { name: 'Vorheriger Artikel', exact: true })).toBeDisabled();
     await root.getByRole('button', { name: 'Nächster Artikel', exact: true }).click();
@@ -1155,7 +1171,7 @@ test('TC-F60-03/TC-F62-02: Aktionsreiter zeigen nur ihren Inhalt und behalten Zi
   await openPreview(page, 'drinks', 1);
   const workspace = page.locator('.an-cms-workspace');
   await workspaceView(workspace, 'inputs');
-  await page.locator('[data-action-target]').selectOption('card');
+  await setTarget(page, 'card');
   await showTab(page, 'Ausgabe');
   await expect(page.locator('#an-inspector')).toBeHidden();
   await expect(page.locator('.an-cms-style-options')).toBeHidden();
@@ -1212,7 +1228,7 @@ test('TC-F66-10: Preisschild ist in jeder Aktionsgestaltung erreichbar und oeffn
     await openPreview(page, kind, 2);
     const root = page.locator('#an-root');
     for (const target of ['sheet', 'single']) {
-      await root.locator('[data-action-target]').selectOption(target);
+      await setTarget(page, target);
       let reachable = false;
       for (const tab of ['Element', 'Artikel', 'Vorlage', 'Marker', 'Ansicht']) {
         await showTab(page, tab);
@@ -1254,7 +1270,7 @@ test('TC-F66-11: Eigene Vorlage laesst sich im Aktionseditor waehlen und ersetzt
   await expect(root.locator('[data-action-design-context]')).toContainText('Mein Test');
   await expect(picker).toHaveValue('');
   expect(state.writes).toHaveLength(1);
-  await root.locator('[data-action-target]').selectOption('single');
+  await setTarget(page, 'single');
   await expect(picker).toBeHidden();
   expect(state.errors).toEqual([]);
 });
@@ -1357,7 +1373,7 @@ test('TC-F61-03: Original-CMS-Familie und Palette erhalten fremde Ausgabeziele u
   await openPreview(page, 'weekly', 1);
   const original = structuredClone(state.writes[0].layout.cms);
   await workspaceView(page.locator('.an-cms-workspace'), 'inputs');
-  await page.locator('[data-action-target]').selectOption('card');
+  await setTarget(page, 'card');
   await showTab(page, 'Artikel');
   await page.locator('[data-cms-override=imgDx]').fill('23');
   await page.locator('[data-cms-override=imgDx]').dispatchEvent('change');
@@ -1392,7 +1408,7 @@ test('TC-F61-05: Aktionspaletten erhalten freie Geometrie, fremde Ziele und Undo
   const colours = layout => page.evaluate(layout => Object.fromEntries(['sheet', 'card', 'single', 'scale'].map(target =>
     [target, window.AngeboteModel.effectiveColors(window.AngeboteModel.styleOf(layout, target))])), layout);
   for (const [index, target] of ['card', 'single', 'scale', 'sheet'].entries()) {
-    await page.locator('[data-action-target]').selectOption(target);
+      await setTarget(page, target);
     await showTab(page, 'Element');
     const select = page.locator('#an-select-element');
     const imageId = await select.locator('option').evaluateAll(options => options.find(option => /\bBild\b/.test(option.textContent)).value);
@@ -1478,7 +1494,9 @@ test('TC-F19-02: Werkzeuge stehen links bzw. mobil als Eingaben vor dem separat 
     else expect((await stageInView()).width).toBeGreaterThanOrEqual(Math.min(view.width * .35, 240) - 1);
   }
   for (const field of await side.locator('input:not([type=checkbox]):visible,select:visible').all()) {
-    const height = (await field.boundingBox()).height, label = await field.evaluate((node) => node.outerHTML.slice(0, 120));
+    // Radios gelten über ihre mindestens 44 px hohe Beschriftung als Trefferfläche.
+    const height = await field.evaluate((node) => (node.type === 'radio' && node.closest('label') || node).getBoundingClientRect().height);
+    const label = await field.evaluate((node) => node.outerHTML.slice(0, 120));
     expect(height, label).toBeGreaterThanOrEqual(minimum - .5);
   }
   for (const button of await side.locator('button:visible').all()) {
@@ -1585,7 +1603,7 @@ for (const [surface, path] of SURFACES) {
       const writes = state.writes.length;
         if (mobile) await openSheet(page);
       for (const target of ['card', 'single', 'sheet', 'scale']) {
-        await page.locator('[data-action-target]').selectOption(target);
+        await setTarget(page, target);
         await showTab(page, 'Element');
         const stage = page.locator('.an-task-picture .an-stage:visible');
         const tools = page.locator('.an-task-tools');
@@ -1638,7 +1656,7 @@ for (const [surface, path] of SURFACES) {
         expect(await modal.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
         expect(state.writes).toHaveLength(writes);
       }
-      await page.locator('[data-action-target]').selectOption('sheet');
+      await setTarget(page, 'sheet');
       await page.screenshot({ path: test.info().outputPath('aktionsvorschau-rechts-' + kind + '.png') });
       await page.getByRole('button', { name: 'Schließen', exact: true }).click();
       await expect(modal).toHaveCount(0);
@@ -1739,14 +1757,14 @@ test('TC-F23-01..03: Stil gilt je Ausgabeziel; freie Positionen werden erst nach
     await page.locator('label.an-family', { has: page.locator('input[data-style=family][value=' + id + ']') }).click();
   };
   const original = await chosen();
-  await page.locator('[data-action-target]').selectOption('card');
+  await setTarget(page, 'card');
   await pick('half');
   await expect.poll(chosen).toBe('half-red');
   await expect(page.getByRole('dialog', { name: 'Gestaltung ersetzen?' })).toHaveCount(0);
   await expect(page.locator('[data-style=density]').first()).toBeHidden();
-  await page.locator('[data-action-target]').selectOption('single');
+  await setTarget(page, 'single');
   await expect.poll(chosen).toBe(original);
-  await page.locator('[data-action-target]').selectOption('card');
+  await setTarget(page, 'card');
   await expect.poll(chosen).toBe('half-red');
   await saveDesign(page);
   let layout = state.writes.at(-1).layout;
@@ -1811,6 +1829,8 @@ for (const kind of ['weekly', 'drinks']) {
     const dialog = await modal.boundingBox(), view = page.viewportSize();
     await expect(page.locator('details.an-cms-style-options')).toHaveCount(0);
     const inView = async (locator) => {
+      // Am Telefon liegen die Bereiche in einer scrollbaren Spalte; erreichbar heißt hier: per Scrollen in der Spalte sichtbar.
+      await locator.scrollIntoViewIfNeeded();
       const b = await locator.boundingBox();
       expect(b.y).toBeGreaterThanOrEqual(-1);
       expect(b.y + b.height).toBeLessThanOrEqual(view.height + 1);
@@ -1822,15 +1842,19 @@ for (const kind of ['weekly', 'drinks']) {
       await inView(stage);
       if (mobile) await workspaceView(workspace, 'inputs');
     };
-    // Die Gestaltungsbereiche stehen auf allen Breiten hinter Reitern; Vorlage und Marker sind eigene Reiter.
+    // Die Gestaltungsbereiche stehen auf Tablet und Desktop hinter Reitern; am Telefon (F73) gibt es Kurzwahl-Chips im Blattkopf.
     await openSheet(page);
-    const phoneTabs = page.locator('.an-motiv-tabs button[data-motiv-tab]');
-    if (await phoneTabs.first().isVisible().catch(() => false)) await expect(phoneTabs).toHaveCount(kind === 'weekly' ? 5 : 4);
-    else {
+    const phone = await page.locator('.an-motiv-sheet-head').isVisible().catch(() => false);
+    if (phone) {
+      await expect(page.locator('.an-cms-tabbar')).toBeHidden();
+      const markerChip = page.locator('.an-sheet-chips [data-sheet-chip=marker]');
+      if (kind === 'weekly') await expect(markerChip).toBeVisible(); else await expect(markerChip).toBeHidden();
+    } else {
       await expect(page.locator('.an-cms-tabbar')).toBeVisible();
       await expect(page.locator('.an-cms-tabbar button')).toHaveCount(kind === 'weekly' ? 6 : 5);
     }
-    await expect(panel).toBeHidden();
+    // Am Telefon sind die Bereiche Gruppen im selben Blatt; nur Reiter blenden Vorlage aus.
+    if (!phone) await expect(panel).toBeHidden();
     await showTab(page, 'Vorlage');
     await expect(panel).toBeVisible();
     if (!mobile) {
@@ -1851,7 +1875,7 @@ for (const kind of ['weekly', 'drinks']) {
       await stageInView();
     }
     await showTab(page, 'Element');
-    await expect(panel).toBeHidden();
+    if (!phone) await expect(panel).toBeHidden();
     expect(await modal.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
     expect(state.errors).toEqual([]);
   });
@@ -1865,7 +1889,7 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
   const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
   await openSheet(page);
   for (const target of ['card', 'single', 'sheet', 'scale']) {
-    await page.locator('[data-action-target]').selectOption(target);
+    await setTarget(page, target);
     await showTab(page, 'Element');
     // F47: Die Waage hat ein eigenes Zielrenderer-Layout und damit die nativen Gestaltungswerkzeuge statt der Originalwochenvorschau.
     const native = target === 'scale', canvas = native ? page.locator('#an-stage canvas') : surface.locator('canvas');
@@ -1886,7 +1910,7 @@ test('TC-F31-02: Weekly-Ziele behalten alle Werkzeuge; Farbänderung wirkt sofor
     await expect(side.locator('[data-x-image]')).toBeAttached();
     await expect(side.locator('[data-x-rot]')).toBeVisible();
   }
-  await page.locator('[data-action-target]').selectOption('sheet');
+  await setTarget(page, 'sheet');
   const canvas = surface.locator('canvas'), before = await canvas.evaluate((c) => c.toDataURL());
   await showTab(page, 'Vorlage');
   const color = page.locator('[data-cms-config=plakat_decoBgColor]');
@@ -1904,12 +1928,12 @@ test('TC-F31-02: Getränke-Ziele behalten alle Werkzeuge; Stiländerung wirkt je
   const tools = page.locator('#an-inspector');
   await openSheet(page);
   for (const target of ['card', 'single', 'sheet', 'scale']) {
-    await page.locator('[data-action-target]').selectOption(target);
+    await setTarget(page, target);
     await showTab(page, 'Element');
     for (const name of ['+ Eigenes Bild', 'Ghost', 'Duplizieren']) await expect(tools.getByRole('button', { name, exact: true })).toBeVisible();
     await expect(tools.locator('[data-element-prop=rotation][type=range]')).toBeVisible();
   }
-  await page.locator('[data-action-target]').selectOption('card');
+  await setTarget(page, 'card');
   await showTab(page, 'Vorlage');
   const color = page.locator('input[data-style=background]');
   await color.fill('#336699'); await color.dispatchEvent('change');
@@ -1924,7 +1948,7 @@ for (const kind of ['drinks', 'weekly']) {
     await page.goto(BASE + '/angebote.html');
     await openPreview(page, kind, 2, true);
     expect(state.writes).toHaveLength(1);
-    await page.locator('[data-action-target]').selectOption('sheet');
+    await setTarget(page, 'sheet');
     await showTab(page, 'Vorlage');
     const color = kind === 'drinks' ? page.locator('input[data-style=background]') : page.locator('[data-cms-config=plakat_decoBgColor]');
     await color.fill('#336699'); await color.dispatchEvent('change');
@@ -2261,12 +2285,15 @@ test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt; am Telefon Motiv zuers
     const tools = page.locator('.an-split-tools'), picture = page.locator('.an-split-picture');
     const mobile = await workspace.evaluate((node) => node.classList.contains('an-split-mobile'));
     if (mobile) {
-      await expect(tools).toBeHidden();
+      /* Geschlossen zeigt das Blatt nur seinen Kopf (F73). */
+      await expect(page.locator('.an-motiv-sheet-head')).toBeVisible();
+      expect((await tools.boundingBox()).height).toBeLessThanOrEqual(130);
       await expect(picture).toBeVisible();
       const wsBox = await workspace.boundingBox(), p = await picture.boundingBox();
       expect(p.height).toBeGreaterThan(wsBox.height * .5);
       await openSheet(page);
       await expect(tools).toBeVisible();
+      expect((await tools.boundingBox()).height).toBeGreaterThan(130);
     } else {
       await expect(tools).toBeVisible(); await expect(picture).toBeVisible();
       const [t, p] = [await tools.boundingBox(), await picture.boundingBox()];
@@ -2288,9 +2315,9 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
   for (const kind of ['weekly', 'drinks']) {
     await openPreview(page, kind, 4, true, null, true);
     await selectArea(page.locator('#an-root'), 'design');
-    const dock = page.locator('.an-motiv-dock'), sheet = page.locator('.an-cms-workspace>.an-split-tools');
+    const dock = page.locator('.an-motiv-dock');
     await expect(dock, kind).toBeVisible();
-    await expect(sheet).toBeHidden();
+    await expect(page.locator('.an-cms-workspace')).toHaveAttribute('data-sheet-rest', 'peek');
     /* TC-F71-01: Schnellleiste liegt IN der Vorschau, alle Knoepfe 44 px hoch, kein Seitenscrollen */
     const buttons = dock.getByRole('button');
     await expect(buttons).toHaveCount(8);
@@ -2339,14 +2366,14 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     await undo.click();
     await undo.click();
     await expect(undo).toBeDisabled();
-    await expect(sheet).toBeHidden();
-    /* Ein Reiter oeffnet das Blatt und ersetzt die Schnellleiste, Fertig stellt sie wieder her; Rueckgaengig und Speichern bleiben sichtbar */
-    await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Vorlage', exact: true }).click();
-    await expect(sheet).toBeVisible();
+    await expect(page.locator('.an-cms-workspace')).toHaveAttribute('data-sheet-rest', 'peek');
+    /* Ein Kurzwahl-Chip zieht das Blatt auf Halb und ersetzt die Schnellleiste, Einklappen stellt sie wieder her; Rueckgaengig und Speichern bleiben sichtbar */
+    await page.locator('.an-sheet-chips').getByRole('button', { name: 'Vorlage', exact: true }).click();
+    await expect(page.locator('.an-cms-workspace')).toHaveAttribute('data-sheet-rest', 'half');
     await expect(dock).toBeHidden();
     await expect(undo).toBeVisible();
     await expect(page.locator('.an-motiv-bar [data-motiv-save]')).toBeVisible();
-    await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Fertig', exact: true }).click();
+    await page.locator('[data-sheet-close]').click();
     await expect(dock).toBeVisible();
     await page.getByRole('button', { name: 'Schließen', exact: true }).click();
     const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
@@ -2391,14 +2418,14 @@ test('TC-F71-03: Schnellleiste verdeckt beim Scrollen keinen Inhalt - unteres En
   });
   expect(zoomTop).toBeGreaterThanOrEqual(0);
   expect(zoomTop).toBeLessThanOrEqual(16);
-  /* Blatt öffnen: reservierter Platz wird freigegeben, „Fertig" stellt ihn wieder her */
-  await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Vorlage', exact: true }).click();
+  /* Blatt öffnen: reservierter Platz wird freigegeben, Einklappen stellt ihn wieder her */
+  await page.locator('.an-sheet-chips').getByRole('button', { name: 'Vorlage', exact: true }).click();
   await expect(dock).toBeHidden();
   await expect.poll(async () => picture.evaluate((node) => {
     const spacer = node.querySelector('.an-dock-spacer');
     return spacer ? parseFloat(getComputedStyle(spacer).height) : 0;
   })).toBe(0);
-  await page.locator('.an-motiv-tabs').getByRole('button', { name: 'Fertig', exact: true }).click();
+  await page.locator('[data-sheet-close]').click();
   await expect(dock).toBeVisible();
   await expect.poll(async () => picture.evaluate((node) => parseFloat(getComputedStyle(node.querySelector('.an-dock-spacer')).height))).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Schließen', exact: true }).click();
@@ -2539,15 +2566,15 @@ test('TC-F72-02: Zurueck-Taste schliesst erst das Blatt, dann den Editor (mit Ru
   await page.goto(BASE + '/angebote.html');
   const url = page.url();
   await openPreview(page, 'drinks', 2);
-  const modal = page.locator('.an-cms-preview-modal'), sheet = page.locator('.an-cms-workspace>.an-split-tools'), strip = page.locator('.an-motiv-tabs');
-  await expect(strip).toBeVisible();
+  const modal = page.locator('.an-cms-preview-modal'), workspace = page.locator('.an-cms-workspace');
+  await expect(page.locator('.an-sheet-chips')).toBeVisible();
   await page.locator('.an-motiv-dock').getByRole('button', { name: 'Element nach links schieben', exact: true }).click();
   await expect(page.locator('#an-state')).toContainText('geändert');
-  await strip.getByRole('button', { name: 'Vorlage', exact: true }).click();
-  await expect(sheet).toBeVisible();
-  /* Zurueck 1: nur das Blatt */
+  await page.locator('.an-sheet-chips').getByRole('button', { name: 'Vorlage', exact: true }).click();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'half');
+  /* Zurueck 1: nur das Blatt (auf Peek) */
   await page.goBack();
-  await expect(sheet).toBeHidden();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'peek');
   await expect(modal).toHaveCount(1);
   /* Zurueck 2: Rueckfrage wegen ungespeicherter Aenderungen; Abbrechen laesst den Editor offen */
   await page.goBack();
@@ -2563,7 +2590,7 @@ test('TC-F72-02: Zurueck-Taste schliesst erst das Blatt, dann den Editor (mit Ru
   expect(page.url()).toBe(url);
   expect(state.errors).toEqual([]);
 });
-test('TC-F70-01..03: Motiv zuerst am Telefon (Reiterleiste, Blatt, Hauptleiste)', async ({ page }, testInfo) => {
+test('TC-F70-01..03: Motiv zuerst am Telefon (Blatt mit Rastpunkten, Hauptleiste)', async ({ page }, testInfo) => {
   const state = await setup(page);
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 2);
@@ -2571,27 +2598,20 @@ test('TC-F70-01..03: Motiv zuerst am Telefon (Reiterleiste, Blatt, Hauptleiste)'
   await page.setViewportSize({ width: 375, height: 667 });
   await expect(page.locator('#an-root')).toHaveClass(/an-cms-phone/, { timeout: 10000 });
   await page.waitForTimeout(600);
-  /* TC-F70-01: Motiv fuellt, Blatt zu; ein Reiter oeffnet das Blatt, Fertig und erneutes Antippen schliessen es */
+  /* TC-F70-01: Motiv fuellt, Blatt im Peek; Kopf-Tipp und Einklappen wechseln die Rastpunkte */
   const rootBox = await page.locator('.an-cms-workspace').boundingBox();
   const pictureBox = await page.locator('.an-cms-workspace>.an-split-picture').boundingBox();
   expect(pictureBox.height).toBeGreaterThan(rootBox.height * .6);
-  const bar = page.locator('.an-motiv-bar'), strip = page.locator('.an-motiv-tabs');
+  const bar = page.locator('.an-motiv-bar'), workspace = page.locator('.an-cms-workspace');
   await expect(bar).toBeVisible();
-  await expect(strip).toBeVisible();
   await expect(bar.getByRole('button', { name: 'Mehr', exact: true })).toHaveCount(0);
-  const sheet = page.locator('.an-cms-workspace>.an-split-tools');
-  expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
-  await strip.getByRole('button', { name: 'Vorlage', exact: true }).click();
-  await expect(sheet).toBeVisible();
-  await expect(strip.getByRole('button', { name: 'Vorlage', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await strip.getByRole('button', { name: 'Fertig', exact: true }).click();
-  await page.waitForTimeout(350);
-  expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
-  await strip.getByRole('button', { name: 'Artikel', exact: true }).click();
-  await expect(sheet).toBeVisible();
-  await strip.getByRole('button', { name: 'Artikel', exact: true }).click();
-  await page.waitForTimeout(350);
-  expect(await sheet.evaluate((node) => getComputedStyle(node).visibility)).toBe('hidden');
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'peek');
+  await page.locator('[data-sheet-cycle]').click();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'half');
+  await page.locator('[data-sheet-cycle]').click();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'full');
+  await page.locator('[data-sheet-close]').click();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'peek');
   /* TC-F70-02: Element antippen waehlt es; die Schnellleiste zeigt es */
   const hit = page.locator('#an-hit-layer [data-select]').first();
   await expect(hit).toBeVisible();
@@ -2608,6 +2628,113 @@ test('TC-F70-01..03: Motiv zuerst am Telefon (Reiterleiste, Blatt, Hauptleiste)'
   await page.locator('[data-action-area=output]').click();
   await page.waitForTimeout(300);
   await expect(bar).toBeHidden();
-  await expect(strip).toBeHidden();
+  await expect(page.locator('.an-motiv-sheet-head')).toBeHidden();
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F73-01..04: Telefon ohne Reiter - Kopf mit Kurzwahl, Marker und Vorlage als Gruppen, Ziel-Menue', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const workspace = page.locator('.an-cms-workspace'), head = page.locator('.an-motiv-sheet-head'), title = page.locator('[data-sheet-title]');
+  /* TC-F73-01: keine Reiterleiste, kein "Fertig", Blatt-Kopf klein, Motiv gross, kein Seitenscrollen */
+  await expect(page.locator('.an-cms-tabbar')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Fertig', exact: true })).toHaveCount(0);
+  await expect(head).toBeVisible();
+  expect((await page.locator('.an-split-tools').boundingBox()).height).toBeLessThanOrEqual(120);
+  const chips = page.locator('.an-sheet-chips button:visible');
+  /* Artikel/Element gibt es nur mit Auswahl, Marker nur bei Wochenaktionen (TC-F73-02). */
+  await expect(chips).toHaveText(['Artikel', 'Element', 'Vorlage', 'Ansicht']);
+  for (const box of await chips.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().toJSON()))) expect(box.height).toBeGreaterThanOrEqual(43.5);
+  await expect.poll(async () => (await page.locator('.an-split-picture canvas:visible').first().boundingBox()).height, { timeout: 8000 }).toBeGreaterThan(300);
+  expect(await page.evaluate(() => ({ x: document.documentElement.scrollWidth > innerWidth, y: document.documentElement.scrollHeight > innerHeight }))).toEqual({ x: false, y: false });
+  /* TC-F73-04: der Kopf nennt das gewaehlte Element; Artikel und Element liegen als Chips bereit */
+  const picked = await page.locator('[data-dock-element] option:checked').textContent();
+  await expect(title).toHaveText(picked);
+  await expect(title).not.toHaveText('Seite');
+  await expect(chips).toHaveText(['Artikel', 'Element', 'Vorlage', 'Ansicht']);
+  /* TC-F73-02: Vorlage-Chip oeffnet das Blatt auf Halb mit der Gruppe; Aenderung wirkt, Rueckgaengig in der Hauptleiste */
+  await head.getByRole('button', { name: 'Vorlage', exact: true }).click();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'half');
+  await expect(page.locator('[data-group=style]')).toHaveAttribute('aria-expanded', 'true');
+  const color = page.locator('input[data-style=background]');
+  await color.scrollIntoViewIfNeeded();
+  const before = await color.inputValue();
+  await color.fill('#336699');
+  await expect(page.locator('#an-state')).toContainText('geändert');
+  await page.locator('.an-motiv-bar [data-motiv-history=undo]').click();
+  await expect(color).toHaveValue(before);
+  /* TC-F73-03: Ziel-Menue enthaelt Gestaltungsziel und Standard laden und schliesst nach der Wahl */
+  const toggle = page.locator('[data-menu-toggle]');
+  await toggle.click();
+  const menu = page.locator('.an-motiv-menu');
+  await expect(menu).toBeVisible();
+  await expect(menu.locator('[data-action-target]')).toBeVisible();
+  await expect(menu.locator('[data-design-load-standard]')).toBeVisible();
+  await menu.locator('[data-action-target]').selectOption('single');
+  await expect(menu).toBeHidden();
+  await expect(toggle).toContainText(/Einzel/i);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F73-05: Android-Zurueck - Menue, Blatt, Editor; schnelle Folgen zerstoeren den Verlauf nicht', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  const url = page.url();
+  await openPreview(page, 'drinks', 2);
+  const modal = page.locator('.an-cms-preview-modal'), workspace = page.locator('.an-cms-workspace'), menu = page.locator('.an-motiv-menu');
+  /* Blatt auf Halb, Menue auf; Zurueck schliesst zuerst das Menue, dann das Blatt */
+  await page.locator('[data-sheet-cycle]').click();
+  await page.locator('[data-menu-toggle]').click();
+  await expect(menu).toBeVisible();
+  await page.goBack();
+  await expect(menu).toBeHidden();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'half');
+  await page.goBack();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'peek');
+  await expect(modal).toHaveCount(1);
+  /* Schnelle Folge: Menue oeffnen, per Wahl schliessen und sofort wieder oeffnen */
+  for (let i = 0; i < 3; i++) {
+    await page.locator('[data-menu-toggle]').click();
+    await expect(menu).toBeVisible();
+    await menu.locator('[data-action-target]').selectOption(i % 2 ? 'card' : 'single');
+    await page.locator('[data-menu-toggle]').click();
+    await expect(menu).toBeVisible();
+    await menu.locator('[data-menu-close]').click();
+    await expect(menu).toBeHidden();
+  }
+  await expect(modal).toHaveCount(1);
+  /* Zurueck verlaesst weder Editor noch Seite, solange nichts mehr offen ist: erst jetzt schliesst der Editor */
+  await page.goBack();
+  await expect(modal).toHaveCount(0);
+  expect(page.url()).toBe(url);
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F73-02b: Marker-Chip nur bei Wochenaktion; oeffnet das Blatt mit der Marker-Gruppe', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 2);
+  const workspace = page.locator('.an-cms-workspace'), marker = page.locator('[data-sheet-chip=marker]');
+  await expect(marker).toBeVisible();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'peek');
+  await marker.click();
+  await expect(workspace).toHaveAttribute('data-sheet-rest', 'half');
+  const group = page.locator('[data-group=marker]');
+  await expect(group).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#an-design-options').locator(':is(select,input):visible').first()).toBeVisible();
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F73-05b: Tablet und Desktop behalten die Reiter', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 900, height: 800 });
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  await expect(page.locator('.an-motiv-sheet-head')).toBeHidden();
+  await expect(page.locator('.an-cms-tabbar').getByRole('button', { name: 'Vorlage', exact: true })).toBeVisible();
   expect(state.errors).toEqual([]);
 });
