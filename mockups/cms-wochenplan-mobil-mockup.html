@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup &middot; Mobiler CMS-Wochenplan</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%;color:var(--ink);background:var(--flaeche);font:16px/1.4 system-ui,"Segoe UI",sans-serif}
+body{display:grid;place-items:center;min-height:100dvh}
+h1,h2,h3,p{margin:0}
+h1,h2,h3,strong{font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}
+button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);cursor:pointer}
+button:hover{background:var(--gr-t)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+button:disabled{opacity:.55;cursor:default}
+svg{width:20px;height:20px;flex:none;vertical-align:middle}
+i[data-lucide]{display:inline-flex;flex:none}
+.icon{width:44px;padding:8px}
+.quiet{border-color:transparent;background:transparent}
+.primary{background:var(--gr-d);border-color:var(--gr-d);color:var(--karte)}
+.primary:hover{background:var(--gr)}
+.danger{color:var(--red)}
+.app{width:100%;max-width:1100px;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--flaeche)}
+body.phone .app{max-width:375px;height:min(667px,100dvh);border:1px solid var(--line)}
+.app-head{display:flex;align-items:center;gap:4px;flex:none;min-height:60px;padding:6px 8px;background:var(--karte);border-bottom:1px solid var(--line)}
+.brand{flex:1;min-width:0;display:grid;justify-items:start;gap:1px;padding:0 6px}
+.brand img{display:block;width:120px;max-width:100%;height:28px;object-fit:contain;object-position:left center}
+.connection{display:inline-flex;align-items:center;gap:5px;color:var(--gr-d);font-size:13px;white-space:nowrap}
+.connection::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gr)}
+.controls{flex:none;padding:6px 12px 0;background:var(--karte);border-bottom:1px solid var(--line)}
+.section-head{display:flex;align-items:center;gap:4px}
+.section-head h1{flex:1;font-size:20px}
+.add-meal{padding:8px 10px}
+.week-nav{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;margin-top:4px}
+.week-label{text-align:center;min-width:0}
+.week-label strong{display:block;font-size:17px}
+.week-label p{font-size:13px;color:var(--ink)}
+.week-presets{display:flex;justify-content:center;gap:8px}
+.week-presets button{border:0;border-bottom:2px solid transparent;border-radius:0;padding:8px 10px;background:transparent}
+.week-presets button[aria-pressed=true]{color:var(--gr-d);border-bottom-color:var(--gr);font-weight:600}
+.exports{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:4px 0;border-top:1px solid var(--line)}
+.exports button{flex-direction:column;gap:2px;min-width:0;height:52px;padding:3px 1px;border-color:transparent;background:transparent;font-size:16px}
+.exports button:hover{background:var(--gr-t)}
+.exports svg{width:18px;height:18px}
+.days-area{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px}
+.days{display:grid;gap:10px;align-items:start}
+.day{min-width:0;padding:10px 12px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-m)}
+.day-head{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.day-head h2{color:var(--gr-d);font-size:16px}
+.day-head time{font-size:13px}
+.meal{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:4px;align-items:center}
+.meal+.meal{border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
+.meal-edit{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:100%;min-height:58px;padding:4px 0;text-align:left;border:0;background:transparent;justify-content:stretch;line-height:1.4}
+.meal-name{overflow-wrap:anywhere}
+.meal-price{align-self:start;display:flex;align-items:center;gap:4px;white-space:nowrap;font-weight:600;color:var(--gr-d)}
+.meal-price svg{width:14px;height:14px}
+.meal-description{grid-column:1/-1;font-size:13px}
+.meal-image{width:44px;height:44px;object-fit:cover;border-radius:var(--r-s)}
+.remove-meal{color:var(--ink)}
+.remove-meal:hover{color:var(--red);background:var(--red-l)}
+.remove-meal svg{width:17px;height:17px}
+.empty{font-size:15px;padding:12px 0}
+.design-notes{margin-top:18px;font-size:14px}
+.design-notes summary{display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer}
+.design-notes p,.design-notes li{margin:8px 0}
+.design-notes ul{padding-left:20px}
+.mockup-note{flex:none;min-height:24px;padding:3px 8px;background:var(--amb-l);color:var(--ink);border-top:1px solid var(--line);text-align:center;font-size:13px}
+dialog{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line);border-radius:var(--r-m);color:var(--ink);background:var(--karte);box-shadow:var(--schatten-2)}
+dialog::backdrop{background:rgba(16,40,28,.25)}
+body.phone dialog{width:min(351px,calc(100vw - 24px));max-height:min(635px,calc(100dvh - 32px))}
+.dialog-layout{display:flex;flex-direction:column;max-height:inherit}
+.dialog-head,.dialog-foot{flex:none;display:flex;align-items:center;gap:8px;padding:8px 12px}
+.dialog-head{border-bottom:1px solid var(--line)}
+.dialog-head h2{flex:1;font-size:18px}
+.dialog-foot{justify-content:flex-end;border-top:1px solid var(--line)}
+.dialog-body{overflow:auto;padding:12px;min-height:0}
+.dialog-body p+p{margin-top:12px}
+.dialog-feedback{margin-top:12px;padding:10px;border-left:3px solid var(--gr);background:var(--gr-l);font-size:15px}
+.field{display:grid;gap:4px;margin-bottom:12px}
+.field>span{font-size:15px}
+input,select,textarea{width:100%;min-width:0;min-height:44px;border:1px solid var(--gr);border-radius:var(--r-s);padding:8px;background:var(--karte)}
+textarea{resize:vertical;min-height:66px}
+.form-row{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:8px}
+.draft-row{border:0;border-top:1px solid var(--line);margin:8px 0;padding:12px 0 0;min-width:0}
+.draft-row legend{padding:0 4px;font-size:15px;font-weight:600}
+.draft-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.draft-actions .field{flex:1;margin:0}
+.draft-actions input[type=file]{padding:6px;max-width:100%;font-size:13px}
+.output-graphic img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:var(--r-s)}
+.output-note{font-size:13px;margin-top:8px}
+.dialog-foot.output-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.output-actions button{width:100%;padding:6px 8px;gap:6px}
+.scale-settings{margin-top:16px}
+#print-sheet{display:none}
+.menu-list{display:grid;gap:4px}
+.menu-list button{justify-content:flex-start}
+.toast{position:fixed;bottom:40px;left:12px;right:12px;margin:auto;max-width:400px;padding:10px 14px;border:1px solid var(--gr);border-radius:var(--r-s);background:var(--gr-l);color:var(--ink);box-shadow:var(--schatten-2);z-index:5;font-size:15px}
+@media(min-width:600px){
+  body:not(.phone) .controls{padding:12px 20px 0}
+  body:not(.phone) .week-nav{max-width:440px;margin:0 auto}
+  body:not(.phone) .exports{display:flex;justify-content:flex-end;gap:8px}
+  body:not(.phone) .exports button{flex-direction:row;width:auto;padding:4px 12px}
+  body:not(.phone) .days-area{padding:16px 20px}
+  body:not(.phone) .days{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(min-width:600px) and (pointer:fine){
+  body:not(.phone) :is(.controls,.app-head,.days) button{min-height:32px;height:32px}
+  body:not(.phone) .icon{width:32px;min-width:32px}
+  body:not(.phone) .week-nav{grid-template-columns:32px minmax(0,1fr) 32px}
+  body:not(.phone) .exports button{height:32px}
+  body:not(.phone) .days .meal-edit{height:auto;min-height:52px}
+}
+@media print{
+  @page{size:A4;margin:10mm}
+  html,body{height:auto;max-height:none;overflow:visible;display:block;background:white}
+  body>*:not(#print-sheet){display:none!important}
+  dialog::backdrop{display:none}
+  #print-sheet{display:block}
+  #print-sheet img{display:block;width:100%;height:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-head">
+    <button class="icon quiet" data-action="menu" aria-label="CMS-Bereich wechseln" title="CMS-Bereich wechseln"><i data-lucide="menu" aria-hidden="true"></i></button>
+    <div class="brand"><img src="../static-site/images/logo_freigestellt.png" alt="Dorfladen Oberornau"><span class="connection">Verbunden</span></div>
+    <button class="icon quiet" data-action="kiosk" aria-label="Zum Kiosk" title="Zum Kiosk"><i data-lucide="monitor" aria-hidden="true"></i></button>
+    <button class="icon quiet" data-action="website" aria-label="Zur Website" title="Zur Website"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+  </header>
+  <section class="controls" aria-label="Wochenplan steuern">
+    <div class="section-head">
+      <h1>Wochenplan</h1>
+      <button class="primary add-meal" data-action="add"><i data-lucide="plus" aria-hidden="true"></i>Gericht</button>
+      <button class="icon quiet" data-action="help" aria-label="Hilfe zum Wochenplan" title="Hilfe zum Wochenplan"><i data-lucide="circle-help" aria-hidden="true"></i></button>
+    </div>
+    <nav aria-label="Woche w&auml;hlen">
+      <div class="week-nav">
+        <button class="icon quiet" data-action="previous" aria-label="Vorherige Woche" title="Vorherige Woche"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+        <div class="week-label" aria-live="polite"><strong id="week-title"></strong><p id="week-range"></p></div>
+        <button class="icon quiet" data-action="next" aria-label="N&auml;chste Woche anzeigen" title="N&auml;chste Woche anzeigen"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <div class="week-presets"><button data-action="this" aria-pressed="true">Diese Woche</button><button data-action="next-preset" aria-pressed="false">N&auml;chste Woche</button></div>
+    </nav>
+    <div class="exports" role="group" aria-label="Vorschau und Ausgabe">
+      <button data-action="preview"><i data-lucide="eye" aria-hidden="true"></i><span>Vorschau</span></button>
+      <button data-action="print"><i data-lucide="printer" aria-hidden="true"></i><span>Drucken</span></button>
+      <button data-action="scale" aria-label="Auf die Waage"><i data-lucide="scale" aria-hidden="true"></i><span>Waage</span></button>
+      <button data-action="share"><i data-lucide="share-2" aria-hidden="true"></i><span>Teilen</span></button>
+    </div>
+  </section>
+  <main class="days-area" aria-label="Gerichte der gew&auml;hlten Woche" tabindex="0">
+    <div class="days" id="days"></div>
+    <details class="design-notes">
+      <summary>Entwurfsdetails und Funktionserhalt</summary>
+      <p>Nur ein Gestaltungsentwurf. Alle Daten und &Auml;nderungen bleiben in diesem Browserfenster; Neuladen setzt die Beispiele zur&uuml;ck.</p>
+      <p><strong>Klare Struktur:</strong> oben Bereich und Verbindung, dann Wochenwahl und eine ruhige Ausgabezeile. Einzig &bdquo;Gericht&ldquo; ist eine hervorgehobene Hauptaktion. Die Tagesgerichte stehen im Vordergrund.</p>
+      <ul>
+        <li>Woche zur&uuml;ck/vor sowie Diese/N&auml;chste Woche bleiben vier getrennte direkte Aktionen.</li>
+        <li>Vorschau, Drucken, Auf die Waage und Teilen bleiben direkt erreichbar, beschriftet und nicht in einem Mehr-Men&uuml; versteckt.</li>
+        <li>Gericht hinzuf&uuml;gen und Hilfe bleiben eigene Aktionen. Bearbeiten liegt auf der Gerichtszeile mit Stiftsymbol; L&ouml;schen bleibt getrennt und wird best&auml;tigt.</li>
+        <li>Wochentag, Hinweis, Gerichtsname, Preis, Allergene und Bilder bleiben erhalten. Die Erfassung ist hier nur eine lokale Beispieldaten-Demo; der bestehende vollst&auml;ndige Erfassungsablauf ist nicht Gegenstand dieses Umbaus.</li>
+        <li>Die Vorschau nutzt den unver&auml;nderten CMS-Zeichencode mit einem nur lesend &uuml;bernommenen Stand des gespeicherten CMS-Designs, einschlie&szlig;lich Vorlagenwahl, Farben, Schriften und Originallogo. Keine eigene Motivgestaltung.</li>
+        <li>PNG-Download und Druckdialog funktionieren mit genau dieser Grafik. Teilen nutzt den Ger&auml;tedialog, sofern verf&uuml;gbar; PNG-Download und WhatsApp-Link bleiben getrennt verf&uuml;gbar. Nur lokale Beispieldaten werden ausgegeben. Der Waagenablauf bleibt ausdr&uuml;cklich eine lokale Simulation.</li>
+        <li>Bereichsmen&uuml;, Kiosk, Website und Verbindungsstatus bleiben erhalten. Die Navigation ist hier nur demonstriert. Das CMS und echte Waagen werden weder beschrieben noch ver&auml;ndert.</li>
+      </ul>
+      <p>Designstand und Zeichencode lassen sich mit <code>node tools\build-wochenplan-mockup.js</code> erneut nur lesend &uuml;bernehmen. Das Mockup selbst ruft keine CMS-API auf.</p>
+      <p>Keine fachliche Zusammenlegung oder Entfernung. Eine Umsetzung folgt erst nach Mockup-Freigabe und SDD; dieser Entwurf &auml;ndert keine bestehende CMS-Seite.</p>
+    </details>
+  </main>
+  <footer class="mockup-note">Mockup &middot; Beispieldaten &middot; kein CMS-Zugriff</footer>
+</div>
+<dialog id="dialog" aria-labelledby="dialog-title">
+  <div class="dialog-layout">
+    <header class="dialog-head"><h2 id="dialog-title"></h2><button class="icon quiet" data-action="close" aria-label="Dialog schlie&szlig;en"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <div id="dialog-body" class="dialog-body"></div>
+    <footer id="dialog-footer" class="dialog-foot"></footer>
+  </div>
+</dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<div id="print-sheet"><img alt="Wochenplan zum Drucken"></div>
+<script src="cms-wochenplan-vorschau.js"></script>
+<script>
+'use strict';
+if (new URLSearchParams(location.search).get('ansicht') !== 'app') document.body.classList.add('phone');
+const paths = {
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  monitor:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  'arrow-left':'<path d="m12 19-7-7 7-7M5 12h14"/>',
+  'chevron-left':'<path d="m15 18-6-6 6-6"/>',
+  'chevron-right':'<path d="m9 18 6-6-6-6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  printer:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/><path d="M18 12h.01"/>',
+  scale:'<path d="m16 16 3-8 3 8c-1.6 1-4.4 1-6 0ZM2 16l3-8 3 8c-1.6 1-4.4 1-6 0ZM7 21h10M12 3v18M3 7l9-4 9 4"/>',
+  'share-2':'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+  'circle-help':'<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+  pencil:'<path d="m16 3 5 5M3 21l4-1L21 6a2.1 2.1 0 0 0-3-3L4 17l-1 4Z"/>',
+  'trash-2':'<path d="M3 6h18M19 6l-1 14H6L5 6M9 6V3h6v3M10 10v7M14 10v7"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  x:'<path d="m18 6-12 12M6 6l12 12"/>'
+};
+function icon(name) {
+  return '<i data-lucide="'+name+'" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+paths[name]+'</svg></i>';
+}
+document.querySelectorAll('i[data-lucide]').forEach(node => { node.innerHTML = icon(node.dataset.lucide).replace(/^.*?<svg/,'<svg').replace(/<\/i>$/,''); });
+document.addEventListener('DOMContentLoaded', () => { if (window.lucide) window.lucide.createIcons(); });
+const days = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
+const initial = [
+  {id:1,day:0,name:'Halsgrat in Gulaschso\u00dfe mit Sp\u00e4tzle und Salat',price:9.8,notice:'',allergens:'',image:''},
+  {id:2,day:1,name:'Cordon bleu mit Pommes oder Kartoffelsalat',price:9.8,notice:'',allergens:'',image:''},
+  {id:3,day:2,name:'Lasagne mit gemischtem Salat',price:8.9,notice:'',allergens:'A, G',image:''},
+  {id:4,day:3,name:'Rinderbraten mit Semmelkn\u00f6del und Blaukraut',price:10.9,notice:'',allergens:'',image:''},
+  {id:5,day:4,name:'Gebackener Fisch mit Kartoffelsalat',price:9.8,notice:'',allergens:'',image:''}
+];
+const weeks = new Map([[0, structuredClone(initial)]]);
+let offset = 0, nextId = 6, opener = null, timer, editing = null, drafts = [], output = null, outputTicket = 0;
+const dialog = document.getElementById('dialog');
+const body = document.getElementById('dialog-body');
+const foot = document.getElementById('dialog-footer');
+const money = value => new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(value);
+const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const current = () => weeks.get(offset) || [];
+function date(day) { const result = new Date(Date.UTC(2026,10,23)); result.setUTCDate(result.getUTCDate()+offset*7+day); return result; }
+function dateLabel(value) { return new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'2-digit',timeZone:'UTC'}).format(value); }
+function weekNumber(value) {
+  const thursday = new Date(value); thursday.setUTCDate(thursday.getUTCDate()+3);
+  return {year:thursday.getUTCFullYear(),week:Math.ceil((((thursday-new Date(Date.UTC(thursday.getUTCFullYear(),0,1)))/86400000)+1)/7)};
+}
+function render() {
+  const focused = document.activeElement.closest('.meal')?.querySelector('[data-edit]')?.dataset.edit;
+  const week = weekNumber(date(0));
+  document.getElementById('week-title').textContent = 'KW '+week.week+' / '+week.year;
+  document.getElementById('week-range').textContent = dateLabel(date(0))+' \u2013 '+dateLabel(date(4))+week.year;
+  document.querySelector('[data-action=this]').setAttribute('aria-pressed',String(offset===0));
+  document.querySelector('[data-action=next-preset]').setAttribute('aria-pressed',String(offset===1));
+  document.getElementById('days').innerHTML = days.map((name,index) => {
+    const meals = current().filter(meal => meal.day===index);
+    return '<section class="day" aria-label="'+name+'"><header class="day-head"><h2>'+name+'</h2><time datetime="'+date(index).toISOString().slice(0,10)+'">'+dateLabel(date(index))+'</time></header>'
+      +(meals.length ? meals.map(meal => '<div class="meal"><button class="meal-edit" data-edit="'+meal.id+'" aria-label="Gericht bearbeiten: '+esc(meal.name || meal.notice)+'">'
+        +'<span class="meal-name">'+esc(meal.name || meal.notice)+'</span><span class="meal-price">'+(meal.name?money(meal.price):'')+icon('pencil')+'</span>'
+        +(meal.name && meal.notice?'<span class="meal-description">'+esc(meal.notice)+'</span>':'')
+        +(meal.allergens?'<span class="meal-description">Allergene: '+esc(meal.allergens)+'</span>':'')
+        +(meal.image?'<img class="meal-image" src="'+esc(meal.image)+'" alt="Lokales Gerichtsbild">':'')
+        +'</button><button class="icon quiet remove-meal" data-delete="'+meal.id+'" aria-label="Gericht l\u00f6schen: '+esc(meal.name || meal.notice)+'" title="Gericht l\u00f6schen">'+icon('trash-2')+'</button></div>').join('')
+        :'<p class="empty">Kein Gericht</p>')+'</section>';
+  }).join('');
+  if (focused) (document.querySelector('[data-edit="'+focused+'"]') || document.querySelector('[data-action=add]')).focus();
+}
+function openDialog(title, html, footer) {
+  outputTicket++;
+  if (!dialog.open) opener = document.activeElement;
+  document.getElementById('dialog-title').textContent = title;
+  body.innerHTML = html+'<p id="dialog-feedback" class="dialog-feedback" role="status" hidden></p>';
+  foot.innerHTML = footer || '<button data-action="close">Schlie\u00dfen</button>';
+  foot.classList.remove('output-actions');
+  dialog.showModal();
+}
+function close() { outputTicket++; dialog.close(); if (opener && opener.isConnected) opener.focus(); }
+dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+function notify(text) {
+  if (dialog.open) {
+    const feedback = document.getElementById('dialog-feedback');
+    feedback.textContent = text; feedback.hidden = false; feedback.scrollIntoView({block:'nearest'}); return;
+  }
+  const node = document.getElementById('toast'); clearTimeout(timer);
+  node.textContent = text; node.hidden = false; timer = setTimeout(() => { node.hidden = true; },4000);
+}
+async function preview(mode='preview') {
+  const titles = {preview:'Wochenplan-Vorschau',print:'Druckvorschau',scale:'Auf die Waage',share:'Wochenplan teilen'};
+  const actions = mode==='scale'
+    ? '<button data-action="preview">Zur\u00fcck</button><button data-action="scale-demo" disabled>Demo testen</button>'
+    : mode==='share'
+      ? '<button data-action="download" disabled>'+icon('download')+'Download</button><button data-action="native-share" disabled>'+icon('share-2')+'Teilen</button><button data-action="whatsapp" disabled>'+icon('share-2')+'WhatsApp</button><button data-action="close">Schlie\u00dfen</button>'
+      : '<button data-action="download" disabled>'+icon('download')+'Download</button><button data-action="print-output" disabled>'+icon('printer')+'Drucken</button><button data-action="scale" disabled>'+icon('scale')+'Auf die Waage</button><button data-action="close">Schlie\u00dfen</button>';
+  const settings = mode==='scale'
+    ? '<form id="scale-form" class="scale-settings"><label class="field"><span>Anzeigedauer in Sekunden</span><input name="duration" type="number" min="1" max="60" value="10" required></label><p>Lokale Demo: Die Grafik und Dauer werden nur hier gezeigt. Keine Verbindung zu einer Waage.</p></form>'
+    : '';
+  openDialog(titles[mode],'<div class="output-graphic" aria-busy="true"><p>CMS-Motiv wird erzeugt\u2026</p></div><p class="output-note">Gespeichertes CMS-Design \u00b7 lokale Beispieldaten</p>'+settings,actions);
+  foot.classList.add('output-actions');
+  const ticket = outputTicket, week = weekNumber(date(0));
+  const header = 'KW '+week.week+' \u00b7 '+dateLabel(date(0))+String(week.year).slice(-2)+' \u2013 '+dateLabel(date(4))+String(week.year).slice(-2);
+  const rows = days.flatMap((day,index) => {
+    const meals = current().filter(meal => meal.day===index);
+    return meals.length ? meals.map((meal,i) => ({day:i===0?day:'',dish:meal.name || meal.notice,price:meal.name?money(meal.price):'',alt:''}))
+      : [{day,dish:'\u2014',price:'',alt:''}];
+  });
+  try {
+    const blob = await window.WochenplanMockup.render(rows,header);
+    const url = await new Promise((resolve,reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Die Grafik konnte nicht gelesen werden.'));
+      reader.readAsDataURL(blob);
+    });
+    if (ticket!==outputTicket || !dialog.open) return;
+    output = {blob,url,header,filename:'Wochenplan_KW'+week.week+'_'+week.year+'.png'};
+    const image = new Image(); image.alt = 'Fertiges Wochenplan-Motiv im gespeicherten CMS-Design'; image.src = url;
+    await image.decode();
+    if (ticket!==outputTicket || !dialog.open) return;
+    const graphic = body.querySelector('.output-graphic');
+    graphic.replaceChildren(image); graphic.setAttribute('aria-busy','false');
+    foot.querySelectorAll('button').forEach(button => { button.disabled = false; });
+  } catch (error) {
+    if (ticket!==outputTicket || !dialog.open) return;
+    body.querySelector('.output-graphic').setAttribute('aria-busy','false');
+    notify('Vorschau fehlgeschlagen: '+error.message);
+  }
+}
+function download() {
+  const link = document.createElement('a');
+  link.href = output.url; link.download = output.filename;
+  document.body.append(link); link.click(); link.remove();
+}
+async function printOutput() {
+  try {
+    const image = document.querySelector('#print-sheet img');
+    image.src = output.url; await image.decode(); window.print();
+  } catch (error) { notify('Drucken fehlgeschlagen: '+error.message); }
+}
+async function shareOutput() {
+  const file = new File([output.blob],output.filename,{type:'image/png'});
+  if (!navigator.share || !navigator.canShare?.({files:[file]})) {
+    notify('Dieser Browser unterst\u00fctzt das Teilen von Dateien nicht. Bitte das PNG herunterladen und manuell teilen.'); return;
+  }
+  try { await navigator.share({files:[file],title:'Wochenplan'}); }
+  catch (error) { notify(error.name==='AbortError'?'Teilen abgebrochen.':'Teilen fehlgeschlagen: '+error.message); }
+}
+function whatsappOutput() {
+  const tab = window.open('about:blank','_blank');
+  download();
+  if (!tab) { notify('PNG heruntergeladen. Der WhatsApp-Link wurde vom Popup-Blocker blockiert. Bitte Popups erlauben und erneut versuchen.'); return; }
+  tab.opener = null;
+  tab.location.href = 'https://wa.me/?text='+encodeURIComponent('Mittagsmen\u00fc '+output.header);
+  notify('PNG heruntergeladen. Bitte das Bild in WhatsApp selbst anh\u00e4ngen und den Versand best\u00e4tigen.');
+}
+function edit(id) {
+  editing = id || null;
+  const meal = current().find(item => item.id===id);
+  drafts = meal ? [structuredClone(meal)] : [{name:'',price:'',allergens:'',image:''}];
+  openDialog(meal?'Gericht bearbeiten':'Gericht hinzuf\u00fcgen',
+    '<form id="meal-form"><label class="field"><span>Wochentag</span><select name="day">'+days.map((day,index) => '<option value="'+index+'"'+(index===(meal?.day || 0)?' selected':'')+'>'+day+'</option>').join('')+'</select></label>'
+    +'<label class="field"><span>Hinweis (optional)</span><input name="notice" list="notices" value="'+esc(meal?.notice || '')+'" placeholder="Kein Hinweis"><datalist id="notices"><option value="Feiertag geschlossen"><option value="Nicht geoeffnet"><option value="Kein Mittagessen heute"><option value="Betriebsurlaub"></datalist></label>'
+    +'<div id="drafts"></div>'+(!meal?'<button type="button" class="quiet" data-action="draft-add">'+icon('plus')+'Weiteres Gericht</button>':'')
+    +'<p style="font-size:13px;margin-top:12px">Nur Beispieldaten. Bilder und \u00c4nderungen werden nicht \u00fcbertragen.</p></form>',
+    '<button data-action="close">Abbrechen</button><button class="primary" data-action="save">Speichern</button>');
+  renderDrafts();
+}
+function renderDrafts() {
+  document.getElementById('drafts').innerHTML = drafts.map((draft,index) =>
+    '<fieldset class="draft-row"><legend>Gericht '+(index+1)+'</legend><div class="form-row">'
+    +'<label class="field"><span>Gerichtsname</span><input data-draft="'+index+'" data-field="name" value="'+esc(draft.name)+'" autocomplete="off"></label>'
+    +'<label class="field"><span>Preis in EUR</span><input inputmode="decimal" data-draft="'+index+'" data-field="price" value="'+esc(String(draft.price).replace('.',','))+'"></label></div>'
+    +'<label class="field"><span>Allergene / Zusatzstoffe</span><input data-draft="'+index+'" data-field="allergens" value="'+esc(draft.allergens)+'" placeholder="z. B. A, C, G"></label>'
+    +'<div class="draft-actions"><label class="field"><span>Bild (optional, nur lokal)</span><input type="file" accept="image/*" data-image="'+index+'"></label>'
+    +(index>0?'<button type="button" class="icon quiet" data-remove-draft="'+index+'" aria-label="Gerichtszeile entfernen">'+icon('x')+'</button>':'')+'</div>'
+    +(draft.image?'<img class="meal-image" src="'+esc(draft.image)+'" alt="Gew\u00e4hltes lokales Bild">':'')+'</fieldset>').join('');
+}
+body.addEventListener('input', event => {
+  if (event.target.dataset.field) drafts[Number(event.target.dataset.draft)][event.target.dataset.field] = event.target.value;
+});
+body.addEventListener('change', event => {
+  if (!event.target.matches('[data-image]') || !event.target.files.length) return;
+  const file = event.target.files[0], index = Number(event.target.dataset.image);
+  if (!file.type.startsWith('image/')) { notify('Bitte eine Bilddatei ausw\u00e4hlen.'); return; }
+  const reader = new FileReader();
+  reader.onload = () => { drafts[index].image = reader.result; renderDrafts(); };
+  reader.onerror = () => notify('Das Bild konnte nicht gelesen werden. Bitte erneut ausw\u00e4hlen.');
+  reader.readAsDataURL(file);
+});
+document.addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (!button) return;
+  if (button.dataset.edit) { edit(Number(button.dataset.edit)); return; }
+  if (button.dataset.delete) {
+    const id = Number(button.dataset.delete), meal = current().find(item => item.id===id);
+    openDialog('Gericht l\u00f6schen?','<p>'+esc(meal.name || meal.notice)+' aus den lokalen Beispieldaten entfernen?</p>',
+      '<button data-action="close">Abbrechen</button><button class="danger" data-confirm-delete="'+id+'">L\u00f6schen</button>');
+    return;
+  }
+  if (button.dataset.confirmDelete) {
+    weeks.set(offset,current().filter(meal => meal.id!==Number(button.dataset.confirmDelete))); close(); render(); notify('Nur aus dem Mockup entfernt.'); return;
+  }
+  if (button.dataset.removeDraft) { drafts.splice(Number(button.dataset.removeDraft),1); renderDrafts(); return; }
+  const action = button.dataset.action;
+  if (action==='close') close();
+  else if (['previous','next','this','next-preset'].includes(action)) {
+    offset = action==='previous'?offset-1:action==='next'?offset+1:action==='this'?0:1; render();
+  } else if (action==='add') edit();
+  else if (['preview','print','scale','share'].includes(action)) preview(action);
+  else if (action==='download') download();
+  else if (action==='print-output') printOutput();
+  else if (action==='native-share') shareOutput();
+  else if (action==='whatsapp') whatsappOutput();
+  else if (action==='scale-demo') {
+    const form = document.getElementById('scale-form');
+    if (form.reportValidity()) notify('Lokale Demo: Dieses Motiv ist f\u00fcr '+form.elements.duration.value+' Sekunden vorgesehen. Keine Daten an eine Waage gesendet.');
+  }
+  else if (action==='draft-add') { drafts.push({name:'',price:'',allergens:'',image:''}); renderDrafts(); }
+  else if (action==='save') {
+    const form = document.getElementById('meal-form'), notice = form.elements.notice.value.trim(), day = Number(form.elements.day.value);
+    const converted = drafts.map(draft => ({...draft,name:draft.name.trim(),price:Number(String(draft.price).replace(',','.'))}));
+    if (converted.some(draft => !draft.name && !notice || draft.name && (!Number.isFinite(draft.price) || draft.price<=0))) {
+      notify('Bitte Gerichtsname und g\u00fcltigen Preis oder einen Tageshinweis eingeben.'); return;
+    }
+    const meals = current().filter(meal => meal.id!==editing);
+    converted.forEach(draft => meals.push({...draft,day,notice,id:editing || nextId++}));
+    weeks.set(offset,meals); close(); render(); notify('Nur lokal im Mockup gespeichert.');
+  } else if (action==='help') openDialog('Hilfe zum Wochenplan','<p>Woche mit den Pfeilen oder den beiden Direktwahlen ausw\u00e4hlen. \u00dcber \u201eGericht\u201c einen Eintrag hinzuf\u00fcgen.</p><p>Gerichtszeile mit Stiftsymbol antippen, um den vorhandenen Eintrag zu bearbeiten. Der Papierkorb l\u00f6scht erst nach Best\u00e4tigung.</p><p>Vorschau, Drucken, Waage und Teilen stehen getrennt in der ruhigen Ausgabezeile.</p><p>Diese Seite ist ein lokaler Gestaltungsentwurf, nicht mit dem CMS verbunden.</p>');
+  else if (action==='menu') openDialog('CMS-Bereich wechseln','<div class="menu-list"><button data-action="close">Wochenplan</button><button data-action="other-area">Angebote</button><button data-action="other-area">\u00d6ffnungszeiten</button><button data-action="other-area">Sortiment</button><button data-action="other-area">Weitere CMS-Bereiche</button></div>');
+  else if (['kiosk','website','other-area'].includes(action)) notify('Mockup: Navigation nur als Beispiel, die bestehende Anwendung bleibt unver\u00e4ndert.');
+});
+dialog.addEventListener('submit', event => { event.preventDefault(); dialog.querySelector(event.target.id==='scale-form'?'[data-action=scale-demo]':'[data-action=save]')?.click(); });
+render();
+</script>
+</body>
+</html>

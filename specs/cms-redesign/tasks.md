@@ -1,0 +1,47 @@
+# CMS-Wochenplan F8 — Aufgaben
+
+Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
+
+| Aufgabe | Voraussetzung | Umsetzung | Abnahme |
+| --- | --- | --- | --- |
+| WP1 | Freigegebenes Mockup und abgeschlossene SDD-Unterlagen | Generierte Wochenplan-Steuerung und gezielte CSS-Hüllen einschließlich mobiler Kopfzeile an Mockup angleichen. | TC-F8-01, maschineller Funktionsabgleich |
+| WP2 | WP1 | Neue Tageskarten mit bisherigen Informationen und Handlern; klassische Darstellung erhalten. | TC-F8-01, TC-F8-02 |
+| WP3 | WP1 | Wochenplan-Vorschauhülle angleichen; ursprünglichen Motivrenderer und echte Ausgabewege erhalten. | TC-F8-03 |
+| WP4 | WP2, WP3 | Isolierte Playwright-Abnahme auf vier Zielgrößen, Zurück, Dunkelmodus und betroffene Regressionen; visueller und gegebenenfalls Feature-Live-Nachweis. | TC-F8-01–04 |
+
+## Lokale Abnahme
+
+WP1–WP4 sind lokal umgesetzt und geprüft. Veröffentlichung und Live-Abnahme
+in der Feature-Preview stehen bis zur Freigabe von Commit/Push aus.
+
+- **33/33 gezielte Playwright-Tests bestanden:** neue Wochenplan-Suite
+  14/14, freigegebenes Mockup 11/11, betroffene CMS- und Ausgabe-Regressionen
+  8/8.
+- **TC-F8-01:** 375×667, 768×1024, 1280×800 und 686×1095.
+  Listenhöhe mindestens 50 %, echte Scrollradbedienung bei Überlänge,
+  stehende Steuerung und vollständig erreichbares letztes Gericht.
+  32/44-px-Bedienmaße; Hell-/Dunkel-Kontraste mindestens 4,5:1 für
+  Gerichtstext, Tagesüberschrift, Verbindungsstatus und Hauptaktion.
+- **TC-F8-02:** vier Wochenwahlen mit richtigen API-Filtern; Mehrfachzeilen,
+  Bild, Hinweis, Allergene, Bearbeiten und bestätigtes Löschen ausschließlich
+  über zustandsbehaftete lokale API-Fixtures. Klassischer Renderer geprüft.
+- **TC-F8-03:** aktuelle CMS-Farbe wirkt ohne Besuch des Design-Reiters;
+  geänderte Konfiguration wirkt nach Neuladen. Originalgrafik 2382 px breit,
+  Download bytegleich zur Vorschau; tatsächliche Druckaufrufe und native
+  PNG-Übergabe abgefangen. Waageneinstieg und vorhandene JPEG-/Uploadfolge
+  mit API-Attrappen geprüft. Vorschauaktionen bei allen vier Größen sichtbar.
+- **TC-F8-04:** Escape und Browser-Zurück nach wiederholtem Öffnen von
+  Vorschau/Bearbeitung geprüft; keine unbeabsichtigten API-Schreibzugriffe.
+- Sichtprüfung der vier Ansichten und der mobilen fertigen Vorschau gegen
+  das freigegebene Mockup.
+- Generator erneut ausgeführt: beide HTML-Ausgaben bytegleich.
+  Maschineller Funktionsabgleich für Betriebs- und Entwurfsseite jeweils
+  **0 Fehlstellen**; JavaScript-Syntax und `git diff --check` fehlerfrei.
+
+Zusätzlicher, nicht durch F8 verursachter Befund:
+[cms-waage-werbung.spec.js, TC-F3-01](../../tests/cms-waage-werbung.spec.js)
+verwendet im Angebotsbereich das erste `waageAktion`-Element, obwohl dieses
+versteckt ist. Der Fehler wurde mit den unveränderten HTML-/JS-/CSS-Dateien
+von `HEAD` identisch reproduziert. Test und Angebotsbereich bleiben für
+diesen Wochenplan-Auftrag unverändert; dies ist keine vollständig grüne
+Gesamtabnahme der älteren Waagen-Suite.

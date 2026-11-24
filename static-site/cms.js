@@ -1012,7 +1012,7 @@
       // Pre-load design overrides from Dataverse so they're ready when Design tab opens
       if(typeof cfgLoadFromDataverse==='function') cfgLoadFromDataverse();
       document.getElementById('cms-status').textContent = 'Verbunden';
-      document.getElementById('cms-status').style.color = '#16a34a';
+      document.getElementById('cms-status').style.color = document.querySelector('.cmsneu-app') ? 'var(--gr-d)' : '#16a34a';
     }catch(e){
       console.error('CMS init error',e);
       document.getElementById('cms-status').textContent = _cmsErr(e);
@@ -1135,7 +1135,9 @@
     history.replaceState({cmsTab:'wp'},'','');
     window.addEventListener('popstate',function(e){
       // Close any open modal on back button
-      if(e.state&&e.state.cmsModal) return; // just consumed the modal-open pushState
+      // Nach erneutem Öffnen kann auch der vorherige Eintrag ein Dialog sein.
+      var weeklyModal=document.querySelector('.cmsneu-app')&&document.querySelector('#cms-modal-wrap .cms-wp-preview,#cms-modal-wrap #cms-meal-rows');
+      if(e.state&&e.state.cmsModal&&!weeklyModal) return;
       // Die Ebenen des Angebote-Editors (Editor, Blatt, Menü) behandelt angebote-editor.js selbst.
       if(e.state&&e.state.angeboteLayer) return;
       var modalWrap=document.getElementById('cms-modal-wrap');
@@ -3191,6 +3193,17 @@
   });
 
   // --- Wochenplan ---
+  function wpIcon(name){
+    var paths={
+      pencil:'<path d="m16 3 5 5M3 21l4-1L21 6a2.1 2.1 0 0 0-3-3L4 17l-1 4Z"/>',
+      'trash-2':'<path d="M3 6h18M19 6l-1 14H6L5 6M9 6V3h6v3M10 10v7M14 10v7"/>',
+      download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+      printer:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/><path d="M18 12h.01"/>',
+      scale:'<path d="m16 16 3-8 3 8c-1.6 1-4.4 1-6 0ZM2 16l3-8 3 8c-1.6 1-4.4 1-6 0ZM7 21h10M12 3v18M3 7l9-4 9 4"/>',
+      x:'<path d="m18 6-12 12M6 6l12 12"/>'
+    };
+    return '<i data-lucide="'+name+'" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+paths[name]+'</svg></i>';
+  }
   window.cmsWeek = function(delta){
     kw+=delta; if(kw<1){jahr--;kw=52;} if(kw>52){jahr++;kw=1;} loadWP();
   };
@@ -3218,6 +3231,8 @@
     var bThis=document.querySelector('[data-action="weekThis"]'),bNxt=document.querySelector('[data-action="weekNxt"]');
     if(bThis)bThis.className='cms-week-quick'+(kw===thisKw&&jahr===thisJahr?' active':'');
     if(bNxt)bNxt.className='cms-week-quick'+(kw===nxtKw&&jahr===nxtJahr?' active':'');
+    if(bThis)bThis.setAttribute('aria-pressed',String(kw===thisKw&&jahr===thisJahr));
+    if(bNxt)bNxt.setAttribute('aria-pressed',String(kw===nxtKw&&jahr===nxtJahr));
 
     var filter="dl_kalenderwoche eq "+kw+" and dl_jahr eq "+jahr;
     fetch(API+'/wochenplan?$filter='+encodeURIComponent(filter)+'&$orderby=dl_datum asc,dl_wochentag asc&$top=50')
@@ -3258,9 +3273,27 @@
     [101000,101001,101002,101003,101004].forEach(function(d){byDay[d]=[];});
     meals.forEach(function(m){if(byDay[m.wochentag])byDay[m.wochentag].push(m);});
 
-    [101000,101001,101002,101003,101004].forEach(function(dc){
+    var modern=!!document.querySelector('.cmsneu-app');
+    var monday=weekRange(kw,jahr).start;
+    [101000,101001,101002,101003,101004].forEach(function(dc,dayIndex){
       var items=byDay[dc], col=DAY_COLORS[dc];
       var card=document.createElement('div'); card.className='cms-meal';
+      if(modern){
+        var dayDate=new Date(monday);dayDate.setDate(dayDate.getDate()+dayIndex);
+        var content='<div class="cms-meal-hdr"><h3>'+DAYS[dc]+'</h3><time>'+fmtD(dayDate).slice(0,6)+'</time></div><div class="cms-meal-body">';
+        if(!items.length)content+='<p class="cms-wp-description">Kein Gericht</p>';
+        items.forEach(function(m){
+          content+='<div class="cms-wp-meal"><button type="button" class="cms-wp-edit" data-action="editMeal" data-id="'+esc(m.id)+'" aria-label="Gericht bearbeiten: '+esc(m.gericht||m.beschreibung)+'">';
+          content+='<span class="cms-wp-name">'+esc(m.gericht||m.beschreibung)+'</span><span class="cms-wp-price">'+(m.preis?fmtP(m.preis):'')+wpIcon('pencil')+'</span>';
+          if(m.gericht&&m.beschreibung)content+='<span class="cms-wp-description">'+esc(m.beschreibung)+'</span>';
+          if(m.allergene)content+='<span class="cms-wp-description">Allergene: '+esc(m.allergene)+'</span>';
+          if(showImgs&&m.gericht&&_cmsMtBilder()[m.gericht]&&_cmsMtBilder()[m.gericht].bild_url){
+            content+='<img class="cms-wp-photo" src="'+esc(_cmsMtBilder()[m.gericht].bild_url)+'" alt="Gerichtsbild" onerror="this.style.display=\'none\'">';
+          }
+          content+='</button><button type="button" class="cms-btn-trash" data-action="deleteMeal" data-id="'+esc(m.id)+'" aria-label="Gericht l\u00f6schen: '+esc(m.gericht||m.beschreibung)+'" title="Wochenplan-Eintrag l\u00f6schen">'+wpIcon('trash-2')+'</button></div>';
+        });
+        card.innerHTML=content+'</div>';grid.appendChild(card);return;
+      }
       var h='<div class="cms-meal-hdr" style="background:'+col+'">'+DAYS[dc]+'</div>';
       var b='<div class="cms-meal-body">';
       if(items.length===0){
@@ -4773,20 +4806,24 @@
 
   function showSharePreview(blob,filename,opts){
     opts=opts||{};
+    var modernWp=opts.waage==='wochenplan'&&!!document.querySelector('.cmsneu-app');
     var url=URL.createObjectURL(blob);
-    var html='<div class="cms-modal-bg">';
-    html+='<div class="cms-modal" style="max-width:520px;text-align:center;position:relative">';
-    html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">\u2715</button>';
-    html+='<h3 style="margin:0 0 12px;font-size:var(--schrift-gross)">Vorschau</h3>';
+    var html='<div class="cms-modal-bg'+(modernWp?' cms-wp-preview-bg':'')+'">';
+    html+='<div class="cms-modal'+(modernWp?' cms-wp-preview':'')+'"'+(modernWp?' role="dialog" aria-modal="true" aria-labelledby="cms-wp-preview-title"':'')+' style="max-width:520px;text-align:center;position:relative">';
+    if(modernWp)html+='<div class="cms-wp-preview-head">';
+    html+='<button class="cms-modal-close" data-action="closeModal" title="Schlie\u00dfen">'+(modernWp?wpIcon('x'):'\u2715')+'</button>';
+    html+='<h3'+(modernWp?' id="cms-wp-preview-title"':'')+' style="margin:0 0 12px;font-size:var(--schrift-gross)">'+(modernWp?'Wochenplan-Vorschau':'Vorschau')+'</h3>';
+    if(modernWp)html+='</div><div class="cms-wp-preview-body">';
     // Wrap image in relative container for clickable card zones
     html+='<div id="cms-share-img-wrap" style="position:relative;display:inline-block;margin-bottom:12px">';
     html+='<img id="cms-share-img" src="'+url+'" style="max-width:100%;max-height:55vh;border-radius:var(--r-s);border:1px solid var(--line);display:block">';
     html+='</div>';
+    if(modernWp)html+='</div>';
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line)">';
-    html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">\u2b07\ufe0f Download</button>';
-    html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">\ud83d\udda8\ufe0f Drucken</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">'+(modernWp?wpIcon('download'):'\u2b07\ufe0f')+' Download</button>';
+    html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">'+(modernWp?wpIcon('printer'):'\ud83d\udda8\ufe0f')+' Drucken</button>';
     if(opts.waage){
-      html+='<button class="cms-btn" id="cms-share-waage" style="background:var(--blu);color:var(--karte)">\u2696\ufe0f Auf die Waage</button>';
+      html+='<button class="cms-btn" id="cms-share-waage" style="background:var(--blu);color:var(--karte)">'+(modernWp?wpIcon('scale'):'\u2696\ufe0f')+' Auf die Waage</button>';
     }
     if(opts.showEinzelflyer){
       html+='<button class="cms-btn" id="cms-share-flyer" style="background:var(--amb);color:var(--karte)">\ud83d\udccb Alle Einzelflyer</button>';

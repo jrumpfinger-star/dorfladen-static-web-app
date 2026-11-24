@@ -127,6 +127,7 @@ test.describe('CMS im Kiosk-Design', () => {
     for (const id of BEREICHE) {
       await zeigeBereich(page, id);
       const klein = await page.evaluate((bereich) => {
+        const minimum = bereich === 'wp' && innerWidth >= 600 && matchMedia('(pointer:fine)').matches ? 32 : 44;
         return [...document.querySelectorAll('#cms-panel-' + bereich + ' button')]
           // Der Design-Editor (#cms-panel-cfg.an-design-shell) stuft die
           // Knopfhöhe nach Zeigertyp: 44 px bei Touch, 32 px bei Maus
@@ -137,7 +138,7 @@ test.describe('CMS im Kiosk-Design', () => {
             t: (e.textContent || '').trim().slice(0, 20),
             h: Math.round(e.getBoundingClientRect().height),
           }))
-          .filter((x) => x.h && x.h < 43);
+          .filter((x) => x.h && x.h < minimum - 1);
       }, id);
       if (klein.length) befunde.push({ bereich: id, klein });
     }
