@@ -2232,7 +2232,9 @@ test('TC-F63-02: alle zehn Getränkefelder passen in den mobilen Einzelarbeitsra
   await fillDrink(row, 1);
   for (const [width, height] of [[360, 640], [375, 667], [390, 844], [320, 568], [686, 432]]) {
     await page.setViewportSize({ width, height });
+    await expect(dlg).toHaveClass(/an-capture-phone/);
     if (await dlg.locator('[data-meta-toggle]').getAttribute('aria-expanded') === 'true') await dlg.locator('[data-meta-toggle]').click();
+    await expect(dlg.locator('[data-meta-toggle]')).toHaveAttribute('aria-expanded', 'false');
     await focusRow(row);
     const bounds = await row.evaluate(el => {
       const body = el.closest('.an-capture-body').getBoundingClientRect();

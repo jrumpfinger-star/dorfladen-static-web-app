@@ -268,3 +268,9 @@ Zielerhalt und Vorlagenzeile bestehen einschließlich Browser-Zurück.
 Alle zehn Getränkefelder passen weiterhin ab 360x640 vollständig in den
 Arbeitsraum; die Eingabeflächen bleiben mindestens 44 px hoch.
 Browser-Zurück emuliert Android-Zurück; kein physisches Androidgerät getestet.
+Die Feature-Preview besteht 17/17 fokussierte Abnahmetests mit vollständig
+gemockter API; sechs ausgelieferte HTML-/CSS-/JS-Dateien stimmen bytegenau
+mit dem Feature-Commit überein. Der Größenwechsel-Test wartet vor dem
+Metadaten-Klick auf den mobilen Erfassungsmodus, damit ein ausstehendes
+Media-Query-Ereignis den Zustand nicht zwischen Lesen und Klicken umschaltet.
+Der iPad-Start mit anschließendem Größenwechsel besteht fünf Wiederholungen.
