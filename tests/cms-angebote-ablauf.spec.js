@@ -803,6 +803,7 @@ const saveDesign = async (page) => {
 // Unter 1000 px Dialogbreite liegen die Einstellungen hinter Reitern; sonst stehen sie neben der Vorschau.
 const showTab = async (page, name) => {
   const root = page.locator('#an-root');
+  await expect(root.locator('.an-cms-workspace')).toBeVisible();
   if (name === 'Ausgabe') { await selectArea(root, 'output'); return; }
   if (await root.getAttribute('data-output-mode') === 'true') await selectArea(root, 'design');
   /* Telefon (F73): keine Reiter; der Blattkopf zeigt die Kurzwahl, Vorlage, Marker und Ansicht sind aufklappbare Gruppen im Blatt. */
@@ -3064,4 +3065,39 @@ test('TC-F75-03: Letzte Artikelkachel bleibt bei offenen Blaettern sichtbar, and
     else await setSheetRest(page, 'peek');
   }
   expect(state.errors).toEqual([]);
+});
+
+test('TC-F75-04: Ausstehende Live-Vorschau nach Abbrechen und Schliessen erzeugt keinen Fehlerdialog', async ({ page }) => {
+  const state = await setup(page);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 2);
+  const writes = state.writes.length;
+  await page.locator('[data-sheet-chip=text]').click();
+  await page.evaluate(() => {
+    const original = window.AngeboteDesign.previewChoices;
+    let delay = true;
+    window.AngeboteDesign.previewChoices = async function (...args) {
+      const result = await original.apply(this, args);
+      if (delay) {
+        delay = false;
+        await new Promise(resolve => { window.releasePreview = resolve; });
+      }
+      return result;
+    };
+  });
+  await page.locator('dialog.an-phone-object[open] input[type=color]').first().evaluate(node => {
+    node.value = '#1267d9'; node.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect.poll(() => page.evaluate(() => typeof window.releasePreview)).toBe('function');
+  await page.goBack();
+  await expect(page.locator('dialog.an-phone-object[open]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
+  await page.evaluate(() => {
+    window.releasePreview();
+    return new Promise(resolve => requestAnimationFrame(resolve));
+  });
+  await expect(page.getByRole('heading', { name: 'Das hat leider nicht geklappt', exact: true })).toHaveCount(0);
+  expect(state.writes).toHaveLength(writes); expect(state.errors).toEqual([]);
 });

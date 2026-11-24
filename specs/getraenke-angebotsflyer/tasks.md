@@ -282,9 +282,10 @@ Der iPad-Start mit anschließendem Größenwechsel besteht fünf Wiederholungen.
 | GF138 Echte Touch-/Live-Pixel-Regressionen mit sechs Artikeln ergänzen | F75-Spec/Plan, bestätigte Abbruchsemantik | TC-F75-01..03 |
 | GF139 Telefon-Objektfenster nichtmodal mit unveränderter Transaktion und Hintergrundschutz öffnen | GF138 | TC-F75-02, TC-F73-03b/05 |
 | GF140 Kachelzuordnung und Scrollreserve über alle Überlagerungen korrigieren; Presetfelder erhalten | GF138 | TC-F75-01..03 |
-| GF141 Vieransichten- und Bestandsabnahme, Feature-Preview schreibfrei prüfen | GF139, GF140 | TC-F75-01..03, TC-F70..74 |
+| GF142 Ausstehende Live-Aktualisierung nach Abbrechen/Schließen sicher verwerfen | GF139 | TC-F75-04 |
+| GF141 Vieransichten- und Bestandsabnahme, Feature-Preview schreibfrei prüfen | GF139, GF140, GF142 | TC-F75-01..04, TC-F70..74 |
 
-F75 lokal abgenommen: CMS-Angebotsablauf 236/236 auf Desktop, Telefon,
+F75 lokal abgenommen: CMS-Angebotsablauf 237/237 auf Desktop, Telefon,
 Laden-Tablet und Touch-iPad; zusätzlich 14/14 fokussierte Bestandsprüfungen
 der gemeinsamen Eigenschaftenfenster einschließlich Feldbesitz und Reset.
 Echte Browser-Touchgesten scrollen im Peek, Position-/Marker-/Stilblatt
@@ -297,4 +298,9 @@ Elementauswahl und Artikelnavigation sind synchron, Motivfläche und Zoom
 bleiben gleich. Der frühere TC-F71-03-Vertrag „kein Scrollraum bei offenem
 Blatt“ ist durch den F75-Nachweis eines unverdeckten unteren Motivrands ersetzt.
 Browser-Zurück emuliert Android-Zurück; kein physisches Androidgerät getestet.
-Dies ist noch kein Live-Deploymentnachweis.
+Ein gezielt verzögerter Renderauftrag reproduziert den beim Live-Test
+aufgedeckten Zugriff nach Schließen vor dem Fix; nach erneuter
+Renderauftragsprüfung besteht TC-F75-04 fünf Wiederholungen. Reiter-Prüfhelfer
+warten auf den vollständig aufgebauten Arbeitsbereich, statt während dessen
+Aufbau einen veralteten Ausgabemodus zu lesen.
+Dies ist ein lokaler Abnahmestand, kein Live-Deploymentnachweis.

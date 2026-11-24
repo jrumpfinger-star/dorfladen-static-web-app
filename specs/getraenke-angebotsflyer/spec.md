@@ -2183,6 +2183,9 @@ Kein automatischer Schreibzugriff.
   Motivbereich, Vorschau-/Canvasgröße und Zoom bleiben unverändert. Weiteres
   manuelles Scrollen wird nicht zurückgesetzt. Vier Zielansichten,
   Fokus-/Tastaturbedienung und unveränderte Tablet-/Desktopdialoge prüfen.
+- TC-F75-04: Eine noch laufende Live-Aktualisierung nach Abbrechen und
+  Schließen des Editors wird als veraltet verworfen. Kein Fehlerdialog,
+  kein Zugriff auf den geschlossenen Editor und kein Schreibzugriff.
 
 ## F74: Freigegebene mobile Aktionsnavigation
 

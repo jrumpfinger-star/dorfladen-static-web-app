@@ -783,6 +783,7 @@
     var ticket = ++paint, draft = M.clone(data), n = page, target = designTarget, itemId = designItemId;
     var ownStyle = designTarget !== 'sheet' && !weeklyTarget();
     await D.previewChoices($('an-style-controls'), controlLayout(), draft.kind);
+    if (ticket !== paint || !data || !$('an-stage-canvas')) return;
     if (weeklyTarget()) {
       var group = designTarget === 'sheet' || designTarget === 'card' ? 'plakat' : 'flyer';
       $('an-style-controls').querySelectorAll('[data-cms-config]').forEach(function (control) {

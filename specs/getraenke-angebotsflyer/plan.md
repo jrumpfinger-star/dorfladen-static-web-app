@@ -1113,6 +1113,9 @@ Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
    berücksichtigen; bei Auswahl/Öffnen nachführen, nicht bei Nutzer-Scrollen
    oder bloßem Canvas-Neuzeichnen. Preisschild-Presetfelder im offenen
    Objektfenster synchronisieren, statt ihre Herkunftscontainer zu ersetzen.
+   Nach asynchronem Laden der Vorschauauswahl den bestehenden Renderauftrag
+   erneut prüfen; nach Schließen oder neuerer Vorschau keinen alten Editor
+   mehr auswerten.
 3. `angebote-vorschau-editor.js`: Artikelzuordnung der Auswahlflächen
    verfügbar machen; Elementauswahl im Select an die bestehende
    Artikelsynchronisierung melden. Native Touchgesten weiter durchlassen.
