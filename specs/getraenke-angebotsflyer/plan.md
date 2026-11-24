@@ -1048,17 +1048,24 @@ nach der Relevanzsortierung angewandt.
 
 ## F73: Gestaltung am Telefon ohne Reiterleiste
 
-Nur Telefon (`an-cms-phone`, Gestaltung): `cmsTabs()` setzt dort `data-an-tab="phone"`
-(kein Reiter blendet Bereiche aus), `#an-inspector`, `#an-cms-article`, das
-Stil-Panel (`cmsPanel`) und das Ansicht-Panel sind gleichzeitig sichtbar; die
-Aufklappzustaende (Stil, Marker, Ansicht) liegen als Klassen `an-g-*` am
-Workspace, damit sie Neurendern ueberstehen. Das Blatt `.an-cms-side` wird eine
-eigene Gridzeile (`minmax(0,1fr) auto auto`) mit `data-rest=peek|half|full`;
+Nur Telefon (`an-cms-phone`, Gestaltung): `cmsTabs()` setzt dort `data-an-tab="phone"`.
+Die ausdrueckliche Nachfreigabe ersetzt das verkleinernde Layout: Vorschau
+plus Hauptleiste bilden zwei Gridzeilen; `.an-cms-side` liegt absolut und
+durchscheinend darueber. `#an-cms-article` und der doppelte Aktionsfooter
+sind im geteilten Telefonlayout unsichtbar. Der Gestaltungskontext wird mit
+seinen bestehenden Nodes in das Blatt verschoben und bei anderen Ansichten
+an seinen urspruenglichen Platz zurueckgesetzt.
+Aufklappzustaende fuer Stil und Marker liegen als Klassen `an-g-*` am
+Workspace. `data-sheet-rest=peek|half|full` steuert ausschliesslich das Blatt;
 `phoneSheetOpen` bleibt als „Rast ungleich Peek" erhalten (Zurueck-Ebene
-`sheet`, Dock nur im Peek). Der neue Kopf `.an-motiv-sheet-head` (Titel,
-Ziel-Chip, ▲/▼, Chips) wird in `phoneMotifBar` angelegt und von `syncDock`
-mit dem Auswahlnamen versorgt. `placeContext` setzt „Gestalten fuer" und den
-Gestaltungskontext in das Ziel-Menue (`.an-motiv-menu`); Logik und
-Bedienelemente bleiben dieselben. Die Reiterleiste (`motivTabs`) entfaellt.
+`sheet`, Dock nur im Peek). Der Kopf `.an-motiv-sheet-head` folgt dem
+Mockup (Titel, Zustandszusammenfassung, ▲/▼, horizontale Chips). Schrift,
+Preisschild und Bild delegieren an `root._objectProperties.open`, ohne
+neue Datenadapter oder verlorene Transaktionen. Kein neues Ziel-Menue.
+Die Zoomleiste liegt platzneutral ueber der Vorschau; Bestandszoom und
+Einpassen bleiben erhalten. Die Reiterleiste (`motivTabs`) entfaellt.
+Auswahltests klicken echte Motivflaechen und pruefen Auswahlname, nicht
+bloss ein verstecktes Select. Layouttests vergleichen Canvas und Vorschau
+vor/nach Blattwechsel; Android-Zurueck behandelt zuerst den innersten Dialog.
 Dateien: `static-site/js/angebote-editor.js`, `static-site/css/angebote.css`,
 `tests/cms-angebote-ablauf.spec.js`.

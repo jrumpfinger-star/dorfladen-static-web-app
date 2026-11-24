@@ -1609,12 +1609,31 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-cms-phone .an-cms-workspace.an-mobile-views[data-an-tab=output].an-split-mobile.an-split{grid-template-rows:minmax(0,1fr)!important}
 .an-cms-phone .an-cms-workspace.an-mobile-views[data-an-tab=output].an-split-mobile.an-split>.an-split-picture{grid-row:1!important;grid-column:1!important}
 /* F70-F73 Motiv zuerst am Telefon (alle Aktionen, auch Wochen-/Sonderaktionen mit CMS-Vorlage):
-   Zeile 1 Vorschau mit überlagerter Schnellleiste, Zeile 2 Eigenschaften-Blatt (Rastpunkte Peek/Halb/Voll,
-   Kopf mit Auswahlname, Ziel-Chip und Kurzwahl-Chips statt Reitern), Zeile 3 Hauptleiste (Rückgängig,
-   Wiederholen, Artikel, Speichern, Ansicht). Das Flag an-motiv-first setzt der Editor am Workspace. */
-.an-motiv-bar,.an-motiv-dock,.an-motiv-sheet-head,.an-motiv-menu{display:none}
+   Die Vorschau behält ihre volle Größe; das Eigenschaften-Blatt überlagert sie als durchscheinendes
+   Blatt (Peek zeigt Kopf und Bereichs-Chips, Halb/Voll wachsen über die Vorschau), unten bleibt die
+   Hauptleiste (Rückgängig, Wiederholen, Artikelwechsel, Arbeitsansicht, Speichern). */
+.an-motiv-bar,.an-motiv-dock,.an-motiv-sheet-head{display:none}
+.an-phone-title,.an-phone-target,.an-phone-back,.an-phone-close{display:none}
+.an-phone-design.an-task-editor>.an-toolbar{
+  background:var(--gr-d,#234c38);color:#fff;margin:-6px -6px 0;padding:6px;gap:4px;min-height:56px}
+.an-phone-design.an-task-editor>.an-toolbar>.an-main-steps{flex:0 0 44px;width:44px;margin:0}
+.an-phone-design>.an-toolbar .an-main-steps>[data-action-area]:not([data-action-area=output]){display:none}
+.an-phone-design>.an-toolbar .an-main-steps>[data-action-area=output]{
+  display:flex;flex:0 0 44px;align-items:center;justify-content:center;min-width:44px;max-width:44px;width:44px;padding:4px;border-color:#ffffff73;background:transparent;color:#fff}
+.an-phone-design :is(.an-phone-back,.an-phone-close){display:block}
+.an-phone-design>.an-toolbar [data-action-area=output]>span{display:none}
+.an-phone-design .an-phone-title{display:block;flex:1;min-width:0}
+.an-phone-title :is(strong,small){display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-phone-title strong{font-size:15px;font-weight:600}
+.an-phone-title small{font-size:13px;font-weight:400}
+.an-phone-design .an-phone-target{display:block;flex:none;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:6px 10px;border-radius:999px;background:var(--karte,#fff);color:var(--gr-d,#234c38);font-size:13px;font-weight:600}
+.an-phone-design>.an-toolbar #an-overview{display:flex;align-items:center;justify-content:center;flex:none;width:44px;min-width:44px;padding:4px}
+.an-phone-design>.an-toolbar #an-overview>span{display:none}
+.an-phone-design>.an-toolbar>button{color:var(--ink,#24362d)}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-split-picture{scrollbar-gutter:stable}
 .an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output]){
-  grid-template-rows:minmax(0,1fr) auto auto!important}
+  grid-template-rows:minmax(0,1fr) auto!important;position:relative}
 .an-cms-phone .an-cms-workspace.an-motiv-first.an-mobile-views.an-split-mobile.an-split[data-workspace-view=split]:not([data-an-tab=output])>.an-split-picture{grid-row:1!important;grid-column:1!important}
 /* Hauptleiste: immer sichtbar, nicht hinter einem Menü */
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar:not([hidden]),
@@ -1622,7 +1641,7 @@ body.an-body{margin:0;background:#f7f5ed}
   display:flex;align-items:center;gap:4px;flex-wrap:nowrap;grid-column:1!important;
   min-height:52px;padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px));
   background:var(--an-surface,#fff);border-top:1px solid var(--an-line,#d5dfd6)}
-.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar{grid-row:3!important}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-motiv-bar{grid-row:2!important}
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]>.an-motiv-bar{grid-row:3!important}
 .an-motiv-bar [data-motiv-history]{flex:none;width:40px;min-width:0;min-height:44px;padding:0;font-size:20px;line-height:1}
 .an-motiv-bar .an-article-navigation{display:flex;align-items:center;justify-content:center;gap:2px;flex:1 1 auto;min-width:0}
@@ -1640,38 +1659,77 @@ body.an-body{margin:0;background:#f7f5ed}
   background:rgba(255,255,255,.94);border:1px solid var(--an-line,#d5dfd6);box-shadow:0 6px 24px rgba(16,40,28,.22);
   backdrop-filter:blur(6px)}
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=picture]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-motiv-dock{grid-row:2!important}
+/* Im Peek schwebt die Schnellleiste über der Blattoberkante (Offset setzt der Editor). */
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-motiv-dock{margin-bottom:112px}
 /* Abstandshalter am Ende der scrollbaren Vorschau: schafft Laufraum, damit der Inhalt
    über die Schnellleiste hinaus gescrollt werden kann (Chromium-Padding-Bug in Flex). */
 .an-cms-phone .an-cms-workspace .an-dock-spacer{flex:none;width:100%;pointer-events:none}
-.an-motiv-dock select{grid-column:1/-1;min-width:0;min-height:44px;font-size:14px;margin:0}
 .an-motiv-dock button{min-height:44px;min-width:0;padding:0;font-size:20px;line-height:1;touch-action:manipulation}
-/* Eigenschaften-Blatt (F73): eigene Gridzeile unter der Vorschau. Peek zeigt nur den Kopf, Halb und Voll
-   begrenzen die Höhe; die Vorschau behält den Rest der Zeile. */
+/* Eigenschaften-Blatt (F73): überlagert als durchscheinendes Blatt die Vorschau. Peek zeigt nur
+   Kopf und Bereichs-Chips, Halb und Voll wachsen über die Vorschau; die Änderung bleibt im
+   Hintergrund sichtbar. Der untere Abstand zur Hauptleiste setzt der Editor (style.bottom). */
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side.an-split-tools{
-  grid-row:2!important;grid-column:1!important;align-self:end;display:block;overflow:auto;overscroll-behavior:contain;z-index:30;
-  max-height:none;scroll-padding-top:104px;
-  background:var(--an-surface,#fff);border-top:1px solid var(--an-line,#d5dfd6);
-  border-radius:14px 14px 0 0;box-shadow:0 -8px 24px rgba(16,40,28,.16);
+  position:absolute;left:0;right:0;bottom:0;z-index:30;display:block;overflow:auto;overscroll-behavior:contain;
+  max-height:none;scroll-padding-top:110px;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  border-top:1px solid var(--an-line,#d5dfd6);border-radius:14px 14px 0 0;box-shadow:0 -8px 24px rgba(16,40,28,.16);
   margin:0;padding:0 10px}
-.an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-sheet-rest=half][data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side.an-split-tools{max-height:40dvh}
-.an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-sheet-rest=full][data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side.an-split-tools{max-height:66dvh}
+.an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-cms-side.an-split-tools{height:100px}
+.an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-sheet-rest=half][data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side.an-split-tools{height:46dvh}
+.an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-sheet-rest=full][data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side.an-split-tools{height:66dvh}
 .an-cms-phone .an-cms-workspace.an-motiv-sheet-open[data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side.an-split-tools{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output]):not(.an-motiv-sheet-open)>.an-cms-side>:not(.an-motiv-sheet-head){display:none!important}
-/* Kopf: Auswahlname (Rastpunkt wechseln), Ziel-Chip, Einklappen und Kurzwahl-Chips */
+/* Kopf: Auswahlname bzw. „Seite · Ziel" (Rastpunkt wechseln), Einklappen und Bereichs-Chips */
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side>.an-motiv-sheet-head{
   display:block;position:sticky;top:0;z-index:5;margin:0 -10px 6px;padding:2px 10px 6px;
-  background:var(--an-surface,#fff);border-radius:14px 14px 0 0}
+  background:rgba(255,255,255,.92);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border-radius:14px 14px 0 0}
 .an-sheet-row{display:flex;align-items:center;gap:6px}
+.an-sheet-row.an-sheet-tools{min-height:44px}
+.an-sheet-tools .an-sheet-chips{flex:1 1 auto;min-width:0}
+.an-sheet-tools #an-page-tools{flex:none;align-items:center;margin:0;gap:2px}
+.an-sheet-tools #an-page-tools span{font-size:13px;font-weight:600;white-space:nowrap}
 .an-sheet-cycle{flex:1 1 auto;min-width:0;min-height:44px;display:flex;align-items:center;gap:8px;padding:0 6px;border:0;background:transparent;text-align:left;font:inherit}
-.an-sheet-cycle strong{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
-.an-sheet-grip{flex:none;width:28px;height:4px;border-radius:2px;background:#9aa9a0}
+.an-sheet-names{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.an-sheet-cycle strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.an-sheet-cycle small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--an-muted,#5c6f63)}
+.an-sheet-grip{position:absolute;left:50%;top:5px;width:40px;height:4px;border-radius:2px;background:var(--line,#9aa9a0);transform:translateX(-50%)}
 .an-sheet-caret{flex:none;font-size:13px;color:#4c5f54}
-.an-target-chip{flex:0 1 auto;min-width:0;max-width:46%;min-height:44px;padding:0 10px;border-radius:999px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .an-sheet-close{flex:none;min-width:44px;min-height:44px;padding:0;font-size:14px}
 .an-sheet-close[hidden]{display:none}
 .an-sheet-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .an-sheet-chips button{flex:none;min-height:44px;padding:0 14px;border-radius:999px;font-size:13px}
 .an-sheet-chips button[hidden]{display:none}
+.an-cms-phone .an-sheet-cycle{padding:10px 2px 0}
+.an-cms-phone .an-sheet-cycle small{font-size:13px}
+.an-phone-object{
+  height:min(66dvh,calc(100dvh - 144px));max-height:66dvh;overflow:hidden;
+  margin:auto auto 72px;background:rgba(255,255,255,.9);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.an-phone-object form{height:100%;max-height:100%}
+.an-phone-object::backdrop{background:transparent}
+.an-phone-object .an-object-preview{display:none!important}
+.an-phone-object :is(header,footer){background:transparent}
+.an-phone-object .an-price-colors{grid-template-columns:minmax(0,1fr)}
+.an-phone-object .an-price-colors .an-object-grid>label{grid-template-columns:minmax(0,1fr) auto 44px}
+.an-phone-object .an-price-colors .an-object-grid>label>span{grid-column:1;grid-row:1}
+.an-phone-object .an-price-colors .an-object-grid>label>input[type=color]{grid-column:3;grid-row:1}
+.an-phone-object .an-object-color-value{grid-column:2;grid-row:1}
+.an-cms-phone .an-sheet-chips button{background:var(--karte,#fff);border:1px solid var(--line,#d5dfd6);color:var(--ink,#24362d)}
+.an-cms-phone .an-cms-workspace.an-motiv-sheet-open .an-sheet-tools{display:none}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone] .an-task-fields{overflow:visible;min-height:0;flex:none}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone] .an-compact-group{background:rgba(255,255,255,.55)}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-cms-side>.an-design-context{margin:8px 0}
+/* Der Zoom schwebt platzneutral: sein Sticky-Anker bleibt am Anfang des Scrollbereichs. */
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-split-picture>.an-zoombar{
+  position:sticky;top:0;align-self:flex-end;z-index:20;flex:none;
+  width:100%;height:0;min-height:0;margin:0;padding:0;border:0;overflow:visible;
+  display:flex;align-items:flex-start;justify-content:flex-end;gap:0;background:transparent;pointer-events:none}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-split-picture>.an-zoombar>:is(button,output){
+  box-sizing:border-box;min-height:44px;height:44px;min-width:44px;margin:0;padding:4px 8px;
+  border:1px solid var(--line,#d5dfd6);border-radius:0;background:var(--karte,#fff);pointer-events:auto}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-split-picture>.an-zoombar>button:first-child{border-radius:22px 0 0 22px}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-split-picture>.an-zoombar>button:last-child{border-radius:0 22px 22px 0}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]>.an-split-picture>.an-zoombar>output{display:flex;align-items:center;justify-content:center;font-size:13px}
 /* Gruppen im Blatt */
 .an-g-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;margin:4px 0;padding:0 12px;text-align:left;font-weight:600}
 .an-g-toggle[hidden]{display:none}
@@ -1687,16 +1745,13 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-cms-phone .an-cms-workspace[data-an-tab=phone] [data-side-panel=marker]>legend{display:none}
 .an-cms-phone .an-cms-workspace[data-an-tab=phone]:not(.an-g-marker) [data-side-panel=marker],
 .an-cms-phone .an-cms-workspace[data-an-tab=phone]:not(.an-g-style) #an-style-controls>:not([data-side-panel=marker]),
-.an-cms-phone .an-cms-workspace[data-an-tab=phone]:not(.an-g-style) #an-design-options>:not(#an-style-controls):not(.an-g-toggle),
-.an-cms-phone .an-cms-workspace[data-an-tab=phone]:not(.an-g-view) [data-task-panel=view]{display:none}
-/* Ziel-Menü: unsichtbare Fläche über dem Arbeitsbereich fängt Tipps außerhalb ab; das Feld sitzt oben über dem Motiv. */
-.an-cms-phone .an-cms-workspace.an-motiv-first:not([data-an-tab=output])>.an-motiv-menu:not([hidden]){
-  display:flex;align-items:flex-start;justify-content:center;grid-row:1 / -1;grid-column:1!important;z-index:40}
-.an-motiv-menu-panel{display:grid;gap:8px;width:calc(100% - 16px);max-height:calc(100% - 16px);overflow:auto;margin:8px;padding:10px;box-sizing:border-box;
-  border-radius:14px;background:var(--an-surface,#fff);border:1px solid var(--an-line,#d5dfd6);box-shadow:0 8px 28px rgba(16,40,28,.28)}
-.an-motiv-menu-panel .an-action-context{padding:0}
-.an-motiv-menu-panel .an-design-context{margin:0}
-.an-menu-close{min-height:44px}
+.an-cms-phone .an-cms-workspace[data-an-tab=phone]:not(.an-g-style) #an-design-options>:not(#an-style-controls):not(.an-g-toggle){display:none}
+/* Im Blatt (geteilte Ansicht) entfallen: Seitenleiste „Ansicht" (Seitenwechsel läuft über die
+   Hauptleiste), Artikelfelder (gehören zum Schritt „Artikel und Bilder") und die doppelte
+   Aktionsfußzeile (Rückgängig, Wiederholen und Speichern liegen in der Hauptleiste). */
+.an-cms-phone .an-cms-workspace[data-an-tab=phone][data-workspace-view=split] [data-task-panel=view],
+.an-cms-phone .an-cms-workspace[data-an-tab=phone][data-workspace-view=split] #an-cms-article,
+.an-cms-phone .an-cms-workspace[data-an-tab=phone][data-workspace-view=split]:not([data-an-tab=output]) .an-action-footer{display:none!important}
 /* Reiter gibt es am Telefon nur noch im Bereich Ausgabe; Artikelnavigation liegt in der Hauptleiste. */
 .an-cms-phone .an-cms-workspace:not([data-an-tab=output]) .an-cms-tabbar,
 .an-cms-phone .an-cms-workspace.an-motiv-first[data-workspace-view=split]:not([data-an-tab=output])>.an-cms-side .an-article-picker .an-article-navigation{display:none}

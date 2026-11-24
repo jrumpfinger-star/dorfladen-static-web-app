@@ -240,9 +240,14 @@ Status wird in den Session-Todos geführt, Abnahme nur anhand der Testfälle.
 
 | Aufgabe | Abhaengigkeit | Testvertrag |
 | --- | --- | --- |
-| GF129 Reiterleiste und „Fertig" entfernen; Blatt mit Rastpunkten Peek/Halb/Voll als eigene Gridzeile, Kopf mit Auswahlname und ▲/▼ | GF125 | TC-F73-01, TC-F73-05 |
-| GF130 Alle Gruppen im Blatt untereinander (Artikel, Element, Vorlage/Stil, Marker, Ansicht), Kurzwahl-Chips je nach Auswahl | GF129 | TC-F73-02, TC-F73-04 |
-| GF131 Ziel-Menue im Blattkopf (Gestalten fuer, Standard laden, Eigene Vorlage) und Zurueck-Ebenen | GF129 | TC-F73-03, TC-F73-05 |
+| GF129 Reiterleiste und „Fertig" entfernen; durchscheinendes Overlay-Blatt Peek/Halb/Voll ohne Motivverkleinerung, Kopf und Zusammenfassung wie Mockup | GF125 | TC-F73-01, TC-F73-05 |
+| GF130 Element, Marker und Stil im Blatt; Artikelfelder nur in Artikel/Bilder; Chips Schrift/Preisschild/Bild an vorhandene Eigenschaftenfenster anbinden | GF129 | TC-F73-02, TC-F73-03b, TC-F73-04 |
+| GF131 Kontext und Vorlagen ins Blatt statt Ziel-Popup; platzneutraler Zoom; Zurueck-Ebenen erhalten | GF129 | TC-F73-03, TC-F73-05 |
 | GF132 Testhelfer showTab/openSheet und TC-F70/F71/F72 auf das neue Blatt umstellen | GF129..GF131 | TC-F70..F73 |
 
 Abgenommen: Globale Designer F65/F66 17/17 und CMS-Aktionseditor F65–F69 (Einzel-/Sammelausgabe, PNG, Navigation, Live) jeweils auf den vier Pflichtansichten grün; API-Provenienz (`test_angebote.py`) grün. Der echte Scrollbalken-Test läuft nur Desktop/iPad (Headless-Einschränkung).
+
+F73-Nachfreigabe lokal geprueft: CMS-Angebotsablauf 173/173 auf Desktop,
+Telefon und Laden-Tablet sowie 42/42 Layouttests bei 768x1024.
+Objektblatt-Footer und Android-Zurueck zusaetzlich in allen vier Projekten
+geprueft. Dies ist kein Live-Deploymentnachweis.

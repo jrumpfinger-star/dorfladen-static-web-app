@@ -735,6 +735,7 @@ window.AngeboteDesign = (function () {
           if (!nodes.length) return;
           var dialog = document.createElement('dialog'), positions = [], statuses = [];
           dialog.className = 'an-dialog an-object-dialog';
+          if (root.classList.contains('an-phone-design')) dialog.classList.add('an-phone-object');
           dialog.dataset.objectGroup = group;
           dialog.setAttribute('aria-label', labels[group] + ' einstellen');
           dialog.innerHTML = '<form><header><h2>' + labels[group] + ' einstellen</h2>'

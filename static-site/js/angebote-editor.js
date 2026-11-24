@@ -15,7 +15,7 @@
   var cmsHost = null, cmsAction = null, cmsReturn = null, cmsDialog = null, cmsPlaceholder = null, cmsScrolled = false;
   var cmsTab = 'element', cmsPanel = null, cmsTabbar = null, cmsObserver = null, cmsNarrow = null;
   var cmsSession = null;
-  var phoneSheetOpen = false, phoneSheetRest = 'peek', phoneMenuOpen = false;
+  var phoneSheetOpen = false, phoneSheetRest = 'peek';
   var roleNames = { brand: 'Marke', title: 'Überschrift', period: 'Zeitraum', footer: 'Fußzeile',
     name: 'Artikelname', pack: 'Gebinde', description: 'Beschreibung', price: 'Preis',
     old_price: 'Stattpreis', discount: 'Rabatt', deposit: 'Pfand', base: 'Literpreis', image: 'Bild', logo: 'Dorfladen-Logo', text: 'Eigener Text', shape: 'Fläche' };
@@ -184,15 +184,10 @@
     var bar = root.querySelector('.an-motiv-bar');
     if (bar && bar._motivSetOpen) bar._motivSetOpen(false);
   }
-  function closeMenu(popped) {
-    var bar = root.querySelector('.an-motiv-bar');
-    if (bar && bar._motivCloseMenu) bar._motivCloseMenu(popped);
-  }
   window.addEventListener('popstate', function () {
     if (expectedPops) { expectedPops--; if (!expectedPops) flushLayers(); return; }
     if (!layers.length) return;
     var name = layers.pop(), nested = nestedDialog();
-    if (!nested && name === 'menu') { closeMenu(true); return; }
     if (!nested && name === 'sheet') { closeSheet(); return; }
     pushLayer(name);
     if (nested) { if (nested.dispatchEvent(new Event('cancel', { cancelable: true }))) nested.close(); return; }
@@ -568,7 +563,6 @@
     var workspace = root.querySelector('.an-cms-workspace');
     if (!workspace || !cmsPanel || !cmsTabbar) return;
     workspace.classList.toggle('an-cms-weekly', weeklyTarget());
-    placeContext(workspace);
     cmsTabs();
     cmsNarrow = narrow;
   }
@@ -577,6 +571,7 @@
       .concat(weeklyTarget() ? [['marker', 'Marker']] : []).concat([['view', 'Ansicht'], ['output', 'Ausgabe']]);
     /* F73: Am Telefon gibt es in der Gestaltung keine Reiter; alle Bereiche stehen gleichzeitig im Blatt. */
     var phone = !!cmsAction && root.classList.contains('an-cms-phone');
+    root.classList.toggle('an-phone-design', phone && cmsTab !== 'output');
     if (phone && cmsTab !== 'output') cmsTab = 'element';
     var unified = phone && cmsTab !== 'output';
     if (!tabs.some(function (tab) { return tab[0] === cmsTab; })) cmsTab = 'output';
@@ -602,6 +597,27 @@
     var motivBar = root.querySelector('.an-motiv-bar');
     if (motivBar) { motivBar.hidden = outputMode(); if (outputMode() && motivBar._motivSetOpen) motivBar._motivSetOpen(false); }
     syncSheetHead();
+    /* Bestehende Kontext- und Seitenelemente wechseln nur den Ort, nicht ihren Besitzer. */
+    var designContext = root.querySelector('.an-design-context');
+    var side = workspaceNode.querySelector('.an-cms-side');
+    if (designContext) {
+      if (!designContext._home) {
+        designContext._home = document.createComment('Gestaltungskontext');
+        designContext.before(designContext._home);
+      }
+      if (phone && unified && workspaceNode.dataset.workspaceView === 'split') {
+        if (designContext.parentElement !== side) side.querySelector('.an-motiv-sheet-head').after(designContext);
+      } else if (designContext.parentElement !== designContext._home.parentElement) designContext._home.after(designContext);
+    }
+    var pageTools = $('an-page-tools');
+    if (pageTools) {
+      if (phone && unified && workspaceNode.dataset.workspaceView === 'split') {
+        if (pageTools.parentElement !== side) side.appendChild(pageTools);
+      } else {
+        var viewHost = root.querySelector('[data-task-panel=view]');
+        if (viewHost && pageTools.parentElement !== viewHost) viewHost.prepend(pageTools);
+      }
+    }
     if (outputBar && itemPicker) {
       if (outputMode()) outputBar.prepend(itemPicker);
       else root.querySelector('.an-task-fields').prepend(itemPicker);
@@ -952,10 +968,11 @@
       cmsDialog.appendChild(root); document.body.appendChild(cmsDialog);
       cmsDialog.addEventListener('cancel', function (event) {
         event.preventDefault();
-        if (phoneMenuOpen) closeMenu(false); else if (phoneSheetOpen) closeSheet(); else run(closeCmsPreview);
+        if (phoneSheetOpen) closeSheet(); else run(closeCmsPreview);
       });
       cmsDialog.showModal(); pushLayer('editor');
-      cmsTab = mode === 'preview' || mode === 'output' ? 'output' : (cmsSession && cmsSession.state ? cmsSession.state.cmsTab : 'element'); cmsNarrow = null;
+      cmsTab = mode === 'preview' || mode === 'output' ? 'output'
+        : (cmsSession && cmsSession.state && cmsSession.state.cmsTab !== 'output' ? cmsSession.state.cmsTab : 'element'); cmsNarrow = null;
       if (window.ResizeObserver) {
         cmsObserver = new ResizeObserver(function () {
           if (!cmsDialog || !cmsPanel || cmsNarrow === (cmsDialog.clientWidth < 1000)) return;
@@ -989,7 +1006,7 @@
     if (cmsObserver) { cmsObserver.disconnect(); cmsObserver = null; }
     if (taskFrame) { taskFrame.destroy(); taskFrame = null; }
     root.classList.remove('an-task-editor'); root.style.removeProperty('height');
-    cmsPanel = null; cmsTabbar = null;     cmsNarrow = null; phoneSheetOpen = false; phoneSheetRest = 'peek'; phoneMenuOpen = false;
+    cmsPanel = null; cmsTabbar = null;     cmsNarrow = null; phoneSheetOpen = false; phoneSheetRest = 'peek';
   }
   async function closeCmsPreview() {
     if (!cmsSession && !(await discard())) return;
@@ -1081,6 +1098,8 @@
     $('an-save').textContent = cmsSession ? 'Aktion speichern' : 'Gestaltung speichern';
     $('an-reload-saved').hidden = !!cmsSession;
     $('an-overview').textContent = cmsSession ? 'Artikel / Bilder' : 'Schließen';
+    $('an-overview').setAttribute('aria-label', $('an-overview').textContent);
+    $('an-overview').innerHTML = '<svg class="an-phone-close" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 6-12 12M6 6l12 12"/></svg><span>' + $('an-overview').textContent + '</span>';
     $('an-overview').onclick = function () { run(closeCmsPreview); };
     {
       var area = document.createElement('select'); area.className = 'an-workspace-area'; area.setAttribute('aria-label', 'Aktionsbereich');
@@ -1091,7 +1110,15 @@
         else { cmsTab = area.value === 'output' ? 'output' : 'element'; renderInspector(); preview().catch(M.error); }
       };
       root.querySelector('.an-toolbar').prepend(area);
-      window.CMSAngeboteForm.areaNavigation(area);
+      var areaNav = window.CMSAngeboteForm.areaNavigation(area);
+      var outputButton = areaNav.querySelector('[data-action-area=output]');
+      outputButton.innerHTML = '<svg class="an-phone-back" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 19-7-7 7-7M5 12h14"/></svg><span>' + outputButton.textContent + '</span>';
+      var phoneTitle = document.createElement('div'); phoneTitle.className = 'an-phone-title';
+      var phoneName = document.createElement('strong'); phoneName.textContent = data.title;
+      var phoneSubtitle = document.createElement('small'); phoneSubtitle.textContent = 'Angebot Gestaltung';
+      phoneTitle.append(phoneName, phoneSubtitle); areaNav.after(phoneTitle);
+      var phoneTarget = document.createElement('span'); phoneTarget.className = 'an-phone-target';
+      phoneTarget.dataset.phoneTarget = ''; phoneTitle.after(phoneTarget);
     }
     var panel = root.querySelector('.an-work-panel');
     panel.hidden = true;
@@ -1132,6 +1159,9 @@
     finishTaskFrame(workspace, sideColumn, canvasColumn, view);
     createOutputControls(canvasColumn);
     phoneMotifBar(workspace, sideColumn);
+    workspace.addEventListener('change', function (event) {
+      if (event.target.matches('[aria-label=Arbeitsansicht]')) cmsLayout();
+    });
     renderCmsArticle(); cmsLayout();
   }
   /* F70-F73 Motiv zuerst am Telefon. Das Eigenschaften-Blatt unter der Vorschau hat die Rastpunkte Peek,
@@ -1155,16 +1185,6 @@
   }
   function syncDock() {
     var dock = root.querySelector('.an-motiv-dock'); if (!dock) return;
-    var source = dockElementSource(), select = dock.querySelector('[data-dock-element]');
-    if (source) {
-      var signature = Array.from(source.options).map(function (option) { return option.value + '|' + option.textContent; }).join('\n');
-      if (select.dataset.signature !== signature) {
-        select.replaceChildren();
-        Array.from(source.options).forEach(function (option) { select.add(new Option(option.textContent, option.value)); });
-        select.dataset.signature = signature;
-      }
-      select.value = source.value; select.disabled = false;
-    } else { select.replaceChildren(new Option('Kein Element', '')); select.dataset.signature = ''; select.disabled = true; }
     dock.querySelectorAll('[data-dock-kind]').forEach(function (button) {
       var target = dockTarget(button.dataset.dockKind, button.dataset.dockKey);
       button.disabled = !target || target.disabled;
@@ -1172,15 +1192,26 @@
     placeDock(true);
     syncSheetHead();
   }
-  /* F73: Kopf des Eigenschaften-Blatts – Name der Auswahl, Ziel-Chip und Kurzwahl-Chips. */
+  /* F73: Kopf des Eigenschaften-Blatts – Auswahlname bzw. „Seite · Ziel", Zielzeile und Bereichs-Chips. */
   function syncSheetHead() {
     var head = root.querySelector('.an-motiv-sheet-head'); if (!head) return;
     var source = dockElementSource();
     var selection = source && source.value && source.selectedOptions[0] ? source.selectedOptions[0].textContent : '';
-    head.querySelector('[data-sheet-title]').textContent = selection || 'Seite';
     var target = root.querySelector('[data-action-target]');
-    head.querySelector('[data-menu-label]').textContent = target && target.selectedOptions[0] ? target.selectedOptions[0].textContent : '';
-    head.querySelectorAll('[data-sheet-chip=article],[data-sheet-chip=element]').forEach(function (chip) { chip.hidden = !selection; });
+    var ziel = target && target.selectedOptions[0] ? target.selectedOptions[0].textContent : '';
+    var phoneTarget = root.querySelector('[data-phone-target]');
+    if (phoneTarget) phoneTarget.textContent = ziel;
+    head.querySelector('[data-sheet-title]').textContent = selection || ('Seite · ' + ziel);
+    function value(selector) {
+      var field = root.querySelector(selector);
+      return !field ? '' : field.tagName === 'SELECT' ? field.selectedOptions[0].textContent : field.value + ' %';
+    }
+    var detail = weeklyTarget()
+      ? 'Marker: ' + [value('[data-cms-config=savingsMarkerType]'), value('[data-cms-config=savingsPalette]'),
+        value('[data-cms-config=' + (designTarget === 'sheet' || designTarget === 'card' ? 'savingsScalePlakat' : 'savingsScaleFlyer') + ']')].filter(Boolean).join(' · ')
+      : 'Schrift · Preisschild · Bild';
+    head.querySelector('[data-sheet-sub]').textContent = detail;
+    head.querySelector('[data-sheet-chip=position]').hidden = !selection;
     head.querySelector('[data-sheet-chip=marker]').hidden = !weeklyTarget();
   }
   /* Die Schnellleiste liegt als Überlagerung am unteren Rand der Vorschau und reserviert
@@ -1230,10 +1261,9 @@
   }
   function dockControls() {    var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
     dock.setAttribute('aria-label', 'Schnellwerkzeuge für das gewählte Element');
-    dock.innerHTML = '<select data-dock-element aria-label="Element wählen"></select>'
-      + DOCK_ACTIONS.map(function (action) {
-        return '<button type="button" data-dock-kind="' + action[0] + '" data-dock-key="' + action[1] + '" aria-label="' + action[3] + '">' + action[2] + '</button>';
-      }).join('');
+    dock.innerHTML = DOCK_ACTIONS.map(function (action) {
+      return '<button type="button" data-dock-kind="' + action[0] + '" data-dock-key="' + action[1] + '" aria-label="' + action[3] + '">' + action[2] + '</button>';
+    }).join('');
     function fire(button) {
       var target = dockTarget(button.dataset.dockKind, button.dataset.dockKey);
       if (target && !target.disabled) target.click();
@@ -1251,51 +1281,20 @@
       var button = event.target.closest('[data-dock-kind]');
       if (button && event.detail === 0) fire(button);
     });
-    dock.querySelector('[data-dock-element]').onchange = function () {
-      var source = dockElementSource(); if (!source) return;
-      source.value = this.value; source.dispatchEvent(new Event('change', { bubbles: true }));
-    };
     return dock;
   }
-  /* F73: Der Gestaltungskontext („Gestalten für“, Standard laden, eigene Vorlage) wandert am Telefon
-     in das Ziel-Menü des Blattkopfs und kehrt sonst an seinen Platz zurück. */
-  function placeContext(workspace) {
-    var panel = workspace.querySelector('.an-motiv-menu-panel'); if (!panel) return;
-    /* Nur in der geteilten Ansicht gibt es den Blattkopf mit Ziel-Menü; „Nur Eingaben“ und Ausgabe behalten den Kontext im Werkzeugstapel. */
-    var inMenu = root.classList.contains('an-cms-phone') && workspace.dataset.workspaceView === 'split' && workspace.dataset.anTab !== 'output';
-    [root.querySelector('.an-action-context'), root.querySelector('.an-design-context')].forEach(function (node) {
-      if (!node) return;
-      if (inMenu && node.parentElement !== panel) {
-        if (!node._home) { node._home = document.createComment('context'); node.before(node._home); }
-        panel.insertBefore(node, panel.querySelector('[data-menu-close]'));
-      } else if (!inMenu && node.parentElement === panel && node._home) node._home.after(node);
-    });
-    if (!inMenu && phoneMenuOpen) closeMenu(false);
-  }
-  var SHEET_REST = ['peek', 'half', 'full'], SHEET_GROUPS = ['style', 'marker', 'view'];
-  var SHEET_CHIPS = [['article', 'Artikel'], ['element', 'Element'], ['marker', 'Marker'], ['style', 'Vorlage'], ['view', 'Ansicht']];
-  var GROUP_LABELS = { style: 'Vorlage und Stil', marker: 'Ersparnis-Marker', view: 'Ansicht' };
+  var SHEET_REST = ['peek', 'half', 'full'], SHEET_GROUPS = ['marker', 'style'];
+  var SHEET_CHIPS = [['position', 'Position'], ['marker', 'Marker'], ['text', 'Schrift'], ['price', 'Preisschild'], ['image', 'Bild'], ['style', 'Stil']];
+  var GROUP_LABELS = { style: 'Stil', marker: 'Ersparnis-Marker' };
   function phoneMotifBar(workspace, sideColumn) {
     var head = document.createElement('div'); head.className = 'an-motiv-sheet-head';
     head.innerHTML = '<div class="an-sheet-row">'
       + '<button type="button" class="an-sheet-cycle" data-sheet-cycle aria-expanded="false"><span class="an-sheet-grip" aria-hidden="true"></span>'
-      + '<strong data-sheet-title>Seite</strong><span class="an-sheet-caret" aria-hidden="true">▲</span></button>'
-      + '<button type="button" class="an-target-chip" data-menu-toggle aria-haspopup="true" aria-expanded="false"><span data-menu-label></span><span aria-hidden="true"> ▾</span></button>'
+      + '<span class="an-sheet-names"><strong data-sheet-title>Seite</strong><small data-sheet-sub></small></span><span class="an-sheet-caret" aria-hidden="true">▲</span></button>'
       + '<button type="button" class="an-sheet-close" data-sheet-close aria-label="Eigenschaften einklappen" hidden>▼</button></div>'
-      + '<div class="an-sheet-chips" role="group" aria-label="Kurzwahl">'
-      + SHEET_CHIPS.map(function (chip) { return '<button type="button" data-sheet-chip="' + chip[0] + '">' + chip[1] + '</button>'; }).join('') + '</div>';
+      + '<div class="an-sheet-row an-sheet-tools"><div class="an-sheet-chips" role="group" aria-label="Bereiche">'
+      + SHEET_CHIPS.map(function (chip) { return '<button type="button" data-sheet-chip="' + chip[0] + '">' + chip[1] + '</button>'; }).join('') + '</div></div>';
     sideColumn.prepend(head);
-    var menu = document.createElement('div'); menu.className = 'an-motiv-menu'; menu.hidden = true;
-    menu.innerHTML = '<div class="an-motiv-menu-panel" role="group" aria-label="Gestaltungsziel und Vorlage"></div>';
-    var menuPanel = menu.firstChild;
-    var menuClose = document.createElement('button'); menuClose.type = 'button'; menuClose.className = 'an-menu-close'; menuClose.dataset.menuClose = '';
-    menuClose.textContent = 'Schließen';
-    menuPanel.appendChild(menuClose);
-    workspace.appendChild(menu);
-    if (window.MutationObserver && !workspace._contextObserver) {
-      workspace._contextObserver = new MutationObserver(function () { placeContext(workspace); });
-      workspace._contextObserver.observe(workspace, { attributes: true, attributeFilter: ['data-workspace-view', 'data-an-tab'] });
-    }
     var bar = document.createElement('div'); bar.className = 'an-motiv-bar'; bar.hidden = true;
     bar.setAttribute('aria-label', 'Hauptfunktionen');
     bar.innerHTML = '<button type="button" data-motiv-history="undo" aria-label="Rückgängig" title="Rückgängig"' + (undo.length ? '' : ' disabled') + '>↶</button>'
@@ -1309,14 +1308,13 @@
     var dock = dockControls();
     workspace.appendChild(dock); watchDock(workspace, dock);
     /* Gruppen: aufklappbare Bereiche des Blatts. Zustand als Klasse am Workspace, damit er Neurendern überlebt. */
-    var fields = sideColumn.querySelector('.an-task-fields'), options = $('an-design-options'), viewPanel = sideColumn.querySelector('[data-task-panel=view]');
+    var options = $('an-design-options');
     function toggle(group) {
       var button = document.createElement('button'); button.type = 'button'; button.className = 'an-g-toggle';
       button.dataset.group = group; button.textContent = GROUP_LABELS[group]; button.setAttribute('aria-expanded', 'false');
       return button;
     }
     if (options) { options.prepend(toggle('marker')); options.querySelector('[data-group=marker]').after(toggle('style')); }
-    if (viewPanel) viewPanel.before(toggle('view'));
     workspace.classList.add(weeklyTarget() ? 'an-g-marker' : 'an-g-style');
     function syncGroups() {
       SHEET_GROUPS.forEach(function (group) {
@@ -1328,46 +1326,38 @@
       workspace.classList.toggle('an-g-' + group, open); syncGroups();
     }
     syncGroups();
+    /* Das Blatt überlagert die Vorschau: es liegt über der Hauptleiste, die Vorschau behält ihre Größe. */
+    function applySheetOffset() {
+      sideColumn.style.bottom = bar.hidden ? '0px' : bar.offsetHeight + 'px';
+    }
+    if (window.ResizeObserver) new ResizeObserver(applySheetOffset).observe(bar);
     function applyRest() {
       workspace.dataset.sheetRest = phoneSheetRest;
       workspace.classList.toggle('an-motiv-sheet-open', phoneSheetOpen);
       head.querySelector('[data-sheet-cycle]').setAttribute('aria-expanded', String(phoneSheetOpen));
       head.querySelector('.an-sheet-caret').textContent = phoneSheetRest === 'full' ? '▼' : '▲';
       head.querySelector('[data-sheet-close]').hidden = !phoneSheetOpen;
-      placeDock();
+      applySheetOffset(); placeDock();
     }
     function setRest(next) {
-      var hadSheet = layers.indexOf('sheet') >= 0;
-      if (phoneMenuOpen) closeMenuNow(hadSheet && next === 'peek');
       if (next === phoneSheetRest) return;
       phoneSheetRest = next; phoneSheetOpen = next !== 'peek';
       if (phoneSheetOpen) pushLayer('sheet'); else { dropLayer('sheet'); sideColumn.scrollTop = 0; }
       applyRest();
     }
-    function closeMenuNow(popped) {
-      if (!phoneMenuOpen) return;
-      phoneMenuOpen = false; menu.hidden = true;
-      head.querySelector('[data-menu-toggle]').setAttribute('aria-expanded', 'false');
-      if (!popped) dropLayer('menu');
-    }
-    function openMenu() {
-      phoneMenuOpen = true; menu.hidden = false;
-      head.querySelector('[data-menu-toggle]').setAttribute('aria-expanded', 'true');
-      pushLayer('menu');
-      var first = menuPanel.querySelector('select:not([hidden]),button'); if (first) first.focus();
-    }
     head.querySelector('[data-sheet-cycle]').onclick = function () {
       setRest(SHEET_REST[(SHEET_REST.indexOf(phoneSheetRest) + 1) % SHEET_REST.length]);
     };
     head.querySelector('[data-sheet-close]').onclick = function () { setRest('peek'); };
-    head.querySelector('[data-menu-toggle]').onclick = function () { if (phoneMenuOpen) closeMenuNow(false); else openMenu(); };
-    head.querySelector('.an-sheet-chips').onclick = function (event) {
+    head.querySelector('.an-sheet-tools').onclick = function (event) {
       var chip = event.target.closest('[data-sheet-chip]'); if (!chip) return;
       var key = chip.dataset.sheetChip;
-      if (SHEET_GROUPS.indexOf(key) >= 0) setGroup(key, true);
+      if (key === 'text' || key === 'price' || key === 'image') {
+        root._objectProperties.open(key, chip); return;
+      }
       if (phoneSheetRest === 'peek') setRest('half');
-      var anchor = key === 'article' ? ($('an-cms-article') && !$('an-cms-article').hidden && $('an-cms-article').offsetParent ? $('an-cms-article') : $('an-design-item-wrap'))
-        : key === 'element' ? $('an-inspector') : sideColumn.querySelector('[data-group=' + key + ']');
+      var anchor = key === 'position' ? $('an-inspector') : sideColumn.querySelector('[data-group=' + key + ']');
+      if (key !== 'position' && anchor) setGroup(key, true);
       if (anchor) requestAnimationFrame(function () { anchor.scrollIntoView({ block: 'start' }); });
     };
     sideColumn.addEventListener('click', function (event) {
@@ -1376,11 +1366,6 @@
       setGroup(button.dataset.group, open);
       if (open) requestAnimationFrame(function () { button.scrollIntoView({ block: 'nearest' }); });
     });
-    menu.addEventListener('click', function (event) {
-      if (event.target === menu || event.target.closest('[data-menu-close]')) { closeMenuNow(false); return; }
-      if (event.target.closest('button')) setTimeout(function () { closeMenuNow(false); }, 0);
-    });
-    menu.addEventListener('change', function () { closeMenuNow(false); });
     bar.querySelector('[data-motiv-save]').onclick = function () { var save = $('an-save'); if (save) save.click(); };
     bar.addEventListener('click', function (event) {
       var button = event.target.closest('[data-motiv-history]'); if (!button || button.disabled) return;
@@ -1388,7 +1373,6 @@
       if (target && !target.disabled) target.click();
     });
     bar._motivSetOpen = function (open) { setRest(open ? (phoneSheetRest === 'peek' ? 'half' : phoneSheetRest) : 'peek'); };
-    bar._motivCloseMenu = closeMenuNow;
     /* Das Flag gilt für alle Aktionen; der Splitter verschiebt den Ansichtsknopf erst danach in die Leiste. */
     workspace.classList.add('an-motiv-first');
     if (workspace._splitView) workspace._splitView.resize();
@@ -1988,7 +1972,7 @@
       }
       if (b.dataset.step) setStep(b.dataset.step);
       if (outputMode()) return;
-      if (b.dataset.select) { selected = b.dataset.select; syncSelectedArticle(); renderInspector(); overlay(); }
+      if (b.dataset.select) { selected = b.dataset.select; syncSelectedArticle(); renderInspector(); overlay(); syncDock(); }
       if (b.dataset.remove) {
         var removedIndex = data.items.findIndex(function (item) { return item.id === b.dataset.remove; });
         var remaining = data.items.filter(function (it) { return it.id !== b.dataset.remove; });
@@ -2218,7 +2202,7 @@
         });
       }
       if (target.id === 'an-design-item') { selectArticle(target.value); return; }
-      if (target.id === 'an-select-element') { selected = target.value; syncSelectedArticle(); renderInspector(); overlay(); }
+      if (target.id === 'an-select-element') { selected = target.value; syncSelectedArticle(); renderInspector(); overlay(); syncDock(); }
       if (target.dataset.elementProp && selection()) {
         var e = selection();
         edit(function () { e[target.dataset.elementProp] = target.type === 'checkbox' ? target.checked : target.type === 'number' || target.type === 'range' ? Number(target.value) : target.value; }, true);

@@ -2078,50 +2078,63 @@ Tablet und Desktop behalten ihre Reiter unveraendert.
 - Die Reiterleiste (`.an-motiv-tabs`) und der Knopf „Fertig" entfallen.
 - **Eigenschaften-Blatt mit Rastpunkten** statt Reitern: Peek (Standard: nur
   Kopf und Kurzwahl-Chips, das Motiv behaelt fast die ganze Hoehe), Halb und
-  Voll. Das Blatt ist eine eigene Zeile ueber der Hauptleiste und verdeckt das
-  Motiv nicht, sondern verkleinert es. Der Kopf zeigt den Namen der Auswahl
-  (sonst „Seite") und ein ▲/▼ zum Vergroessern bzw. Verkleinern; Tippen auf
+  Voll. Nachfreigabe: Das durchscheinende Blatt ueberlagert ausschliesslich
+  die Vorschau oberhalb der Hauptleiste; die Motivgroesse bleibt in allen
+  Rasten unveraendert. Optik, Reihenfolge und Zusammenfassungen folgen dem
+  freigegebenen Mockup, nicht nur dessen Funktionsumfang. Der Kopf zeigt
+  den Namen der Auswahl (sonst „Seite · Ausgabeziel") und eine passende
+  Zustandszusammenfassung sowie ▲/▼; Tippen auf
   den Kopf schaltet Peek → Halb → Voll → Peek.
-- **Alle Einstellungen stehen im Blatt untereinander** (keine Reiter): Artikel
-  bearbeiten, Elementwerkzeuge, Vorlage und Stil (aufklappbar), Ersparnis-Marker
-  (aufklappbar, nur Wochenaktion; Typ, Farbwelt, Markergroesse; ohne Auswahl
-  standardmaessig geoeffnet), Ansicht (Seitenwechsel, Hilfe; aufklappbar).
+- **Alle Einstellungen stehen im Blatt untereinander** (keine Reiter):
+  Elementwerkzeuge, Vorlage und Stil (aufklappbar), Ersparnis-Marker
+  (aufklappbar, nur Wochenaktion; Typ, Farbwelt, Markergroesse).
+  Artikeldaten entfallen hier ausdruecklich; sie bleiben in Artikel/Bilder.
+  Schrift, Preisschild und Bild verwenden ihre bestehenden vollstaendigen
+  Eigenschaftenfenster mit unveraenderter Uebernehmen-/Abbrechen-Transaktion.
 - **Kurzwahl-Chips im Peek**: ohne Auswahl „Marker" (nur Wochenaktion),
-  „Vorlage", „Ansicht"; mit Auswahl zusaetzlich „Artikel" und „Element".
-  Ein Chip setzt das Blatt auf „Halb", klappt die Gruppe auf und scrollt sie in
-  den Blick.
-- **Ziel-Chip** („Sammelflyer ▾") im Blattkopf oeffnet ein Menue mit den
-  vorhandenen Bedienelementen „Gestalten fuer" (Auswahl), „Standard-Gestaltung
-  laden" und „Eigene Vorlage laden …" (bisheriger Gestaltungskontext, gleiche
-  Logik und Rueckfragen).
+  „Schrift", „Preisschild", „Bild", „Stil"; mit Auswahl zusaetzlich „Position".
+  Marker/Stil/Position setzen das Blatt auf „Halb" und scrollen die Gruppe in
+  den Blick; Objektchips oeffnen das zugehoerige Eigenschaftenfenster.
+- Kein zusaetzliches Ziel-Popup in der Gestaltung. Der uebliche Zielwechsel
+  erfolgt unter Ausgabe. Bestehende Zielauswahl und Standard-/eigene Vorlagen
+  bleiben im geoeffneten Blatt erreichbar, nicht als weitere Zeile ueber dem
+  Motiv. Zoom schwebt kompakt ueber dem Motiv und reserviert keine eigene Zeile.
 - Schnellleiste (nur bei Peek), Hauptleiste (Rueckgaengig, Wiederholen,
   Artikel n / N, Arbeitsansicht, Speichern), Touch-Regeln und die
   Zurueck-Taste (Blatt schliessen = auf Peek, dann Editor) aus F71/F72 bleiben.
-  Offene Menues und das Blatt schliessen sich mit der Zurueck-Taste.
+  Eigenschaftenfenster und Blatt schliessen sich mit der Zurueck-Taste.
 - Mapping (nichts geht verloren): Reiter Element → Auswahl im Motiv, Blatt und
-  Schnellleiste; Reiter Artikel → Gruppe „Artikel bearbeiten" und Artikelwechsel
-  der Hauptleiste; Reiter Vorlage → Ziel-Menue (Gestalten fuer, Standard,
-  Eigene Vorlage) und Gruppe „Vorlage und Stil"; Reiter Marker → Gruppe
-  „Ersparnis-Marker"; Reiter Ansicht → Gruppe „Ansicht" und Zoomleiste;
+  Schnellleiste; Reiter Artikel → ausdruecklich entfernt aus der Gestaltung,
+  Bearbeitung in Artikel/Bilder, Artikelwechsel bleibt in der Hauptleiste;
+  Reiter Vorlage → vorhandene Vorlagencontrols im Blatt und Gruppe „Stil";
+  Reiter Marker → Gruppe „Ersparnis-Marker"; Reiter Ansicht → Seitenwechsel
+  im Blatt und schwebende Zoomleiste;
   „Fertig" → entfaellt, das Blatt schliesst per ▼, Kopf-Tipp oder Zurueck.
   Ausgabe bleibt der eigene Bereich „Ausgabe / Gestaltung" (Aktionsbereich).
 
 - TC-F73-01: Auf 375x667 gibt es keine Reiterleiste und keinen Knopf „Fertig";
   das Blatt steht im Peek (hoechstens 120 px), das Motiv ist hoeher als 300 px,
-  kein Seiten-Scrollen; Kurzwahl-Chips ohne Auswahl: „Vorlage", „Ansicht" und
-  bei Wochenaktion „Marker".
+  kein Seiten-Scrollen; Kurzwahl-Chips: „Schrift", „Preisschild", „Bild", „Stil"
+  und bei Wochenaktion „Marker". Vorhandene Auswahl ergaenzt „Position".
+  Blatt halb/voll veraendert weder Vorschau-Rechteck noch Canvasgroesse.
 - TC-F73-02: Chip „Marker" (Wochenaktion) setzt das Blatt auf Halb und zeigt
   Typ, Farbwelt und Markergroesse; eine Aenderung wirkt in der Vorschau, setzt
   den Stand auf „geaendert" und Rueckgaengig der Hauptleiste macht sie
   rueckgaengig. Das Blatt ist hoeher als der Peek, das Motiv bleibt sichtbar.
-- TC-F73-03: Chip „Vorlage" klappt „Vorlage und Stil" auf; das Ziel-Menue des
-  Blattkopfs bietet „Gestalten fuer", „Standard-Gestaltung laden" und
-  „Eigene Vorlage laden"; Wechsel des Ziels funktioniert wie bisher.
-- TC-F73-04: Mit gewaehltem Element zeigt der Blattkopf dessen Namen und die
-  Chips „Artikel" und „Element"; „Artikel" zeigt Artikelname, Angebot und Statt;
+- TC-F73-03: Chip „Stil" klappt die Gestaltung auf; Standard-Gestaltung und
+  Zielauswahl bleiben ohne neues Popup erreichbar. Objektchips oeffnen die
+  vorhandenen Schrift-/Preisschild-/Bild-Eigenschaften.
+- TC-F73-03b: Auf Telefonen oeffnen alle drei Objektchips bei Getraenke- und
+  Wochenaktion ein durchscheinendes Blatt ohne Hintergrundabdunklung.
+  Eingaben scrollen intern; Abbrechen/Uebernehmen bleiben vollstaendig sichtbar.
+  Android-Zurueck verwirft die lokale Bearbeitung, ohne neuen Undo-Schritt,
+  Schreibzugriff, Motivverkleinerung oder Verlassen des Editors.
+- TC-F73-04: Mit gewaehltem Element zeigt der Blattkopf dessen Namen und den
+  Chip „Position"; Artikelfelder sind in der geteilten Gestaltung unsichtbar;
   ohne Auswahl (Rueckfall, der Editor waehlt beim Zielwechsel selbst ein
-  Element) heisst der Kopf „Seite" und die beiden Chips entfallen.
-- TC-F73-05: Zurueck-Taste: erst Menue, dann Blatt (auf Peek), dann Editor;
+  Element) heisst der Kopf „Seite · Ausgabeziel" und „Position" entfaellt.
+- TC-F73-05: Zurueck-Taste: erst Eigenschaftenfenster (Abbruch), dann Blatt
+  (auf Peek), dann Editor;
   ▼ im Kopf und Kopf-Tipp schalten die Rastpunkte; im Ausgabe-Bereich ist das
   Blatt ausgeblendet. Tablet und Desktop behalten die Reiter.
 

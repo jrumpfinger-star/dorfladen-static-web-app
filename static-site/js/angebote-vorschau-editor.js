@@ -224,15 +224,16 @@ window.AngeboteVorschauEditor = (function () {
       event.preventDefault(); chosen = hit.dataset.previewSelect || hit.dataset.previewResize || hit.dataset.previewRotate || hit.dataset.previewMove; overlay();
       var entry = current(); if (!entry) return;
       if (options.select) options.select(entry);
-      if (options.begin) options.begin();
       stage.focus({ preventScroll: true });
       var lastX = event.clientX, lastY = event.clientY, resizing = !!hit.dataset.previewResize, turning = !!hit.dataset.previewRotate;
       var startRect = stage.getBoundingClientRect();
       var centerX = startRect.left + (entry.x + entry.w / 2) / width * startRect.width, centerY = startRect.top + (entry.y + entry.h / 2) / height * startRect.height;
-      var lastAngle = pointerAngle(centerX, centerY, event);
+      var lastAngle = pointerAngle(centerX, centerY, event), began = false;
       function move(ev) {
         if (ev.pointerId !== event.pointerId) return;
         var rect = stage.getBoundingClientRect(), dx = (ev.clientX - lastX) / rect.width * width, dy = (ev.clientY - lastY) / rect.height * height;
+        if (!dx && !dy) return;
+        if (!began) { began = true; if (options.begin) options.begin(); }
         lastX = ev.clientX; lastY = ev.clientY;
         if (turning) {
           var angle = pointerAngle(centerX, centerY, ev), turn = normalizeTurn(angle - lastAngle);
