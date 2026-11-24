@@ -1739,8 +1739,9 @@ body.an-body{margin:0;background:#f7f5ed}
 .an-cms-phone .an-sheet-cycle{padding:10px 2px 0}
 .an-cms-phone .an-sheet-cycle small{font-size:13px}
 .an-phone-object{
-  height:min(66dvh,calc(100dvh - 144px));max-height:66dvh;overflow:hidden;
-  margin:auto auto 72px;background:rgba(255,255,255,.9);
+  position:fixed;inset:auto;z-index:60;max-width:none;
+  height:min(46dvh,calc(100dvh - 144px));max-height:66dvh;overflow:hidden;
+  margin:0;background:rgba(255,255,255,.9);
   backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .an-phone-object form{height:100%;max-height:100%}
 .an-phone-object::backdrop{background:transparent}

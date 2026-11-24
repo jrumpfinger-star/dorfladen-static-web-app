@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const BASE = process.env.TEST_URL || 'http://127.0.0.1:8818';
 const PHOTO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6hywAAAAASUVORK5CYII=';
 
-async function setup(page) {
+async function setup(page, photo = PHOTO) {
   const state = { actions: new Map(), revisions: new Map(), writes: [], errors: [], offerReads: [], imageLookups: [], failSave: false, failReads: false, images: 0, featureArchive: false };
   await page.clock.install({ time: new Date('2026-11-18T12:00:00Z') });
   await page.addInitScript((hash) => {
@@ -27,7 +27,7 @@ async function setup(page) {
       const body = req.postDataJSON();
       if (body.articles) {
         state.imageLookups.push(...body.articles);
-        return json([{ dl_artikelnummer: body.articles[0].artikelnummer, dl_werbebildid: '11111111-1111-4111-8111-111111111111', dl_bild_base64: PHOTO }]);
+        return json([{ dl_artikelnummer: body.articles[0].artikelnummer, dl_werbebildid: '11111111-1111-4111-8111-111111111111', dl_bild_base64: photo }]);
       }
       state.images++;
       if (state.failImages) return json({ success: false, error: 'Das Artikelbild konnte nicht gespeichert werden.' }, 503);
@@ -47,7 +47,7 @@ async function setup(page) {
             dl_produkt: it.name, dl_details: it.description, dl_preis: it.price_cents / 100,
             dl_statt_preis: it.old_price_cents == null ? null : it.old_price_cents / 100,
             dl_artikelnummer: it.barcode, dl_werbebildid: it.werbebild_id, image_key: it.image_id?.slice(4),
-            bild_data: it.image_id ? PHOTO : '', action_kind: action.kind, action_layout: action.layout,
+            bild_data: it.image_id ? photo : '', action_kind: action.kind, action_layout: action.layout,
             units: it.units, volume_ml: it.volume_ml, packaging: it.packaging,
             deposit_cents: it.deposit_cents, deposit_free: it.deposit_free, article_number: it.article_number,
             action_revision: 'rev-' + (state.revisions.get(action.aktion_id) || 1)
@@ -2441,13 +2441,14 @@ test('TC-F71-03: Schnellleiste verdeckt beim Scrollen keinen Inhalt - unteres En
   });
   expect(zoomTop).toBeGreaterThanOrEqual(0);
   expect(zoomTop).toBeLessThanOrEqual(16);
-  /* Blatt öffnen: reservierter Platz wird freigegeben, Einklappen stellt ihn wieder her */
+  /* F75: Auch das offene Blatt darf den unteren Motivrand nicht verdecken. */
   await page.locator('.an-sheet-chips').getByRole('button', { name: 'Stil', exact: true }).click();
   await expect(dock).toBeHidden();
-  await expect.poll(async () => picture.evaluate((node) => {
-    const spacer = node.querySelector('.an-dock-spacer');
-    return spacer ? parseFloat(getComputedStyle(spacer).height) : 0;
-  })).toBe(0);
+  await picture.evaluate(node => { node.scrollTop = node.scrollHeight; });
+  await expect.poll(async () => picture.evaluate(node => {
+    const selected = node.querySelector('.an-selected');
+    return selected.getBoundingClientRect().bottom <= document.querySelector('.an-cms-side').getBoundingClientRect().top + 1;
+  })).toBe(true);
   await page.locator('[data-sheet-close]').click();
   await expect(dock).toBeVisible();
   await expect.poll(async () => picture.evaluate((node) => parseFloat(getComputedStyle(node.querySelector('.an-dock-spacer')).height))).toBeGreaterThan(0);
@@ -2912,4 +2913,155 @@ test('TC-F74-04: Vorlagenauswahl erhaelt Breite, Standardknopf bleibt zweizeilig
   await expect(confirmation).toHaveCount(0);
   await expect(page.locator('.an-cms-preview-modal')).toBeVisible();
   expect(state.writes).toHaveLength(writes); expect(state.errors).toEqual([]);
+});
+
+async function swipePreview(page) {
+  const picture = page.locator('.an-split-picture');
+  const point = await picture.evaluate(node => {
+    const r = node.getBoundingClientRect();
+    const overlays = [...document.querySelectorAll('.an-cms-side,.an-motiv-dock,dialog.an-phone-object[open]')]
+      .filter(n => n.getClientRects().length).map(n => n.getBoundingClientRect());
+    const bottom = Math.min(r.bottom, ...overlays.filter(b => b.bottom > r.top).map(b => b.top));
+    return { x: r.left + r.width * .85, start: Math.min(bottom - 12, r.top + 180), end: r.top + 60 };
+  });
+  expect(point.start - point.end).toBeGreaterThan(30);
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: point.x, y: point.start }] });
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: point.x, y: point.start + (point.end - point.start) * i / 8 }] });
+      await page.waitForTimeout(20);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally { await cdp.detach(); }
+}
+
+for (const kind of ['drinks', 'weekly']) {
+  test(`TC-F75-01: native Touchgesten scrollen unter offenen Eigenschaften (${kind})`, async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 375, height: 667 }, hasTouch: true, serviceWorkers: 'block' });
+    try {
+      const page = await context.newPage(), state = await setup(page);
+      await page.goto(BASE + '/angebote.html');
+      await openPreview(page, kind, 6);
+      const picture = page.locator('.an-split-picture'), status = await page.locator('#an-state').textContent(), writes = state.writes.length;
+      for (const group of ['peek', 'position', kind === 'weekly' ? 'marker' : 'style', 'text', 'price', 'image']) {
+        if (group !== 'peek') await page.locator('[data-sheet-chip=' + group + ']').click();
+        await picture.evaluate(node => { node.scrollTop = 0; });
+        await swipePreview(page);
+        await expect.poll(() => picture.evaluate(node => node.scrollTop), group).toBeGreaterThan(20);
+        await page.waitForTimeout(250);
+        expect(await picture.evaluate(node => node.scrollTop), group).toBeGreaterThan(20);
+        expect(await page.locator('#an-state').textContent()).toBe(status);
+        if (['text', 'price', 'image'].includes(group)) await page.locator('[data-object-cancel]').last().click();
+        else if (group !== 'peek') await setSheetRest(page, 'peek');
+      }
+      expect(state.writes).toHaveLength(writes); expect(state.errors).toEqual([]);
+    } finally { await context.close(); }
+  });
+
+  test(`TC-F75-02: Objektfenster zeigen echte Live-Pixel und erhalten Abbruch und Undo (${kind})`, async ({ page }) => {
+    const photo = await page.evaluate(() => {
+      const canvas = document.createElement('canvas'); canvas.width = 60; canvas.height = 100;
+      const ctx = canvas.getContext('2d'); ctx.fillStyle = '#d82233'; ctx.fillRect(0, 0, 60, 100);
+      ctx.fillStyle = '#1245c0'; ctx.fillRect(0, 0, 25, 70);
+      return canvas.toDataURL();
+    });
+    const state = await setup(page, photo);
+    await page.route('**/api/cms-config', route => route.fulfill({ json: { success: true, data: {
+      feature_flags: { kiosk_werbebilder: true }, design_config: { plakat_showTexture: false, flyer_showTexture: false }
+    } } }));
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto(BASE + '/angebote.html');
+    await openPreview(page, kind, 6, true);
+    const pixels = async () => require('node:crypto').createHash('sha256')
+      .update(await page.locator('.an-split-picture .an-stage:visible canvas').evaluate(node => node.toDataURL())).digest('hex');
+    const writes = state.writes.length, initial = await pixels();
+    for (const group of ['text', 'price', 'image']) {
+      await page.locator('[data-sheet-chip=' + group + ']').click();
+      const dialog = page.locator('dialog.an-phone-object[open]');
+      expect(await dialog.evaluate(node => node.matches(':modal'))).toBe(false);
+      expect(await page.locator('[data-motiv-next]').evaluate(node => node.inert)).toBe(true);
+      const control = group === 'image' ? dialog.locator('input[type=number],input[type=range]').first() : dialog.locator('input[type=color]').first();
+      await control.evaluate(node => {
+        node.value = node.type === 'color' ? '#1267d9' : String(Number(node.value) + 15);
+        node.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await expect.poll(pixels, group + ' muss vor dem Schliessen im Motiv sichtbar sein').not.toBe(initial);
+      await expect(page.locator('[data-motiv-history=undo]')).toBeDisabled();
+      if (group === 'text') await page.keyboard.press('Escape');
+      else if (group === 'price') await page.goBack();
+      else await dialog.locator('[data-object-cancel]').last().click();
+      await expect(dialog).toHaveCount(0);
+      expect(await page.locator('[data-motiv-next]').evaluate(node => node.inert)).toBe(false);
+      await expect.poll(pixels).toBe(initial);
+      await expect(page.locator('[data-motiv-history=undo]')).toBeDisabled();
+    }
+    await page.locator('[data-sheet-chip=price]').click();
+    const dialog = page.locator('dialog.an-phone-object[open]');
+    const preset = dialog.locator('[data-style=price_preset],[data-cms-config$=_tagPreset]');
+    await preset.selectOption('classic-red-rect');
+    await expect(dialog.locator(kind === 'weekly' ? '[data-cms-config=plakat_priceStripColor]' : '[data-style=price_background]')).toHaveValue('#a51d2d');
+    await expect.poll(pixels).not.toBe(initial);
+    const changed = await pixels();
+    await dialog.getByRole('button', { name: 'Übernehmen', exact: true }).click();
+    await expect(page.locator('[data-motiv-history=undo]')).toBeEnabled();
+    await page.locator('[data-motiv-history=undo]').click();
+    await expect.poll(pixels).toBe(initial);
+    await expect(page.locator('[data-motiv-history=undo]')).toBeDisabled();
+    await page.locator('[data-sheet-chip=price]').click();
+    await page.locator('dialog.an-phone-object[open] [data-object-cancel]').last().focus();
+    await page.keyboard.press('Control+y');
+    await expect.poll(pixels).toBe(initial);
+    await page.locator('dialog.an-phone-object[open] [data-object-cancel]').last().click();
+    await page.locator('[data-motiv-history=redo]').click();
+    await expect.poll(pixels).toBe(changed);
+    expect(state.writes).toHaveLength(writes); expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F75-03: Letzte Artikelkachel bleibt bei offenen Blaettern sichtbar, andere Ansichten bleiben modal', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'weekly', 6);
+  const phone = await page.locator('#an-root').evaluate(node => node.classList.contains('an-phone-design'));
+  if (!phone) {
+    await showTab(page, 'Vorlage');
+    await page.locator('[data-object-properties=price]').click();
+    expect(await page.locator('.an-object-dialog[open]').evaluate(node => node.matches(':modal'))).toBe(true);
+    await page.locator('.an-object-dialog [data-object-cancel]').last().click();
+    expect(state.errors).toEqual([]);
+    return;
+  }
+  for (let i = 0; i < 5; i++) await page.locator('[data-motiv-next]').click();
+  await expect(page.locator('[data-motiv-position]')).toHaveText('6 / 6');
+  await expect(page.locator('[data-sheet-title]')).toContainText('Original 6');
+  await page.locator('[data-sheet-chip=position]').click();
+  const select = page.locator('[data-preview-element]');
+  for (const number of [1, 6]) {
+    const value = await select.locator('option').filter({ hasText: 'Original ' + number }).first().getAttribute('value');
+    await select.selectOption(value);
+    await expect(page.locator('[data-motiv-position]')).toHaveText(number + ' / 6');
+    await expect(page.locator('[data-sheet-title]')).toContainText('Original ' + number);
+  }
+  await setSheetRest(page, 'peek');
+  const picture = page.locator('.an-split-picture'), before = await picture.boundingBox();
+  const zoom = await page.locator('.an-zoombar output').textContent();
+  for (const group of ['position', 'marker', 'price']) {
+    await page.locator('[data-sheet-chip=' + group + ']').click();
+    await expect.poll(async () => page.locator('.an-split-picture .an-selected').evaluate(node => {
+      const picture = node.closest('.an-split-picture'), p = picture.getBoundingClientRect();
+      const parts = [...picture.querySelectorAll('[data-preview-item]')]
+        .filter(part => part.dataset.previewItem === node.dataset.previewItem && part.getClientRects().length)
+        .map(part => part.getBoundingClientRect());
+      const overlay = document.querySelector('dialog.an-phone-object[open]') || document.querySelector('.an-cms-side');
+      return parts.length > 1 && Math.min(...parts.map(r => r.top)) >= p.top + 44
+        && Math.max(...parts.map(r => r.bottom)) <= overlay.getBoundingClientRect().top;
+    }), group).toBe(true);
+    expect(await picture.boundingBox()).toEqual(before);
+    expect(await page.locator('.an-zoombar output').textContent()).toBe(zoom);
+    await page.screenshot({ path: test.info().outputPath('f75-last-tile-' + group + '.png') });
+    if (group === 'price') await page.locator('[data-object-cancel]').last().click();
+    else await setSheetRest(page, 'peek');
+  }
+  expect(state.errors).toEqual([]);
 });

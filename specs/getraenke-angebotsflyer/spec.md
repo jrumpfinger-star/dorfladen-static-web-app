@@ -2138,6 +2138,52 @@ Tablet und Desktop behalten ihre Reiter unveraendert.
   ▼ im Kopf und Kopf-Tipp schalten die Rastpunkte; im Ausgabe-Bereich ist das
   Blatt ausgeblendet. Tablet und Desktop behalten die Reiter.
 
+## F75: Scrollbare Live-Vorschau bei offenen Eigenschaften
+
+Nachfreigabe zu F73/F74: Im Telefon-Aktionseditor bleiben Motivgröße und
+freigegebenes Erscheinungsbild erhalten. Alle Gestaltungsänderungen, auch
+Schrift, Preisschild und Bild, erscheinen bereits während der Eingabe im
+Motiv. Die vom Nutzer bestätigte Transaktion bleibt: Übernehmen behält den
+lokalen Stand, Abbrechen, Schließen, Escape und Android-Zurück stellen den
+Stand vor dem Öffnen einschließlich Speicherstatus und Undo/Redo wieder her.
+Kein automatischer Schreibzugriff.
+
+- Die freie Vorschau bleibt mit echten Fingerbewegungen scrollbar, sowohl
+  im Peek als auch bei offenem Position-/Marker-/Stilblatt oder
+  Schrift-/Preisschild-/Bildfenster. Scrollen verändert keine Gestaltung
+  und wird nicht durch automatisches Nachführen rückgängig gemacht.
+- Die drei Eigenschaftenfenster überlagern am Telefon als durchscheinende,
+  unten verankerte Halbhöhen-Blätter dieselbe unverkleinerte Vorschau.
+  Sie sperren nur andere Bearbeitungsaktionen, nicht Scrollen/Zoom der
+  Vorschau. Alle bestehenden Felder, Reset, Übernehmen und Abbrechen bleiben;
+  die Felder scrollen intern, Kopf und Abschlussaktionen bleiben erreichbar.
+- Beim Artikel-/Elementwechsel und Öffnen eines Blatts wird die zugehörige
+  Kachel oberhalb der Überlagerung sichtbar gemacht, nicht stets der erste
+  Artikel. Bei echtem Zoom wird der erreichbare Kachelausschnitt gezeigt,
+  ohne den Zoom eigenmächtig zu ändern. Während manuellen Scrollens erfolgt
+  kein Zurückspringen zur Auswahl. Der interne Scrollraum berücksichtigt
+  Schnellleiste, Eigenschaftenblatt und Eigenschaftenfenster.
+- Änderungen an Preisschild-Vorlagen aktualisieren auch die abhängigen
+  Felder im geöffneten Fenster, ohne verschobene Controls zu verlieren.
+  Außerhalb des Telefon-Aktionseditors bleibt das modale Verhalten erhalten.
+
+### Testfälle
+
+- TC-F75-01: Für Sonder-/Wochen- und Getränkeaktion mit sechs Artikeln echte
+  Browser-Touchgesten im Peek und geöffneten Blatt ausführen. Scrollposition
+  muss sich messbar ändern und stabil bleiben; Gestaltung und Schreibzahl
+  bleiben gleich. Ein Griff verändert weiterhin nur bewusst die Gestaltung.
+- TC-F75-02: Schrift, Preisschild und Bild im Telefoneditor jeweils öffnen:
+  Eingaben verändern die tatsächlichen Motivpixel vor dem Schließen;
+  die freie Vorschau bleibt mit Touch scrollbar. Abbrechen/Escape/Zurück
+  stellen Motiv und Historie wieder her; Übernehmen ergibt einen Undo-Schritt.
+  Vorlagenwechsel im Preisschildfenster synchronisiert die abhängigen Felder.
+- TC-F75-03: Letzten Artikel und ein Element auswählen, dann Position,
+  Marker/Stil und Eigenschaften öffnen: die passende Kachel liegt im freien
+  Motivbereich, Vorschau-/Canvasgröße und Zoom bleiben unverändert. Weiteres
+  manuelles Scrollen wird nicht zurückgesetzt. Vier Zielansichten,
+  Fokus-/Tastaturbedienung und unveränderte Tablet-/Desktopdialoge prüfen.
+
 ## F74: Freigegebene mobile Aktionsnavigation
 
 Referenz: `mockups/angebote-mobile-navigation-mockup.html`. Freigegeben sind

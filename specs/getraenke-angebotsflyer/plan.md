@@ -1099,3 +1099,32 @@ Vorher/Nachher: alle fünf primären Kartenhandler unverändert; Mehr/Dupliziere
 bleibt Details-Menü; drei Bereichswechsel bleiben Select-Change-Delegation;
 Aktionsdaten bleiben `metaToggle.onclick`, Schließen bleibt `cancel()`.
 Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
+
+## F75: Einheitliche Live-Vorschau und Touch-Scrollen
+
+1. `angebote-design.js`: Die bestehenden Objektfenster nur im Telefoneditor
+   nichtmodal innerhalb des äußeren Editordialogs öffnen. Über der Vorschau
+   positionieren; Hintergrundbearbeitung während der bestehenden Transaktion
+   einschließlich globaler Undo-/Redo-Kürzel sperren, Scrollen und Zoom
+   freilassen. Escape wie Abbrechen behandeln.
+   Öffnen/Schließen meldet die geänderte Überlagerung an die Vorschau.
+2. `angebote-editor.js`: Scrollreserve und sichtbare Auswahl an allen
+   überlagernden Blättern ausrichten. Ganze Artikelkachel statt nur Griff
+   berücksichtigen; bei Auswahl/Öffnen nachführen, nicht bei Nutzer-Scrollen
+   oder bloßem Canvas-Neuzeichnen. Preisschild-Presetfelder im offenen
+   Objektfenster synchronisieren, statt ihre Herkunftscontainer zu ersetzen.
+3. `angebote-vorschau-editor.js`: Artikelzuordnung der Auswahlflächen
+   verfügbar machen; Elementauswahl im Select an die bestehende
+   Artikelsynchronisierung melden. Native Touchgesten weiter durchlassen.
+4. `angebote.css`: Telefon-Objektfenster als bestehendes transparentes
+   Halbhöhen-Overlay anordnen; unverkleinertes Motiv, interne Feldscrollfläche
+   und feste Abschlussaktionen erhalten. Keine neue visuelle Sprache.
+5. `cms-angebote-ablauf.spec.js`: echte CDP-Touchgesten und Pixelvergleiche
+   ergänzen, nicht nur synthetische PointerEvents oder CSS-Eigenschaften.
+   Beide Aktionsarten, letzte Kachel, offene Gruppen, Transaktionsabbruch,
+   Undo/Redo und vier Ansichten abnehmen.
+
+Funktionsmapping: Alle bestehenden Objektfelder und Handler bleiben
+dieselben Nodes. Übernehmen/Abbrechen bleiben Transaktionen; Android-Zurück
+nutzt weiter die bestehende verschachtelte Dialogerkennung. Nur die modale
+Telefonsperre wird durch gezielte Hintergrundsperren ersetzt.

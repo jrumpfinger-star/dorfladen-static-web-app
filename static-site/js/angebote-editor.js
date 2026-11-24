@@ -759,7 +759,7 @@
     var size = activeSize();
     var visible = M.groupedElements(data, elements(), controlLayout());
     host.innerHTML = visible.filter(function (e) { return !e.hidden; }).map(function (e) {
-      return '<button type="button" data-select="' + e.id + '" class="' + (selected === e.id ? 'an-selected' : '') + '" aria-label="Element auswählen: ' + roleNames[e.type]
+      return '<button type="button" data-select="' + e.id + '" data-preview-item="' + M.esc(e.item_id || '') + '" class="' + (selected === e.id ? 'an-selected' : '') + '" aria-label="Element auswählen: ' + roleNames[e.type]
         + '" style="left:' + e.x / size.w * 100 + '%;top:' + e.y / size.h * 100 + '%;width:' + e.w / size.w * 100 + '%;height:' + e.h / size.h * 100
         + '%;transform:rotate(' + e.rotation + 'deg)"></button>';
     }).join('');
@@ -1049,6 +1049,7 @@
     var splitter = D.split(layout, left, picture), viewport = D.pictureViewport(picture, view);
     D.objectProperties(root, {
       canvas: function () { return $('an-stage-canvas'); },
+      reveal: function () { placeDock(true); },
       item: function () { return selection()?.item_id || designItemId; },
       origin: function (group) { return M.originStatus(data, designTarget, group); },
       canReset: function () { return !!data.layout.design_origin?.targets[designTarget]; },
@@ -1240,16 +1241,26 @@
   function placeDock(adjust) {
     var dock = root.querySelector('.an-motiv-dock'), picture = root.querySelector('.an-cms-workspace>.an-split-picture');
     if (!dock || !picture) return;
-    if (!dock.offsetParent) { reserveDockSpace(picture, 0); return; }
-    reserveDockSpace(picture, dock.offsetHeight + 16);
+    if (!root.classList.contains('an-phone-design')) { reserveDockSpace(picture, 0); return; }
+    var area = picture.getBoundingClientRect(), limit = area.bottom;
+    root.querySelectorAll('.an-motiv-dock,.an-cms-side,.an-phone-object[open]').forEach(function (panel) {
+      if (!panel.getClientRects().length) return;
+      var box = panel.getBoundingClientRect();
+      if (box.bottom > area.top && box.top < area.bottom) limit = Math.min(limit, box.top);
+    });
+    reserveDockSpace(picture, Math.max(0, area.bottom - limit) + 8);
     if (!adjust) return;
     var selectedBox = picture.querySelector('.an-selected');
     if (!selectedBox) return;
-    var element = selectedBox.getBoundingClientRect(), limit = dock.getBoundingClientRect().top - 4;
-    if (element.bottom > limit) {
-      var max = picture.scrollHeight - picture.clientHeight;
-      picture.scrollTop = Math.min(picture.scrollTop + (element.bottom - limit), max);
-    }
+    var item = selectedBox.dataset.previewItem;
+    var boxes = item ? Array.from(picture.querySelectorAll('[data-preview-item]')).filter(function (node) {
+      return node.dataset.previewItem === item;
+    }).map(function (node) { return node.getBoundingClientRect(); }) : [selectedBox.getBoundingClientRect()];
+    var top = Math.min.apply(null, boxes.map(function (box) { return box.top; }));
+    var bottom = Math.max.apply(null, boxes.map(function (box) { return box.bottom; }));
+    var ceiling = area.top + 52; limit -= 8;
+    var delta = top < ceiling || bottom - top > limit - ceiling ? top - ceiling : Math.max(0, bottom - limit);
+    picture.scrollTop = Math.max(0, Math.min(picture.scrollHeight - picture.clientHeight, picture.scrollTop + delta));
   }
   function watchDock(workspace, dock) {
     var picture = workspace.querySelector('.an-split-picture'), frame = 0;
@@ -1258,7 +1269,7 @@
     function later(adjust) { cancelAnimationFrame(frame); frame = requestAnimationFrame(function () { placeDock(adjust); }); }
     picture.addEventListener('scroll', function () { later(false); }, { passive: true });
     if (window.ResizeObserver) new ResizeObserver(function () { later(true); }).observe(picture);
-    if (window.MutationObserver) new MutationObserver(function () { later(true); }).observe(picture, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    if (window.MutationObserver) new MutationObserver(function () { later(false); }).observe(picture, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
     dock.addEventListener('transitionend', function () { later(true); });
   }
   function dockControls() {    var dock = document.createElement('div'); dock.className = 'an-motiv-dock'; dock.setAttribute('role', 'toolbar');
@@ -1339,7 +1350,7 @@
       head.querySelector('[data-sheet-cycle]').setAttribute('aria-expanded', String(phoneSheetOpen));
       head.querySelector('.an-sheet-caret').textContent = phoneSheetRest === 'full' ? '▼' : '▲';
       head.querySelector('[data-sheet-close]').hidden = !phoneSheetOpen;
-      applySheetOffset(); placeDock();
+      applySheetOffset(); placeDock(true);
     }
     function setRest(next) {
       if (next === phoneSheetRest) return;
@@ -1898,7 +1909,7 @@
   }
   function bind() {
     root.onkeydown = function (event) {
-      if (outputMode()) return;
+      if (outputMode() || objectTransaction) return;
       if (event.ctrlKey || event.metaKey) liveControl = null;
       var undoButton = root.querySelector('[data-history=undo]'), redoButton = root.querySelector('[data-history=redo]');
       if (undoButton && redoButton) D.historyShortcut(event, function () { undoButton.click(); }, function () { redoButton.click(); });
@@ -2150,7 +2161,8 @@
               cfg[prefix + '_tagShape'] = preset.tagShape; cfg[prefix + '_tagRadius'] = preset.tagRadius;
               cfg[prefix + '_priceStripColor'] = preset.tagShape === 'price-image' ? '#fff000' : preset.tagColor;
               cfg[prefix + '_priceImageColor'] = preset.tagShape === 'price-image' ? preset.tagColor : '#ffffff';
-              $('an-style-controls').innerHTML = D.controls(controlLayout()); D.expandGroups($('an-style-controls'));
+              if (root.querySelector('.an-object-dialog[open]')) root._objectProperties.syncValues();
+              else { $('an-style-controls').innerHTML = D.controls(controlLayout()); D.expandGroups($('an-style-controls')); }
             }
           }
           if (target.dataset.cmsConfig === 'plakatTemplate') data.layout.template = target.value;
@@ -2193,6 +2205,7 @@
           if (designTarget === 'sheet') D.change(data.layout, target);
           else M.setTargetStyle(data.layout, designTarget, function (style) { D.change(style, target); });
         });
+        if (root._objectProperties) root._objectProperties.syncValues();
       } else if (target.dataset.style && (designTarget === 'sheet' || weeklyTarget())) {
         edit(function () { M.preserveBackgrounds(data); D.change(data.layout, target); if (data.layout.mode === 'template' && designTarget === 'sheet') M.applyTemplate(data); });
       } else if (target.dataset.style) {
@@ -2302,7 +2315,7 @@
       document.addEventListener('pointermove', drag); document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
     };
     $('an-stage').onkeydown = function (e) {
-      if (outputMode()) return;
+      if (outputMode() || objectTransaction) return;
       var key = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       if (key && selection()) { e.preventDefault(); move(key[0] * (e.shiftKey ? 10 : 1), key[1] * (e.shiftKey ? 10 : 1)); }
     };

@@ -729,13 +729,27 @@ window.AngeboteDesign = (function () {
             });
           }
         }
+        function syncValues() {
+          if (!active || !options.values) return;
+          var values = options.values();
+          active.querySelectorAll('input,select').forEach(function (control) {
+            var key = control.dataset.cmsConfig ? 'cms.' + control.dataset.cmsConfig : control.dataset.style;
+            if (!Object.prototype.hasOwnProperty.call(values, key)) {
+              if (control.type === 'checkbox') control.checked = false;
+              else if (control.type !== 'radio' && !control.dataset.cmsConfig) control.value = '';
+              return;
+            }
+            if (control.type === 'checkbox') control.checked = values[key]; else control.value = values[key];
+          });
+        }
         function open(group, opener) {
           if (active) return;
           var nodes = groups[group].filter(function (field) { return field.isConnected && field.dataset.objectUnavailable !== 'true'; });
           if (!nodes.length) return;
           var dialog = document.createElement('dialog'), positions = [], statuses = [];
           dialog.className = 'an-dialog an-object-dialog';
-          if (root.classList.contains('an-phone-design')) dialog.classList.add('an-phone-object');
+          var phone = root.classList.contains('an-phone-design');
+          if (phone) dialog.classList.add('an-phone-object');
           dialog.dataset.objectGroup = group;
           dialog.setAttribute('aria-label', labels[group] + ' einstellen');
           dialog.innerHTML = '<form><header><h2>' + labels[group] + ' einstellen</h2>'
@@ -792,22 +806,28 @@ window.AngeboteDesign = (function () {
           }
           dialog.addEventListener('input', refreshColors); dialog.addEventListener('change', refreshColors); refreshColors();
           root.appendChild(dialog); active = dialog;
+          var picture = phone && root.querySelector('.an-split-picture'), blocked = [], observer;
+          function position() {
+            var box = picture.getBoundingClientRect();
+            dialog.style.left = box.left + 'px'; dialog.style.width = box.width + 'px';
+            dialog.style.bottom = Math.max(0, innerHeight - box.bottom) + 'px';
+            dialog.style.maxHeight = Math.max(160, box.height - 100) + 'px';
+            if (options.reveal) options.reveal();
+          }
+          if (picture) {
+            root.querySelectorAll('button,input,select,textarea,summary,a[href],.an-hit-layer').forEach(function (node) {
+              if (dialog.contains(node) || picture.contains(node) && !node.classList.contains('an-hit-layer')) return;
+              blocked.push([node, node.inert]); node.inert = true;
+            });
+            observer = new ResizeObserver(position); observer.observe(picture);
+          }
           if (options.reset) {
             var reset = document.createElement('button'); reset.type = 'button';
             reset.textContent = options.canReset() ? 'Auf Vorlagenwert zurücksetzen' : 'Keine gespeicherte Vorlagenherkunft';
             reset.disabled = !options.canReset();
             reset.onclick = function () {
               options.reset(group);
-              var values = options.values();
-              dialog.querySelectorAll('input,select').forEach(function (control) {
-                var key = control.dataset.cmsConfig ? 'cms.' + control.dataset.cmsConfig : control.dataset.style;
-                if (!Object.prototype.hasOwnProperty.call(values, key)) {
-                  if (control.type === 'checkbox') control.checked = false;
-                  else if (control.type !== 'radio' && !control.dataset.cmsConfig) control.value = '';
-                  return;
-                }
-                if (control.type === 'checkbox') control.checked = values[key]; else control.value = values[key];
-              });
+              syncValues();
               refreshColors();
             };
             dialog.querySelector('.an-object-body').appendChild(reset);
@@ -815,6 +835,8 @@ window.AngeboteDesign = (function () {
           function close(commit) {
             if (commit && !dialog.querySelector('form').reportValidity()) return;
             clearInterval(timer);
+            if (observer) observer.disconnect();
+            blocked.forEach(function (entry) { entry[0].inert = entry[1]; });
             dialog.querySelectorAll('.an-object-color-value').forEach(function (output) { output.remove(); });
             positions.forEach(function (entry) { entry[1].hidden = entry[2]; entry[0].replaceWith(entry[1]); });
             dialog.close(); dialog.remove(); active = null;
@@ -822,6 +844,7 @@ window.AngeboteDesign = (function () {
             if (options.end) options.end(commit);
             if (!commit) statuses.forEach(function (entry) { if (entry[0].isConnected) entry[0].textContent = entry[1]; });
             refresh(); (opener.isConnected ? opener : bar.querySelector('[data-object-properties="' + group + '"]'))?.focus();
+            if (options.reveal) options.reveal();
           }
           var whole = false;
           function preview() {
@@ -837,8 +860,12 @@ window.AngeboteDesign = (function () {
           dialog.querySelector('form').onsubmit = function (event) { event.preventDefault(); close(true); };
           dialog.querySelectorAll('[data-object-cancel]').forEach(function (button) { button.onclick = function () { close(false); }; });
           dialog.addEventListener('cancel', function (event) { event.preventDefault(); event.stopPropagation(); close(false); });
+          dialog.addEventListener('keydown', function (event) {
+            if (phone && event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(false); }
+          });
           var timer = setInterval(preview, 150);
-          dialog.showModal(); preview();
+          if (phone) { dialog.show(); position(); } else dialog.showModal();
+          preview();
         }
   function drawDetail(target, source, group, itemId) {
     var elements = source._weeklyElements || source._elMeta || source._offerElements || [];
@@ -864,7 +891,7 @@ window.AngeboteDesign = (function () {
     target.width = Math.max(1, Math.round(w)); target.height = Math.max(1, Math.round(h));
     target.getContext('2d').drawImage(source, x, y, w, h, 0, 0, target.width, target.height);
   }
-        root._objectProperties = { refresh: refresh, open: open };
+        root._objectProperties = { refresh: refresh, open: open, syncValues: syncValues };
         refresh(); return root._objectProperties;
       }
   var helpId = 0;

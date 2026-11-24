@@ -62,6 +62,7 @@ window.AngeboteVorschauEditor = (function () {
       layer.replaceChildren();
       entries.forEach(function (entry) {
         var button = document.createElement('button'); button.type = 'button'; button.dataset.previewSelect = entry.id;
+        button.dataset.previewItem = entry.itemId || '';
         button.setAttribute('aria-label', 'Vorschauelement auswählen: ' + entry.label);
         button.className = entry.id === chosen ? 'an-selected' : '';
         button.style.cssText = 'left:' + entry.x / width * 100 + '%;top:' + entry.y / height * 100
@@ -187,7 +188,10 @@ window.AngeboteVorschauEditor = (function () {
         if (entry) { pending = entry.id.split(':')[0] + ':customImg'; options.addImage(entry, file); }
       });
     }
-    select.onchange = function () { chosen = select.value; overlay(); };
+    select.onchange = function () {
+      chosen = select.value; overlay();
+      var entry = current(); if (entry && options.select) options.select(entry);
+    };
     tools.onclick = function (event) {
       var nudge = event.target.closest('[data-preview-nudge]');
       if (nudge && current()) {
@@ -203,6 +207,7 @@ window.AngeboteVorschauEditor = (function () {
       if (options.end) options.end();
     };
     stage.onkeydown = function (event) {
+      if (layer.inert) return;
       var delta = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
       if (!delta || !current()) return;
       event.preventDefault(); if (options.begin) options.begin();

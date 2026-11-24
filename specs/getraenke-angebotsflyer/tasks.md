@@ -274,3 +274,27 @@ mit dem Feature-Commit überein. Der Größenwechsel-Test wartet vor dem
 Metadaten-Klick auf den mobilen Erfassungsmodus, damit ein ausstehendes
 Media-Query-Ereignis den Zustand nicht zwischen Lesen und Klicken umschaltet.
 Der iPad-Start mit anschließendem Größenwechsel besteht fünf Wiederholungen.
+
+# Folgeauftrag F75: Scrollbare Live-Vorschau
+
+| Aufgabe | Abhängigkeit | Testvertrag |
+| --- | --- | --- |
+| GF138 Echte Touch-/Live-Pixel-Regressionen mit sechs Artikeln ergänzen | F75-Spec/Plan, bestätigte Abbruchsemantik | TC-F75-01..03 |
+| GF139 Telefon-Objektfenster nichtmodal mit unveränderter Transaktion und Hintergrundschutz öffnen | GF138 | TC-F75-02, TC-F73-03b/05 |
+| GF140 Kachelzuordnung und Scrollreserve über alle Überlagerungen korrigieren; Presetfelder erhalten | GF138 | TC-F75-01..03 |
+| GF141 Vieransichten- und Bestandsabnahme, Feature-Preview schreibfrei prüfen | GF139, GF140 | TC-F75-01..03, TC-F70..74 |
+
+F75 lokal abgenommen: CMS-Angebotsablauf 236/236 auf Desktop, Telefon,
+Laden-Tablet und Touch-iPad; zusätzlich 14/14 fokussierte Bestandsprüfungen
+der gemeinsamen Eigenschaftenfenster einschließlich Feldbesitz und Reset.
+Echte Browser-Touchgesten scrollen im Peek, Position-/Marker-/Stilblatt
+sowie Schrift-, Preisschild- und Bildfenster, ohne Gestaltung oder
+Schreibzahl zu ändern. Pixelvergleiche mit einem sichtbaren zweifarbigen
+Testbild belegen Live-Änderung, Abbruch, Übernehmen und Undo/Redo für
+beide Aktionsarten; zufällige Papiertextur ist nur in diesem Test deaktiviert.
+Die gesamte Elementgruppe des letzten Artikels bleibt über dem Blatt;
+Elementauswahl und Artikelnavigation sind synchron, Motivfläche und Zoom
+bleiben gleich. Der frühere TC-F71-03-Vertrag „kein Scrollraum bei offenem
+Blatt“ ist durch den F75-Nachweis eines unverdeckten unteren Motivrands ersetzt.
+Browser-Zurück emuliert Android-Zurück; kein physisches Androidgerät getestet.
+Dies ist noch kein Live-Deploymentnachweis.
