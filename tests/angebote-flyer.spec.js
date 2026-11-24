@@ -3795,6 +3795,42 @@ test('TC-F38-07: Bild- und Preisposition nutzen breite Container nebeneinander',
   expect(state.errors).toEqual([]);
 });
 
+test('TC-F38-08: Bild- und Preisposition-Pads wirken sofort — auch bei ausgeschalteter Auto-Vorschau', async ({ page }) => {
+  const state = await setup(page, { legacyArticleNumber: 'ART2001' });
+  await cms(page);
+  await designTab(page, 'sec-flyer');
+  const root = page.locator('#cfg-sec-flyer');
+  await designerTool(root, 2);
+  const stage = root.locator('[data-cfg-inline=flyer] .an-stage');
+  await expect(stage).toBeVisible({ timeout: 15000 });
+  const imgBtn = stage.locator('[data-preview-select=img]');
+  const priceBtn = stage.locator('[data-preview-select=price]');
+  await expect(imgBtn).toBeVisible({ timeout: 20000 });
+  const pad = root.locator('#cfg-flyer-imgAnchorX');
+  const padGroup = pad.locator('xpath=..');
+  const pricePad = root.locator('#cfg-flyer-priceAnchorX');
+  const pricePadGroup = pricePad.locator('xpath=..');
+  const auto = root.locator('#cfg-live-auto-flyer');
+  /* Auto-Vorschau AUS — die Pads müssen trotzdem sofort neu zeichnen. */
+  if (await auto.isVisible()) await auto.uncheck();
+  const imgBefore = await imgBtn.boundingBox();
+  const priceBefore = await priceBtn.count() ? await priceBtn.boundingBox() : null;
+  for (let i = 0; i < 3; i++) await padGroup.locator('button[title="nach rechts"]').click();
+  for (let i = 0; i < 3; i++) await pricePadGroup.locator('button[title="nach unten"]').click();
+  await expect(pad).toHaveValue('40');
+  await expect(root.locator('#cfg-flyer-priceAnchorY')).toHaveValue('40');
+  await page.clock.runFor(2500);
+  const imgAfter = await imgBtn.boundingBox();
+  const priceAfter = priceBefore ? await priceBtn.boundingBox() : null;
+  const imgMoved = Math.hypot(imgAfter.x - imgBefore.x, imgAfter.y - imgBefore.y);
+  expect(imgMoved, 'Bild-Element sollte sich nach 3x +10px sichtbar bewegen').toBeGreaterThan(4);
+  if (priceBefore && priceAfter) {
+    const priceMoved = Math.hypot(priceAfter.x - priceBefore.x, priceAfter.y - priceBefore.y);
+    expect(priceMoved, 'Preisblock sollte sich nach 3x +10px sichtbar bewegen').toBeGreaterThan(4);
+  }
+  expect(state.errors).toEqual([]);
+});
+
 test('TC-F38-04: Preisbild wartet auf lokale Anton-Schrift und setzt Cent eng an', { tag: '@ohne-layout' }, async ({ page }) => {
   const state = await setup(page);
   let release;
