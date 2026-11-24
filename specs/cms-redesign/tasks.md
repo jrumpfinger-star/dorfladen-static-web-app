@@ -8,6 +8,7 @@ Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
 | WP2 | WP1 | Neue Tageskarten mit bisherigen Informationen und Handlern; klassische Darstellung erhalten. | TC-F8-01, TC-F8-02 |
 | WP3 | WP1 | Wochenplan-Vorschauhülle angleichen; ursprünglichen Motivrenderer und echte Ausgabewege erhalten. | TC-F8-03 |
 | WP4 | WP2, WP3 | Isolierte Playwright-Abnahme auf vier Zielgrößen, Zurück, Dunkelmodus und betroffene Regressionen; visueller und gegebenenfalls Feature-Live-Nachweis. | TC-F8-01–04 |
+| WP5 | WP4 | Verlaufssteuerung in `cms.js`: genau ein Eintrag je offene Ebene (Dialog, Druckansicht), Entfernen beim Schließen per Knopf, Zurück schließt oberste Ebene zuerst, tote Einträge werden übersprungen. | TC-F8-05 |
 
 ## Lokale Abnahme
 
@@ -32,6 +33,13 @@ Freigabe auch in der Feature-Preview veröffentlicht und abgenommen.
   mit API-Attrappen geprüft. Vorschauaktionen bei allen vier Größen sichtbar.
 - **TC-F8-04:** Escape und Browser-Zurück nach wiederholtem Öffnen von
   Vorschau/Bearbeitung geprüft; keine unbeabsichtigten API-Schreibzugriffe.
+- **TC-F8-05:** Android-Zurück nach Schließen per Knopf (zweimal wiederholt),
+  mit Druckansicht über der Vorschau (zuerst Druckansicht, dann Dialog) und
+  danach der Verlaufszustand wieder `cmsTab`. Vor der Korrektur
+  reproduziert (toter Eintrag, Druckansicht blieb stehen); danach 4/4 grün.
+  Betroffene Regressionen (Angebote-Ablauf einschließlich F72/F73-Zurück,
+  Wochenplan-Mockup, CMS-Neu): 258 grün; einziger Fehler ist der unten
+  dokumentierte Altbefund der Waagen-Suite.
 - Sichtprüfung der vier Ansichten und der mobilen fertigen Vorschau gegen
   das freigegebene Mockup.
 - Generator erneut ausgeführt: beide HTML-Ausgaben bytegleich.

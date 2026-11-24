@@ -1134,18 +1134,35 @@
     var isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
     history.replaceState({cmsTab:'wp'},'','');
     window.addEventListener('popstate',function(e){
-      // Close any open modal on back button
-      // Nach erneutem Öffnen kann auch der vorherige Eintrag ein Dialog sein.
-      var weeklyModal=document.querySelector('.cmsneu-app')&&document.querySelector('#cms-modal-wrap .cms-wp-preview,#cms-modal-wrap #cms-meal-rows');
-      if(e.state&&e.state.cmsModal&&!weeklyModal) return;
+      // Eigene history.back()-Aufrufe (Eintrag nach Schließen per Knopf entfernen) nicht als Benutzer-Zurück werten.
+      if(window._cmsSilentPops>0){
+        window._cmsSilentPops--;
+        if(window._cmsSyncHistory) window._cmsSyncHistory();
+        return;
+      }
+      // Oberste Ebene zuerst: Druckansichten liegen über dem Dialog.
+      var printOverlays=document.querySelectorAll('#_printOverlay,#_pcePrintOverlay,#_flyPrintOverlay');
+      if(printOverlays.length){
+        printOverlays.forEach(function(o){o.remove();});
+        if(window._cmsSyncHistory) window._cmsSyncHistory();
+        return;
+      }
       // Die Ebenen des Angebote-Editors (Editor, Blatt, Menü) behandelt angebote-editor.js selbst.
       if(e.state&&e.state.angeboteLayer) return;
       var modalWrap=document.getElementById('cms-modal-wrap');
       if(modalWrap&&modalWrap.style.display!=='none'&&modalWrap.innerHTML!==''){
         // Try Kachel-Editor close (X button = discard)
         var pceClose=document.getElementById('pce-close');
-        if(pceClose){pceClose.click();return;}
-        if(typeof window.cmsCloseModal==='function') window.cmsCloseModal();
+        if(pceClose) pceClose.click();
+        else if(typeof window.cmsCloseModal==='function') window.cmsCloseModal();
+        // Bleibt der Dialog offen (z. B. Rückfrage), braucht er wieder seinen Verlaufseintrag.
+        setTimeout(function(){ if(window._cmsSyncHistory) window._cmsSyncHistory(); },0);
+        return;
+      }
+      // Eintrag eines bereits geschlossenen Dialogs oder einer Druckansicht überspringen.
+      if(e.state&&(e.state.cmsModal||e.state.cmsOverlay)){
+        window._cmsSilentPops=(window._cmsSilentPops||0)+1;
+        history.back();
         return;
       }
       // Close Einzelflyer mobile overlay
@@ -3541,17 +3558,33 @@
       cmsCloseModal();
     }
   });
-  // Auto-push history state when a modal opens, so mobile back button can close it
+  // Auto-push history state when a modal opens, so mobile back button can close it.
+  // Pro offener Ebene (Dialog, Druckansicht) gibt es genau einen Eintrag; er wird beim
+  // Schließen per Knopf wieder entfernt, damit Zurück nie ins Leere läuft.
   (function(){
     var mw=document.getElementById('cms-modal-wrap');
     if(!mw)return;
-    var obs=new MutationObserver(function(){
-      if(mw.style.display!=='none'&&mw.innerHTML!==''){
-        document.body.style.overflow='hidden';
-        history.pushState({cmsModal:true},'','');
+    var OVERLAYS='#_printOverlay,#_pcePrintOverlay,#_flyPrintOverlay';
+    function modalOpen(){return mw.style.display!=='none'&&mw.innerHTML!=='';}
+    function stateIs(key){return !!(history.state&&history.state[key]);}
+    function sync(){
+      if(window._cmsSilentPops>0) return;
+      var overlay=!!document.querySelector(OVERLAYS), modal=modalOpen();
+      if(modal) document.body.style.overflow='hidden';
+      if(overlay){
+        if(!stateIs('cmsOverlay')) history.pushState({cmsOverlay:true},'','');
+      } else if(stateIs('cmsOverlay')){
+        window._cmsSilentPops=(window._cmsSilentPops||0)+1; history.back();
+      } else if(modal){
+        if(!stateIs('cmsModal')) history.pushState({cmsModal:true},'','');
+      } else if(stateIs('cmsModal')){
+        window._cmsSilentPops=(window._cmsSilentPops||0)+1; history.back();
       }
-    });
+    }
+    window._cmsSyncHistory=sync;
+    var obs=new MutationObserver(sync);
     obs.observe(mw,{attributes:true,childList:true});
+    obs.observe(document.body,{childList:true});
   })();
 
   function getNoticeValue(){

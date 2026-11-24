@@ -421,6 +421,7 @@ wird aus der Umformung ein einmaliger Schreibvorgang.
 | TC-F8-02 | Alle vier Wochenwahlen, bestehende Erfassung einschließlich Mehrfachzeilen/Hinweis/Allergenen/Bildern, zeilenweises Bearbeiten und separate bestätigte Löschung bleiben erreichbar; klassischer Renderer bleibt unverändert. |
 | TC-F8-03 | Vorschau enthält fertige aktuelle CMS-Grafik in HD. Geänderte CMS-Designkonfiguration wirkt tatsächlich; PNG-Download, Druck und Waageneinstieg verwenden bestehende Abläufe. Alle Vorschauaktionen passen bei vier Zielgrößen. |
 | TC-F8-04 | Escape und Android-/Browser-Zurück schließen Vorschau/Bearbeitung ohne Verlassen des Wochenplans; kein versehentlicher Schreibzugriff bei Abbruch/Navigation/Vorschau. |
+| TC-F8-05 | Android-Zurück schließt genau die oberste Ebene (zuerst Druckansicht, dann Dialog). Ein per Knopf geschlossener Dialog oder eine geschlossene Druckansicht hinterlässt keinen toten Verlaufseintrag; das nächste Zurück verlässt die Seite sofort. |
 
 ## Data & Contracts
 
@@ -462,4 +463,4 @@ Keine offenen Punkte, die den Plan aufhalten. Zwei Punkte sind bewusst als
 | F5 Prototyp | TC-F5-01 … TC-F5-03 | Stufe 1 | — |
 | F6 Bedienbarkeit | TC-F6-01 … TC-F6-05 | Stufe 3 | — |
 | F7 Umkehrbarkeit | TC-F7-01, TC-F7-02 | Stufe 4 | — |
-| F8 Mobiler Wochenplan nach Mockup | TC-F8-01 … TC-F8-04 | F8-Ergänzung | WP1–WP4 |
+| F8 Mobiler Wochenplan nach Mockup | TC-F8-01 … TC-F8-05 | F8-Ergänzung | WP1–WP5 |

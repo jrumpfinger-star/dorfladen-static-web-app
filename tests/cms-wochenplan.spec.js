@@ -298,6 +298,41 @@ test('TC-F8-02/03: Teilen uebergibt den aktuellen Wochenplan als echte PNG-Datei
   });
 });
 
+test('TC-F8-05: Android-Zurueck schliesst genau die oberste Ebene und hinterlaesst keine toten Eintraege', { tag: '@layout' }, async ({ page }) => {
+  await setup(page);
+  const modal = page.locator('#cms-modal-wrap'), image = page.locator('#cms-share-img');
+  const state = () => page.evaluate(() => history.state);
+  expect(await state()).toEqual({ cmsTab: 'wp' });
+  // Mit Schliessen-Knopf geschlossene Dialoge duerfen keinen Verlaufseintrag zuruecklassen.
+  for (let round = 0; round < 2; round++) {
+    await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+    await expect(image).toBeVisible();
+    await page.locator('.cms-modal-footer').getByRole('button', { name: 'Schließen', exact: true }).click();
+    await expect(modal).toBeHidden();
+    await expect.poll(state).toEqual({ cmsTab: 'wp' });
+  }
+  // Zurueck schliesst zuerst die Druckansicht, danach die Vorschau.
+  await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+  await expect(image).toBeVisible();
+  if (page.viewportSize().width <= 768) {
+    await page.locator('#cms-share-print').click();
+    await expect(page.locator('#_printOverlay img')).toBeVisible();
+    await page.goBack();
+    await expect(page.locator('#_printOverlay')).toHaveCount(0);
+    await expect(image).toBeVisible();
+    await page.locator('#cms-share-print').click();
+    await page.locator('#_printOverlay').getByRole('button', { name: 'Zurück', exact: true }).click();
+    await expect(page.locator('#_printOverlay')).toHaveCount(0);
+    await expect(image).toBeVisible();
+    await expect.poll(state).toEqual({ cmsModal: true });
+  }
+  await page.goBack();
+  await expect(modal).toBeHidden();
+  await expect(page.locator('#cms-wp-grid')).toBeVisible();
+  await expect.poll(state).toEqual({ cmsTab: 'wp' });
+  await expect(page).toHaveURL(/cms\.html$/);
+});
+
 test('TC-F8-02: klassische Wochenplan-Darstellung bleibt unveraendert', async ({ page }) => {
   await setup(page, { classic: true });
   await expect(page.locator('.cms-wp-controls')).toHaveCount(0);
