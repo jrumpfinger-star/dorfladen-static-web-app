@@ -286,6 +286,7 @@ test('TC-F8-02/03: Teilen uebergibt den aktuellen Wochenplan als echte PNG-Datei
   await setup(page);
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: async data => {
+      if (!navigator.userActivation.isActive) throw new DOMException('User activation required', 'NotAllowedError');
       const file = data.files[0], image = await createImageBitmap(file);
       window.sharedPlan = { text: data.text, name: file.name, type: file.type, width: image.width };
       image.close();
@@ -296,7 +297,143 @@ test('TC-F8-02/03: Teilen uebergibt den aktuellen Wochenplan als echte PNG-Datei
     text: '🍽️ *Mittagsmenü KW 48 · 23.11.26 – 27.11.26*',
     name: 'Wochenplan_KW48.png', type: 'image/png', width: 2382
   });
+  await expect(page.getByRole('dialog', { name: 'Bild bereit', exact: true })).toHaveCount(0);
 });
+
+test('TC-F8-06: langsames HD-PNG wird mit frischer Aktivierung ohne Neurendern geteilt', { tag: '@layout' }, async ({ page }) => {
+  await setup(page);
+  const downloads = [];
+  page.on('download', download => downloads.push(download));
+  await page.evaluate(() => {
+    window.shareAttempts = []; window.openedShareLinks = []; window.pngRenders = 0;
+    window.open = url => { window.openedShareLinks.push(url); return null; };
+    const toBlob = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function (callback, ...args) {
+      window.pngRenders++;
+      toBlob.call(this, blob => setTimeout(() => {
+        window.activationAtRenderEnd = navigator.userActivation.isActive;
+        callback(blob);
+      }, 5500), ...args);
+    };
+    Object.defineProperty(navigator, 'share', { configurable: true, value: async data => {
+      const active = navigator.userActivation.isActive;
+      window.shareAttempts.push({ active });
+      if (!active) throw new DOMException('User activation required', 'NotAllowedError');
+      const file = data.files[0], bitmap = await createImageBitmap(file);
+      const bytes = await file.arrayBuffer();
+      const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+        .map(value => value.toString(16).padStart(2, '0')).join('');
+      Object.assign(window.shareAttempts[window.shareAttempts.length - 1], {
+        name: file.name, type: file.type, width: bitmap.width, text: data.text, digest
+      });
+      bitmap.close();
+    } });
+  });
+  await page.getByRole('button', { name: 'Teilen', exact: true }).click();
+  // Browser-Abfragen waehrenddessen koennen in Playwright die Nutzeraktivierung erneuern.
+  await new Promise(resolve => setTimeout(resolve, 6500));
+  const dialog = page.getByRole('dialog', { name: 'Bild bereit', exact: true });
+  await expect(dialog).toBeVisible({ timeout: 15000 });
+  expect(await page.evaluate(() => window.activationAtRenderEnd)).toBe(false);
+  expect(await page.evaluate(() => window.shareAttempts)).toEqual([]);
+  expect(downloads).toHaveLength(0);
+  expect(await page.evaluate(() => window.openedShareLinks)).toEqual([]);
+  await expect(dialog.getByRole('status')).toContainText('Teilen');
+  for (const name of ['Teilen', 'Download', 'Schließen']) {
+    await expect(dialog.locator('.cms-modal-footer').getByRole('button', { name, exact: true })).toBeInViewport({ ratio: 1 });
+  }
+  const image = dialog.locator('#cms-share-img');
+  const prepared = await image.evaluate(async node => {
+    await node.decode();
+    const bytes = await (await fetch(node.src)).arrayBuffer();
+    return {
+      url: node.src, width: node.naturalWidth,
+      digest: [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+        .map(value => value.toString(16).padStart(2, '0')).join('')
+    };
+  });
+  expect(prepared.width).toBe(2382);
+  await page.screenshot({ path: test.info().outputPath('wochenplan-teilen-bereit.png') });
+  const downloadEvent = page.waitForEvent('download');
+  await dialog.getByRole('button', { name: 'Download', exact: true }).click();
+  const download = await downloadEvent;
+  expect(createHash('sha256').update(fs.readFileSync(await download.path())).digest('hex')).toBe(prepared.digest);
+  await dialog.getByRole('button', { name: 'Teilen', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(await page.evaluate(() => window.shareAttempts)).toEqual([{
+    active: true, name: 'Wochenplan_KW48.png', type: 'image/png', width: 2382,
+    text: '🍽️ *Mittagsmenü KW 48 · 23.11.26 – 27.11.26*', digest: prepared.digest
+  }]);
+  expect(await page.evaluate(() => window.pngRenders)).toBe(1);
+  expect(await page.evaluate(() => window.openedShareLinks)).toEqual([]);
+  await expect.poll(() => page.evaluate(() => history.state)).toEqual({ cmsTab: 'wp' });
+  expect(await page.evaluate(async url => {
+    try { await fetch(url); return true; } catch { return false; }
+  }, prepared.url)).toBe(false);
+});
+
+for (const mode of ['AbortError', 'NotAllowedError', 'synchronous', 'unavailable', 'missing-image']) {
+  test(`TC-F8-07: Teilen behandelt ${mode} ohne ungefragte Ersatzaktion`, { tag: '@layout' }, async ({ page }) => {
+    await setup(page);
+    const downloads = [];
+    page.on('download', download => downloads.push(download));
+    await page.evaluate(mode => {
+      window.shareCalls = 0; window.openedShareLinks = [];
+      window.open = url => { window.openedShareLinks.push(url); return null; };
+      Object.defineProperty(navigator, 'share', { configurable: true, value: mode === 'unavailable' ? undefined : () => {
+        window.shareCalls++;
+        if (mode === 'synchronous') throw new TypeError('unsupported file');
+        return Promise.reject(new DOMException('test share rejection', mode));
+      } });
+      if (mode === 'missing-image') HTMLCanvasElement.prototype.toBlob = function (callback) { callback(null); };
+    }, mode);
+    await page.getByRole('button', { name: 'Teilen', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Bild bereit', exact: true });
+    if (mode === 'AbortError') {
+      await expect.poll(() => page.evaluate(() => window.shareCalls)).toBe(1);
+      await expect(dialog).toHaveCount(0);
+    } else if (mode === 'missing-image') {
+      await expect(page.locator('.cms-toast')).toContainText('Bild konnte nicht erstellt werden');
+      expect(await page.evaluate(() => window.shareCalls)).toBe(0);
+      await expect(dialog).toHaveCount(0);
+    } else {
+      await expect(dialog).toBeVisible();
+      const share = dialog.getByRole('button', { name: 'Teilen', exact: true });
+      if (mode === 'unavailable') {
+        await expect(share).toBeDisabled();
+        await expect(dialog.getByRole('status')).toContainText('unterstützt');
+      } else {
+        await expect(dialog.getByRole('status')).toContainText('erneut');
+        await page.evaluate(() => {
+          Object.defineProperty(navigator, 'share', { configurable: true, value: () =>
+            Promise.reject(new DOMException('test share rejection', 'NotAllowedError')) });
+        });
+        await share.click();
+        await expect(share).toBeEnabled();
+        await expect(dialog.getByRole('status')).toContainText('erneut');
+      }
+      if (mode === 'unavailable') {
+        await page.goBack();
+        await expect(dialog).toHaveCount(0);
+      } else if (mode === 'synchronous') {
+        await page.keyboard.press('Escape');
+        await expect(dialog).toHaveCount(0);
+      } else {
+        await page.evaluate(() => {
+          Object.defineProperty(navigator, 'share', { configurable: true, value: () =>
+            Promise.reject(new DOMException('cancelled', 'AbortError')) });
+        });
+        await share.click();
+        await expect(dialog.getByRole('status')).toContainText('abgebrochen');
+        await dialog.locator('.cms-modal-footer').getByRole('button', { name: 'Schließen', exact: true }).click();
+      }
+      await expect.poll(() => page.evaluate(() => history.state)).toEqual({ cmsTab: 'wp' });
+      await expect(page.locator('#cms-wp-grid')).toBeVisible();
+    }
+    expect(downloads).toHaveLength(0);
+    expect(await page.evaluate(() => window.openedShareLinks)).toEqual([]);
+  });
+}
 
 test('TC-F8-05: Android-Zurueck schliesst genau die oberste Ebene und hinterlaesst keine toten Eintraege', { tag: '@layout' }, async ({ page }) => {
   await setup(page);

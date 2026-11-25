@@ -47,6 +47,37 @@ F8-Stand: umgesetzt und in der PR-15-Feature-Preview veröffentlicht. 33 gezielt
 lokale Tests und 14 Wochenplan-Live-Tests bestanden. Ergebnisse, CI-Nachweise
 und gesonderter Altbefund stehen in [tasks.md](./tasks.md).
 
+### F8-Korrektur: Teilen nach langsamer Bilderzeugung
+
+Nachweis: Mit 5,5 Sekunden verzögerter PNG-Bereitstellung ist
+`navigator.userActivation.isActive` beim bisherigen `navigator.share` falsch.
+Ein aktivierungsprüfender Share-Ersatz lehnt mit `NotAllowedError` ab;
+der bisherige Ausweichweg startet einen Download statt des Teilen-Menüs.
+Der bisherige Erfolgstest prüfte keine Nutzeraktivierung.
+
+1. `static-site/cms.js`: `shareBlob` prüft das erzeugte Bild und die
+   Nutzeraktivierung. Direkt teilen, solange aktiv; sonst Bereitschaftshülle
+   öffnen. Synchrone und asynchrone Share-Fehler gezielt behandeln und
+   protokollieren; Abbruch ohne Ersatzaktion.
+2. `showSharePreview` für den Bereitschaftsmodus wiederverwenden: Bild,
+   Statusmeldung, Teilen, ausdrücklicher Download und Schließen. Teilen direkt
+   im Klick-Handler mit dem bestehenden Blob, ohne neues Rendern. Normale
+   Vorschau und ihre Aktionen unverändert lassen. Keine neuen UI-Tokens.
+   Die vorhandene Verlaufs-/Escape-Behandlung der Hülle weiterverwenden.
+3. Objekt-URL beim Schließen der Bereitschaftshülle freigeben. Bei fehlender
+   Browserunterstützung Download erklären, nicht automatisch auslösen.
+4. `tests/cms-wochenplan.spec.js`: tatsächliches Ablaufen der Aktivierung durch
+   verzögerte Canvas-Ausgabe nachstellen; Aktivierung im Share-Ersatz prüfen.
+   PNG/Design/Begleittext, direkter Schnellweg, Wiederholung, Abbruch,
+   fehlende API, synchroner Fehler und Renderfehler isoliert prüfen.
+
+Vorher/nachher: schnelles Teilen bleibt direkt; langsames Teilen bekommt
+den freigegebenen zusätzlichen Klick. Automatischer Download/WhatsApp bei
+Fehler wird durch expliziten Download mit verständlichem Hinweis ersetzt.
+Bestehende PNG-Erzeugung, Vorschau, Drucken, Waage und Datenhaltung bleiben.
+Abnahme: TC-F8-01–07 auf vier Zielgrößen, Syntax-/Diffprüfung; Feature-Deploy
+nur nach ausdrücklicher Commit-/Push-Freigabe, keine Produktionsänderung.
+
 ## 1. Das Designschema — festgehalten
 
 Damit „dasselbe Design" nicht Auslegungssache ist, hier das Schema, das im

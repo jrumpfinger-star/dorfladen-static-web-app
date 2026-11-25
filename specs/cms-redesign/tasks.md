@@ -9,6 +9,30 @@ Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
 | WP3 | WP1 | Wochenplan-Vorschauhülle angleichen; ursprünglichen Motivrenderer und echte Ausgabewege erhalten. | TC-F8-03 |
 | WP4 | WP2, WP3 | Isolierte Playwright-Abnahme auf vier Zielgrößen, Zurück, Dunkelmodus und betroffene Regressionen; visueller und gegebenenfalls Feature-Live-Nachweis. | TC-F8-01–04 |
 | WP5 | WP4 | Verlaufssteuerung in `cms.js`: genau ein Eintrag je offene Ebene (Dialog, Druckansicht), Entfernen beim Schließen per Knopf, Zurück schließt oberste Ebene zuerst, tote Einträge werden übersprungen. | TC-F8-05 |
+| WP6 | WP5; Freigabe des bedarfsweisen zweiten Antippens | Aktivierungsabhängig direkt teilen oder vorbereitete PNG in bestehender Vorschauhülle anbieten; keine automatischen Ersatzaktionen. Fehler/Abbruch unterscheiden, expliziten Download und Schließen erhalten; isoliert auf vier Zielgrößen prüfen. | TC-F8-06, TC-F8-07 |
+
+## Teilen-Korrektur: Nachweis
+
+- Vor der Korrektur reproduziert: 5,5 Sekunden verzögerte Canvas-Ausgabe,
+  echte Browseraktivierung beim Teilen abgelaufen, `NotAllowedError`,
+  danach ungefragter Download.
+- WP6 lokal umgesetzt: **45/45 gezielte Tests bestanden** (42 Wochenplan-
+  Tests einschließlich TC-F8-06/07 auf 375×667, 768×1024, 1280×800,
+  686×1095; drei bestehende HD-/Download-/Druck-/Waagenregressionen).
+- TC-F8-06 prüft tatsächlich abgelaufene Browseraktivierung nach 5,5 Sekunden
+  Verzögerung, frische Aktivierung beim Wiederholen, unveränderte PNG-Bytes
+  und 2382 px Breite ohne Neurendern. Browserabfragen werden während des
+  Ablaufs vermieden, weil sie in Playwright die Aktivierung erneuern können.
+- TC-F8-07 prüft nativen Abbruch, asynchronen/synchronen Fehler, fehlende
+  Teilen-API und leere Canvas-Ausgabe. Keine ungefragten Downloads oder
+  WhatsApp-Starts; erneutes Antippen, expliziter Download, Escape, Zurück,
+  Schließen und Freigabe der Bild-URL geprüft.
+- Bereitschaftshülle auf allen vier Zielgrößen visuell geprüft.
+- Zusätzlicher Prüflauf von `cms-waage-werbung` TC-F1-02 scheitert vor dem
+  Motivaufruf am bereits unten dokumentierten versteckten `waageAktion`-
+  Element; kein neuer Teilen-Fehler, Test unverändert.
+- Veröffentlichung der Teilen-Korrektur ausdrücklich freigegeben und auf
+  die PR-15-Feature-Vorschau begrenzt; Produktion bleibt unverändert.
 
 ## Lokale Abnahme
 
