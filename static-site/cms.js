@@ -3215,6 +3215,7 @@
       pencil:'<path d="m16 3 5 5M3 21l4-1L21 6a2.1 2.1 0 0 0-3-3L4 17l-1 4Z"/>',
       'trash-2':'<path d="M3 6h18M19 6l-1 14H6L5 6M9 6V3h6v3M10 10v7M14 10v7"/>',
       download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+      'message-circle':'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
       'share-2':'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
       printer:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/><path d="M18 12h.01"/>',
       scale:'<path d="m16 16 3-8 3 8c-1.6 1-4.4 1-6 0ZM2 16l3-8 3 8c-1.6 1-4.4 1-6 0ZM7 21h10M12 3v18M3 7l9-4 9 4"/>',
@@ -4826,7 +4827,7 @@
     }
     if(!navigator.share){
       console.info('[share] navigator.share not available');
-      ready('Dieser Browser unterst\u00fctzt das Teilen von Dateien nicht. Bitte das Bild herunterladen und manuell teilen.');
+      ready('Dieser Browser unterst\u00fctzt das Teilen von Dateien nicht. Bitte WhatsApp verwenden oder das Bild herunterladen.');
       return;
     }
     // HD-Rendering kann die transiente Browserfreigabe des ersten Antippens ueberdauern.
@@ -4835,7 +4836,7 @@
       return;
     }
     shareFile(file,msg,function(err){
-      if(err&&err.name!=='AbortError') ready('Das Teilen-Men\u00fc konnte nicht ge\u00f6ffnet werden. Bitte erneut auf Teilen tippen oder das Bild herunterladen.');
+      if(err&&err.name!=='AbortError') ready('Das Teilen-Men\u00fc konnte nicht ge\u00f6ffnet werden. Bitte WhatsApp verwenden oder das Bild herunterladen.');
     });
   }
   function shareFile(file,msg,done){
@@ -4872,6 +4873,7 @@
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">'+(modernWp?wpIcon('download'):'\u2b07\ufe0f')+' Download</button>';
     if(opts.share){
       html+='<button class="cms-btn cms-btn-primary" id="cms-share-native"'+(!navigator.share?' disabled':'')+'>'+wpIcon('share-2')+' Teilen</button>';
+      html+='<button class="cms-btn cms-btn-gray" id="cms-share-wa">'+wpIcon('message-circle')+' WhatsApp</button>';
     }else{
       html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">'+(modernWp?wpIcon('printer'):'\ud83d\udda8\ufe0f')+' Drucken</button>';
     }
@@ -4906,8 +4908,15 @@
           if(!readyDialog.isConnected)return;
           button.disabled=false;
           if(!err){cmsCloseModal();return;}
-          status.textContent=err.name==='AbortError'?'Teilen abgebrochen.':'Das Teilen-Men\u00fc konnte nicht ge\u00f6ffnet werden. Bitte erneut versuchen oder das Bild herunterladen.';
+          status.textContent=err.name==='AbortError'?'Teilen abgebrochen.':'Das Teilen-Men\u00fc konnte nicht ge\u00f6ffnet werden. Bitte erneut versuchen, WhatsApp verwenden oder das Bild herunterladen.';
         });
+      };
+      document.getElementById('cms-share-wa').onclick=function(){
+        var a=document.createElement('a');a.href=url;a.download=filename;a.click();
+        toast('Bild heruntergeladen \u2013 WhatsApp \u00f6ffnet sich\u2026','ok');
+        var isMob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        var waUrl=isMob?'https://wa.me/?text='+encodeURIComponent(opts.share.text):'https://web.whatsapp.com/send?text='+encodeURIComponent(opts.share.text);
+        setTimeout(function(){window.open(waUrl,'_blank');},800);
       };
     }else{
       document.getElementById('cms-share-print').onclick=function(){

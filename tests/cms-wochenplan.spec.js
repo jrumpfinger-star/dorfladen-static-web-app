@@ -407,14 +407,14 @@ for (const mode of ['AbortError', 'NotAllowedError', 'synchronous', 'unavailable
         await expect(share).toBeDisabled();
         await expect(dialog.getByRole('status')).toContainText('unterstützt');
       } else {
-        await expect(dialog.getByRole('status')).toContainText('erneut');
+        await expect(dialog.getByRole('status')).toContainText('WhatsApp verwenden');
         await page.evaluate(() => {
           Object.defineProperty(navigator, 'share', { configurable: true, value: () =>
             Promise.reject(new DOMException('test share rejection', 'NotAllowedError')) });
         });
         await share.click();
         await expect(share).toBeEnabled();
-        await expect(dialog.getByRole('status')).toContainText('erneut');
+        await expect(dialog.getByRole('status')).toContainText('WhatsApp verwenden');
       }
       if (mode === 'unavailable') {
         await page.goBack();
@@ -429,13 +429,19 @@ for (const mode of ['AbortError', 'NotAllowedError', 'synchronous', 'unavailable
         });
         await share.click();
         await expect(dialog.getByRole('status')).toContainText('abgebrochen');
+        const waEvent = page.waitForEvent('download');
+        await dialog.locator('.cms-modal-footer').getByRole('button', { name: 'WhatsApp', exact: true }).click();
+        expect((await waEvent).suggestedFilename()).toMatch(/\.png$/);
+        await expect.poll(() => page.evaluate(() => window.openedShareLinks)).toHaveLength(1);
         await dialog.locator('.cms-modal-footer').getByRole('button', { name: 'Schließen', exact: true }).click();
       }
       await expect.poll(() => page.evaluate(() => history.state)).toEqual({ cmsTab: 'wp' });
       await expect(page.locator('#cms-wp-grid')).toBeVisible();
+      if (mode === 'unavailable' || mode === 'missing-image') {
+        expect(downloads).toHaveLength(0);
+        expect(await page.evaluate(() => window.openedShareLinks)).toEqual([]);
+      }
     }
-    expect(downloads).toHaveLength(0);
-    expect(await page.evaluate(() => window.openedShareLinks)).toEqual([]);
   });
 }
 
