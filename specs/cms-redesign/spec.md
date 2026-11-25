@@ -444,9 +444,11 @@ Zurück, Escape und Schließen schließen auch die Bereitschaftshülle.
 | TC-F8-02 | Alle vier Wochenwahlen, bestehende Erfassung einschließlich Mehrfachzeilen/Hinweis/Allergenen/Bildern, zeilenweises Bearbeiten und separate bestätigte Löschung bleiben erreichbar; klassischer Renderer bleibt unverändert. |
 | TC-F8-03 | Vorschau enthält fertige aktuelle CMS-Grafik in HD. Geänderte CMS-Designkonfiguration wirkt tatsächlich; PNG-Download, Druck und Waageneinstieg verwenden bestehende Abläufe. Alle Vorschauaktionen passen bei vier Zielgrößen. |
 | TC-F8-04 | Escape und Android-/Browser-Zurück schließen Vorschau/Bearbeitung ohne Verlassen des Wochenplans; kein versehentlicher Schreibzugriff bei Abbruch/Navigation/Vorschau. |
+| TC-F8-08 | Nach aufgebrauchtem CMS-Verlauf landet Zurück auf der Homepage und bleibt dort verankert: weitere Zurück-Tasten erzeugen keinen leeren Bildschirm. Verlässt der Nutzer die Homepage normal, wird die Verankerung abgebaut. |
 | TC-F8-05 | Android-Zurück schließt genau die oberste Ebene (zuerst Druckansicht, dann Dialog). Ein per Knopf geschlossener Dialog oder eine geschlossene Druckansicht hinterlässt keinen toten Verlaufseintrag; das nächste Zurück verlässt die Seite sofort. |
 | TC-F8-06 | Erzwungen langsame PNG-Erzeugung lässt die echte Browseraktivierung ablaufen. Kein Download/WhatsApp-Autostart; „Bild bereit“ auf vier Zielgrößen bedienbar. Antippen von Teilen übergibt dasselbe aktuelle HD-PNG mit frischer Aktivierung ohne erneute Bilderzeugung; Zurück/Escape/Schließen funktionieren. |
 | TC-F8-07 | Schnelles natives Teilen bleibt direkt. Native Fehler (auch synchrone), Abbruch, fehlende Unterstützung und fehlendes PNG führen nicht zu ungefragten Downloads/WhatsApp oder unbehandelten Fehlern. Fehler erlauben Wiederholung; expliziter Download ist bytegleich zum vorbereiteten Bild. |
+| TC-F8-08 | Nach aufgebrauchtem CMS-Verlauf landet Zurück auf der Homepage und bleibt dort verankert: weitere Zurück-Tasten erzeugen keinen leeren Bildschirm. Verlässt der Nutzer die Homepage normal, wird die Verankerung abgebaut. |
 
 ## Data & Contracts
 
@@ -488,4 +490,4 @@ Keine offenen Punkte, die den Plan aufhalten. Zwei Punkte sind bewusst als
 | F5 Prototyp | TC-F5-01 … TC-F5-03 | Stufe 1 | — |
 | F6 Bedienbarkeit | TC-F6-01 … TC-F6-05 | Stufe 3 | — |
 | F7 Umkehrbarkeit | TC-F7-01, TC-F7-02 | Stufe 4 | — |
-| F8 Mobiler Wochenplan nach Mockup | TC-F8-01 … TC-F8-07 | F8-Ergänzung | WP1–WP6 |
+| F8 Mobiler Wochenplan nach Mockup | TC-F8-01 … TC-F8-08 | F8-Ergänzung | WP1–WP7 |

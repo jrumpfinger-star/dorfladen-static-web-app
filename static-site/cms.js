@@ -1165,6 +1165,12 @@
         history.back();
         return;
       }
+      // Homepage-Anker (Verankerung nach CMS-Ausstieg): nicht anfassen.
+      if(e.state&&e.state.cmsHomeAnker) return;
+      // Der Verlauf liegt hinter dem CMS-Einstieg: nicht ins CMS zurueckpendeln.
+      if(!e.state||!e.state.cmsTab){
+        return;
+      }
       // Close Einzelflyer mobile overlay
       var mobRoot=document.getElementById('einzelflyer-mob-root');
       if(mobRoot){mobRoot.remove();return;}
@@ -1177,12 +1183,13 @@
         cmsTab(e.state.cmsTab,true);
         return;
       }
-      // No more tab history – navigate to homepage instead of closing
+      // Kein eigener Verlauf mehr: zur Homepage. Der Anker, der dort weiteres
+      // Zurück stoppt, vermerkt den Sprung in der Sitzung.
+      try{ sessionStorage.setItem('cms_home_anker','1'); }catch(e2){}
       if(isStandalone){
         cmsTab('wp',true);
         history.pushState({cmsTab:'wp'},'','');
       } else {
-        // In regular browser: go to homepage
         window.location.href='/';
       }
     });
@@ -4822,12 +4829,16 @@
       return;
     }
     var file=new File([blob],filename,{type:blob.type||'image/png'});
-    function ready(status){
-      showSharePreview(blob,filename,{share:{file:file,text:msg,status:status}});
+    function ready(status,native){
+      showSharePreview(blob,filename,{share:{file:file,text:msg,status:status,native:native!==false}});
     }
-    if(!navigator.share){
-      console.info('[share] navigator.share not available');
-      ready('Dieser Browser unterst\u00fctzt das Teilen von Dateien nicht. Bitte WhatsApp verwenden oder das Bild herunterladen.');
+    var canFiles=false;
+    if(navigator.share){
+      try{canFiles=!navigator.canShare||!!navigator.canShare({files:[file]});}catch(e){}
+    }
+    if(!canFiles){
+      console.info('[share] navigator.share cannot hand over files');
+      ready('Dieser Browser unterst\u00fctzt das Teilen von Dateien nicht. Bitte WhatsApp verwenden oder das Bild herunterladen.',false);
       return;
     }
     // HD-Rendering kann die transiente Browserfreigabe des ersten Antippens ueberdauern.
@@ -4836,7 +4847,7 @@
       return;
     }
     shareFile(file,msg,function(err){
-      if(err&&err.name!=='AbortError') ready('Das Teilen-Men\u00fc konnte nicht ge\u00f6ffnet werden. Bitte WhatsApp verwenden oder das Bild herunterladen.');
+      if(err&&err.name!=='AbortError') ready('Das Teilen-Men\u00fc konnte nicht ge\u00f6ffnet werden. Bitte erneut versuchen, WhatsApp verwenden oder das Bild herunterladen.');
     });
   }
   function shareFile(file,msg,done){
@@ -4848,7 +4859,17 @@
       navigator.share({text:msg,files:[file]}).then(function(){
         console.log('[share] success');
         done(null);
-      },failed);
+      },function(err){
+        // Manche Android-Browser lehnen Bild+Text ab, teilen aber das Bild allein.
+        if(err&&err.name==='AbortError'){failed(err);return;}
+        console.warn('[share] retry without text');
+        try{
+          navigator.share({files:[file]}).then(function(){
+            console.log('[share] success (files only)');
+            done(null);
+          },failed);
+        }catch(err2){failed(err2);}
+      });
     }catch(err){failed(err);}
   }
 
@@ -4872,7 +4893,7 @@
     html+='<div class="cms-modal-footer" style="justify-content:center;padding:14px 0 0;border-top:1px solid var(--line)">';
     html+='<button class="cms-btn cms-btn-gray" id="cms-share-dl">'+(modernWp?wpIcon('download'):'\u2b07\ufe0f')+' Download</button>';
     if(opts.share){
-      html+='<button class="cms-btn cms-btn-primary" id="cms-share-native"'+(!navigator.share?' disabled':'')+'>'+wpIcon('share-2')+' Teilen</button>';
+      html+='<button class="cms-btn cms-btn-primary" id="cms-share-native"'+(opts.share.native===false?' disabled':'')+'>'+wpIcon('share-2')+' Teilen</button>';
       html+='<button class="cms-btn cms-btn-gray" id="cms-share-wa">'+wpIcon('message-circle')+' WhatsApp</button>';
     }else{
       html+='<button class="cms-btn cms-btn-gray" id="cms-share-print">'+(modernWp?wpIcon('printer'):'\ud83d\udda8\ufe0f')+' Drucken</button>';

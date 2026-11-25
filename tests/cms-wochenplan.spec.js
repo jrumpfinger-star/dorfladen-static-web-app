@@ -88,7 +88,7 @@ async function setup(page, options = {}) {
   await expect(page.locator('#cms-header-logo')).toBeVisible();
   await expect.poll(() => page.locator('#cms-header-logo').evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
   if (options.complex) await expect(page.locator('.cms-wp-photo')).toBeVisible();
-  return { rows, writes, filters, design };
+  return { rows, writes, filters, design, errors, forbidden };
 }
 
 test.afterEach(async ({ page }) => {
@@ -389,6 +389,7 @@ for (const mode of ['AbortError', 'NotAllowedError', 'synchronous', 'unavailable
         if (mode === 'synchronous') throw new TypeError('unsupported file');
         return Promise.reject(new DOMException('test share rejection', mode));
       } });
+      Object.defineProperty(navigator, 'canShare', { configurable: true, value: mode === 'unavailable' ? undefined : options => options.files && options.files[0].type === 'image/png' });
       if (mode === 'missing-image') HTMLCanvasElement.prototype.toBlob = function (callback) { callback(null); };
     }, mode);
     await page.getByRole('button', { name: 'Teilen', exact: true }).click();
@@ -444,6 +445,45 @@ for (const mode of ['AbortError', 'NotAllowedError', 'synchronous', 'unavailable
     }
   });
 }
+
+test('TC-F8-08: Zurueck am Verlaufsende verankert sich auf der Homepage ohne leeren Bildschirm', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.route('**maps.googleapis.com/**', route => route.abort());
+  await page.route('**/api/track', route => route.fulfill({ status: 204 }));
+  // Realistischer Ablauf: Homepage war vorher da (Verlauf: index -> cms).
+  await page.goto(BASE + '/index.html');
+  await page.waitForTimeout(500);
+  await page.evaluate(() => { sessionStorage.setItem('cms_home_anker', '1'); location.href = '/cms.html'; });
+  await page.locator('#cms-app').waitFor({ state: 'visible' });
+  // CMS-Verlauf abarbeiten, bis die Homepage erreicht ist (max. 8 Schritte).
+  for (let i = 0; i < 8; i++) {
+    await page.goBack();
+    await page.waitForTimeout(600);
+    if (/\/(index\.html?)?$/.test(page.url())) break;
+  }
+  await expect(page).toHaveURL(/\/(index\.html?)?$/);
+  // Die Homepage ist wirklich geladen: Hero-Text steht im Dokument und das
+  // Dokument hat nennenswerten Inhalt (kein Leerbildschirm).
+  await expect(page.locator('h1').first()).toContainText('Nahversorger');
+  expect(await page.evaluate(() => document.body.innerText.trim().length)).toBeGreaterThan(100);
+  // Anker aktiv: weitere Zurück-Taste(n) bleiben auf der Homepage, statt
+  // ins CMS zurueck oder in einen leeren Bildschirm zu pendeln.
+  for (let i = 0; i < 4; i++) {
+    await page.goBack();
+    await page.waitForTimeout(500);
+    const url = page.url();
+    expect(url).not.toMatch(/cms\.html$/);
+    expect(url).not.toBe('about:blank');
+    await expect(page.locator('h1').first()).toContainText('Nahversorger');
+    expect(await page.evaluate(() => document.body.innerText.trim().length)).toBeGreaterThan(100);
+  }
+  expect(await page.evaluate(() => history.state && history.state.cmsHomeAnker)).toBe(true);
+  // Verlaesst der Nutzer die Homepage normal, wird der Anker abgebaut.
+  await page.evaluate(() => { location.href = '/impressum'; });
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => sessionStorage.getItem('cms_home_anker'))).toBe(null);
+  expect(state.errors.get(page)).toEqual([]);
+});
 
 test('TC-F8-05: Android-Zurueck schliesst genau die oberste Ebene und hinterlaesst keine toten Eintraege', { tag: '@layout' }, async ({ page }) => {
   await setup(page);

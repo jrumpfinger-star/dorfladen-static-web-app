@@ -10,6 +10,7 @@ Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
 | WP4 | WP2, WP3 | Isolierte Playwright-Abnahme auf vier Zielgrößen, Zurück, Dunkelmodus und betroffene Regressionen; visueller und gegebenenfalls Feature-Live-Nachweis. | TC-F8-01–04 |
 | WP5 | WP4 | Verlaufssteuerung in `cms.js`: genau ein Eintrag je offene Ebene (Dialog, Druckansicht), Entfernen beim Schließen per Knopf, Zurück schließt oberste Ebene zuerst, tote Einträge werden übersprungen. | TC-F8-05 |
 | WP6 | WP5; Freigabe des bedarfsweisen zweiten Antippens | Aktivierungsabhängig direkt teilen oder vorbereitete PNG in bestehender Vorschauhülle anbieten; keine automatischen Ersatzaktionen. Fehler/Abbruch unterscheiden, expliziten Download und Schließen erhalten; isoliert auf vier Zielgrößen prüfen. | TC-F8-06, TC-F8-07 |
+| WP7 | WP6 | Homepage-Verankerung: `cms.js` merkt den Ausstieg in der Sitzung an; `theme.js` verankert die Homepage mit doppeltem Zwillings-Eintrag und popstate-Erneuerung; CMS-popstate respektiert Anker-Einträge. | TC-F8-08 |
 
 ## Teilen-Korrektur: Nachweis
 
@@ -48,6 +49,31 @@ Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
   [Read-only Smoke 45581068594](https://github.com/jrumpfinger-star/dorfladen-static-web-app/actions/runs/45581068594)
   erfolgreich. Ein reales Android-Gerät wurde nicht fernbedient; die
   Browseraktivierung und Dateiübergabe wurden automatisiert geprüft.
+
+## Homepage-Verankerung: Nachweis (WP7, 25.11.2026)
+
+- Befund: Nach CMS-Ausstieg über aufgebrauchten Verlauf landete Zurück auf
+  `about:blank` (schwarzer/leerer Bildschirm), gemeldet beim ersten Zurück.
+  Reproduktion: Homepage → CMS → Zurück-Reihe; Verlaufsprotokoll zeigte
+  Verlassen des Verlaufs nach Verbrauch der Einträge.
+- Ursachen: (1) Der CMS-Ausstieg navigierte ohne Halt zur Homepage;
+  (2) der Anker auf der Homepage verbrauchte den Zwillings-Eintrag, bevor
+  der asynchrone popstate-Push wirksam war; (3) der CMS-popstate pendelte
+  beim Zurück zur Homepage wieder ins CMS zurück.
+- WP7: `cms.js` markiert den Ausstieg per Sitzungsmerkmal; `theme.js`
+  verankert nur die Homepage mit **doppeltem** Zwillings-Eintrag und erneuert
+  ihn bei jedem popstate; `pageshow` stellt den Anker nach BFCache-Rückkehr
+  wieder her; `beforeunload` baut ihn bei normalem Verlassen ab; der
+  CMS-popstate-Handler respektiert Anker-Einträge und pendelt nicht zurück.
+- **TC-F8-08:** 10× Zurück bleibt stabil auf der Homepage (Hero-Text, Inhalt,
+  Ankerzustand); normaler Verlass der Homepage entfernt das Merkmal. Vor der
+  Korrektur reproduziert (Back 3 = `about:blank`). 46/46 Wochenplan-Tests,
+  258/258 betroffene Regressionen (Angebote-Ablauf, Mockup, CMS-Neu) grün.
+- Begleitkorrekturen: `js/roterpunkt-live.js` toleriert fehlendes
+  `generated` (Altbefund nur unter Test-Attrappen sichtbar); Test-Setup gibt
+  Fehler-/Verbotskarten zurück. Der Parsefehler „Unexpected token ':'"
+  stammt vom Google-Maps-Skript unter blockiertem Netz (Testumgebung, mit
+  Netz reproduzierfrei) und wird im Anker-Test gezielt blockiert.
 
 ## Lokale Abnahme
 
