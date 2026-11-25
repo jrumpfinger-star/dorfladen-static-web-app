@@ -33,6 +33,21 @@ Grundlage: [Spec F8](./spec.md), [Plan F8-Ergänzung](./plan.md).
   Element; kein neuer Teilen-Fehler, Test unverändert.
 - Veröffentlichung der Teilen-Korrektur ausdrücklich freigegeben und auf
   die PR-15-Feature-Vorschau begrenzt; Produktion bleibt unverändert.
+- **Feature-Live-Abnahme: 42/42 Wochenplan-Tests bestanden**, einschließlich
+  der langsamen Bilderzeugung auf allen vier Zielgrößen. Alle API-Anfragen
+  abgefangen; keine echten Schreibzugriffe.
+- Der Verzögerungstest wartet außerhalb des Browsers auf das Renderereignis
+  statt auf eine feste Gesamtdauer. Dadurch verlängern schwankende
+  Live-Logo-Ladezeiten nicht versehentlich die Aktivierung durch nachfolgende
+  Playwright-Abfragen. Beide finalen Läufe mit dieser Synchronisierung:
+  lokal 45/45, live 42/42.
+- Ausgelieferte `cms.js` per SHA-256 gegen Code-Commit `6721e05a`
+  abgeglichen (UTF-8, Zeilenenden normalisiert): identisch.
+- [Deployment 45581068625](https://github.com/jrumpfinger-star/dorfladen-static-web-app/actions/runs/45581068625)
+  einschließlich isolierter Preview-Einstellungen und
+  [Read-only Smoke 45581068594](https://github.com/jrumpfinger-star/dorfladen-static-web-app/actions/runs/45581068594)
+  erfolgreich. Ein reales Android-Gerät wurde nicht fernbedient; die
+  Browseraktivierung und Dateiübergabe wurden automatisiert geprüft.
 
 ## Lokale Abnahme
 

@@ -313,6 +313,7 @@ test('TC-F8-06: langsames HD-PNG wird mit frischer Aktivierung ohne Neurendern g
       toBlob.call(this, blob => setTimeout(() => {
         window.activationAtRenderEnd = navigator.userActivation.isActive;
         callback(blob);
+        console.debug('test:wochenplan-share-rendered');
       }, 5500), ...args);
     };
     Object.defineProperty(navigator, 'share', { configurable: true, value: async data => {
@@ -329,9 +330,12 @@ test('TC-F8-06: langsames HD-PNG wird mit frischer Aktivierung ohne Neurendern g
       bitmap.close();
     } });
   });
-  await page.getByRole('button', { name: 'Teilen', exact: true }).click();
   // Browser-Abfragen waehrenddessen koennen in Playwright die Nutzeraktivierung erneuern.
-  await new Promise(resolve => setTimeout(resolve, 6500));
+  const renderEnded = page.waitForEvent('console', {
+    predicate: message => message.text() === 'test:wochenplan-share-rendered'
+  });
+  await page.getByRole('button', { name: 'Teilen', exact: true }).click();
+  await renderEnded;
   const dialog = page.getByRole('dialog', { name: 'Bild bereit', exact: true });
   await expect(dialog).toBeVisible({ timeout: 15000 });
   expect(await page.evaluate(() => window.activationAtRenderEnd)).toBe(false);
