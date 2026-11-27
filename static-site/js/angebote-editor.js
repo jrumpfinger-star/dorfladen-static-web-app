@@ -1401,8 +1401,9 @@
       + '<button type="button" data-cms-download>Als PNG speichern</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
       + '<button type="button" data-cms-print-all hidden title="Druckt jeden Einzelflyer auf einer eigenen A4-Seite">Alle Einzelflyer drucken</button>'
       + '<button type="button" data-cms-all-pages>Alle Seiten als PNG</button><button type="button" data-cms-scale title="Einzelartikel im Wechsel auf die Waage">⚖ Waage</button></div>'
-      + '<details class="an-output-more"><summary>Mehr</summary><div class="an-output-actions">'
-      + (!cmsAction ? '<button type="button" data-output-publish>Für Homepage veröffentlichen</button>' : '') + '</div></details>'
+      /* „Mehr" enthält nur die Freigabe des alten Aufgaben-Editors; in der CMS-/Kiosk-Vorschau gäbe es ein leeres Aufklappfeld. */
+      + (!cmsAction ? '<details class="an-output-more"><summary>Mehr</summary><div class="an-output-actions">'
+        + '<button type="button" data-output-publish>Für Homepage veröffentlichen</button></div></details>' : '')
       + '<p data-export-state role="status"></p><button type="button" data-output-back>Zur Gestaltung</button>';
     picture.prepend(bar);
     bar.querySelector('[data-output-target]').onchange = function () {

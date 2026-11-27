@@ -1200,7 +1200,8 @@ test('TC-F60-03/TC-F62-02: Aktionsreiter zeigen nur ihren Inhalt und behalten Zi
   await expect(page.locator('.an-cms-style-options')).toBeHidden();
   await expect(page.locator('[data-cms-download]')).toBeVisible();
   await expect(page.locator('[data-cms-print]')).toBeVisible();
-  await page.locator('.an-output-more>summary').click();
+  /* Kein leeres „Mehr": die Waage steht direkt in der Ausgabeleiste. */
+  await expect(page.locator('.an-output-more')).toHaveCount(0);
   await expect(page.locator('[data-cms-scale]')).toBeVisible();
   await expect(page.locator('[data-action-target]')).toHaveValue('card');
   await showTab(page, 'Ansicht');
@@ -1374,7 +1375,6 @@ test('TC-F66-07: Waagenvorschau liegt sichtbar und bedienbar ueber dem modalen A
   await page.goto(BASE + '/angebote.html');
   await openPreview(page, 'drinks', 1);
   await showTab(page, 'Ausgabe');
-  await page.locator('.an-output-more>summary').click();
   await page.locator('[data-cms-scale]').click();
   const overlay = page.locator('#wb-ueb');
   await expect(overlay).toBeVisible();
