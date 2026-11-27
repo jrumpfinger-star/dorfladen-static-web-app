@@ -303,6 +303,41 @@ class AngeboteTests(unittest.TestCase):
             service.homepage()
         self.assertEqual(failure.exception.status, 503)
 
+    def test_TC_WD_F3_waage_standards_roundtrip_optional_and_validated(self):
+        service = AngeboteService(MemoryStore())
+        raw = service.design()
+        saved = service.save_design(0, raw)
+        self.assertNotIn("scale_large", saved)
+        raw = copy.deepcopy(saved)
+        raw["scale_large"] = copy.deepcopy(raw["drinks"])
+        raw["scale_small"] = copy.deepcopy(raw["drinks"])
+        raw["scale_large"]["background"] = "#112233"
+        raw["scale_small"]["background"] = "#445566"
+        saved = service.save_design(saved["version"], raw)
+        self.assertEqual(service.design()["scale_large"]["background"], "#112233")
+        self.assertEqual(service.design()["scale_small"]["background"], "#445566")
+        older_client = copy.deepcopy(saved)
+        del older_client["scale_large"], older_client["scale_small"]
+        kept = service.save_design(saved["version"], older_client)
+        self.assertEqual(kept["scale_small"]["background"], "#445566")
+        bad = copy.deepcopy(kept)
+        bad["scale_small"]["background"] = "rot"
+        self.error(400, service.save_design, bad["version"], bad)
+
+    def test_TC_WD_F4_small_waage_target_is_optional_on_actions(self):
+        data = draft()
+        data["layout"]["target_styles"] = {"scale_small": {"background": "#112233"}}
+        self.assertEqual(normalize(data)["layout"]["target_styles"]["scale_small"]["background"], "#112233")
+        data["layout"]["target_styles"] = {"scale_tiny": {}}
+        self.error(400, normalize, data)
+        data = draft()
+        item_id = data["items"][0]["id"]
+        element = {"id": "a" * 32, "type": "name", "item_id": item_id, "x": 12, "y": 12, "w": 200, "h": 40}
+        data["layout"]["targets"] = {"scale_small": [{"item_id": item_id, "elements": [element]}]}
+        self.assertEqual(normalize(data)["layout"]["targets"]["scale_small"][0]["item_id"], item_id)
+        element["y"] = 300
+        self.error(400, normalize, data)
+
     def test_TC_F61_extended_palette_roles_roundtrip_and_validation(self):
         colors = {key: "#123456" for key in (
             "header_background", "header_accent", "date_color", "divider_color",

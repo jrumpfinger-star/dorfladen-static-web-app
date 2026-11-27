@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Waagen-Design unter Design</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;height:100dvh;overflow:hidden;background:var(--flaeche);color:var(--ink);font:16px/1.4 system-ui,"Segoe UI",sans-serif}
+[hidden]{display:none!important}
+h1,h2,h3,p{margin:0}
+h1,h2,h3,strong{font-weight:600}
+button,select,input{font:inherit;color:inherit}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);cursor:pointer;white-space:nowrap}
+button:hover{background:var(--gr-t);border-color:var(--gr)}
+button:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+button:disabled{opacity:.5;cursor:not-allowed}
+svg{flex:none;width:20px;height:20px;pointer-events:none}
+i[data-icon]{display:inline-flex}
+.primary{background:var(--gr-d);border-color:var(--gr-d);color:var(--karte)}
+.primary:hover{background:var(--gr);border-color:var(--gr);color:var(--karte)}
+.ghost{border-color:transparent;background:transparent}
+.danger{color:var(--red)}
+.icon-button{width:44px;padding:8px}
+select,input[type=text]{width:100%;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte)}
+input[type=color]{width:100%;min-height:44px;padding:2px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);cursor:pointer}
+input[type=range]{width:100%;min-height:44px}
+.mockup-note{min-height:24px;padding:3px 8px;text-align:center;font-size:13px;color:var(--amb);background:var(--amb-l);border-top:1px solid var(--amb-b)}
+
+/* Kopf: Bereich und Reiter */
+.top{background:var(--karte);border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.top-row h1{flex:1;min-width:0;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:480px){.top-row{gap:4px;padding:4px 8px}.top-row h1{flex:none;font-size:16px}.top-row .segments button{padding:4px 8px;font-size:14px}}
+.segments{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte)}
+.segments button{border-color:transparent;background:transparent}
+.segments button[aria-pressed=true],.segments button[aria-selected=true]{background:var(--gr-l);border-color:var(--gr);color:var(--gr-d)}
+.tabs{display:flex;gap:0;padding:0 8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+.tabs button{flex:none;border-width:0 0 3px;border-radius:0;background:transparent;color:var(--mut);font-weight:600}
+.tabs button[aria-selected=true]{border-bottom-color:var(--gr);color:var(--gr-d)}
+.tabs .new{position:relative}
+.tabs .new::after{content:"neu";margin-left:6px;padding:0 6px;border-radius:999px;background:var(--gr-l);color:var(--gr-d);font-size:11px;font-weight:600}
+
+/* Arbeitsfläche: Werkzeuge und Live-Vorschau */
+.work{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0;gap:0}
+.preview-col{order:-1;padding:8px 12px;background:var(--gr-t);border-bottom:1px solid var(--line)}
+.preview-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:13px;color:var(--mut)}
+.preview-head strong{color:var(--ink);font-size:14px}
+.stage{display:flex;justify-content:center}
+.frame{width:100%;max-width:640px;border:1px solid var(--line);border-radius:6px;overflow:hidden;box-shadow:var(--schatten-1);background:#fff}
+.tools{min-height:0;overflow:auto;padding:12px;display:grid;gap:8px;align-content:start}
+.tools-inner{display:grid;gap:8px;max-width:640px;width:100%}
+@media(min-width:900px){
+  .work{grid-template-rows:none;grid-template-columns:minmax(300px,380px) minmax(0,1fr)}
+  .tools{order:1;border-right:1px solid var(--line)}
+  .preview-col{order:2;border-bottom:0;padding:16px;overflow:auto;display:flex;flex-direction:column}
+  .stage{flex:1;align-items:flex-start}
+  .frame{max-width:none}
+}
+@media(max-width:899px){
+  .preview-col{padding:6px 12px}
+  .frame{max-width:min(100%,calc(34dvh * 800 / 462))}
+  .frame.small{max-width:min(100%,calc(34dvh * 800 / 280))}
+}
+
+/* Gruppen */
+details.group{border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte)}
+details.group>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 12px;font-weight:600;cursor:pointer;list-style:none}
+details.group>summary::-webkit-details-marker{display:none}
+details.group>summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg);transition:transform .15s}
+details.group[open]>summary::after{transform:rotate(-135deg)}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 12px;padding:4px 12px 12px}
+.field{display:grid;gap:2px;font-size:14px}
+.field>span{color:var(--mut);font-size:13px}
+.field.wide{grid-column:1/-1}
+.inline{display:flex;gap:8px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.status{min-height:22px;font-size:14px;color:var(--mut)}
+.status.dirty{color:var(--amb);font-weight:600}
+.panel-empty{padding:24px 16px;color:var(--mut);max-width:560px}
+
+/* Waagenmotiv: 1 Einheit = 1 Pixel des 800er Bildes */
+.motif{--u:.125cqw;container-type:inline-size;position:relative;width:100%;overflow:hidden;font-family:var(--mfont,Arial),sans-serif;background:var(--m-bg);color:var(--m-text)}
+.motif[data-profile=large]{aspect-ratio:800/462}
+.motif[data-profile=small]{aspect-ratio:800/280}
+.m-top{display:flex;align-items:center;justify-content:space-between;height:calc(var(--u)*56);padding:0 calc(var(--u)*24);background:var(--m-title);color:var(--m-titletx)}
+.m-top b{font-size:calc(var(--u)*30);font-weight:900}
+.m-top span{font-size:calc(var(--u)*20);font-weight:700}
+.m-body{position:relative;display:grid;grid-template-columns:calc(var(--u)*300) 1fr calc(var(--u)*220);gap:calc(var(--u)*20);align-items:center;padding:calc(var(--u)*24);height:calc(100% - var(--u)*56)}
+.m-img{height:calc(var(--u)*300);border:calc(var(--u)*2) dashed color-mix(in srgb,var(--m-text) 35%,transparent);border-radius:calc(var(--u)*10);display:flex;align-items:center;justify-content:center;font-size:calc(var(--u)*20);opacity:.7}
+.m-text h2{font-size:calc(var(--u)*40);line-height:1.1;font-weight:900;color:var(--m-text)}
+.m-text p{margin-top:calc(var(--u)*8);font-size:calc(var(--u)*24)}
+.m-price{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*8);position:relative}
+.m-tag{display:flex;align-items:center;justify-content:center;min-width:calc(var(--u)*200);height:calc(var(--u)*110);padding:0 calc(var(--u)*16);background:var(--m-tag);color:var(--m-tagtx);font-size:calc(var(--u)*60);font-weight:900;transform:rotate(-3deg);border:calc(var(--u)*3) solid var(--m-tag)}
+.m-tag small{font-size:calc(var(--u)*28);margin-left:calc(var(--u)*4);align-self:flex-start;padding-top:calc(var(--u)*16)}
+.m-tag[data-shape=rect]{border-radius:0}
+.m-tag[data-shape=round]{border-radius:calc(var(--u)*18)}
+.m-tag[data-shape=pill]{border-radius:999px}
+.m-tag[data-shape=ellipse]{border-radius:50%}
+.m-tag[data-shape=banner]{border-radius:0;clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%)}
+.m-old{font-size:calc(var(--u)*24);text-decoration:line-through;text-decoration-color:var(--m-tag);text-decoration-thickness:calc(var(--u)*3)}
+.m-mark{z-index:1;position:absolute;top:calc(var(--u)*-34);left:calc(var(--u)*-52);display:flex;align-items:center;justify-content:center;width:calc(var(--u)*92);height:calc(var(--u)*92);background:var(--m-mark);color:#fff;font-size:calc(var(--u)*26);font-weight:900}
+.m-mark[data-type=starburst]{clip-path:polygon(50% 0,61% 14%,79% 8%,80% 27%,98% 31%,88% 48%,98% 65%,80% 70%,79% 90%,61% 85%,50% 100%,39% 85%,21% 90%,20% 70%,2% 65%,12% 48%,2% 31%,20% 27%,21% 8%,39% 14%)}
+.m-mark[data-type=badge]{border-radius:50%}
+.m-mark[data-type=pill]{border-radius:999px;width:calc(var(--u)*110);height:calc(var(--u)*52);top:calc(var(--u)*-8)}
+.motif[data-profile=small] .m-top{height:calc(var(--u)*40)}
+.motif[data-profile=small] .m-top b{font-size:calc(var(--u)*24)}
+.motif[data-profile=small] .m-top span{font-size:calc(var(--u)*16)}
+.motif[data-profile=small] .m-body{grid-template-columns:calc(var(--u)*150) 1fr calc(var(--u)*190);gap:calc(var(--u)*14);padding:calc(var(--u)*14) calc(var(--u)*24);height:calc(100% - var(--u)*40)}
+.motif[data-profile=small] .m-img{height:calc(var(--u)*190);font-size:calc(var(--u)*14)}
+.motif[data-profile=small] .m-text h2{font-size:calc(var(--u)*32)}
+.motif[data-profile=small] .m-text p{font-size:calc(var(--u)*18);margin-top:calc(var(--u)*4)}
+.motif[data-profile=small] .m-tag{min-width:calc(var(--u)*170);height:calc(var(--u)*84);font-size:calc(var(--u)*46)}
+.motif[data-profile=small] .m-tag small{font-size:calc(var(--u)*22);padding-top:calc(var(--u)*10)}
+.motif[data-profile=small] .m-old{font-size:calc(var(--u)*18)}
+.motif[data-profile=small] .m-mark{width:calc(var(--u)*70);height:calc(var(--u)*70);font-size:calc(var(--u)*20);top:calc(var(--u)*-22);left:calc(var(--u)*-40)}
+
+/* Wochenplan-Waage */
+.wp{--u:.125cqw;container-type:inline-size;width:100%;overflow:hidden;font-family:var(--mfont,Arial),sans-serif;background:var(--w-bg);color:var(--w-dish);position:relative}
+.wp[data-profile=large]{aspect-ratio:800/462}
+.wp[data-profile=small]{aspect-ratio:800/280}
+.wp-top{display:flex;align-items:baseline;justify-content:space-between;padding:0 calc(var(--u)*16);height:calc(var(--u)*64);font-weight:900}
+.wp-top b{font-size:calc(var(--u)*30)}
+.wp-top span{font-size:calc(var(--u)*17);font-weight:700}
+.wp[data-profile=small] .wp-top{height:calc(var(--u)*44)}
+.wp[data-profile=small] .wp-top b{font-size:calc(var(--u)*22)}
+.wp-rows{display:grid;margin:0 calc(var(--u)*8)}
+.wp-row{display:grid;grid-template-columns:calc(var(--u)*164) 1fr auto;gap:calc(var(--u)*8);align-items:center;padding:0 calc(var(--u)*8);font-size:calc(var(--u)*var(--wfs,28));font-weight:600}
+.wp-row:nth-child(odd){background:var(--w-stripe)}
+.wp-row b{font-size:min(calc(var(--u)*21),calc(var(--u)*var(--wfs,28)));color:var(--w-day)}
+.wp-row em{font-style:normal;font-weight:900;color:var(--w-price)}
+.wp-hint{padding:8px 12px;margin-top:6px;border:1px solid var(--amb-b);border-radius:var(--r-s);background:var(--amb-l);color:var(--amb);font-size:14px}
+
+/* Dialoge */
+dialog{max-width:min(460px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 48px);padding:0;border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);color:var(--ink);box-shadow:var(--schatten-2)}
+dialog::backdrop{background:rgba(16,40,28,.25)}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.dialog-head h2{font-size:18px}
+.dialog-body{padding:16px;overflow:auto}
+.dialog-foot{display:flex;justify-content:flex-end;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+#notice{position:fixed;left:12px;right:12px;bottom:36px;margin:auto;max-width:480px;padding:12px;background:var(--ink);color:var(--karte);border-radius:var(--r-s);box-shadow:var(--schatten-2);z-index:5}
+.notes table{border-collapse:collapse;width:100%;font-size:14px}
+.notes td,.notes th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+
+@media(min-width:600px) and (pointer:fine){
+  button,select,input[type=text],input[type=color]{min-height:32px;height:32px;padding-block:3px}
+  button{min-width:32px}
+  .icon-button{width:32px}
+  details.group>summary{min-height:36px}
+  input[type=range]{min-height:32px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>Design</h1>
+    <div class="segments" role="group" aria-label="Designbereich">
+      <button data-area="flyer" aria-pressed="true">Plakate &amp; Flyer</button>
+      <button data-area="wp" aria-pressed="false">Wochenplan</button>
+    </div>
+    <button class="icon-button ghost" id="theme" aria-label="Hell/Dunkel wechseln" title="Hell/Dunkel wechseln"><i data-icon="moon"></i></button>
+  </div>
+  <div class="tabs" role="tablist" id="tabs" aria-label="Designabschnitt"></div>
+</header>
+<main class="work" id="work" aria-live="polite"></main>
+<div class="mockup-note">Mockup · nur lokale Beispieldaten, keine echten Schreibzugriffe, keine Übertragung an die Waage</div>
+<div id="notice" role="status" hidden></div>
+<dialog id="confirm" aria-labelledby="c-title">
+  <header class="dialog-head"><h2 id="c-title"></h2><button class="icon-button ghost" data-no aria-label="Dialog schließen" title="Dialog schließen"><i data-icon="x"></i></button></header>
+  <div class="dialog-body"><p id="c-text"></p></div>
+  <footer class="dialog-foot"><button data-no>Abbrechen</button><button class="primary" id="c-yes">Bestätigen</button></footer>
+</dialog>
+<dialog id="notes" aria-labelledby="n-title">
+  <header class="dialog-head"><h2 id="n-title">Entwurfsnotizen</h2><button class="icon-button ghost" data-no aria-label="Dialog schließen" title="Dialog schließen"><i data-icon="x"></i></button></header>
+  <div class="dialog-body notes">
+    <table>
+      <thead><tr><th>Bisher</th><th>Entwurf</th></tr></thead>
+      <tbody>
+        <tr><td>Design: Plakat, Einzelflyer, Getränkeflyer, Gemeinsam</td><td>Unverändert. Dazu kommen die Reiter „Waage groß“ und „Waage klein“.</td></tr>
+        <tr><td>Waagenmotiv nur im Aktions-Editor gestaltbar</td><td>Standard je Profil unter Design; neue Aktionen starten damit, bestehende bleiben.</td></tr>
+        <tr><td>Wochenplan-Bild für die Waage nutzt Homepage-/Flyer-Farben</td><td>Eigener Abschnitt unter Design → Wochenplan mit Farben, Schriftgröße, Schriftart je Profil.</td></tr>
+        <tr><td>Vorschau auf dem Handy: Reiter oder Umschalter</td><td>Vorschau bleibt oben stehen, Einstellungen scrollen darunter. Dadurch ist jede Änderung sofort sichtbar.</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:8px;font-size:14px;color:var(--mut)">Plakat, Einzelflyer, Getränkeflyer und Gemeinsame Einstellungen sind nicht Teil dieses Mockups.</p>
+  </div>
+  <footer class="dialog-foot"><button class="primary" data-no>Schließen</button></footer>
+</dialog>
+<script>
+(function () {
+  'use strict';
+  var ICONS = {
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.1-14.1 1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/>',
+    download: '<path d="M12 15V3m0 12-4-4m4 4 4-4M2 17l.6 3a2 2 0 0 0 2 1.7h14.8a2 2 0 0 0 2-1.7l.6-3"/>',
+    undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+    plus: '<path d="M5 12h14M12 5v14"/>',
+    trash: '<path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
+  };
+  function svg(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[name] + '</svg>'; }
+  function paint(root) { (root || document).querySelectorAll('i[data-icon]').forEach(function (n) { n.innerHTML = svg(n.dataset.icon); }); }
+  function esc(v) { return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+
+  var TEMPLATES = {
+    land: { name: 'Landhaus', bg: '#fffdf6', title: '#234c38', titletx: '#ffffff', text: '#1d2a22', tag: '#bb421e', tagtx: '#ffffff', markc: '#234c38' },
+    klassisch: { name: 'Klassisch Rot', bg: '#ffffff', title: '#a51d2d', titletx: '#ffffff', text: '#1a1a1a', tag: '#a51d2d', tagtx: '#ffffff', markc: '#f59e0b' },
+    dunkel: { name: 'Dunkel', bg: '#1b2228', title: '#2e7d4f', titletx: '#ffffff', text: '#f3f6f4', tag: '#f0b429', tagtx: '#1b2228', markc: '#f08a80' }
+  };
+  var PRICE_PRESETS = { rot: ['#bb421e', '#ffffff'], gruen: ['#2e7d4f', '#ffffff'], gold: ['#f0b429', '#1b2228'], dunkel: ['#1b2228', '#ffffff'] };
+  var FONTS = ['Arial', 'Georgia', 'Verdana', 'Trebuchet MS'];
+  var SHAPES = [['rect', 'Rechteck'], ['round', 'Abgerundet'], ['pill', 'Kapsel'], ['ellipse', 'Oval'], ['banner', 'Fahne']];
+  var MARKS = [['starburst', 'Stern'], ['badge', 'Kreis'], ['pill', 'Kapsel'], ['off', 'Ohne Marker']];
+  function base(tpl, size) { return Object.assign({ template: tpl, font: 'Arial', shape: 'rect', mark: 'starburst', size: size }, clone(TEMPLATES[tpl])); }
+  var WP_DEFAULT = { bg: '#ffffff', stripe: '#f3f4f6', dish: '#1a1a1a', day: '#1a1a1a', price: '#a51d2d', fs: 28, font: 'Arial' };
+
+  var S = {
+    area: 'flyer', tab: 'waage-gross', wpTab: 'wp-gross', presets: [], notes: false,
+    scale: { large: { saved: base('land'), cur: base('land') }, small: { saved: base('land'), cur: base('land') } },
+    wp: { large: { saved: clone(WP_DEFAULT), cur: clone(WP_DEFAULT) }, small: { saved: Object.assign(clone(WP_DEFAULT), { fs: 22 }), cur: Object.assign(clone(WP_DEFAULT), { fs: 22 }) } }
+  };
+  var OTHER = { plakat: 'Plakat', einzelflyer: 'Einzelflyer', getraenke: 'Getränkeflyer', gemeinsam: 'Gemeinsame Einstellungen' };
+  var FLYER_TABS = [['plakat', 'Plakat'], ['einzelflyer', 'Einzelflyer'], ['getraenke', 'Getränkeflyer'], ['waage-gross', 'Waage groß'], ['waage-klein', 'Waage klein'], ['gemeinsam', 'Gemeinsame Einstellungen']];
+  var WP_TABS = [['wp-home', 'Homepage'], ['wp-flyer', 'Flyer / Druck'], ['wp-gross', 'Waage groß'], ['wp-klein', 'Waage klein']];
+
+  var work = document.getElementById('work'), tabs = document.getElementById('tabs'), timer;
+  function message(text) {
+    clearTimeout(timer);
+    var n = document.getElementById('notice'); n.textContent = text; n.hidden = false;
+    timer = setTimeout(function () { n.hidden = true; }, 3500);
+  }
+  function ask(title, text, yes) {
+    return new Promise(function (resolve) {
+      var d = document.getElementById('confirm');
+      document.getElementById('c-title').textContent = title;
+      document.getElementById('c-text').textContent = text;
+      document.getElementById('c-yes').textContent = yes || 'Bestätigen';
+      function done(v) { d.removeEventListener('close', onClose); resolve(v); }
+      function onClose() { done(d.returnValue === 'yes'); }
+      d.addEventListener('close', onClose);
+      d.returnValue = ''; d.showModal();
+    });
+  }
+  document.getElementById('c-yes').addEventListener('click', function () { var d = document.getElementById('confirm'); d.returnValue = 'yes'; d.close('yes'); });
+  document.querySelectorAll('[data-no]').forEach(function (b) { b.addEventListener('click', function () { b.closest('dialog').close('no'); }); });
+
+  function profileOf(tab) { return tab === 'waage-gross' || tab === 'wp-gross' ? 'large' : 'small'; }
+  function dirty(entry) { return JSON.stringify(entry.cur) !== JSON.stringify(entry.saved); }
+
+  function renderTabs() {
+    var list = S.area === 'flyer' ? FLYER_TABS : WP_TABS, active = S.area === 'flyer' ? S.tab : S.wpTab;
+    tabs.innerHTML = list.map(function (t) {
+      var fresh = /waage|gross|klein/.test(t[0]) && (S.area === 'flyer' ? /waage/.test(t[0]) : /wp-(gross|klein)/.test(t[0]));
+      return '<button role="tab" data-tab="' + t[0] + '" aria-selected="' + (t[0] === active) + '"' + (fresh ? ' class="new"' : '') + '>' + esc(t[1]) + '</button>';
+    }).join('');
+    var sel = tabs.querySelector('[aria-selected=true]'); if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  function motifVars(c) {
+    return '--m-bg:' + c.bg + ';--m-title:' + c.title + ';--m-titletx:' + c.titletx + ';--m-text:' + c.text + ';--m-tag:' + c.tag + ';--m-tagtx:' + c.tagtx + ';--m-mark:' + c.markc + ';--mfont:' + c.font;
+  }
+  function motifHtml(c, profile) {
+    var item = profile === 'large' ? ['Feiner Zucker', 'Packung 1 kg · gemahlen', '0', '99', '1,29 €', '−23 %'] : ['Feiner Zucker', 'Packung 1 kg', '0', '99', '1,29 €', '−23 %'];
+    return '<div class="motif" data-profile="' + profile + '" style="' + motifVars(c) + '" role="img" aria-label="Vorschau Waagenmotiv ' + (profile === 'large' ? '800 mal 462' : '800 mal 280') + '">'
+      + '<div class="m-top"><b>Sonderangebote</b><span>23.–28.11.</span></div>'
+      + '<div class="m-body"><div class="m-img">Produktbild</div><div class="m-text"><h2>' + item[0] + '</h2><p>' + item[1] + '</p></div>'
+      + '<div class="m-price">' + (c.mark !== 'off' ? '<div class="m-mark" data-type="' + c.mark + '">' + item[5] + '</div>' : '')
+      + '<div class="m-tag" data-shape="' + c.shape + '">' + item[2] + ',<small>' + item[3] + '</small></div><div class="m-old">statt ' + item[4] + '</div></div></div></div>';
+  }
+
+  function field(label, control, cls) { return '<label class="field ' + (cls || '') + '"><span>' + label + '</span>' + control + '</label>'; }
+  function opts(list, value) { return list.map(function (o) { var v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o; return '<option value="' + v + '"' + (v === value ? ' selected' : '') + '>' + esc(l) + '</option>'; }).join(''); }
+
+  function renderScale() {
+    var profile = profileOf(S.tab), entry = S.scale[profile], c = entry.cur, size = profile === 'large' ? '800 × 462' : '800 × 280';
+    var preset = Object.keys(PRICE_PRESETS).filter(function (k) { return PRICE_PRESETS[k][0] === c.tag && PRICE_PRESETS[k][1] === c.tagtx; })[0] || '';
+    work.innerHTML =
+      '<div class="tools"><div class="tools-inner">'
+      + '<details class="group" open><summary>Vorlage</summary><div class="fields">'
+      +   field('Vorlage als Startpunkt', '<select data-f="template">' + opts(Object.keys(TEMPLATES).map(function (k) { return [k, TEMPLATES[k].name]; }), c.template) + '</select>', 'wide') + '</div></details>'
+      + '<details class="group" open><summary>Farben</summary><div class="fields">'
+      +   field('Hintergrund', '<input type="color" data-f="bg" value="' + c.bg + '">')
+      +   field('Kopfzeile', '<input type="color" data-f="title" value="' + c.title + '">')
+      +   field('Text', '<input type="color" data-f="text" value="' + c.text + '">') + '</div></details>'
+      + '<details class="group"><summary>Schrift</summary><div class="fields">'
+      +   field('Schriftart', '<select data-f="font">' + opts(FONTS, c.font) + '</select>', 'wide') + '</div></details>'
+      + '<details class="group"><summary>Preisschild</summary><div class="fields">'
+      +   field('Farbvorgabe', '<select data-preset-price><option value="">Manuell</option><option value="rot"' + (preset === 'rot' ? ' selected' : '') + '>Classic Rot</option><option value="gruen"' + (preset === 'gruen' ? ' selected' : '') + '>Naturgrün</option><option value="gold"' + (preset === 'gold' ? ' selected' : '') + '>Gold</option><option value="dunkel"' + (preset === 'dunkel' ? ' selected' : '') + '>Dunkel</option></select>', 'wide')
+      +   field('Form', '<select data-f="shape">' + opts(SHAPES, c.shape) + '</select>')
+      +   field('Preisfarbe', '<input type="color" data-f="tag" value="' + c.tag + '">')
+      +   field('Preistext', '<input type="color" data-f="tagtx" value="' + c.tagtx + '">') + '</div></details>'
+      + '<details class="group"><summary>Sparmarker</summary><div class="fields">'
+      +   field('Marker', '<select data-f="mark">' + opts(MARKS, c.mark) + '</select>')
+      +   field('Markerfarbe', '<input type="color" data-f="markc" value="' + c.markc + '"' + (c.mark === 'off' ? ' disabled' : '') + '>') + '</div></details>'
+      + '<details class="group"><summary>Eigene Designvorlagen</summary><div class="fields">'
+      +   field('Vorlagenname', '<input type="text" data-preset-name maxlength="80">', 'wide')
+      +   '<div class="actions wide"><button data-preset-add><i data-icon="plus"></i>Vorlage anlegen</button></div>'
+      +   field('Eigene Vorlage', '<select data-preset-select><option value="">Wählen …</option>' + S.presets.map(function (p, i) { return '<option value="' + i + '">' + esc(p.name) + '</option>'; }).join('') + '</select>', 'wide')
+      +   '<div class="actions wide"><button data-preset-load>Vorlage laden</button><button class="danger" data-preset-delete><i data-icon="trash"></i>Löschen</button></div></div></details>'
+      + '<div class="actions"><button class="primary" data-save><i data-icon="save"></i>Standard speichern</button><button data-load-standard><i data-icon="download"></i>Standard laden</button><button data-discard><i data-icon="undo"></i>Verwerfen</button></div>'
+      + '<p class="status' + (dirty(entry) ? ' dirty' : '') + '" role="status" data-status>' + (dirty(entry) ? 'Geändert · noch nicht gespeichert' : 'Gespeichert · gilt für neue Aktionen') + '</p>'
+      + '<p class="status">Speichern ersetzt den Startstandard für neue Wochen- und Getränkeaktionen im Profil „Waage ' + (profile === 'large' ? 'groß' : 'klein') + '“. Bestehende Aktionen bleiben unverändert; sie übernehmen den Standard nur über „Designstandards übernehmen“.</p>'
+      + '<div class="actions"><button data-notes><i data-icon="info"></i>Entwurfsnotizen</button></div>'
+      + '</div></div>'
+      + '<section class="preview-col" aria-label="Live-Vorschau"><div class="preview-head"><strong>Live-Vorschau · Waage ' + (profile === 'large' ? 'groß' : 'klein') + '</strong><span>' + size + ' px · Beispielartikel</span></div>'
+      + '<div class="stage"><div class="frame ' + profile + '" data-preview>' + motifHtml(c, profile) + '</div></div></section>';
+    paint(work);
+  }
+
+  function wpRows(profile, fs) {
+    var rows = [['Montag', 'Hähnchenbrust mit Reis und Gemüse', '7,90 €'], ['Dienstag', 'Spaghetti Bolognese', '6,90 €'], ['Mittwoch', 'Schweinebraten mit Kruste, Knödel und Krautsalat', '8,50 €'], ['Donnerstag', 'Gemüsecurry mit Basmatireis', '7,50 €'], ['Freitag', 'Fischfilet mit Kartoffelsalat', '8,90 €']];
+    var H = profile === 'large' ? 462 : 280, hh = profile === 'large' ? 64 : 44, avail = H - hh - 12, total = 0;
+    rows.forEach(function (r) { var lines = Math.max(1, Math.ceil(r[1].length * fs * .55 / 496)); total += Math.max(fs + 10, lines * (fs + 4) + 8); });
+    return { rows: rows, fits: total <= avail };
+  }
+  function wpHtml(c, profile) {
+    var w = wpRows(profile, c.fs), vars = '--w-bg:' + c.bg + ';--w-stripe:' + c.stripe + ';--w-dish:' + c.dish + ';--w-day:' + c.day + ';--w-price:' + c.price + ';--wfs:' + c.fs + ';--mfont:' + c.font;
+    return { fits: w.fits, html: '<div class="wp" data-profile="' + profile + '" style="' + vars + '" role="img" aria-label="Vorschau Wochenplan auf der Waage"><div class="wp-top"><b>Mittagstisch</b><span>KW 48 · 23.11. – 27.11.</span></div><div class="wp-rows">'
+      + w.rows.map(function (r) { return '<div class="wp-row"><b>' + r[0] + '</b><span>' + esc(r[1]) + '</span><em>' + r[2] + '</em></div>'; }).join('') + '</div></div>' };
+  }
+  function renderWp() {
+    if (S.wpTab === 'wp-home' || S.wpTab === 'wp-flyer') {
+      work.innerHTML = '<div class="tools"><p class="panel-empty">Dieser Abschnitt ist unverändert und nicht Teil des Mockups. Der Wochenplan für die Waage steht in den neuen Reitern „Waage groß“ und „Waage klein“.</p></div><section class="preview-col" aria-hidden="true"></section>';
+      return;
+    }
+    var profile = profileOf(S.wpTab), entry = S.wp[profile], c = entry.cur, view = wpHtml(c, profile), size = profile === 'large' ? '800 × 462' : '800 × 280';
+    work.innerHTML =
+      '<div class="tools"><div class="tools-inner">'
+      + '<details class="group" open><summary>Farben</summary><div class="fields">'
+      +   field('Hintergrund', '<input type="color" data-w="bg" value="' + c.bg + '">')
+      +   field('Streifen', '<input type="color" data-w="stripe" value="' + c.stripe + '">')
+      +   field('Gericht', '<input type="color" data-w="dish" value="' + c.dish + '">')
+      +   field('Wochentag', '<input type="color" data-w="day" value="' + c.day + '">')
+      +   field('Preis', '<input type="color" data-w="price" value="' + c.price + '">') + '</div></details>'
+      + '<details class="group" open><summary>Schrift</summary><div class="fields">'
+      +   field('Schriftart', '<select data-w="font">' + opts(FONTS, c.font) + '</select>', 'wide')
+      +   field('Schriftgröße · <b data-fs>' + c.fs + '</b> px', '<input type="range" data-w="fs" min="16" max="34" step="1" value="' + c.fs + '">', 'wide') + '</div></details>'
+      + '<div class="actions"><button class="primary" data-save><i data-icon="save"></i>Standard speichern</button><button data-load-standard><i data-icon="download"></i>Standard laden</button><button data-discard><i data-icon="undo"></i>Verwerfen</button></div>'
+      + '<p class="status' + (dirty(entry) ? ' dirty' : '') + '" role="status" data-status>' + (dirty(entry) ? 'Geändert · noch nicht gespeichert' : 'Gespeichert · ohne Einstellung bleibt das Bild wie bisher') + '</p>'
+      + '<p class="status">Der Dialog „Auf die Waage“ (Vollbild/Dauerwerbung, Profil, Übertragen) bleibt unverändert.</p>'
+      + '<div class="actions"><button data-notes><i data-icon="info"></i>Entwurfsnotizen</button></div>'
+      + '</div></div>'
+      + '<section class="preview-col" aria-label="Live-Vorschau"><div class="preview-head"><strong>Live-Vorschau · Wochenplan Waage ' + (profile === 'large' ? 'groß' : 'klein') + '</strong><span>' + size + ' px</span></div>'
+      + '<div class="stage"><div class="frame ' + profile + '" data-preview>' + view.html + '</div></div>'
+      + '<p class="wp-hint" data-hint' + (view.fits ? ' hidden' : '') + ' role="alert">Die ganze Woche passt in dieser Schriftgröße nicht lesbar auf die Fläche. Bitte die Schrift verkleinern oder das größere Profil wählen.</p></section>';
+    paint(work);
+  }
+  function render() {
+    renderTabs();
+    if (S.area === 'flyer') {
+      if (S.tab === 'waage-gross' || S.tab === 'waage-klein') renderScale();
+      else { work.innerHTML = '<div class="tools"><p class="panel-empty"><strong>' + esc(OTHER[S.tab]) + '</strong><br>Dieser Abschnitt ist unverändert und nicht Teil des Mockups.</p></div><section class="preview-col" aria-hidden="true"></section>'; }
+    } else renderWp();
+  }
+  function refreshScale() {
+    var profile = profileOf(S.tab), entry = S.scale[profile];
+    work.querySelector('[data-preview]').innerHTML = motifHtml(entry.cur, profile);
+    var st = work.querySelector('[data-status]'); st.className = 'status' + (dirty(entry) ? ' dirty' : '');
+    st.textContent = dirty(entry) ? 'Geändert · noch nicht gespeichert' : 'Gespeichert · gilt für neue Aktionen';
+  }
+  function refreshWp() {
+    var profile = profileOf(S.wpTab), entry = S.wp[profile], v = wpHtml(entry.cur, profile);
+    work.querySelector('[data-preview]').innerHTML = v.html;
+    work.querySelector('[data-hint]').hidden = v.fits;
+    var fs = work.querySelector('[data-fs]'); if (fs) fs.textContent = entry.cur.fs;
+    var st = work.querySelector('[data-status]'); st.className = 'status' + (dirty(entry) ? ' dirty' : '');
+    st.textContent = dirty(entry) ? 'Geändert · noch nicht gespeichert' : 'Gespeichert · ohne Einstellung bleibt das Bild wie bisher';
+  }
+  function currentEntry() { return S.area === 'flyer' ? S.scale[profileOf(S.tab)] : S.wp[profileOf(S.wpTab)]; }
+
+  document.querySelectorAll('[data-area]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      S.area = b.dataset.area;
+      document.querySelectorAll('[data-area]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      render();
+    });
+  });
+  tabs.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tab]'); if (!b) return;
+    if (S.area === 'flyer') S.tab = b.dataset.tab; else S.wpTab = b.dataset.tab;
+    render();
+  });
+  document.getElementById('theme').addEventListener('click', function () {
+    var root = document.documentElement, dark = root.dataset.theme !== 'dark';
+    root.dataset.theme = dark ? 'dark' : 'light';
+    this.querySelector('i').innerHTML = svg(dark ? 'sun' : 'moon');
+  });
+
+  work.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset.w) { var e1 = currentEntry(); e1.cur[t.dataset.w] = t.dataset.w === 'fs' ? Number(t.value) : t.value; refreshWp(); return; }
+    if (t.dataset.f && t.type === 'color') {
+      var c = currentEntry().cur; c[t.dataset.f] = t.value;
+      if (['tag', 'tagtx'].indexOf(t.dataset.f) >= 0) { var p = work.querySelector('[data-preset-price]'); if (p) p.value = ''; }
+      refreshScale();
+    }
+  });
+  work.addEventListener('change', async function (e) {
+    var t = e.target, entry = currentEntry();
+    if (t.dataset.w) { entry.cur[t.dataset.w] = t.dataset.w === 'fs' ? Number(t.value) : t.value; refreshWp(); return; }
+    if (t.dataset.f === 'template') {
+      var next = t.value;
+      if (dirty(entry) && !(await ask('Vorlage ersetzen?', 'Die Vorlage „' + TEMPLATES[next].name + '“ ersetzt die Farben dieser Vorschau. Gespeichert wird erst mit „Standard speichern“.', 'Vorlage anwenden'))) { renderScale(); return; }
+      var keep = { font: entry.cur.font, shape: entry.cur.shape, mark: entry.cur.mark };
+      entry.cur = Object.assign(base(next), keep);
+      renderScale(); return;
+    }
+    if (t.dataset.f && t.tagName === 'SELECT') {
+      entry.cur[t.dataset.f] = t.value;
+      if (t.dataset.f === 'mark') renderScale(); else refreshScale();
+      return;
+    }
+    if (t.matches('[data-preset-price]') && t.value) { entry.cur.tag = PRICE_PRESETS[t.value][0]; entry.cur.tagtx = PRICE_PRESETS[t.value][1]; renderScale(); }
+  });
+  work.addEventListener('click', async function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var entry = currentEntry(), isWp = S.area === 'wp', name = isWp ? 'Wochenplan Waage' : 'Waage';
+    var profile = isWp ? profileOf(S.wpTab) : profileOf(S.tab), label = profile === 'large' ? 'groß' : 'klein';
+    if (b.matches('[data-notes]')) { document.getElementById('notes').showModal(); return; }
+    if (b.matches('[data-save]')) {
+      entry.saved = clone(entry.cur); isWp ? renderWp() : renderScale();
+      message(name + ' ' + label + ' gespeichert (Beispiel – nichts wurde geschrieben).'); return;
+    }
+    if (b.matches('[data-discard]')) {
+      if (!dirty(entry)) { message('Keine ungespeicherten Änderungen.'); return; }
+      if (!(await ask('Änderungen verwerfen?', 'Die ungespeicherte Gestaltung für ' + name + ' ' + label + ' wird verworfen.', 'Änderungen verwerfen'))) return;
+      entry.cur = clone(entry.saved); isWp ? renderWp() : renderScale(); return;
+    }
+    if (b.matches('[data-load-standard]')) {
+      if (dirty(entry) && !(await ask('Standard laden?', 'Die ungespeicherte Gestaltung wird durch den gespeicherten Standard für ' + name + ' ' + label + ' ersetzt. Andere Profile und bestehende Aktionen bleiben unverändert.', 'Standard laden'))) return;
+      entry.cur = clone(entry.saved); isWp ? renderWp() : renderScale(); return;
+    }
+    if (b.matches('[data-preset-add]')) {
+      var nm = work.querySelector('[data-preset-name]').value.trim();
+      if (!nm) { await ask('Vorlagenname fehlt', 'Bitte einen Namen für die eigene Designvorlage eingeben.', 'OK'); return; }
+      var idx = S.presets.findIndex(function (p) { return p.name === nm; });
+      if (idx >= 0 && !(await ask('Vorlage ersetzen?', 'Die eigene Vorlage „' + nm + '“ wird durch die aktuelle Gestaltung ersetzt.', 'Vorlage ersetzen'))) return;
+      var p = { name: nm, design: clone(entry.cur) }; if (idx >= 0) S.presets[idx] = p; else S.presets.push(p);
+      renderScale(); message('Vorlage „' + nm + '“ angelegt (Beispiel).'); return;
+    }
+    if (b.matches('[data-preset-load],[data-preset-delete]')) {
+      var v = work.querySelector('[data-preset-select]').value;
+      if (v === '') { await ask('Vorlage auswählen', 'Bitte zuerst eine eigene Designvorlage auswählen.', 'OK'); return; }
+      var pr = S.presets[Number(v)];
+      if (b.matches('[data-preset-delete]')) {
+        if (!(await ask('Vorlage löschen?', 'Die eigene Vorlage „' + pr.name + '“ wird aus der Liste entfernt.', 'Vorlage löschen'))) return;
+        S.presets.splice(Number(v), 1);
+      } else if (!(dirty(entry) && !(await ask('Vorlage laden?', 'Die ungespeicherte Gestaltung wird durch „' + pr.name + '“ ersetzt.', 'Vorlage laden')))) entry.cur = clone(pr.design);
+      renderScale();
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.querySelectorAll('dialog[open]').forEach(function (d) { d.close('no'); });
+  });
+  paint();
+  render();
+})();
+</script>
+</body>
+</html>

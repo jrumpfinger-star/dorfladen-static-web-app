@@ -1989,7 +1989,12 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <div class="cfg-section-nav" style="display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:16px;flex-wrap:wrap">
         <button class="cfg-section-btn active" data-action="wpCfgSection" data-id="wp-sec-home" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--c-m-pri);margin-bottom:-2px;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:.3px">&#127968; Homepage-Layout</button>
         <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-flyer" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#128196; Flyer / Druck</button>
+        <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-waage-large" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">Waage gro&szlig;</button>
+        <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-waage-small" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">Waage klein</button>
       </div>
+
+      <div id="wp-sec-waage-large" style="display:none"></div>
+      <div id="wp-sec-waage-small" style="display:none"></div>
 
       <div class="cfg-split">
       <div class="cfg-split-left">
@@ -2330,12 +2335,20 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         <button class="cfg-section-btn active" data-action="cfgSection" data-id="sec-plakat" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--c-m-pri);margin-bottom:-2px;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:.3px">&#128196; Plakat</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-flyer" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#128196; Einzelflyer</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-drinks" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">Getr&auml;nkeflyer</button>
+        <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-waage-large" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">Waage gro&szlig;</button>
+        <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-waage-small" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">Waage klein</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-shared" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6b7280;text-transform:uppercase;letter-spacing:.3px">&#9881; Gemeinsame Einstellungen</button>
       </div>
 
       <div id="cfg-sec-drinks" style="display:none">
         <div id="an-design-root"></div>
         <p><a class="cms-btn cms-btn-primary" href="/angebote.html">Aktionen individuell gestalten</a></p>
+      </div>
+      <div id="cfg-sec-waage-large" style="display:none">
+        <div id="an-design-root-waage-large"></div>
+      </div>
+      <div id="cfg-sec-waage-small" style="display:none">
+        <div id="an-design-root-waage-small"></div>
       </div>
       <div class="cfg-split" id="cfg-offer-legacy">
       <div class="cfg-split-left">

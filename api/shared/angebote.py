@@ -357,7 +357,7 @@ def _target_styles(raw):
     """Eigener Stil je Ausgabeziel (Kachel, Einzelflyer, Waage); fehlt er, gilt der Stil des Flyers."""
     if raw is None:
         return {}
-    if not isinstance(raw, dict) or set(raw) - {"card", "single", "scale"}:
+    if not isinstance(raw, dict) or set(raw) - {"card", "single", "scale", "scale_small"}:
         raise AngeboteFehler(400, "Bitte die Gestaltung der Ausgabeziele prüfen.")
     result = {}
     for target, style in raw.items():
@@ -383,7 +383,7 @@ def _design_origin(raw):
     if (not isinstance(raw, dict) or set(raw) != {"schema", "targets"}
             or type(raw.get("schema")) is not int or raw["schema"] != 1
             or not isinstance(raw["targets"], dict)
-            or set(raw["targets"]) - {"sheet", "card", "single", "scale"}):
+            or set(raw["targets"]) - {"sheet", "card", "single", "scale", "scale_small"}):
         raise AngeboteFehler(400, "Bitte die gespeicherte Vorlagenherkunft prüfen.")
     for values in raw["targets"].values():
         if not isinstance(values, dict) or len(values) > 300:
@@ -398,7 +398,7 @@ def _design_origin(raw):
     return copy.deepcopy(raw)
 
 
-def _design_provenance(raw, allowed_targets=("sheet", "card", "single", "scale")):
+def _design_provenance(raw, allowed_targets=("sheet", "card", "single", "scale", "scale_small")):
     if (not isinstance(raw, dict) or set(raw) != {"schema", "targets"}
             or type(raw.get("schema")) is not int or raw["schema"] != 1
             or not isinstance(raw["targets"], dict)
@@ -417,7 +417,7 @@ def _design_provenance(raw, allowed_targets=("sheet", "card", "single", "scale")
             snapshot = entry["snapshot"]
             kind = "flyer" if target == "single" else "plakat"
             cms = snapshot["cms"]
-            if (target == "scale" or set(snapshot) != {"cms"} or not isinstance(cms, dict)
+            if (target in ("scale", "scale_small") or set(snapshot) != {"cms"} or not isinstance(cms, dict)
                     or set(cms) != {"config", f"{kind}_article_overrides"}
                     or not isinstance(cms["config"], dict)
                     or f"{kind}Template" not in cms["config"]):
@@ -457,7 +457,7 @@ def _layout(raw, items):
         raise AngeboteFehler(400, "Bitte eine gültige Farbe wählen.")
     pages = raw.get("pages", [])
     targets = raw.get("targets", {})
-    if not isinstance(pages, list) or len(pages) > MAX_PAGES or not isinstance(targets, dict) or set(targets) - {"card", "single", "scale"}:
+    if not isinstance(pages, list) or len(pages) > MAX_PAGES or not isinstance(targets, dict) or set(targets) - {"card", "single", "scale", "scale_small"}:
         raise AngeboteFehler(400, "Der Flyer enthält zu viele Seiten oder Kacheln.")
     known, seen, result = {i["id"] for i in items}, set(), []
     for page in pages:
@@ -465,7 +465,7 @@ def _layout(raw, items):
             raise AngeboteFehler(400, "Bitte die Flyerseiten prüfen.")
         result.append({"elements": _elements(page["elements"], known, seen, WIDTH, HEIGHT),
                        **_background(page)})
-    dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462)}
+    dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462), "scale_small": (800, 280)}
     target_result = {}
     for target, (width, height) in dimensions.items():
         source = targets.get(target, [])
@@ -481,7 +481,8 @@ def _layout(raw, items):
             result_target.append({"item_id": item_layout["item_id"],
                                   "elements": _elements(item_layout["elements"], known, seen, width, height),
                                   **_background(item_layout)})
-        target_result[target] = result_target
+        if target != "scale_small" or result_target:
+            target_result[target] = result_target
     theme = {key: _theme_value(key, raw.get(key, default)) for key, default in THEME_DEFAULTS.items()}
     target_styles = _target_styles(raw.get("target_styles"))
     adjustments = raw.get("adjustments", {})
@@ -490,7 +491,7 @@ def _layout(raw, items):
     normalized_adjustments = {}
     for key, value in adjustments.items():
         if (not isinstance(key, str)
-                or not re.fullmatch(r"(sheet|card|single|scale):(page|[0-5]):[a-z_]+:\d{1,3}", key)
+                or not re.fullmatch(r"(sheet|card|single|scale_small|scale):(page|[0-5]):[a-z_]+:\d{1,3}", key)
                 or not isinstance(value, dict) or set(value) != {"dx", "dy", "scale", "rotation"}):
             raise AngeboteFehler(400, "Bitte die Vorlagenanpassungen prüfen.")
         normalized_adjustments[key] = {
@@ -577,8 +578,10 @@ def normalize(raw, publish=False):
                     raise AngeboteFehler(422, "Im Flyer fehlen lesbare Artikel-, Preis-, Pfand- oder Grundpreisangaben. Bitte die Gestaltung prüfen.")
         targets = result["layout"]["targets"]
         if any(targets.values()):
-            dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462)}
+            dimensions = {"card": (420, 480), "single": (800, 1130), "scale": (800, 462), "scale_small": (800, 280)}
             for target, (width, height) in dimensions.items():
+                if target == "scale_small" and not targets.get(target):
+                    continue
                 layouts = {entry["item_id"]: entry["elements"] for entry in targets[target]}
                 if set(layouts) != {item["id"] for item in items}:
                     raise AngeboteFehler(422, "Für jeden Artikel muss jede Ausgabe gestaltet sein.")
@@ -657,6 +660,11 @@ class AngeboteService:
             design[kind]["mode"] = "template"
         if "homepage" in raw or (stored and "homepage" in stored):
             design["homepage"] = _homepage(raw.get("homepage", (stored or {}).get("homepage", {})))
+        for kind in ("scale_large", "scale_small"):
+            if kind in raw or (stored and kind in stored):
+                design[kind] = _layout(raw.get(kind, (stored or {}).get(kind)), [])
+                design[kind]["pages"] = []
+                design[kind]["mode"] = "template"
         if "design_provenance" in raw or (stored and "design_provenance" in stored):
             provenance = raw.get("design_provenance", (stored or {}).get("design_provenance", {}))
             design["design_provenance"] = _design_provenance(provenance, ("homepage",))

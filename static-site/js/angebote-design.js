@@ -554,9 +554,9 @@ window.AngeboteDesign = (function () {
     if (out) out.textContent = target.value + (out.dataset.unit || '');
     return true;
   }
-  function sample(layout, kind, products) {
+  function sample(layout, kind, products, count) {
     var d = M.blank(kind, layout); d.title = kind === 'drinks' ? 'Getränkeangebote · Designvorschau' : 'Wochenangebote · Designvorschau';
-    for (var n = 0; n < layout.density; n++) {
+    for (var n = 0; n < (count || layout.density); n++) {
       var it = M.item(); Object.assign(it, { name: (kind === 'drinks' ? 'Getränk' : 'Artikel') + ' – Beispiel ' + (n + 1),
         price_cents: 1249, old_price_cents: 1499, units: 20, volume_ml: 500, packaging: 'Mehrweg', deposit_cents: 310 });
       if (products && products.length) {
@@ -571,7 +571,7 @@ window.AngeboteDesign = (function () {
     if (!layout.adjustments) return;
     var shared = {};
     Object.keys(layout.adjustments).forEach(function (key) {
-      var slot = /^(sheet|card|single|scale):([0-5]):(.+)$/.exec(key);
+      var slot = /^(sheet|card|single|scale_small|scale):([0-5]):(.+)$/.exec(key);
       if (!slot) { shared[key] = M.clone(layout.adjustments[key]); return; }
       if (slot[2] !== '0') return;
       for (var n = 0; n < layout.density; n++) {
@@ -1723,9 +1723,9 @@ window.AngeboteDesign = (function () {
       var option = document.createElement('option'); option.value = index; option.textContent = name; tools.appendChild(option);
       var button = document.createElement('button'), panel = document.createElement('div');
       button.type = 'button'; button.textContent = name; button.dataset.designerTab = index;
-      button.id = 'an-designer-' + options.kind + '-tab-' + index;
+      button.id = 'an-designer-' + (options.idKey || options.kind) + '-tab-' + index;
       button.setAttribute('role', 'tab');
-      panel.id = 'an-designer-' + options.kind + '-panel-' + index;
+      panel.id = 'an-designer-' + (options.idKey || options.kind) + '-panel-' + index;
       panel.dataset.designerPanel = index; panel.setAttribute('role', 'tabpanel');
       panel.setAttribute('aria-labelledby', button.id);
       button.setAttribute('aria-controls', panel.id);
@@ -1992,12 +1992,17 @@ window.AngeboteDesign = (function () {
       contextProvider: context && context.read, loadStandard: context && context.loadStandard });
     changes.bind(actions, root);
   }
-  async function mount(root) {
+  var scaleLabels = { drinks: 'Getränkeflyer', scale_large: 'Waage groß', scale_small: 'Waage klein' };
+  async function mount(root, options) {
     if (!root || root.dataset.mounted) return;
     root.dataset.mounted = 'true'; root.classList.add('an-design');
-    root.innerHTML = '<p role="status">Die Getränkeflyer-Einstellungen werden geladen …</p>';
+    var kind = options && options.kind || 'drinks', isScale = kind !== 'drinks', areaLabel = scaleLabels[kind];
+    var scaleTarget = kind === 'scale_small' ? 'scale_small' : 'scale';
+    root.innerHTML = '<p role="status">Die ' + areaLabel + '-Einstellungen werden geladen …</p>';
     try {
-      var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, kind = 'drinks', mode = 'paper', ticket = 0, surface = null;
+      var result = await M.request('/api/angebote-verwaltung?view=design'), design = result.design, mode = 'paper', ticket = 0, surface = null;
+      var stored = !!design[kind];
+      if (!stored) design[kind] = M.clone(design.drinks);
       var savedStandard = M.clone(design[kind]), loadedPreset = '';
       var products = [], productsMessage = 'Produktbilder werden geladen …', productsLoading = false, productsFailed = false;
       var changes = history(function () {
@@ -2018,7 +2023,7 @@ window.AngeboteDesign = (function () {
         var family = M.styleFamilies.find(function (entry) { return entry[0] === M.familyOf(current.template); });
         var layout = family ? family[1] : current.template;
         if (M.familyOf(current.template) === 'magazine') layout += current.template === 'modern-mag-xl' ? ' · Großbild' : ' · Standard';
-        return { area: 'Getränkeflyer', layout: layout,
+        return { area: areaLabel, layout: layout,
           preset: loadedPreset, saveStandard: function () { return persist('standard'); },
           name: state.known ? state.name : '',
           source: state.known ? '' : 'Gespeicherte Gestaltung · Vorlage unbekannt',
@@ -2037,10 +2042,19 @@ window.AngeboteDesign = (function () {
           M.setDesignProvenance(working, 'sheet', loadedPreset);
           var presetLayout = M.clone(working); presetLayout.pages = []; presetLayout.targets = { card: [], single: [], scale: [] };
           payload.presets[presetIndex] = { name: loadedPreset, layout: presetLayout };
-          payload[kind] = M.clone(savedStandard);
+          if (stored) payload[kind] = M.clone(savedStandard); else delete payload[kind];
         }
-        var saved = await M.request('/api/angebote-verwaltung?view=design', M.json('PUT', { version: design.version, data: payload }));
+        if (isScale) {
+          // Zwei Waagen-Reiter teilen sich ein Dokument: aktuellen Stand holen, nur die eigene Art und die Vorlagen ersetzen.
+          var latest = (await M.request('/api/angebote-verwaltung?view=design')).design;
+          var merged = M.clone(latest);
+          if (payload.presets) merged.presets = payload.presets;
+          if (payload[kind]) merged[kind] = payload[kind];
+          payload = merged;
+        }
+        var saved = await M.request('/api/angebote-verwaltung?view=design', M.json('PUT', { version: payload.version == null ? design.version : payload.version, data: payload }));
         design = saved.design;
+        if (how !== 'preset') stored = true;
         if (how === 'preset') design[kind] = working; else savedStandard = M.clone(design[kind]);
         root.querySelector('[data-design-status]').textContent = how === 'preset'
           ? 'Vorlage „' + loadedPreset + '“ gespeichert. Der Standard blieb unverändert.'
@@ -2050,11 +2064,11 @@ window.AngeboteDesign = (function () {
       async function loadAreaStandard() {
         var latest = await M.request('/api/angebote-verwaltung?view=design');
         var standard = latest.design && latest.design[kind];
-        if (!standard || !standard.template) throw M.problem('Der gespeicherte Getränkeflyer-Standard ist nicht verfügbar.');
+        if (!standard || !standard.template) throw M.problem('Der gespeicherte Standard für ' + areaLabel + ' ist nicht verfügbar.');
         M.templateStyle(standard.template);
         var changed = JSON.stringify(M.designSnapshot(design[kind], 'sheet')) !== JSON.stringify(M.designSnapshot(standard, 'sheet'));
         if (changed && !(await M.dialog('Standard-Gestaltung laden?',
-          'Die ungespeicherte Gestaltung des Getränkeflyers wird durch den aktuell gespeicherten Standard für neue Getränkeaktionen ersetzt. Andere Bereiche, Vorlagen und bestehende Aktionen bleiben unverändert.',
+          'Die ungespeicherte Gestaltung (' + areaLabel + ') wird durch den aktuell gespeicherten Standard für neue Aktionen ersetzt. Andere Bereiche, Vorlagen und bestehende Aktionen bleiben unverändert.',
           'Standard-Gestaltung laden'))) return;
         var presets = design.presets;
         design[kind] = M.clone(standard); loadedPreset = '';
@@ -2106,7 +2120,7 @@ window.AngeboteDesign = (function () {
         fine.prepend(font);
         Array.from(colors.querySelectorAll('select')).forEach(function (select) { extra.prepend(select.closest('label')); });
         Array.from(extra.querySelectorAll('input[type=color]')).forEach(function (input) { colors.appendChild(input.closest('label')); });
-        return [Array.from(fields.querySelectorAll(':scope>.an-choice-group,:scope>.an-legacy-template')),
+        return [Array.from(fields.querySelectorAll(':scope>.an-choice-group,:scope>.an-legacy-template')).filter(function (node) { return !isScale || !node.classList.contains('an-density-choice'); }),
           [fields.querySelector('.an-settings-heading'), fields.querySelector(':scope>.an-fields')],
           Array.from(fine.childNodes), Array.from(extra.childNodes)];
       }
@@ -2123,14 +2137,19 @@ window.AngeboteDesign = (function () {
         if (root._designerUi) root._designerUi.destroy();
         if (surface) surface.destroy();
         surface = null;
-        root.innerHTML = '<div class="an-note">Speichern ersetzt den bisherigen Startstandard für neue Getränkeaktionen – nicht die eingebauten Vorlagen. Bestehende Flyer und veröffentlichte Angebote bleiben unverändert. Für eine bestehende Aktion: Aktion öffnen, Gestaltung → Ausgabeziel wählen → „Designstandards übernehmen“, dann speichern und veröffentlichen.</div>'
-          + '<div class="an-design-layout"><section class="an-card"><h2>Getränkeflyer-Design</h2>'
-          + '<p>Standards für Getränkeangebote. Wochenangebote verwenden die gespeicherten Originalvorlagen aus dem <a href="/cms.html?tab=cfg">CMS-Wochenangebotsdesign</a>.</p>'
+        var noteText = isScale
+          ? 'Speichern ersetzt den Startstandard für das Waagenmotiv ' + areaLabel.replace('Waage ', '') + ' neuer Wochen- und Getränkeaktionen. Bestehende Aktionen und bereits übertragene Bilder bleiben unverändert. Für eine bestehende Aktion: Aktion öffnen, Gestaltung → Ausgabeziel „' + (kind === 'scale_small' ? 'Waage klein' : 'Waage') + '“ wählen → „Designstandards übernehmen“, dann speichern.'
+          : 'Speichern ersetzt den bisherigen Startstandard für neue Getränkeaktionen – nicht die eingebauten Vorlagen. Bestehende Flyer und veröffentlichte Angebote bleiben unverändert. Für eine bestehende Aktion: Aktion öffnen, Gestaltung → Ausgabeziel wählen → „Designstandards übernehmen“, dann speichern und veröffentlichen.';
+        var sizeText = kind === 'scale_small' ? '800 × 280' : '800 × 462';
+        root.innerHTML = '<div class="an-note">' + M.esc(noteText) + '</div>'
+          + '<div class="an-design-layout"><section class="an-card"><h2>' + areaLabel + '-Design</h2>'
+          + (isScale ? '<p>Standard für das Waagenmotiv (' + sizeText + ' px) neuer Wochen- und Getränkeaktionen.</p>'
+            : '<p>Standards für Getränkeangebote. Wochenangebote verwenden die gespeicherten Originalvorlagen aus dem <a href="/cms.html?tab=cfg">CMS-Wochenangebotsdesign</a>.</p>')
           + '<div data-design-fields>' + controls(design[kind]) + '</div>'
           + '<div class="an-actions"><button type="button" class="an-primary" data-design-save>Designstandards speichern</button>'
           + '<button type="button" data-design-discard>Änderungen verwerfen</button>'
           + '<button type="button" data-design-reset>Vorlage auf Original zurücksetzen</button>'
-          + '<button type="button" data-design-copy>Bisherige Flyer-Farben übernehmen</button></div>'
+          + (isScale ? '' : '<button type="button" data-design-copy>Bisherige Flyer-Farben übernehmen</button>') + '</div>'
           + '<fieldset class="an-choice-group"><legend>Eigene Designvorlagen</legend>'
           + '<p class="an-muted">Anlegen und Löschen werden erst mit „Designstandards speichern“ dauerhaft übernommen.</p>'
           + '<label class="an-field"><span>Vorlagenname</span><input data-preset-name maxlength="80"></label>'
@@ -2140,9 +2159,10 @@ window.AngeboteDesign = (function () {
           + '<button type="button" data-preset-delete>Vorlage löschen</button></div></fieldset>'
           + '<p data-design-status role="status"></p></section>'
           + '<section class="an-preview"><div class="an-preview-head"><h2>Live-Vorschau · Musterartikel</h2>'
-          + '</div>' + previewTabs(mode, 'data-design-mode')
+          + '</div>' + (isScale ? '' : previewTabs(mode, 'data-design-mode'))
           + '<p data-design-products class="an-muted" role="status"></p><button type="button" data-design-products-retry hidden>Produktbilder erneut laden</button>'
-          + '<p class="an-note">Nur die erste Kachel ist als Musterkachel bearbeitbar. Ihre Änderungen gelten automatisch für alle Kacheln dieser Ausgabe. Titel und Logo gelten für die ganze Seite.</p>'
+          + '<p class="an-note">' + (isScale ? 'Die Vorschau zeigt das Waagenmotiv im echten Format (' + sizeText + ' px) mit einem Musterartikel. Änderungen gelten für alle Artikel neuer Aktionen.'
+            : 'Nur die erste Kachel ist als Musterkachel bearbeitbar. Ihre Änderungen gelten automatisch für alle Kacheln dieser Ausgabe. Titel und Logo gelten für die ganze Seite.') + '</p>'
           + '<div data-design-preview></div></section></div>';
         renderPresets();
         captureFields(root, kind);
@@ -2152,7 +2172,7 @@ window.AngeboteDesign = (function () {
         var actions = settings.querySelector(':scope>.an-actions'), status = settings.querySelector('[data-design-status]');
         actions.appendChild(status);
         var note = root.querySelector(':scope>.an-note');
-        var workspaceUi = workspace(root, { kind: kind, title: 'Getränkeflyer-Design', groups: groups,
+        var workspaceUi = workspace(root, { kind: 'drinks', idKey: kind, title: areaLabel + '-Design', groups: groups,
           preview: root.querySelector('.an-preview'), actions: actions, contextProvider: layoutContext,
           loadStandard: loadAreaStandard });
         changes.bind(actions, root);
@@ -2164,10 +2184,10 @@ window.AngeboteDesign = (function () {
       }
       async function preview() {
         synchronizeTiles(design[kind]);
-        var current = ++ticket, data = sample(design[kind], kind, products), host = root.querySelector('[data-design-preview]');
-        await previewChoices(root, design[kind], kind);
+        var current = ++ticket, data = sample(design[kind], 'drinks', products, isScale ? 1 : 0), host = root.querySelector('[data-design-preview]');
+        await previewChoices(root, design[kind], 'drinks');
         if (current !== ticket) return;
-        var target = mode === 'paper' ? 'sheet' : mode === 'cards' ? 'card' : 'scale';
+        var target = isScale ? scaleTarget : mode === 'paper' ? 'sheet' : mode === 'cards' ? 'card' : 'scale';
         var source = target === 'sheet' ? data.layout.pages[0] : data.layout.targets[target][0];
         var rendered = target === 'sheet' ? await M.render(data, 0, 1) : await M.renderTarget(data, target, data.items[0].id, 1);
         if (current !== ticket) return;
@@ -2278,7 +2298,7 @@ window.AngeboteDesign = (function () {
         }
         if (e.target.closest('[data-design-reset]')) {
           if (!(await M.dialog('Vorlage auf Original zurücksetzen?', 'Farben, Größen, Ersparnismarker und freie Anpassungen werden in der Vorschau auf die Originalwerte der ausgewählten Vorlage zurückgesetzt. Erst „Designstandards speichern“ übernimmt dies als Startstandard für neue Aktionen. Bestehende Flyer bleiben erhalten.', 'Vorschau zurücksetzen'))) return;
-          var reset = M.blank(kind).layout; M.useTemplate(reset, design[kind].template);
+          var reset = M.blank('drinks').layout; M.useTemplate(reset, design[kind].template);
           design[kind] = reset; loadedPreset = ''; refreshFields();
           root.querySelector('[data-design-status]').textContent = 'Originalwerte in der Vorschau · noch nicht gespeichert';
           try { await preview(); } catch (error) { await M.error(error); }

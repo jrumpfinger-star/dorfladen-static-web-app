@@ -136,9 +136,12 @@ window.CMSAngebote = (function () {
       var isNew = !action, drinks = draft.kind === 'drinks', changedRows = false;
       if (action && action.needs_weekly_template) await M.adoptWeekly(draft);
       if (isNew) {
-        if (!initial && drinks && A.settings().feature_archive_enabled !== false) {
-          var standards = await M.request('/api/angebote-verwaltung?view=design');
-          draft = M.blank(kind, standards.design.drinks);
+        if (!initial) {
+          var standards = null, useDrinks = drinks && A.settings().feature_archive_enabled !== false;
+          try { standards = (await M.request('/api/angebote-verwaltung?view=design')).design; }
+          catch (error) { if (useDrinks) throw error; console.error('[Angebote] Waagen-Standards nicht geladen', error); }
+          var waage = standards ? { large: standards.scale_large, small: standards.scale_small } : null;
+          if (useDrinks || waage) draft = M.blank(kind, useDrinks ? standards.drinks : undefined, waage);
         }
         var d = new Date(M.today() + 'T12:00:00Z'), day = d.getUTCDay();
         d.setUTCDate(d.getUTCDate() + (day === 0 ? 1 : 8 - day));

@@ -2027,7 +2027,7 @@
       }
       right.hidden=secId!=='sec-shared';
     }
-    ['sec-plakat','sec-flyer','sec-shared','sec-drinks'].forEach(function(s){
+    ['sec-plakat','sec-flyer','sec-shared','sec-drinks','sec-waage-large','sec-waage-small'].forEach(function(s){
       var panel=document.getElementById('cfg-'+s);
       if(panel)panel.style.display=s===secId?'':'none';
     });
@@ -2038,18 +2038,20 @@
       btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
       btn.style.color=active?'var(--c-m-pri)':'#6b7280';
     });
+    var designerMounts={'sec-drinks':['an-design-root','drinks','Getränkeflyer'],'sec-waage-large':['an-design-root-waage-large','scale_large','Waage-groß'],'sec-waage-small':['an-design-root-waage-small','scale_small','Waage-klein']};
+    var designerMount=designerMounts[secId];
     var legacy=document.getElementById('cfg-offer-legacy');
     var legacySave=document.getElementById('cfg-offer-legacy-save');
-    if(legacy)legacy.style.display=secId==='sec-drinks'?'none':'';
-    if(legacySave)legacySave.style.display=secId==='sec-drinks'?'none':'flex';
-    if(secId==='sec-drinks'){
-      var drinksRoot=document.getElementById('an-design-root');
+    if(legacy)legacy.style.display=designerMount?'none':'';
+    if(legacySave)legacySave.style.display=designerMount?'none':'flex';
+    if(designerMount){
+      var drinksRoot=document.getElementById(designerMount[0]);
       if(window.AngeboteDesign&&drinksRoot){
-        var mountDrinks=function(){return window.AngeboteDesign.mount(drinksRoot);};
+        var mountDrinks=function(){return window.AngeboteDesign.mount(drinksRoot,{kind:designerMount[1]});};
         if(_cmsAdminLogin){
           drinksRoot.innerHTML='<p class="an-status" role="status">Die CMS-Anmeldung wird abgeschlossen …</p>';
           _cmsAdminLogin.then(mountDrinks).catch(function(error){
-            drinksRoot.innerHTML='<p class="an-status an-error" role="alert">Die CMS-Anmeldung konnte nicht abgeschlossen werden. Bitte den Getränkeflyer-Reiter erneut öffnen.</p>';
+            drinksRoot.innerHTML='<p class="an-status an-error" role="alert">Die CMS-Anmeldung konnte nicht abgeschlossen werden. Bitte den Reiter '+designerMount[2]+' erneut öffnen.</p>';
             window.AngeboteModel.error(error);
           });
         }else mountDrinks();
@@ -2123,6 +2125,24 @@
     if(_weekPalettePickers[kind])_weekPalettePickers[kind].refresh();
   }
   window.wpCfgSwitchSection=function(secId){
+    var waageProfile=secId==='wp-sec-waage-large'?'large':secId==='wp-sec-waage-small'?'small':'';
+    var wpSplit=document.querySelector('#cms-cfg-wp>.cfg-split');
+    if(wpSplit)wpSplit.style.display=waageProfile?'none':'';
+    ['wp-sec-waage-large','wp-sec-waage-small'].forEach(function(s){
+      var panel=document.getElementById(s);
+      if(panel)panel.style.display=s===secId?'':'none';
+    });
+    if(waageProfile){
+      var waageNav=document.querySelector('#cms-cfg-wp .cfg-section-nav');
+      if(waageNav)waageNav.querySelectorAll('.cfg-section-btn').forEach(function(btn){
+        var active=btn.getAttribute('data-id')===secId;
+        btn.classList.toggle('active',active);
+        btn.style.borderBottomColor=active?'var(--c-m-pri)':'transparent';
+        btn.style.color=active?'var(--c-m-pri)':'#6b7280';
+      });
+      window.wpWaageMount(waageProfile);
+      return;
+    }
     var modern=document.querySelector('[data-offer-workspaces]'),kind=secId==='wp-sec-flyer'?'flyer':'home';
     if(modern&&window.AngeboteDesign){
       var right=document.querySelector('#cms-cfg-wp>.cfg-split>.cfg-split-right');
@@ -7474,8 +7494,28 @@
     return z;
   }
 
-  function waageWochenplan(d,art,m){
+  // Wochenplan-Waage: eigene Einstellungen je Profil (Design → Wochenplan → Waage); ohne Eintrag bleibt das Bild unverändert.
+  var _wpWaageStore=null;
+  function wpWaageStoreLaden(){
+    if(_wpWaageStore)return _wpWaageStore;
+    _wpWaageStore=fetch(API+'/cms-config').then(function(r){return r.json();}).then(function(res){
+      if(!res.success||!res.data)throw new Error('Die Wochenplan-Waagen-Einstellungen konnten nicht geladen werden.');
+      var v=res.data.wp_waage_design;
+      return v&&typeof v==='object'?v:{};
+    }).catch(function(error){_wpWaageStore=null;throw error;});
+    return _wpWaageStore;
+  }
+  function wpWaageProfil(m){return m&&m.h<=600?'small':'large';}
+  var WP_WAAGE_FONTS=['Arial','Georgia','Verdana','Trebuchet MS'];
+
+  function waageWochenplan(d,art,m,over){
     var cc=getWpTplColors(d.tpl,hpCfgGet(),d.wpKind);
+    over=over||{};
+    if(over.bg)cc.wpBgColor=over.bg;
+    if(over.stripe)cc.wpStripeColor=over.stripe;
+    if(over.dish)cc.wpDishColor=over.dish;
+    if(over.price)cc.wpPriceColor=over.price;
+    var dayColor=over.day||cc.wpDishColor,fam=(over.font||'Arial')+', sans-serif';
     var theme={bgColor:cc.wpBgColor||'#fff'};
     return new Promise(function(resolve,reject){
       var logo=new Image();
@@ -7487,14 +7527,14 @@
       var lw=96,lh=lw*logo.height/logo.width;
       ctx.drawImage(logo,W-16-lw,(hh-lh)/2,lw,lh);
       ctx.fillStyle=cc.wpDishColor;ctx.textAlign='left';
-      ctx.font='bold '+(H<400?22:30)+'px Arial, sans-serif';
+      ctx.font='bold '+(H<400?22:30)+'px '+fam;
       ctx.fillText('Mittagstisch',16,hh-14);
-      ctx.textAlign='right';ctx.font='bold 17px Arial, sans-serif';
+      ctx.textAlign='right';ctx.font='bold 17px '+fam;
       ctx.fillText(d.header,W-128,hh-14);
       ctx.textAlign='left';
-      var fs=H<400?22:28,layout,total;
+      var fs=Math.max(min,Math.min(34,over.fs||(H<400?22:28))),layout,total;
       for(;fs>=min;fs--){
-        ctx.font='600 '+fs+'px Arial, sans-serif';
+        ctx.font='600 '+fs+'px '+fam;
         layout=d.mealRows.map(function(r){
           var lines=waageTextUmbruch(ctx,r.dish,496,10000);
           return {r:r,lines:lines,h:Math.max(fs+10,lines.length*(fs+4)+8)};
@@ -7509,9 +7549,9 @@
         ctx.fillStyle=i%2===0?(cc.wpStripeColor||'#f3f4f6'):(cc.wpBgColor||'#fff');
         ctx.fillRect(8,y,W-16,h);
         var ty=y+(h-row.lines.length*(fs+4))/2+fs;
-        ctx.fillStyle=cc.wpDishColor;ctx.font='600 '+fs+'px Arial, sans-serif';
+        ctx.fillStyle=cc.wpDishColor;ctx.font='600 '+fs+'px '+fam;
         row.lines.forEach(function(t,n){ctx.fillText(t,180,ty+n*(fs+4));});
-        ctx.font='bold '+Math.min(fs,21)+'px Arial, sans-serif';
+        ctx.fillStyle=dayColor;ctx.font='bold '+Math.min(fs,21)+'px '+fam;
         ctx.fillText(row.r.day,16,ty);
         ctx.fillStyle=cc.wpPriceColor;ctx.textAlign='right';
         ctx.fillText(row.r.price,W-16,ty);ctx.textAlign='left';
@@ -7529,12 +7569,141 @@
       praefix:'10_Wochenplan_',
       erzeuge:function(art,fort,abbruch,m){
         fort(0,1);
-        return waageWochenplan(d,art,m).then(function(jpg){
+        return wpWaageStoreLaden().then(function(store){
+          return waageWochenplan(d,art,m,store[wpWaageProfil(m)]);
+        }).then(function(jpg){
           return abbruch()?[]:[{name:'10_Wochenplan_KW'+kwNr+'.jpg',blob:jpg,an:true}];
         });
       }
     });
   };
+
+  // ── Design → Wochenplan → Waage groß / klein ──
+  var _wpWaageState={};
+  function wpWaageDefaults(profile){
+    var d=wpDaten(),cc=getWpTplColors(d.tpl,hpCfgGet(),d.wpKind);
+    return {bg:cc.wpBgColor||'#ffffff',stripe:cc.wpStripeColor||'#f3f4f6',dish:cc.wpDishColor,day:cc.wpDishColor,price:cc.wpPriceColor,fs:profile==='small'?22:28,font:'Arial'};
+  }
+  function wpWaageDaten(){
+    var d=wpDaten();
+    if(!meals.length){
+      d.mealRows=[['Montag','Hähnchenbrust mit Reis und Gemüse','7,90 €'],['Dienstag','Spaghetti Bolognese','6,90 €'],['Mittwoch','Schweinebraten mit Knödel und Krautsalat','8,50 €'],['Donnerstag','Gemüsecurry mit Basmatireis','7,50 €'],['Freitag','Fischfilet mit Kartoffelsalat','8,90 €']]
+        .map(function(r){return {day:r[0],dish:r[1],price:r[2],alt:''};});
+    }
+    return d;
+  }
+  function wpWaageCss(){
+    if(document.getElementById('wpw-css'))return;
+    var st=document.createElement('style');st.id='wpw-css';
+    st.textContent='.wpw{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.wpw-preview{order:-1}.wpw-preview img{display:block;width:100%;max-width:640px;border:1px solid #d1d5db;border-radius:6px;background:#fff}'
+      +'.wpw-tools{display:grid;gap:8px;align-content:start;max-width:640px}.wpw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 12px}.wpw-grid label{display:grid;gap:2px;font-size:13px;color:#374151}'
+      +'.wpw-grid input[type=color],.wpw-grid select{width:100%;box-sizing:border-box;min-height:44px;padding:2px 6px;border:1px solid #d1d5db;border-radius:8px}.wpw-grid input[type=range]{width:100%;min-height:44px}.wpw-actions{display:flex;gap:8px;flex-wrap:wrap}.wpw-status{min-height:22px;font-size:13px;color:#6b7280}.wpw-status.dirty{color:#b45309;font-weight:600}'
+      +'.wpw-hint{padding:8px 12px;border:1px solid #f5d9a8;border-radius:8px;background:#fff5e6;color:#b45309;font-size:13px}'
+      +'@media(min-width:900px){.wpw{grid-template-columns:minmax(300px,380px) minmax(0,1fr)}.wpw-preview{order:2}}'
+      +'@media(min-width:600px) and (pointer:fine){.wpw-grid input[type=color],.wpw-grid select,.wpw-grid input[type=range]{min-height:32px}}';
+    document.head.appendChild(st);
+  }
+  function wpWaageDirty(profile){
+    var s=_wpWaageState[profile];
+    return JSON.stringify(s.cur)!==JSON.stringify(s.saved);
+  }
+  function wpWaageStatus(profile){
+    var root=document.getElementById('wp-sec-waage-'+profile),st=root&&root.querySelector('[data-wpw-status]');
+    if(!st)return;
+    var dirty=wpWaageDirty(profile);
+    st.className='wpw-status'+(dirty?' dirty':'');
+    st.textContent=dirty?'Geändert · noch nicht gespeichert':'Gespeichert · ohne gespeicherte Einstellung bleibt das Waagenbild wie bisher';
+  }
+  var _wpWaageTimers={};
+  function wpWaagePreview(profile){
+    clearTimeout(_wpWaageTimers[profile]);
+    _wpWaageTimers[profile]=setTimeout(function(){
+      var root=document.getElementById('wp-sec-waage-'+profile);if(!root)return;
+      var s=_wpWaageState[profile],img=root.querySelector('[data-wpw-img]'),hint=root.querySelector('[data-wpw-hint]');
+      var ticket=s.ticket=(s.ticket||0)+1;
+      waageWochenplan(wpWaageDaten(),'dauer',{w:1600,h:profile==='small'?560:924},s.cur).then(function(blob){
+        if(ticket!==s.ticket)return;
+        var old=img.src;img.src=URL.createObjectURL(blob);
+        if(old&&old.indexOf('blob:')===0)URL.revokeObjectURL(old);
+        hint.hidden=true;
+      }).catch(function(error){
+        if(ticket!==s.ticket)return;
+        hint.textContent=error.message;hint.hidden=false;
+      });
+    },150);
+  }
+  function wpWaageBuild(profile){
+    var root=document.getElementById('wp-sec-waage-'+profile),s=_wpWaageState[profile],c=s.cur,label=profile==='small'?'klein':'groß';
+    function color(key,text){return '<label>'+text+'<input type="color" data-wpw="'+key+'" value="'+c[key]+'"></label>';}
+    root.innerHTML='<div class="wpw"><div class="wpw-tools">'
+      +'<div class="cms-card"><div class="cms-card-header">Farben</div><div class="cms-card-body"><div class="wpw-grid">'
+      +color('bg','Hintergrund')+color('stripe','Streifen')+color('dish','Gericht')+color('day','Wochentag')+color('price','Preis')
+      +'</div></div></div>'
+      +'<div class="cms-card"><div class="cms-card-header">Schrift</div><div class="cms-card-body"><div class="wpw-grid">'
+      +'<label>Schriftart<select class="cms-input" data-wpw="font">'+WP_WAAGE_FONTS.map(function(f){return '<option'+(f===c.font?' selected':'')+'>'+f+'</option>';}).join('')+'</select></label>'
+      +'<label>Schriftgröße · <b data-wpw-fs>'+c.fs+'</b> px<input type="range" data-wpw="fs" min="16" max="34" step="1" value="'+c.fs+'"></label>'
+      +'</div></div></div>'
+      +'<div class="wpw-actions"><button type="button" class="cms-btn cms-btn-primary" data-wpw-save>Standard speichern</button>'
+      +'<button type="button" class="cms-btn cms-btn-gray" data-wpw-load>Standard laden</button>'
+      +'<button type="button" class="cms-btn cms-btn-gray" data-wpw-discard>Verwerfen</button></div>'
+      +'<p class="wpw-status" role="status" data-wpw-status></p>'
+      +'<p class="wpw-status">Der Dialog „Auf die Waage“ (Vollbild/Dauerwerbung, Profil, Übertragen) bleibt unverändert.</p></div>'
+      +'<section class="wpw-preview" aria-label="Live-Vorschau"><strong>Live-Vorschau · Wochenplan Waage '+label+' · '+(profile==='small'?'800 × 280':'800 × 462')+' px</strong>'
+      +'<img data-wpw-img alt="Live-Vorschau Wochenplan Waage '+label+'"><p class="wpw-hint" data-wpw-hint role="alert" hidden></p></section></div>';
+    wpWaageStatus(profile);wpWaagePreview(profile);
+  }
+  window.wpWaageMount=function(profile){
+    var root=document.getElementById('wp-sec-waage-'+profile);if(!root)return;
+    wpWaageCss();
+    if(_wpWaageState[profile]){wpWaagePreview(profile);return;}
+    root.innerHTML='<p class="wpw-status" role="status">Die Waagen-Einstellungen werden geladen …</p>';
+    wpWaageStoreLaden().then(function(store){
+      var base=wpWaageDefaults(profile),saved=Object.assign({},base,store[profile]||{});
+      _wpWaageState[profile]={saved:saved,cur:Object.assign({},saved)};
+      wpWaageBuild(profile);
+    }).catch(function(error){
+      console.error('[Wochenplan-Waage] Einstellungen',error);
+      root.innerHTML='<p class="wpw-hint" role="alert">Die Waagen-Einstellungen konnten nicht geladen werden. Bitte erneut versuchen.</p><button type="button" class="cms-btn cms-btn-gray" data-wpw-retry>Erneut versuchen</button>';
+    });
+  };
+  function wpWaageProfilOf(node){var sec=node.closest('[id^="wp-sec-waage-"]');return sec?sec.id.replace('wp-sec-waage-',''):'';}
+  function wpWaageSet(node){
+    var profile=wpWaageProfilOf(node),s=_wpWaageState[profile];if(!s||!node.dataset.wpw)return;
+    s.cur[node.dataset.wpw]=node.dataset.wpw==='fs'?Number(node.value):node.value;
+    var fs=node.closest('.wpw').querySelector('[data-wpw-fs]');if(fs)fs.textContent=s.cur.fs;
+    wpWaageStatus(profile);wpWaagePreview(profile);
+  }
+  document.addEventListener('input',function(e){if(e.target.closest&&e.target.closest('[id^="wp-sec-waage-"]'))wpWaageSet(e.target);});
+  document.addEventListener('change',function(e){if(e.target.closest&&e.target.closest('[id^="wp-sec-waage-"]'))wpWaageSet(e.target);});
+  document.addEventListener('click',async function(e){
+    var b=e.target.closest&&e.target.closest('[data-wpw-save],[data-wpw-load],[data-wpw-discard],[data-wpw-retry]');
+    if(!b)return;
+    var profile=wpWaageProfilOf(b),s=_wpWaageState[profile],label=profile==='small'?'klein':'groß';
+    if(b.hasAttribute('data-wpw-retry')){_wpWaageStore=null;window.wpWaageMount(profile);return;}
+    if(!s)return;
+    if(b.hasAttribute('data-wpw-save')){
+      b.disabled=true;
+      try{
+        var store=await wpWaageStoreLaden(),next=Object.assign({},store);
+        next[profile]=_clone(s.cur);
+        var res=await _dvSave('wp_waage_design',next);
+        if(!res.success)throw new Error(res.error||'Speichern fehlgeschlagen');
+        _wpWaageStore=Promise.resolve(next);s.saved=_clone(s.cur);
+        wpWaageStatus(profile);toast('Wochenplan-Waage '+label+' gespeichert','ok');
+      }catch(error){console.error('[Wochenplan-Waage] Speichern',error);toast('Die Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen.','error');}
+      finally{b.disabled=false;}
+      return;
+    }
+    var replace=b.hasAttribute('data-wpw-load')?'Der gespeicherte Standard ersetzt die ungespeicherte Gestaltung (Waage '+label+').':'Die ungespeicherte Gestaltung (Waage '+label+') wird verworfen.';
+    if(wpWaageDirty(profile)&&!(await cmsConfirm(replace)))return;
+    if(b.hasAttribute('data-wpw-load')){
+      try{
+        _wpWaageStore=null;var fresh=await wpWaageStoreLaden();
+        s.saved=Object.assign({},wpWaageDefaults(profile),fresh[profile]||{});
+      }catch(error){console.error('[Wochenplan-Waage] Laden',error);toast('Der Standard konnte nicht geladen werden.','error');return;}
+    }
+    s.cur=_clone(s.saved);wpWaageBuild(profile);
+  });
 
   // ── Aktion im Querformat ──
   function waageTextUmbruch(ctx,text,maxW,maxZeilen){
@@ -7775,11 +7944,38 @@
     },m);
   }
 
+  // Gespeicherter Waagen-Standard (Design → Waage groß/klein) für die alte „Aktion im Querformat“; ohne Standard bleibt die Gestaltung wie bisher.
+  function waageStandardLaden(m){
+    if(!window.AngeboteModel)return Promise.resolve(null);
+    return window.AngeboteModel.request('/api/angebote-verwaltung?view=design').then(function(res){
+      var d=res&&res.design;
+      return d?(m.h<=600?d.scale_small:d.scale_large)||null:null;
+    }).catch(function(error){
+      console.error('[Waage] Standard nicht geladen',error);
+      toast('Der Waagen-Standard konnte nicht geladen werden. Es gilt die bisherige Gestaltung.','warn');
+      return null;
+    });
+  }
+  function waageStandardAnwenden(theme,cfg,s){
+    if(!s)return;
+    var farben={bgColor:'background',cardBg:'card_background',imgBg:'card_background',textColor:'text_color',detailsColor:'text_color',dateColor:'text_color',titleColor:'title_color',tagColor:'price_background'};
+    Object.keys(farben).forEach(function(k){if(s[farben[k]])theme[k]=s[farben[k]];});
+    if(s.background)theme.bgColor_grad=false;
+    if(s.old_price_color)cfg.stattColor=s.old_price_color;
+    if(s.price_shape)cfg.tagShape=({round:'rounded',ellipse:'circle'})[s.price_shape]||s.price_shape;
+  }
+
   function waageAktionBilder(ak,art,fort,abbruch,m){
+    m=m||window.KWerbebilder.masse(art);
+    return waageStandardLaden(m).then(function(std){return waageAktionBilderMit(ak,art,fort,abbruch,m,std);});
+  }
+
+  function waageAktionBilderMit(ak,art,fort,abbruch,m,std){
     var items=ak.items||[];
     var tag=toIsoDateOnly(ak.von)||'aktuell';
     var cfg=cfgForKind(cfgGet(),'plakat');
     var theme=getOfferTheme('plakat',cfg);
+    waageStandardAnwenden(theme,cfg,std);
     var gesamt=1+items.length;
     var logoP=new Promise(function(res){
       var l=new Image();l.onload=function(){res(l);};l.onerror=function(){res(null);};l.src=hdLogoSrc(2);

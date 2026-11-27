@@ -1,6 +1,6 @@
-38	border:none
+42	border:none
+31	background:none
 29	font-size:10px
-27	background:none
 18	font-size:9px
 17	border-radius:2px
 16	font-size:.9rem
@@ -9,12 +9,12 @@
 16	font-size:var(--schrift-klein)
 15	border-radius:50%
 14	font-size:.85rem
+12	border-bottom:2px solid transparent
 10	font-size:.82rem
 10	border-radius:3px
 9	font-size:28px
 8	color:var(--mut)
 8	color:var(--ink)
-8	border-bottom:2px solid transparent
 6	color:var(--c-m-muted)
 6	border-radius:3px 3px 0 0
 5	font-size:18px

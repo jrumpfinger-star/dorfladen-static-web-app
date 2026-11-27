@@ -83,7 +83,7 @@
     function syncDesignContext() {
       var status = root.querySelector('[data-action-design-context]');
       if (!status || !data) return;
-      var names = { sheet: 'Sammelflyer', single: 'Einzelflyer', card: 'Homepage / Kiosk', scale: 'Waage' };
+      var names = { sheet: 'Sammelflyer', single: 'Einzelflyer', card: 'Homepage / Kiosk', scale: 'Waage', scale_small: 'Waage klein' };
       var kind = designTarget === 'single' ? 'flyer' : 'plakat';
       var template = weeklyTarget() ? root.querySelector('[data-cms-variant][data-cms-kind=' + kind + '] option:checked')
         : root.querySelector('[data-style=template] option:checked');
@@ -103,11 +103,11 @@
       }
     }
   }
-  function weeklyTarget() { return !!data.layout.cms && designTarget !== 'scale'; }
+  function weeklyTarget() { return !!data.layout.cms && !M.isScaleTarget(designTarget); }
   function controlLayout() {
     var layout = M.clone(data.layout);
-    if (layout.cms && designTarget !== 'scale') layout.cms = M.clone(M.cmsFor(data, designTarget));
-    if (designTarget === 'scale') delete layout.cms;
+    if (layout.cms && !M.isScaleTarget(designTarget)) layout.cms = M.clone(M.cmsFor(data, designTarget));
+    if (M.isScaleTarget(designTarget)) delete layout.cms;
     return designTarget !== 'sheet' && !weeklyTarget() ? Object.assign(layout, M.styleOf(layout, designTarget)) : layout;
   }
   function header(title) {
@@ -352,7 +352,7 @@
       await cmsHost.capture(null, kind); return;
     }
     var response = await M.request('/api/angebote-verwaltung?view=design'); design = response.design;
-    record = null; data = M.blank(kind, design[kind]); M.applyTemplate(data);
+    record = null; data = M.blank(kind, design[kind], { large: design.scale_large, small: design.scale_small }); M.applyTemplate(data);
     if (kind === 'weekly') await M.adoptWeekly(data);
     M.rememberDesign(data);
     dirty = true; undo = []; redo = []; step = 'articles'; page = 0; selected = ''; designTarget = 'card'; designItemId = '';
@@ -814,7 +814,7 @@
     canvas._offerElements = elements(); canvas._offerWidth = activeSize().w;
     $('an-stage-canvas').replaceWith(canvas);
     if (weeklyTarget() && weeklySurface) weeklySurface.update(canvas, canvas._weeklyElements || [], canvas._weeklyWidth || activeSize().w, canvas._weeklyHeight || activeSize().h);
-    var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv', sheet: 'Sammelflyer' };
+    var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', scale: 'Waagenmotiv', scale_small: 'Waagenmotiv klein', sheet: 'Sammelflyer' };
     var context = root.querySelector('.an-workspace-context');
     if (context) context.textContent = 'Aktion „' + data.title + '“ · ' + names[designTarget] + (outputMode() ? ' · Ausgabevorschau' : ' · Gestaltung dieser Ausgabe');
     var size = activeSize();
@@ -921,7 +921,7 @@
       + '<section class="an-preview an-card" id="an-preview"><div class="an-preview-head"><h2>Gestaltbare Homepage-/Kioskansicht</h2><span class="an-muted" id="an-preview-hint">Element antippen oder ziehen</span></div>'
       + '<nav class="an-tabs an-target-tabs" aria-label="Gestaltungsziel">'
       + '<button type="button" data-layout-target="card">Homepage / Kiosk</button><button type="button" data-layout-target="single">Einzelflyer</button>'
-      + '<button type="button" data-layout-target="sheet">Sammelflyer</button><button type="button" data-layout-target="scale">Waage</button></nav>'
+      + '<button type="button" data-layout-target="sheet">Sammelflyer</button><button type="button" data-layout-target="scale">Waage</button><button type="button" data-layout-target="scale_small">Waage klein</button></nav>'
       + '<div class="an-article-picker" id="an-design-item-wrap"><div class="an-article-navigation"><button type="button" data-article-prev aria-label="Vorheriger Artikel">←</button><span data-article-position role="status"></span><button type="button" data-article-next aria-label="Nächster Artikel">→</button></div><label class="an-field"><span>Artikel auswählen</span><select id="an-design-item">'
       + data.items.map(function (item) { return '<option value="' + item.id + '"' + (item.id === designItemId ? ' selected' : '') + '>' + M.esc(item.name || 'Neuer Artikel') + '</option>'; }).join('')
       + '</select></label></div><div id="an-inspector" class="an-inspector"></div><div id="an-other-preview" hidden></div>'
@@ -1148,7 +1148,7 @@
     var tabs = previewPanel.querySelector('.an-target-tabs');
     var context = document.createElement('label'); context.className = 'an-action-context';
     context.innerHTML = '<span>Gestalten für</span><select data-action-target aria-label="Gestaltungsziel">'
-      + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option></select>';
+      + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option><option value="scale_small">Waage klein</option></select>';
     context.lastElementChild.value = designTarget;
     context.lastElementChild.onchange = function () { tabs.querySelector('[data-layout-target="' + this.value + '"]').click(); };
     tabs.hidden = true;
@@ -1396,7 +1396,7 @@
     var bar = document.createElement('section'); bar.className = 'an-output-bar'; bar.hidden = true;
     bar.setAttribute('aria-label', 'Ausgabe der Vorschau');
     bar.innerHTML = '<label class="an-field"><span>Ausgabeformat</span><select data-output-target aria-label="Ausgabeformat">'
-      + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option></select></label>'
+      + '<option value="sheet">Sammelflyer</option><option value="single">Einzelflyer</option><option value="card">Homepage / Kiosk</option><option value="scale">Waage</option><option value="scale_small">Waage klein</option></select></label>'
       + '<div class="an-output-actions"><button type="button" class="an-primary" data-cms-print>Drucken / PDF</button>'
       + '<button type="button" data-cms-download>Als PNG speichern</button><button type="button" data-cms-singles>Weitere Artikel …</button>'
       + '<button type="button" data-cms-print-all hidden title="Druckt jeden Einzelflyer auf einer eigenen A4-Seite">Alle Einzelflyer drucken</button>'
@@ -1752,7 +1752,7 @@
     if (!source) throw M.problem('Bitte zuerst einen Artikel als Quelle wählen.');
     var others = data.items.filter(function (it) { return it.id !== sourceId; }), options = M.transferOptions(data, target);
     if (!others.length) throw M.problem('Zum Übertragen werden mindestens zwei Artikel benötigt.');
-    var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', sheet: 'Sammelflyer', scale: 'Waagenmotiv' };
+    var names = { card: 'Homepage-/Kioskkachel', single: 'Einzelflyer', sheet: 'Sammelflyer', scale: 'Waagenmotiv', scale_small: 'Waagenmotiv klein' };
     var dlg = document.createElement('dialog'); dlg.className = 'an-dialog an-transfer'; dlg.setAttribute('aria-label', 'Gestaltung übertragen');
     dlg.innerHTML = '<form method="dialog"><h2>Gestaltung übertragen</h2><p>Quelle: Artikel „' + M.esc(source.name) + '“ · Ziel: ' + names[target]
       + '. Artikeldaten, Preise und Bildzuordnungen sowie andere Ausgabeziele bleiben unverändert.</p>'
@@ -1856,7 +1856,7 @@
   var presetCache = null;
   async function refreshPresetPicker() {
     var picker = root.querySelector('[data-action-preset]'); if (!picker) return;
-    var usable = !!data && !!data.layout.cms && designTarget !== 'scale';
+    var usable = !!data && !!data.layout.cms && !M.isScaleTarget(designTarget);
     var presetKind = designTarget === 'single' ? 'flyer' : 'plakat', key = usable + ':' + presetKind;
     if (picker.dataset.key === key && presetCache) return;
     picker.hidden = !usable; if (!usable) { picker.dataset.key = key; return; }
@@ -2064,7 +2064,7 @@
         if (source.length) { dest.push(M.clone(data)); data = source.pop(); page = Math.min(page, data.layout.pages.length - 1); changed(); renderEditor(); }
       }
       if (b.id === 'an-template' || b.id === 'an-defaults') {
-        if (b.id === 'an-defaults' && data.kind === 'weekly' && (!data.layout.cms || designTarget !== 'scale')) {
+        if (b.id === 'an-defaults' && data.kind === 'weekly' && (!data.layout.cms || !M.isScaleTarget(designTarget))) {
           if (!(await M.dialog('CMS-Wochenvorlage übernehmen?', 'Die aktuelle CMS-Vorlage ersetzt nur die Gestaltung des gewählten Ausgabeziels. Andere Ausgaben, Artikel und Preise bleiben erhalten. Alte freie Wochenlayouts werden dabei insgesamt auf die CMS-Vorlage umgestellt.', 'CMS-Vorlage übernehmen'))) return;
           run(function () { return applyWeeklyDesign(); });
           return;
@@ -2075,7 +2075,10 @@
           : 'Die freien Positionen und eigenen Gestaltungselemente im aktuellen Ausgabeziel werden durch die gewählte Vorlage ersetzt. Bei Einzelansichten betrifft das nur den ausgewählten Artikel. Andere Ausgaben, Artikel und Preise bleiben erhalten.', 'Vorlage anwenden'))) return;
         run(async function () {
           var layout = data.layout;
-          if (b.id === 'an-defaults') { var result = await M.request('/api/angebote-verwaltung?view=design'); layout = result.design[data.kind]; }
+          if (b.id === 'an-defaults') {
+            var result = await M.request('/api/angebote-verwaltung?view=design'); layout = result.design[data.kind];
+            if (M.isScaleTarget(designTarget)) layout = result.design[designTarget === 'scale_small' ? 'scale_small' : 'scale_large'] || layout;
+          }
           edit(function () {
             M.preserveBackgrounds(data);
             if (b.id === 'an-defaults') {
@@ -2089,7 +2092,7 @@
                 if (oldLayout.design_provenance) data.layout.design_provenance = M.clone(oldLayout.design_provenance);
                 else delete data.layout.design_provenance;
                 data.layout.target_styles = {};
-                ['card', 'single', 'scale'].forEach(function (target) {
+                ['card', 'single', 'scale', 'scale_small'].forEach(function (target) {
                   var style = M.styleOf(oldLayout, target); delete style.density; data.layout.target_styles[target] = style;
                 });
               } else {

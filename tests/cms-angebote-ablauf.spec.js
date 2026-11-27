@@ -1675,7 +1675,7 @@ for (const [surface, path] of SURFACES) {
             expect(box.x + box.width).toBeLessThanOrEqual(picture.x + 2);
           }
         }
-        await expect(page.locator('[data-action-target] option')).toHaveCount(4);
+        await expect(page.locator('[data-action-target] option')).toHaveCount(5);
         if (await page.locator('#an-root').evaluate(node => node.classList.contains('an-phone-design'))) {
           await expect(page.locator('[data-action-target]')).toBeHidden();
         } else await expect(page.locator('[data-action-target]')).toBeVisible();

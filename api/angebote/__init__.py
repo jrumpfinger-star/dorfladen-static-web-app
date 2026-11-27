@@ -138,9 +138,9 @@ def _validate_layout(layout):
                 raise ActionRequestError(400, "each layout element must be an object")
     target_styles = layout.get("target_styles")
     if target_styles is not None and (
-            not isinstance(target_styles, dict) or set(target_styles) - {"card", "single", "scale"}
+            not isinstance(target_styles, dict) or set(target_styles) - {"card", "single", "scale", "scale_small"}
             or any(not isinstance(style, dict) for style in target_styles.values())):
-        raise ActionRequestError(400, "layout.target_styles must map card, single and scale to objects")
+        raise ActionRequestError(400, "layout.target_styles must map card, single, scale and scale_small to objects")
     cms = layout.get("cms")
     if cms is not None:
         if not isinstance(cms, dict):
