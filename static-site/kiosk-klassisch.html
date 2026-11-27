@@ -162,6 +162,8 @@
     .k-main{flex:1;overflow:hidden;position:relative}
     .k-panel{position:absolute;inset:0;overflow-y:auto;padding:12px 16px;display:none}
     .k-panel.active{display:block}
+    #panel-wochenplan{padding:0;overflow:hidden;scrollbar-gutter:auto}
+    #panel-wochenplan iframe{display:block;width:100%;height:100%;border:0}
     /* Embed-Modus (?embed=mittag): nur Mittagstisch, ohne Kiosk-Kopf/Tab-Leiste –
        zur Einbettung in die Posten-Seite. */
     html.k-embed .k-header,
@@ -1976,10 +1978,6 @@
     <span class="k-tab-icon"><i data-lucide="ham" style="width:22px;height:22px"></i></span> Metzger Mair
     <span class="k-tab-badges" id="badges-metzgerbest"></span>
   </div>
-  <div class="k-tab" data-tab="getraenke" onclick="K.switchTab('getraenke')">
-    <span class="k-tab-icon"><i data-lucide="cup-soda" style="width:22px;height:22px"></i></span> Getränke
-    <span class="k-tab-badges" id="badges-getraenke"></span>
-  </div>
   <div class="k-tab" data-tab="kontakt" onclick="K.switchTab('kontakt')" style="display:none">
     <span class="k-tab-icon"><i data-lucide="message-square" style="width:22px;height:22px"></i></span> Kontakt
     <span class="k-tab-badges" id="badges-kontakt"></span>
@@ -1990,6 +1988,10 @@
   <div class="k-tab" data-tab="kalender" onclick="K.switchTab('kalender')">
     <span class="k-tab-icon"><i data-lucide="calendar-days" style="width:22px;height:22px"></i></span> Kalender
     <span class="k-tab-badges" id="badges-kalender"></span>
+  </div>
+  <div class="k-tab" data-tab="getraenke" onclick="K.switchTab('getraenke')">
+    <span class="k-tab-icon"><i data-lucide="cup-soda" style="width:22px;height:22px"></i></span> Getränke
+    <span class="k-tab-badges" id="badges-getraenke"></span>
   </div>
 </div>
 
@@ -2125,6 +2127,12 @@
     <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
       <p role="status">Die Angebotsverwaltung wird geladen …</p>
     </section>
+  </div>
+
+  <!-- Wochenplan des CMS, eingebettet (specs/kiosk-wochenplan/spec.md). Der Rahmen
+       wird erst beim ersten Öffnen des Reiters geladen. -->
+  <div class="k-panel" id="panel-wochenplan">
+    <iframe id="wochenplan-frame" title="Wochenplan" data-src="/cms.html?embed=wochenplan"></iframe>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -3032,6 +3040,10 @@ var K = (function(){
     if(id==='drax' && window.KDrax) window.KDrax.onShow();
     if(id==='werbebilder' && window.KWerbebilder) window.KWerbebilder.onShow();
     if(id==='angebote' && window.KAngebote) window.KAngebote.onShow();
+    if(id==='wochenplan'){
+      var wpFrame=document.getElementById('wochenplan-frame');
+      if(wpFrame && !wpFrame.getAttribute('src')) wpFrame.setAttribute('src', wpFrame.getAttribute('data-src'));
+    }
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -7947,7 +7959,7 @@ var K = (function(){
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
     if(window.KAngebote && window.KAngebote.hasUnsavedChanges()) return true;
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-angebote' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-angebote' || aktiv.id === 'panel-wochenplan' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen

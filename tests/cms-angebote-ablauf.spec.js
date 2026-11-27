@@ -350,7 +350,8 @@ test('TC-F18-01/05: Erfassung direkt im Kiosk mit Produktsuche und erhaltenem Me
   const state = await setup(page);
   await page.goto(BASE + '/kiosk.html');
   await page.evaluate(() => window.K.switchTab('angebote'));
-  await expect(page.locator('.k-tabs .k-tab').last()).toHaveAttribute('data-tab', 'angebote');
+  await expect(page.locator('.k-tabs .k-tab').last()).toHaveAttribute('data-tab', 'getraenke');
+  await expect(page.locator('.k-tabs .k-tab[data-tab="angebote"] + .k-tab')).toHaveAttribute('data-tab', 'wochenplan');
   const dlg = await create(page, 'drinks');
   await dlg.locator('[data-density]').selectOption('4');
   await expect(dlg.locator('.cms-ang-row')).toHaveCount(4);

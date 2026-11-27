@@ -25,6 +25,16 @@
   var FONT_UI="'Segoe UI',system-ui,-apple-system,sans-serif";
   var FONT_UI_CSS='"Segoe UI",system-ui,-apple-system,sans-serif';
   function _clone(o){return JSON.parse(JSON.stringify(o));}
+  /* Embed-Modus (?embed=wochenplan, Kiosk-Reiter „Wochenplan"): nur der Wochenplan, ohne CMS-Kopf und -Navigation. */
+  var CMS_EMBED=false;
+  try{CMS_EMBED=new URLSearchParams(location.search).get('embed')==='wochenplan';}catch(e){}
+  if(CMS_EMBED){
+    document.documentElement.classList.add('cms-embed');
+    var _embedCss=document.createElement('style');
+    _embedCss.textContent='html.cms-embed .cmsneu-kopf,html.cms-embed .cmsneu-nav,html.cms-embed .cmsneu-hinweis,html.cms-embed .cms-tabs-wrap{display:none!important}'
+      +'html.cms-embed .cmsneu-app{grid-template-areas:"main"!important;grid-template-rows:minmax(0,1fr)!important;grid-template-columns:minmax(0,1fr)!important}';
+    document.head.appendChild(_embedCss);
+  }
   function _dvSave(name,wert){
     return fetch(API+'/cms-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,wert:wert})})
       .then(function(r){
@@ -1091,7 +1101,8 @@
   var angebote = [];
   var _cmsCurrentTab='wp';
   window.cmsTab = function(name, skipHistory){
-    if(name==='help' && window.innerWidth<768 && typeof openHilfePopup==='function'){
+    /* Im Embed-Modus fehlt die Navigation, über die man aus dem Hilfe-Bereich zurückkäme: immer als Popup. */
+    if(name==='help' && (CMS_EMBED || window.innerWidth<768) && typeof openHilfePopup==='function'){
       openHilfePopup();return;
     }
     _cmsCurrentTab=name;
@@ -1126,7 +1137,7 @@
       }
       socialLoadMtBilder(function(){ mtReady=true; tryBuild(); });
     }
-    if(!skipHistory) history.pushState({cmsTab:name},'','');
+    if(!skipHistory && !CMS_EMBED) history.pushState({cmsTab:name},'','');
   };
 
   // PWA back button support for CMS tabs

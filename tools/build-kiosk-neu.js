@@ -45,7 +45,6 @@ const REITER = [
   { id: 'metzger', icon: 'beef', text: 'Metzger', kurz: 'Metzger', badges: true },
   { id: 'baecker', icon: 'croissant', text: 'Bäcker', kurz: 'Bäcker', badges: true },
   { id: 'metzgerbest', icon: 'ham', text: 'Metzger Mair', kurz: 'Mair', badges: true },
-  { id: 'getraenke', icon: 'cup-soda', text: 'Getränke', kurz: 'Getränke', badges: true },
   // Drax stand lange nur in der erzeugten kiosk.html und fehlte hier - ein
   // Lauf des Werkzeugs loeschte den Reiter deshalb spurlos. (R3 schuetzt nur
   // Reiter, die in der Quelle stehen.)
@@ -54,7 +53,10 @@ const REITER = [
   { id: 'social', icon: 'share-2', text: 'Social', kurz: 'Social', badges: false },
   { id: 'kalender', icon: 'calendar-days', text: 'Kalender', kurz: 'Termine', badges: true },
   { id: 'werbebilder', icon: 'images', text: 'Werbebilder', kurz: 'Werbung', badges: false },
-  { id: 'angebote', icon: 'tags', text: 'Angebote', kurz: 'Angebote', badges: false }
+  { id: 'angebote', icon: 'tags', text: 'Angebote', kurz: 'Angebote', badges: false },
+  { id: 'wochenplan', icon: 'calendar-range', text: 'Wochenplan', kurz: 'Woche', badges: false },
+  // Getraenke werden kaum noch gebraucht und stehen deshalb ganz am Ende.
+  { id: 'getraenke', icon: 'cup-soda', text: 'Getränke', kurz: 'Getränke', badges: true }
 ];
 
 /* ── Neue Kopfzeile (Rasterbereich "hd") ──────────────────────────────────
