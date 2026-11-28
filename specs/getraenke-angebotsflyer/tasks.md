@@ -304,3 +304,24 @@ Renderauftragsprüfung besteht TC-F75-04 fünf Wiederholungen. Reiter-Prüfhelfe
 warten auf den vollständig aufgebauten Arbeitsbereich, statt während dessen
 Aufbau einen veralteten Ausgabemodus zu lesen.
 Dies ist ein lokaler Abnahmestand, kein Live-Deploymentnachweis.
+
+# Folgeauftrag F76: Verständlicher Angebotsablauf
+
+| Aufgabe | Abhängigkeit | Testvertrag |
+| --- | --- | --- |
+| GF143 Responsives Angebotskarten-Mockup erstellen und visuell für Desktop/Telefon prüfen | F76-Spec/Plan | TC-F76-04 |
+| GF144 Produktions-Namespace nach erfolgreichem Main-Deploy setzen und Pflicht-Einstellungen maskiert validieren | GF143 | TC-F76-01 |
+| GF145 Save-first-Navigation in derselben Erfassungssitzung und direkten Rückweg zur Übersicht mit Erhalt/Bestätigung des Entwurfs umsetzen | GF143 | TC-F76-02..03 |
+| GF146 Angebotskarte gemäß Mockup gruppieren, Vorschau/Ausgabe benennen, Artikeldetails geschlossen aufklappbar machen und alten Feature-Einstieg entfernen; Altbestand erhalten | GF143 | TC-F76-04..05 |
+| GF147 API-, Workflow-, Vieransichten- und Bestandsregression abnehmen | GF144..GF146 | TC-F76-01..05 |
+
+Die anschließende Produktionsveröffentlichung ist vom Nutzer freigegeben.
+Lokale Browserprüfungen laufen mit einem Worker und gezielten Testfällen;
+die Live-Prüfung verändert keine Angebote oder Bilder.
+
+Lokale Abnahme: 44 gezielte Ablaufprüfungen auf den vier Pflichtansichten
+bestanden; weitere 17 Desktopfälle decken Bilder, Ausgabe, Speichern,
+Bestandsaktionen und Zurück-Navigation ab. Der Kartenfall TC-F76-04 prüft
+zusätzlich alle vier Größen mit echten Touchzielen. 85 Python-Angebotsfälle,
+JS-Syntax, Workflow-YAML, CMS-Funktionsabgleich und Diff-Prüfung bestanden.
+Die Produktionsabnahme folgt nach dem tatsächlichen Deployment.

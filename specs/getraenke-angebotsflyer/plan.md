@@ -1100,6 +1100,38 @@ bleibt Details-Menü; drei Bereichswechsel bleiben Select-Change-Delegation;
 Aktionsdaten bleiben `metaToggle.onclick`, Schließen bleibt `cancel()`.
 Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
 
+## F76: Verständlicher Angebotsablauf und Produktivkonfiguration
+
+1. Workflow: einen Main-Push-Job nach erfolgreichem Deploy ergänzen. Er liest
+   die vorhandenen Produktions-App-Einstellungen, prüft notwendige Werte,
+   maskiert sie und setzt ausschließlich `ANGEBOTE_NAMESPACE=production`. Der
+   bestehende PR-Job und sein `preview-<PR>`-Namespace bleiben unverändert.
+2. CMS-Ablauf: Bei einer nicht gespeicherten neuen Aktion Gestaltung und
+   Ausgabe in der Navigation deaktivieren. Nach erfolgreichem `persist()`
+   innerhalb der bestehenden Erfassungssitzung zur Gestaltung wechseln, damit
+   „Artikel / Bilder“ als Rückweg erhalten bleibt; Fehler behalten den
+   vollständigen Entwurf und die Sperre. Vom Editor gibt es einen getrennten
+   direkten Rückweg zur Angebotsübersicht. Bei direktem Verlassen werden
+   Entwurfänderungen bestätigt.
+3. Übersicht: erste Produktbezeichnung und Angebotspreis als Vorschau in die
+   Aktionskarte aufnehmen. Die Aktionsknöpfe bei unveränderten Labels/Funktionen
+   nach `mockups/angebote-uebersicht-redesign-mockup.html` kompakt gruppieren;
+   „Bearbeiten“ und „Vorschau/Ausgabe“ als Hauptaktionen, Teilen/Waage und
+   Löschen/Mehr als Nebenaktionen, 44-px-Touchziele erhalten. Den alten Einstieg
+   zum Feature-Bestand aus der Übersicht entfernen, Artikeldetails zunächst
+   geschlossen und aufklappbar darstellen, aber Daten und Backendkompatibilität
+   unangetastet lassen.
+4. Verifikation: fokussierte Playwright-Fälle für Save-first, Rücknavigation,
+   sichtbare Produktvorschau und alle vier Viewports; Python-/API- und
+   Workflow-YAML-Prüfung. Die anschließende Veröffentlichung ist ausdrücklich
+   freigegeben; Produktion wird nach dem Deployment schreibfrei geprüft.
+
+Betroffene Dateien: `.github/workflows/azure-static-web-apps-kind-pebble-072605b03.yml`,
+`static-site/js/cms-angebote.js`, `static-site/js/cms-angebote-form.js`,
+`static-site/js/angebote-editor.js`, `static-site/css/angebote.css`,
+`mockups/angebote-uebersicht-redesign-mockup.html`,
+`tests/cms-angebote-ablauf.spec.js` sowie die zugehörigen F76-SDD-Dokumente.
+
 ## F75: Einheitliche Live-Vorschau und Touch-Scrollen
 
 1. `angebote-design.js`: Die bestehenden Objektfenster nur im Telefoneditor

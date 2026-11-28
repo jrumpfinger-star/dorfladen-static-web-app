@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Angebotsübersicht Redesign</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<style>
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{background:var(--flaeche);color:var(--ink);font:15px/1.45 system-ui,"Segoe UI",sans-serif}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+.mockup-badge{position:fixed;z-index:5;top:10px;left:12px;padding:4px 10px;border:1px solid var(--amb-b);border-radius:999px;background:var(--amb-l);color:var(--amb);font-size:12px;font-weight:600}
+.overview{width:min(100%,1320px);margin:0 auto;padding:52px 24px 32px}
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
+.page-title small{display:block;color:var(--mut);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.page-title h1{margin-top:2px;font-size:24px;font-weight:600;line-height:1.2}
+.new-actions{display:flex;gap:8px}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:9px;background:var(--karte);font-weight:600;white-space:nowrap;box-shadow:none}
+.button svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.button:hover{background:var(--gr-t);border-color:var(--gr)}
+.button-primary{border-color:var(--gr-d);background:var(--gr-d);color:#fff}
+.button-primary:hover{background:var(--gr);color:#fff}
+.period{display:flex;gap:4px;width:max-content;margin:0 0 16px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--karte)}
+.period button{min-height:36px;padding:6px 14px;border:0;border-radius:7px;background:transparent;font-size:13px;font-weight:600;white-space:nowrap}
+.period button[aria-pressed=true]{background:var(--gr-l);color:var(--gr-d)}
+.action-card{overflow:hidden;border:1px solid #dfe7e0;border-radius:16px;background:var(--karte);box-shadow:0 5px 16px #1836240a}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px 14px}
+.identity{min-width:0}
+.identity h2{font-size:21px;font-weight:600;line-height:1.25}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:7px;color:var(--mut);font-size:14px}
+.meta-item{display:inline-flex;align-items:center;gap:6px}
+.meta-item svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8}
+.dot{color:#a7b2aa}
+.status-group{display:flex;flex:none;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.status{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:#f8faf8;color:#435249;font-size:12px;font-weight:600;white-space:nowrap}
+.status svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+.status-saved{border-color:#cfe0d1;background:#f1f8f2;color:#25613b}
+.status-planned{border-color:#eddcb2;background:#fff8e9;color:#765316}
+.offer-preview{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;margin:0 22px;padding:16px 18px;border:1px solid #dce7dc;border-radius:12px;background:linear-gradient(110deg,#f6faf6,#fff 72%)}
+.product-info{min-width:0}
+.product-label{margin-bottom:4px;color:#62756a;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.product-info h3{overflow-wrap:anywhere;font-size:19px;font-weight:600;line-height:1.3}
+.product-note{margin-top:3px;color:var(--mut);font-size:13px}
+.price-block{min-width:132px;text-align:right}
+.price-label{display:block;color:#62756a;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.price{display:block;margin-top:1px;color:var(--gr-d);font-size:26px;font-weight:700;line-height:1.15;white-space:nowrap}
+.old-price{display:block;margin-top:3px;color:var(--mut);font-size:13px;text-decoration:line-through}
+.actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px 18px}
+.action-group{display:flex;align-items:center;gap:8px}
+.action-primary{border-color:#c9d9cc;color:var(--gr-d)}
+.action-preview{border-color:#d6e1d8;background:#f6faf6;color:#244b34}
+.action-secondary{min-width:44px;padding-inline:12px;color:#46534a;font-size:14px;font-weight:500}
+.action-secondary svg{width:17px;height:17px}
+.action-icon{width:44px;padding:8px}
+.action-icon.delete{border-color:#efd3d2;color:#a33a36}
+.action-divider{width:1px;height:28px;background:#e4e9e5}
+.offer-details{margin:8px 22px 0}
+.offer-details>summary{list-style:none;cursor:pointer}
+.offer-details>summary::-webkit-details-marker{display:none}
+.disclosure{display:flex;align-items:center;gap:6px;min-height:44px;padding:4px 0;border:0;background:transparent;color:#4b5c51;font-size:13px}
+.disclosure svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;transition:transform .15s}
+.offer-details[open] .disclosure svg{transform:rotate(90deg)}
+.offer-detail-content{padding:0 0 12px}
+.detail-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fbfcfb}
+.detail-item strong{display:block;font-size:15px}
+.detail-item small{display:block;margin-top:3px;color:var(--mut);font-size:13px}
+.detail-item .detail-price{color:var(--gr-d);font-weight:700;white-space:nowrap}
+.hint{margin-top:18px;color:var(--mut);font-size:13px}
+@media(min-width:600px) and (pointer:fine){
+  .button{min-height:36px;padding-block:6px}
+  .period button{min-height:32px}
+  .action-icon{min-height:36px;height:36px}
+}
+@media(max-width:760px){
+  .overview{padding:48px 14px 24px}
+  .page-head{align-items:flex-end}
+  .page-title h1{font-size:22px}
+  .card-head{padding:16px 16px 12px}
+  .offer-preview{margin-inline:16px;padding:14px}
+  .actions{padding:12px 16px 16px}
+  .offer-details{margin-inline:16px}
+}
+@media(max-width:520px){
+  .overview{padding:48px 8px 18px}
+  .page-head{align-items:flex-start;flex-direction:column;gap:12px}
+  .new-actions{width:100%}
+  .new-actions .button{flex:1}
+  .period{display:flex;width:100%}
+  .period button{flex:1;padding-inline:6px}
+  .card-head{flex-direction:column;gap:10px;padding:14px 12px 10px}
+  .identity{width:100%}
+  .identity h2{font-size:19px}
+  .status-group{justify-content:flex-start}
+  .meta{gap:4px 7px;font-size:13px}
+  .offer-preview{grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-inline:12px;padding:12px}
+  .product-info h3{font-size:17px}
+  .price-block{min-width:100px}
+  .price{font-size:23px}
+  .actions{align-items:stretch;flex-direction:column;padding:12px}
+  .action-group{width:100%}
+  .action-group:first-child .button{flex:1;padding-inline:8px;font-size:13px}
+  .action-group-secondary{justify-content:flex-end}
+  .action-secondary{flex:1;padding-inline:6px;font-size:12px}
+  .action-divider{height:24px}
+  .disclosure{margin-inline:12px}
+}
+</style>
+</head>
+<body>
+<div class="mockup-badge">MOCKUP · nicht produktiv</div>
+<main class="overview" aria-label="Aktionsübersicht">
+  <header class="page-head">
+    <div class="page-title">
+      <small>Aktionsverwaltung</small>
+      <h1>Sonderangebote</h1>
+    </div>
+    <div class="new-actions" aria-label="Neue Aktion">
+      <button class="button button-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Sonderaktion</button>
+      <button class="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Getränkeaktion</button>
+    </div>
+  </header>
+
+  <nav class="period" aria-label="Aktionszeitraum">
+    <button aria-pressed="true">Diese Woche</button>
+    <button aria-pressed="false">Nächste Woche</button>
+    <button aria-pressed="false">Alle</button>
+  </nav>
+
+  <article class="action-card" aria-labelledby="offer-title">
+    <header class="card-head">
+      <div class="identity">
+        <h2 id="offer-title">Sonderangebote</h2>
+        <div class="meta">
+          <span class="meta-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+            30.11.2026 bis 05.12.2026
+          </span>
+          <span class="dot" aria-hidden="true">·</span>
+          <span>Sonderaktion</span>
+          <span class="dot" aria-hidden="true">·</span>
+          <span>1 Artikel</span>
+        </div>
+      </div>
+      <div class="status-group" aria-label="Status">
+        <span class="status status-saved">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+          Gespeichert
+        </span>
+        <span class="status status-planned">Geplant</span>
+      </div>
+    </header>
+
+    <section class="offer-preview" aria-label="Angebotsinhalt">
+      <div class="product-info">
+        <div class="product-label">Angebot · 1 Artikel</div>
+        <h3>Nutella 450 g</h3>
+      </div>
+      <div class="price-block">
+        <span class="price-label">Angebotspreis</span>
+        <strong class="price">3,00 €</strong>
+        <del class="old-price">statt 3,79 €</del>
+      </div>
+    </section>
+
+    <details class="offer-details">
+      <summary class="disclosure">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        Artikel und Bilder anzeigen
+      </summary>
+      <div class="offer-detail-content">
+        <div class="detail-item">
+          <div><strong>Nutella 450 g</strong><small>Aktionsartikel · Produktbild und weitere Angebotsdetails</small></div>
+          <span class="detail-price">3,00 €</span>
+        </div>
+      </div>
+    </details>
+
+    <footer class="actions" aria-label="Aktionsfunktionen">
+      <div class="action-group">
+        <button class="button action-primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z"/></svg>
+          Bearbeiten
+        </button>
+        <button class="button action-preview">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Vorschau/Ausgabe
+        </button>
+      </div>
+      <div class="action-group action-group-secondary">
+        <button class="button action-secondary" aria-label="Teilen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4m0-11-6.8 4"/></svg>
+          Teilen
+        </button>
+        <button class="button action-secondary" aria-label="Waage">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 16 3-8 3 8c-.9.7-2 1-3 1s-2.1-.3-3-1Zm-14 0 3-8 3 8c-.9.7-2 1-3 1s-2.1-.3-3-1ZM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+          Waage
+        </button>
+        <span class="action-divider" aria-hidden="true"></span>
+        <button class="button action-icon delete" aria-label="Aktion löschen" title="Aktion löschen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M19 6v14H5V6m3 0V4h8v2m-7 4v7m4-7v7"/></svg>
+        </button>
+        <button class="button action-icon" aria-label="Weitere Aktionen" title="Weitere Aktionen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        </button>
+      </div>
+    </footer>
+  </article>
+  <p class="hint">Entwurf: Angebotstitel, Zeitraum und Status sind gebündelt; Produkt und Preis stehen im Mittelpunkt. Aktionen sind in Haupt- und Nebenaktionen geordnet.</p>
+</main>
+</body>
+</html>

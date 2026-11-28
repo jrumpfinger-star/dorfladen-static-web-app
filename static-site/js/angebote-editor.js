@@ -176,7 +176,8 @@
   }
   function nestedDialog() {
     var open = Array.prototype.filter.call(document.querySelectorAll('dialog[open]'), function (dlg) {
-      return dlg !== cmsDialog && (!cmsDialog || (cmsDialog.compareDocumentPosition(dlg) & Node.DOCUMENT_POSITION_FOLLOWING));
+      return dlg !== cmsDialog && !dlg.classList.contains('an-capture-suspended')
+        && (!cmsDialog || (cmsDialog.compareDocumentPosition(dlg) & Node.DOCUMENT_POSITION_FOLLOWING));
     });
     return open.length ? open[open.length - 1] : null;
   }
@@ -1009,10 +1010,11 @@
     root.classList.remove('an-task-editor'); root.style.removeProperty('height');
     cmsPanel = null; cmsTabbar = null;     cmsNarrow = null; phoneSheetOpen = false; phoneSheetRest = 'peek';
   }
-  async function closeCmsPreview() {
+  async function closeCmsPreview(returnToOverview) {
     if (!cmsSession && !(await discard())) return;
     var result = cmsSession ? { data: M.clone(data), dirty: dirty, undo: M.clone(undo), redo: M.clone(redo),
-      designTarget: designTarget, designItemId: designItemId, selected: selected, page: page, cmsTab: cmsTab } : undefined;
+      designTarget: designTarget, designItemId: designItemId, selected: selected, page: page, cmsTab: cmsTab,
+      returnToOverview: !!returnToOverview } : undefined;
     cmsCleanup();
     cmsAction = null; record = null; data = null; dirty = false; paint++;
     cmsSession = null;
@@ -1101,10 +1103,10 @@
     $('an-state').textContent = M.savedState(data, dirty);
     $('an-save').textContent = cmsSession ? 'Aktion speichern' : 'Gestaltung speichern';
     $('an-reload-saved').hidden = !!cmsSession;
-    $('an-overview').textContent = cmsSession ? 'Artikel / Bilder' : 'Schließen';
+    $('an-overview').textContent = 'Zur Angebotsübersicht';
     $('an-overview').setAttribute('aria-label', $('an-overview').textContent);
     $('an-overview').innerHTML = '<svg class="an-phone-close" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 6-12 12M6 6l12 12"/></svg><span>' + $('an-overview').textContent + '</span>';
-    $('an-overview').onclick = function () { run(closeCmsPreview); };
+    $('an-overview').onclick = function () { run(function () { return closeCmsPreview(true); }); };
     {
       var area = document.createElement('select'); area.className = 'an-workspace-area'; area.setAttribute('aria-label', 'Aktionsbereich');
       area.innerHTML = (cmsSession ? '<option value="articles">Artikel / Bilder</option>' : '') + '<option value="output">Ausgabe</option><option value="design">Gestaltung</option>';

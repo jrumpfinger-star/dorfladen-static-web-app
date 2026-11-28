@@ -13,7 +13,8 @@ window.CMSAngeboteForm = (function () {
       palette: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
       printer: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
       'calendar-days': '<path d="M8 2v4m8-4v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
-      x: '<path d="m18 6-12 12M6 6l12 12"/>'
+      x: '<path d="m18 6-12 12M6 6l12 12"/>',
+      'chevron-down': '<path d="m6 9 6 6 6-6"/>'
     };
     if (!paths[name]) throw new Error('Unbekanntes Angebotssymbol: ' + name);
     return '<svg class="lucide" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths[name] + '</svg>';
@@ -53,29 +54,40 @@ window.CMSAngeboteForm = (function () {
   function action(g, escape, formatPrice) {
     var esc = escape || window.AngeboteModel.esc;
     var card = document.createElement('div'); card.className = 'cms-card';
-    var id = esc(g.aktion_id), h = '<div class="cms-flex cms-between cms-ang-toggle" style="padding:12px 12px 10px" data-action="toggleAngItems" role="button" tabindex="0" aria-expanded="false">'
-      + '<div class="cms-ang-summary" style="display:flex;align-items:center"><div><div style="font-weight:600;color:var(--ink)">' + esc(g.titel || 'Angebot') + '</div>'
-      + '<div class="cms-ang-meta">' + esc(g.von) + ' bis ' + esc(g.bis) + ' · ' + g.items.length + ' Artikel</div></div>'
-      + '<span class="cms-ang-chevron collapsed">&#9660;</span></div><div class="cms-akt-btns" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'
-      + [
-        ['editAktion', 'square-pen', 'Bearbeiten', 'cms-btn cms-btn-sm cms-btn-gray'],
-        ['previewAktion', 'eye', 'Vorschau', 'cms-btn-preview'],
-        ['shareAktion', 'share-2', 'Teilen', 'cms-btn-wa'],
-        ['waageAktion', 'scale', 'Waage', 'cms-btn cms-btn-sm cms-btn-gray'],
-        ['deleteAktion', 'trash-2', 'Aktion löschen', 'cms-btn-trash']
-      ].map(function (entry) {
-        return '<button class="' + entry[3] + '" data-action="' + entry[0] + '" data-id="' + id + '" aria-label="' + entry[2]
-          + '" title="' + (entry[0] === 'waageAktion' ? 'Als Querformat-Bilder auf die Waage' : entry[2]) + '">' + icon(entry[1])
-          + (entry[0] === 'deleteAktion' ? '' : '<span class="an-action-label">' + entry[2] + '</span>') + '</button>';
-      }).join('')
-      + '</div></div><div class="cms-ang-items collapsed">';
+    var id = esc(g.aktion_id), featuredItem = g.items[0];
+    function actionButton(entry) {
+      return '<button type="button" class="' + entry[3] + '" data-action="' + entry[0] + '" data-id="' + id + '" aria-label="' + entry[2]
+        + '" title="' + (entry[0] === 'waageAktion' ? 'Als Querformat-Bilder auf die Waage' : entry[2]) + '">' + icon(entry[1])
+        + (entry[0] === 'deleteAktion' ? '' : '<span class="an-action-label">' + entry[2] + '</span>') + '</button>';
+    }
+    var h = '<div class="cms-ang-card-head">'
+      + '<div class="cms-ang-summary" data-action="toggleAngItems" role="button" tabindex="0" aria-expanded="false">'
+      + '<div class="cms-ang-heading"><div class="cms-ang-title">' + esc(g.titel || 'Angebot') + '</div>'
+      + '<div class="cms-ang-meta"><span>' + esc(g.von) + ' bis ' + esc(g.bis) + '</span><span>' + esc(g.aktionstyp || 'Sonderaktion')
+      + '</span><span>' + g.items.length + ' Artikel</span></div></div>'
+      + '<div class="cms-ang-status" aria-label="Status"></div>'
+      + (featuredItem ? '<div class="cms-ang-featured"><div class="cms-ang-featured-copy"><span class="cms-ang-featured-label">Angebot</span>'
+        + '<strong>' + esc(featuredItem.produkt || 'Artikel') + '</strong>'
+        + (g.items.length > 1 ? '<small>+' + (g.items.length - 1) + ' weitere</small>' : '') + '</div>'
+        + '<div class="cms-ang-featured-price">' + (featuredItem.preis != null ? '<span class="cms-ang-price-label">Angebotspreis</span><strong>'
+          + esc(formatPrice(featuredItem.preis)) + '</strong>' : '')
+        + (featuredItem.statt_preis != null ? '<del>statt ' + esc(formatPrice(featuredItem.statt_preis)) + '</del>' : '') + '</div></div>' : '')
+      + '<div class="cms-ang-disclosure"><span class="cms-ang-chevron collapsed">' + icon('chevron-down') + '</span><span>Artikel und Bilder anzeigen</span></div>'
+        + '</div></div><div class="cms-ang-items collapsed">';
     g.items.forEach(function (item) {
       h += '<div class="cms-ang-item"><div class="cms-ang-name">' + esc(item.produkt) + '</div>';
       if (item.preis != null) h += '<div class="cms-ang-price">' + esc(formatPrice(item.preis)) + '</div>';
       if (item.statt_preis != null) h += '<div class="cms-ang-old">statt ' + esc(formatPrice(item.statt_preis)) + '</div>';
       h += '</div>';
     });
-    card.innerHTML = h + '</div>';
+    card.innerHTML = h + '</div><div class="cms-akt-btns"><div class="cms-akt-primary">'
+        + actionButton(['editAktion', 'square-pen', 'Bearbeiten', 'cms-btn cms-btn-sm cms-btn-gray'])
+        + actionButton(['previewAktion', 'eye', 'Vorschau/Ausgabe', 'cms-btn-preview'])
+        + '</div><div class="cms-akt-secondary">'
+        + actionButton(['shareAktion', 'share-2', 'Teilen', 'cms-btn-wa'])
+        + actionButton(['waageAktion', 'scale', 'Waage', 'cms-btn cms-btn-sm cms-btn-gray'])
+        + actionButton(['deleteAktion', 'trash-2', 'Aktion löschen', 'cms-btn-trash'])
+        + '</div></div>';
     return card;
   }
   function syncAreaNavigation(select) {

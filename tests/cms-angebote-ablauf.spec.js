@@ -178,7 +178,7 @@ for (const kind of ['drinks', 'weekly']) {
     }
     await page.screenshot({ path: test.info().outputPath('gemeinsame-erfassung-' + kind + '.png') });
     await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(dlg).toHaveCount(0);
+    await expect(page.locator('.an-cms-workspace')).toBeVisible();
     expect(state.writes).toHaveLength(1);
     const original = structuredClone(state.writes[0].items);
     if (kind === 'drinks') expect(original.map(it => [it.units, it.deposit_cents])).toEqual([[20, 310], [12, 200]]);
@@ -189,7 +189,7 @@ for (const kind of ['drinks', 'weekly']) {
     await expect(reopened.locator('.cms-ang-row')).toHaveCount(2);
     if (kind === 'drinks') await expect(reopened.locator('[data-f=deposit_cents]').last()).toHaveValue('2,00');
     await reopened.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(reopened).toHaveCount(0);
+    await expect(page.locator('.an-cms-workspace')).toBeVisible();
     expect(state.writes[1].items).toEqual(original);
     expect(state.errors).toEqual([]);
   });
@@ -232,7 +232,7 @@ for (const kind of ['drinks', 'weekly']) {
     expect(state.writes).toHaveLength(0);
     expect(state.images).toBe(0);
     await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(dlg).toHaveCount(0);
+    await expect(page.locator('.an-cms-workspace')).toBeVisible();
     expect(state.images).toBe(1);
     expect(state.writes[0].items[0].werbebild_id).toBe('11111111-1111-4111-8111-111111111111');
     expect(state.errors).toEqual([]);
@@ -303,7 +303,7 @@ test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artik
   await dlg.locator('[data-density]').selectOption('4');
   await expect(rows).toHaveCount(6);
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.writes).toHaveLength(1);
   const saved = state.writes[0];
   await require('node:fs/promises').writeFile(test.info().outputPath('dataverse-action.json'), JSON.stringify(saved));
@@ -339,7 +339,7 @@ test('TC-F18-02/03: Kachelwahl, Folgeseiten, Speichern und Neuöffnen ohne Artik
   await showMeta(reopened);
   await reopened.locator('[data-density]').selectOption('6');
   await reopened.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(reopened).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.writes[1].layout.pages).toHaveLength(1);
   expect(state.writes[1].layout.targets.single).toEqual(saved.layout.targets.single);
   expect(state.writes[1].items).toEqual(saved.items);
@@ -399,7 +399,7 @@ test('TC-F18-04/06: gespeicherte Getränke sind ohne weitere Freigabe mit Flyer 
   await dlg.locator('[data-meta=valid_to]').fill('2026-11-21');
   await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.writes).toHaveLength(1);
   await page.goto(BASE + '/index.html');
   const mobile = page.viewportSize().width <= 768;
@@ -422,7 +422,7 @@ test('TC-F25-02: Aktion der nächsten Woche erscheint auf der Startseite nur unt
   await dlg.locator('[data-meta=valid_to]').fill('2026-11-28');
   await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.writes).toHaveLength(1);
   await page.goto(BASE + '/index.html');
   const mobile = page.viewportSize().width <= 768;
@@ -464,11 +464,11 @@ test('TC-F18-10: Gestaltung direkt nach dem Erfassen mehrfach speichern ohne Kon
   const dlg = await create(page, 'drinks');
   await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   await toDesign(page);
   for (let i = 0; i < 2; i++) {
     await saveDesign(page);
-    await expect(page.locator('dialog.an-dialog:not(.an-cms-preview-modal)[open]')).toHaveCount(0);
+    await expect(page.locator('dialog.an-dialog:not(.an-cms-preview-modal):not(.an-capture-suspended)[open]')).toHaveCount(0);
   }
   expect(state.writes).toHaveLength(3);
   const ids = state.writes[0].items.map((it) => it.id.replace(/-/g, '').toLowerCase());
@@ -628,7 +628,7 @@ test('TC-F18-01/03: eigene Bilddatei bleibt bei Uploadfehler zur erneuten Speich
   await expect(dlg).toBeVisible();
   state.failImages = false;
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.images).toBe(2);
   const item = state.writes[0].items[0];
   expect(item.image_id).toBe('cms:ANG-' + item.id);
@@ -644,7 +644,7 @@ test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen
   await row.locator('[data-f=produkt]').fill('Originalartikel');
   await row.locator('[data-f=preis]').fill('1,99');
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   await showTab(page, 'Artikel');
   const positions = page.locator('details', { hasText: 'Exakte CMS-Artikelpositionen' }).last();
   if (!(await positions.evaluate((node) => node.open))) await positions.locator('> summary').click();
@@ -660,7 +660,7 @@ test('TC-F18-04: Original-Wochenanpassungen überstehen Speichern und Umbenennen
   await focusRow(edit.locator('.cms-ang-row').first());
   await edit.locator('[data-f=produkt]').first().fill('Umbenannter Originalartikel');
   await edit.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(edit).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.writes[2].layout.cms.plakat_article_overrides[itemId].imgDx).toBe(13);
   expect(state.writes[2].items[0].id).toBe(itemId);
   expect(state.errors).toEqual([]);
@@ -675,7 +675,7 @@ test('TC-F18-01/03: gefundene CMS-Bilder mit Produktnamen bleiben nach dem Speic
   await row.locator('[data-offer-action=loadBildSharePoint]').click();
   await expect(row.locator('.cms-bild-preview')).toBeVisible();
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   const item = state.writes[0].items[0];
   expect(item.image_id).toBe('cms:Getränk 1');
   expect(state.writes[0].layout.image_refs[item.id]).toBe(item.image_id);
@@ -690,7 +690,7 @@ test('TC-F18-01/03: gefundene CMS-Bilder mit Produktnamen bleiben nach dem Speic
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F18-07/09: ursprüngliche aufklappbare CMS-Übersicht lädt ohne Vorlagen- und Bildabrufe', async ({ page }) => {
+test('TC-F18-07/09/F76-05: Angebotsdetails sind standardmäßig geschlossen und die Übersicht lädt ohne Vorlagenabrufe', async ({ page }) => {
   const state = await setup(page);
   let templates = 0;
   await page.route('**/api/cms-config', async route => {
@@ -711,9 +711,15 @@ test('TC-F18-07/09: ursprüngliche aufklappbare CMS-Übersicht lädt ohne Vorlag
   expect((await week.boundingBox()).width).toBeLessThan(200);
   const first = page.locator('.an-cms-overview .cms-card').first();
   await expect(first.locator('.cms-ang-items')).toBeHidden();
+  await expect(first.locator('.cms-ang-summary')).toHaveAttribute('aria-expanded', 'false');
+  await expect(first.locator('.cms-ang-disclosure')).toContainText('Artikel und Bilder anzeigen');
   await first.locator('[data-cms-toggle]').press('Enter');
+  await expect(first.locator('.cms-ang-summary')).toHaveAttribute('aria-expanded', 'true');
   await expect(first.locator('.cms-ang-items')).toBeVisible();
   await expect(first.locator('.cms-ang-name')).toHaveText('Artikel 0');
+  await first.locator('.cms-ang-summary').click();
+  await expect(first.locator('.cms-ang-summary')).toHaveAttribute('aria-expanded', 'false');
+  await expect(first.locator('.cms-ang-items')).toBeHidden();
   await expect(first.locator('.cms-btn-preview')).toBeVisible();
   await expect(first.locator('.cms-btn-wa')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('urspruengliche-cms-uebersicht.png') });
@@ -744,7 +750,7 @@ test('TC-F18-08: vorhandene SharePoint-Bilder ohne Verknüpfung und mit abgelauf
   expect(state.imageLookups.map(it => it.artikelnummer).sort()).toEqual(['4001234567890', '4001234567891']);
   expect(state.imageLookups.every(it => it.edeka_nr && it.strichcode)).toBe(true);
   await dlg.getByRole('button', { name: 'Abbrechen', exact: true }).click();
-  await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+  await page.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true }).click();
   await expect(page.locator('#an-page-label')).toHaveText('Seite 1 / 1');
   await expect(page.locator('#an-stage-info')).not.toHaveClass(/an-error/);
   expect(state.imageLookups).toHaveLength(3);
@@ -775,9 +781,10 @@ async function openPreview(page, kind, count, withImage, density, stayOnOutput) 
     await (await chooser).setFiles({ name: 'produkt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
   }
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
-  /* Der Editor öffnet im Standardbereich Ausgabe; die meisten Tests prüfen die Gestaltung. */
-  if (!stayOnOutput) await toDesign(page);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
+  /* Der erste Speichervorgang öffnet Gestaltung mit erhaltener Artikel-Rücknavigation. */
+  if (stayOnOutput) await selectArea(page.locator('#an-root'), 'output');
+  else await toDesign(page);
 }
 // Elementauswahl ohne Sichtbarkeit des Blatts: ueber das Werkzeug-Select (wie ehemals über die Schnellleiste).
 const pickElement = async (page, kind, must) => {
@@ -899,7 +906,7 @@ test('TC-F65-03: Aktion laedt benannten Bereichsstandard bestaetigt und behaelt 
   expect(state.writes[1].items).toEqual(state.writes[0].items);
   await root.locator('#an-overview').click();
   await allWeeks(page);
-  await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+  await page.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true }).click();
   await expect(root.locator('[data-action-design-context]')).toContainText('Fruehlingsvorlage');
   expect(state.writes).toHaveLength(2);
   expect(state.errors).toEqual([]);
@@ -1684,7 +1691,7 @@ for (const [surface, path] of SURFACES) {
       }
       await setTarget(page, 'sheet');
       await page.screenshot({ path: test.info().outputPath('aktionsvorschau-rechts-' + kind + '.png') });
-      await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+      await page.locator('#an-overview').click();
       await expect(modal).toHaveCount(0);
     }
     expect(state.errors).toEqual([]);
@@ -1998,7 +2005,7 @@ for (const kind of ['drinks', 'weekly']) {
     await page.locator('#an-overview').click();
     await page.goto(BASE + '/angebote.html');
     await allWeeks(page);
-    await page.getByRole('button', { name: 'Vorschau', exact: true }).click();
+    await page.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true }).click();
     await expect(page.locator('#an-stage-info')).not.toHaveClass(/an-error/);
     const after = await output();
     // Der Originalwochenrenderer streut Dekoration zufällig; dort gilt gleiche Ausgabegröße, bei Getränken Byte-Gleichheit.
@@ -2028,7 +2035,7 @@ test('TC-F55-01: wahrheitsgemäße Zustände, Schutz vor Verlust und kein doppel
   await page.goto(BASE + '/angebote.html');
   await allWeeks(page);
   for (const label of ['Geplant', 'Aktiv', 'Abgelaufen']) {
-    await expect(page.locator('.an-action-list').getByText('Gespeichert · ' + label, { exact: false })).toHaveCount(1);
+    await expect(page.locator('.an-action-list .an-state-chip').filter({ hasText: label })).toHaveCount(1);
   }
   const dlg = await create(page, 'drinks');
   const status = dlg.locator('[data-capture-status]');
@@ -2046,7 +2053,7 @@ test('TC-F55-01: wahrheitsgemäße Zustände, Schutz vor Verlust und kein doppel
   expect(state.actions.size).toBe(4);
   state.failReads = false;
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.actions.size).toBe(4);
   const written = state.writes.filter((body) => body.title === 'Getränkeangebote');
   expect(written).toHaveLength(2);
@@ -2090,7 +2097,7 @@ test('TC-F55-02: zwei Bearbeitungen desselben Inhalts überschreiben sich nicht'
   await expect(fresh.locator('[data-meta=title]')).toHaveValue('Fassung des anderen Clients');
   await fresh.locator('[data-meta=title]').fill('Zusammengeführt');
   await fresh.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(fresh).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.actions.get('AKT-ZWEI').title).toBe('Zusammengeführt');
   await page.locator('#an-overview').click();
   await allWeeks(page);
@@ -2112,12 +2119,14 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await row.locator('[data-offer-action=uploadBildSP]').click();
   await (await chooser).setFiles({ name: 'artikel.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
   await row.evaluate(el => { window.__captureRow = el; });
-  await selectArea(dlg, 'design');
+  await expect(dlg.locator('[data-action-area=design]')).toBeDisabled();
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   const workspace = page.getByRole('dialog', { name: 'Vorschau', exact: true });
+  await expect(workspace).toBeVisible();
   if (page.viewportSize().width < 600) await workspaceView(workspace, 'picture');
   await expect(workspace.locator('#an-stage-canvas')).toBeVisible();
   if (page.viewportSize().width < 600) await workspaceView(workspace, 'inputs');
-  expect(state.writes).toHaveLength(0); expect(state.images).toBe(0);
+  expect(state.writes).toHaveLength(1); expect(state.images).toBe(1);
   await openSheet(page);
   await showTab(page, 'Vorlage');
   const color = page.locator('input[data-style=background]');
@@ -2129,7 +2138,7 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   await row.locator('[data-f=produkt]').fill('Korrigierter Artikel');
   await selectArea(dlg, 'output');
   await expect(workspace.locator('[data-cms-download]')).toBeVisible();
-  expect(state.writes).toHaveLength(0); expect(state.images).toBe(0);
+  expect(state.writes).toHaveLength(1); expect(state.images).toBe(1);
   await openSheet(page);
   await showTab(page, 'Vorlage');
   await expect(page.locator('input[data-style=background]')).toHaveValue('#336699');
@@ -2143,11 +2152,11 @@ test('TC-F62-01: Bereichswechsel erhält ungespeicherte Artikel, Bilder und Gest
   /* Am Telefon liegt Speichern in der Hauptleiste, sonst im Fuss der Werkzeugspalte. */
   const phoneSave = workspace.locator('[data-motiv-save]');
   await ((await phoneSave.isVisible()) ? phoneSave : workspace.locator('#an-save')).click();
-  await expect.poll(() => state.writes.length).toBe(1);
+  await expect.poll(() => state.writes.length).toBe(2);
   expect(state.images).toBe(1);
-  expect(state.writes[0].items[0].name).toBe('Korrigierter Artikel');
-  expect(state.writes[0].items[0].image_id).not.toContain('pending-');
-  expect(state.writes[0].layout.background).toBe('#336699');
+  expect(state.writes[1].items[0].name).toBe('Korrigierter Artikel');
+  expect(state.writes[1].items[0].image_id).not.toContain('pending-');
+  expect(state.writes[1].layout.background).toBe('#336699');
   expect(state.errors).toEqual([]);
 });
 
@@ -2160,8 +2169,12 @@ test('TC-F62-02: Speicherkonflikt nach Bildupload erhält Bild, Artikel und geme
   const chooser = page.waitForEvent('filechooser');
   await row.locator('[data-offer-action=uploadBildSP]').click();
   await (await chooser).setFiles({ name: 'konflikt.png', mimeType: 'image/png', buffer: Buffer.from(PHOTO.split(',')[1], 'base64') });
-  await selectArea(dlg, 'design');
+  await expect(dlg.locator('[data-action-area=design]')).toBeDisabled();
+  await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
   const workspace = page.getByRole('dialog', { name: 'Vorschau', exact: true });
+  await expect(workspace).toBeVisible();
+  await showTab(page, 'Vorlage');
+  await page.locator('input[data-style=background]').fill('#336699');
   state.failSave = true;
   const phoneSave = workspace.locator('[data-motiv-save]');
   await ((await phoneSave.isVisible().catch(() => false)) ? phoneSave : workspace.locator('#an-save')).click();
@@ -2170,16 +2183,15 @@ test('TC-F62-02: Speicherkonflikt nach Bildupload erhält Bild, Artikel und geme
   await selectArea(workspace, 'articles');
   await expect(row.locator('[data-f=produkt]')).toHaveValue('Getränk 1');
   await expect(row.locator('.cms-bild-preview')).toBeVisible();
-  expect(state.images).toBe(1); expect(state.actions.size).toBe(0);
+  expect(state.images).toBe(1); expect(state.actions.size).toBe(1);
   state.failSave = false;
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(workspace).toBeVisible();
   expect(state.images).toBe(1);
-  expect(state.writes).toHaveLength(2);
-  expect(state.writes[1].items[0].image_id).toMatch(/^cms:/);
-  expect(state.writes[1].items[0].image_id).not.toContain('pending-');
-  expect(state.writes[1].items[0].werbebild_id).toBe('11111111-1111-4111-8111-111111111111');
-  expect(state.writes[1].items[0].name).toBe('Getränk 1');
+  expect(state.writes).toHaveLength(3);
+  expect(state.writes[2].items[0].image_id).not.toContain('pending-');
+  expect(state.writes[2].items[0].werbebild_id).toBe('11111111-1111-4111-8111-111111111111');
+  expect(state.writes[2].items[0].name).toBe('Getränk 1');
   expect(state.errors).toEqual([]);
 });
 
@@ -2280,7 +2292,7 @@ test('TC-F57-01: Duplizieren öffnet eine ungespeicherte Kopie mit neuen Kennung
   await showMeta(dlg);
   await dlg.locator('[data-meta=title]').fill('Meine Kopie');
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
   expect(state.writes).toHaveLength(2);
   const copy = state.writes[1];
   expect(copy.aktion_id).not.toBe(source.aktion_id);
@@ -2331,7 +2343,7 @@ test('TC-AEA-F1-01/F2-01: Aktions-Editor startet geteilt; am Telefon Motiv zuers
       if (mobile) expect(t.height).toBeGreaterThan(p.height);
       else expect(t.width).toBeGreaterThan(p.width);
     }
-    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await page.locator('#an-overview').click();
     await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
   }
   expect(state.errors).toEqual([]);
@@ -2400,7 +2412,7 @@ test('TC-F71-01/02: Schnellleiste am Telefon bearbeitet das Motiv ohne Scrollen 
     await expect(page.locator('.an-motiv-bar [data-motiv-save]')).toBeVisible();
     await page.locator('[data-sheet-close]').click();
     await expect(dock).toBeVisible();
-    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await page.locator('#an-overview').click();
     const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
     if (await discard.isVisible().catch(() => false)) await discard.click();
     await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
@@ -2454,7 +2466,7 @@ test('TC-F71-03: Schnellleiste verdeckt beim Scrollen keinen Inhalt - unteres En
   await page.locator('[data-sheet-close]').click();
   await expect(dock).toBeVisible();
   await expect.poll(async () => picture.evaluate((node) => parseFloat(getComputedStyle(node.querySelector('.an-dock-spacer')).height))).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await page.locator('#an-overview').click();
   const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
   if (await discard.isVisible().catch(() => false)) await discard.click();
   await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
@@ -2514,14 +2526,14 @@ test('TC-F69-02: Einzelflyer-Druck aus dem CMS-Modal ergibt je Artikel eine eige
   await fillDrink(rows.nth(0), 1);
   await fillDrink(rows.nth(1), 2);
   await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(dlg).toHaveCount(0);
-  await page.locator('#an-root').getByRole('button', { name: 'Schließen', exact: true }).click();
+  await expect(page.locator('.an-cms-workspace')).toBeVisible();
+  await page.locator('#an-overview').click();
   await page.waitForTimeout(500);
   await page.goto(BASE + '/cms.html?tab=ang');
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Alle', exact: true }).click();
   await page.waitForTimeout(800);
-  await page.getByRole('button', { name: 'Vorschau', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true }).first().click();
   await page.waitForTimeout(1200);
   await page.locator('[data-output-target]').selectOption('single');
   await page.waitForTimeout(800);
@@ -2578,7 +2590,7 @@ test('TC-F72-01: Touch - Antippen waehlt, Ziehen am Element veraendert nichts, V
     /* Am Griff veraendert Ziehen die Gestaltung */
     await touchGesture(page, handle, 30, 20);
     await expect(page.locator('#an-state'), kind).toContainText('geändert');
-    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await page.locator('#an-overview').click();
     const discard = page.getByRole('dialog').getByRole('button', { name: 'Änderungen verwerfen', exact: true });
     if (await discard.isVisible().catch(() => false)) await discard.click();
     await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
@@ -2592,6 +2604,10 @@ test('TC-F72-02: Zurueck-Taste schliesst erst das Blatt, dann den Editor (mit Ru
   await page.goto(BASE + '/angebote.html');
   const url = page.url();
   await openPreview(page, 'drinks', 2);
+  await page.locator('#an-overview').click();
+  await allWeeks(page);
+  await page.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true }).click();
+  await selectArea(page.locator('#an-root'), 'design');
   const modal = page.locator('.an-cms-preview-modal'), workspace = page.locator('.an-cms-workspace');
   await expect(page.locator('.an-sheet-chips')).toBeVisible();
   await page.locator('.an-motiv-dock').getByRole('button', { name: 'Element nach links schieben', exact: true }).click();
@@ -2753,7 +2769,7 @@ test('TC-F73-03b: Objektchips oeffnen durchscheinende Eigenschaften; Android-Zur
       expect(page.url()).toBe(url);
       expect(state.writes).toHaveLength(writes);
     }
-    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await page.locator('#an-overview').click();
   }
   expect(state.errors).toEqual([]);
 });
@@ -2812,23 +2828,110 @@ test('TC-F73-05b: Tablet und Desktop behalten die Reiter', { tag: '@layout' }, a
   expect(state.errors).toEqual([]);
 });
 
-test('TC-F74-01: Kartenaktionen bleiben einzeilig, lesbar und als Touchziele erreichbar', async ({ browser }) => {
+for (const kind of ['drinks', 'weekly']) {
+  test(`TC-F76-02: Erstes Speichern schaltet Gestaltung und Ausgabe nur bei Erfolg frei (${kind})`, { tag: '@layout' }, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    const dlg = await create(page, kind), row = dlg.locator('.cms-ang-row').first();
+    if (kind === 'drinks') await fillDrink(row, 1);
+    else {
+      await row.locator('[data-f=produkt]').fill('Sonderartikel');
+      await row.locator('[data-f=preis]').fill('1,99');
+    }
+    const assertLocked = async () => {
+      for (const area of ['design', 'output']) {
+        await expect(dlg.locator('[data-action-area=' + area + ']')).toBeDisabled();
+        await expect(dlg.locator('[data-capture-area] option[value=' + area + ']')).toBeDisabled();
+      }
+      await expect(page.locator('.an-cms-workspace')).toHaveCount(0);
+    };
+    await assertLocked();
+    state.failSave = true;
+    await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+    const error = page.getByRole('dialog').last();
+    await expect(error).toContainText('zwischenzeitlich geändert');
+    await error.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await assertLocked();
+    await expect(row.locator('[data-f=produkt]')).toHaveValue(kind === 'drinks' ? 'Getränk 1' : 'Sonderartikel');
+    expect(state.actions.size).toBe(0);
+    state.failSave = false;
+    await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+    const workspace = page.locator('.an-cms-workspace');
+    await expect(workspace).toBeVisible();
+    await selectArea(page.locator('#an-root'), 'articles');
+    await expect(dlg).toBeVisible();
+    await expect(dlg.locator('[data-action-area=design]')).toBeEnabled();
+    await expect(dlg.locator('[data-action-area=output]')).toBeEnabled();
+    await selectArea(dlg, 'output');
+    await expect(workspace.locator('[data-cms-download]')).toBeVisible();
+    await page.locator('#an-overview').click();
+    await expect(dlg).toHaveCount(0);
+    expect(state.actions.size).toBe(1);
+    expect(state.writes).toHaveLength(2);
+    expect(state.errors).toEqual([]);
+  });
+}
+
+test('TC-F76-03: Rückweg zur Übersicht bestätigt Änderungen und Abbrechen erhält Artikel und Gestaltung', { tag: '@layout' }, async ({ page }) => {
+  const state = await setup(page);
+  await page.goto(BASE + '/angebote.html');
+  await openPreview(page, 'drinks', 1);
+  const workspace = page.locator('.an-cms-workspace'), dlg = page.locator('.an-cms-capture');
+  await showTab(page, 'Vorlage');
+  await page.locator('input[data-style=background]').fill('#336699');
+  await page.locator('#an-overview').click();
+  const confirmation = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Änderungen verwerfen?', exact: true }) });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  await expect(dlg).toBeVisible();
+  await expect(dlg.locator('[data-f=produkt]').first()).toHaveValue('Getränk 1');
+  await selectArea(dlg, 'design');
+  await expect(workspace).toBeVisible();
+  await showTab(page, 'Vorlage');
+  await expect(page.locator('input[data-style=background]')).toHaveValue('#336699');
+  await expect(historyButton(page, 'undo')).toBeEnabled();
+  await page.locator('#an-overview').click();
+  await confirmation.getByRole('button', { name: 'Änderungen verwerfen', exact: true }).click();
+  await expect(dlg).toHaveCount(0);
+  await expect(workspace).toHaveCount(0);
+  await allWeeks(page);
+  await expect(page.locator('.an-overview-action')).toHaveCount(1);
+  expect(state.writes).toHaveLength(1);
+  expect(state.writes[0].layout.background).not.toBe('#336699');
+  expect(state.errors).toEqual([]);
+});
+
+test('TC-F76-04: Angebotsaktionen sind gruppiert, kompakt und als Touchziele erreichbar', async ({ browser }) => {
   for (const [width, height, touch] of [[375, 667, true], [768, 1024, true], [1280, 800, false], [686, 1095, true]]) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: touch, serviceWorkers: 'block' });
     try {
       const page = await context.newPage(), state = await setup(page);
+      state.featureArchive = true;
       state.actions.set('AKT-NAV', seededAction('AKT-NAV', 'Navigationsprobe', '2026-11-16', '2026-11-21'));
       await page.goto(BASE + '/angebote.html');
-      const card = page.locator('.an-overview-action'), controls = card.locator('.cms-akt-btns>button,.an-action-more>summary');
+      const card = page.locator('.an-overview-action');
+      await expect(card.locator('.cms-ang-featured')).toContainText('Seed Navigationsprobe');
+      await expect(card.locator('.cms-ang-featured-price')).toContainText('12,49');
+      await expect(card.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Feature-Bestand öffnen', exact: true })).toHaveCount(0);
+      await expect(card.locator('.cms-ang-items')).toBeHidden();
+      const primary = card.locator('.cms-akt-primary button');
+      const secondary = card.locator('.cms-akt-secondary>button,.cms-akt-secondary>.an-action-more>summary');
+      const controls = card.locator('.cms-akt-primary button,.cms-akt-secondary>button,.cms-akt-secondary>.an-action-more>summary');
       await expect(controls).toHaveCount(6);
       const boxes = await controls.evaluateAll(nodes => nodes.map(node => {
         const r = node.getBoundingClientRect();
         return { x: r.x, y: r.y, width: r.width, height: r.height, name: node.getAttribute('aria-label') };
       }));
       expect(boxes.every(b => b.name && b.width >= 44 && b.height >= (touch ? 44 : 32)
-        && Math.abs(b.y - boxes[0].y) <= 1 && b.x >= 0 && b.x + b.width <= width), JSON.stringify(boxes)).toBe(true);
+        && b.x >= 0 && b.x + b.width <= width), JSON.stringify(boxes)).toBe(true);
+      const primaryY = await primary.evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().y));
+      const secondaryY = await secondary.evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().y));
+      expect(Math.max(...primaryY) - Math.min(...primaryY)).toBeLessThanOrEqual(1);
+      expect(Math.max(...secondaryY) - Math.min(...secondaryY)).toBeLessThanOrEqual(1);
+      expect(secondaryY[0]).toBeGreaterThan(primaryY[0] - 1);
       const texts = await card.locator('.an-action-label').evaluateAll(nodes => nodes.filter(n => getComputedStyle(n).display !== 'none').length);
-      expect(texts).toBe(width === 375 ? 0 : 4);
+      expect(texts).toBe(4);
       await page.screenshot({ path: test.info().outputPath('navigation-overview-' + width + '.png') });
       await card.locator('.an-action-more>summary').click();
       await expect(card.getByRole('button', { name: 'Duplizieren', exact: true })).toBeVisible();
@@ -2877,9 +2980,9 @@ for (const kind of ['drinks', 'weekly']) {
       await page.goBack();
       await expect(dlg).toBeVisible();
       expect(page.url()).toBe(BASE + '/angebote.html');
-    } else await page.locator('#an-overview').click();
+    } else await selectArea(page.locator('#an-root'), 'articles');
     await expect(dlg.locator('.cms-ang-row').first().locator('[data-f=produkt]')).toHaveValue('Seed Navigationsprobe');
-    await dlg.getByRole('button', { name: 'Erfassung schließen', exact: true }).click();
+    await dlg.getByRole('button', { name: 'Zur Angebotsübersicht', exact: true }).click();
     await expect(dlg).toHaveCount(0);
     expect(state.writes).toHaveLength(0); expect(state.errors).toEqual([]);
   });
@@ -3093,7 +3196,7 @@ test('TC-F75-04: Ausstehende Live-Vorschau nach Abbrechen und Schliessen erzeugt
   await expect.poll(() => page.evaluate(() => typeof window.releasePreview)).toBe('function');
   await page.goBack();
   await expect(page.locator('dialog.an-phone-object[open]')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+  await page.locator('#an-overview').click();
   await expect(page.locator('.an-cms-preview-modal')).toHaveCount(0);
   await page.evaluate(() => {
     window.releasePreview();

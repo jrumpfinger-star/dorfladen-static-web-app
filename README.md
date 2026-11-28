@@ -130,11 +130,13 @@ git push origin main
 
 ## Test-Arbeitsregel (schnelle Zyklen)
 
-Die Playwright-Suite ist groß (~1.500 Tests, `fullyParallel`, 12 Worker).
+Die Playwright-Suite ist groß (~1.500 Tests) und läuft standardmäßig mit
+einem Worker, damit der Rechner bedienbar bleibt. Mehr Parallelität kann
+bei Bedarf explizit mit `--workers=2` oder `PW_WORKERS` gewählt werden.
 Während der Entwicklung NIE die volle Suite fahren:
 
 ```bash
-npm run test:schnell              # nur Desktop-Projekt, alles — ~1-2 min
+npm run test:schnell              # nur Desktop-Projekt, alles
 npm run test:geaendert            # nur Specs zu den geänderten Dateien, Desktop
 npm run test:geaendert:alle       # dieselben Specs auf allen Ansichten
 npm run test:voll                 # volle Matrix (vor Push / release)

@@ -45,6 +45,7 @@ window.CMSAngebote = (function () {
           var data = action.data;
           var card = window.CMSAngeboteForm.action({
             aktion_id: action.id, titel: data.title, von: M.date(data.valid_from), bis: M.date(data.valid_to),
+            aktionstyp: data.kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion',
             items: data.items.map(function (item) { return { produkt: item.name, preis: item.price_cents == null ? null : item.price_cents / 100,
               statt_preis: item.old_price_cents == null ? null : item.old_price_cents / 100 }; })
           }, M.esc, function (value) { return M.money(Math.round(value * 100)) + ' €'; });
@@ -58,23 +59,22 @@ window.CMSAngebote = (function () {
           var duplicate = document.createElement('button'); duplicate.type = 'button';
           duplicate.textContent = 'Duplizieren'; duplicate.dataset.duplicateAction = action.id;
           var buttons = card.querySelector('.cms-akt-btns'), summary = card.querySelector('.cms-ang-summary');
-          var toggle = card.querySelector('[data-cms-toggle]');
-          toggle.removeAttribute('data-cms-toggle'); toggle.removeAttribute('role'); toggle.removeAttribute('tabindex'); toggle.removeAttribute('aria-expanded');
-          summary.dataset.cmsToggle = ''; summary.setAttribute('role', 'button'); summary.tabIndex = 0; summary.setAttribute('aria-expanded', 'false');
+          summary.dataset.cmsToggle = '';
+          var state = document.createElement('div'); state.className = 'an-save-state';
+          M.savedState(data, false).split(' · ').forEach(function (label, index) {
+            var chip = document.createElement('span'); chip.className = 'an-state-chip';
+            chip.classList.add(index === 0 ? 'an-state-saved' : label === 'Aktiv' ? 'an-state-active' : label === 'Geplant' ? 'an-state-planned' : 'an-state-expired');
+            chip.textContent = label; state.appendChild(chip);
+          });
+          card.querySelector('.cms-ang-status').appendChild(state);
           var more = document.createElement('details'); more.className = 'an-action-more';
           var moreLabel = document.createElement('summary'); moreLabel.innerHTML = window.CMSAngeboteForm.icon('ellipsis');
           moreLabel.setAttribute('aria-label', 'Weitere Aktionsfunktionen'); moreLabel.title = 'Weitere Aktionsfunktionen';
           var menu = document.createElement('div'); more.append(moreLabel, menu);
-          menu.prepend(duplicate); buttons.appendChild(more);
+          menu.prepend(duplicate); buttons.querySelector('.cms-akt-secondary').appendChild(more);
           card.classList.add('an-overview-action');
-          var state = document.createElement('span'); state.className = 'an-save-state';
-          state.textContent = ' · ' + (data.kind === 'drinks' ? 'Getränkeaktion' : 'Sonderaktion') + ' · ' + M.savedState(data, false);
-          card.querySelector('.cms-ang-meta').appendChild(state);
           return card.outerHTML;
-        }).join('') + (selected.length ? '' : '<p>Keine Aktionen in diesem Zeitraum.</p>') + '</div>'
-        + '<details class="an-legacy-links"><summary>Bereits gespeicherte Feature-Aktionen</summary>'
-        + '<p>Die bisherigen Feature-Entwürfe und Freigaben bleiben unverändert erhalten. Neue Aktionen werden im gemeinsamen CMS-Angebotsbestand gespeichert.</p>'
-        + '<button data-feature-stock>Feature-Bestand öffnen</button></details>';
+        }).join('') + (selected.length ? '' : '<p>Keine Aktionen in diesem Zeitraum.</p>') + '</div>';
       root.onclick = function (event) {
         var helpLink = event.target.closest('[data-help-topic]');
         if (helpLink) { window.cmsTab('help'); window.cmsSwitchHelpTopic(helpLink.dataset.helpTopic); return; }
@@ -83,6 +83,8 @@ window.CMSAngebote = (function () {
         if (!b && toggle) {
           var collapsed = toggle.closest('.cms-card').querySelector('.cms-ang-items').classList.toggle('collapsed');
           toggle.querySelector('.cms-ang-chevron').classList.toggle('collapsed', collapsed);
+          toggle.querySelector('.cms-ang-featured')?.toggleAttribute('hidden', !collapsed);
+          toggle.querySelector('.cms-ang-disclosure span:last-child').textContent = collapsed ? 'Artikel und Bilder anzeigen' : 'Artikel und Bilder ausblenden';
           toggle.setAttribute('aria-expanded', String(!collapsed)); return;
         }
         if (!b) return;
@@ -93,7 +95,6 @@ window.CMSAngebote = (function () {
         if (b.dataset.week) { filter = b.dataset.week; render(); return; }
         if (b.dataset.createKind) { capture(null, b.dataset.createKind).catch(M.error); return; }
         if (b.hasAttribute('data-create')) { choose().catch(M.error); return; }
-        if (b.hasAttribute('data-feature-stock')) { options.legacy(); return; }
         var id = b.dataset.edit || b.dataset.previewAction || b.dataset.shareAction || b.dataset.scaleAction || b.dataset.deleteAction || b.dataset.duplicateAction;
         var action = list.find(function (item) { return item.id === id; });
         if (!action) return;
@@ -181,6 +182,17 @@ window.CMSAngebote = (function () {
       area.innerHTML = '<option value="articles">Artikel / Bilder</option><option value="design">Gestaltung</option><option value="output">Ausgabe</option>';
       top.insertBefore(area, closeButton);
       var areaNav = window.CMSAngeboteForm.areaNavigation(area);
+      function syncAreaAvailability() {
+        var locked = isNew;
+        areaNav.querySelectorAll('[data-action-area]').forEach(function (button) {
+          button.disabled = locked && button.dataset.actionArea !== 'articles';
+        });
+        Array.from(area.options).forEach(function (option) {
+          option.disabled = locked && option.value !== 'articles';
+        });
+      }
+      syncAreaAvailability();
+      if (isNew) status.textContent = 'Gestaltung und Ausgabe werden nach dem ersten erfolgreichen Speichern freigeschaltet.';
       areaNav.classList.add('an-capture-nav');
       areaNav.querySelectorAll('button').forEach(function (button) {
         button.setAttribute('aria-label', button.textContent);
@@ -192,7 +204,8 @@ window.CMSAngebote = (function () {
       var metaToggle = document.createElement('button'); metaToggle.type = 'button'; metaToggle.dataset.metaToggle = '';
       metaToggle.innerHTML = window.CMSAngeboteForm.icon('calendar-days'); metaToggle.setAttribute('aria-label', 'Aktionsdaten ein- oder ausblenden');
       metaToggle.title = 'Aktionsdaten'; metaToggle.setAttribute('aria-expanded', String(isNew));
-      closeButton.innerHTML = window.CMSAngeboteForm.icon('x'); closeButton.title = 'Erfassung schließen';
+      closeButton.innerHTML = window.CMSAngeboteForm.icon('x'); closeButton.title = 'Zur Angebotsübersicht';
+      closeButton.setAttribute('aria-label', 'Zur Angebotsübersicht');
       var headerTools = document.createElement('div'); headerTools.className = 'an-capture-header-tools';
       headerTools.append(metaToggle, closeButton); top.appendChild(headerTools);
       var mobileList = document.createElement('div'); mobileList.className = 'an-capture-mobile-list';
@@ -277,7 +290,10 @@ window.CMSAngebote = (function () {
       }
       function mark(event) {
         if (event && event.target === area) return;
-        dirty = true; status.textContent = 'Ungespeicherte Änderungen · Speichern steuert die Sichtbarkeit im Gültigkeitszeitraum.'; renderMobile();
+        dirty = true; status.textContent = isNew
+          ? 'Ungespeicherte Änderungen · Speichern schaltet Gestaltung und Ausgabe frei.'
+          : 'Ungespeicherte Änderungen · Speichern steuert die Sichtbarkeit im Gültigkeitszeitraum.';
+        renderMobile();
       }
       function renderMobile() {
         var rows = Array.from(host.children), narrow = phone.matches;
@@ -571,10 +587,16 @@ window.CMSAngebote = (function () {
         }
         var saved = await A.save(action, draft);
         action = saved; isNew = false; changedRows = false; resetApproved = false; dirty = false;
+        syncAreaAvailability();
         initialItems = M.clone(saved.data.items);
         return saved;
       }
       area.onchange = function () {
+        if (isNew && area.value !== 'articles') {
+          area.value = 'articles'; window.CMSAngeboteForm.syncAreaNavigation(area);
+          status.textContent = 'Gestaltung und Ausgabe werden nach dem ersten erfolgreichen Speichern freigeschaltet.';
+          return;
+        }
         if (area.value === 'articles' || saving) return;
         var mode = area.value; area.value = 'articles';
         window.CMSAngeboteForm.syncAreaNavigation(area);
@@ -602,12 +624,19 @@ window.CMSAngebote = (function () {
           }
           layerAnchors.forEach(function (anchor, layer) { hideLayer(layer); });
           var captureDirty = dirty;
+          dlg.classList.add('an-capture-suspended');
           await options.preview(Object.assign({}, action || {}, { data: previewDraft }), mode, async function (result) {
             if (result) {
               workspaceState = result; acceptPreview(result.data, temporaryImages);
               dirty = captureDirty || result.dirty;
             }
             dlg.classList.remove('an-capture-suspended');
+            if (result && result.returnToOverview) {
+              await cancel();
+              if (!dlg.isConnected) await overview();
+              else top.querySelector('[data-action-area=articles]').focus();
+              return;
+            }
             (area.checkVisibility() ? area : top.querySelector('[data-action-area=articles]')).focus();
           }, {
             state: workspaceState, dirty: dirty,
@@ -807,14 +836,18 @@ window.CMSAngebote = (function () {
             status.textContent = 'Wird gespeichert …';
             try {
               var saved = await persist(); if (!saved) return;
-              close(); await overview();
-              options.preview(saved, 'preview', overview);
+              status.textContent = 'Gespeichert. Gestaltung und Ausgabe sind jetzt verfügbar.';
+              saving = false;
+              area.value = 'design';
+              window.CMSAngeboteForm.syncAreaNavigation(area);
+              area.dispatchEvent(new Event('change', { bubbles: true }));
             } catch (error) {
               status.textContent = 'Speichern nicht abgeschlossen · Eingaben bleiben erhalten.';
               metaToggle.setAttribute('aria-expanded', 'true'); renderMobile(); await M.error(error);
             }
             finally {
               saving = false; dlg.querySelectorAll('button,input,select').forEach(function (el) { el.disabled = false; });
+              syncAreaAvailability();
               host.querySelectorAll('[data-f="deposit_mode"]').forEach(function (el) { input(el.closest('.cms-ang-row'), 'deposit_cents').disabled = el.value === 'no'; });
               renderMobile();
             }

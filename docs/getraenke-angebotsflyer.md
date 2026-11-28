@@ -10,12 +10,13 @@ Der Reiter **Angebote** steht im Kioskmenü ganz unten, unter „Werbebilder“.
 Das eigentliche Getränke-Bestellsystem bleibt unverändert.
 
 Die kompakte Übersicht bietet Wochenfilter und direkte Aktionen:
-**Bearbeiten**, **Vorschau** und **Teilen**. **Duplizieren**, **Waage**
+**Bearbeiten**, **Vorschau/Ausgabe** und **Teilen**. **Duplizieren**, **Waage**
 und **Löschen** (mit Bestätigung) stehen im Mehrmenü der Aktionskarte.
 Eine Typkennzeichnung unterscheidet Sonder- und Getränkeaktionen.
 Auf dem Handy öffnet **Zeitraum** die Filter; am Desktop sind sie direkt sichtbar.
-Die ursprünglichen CMS-Aktionszeilen mit aufklappbarer Artikelliste bleiben
-erhalten. Die Übersicht wartet nicht auf Vorlagen oder Artikelbilder;
+Die Karte zeigt den ersten Artikel und Angebotspreis direkt. **Artikel und
+Bilder anzeigen** klappt die Angebotsdetails auf; dieser Bereich ist
+standardmäßig geschlossen. Die Übersicht wartet nicht auf Vorlagen oder Artikelbilder;
 Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
 
 ### Angebote erfassen
@@ -44,10 +45,13 @@ Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
    Bildmenü öffnen bei Bedarf nach oben und werden nicht am Dialogrand
    abgeschnitten. Pfeiltasten und Enter übernehmen einen Artikeltreffer;
    Escape schließt die Auswahl.
-6. **Speichern** übernimmt die vollständige Aktion. Während ihres
-   Gültigkeitszeitraums ist sie für Kunden sichtbar – **ohne zusätzliche
-   Veröffentlichung**. Abbrechen verwirft ungespeicherte Eingaben erst nach
-   Bestätigung. Fehler lassen den Dialog mit den Eingaben offen.
+6. **Speichern** übernimmt die vollständige Aktion. Bei einer neuen Aktion
+   öffnet sich danach die Gestaltung; **Artikel / Bilder** bleibt als Rückweg
+   verfügbar. Gestaltung und Ausgabe sind vor dem ersten erfolgreichen
+   Speichern gesperrt. Während des Gültigkeitszeitraums ist die Aktion für
+   Kunden sichtbar – **ohne zusätzliche Veröffentlichung**. Abbrechen
+   verwirft ungespeicherte Eingaben erst nach Bestätigung. Fehler lassen den
+   Dialog mit den Eingaben offen.
 
 ### Vier oder sechs Getränkekacheln
 
@@ -406,9 +410,9 @@ Neue Sonder- und Getränkeaktionen erweitern denselben Angebotsbestand.
 Aktionsbezogene Layoutmetadaten verwenden vorhandene Dataverse-Konfiguration,
 keine zweite führende Aktionsablage.
 
-Unter **Bereits gespeicherte Feature-Aktionen → Feature-Bestand öffnen**
-bleiben die zuvor angelegten Blob-Entwürfe und Veröffentlichungen erreichbar.
-Sie behalten ihre bisherige Entwurf-/Freigabesemantik. Es erfolgt keine
+Die gemeinsame Aktionsübersicht bietet keinen separaten Einstieg in den alten
+Feature-Bestand. Dessen Blob-Entwürfe und Veröffentlichungen sowie ihre
+bisherige Entwurf-/Freigabesemantik bleiben unverändert; es erfolgt keine
 automatische Migration oder Freigabe und kein paralleles Schreiben neuer
 Aktionen in beide Ablagen.
 

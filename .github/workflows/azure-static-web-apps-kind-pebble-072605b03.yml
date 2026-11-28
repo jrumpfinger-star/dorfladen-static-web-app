@@ -93,6 +93,38 @@ jobs:
             --output none --only-show-errors
           echo "Preview configured: existing Dataverse mapping, private offer namespace, managed scale sends disabled"
 
+  set_production_offer_namespace:
+    needs: build_and_deploy_job
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Set Production Offer Namespace
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Validate production settings and set offer namespace
+        run: |
+          PRODUCTION_SETTINGS="$(az staticwebapp appsettings list \
+            --name dorfladen-website --resource-group rg-dorfladen \
+            --subscription 89dd5962-2356-4f41-aa6b-ab6c0e054877 \
+            --output json --only-show-errors)"
+          for KEY in STORAGE_CONN CMS_AUTH_TOKEN CMS_PW_HASH SHOP_JWT_SECRET; do
+            VALUE="$(jq -r --arg key "$KEY" '.properties[$key] // empty' <<< "$PRODUCTION_SETTINGS")"
+            if [ -z "$VALUE" ]; then
+              echo "::error::Required production setting is missing: $KEY"
+              exit 1
+            fi
+            echo "::add-mask::$VALUE"
+          done
+          az staticwebapp appsettings set \
+            --name dorfladen-website \
+            --resource-group rg-dorfladen \
+            --subscription 89dd5962-2356-4f41-aa6b-ab6c0e054877 \
+            --setting-names "ANGEBOTE_NAMESPACE=production" \
+            --output none --only-show-errors
+          echo "Production offer namespace configured; existing settings preserved"
+
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest

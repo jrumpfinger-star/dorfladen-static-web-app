@@ -2241,3 +2241,54 @@ Artikelpflege oder ein Ersatz der bereits freigegebenen Gestaltung.
 Automatisierte Python-Tests und Playwright bei 375×667, 768×1024, 1280×800
 und 686×1095. Keine offenen fachlichen Klärungsmarker. Physische Waagenanzeige
 erfordert eine spätere manuelle Abnahme am Gerät, keine fingierte Bestätigung.
+
+## F76: Verständlicher Angebotsablauf und Produktivkonfiguration
+
+Die Produktionsumgebung erhält nach erfolgreichem Main-Deployment den
+eigenständigen Namespace `production`; Pull-Request-Vorschauen behalten ihren
+separaten `preview-<PR>`-Namespace. Vorhandene erforderliche Azure-Einstellungen
+werden geprüft und ihre Werte weder ausgegeben noch in das Repository kopiert.
+
+Bei einer neuen Aktion bleiben Gestaltung und Ausgabe bis zum erfolgreichen
+ersten Speichern der Artikel gesperrt. Ein fehlgeschlagener Speicherversuch
+behält Eingaben und Sperre. Nach dem Speichern öffnet sich Gestaltung in
+derselben Erfassungssitzung, damit der Weg zu Artikel/Bilder erhalten bleibt.
+Von Gestaltung führt eine eigene Aktion direkt zur Angebotsübersicht;
+ungespeicherte Änderungen werden vor dem Verlassen bestätigt und bei Abbruch
+der Rückfrage erhalten.
+
+Die Angebotskarte zeigt neben Titel und Gültigkeit mindestens den ersten
+Produktnamen und Angebotspreis, bei mehreren Artikeln zusätzlich deren Anzahl.
+Bearbeiten, Vorschau/Ausgabe, Teilen und Waage behalten Beschriftung und Funktion,
+wirken aber kompakter und optisch nachrangig; Touchziele bleiben mindestens
+44 px hoch. Der eingeklappte Einstieg „Bereits gespeicherte Feature-Aktionen“
+entfällt aus der Übersicht. Bestehende Feature-Daten und Backendpfade bleiben
+unverändert und werden weder gelöscht noch migriert.
+
+Die klare Kartenhierarchie ist in
+`mockups/angebote-uebersicht-redesign-mockup.html` festgehalten: Titel,
+Zeitraum, Aktionsart und Status bilden einen ausgerichteten Kopf; Produktname
+und Angebotspreis stehen in einer eigenen Angebotsfläche; Bearbeiten und
+Vorschau/Ausgabe sind als Hauptaktionen von Teilen, Waage und Lösch-/Mehrmenü
+abgesetzt. Schmale Ansichten brechen die Gruppen geordnet um, ohne
+Touchzielgrößen oder Beschriftungen der Hauptaktionen zu reduzieren.
+
+### Testfälle
+
+- TC-F76-01: Ein Main-Push konfiguriert nach dem Deployment `production`;
+  PR-Vorschauen behalten ihren isolierten Namespace. Erforderliche
+  App-Einstellungen werden validiert und Geheimwerte nicht protokolliert.
+- TC-F76-02: Bei einer neuen Aktion sind Gestaltung und Ausgabe vor dem
+  ersten Speichern nicht auswählbar. Ein fehlgeschlagener Schreibversuch
+  erhält Artikel und Sperre; ein erfolgreicher Schreibversuch öffnet den
+  bestehenden Gestaltungs-/Ausgabeablauf.
+- TC-F76-03: Aus Gestaltung führt „Zur Angebotsübersicht“ direkt zur Liste.
+  „Artikel / Bilder“ bleibt ein eigener Rückweg. Ungespeicherte Änderungen
+  können verworfen oder nach Abbruch der Rückfrage weiterbearbeitet werden.
+- TC-F76-04: Die Angebotsübersicht zeigt Produkt und Angebotspreis ohne
+  Aufklappen; der Einstieg zum Editor heißt „Vorschau/Ausgabe“. Die
+  Aktionsknöpfe sind kompakter, behalten ihre Funktion und Mindest-Touchgröße.
+  Der alte Feature-Aktionen-Einstieg ist nicht sichtbar; vorhandene
+  Feature-Daten werden nicht verändert.
+- TC-F76-05: Die Artikeldetails der Angebotskarte sind standardmäßig
+  geschlossen und lassen sich per Maus, Touch und Tastatur auf- und zuklappen.

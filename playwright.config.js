@@ -46,7 +46,8 @@ const OHNE_LAYOUT = nurDesktop();
    auf den beiden Ansichts-Projekten unten (mobil + Ladentablett).
    Die beiden Angebots-Specs sind vollstaendig auf dieses System umgestellt
    und daher aus den alten Ansichts-Projekten ausgeschlossen. */
-const ANGEBOTS_SPECS = ['tests/angebote-flyer.spec.js', 'tests/cms-angebote-ablauf.spec.js'];
+const ANGEBOTS_SPECS = process.env.ALLE_ANSICHTEN ? []
+  : ['tests/angebote-flyer.spec.js', 'tests/cms-angebote-ablauf.spec.js'];
 
 module.exports = {
   testDir: './tests',
@@ -56,8 +57,8 @@ module.exports = {
   // hat eigene Page, Context und Mocks). Ausnahme: cms-waage-werbung.spec.js
   // setzt beschreib-serial test.describe.configure({ mode: 'serial' }).
   fullyParallel: true,
-  // 75 % der Kerne statt der Haelfte - die Suite ist der Engpass beim Entwickeln.
-  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : '75%',
+  // Ein Worker schont den Entwicklungsrechner; mehr Parallelitaet nur explizit.
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : 1,
   // Reporter: Liste im Terminal + HTML-Report (im VS-Code Simple Browser
   // ansehbar via `npm run test:report` -> http://127.0.0.1:9323).
   reporter: [
