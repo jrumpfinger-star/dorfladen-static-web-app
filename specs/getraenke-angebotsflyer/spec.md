@@ -2287,7 +2287,9 @@ Touchzielgrößen oder Beschriftungen der Hauptaktionen zu reduzieren.
   erhält Artikel und Sperre; ein erfolgreicher Schreibversuch öffnet den
   bestehenden Gestaltungs-/Ausgabeablauf.
 - TC-F76-03: Aus Gestaltung führt „Zur Angebotsübersicht“ direkt zur Liste.
-  „Artikel / Bilder“ bleibt ein eigener Rückweg. Ungespeicherte Änderungen
+  „Artikel / Bilder“ bleibt ein eigener Rückweg, führt in den Artikel-
+  Bearbeiten-Dialog zurück und stellt hinter ihm die Übersicht wieder her
+  (nie eine leere Editorseite). Ungespeicherte Änderungen
   können verworfen oder nach Abbruch der Rückfrage weiterbearbeitet werden.
 - TC-F76-04: Die Angebotsübersicht zeigt Produkt und Preis erst nach
   Aufklappen und verbirgt sie beim Zuklappen wieder; eine separate Vorschau

@@ -636,6 +636,8 @@ window.CMSAngebote = (function () {
               else top.querySelector('[data-action-area=articles]').focus();
               return;
             }
+            // Der Editor hat die Übersicht im Hintergrund ersetzt; sie muss für den Rückweg wieder stehen.
+            await overview();
             (area.checkVisibility() ? area : top.querySelector('[data-action-area=articles]')).focus();
           }, {
             state: workspaceState, dirty: dirty,

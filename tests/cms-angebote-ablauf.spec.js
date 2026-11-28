@@ -2873,6 +2873,8 @@ for (const kind of ['drinks', 'weekly']) {
     await expect(dlg).toBeVisible();
     await expect(dlg.locator('[data-action-area=design]')).toBeEnabled();
     await expect(dlg.locator('[data-action-area=output]')).toBeEnabled();
+    await expect(page.locator('#an-root').getByRole('heading', { name: 'Sonderangebote', exact: true })).toBeAttached();
+    await expect(page.locator('#an-root .an-task-editor')).toHaveCount(0);
     await selectArea(dlg, 'output');
     await expect(workspace.locator('[data-cms-download]')).toBeVisible();
     await page.locator('#an-overview').click();
