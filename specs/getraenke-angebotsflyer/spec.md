@@ -2289,8 +2289,12 @@ Touchzielgrößen oder Beschriftungen der Hauptaktionen zu reduzieren.
 - TC-F76-03: Aus Gestaltung führt „Zur Angebotsübersicht“ direkt zur Liste.
   „Artikel / Bilder“ bleibt ein eigener Rückweg, führt in den Artikel-
   Bearbeiten-Dialog zurück und stellt hinter ihm die Übersicht wieder her
-  (nie eine leere Editorseite). Ungespeicherte Änderungen
+  (nie eine leere Editorseite). Das gilt auch für gespeicherte Aktionen im
+  eingebetteten CMS und Kiosk. Ungespeicherte Änderungen
   können verworfen oder nach Abbruch der Rückfrage weiterbearbeitet werden.
+- TC-F76-06: Bei einer gespeicherten Aktion auf Angebotsseite, im CMS und Kiosk führt „Artikel / Bilder“
+  aus der Gestaltung zurück in den geöffneten, bedienbaren Bearbeitungsdialog;
+  Artikelwerte und Bildzustand bleiben erhalten.
 - TC-F76-04: Die Angebotsübersicht zeigt Produkt und Preis erst nach
   Aufklappen und verbirgt sie beim Zuklappen wieder; eine separate Vorschau
   außerhalb der Details fehlt. Der Einstieg zum Editor heißt „Vorschau/Ausgabe“. Die

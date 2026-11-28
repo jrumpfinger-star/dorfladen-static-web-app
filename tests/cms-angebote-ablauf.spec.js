@@ -2914,6 +2914,35 @@ test('TC-F76-03: Rückweg zur Übersicht bestätigt Änderungen und Abbrechen er
   expect(state.errors).toEqual([]);
 });
 
+for (const [surface, path] of SURFACES) {
+  test(`TC-F76-06: Artikel/Bilder öffnet nach Gestaltung bei gespeicherter Aktion wieder den Bearbeitungsdialog (${surface})`, { tag: '@layout' }, async ({ page }) => {
+    const state = await setup(page);
+    await page.goto(BASE + '/angebote.html');
+    let dlg = await create(page, 'drinks');
+    await fillDrink(dlg.locator('.cms-ang-row').first(), 1);
+    await dlg.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(page.locator('.an-cms-workspace')).toBeVisible();
+    await page.locator('#an-overview').click();
+    await expect(dlg).toHaveCount(0);
+    await openSurface(page, path);
+    await expect(page.locator('.an-cms-overview')).toBeVisible();
+    await allWeeks(page);
+    const card = page.locator('.an-overview-action').first();
+    await expect(card).toBeVisible();
+    await card.locator('[data-edit]').click();
+    dlg = page.locator('.an-cms-capture');
+    await expect(dlg).toBeVisible();
+    await selectArea(dlg, 'design');
+    await expect(page.locator('.an-cms-workspace')).toBeVisible();
+    await selectArea(page.locator('#an-root'), 'articles');
+    await expect(dlg).toBeVisible();
+    await expect(dlg).not.toHaveClass(/an-capture-suspended/);
+    await expect(dlg.locator('[data-f=produkt]').first()).toHaveValue('Getränk 1');
+    expect(await dlg.evaluate((node) => node.matches(':modal'))).toBe(true);
+    expect(state.errors).toEqual([]);
+  });
+}
+
 test('TC-F76-04: Angebotsaktionen sind gruppiert, kompakt und als Touchziele erreichbar', async ({ browser }) => {
   for (const [width, height, touch] of [[375, 667, true], [768, 1024, true], [1280, 800, false], [686, 1095, true]]) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: touch, serviceWorkers: 'block' });

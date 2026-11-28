@@ -638,6 +638,8 @@ window.CMSAngebote = (function () {
             }
             // Der Editor hat die Übersicht im Hintergrund ersetzt; sie muss für den Rückweg wieder stehen.
             await overview();
+            // Im eingebetteten CMS kann das Schließen des Editors den Capture-Dialog mit schließen.
+            if (dlg.isConnected && !dlg.open) dlg.showModal();
             (area.checkVisibility() ? area : top.querySelector('[data-action-area=articles]')).focus();
           }, {
             state: workspaceState, dirty: dirty,

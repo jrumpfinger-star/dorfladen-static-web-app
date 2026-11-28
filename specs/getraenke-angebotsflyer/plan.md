@@ -1112,7 +1112,9 @@ Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
    „Artikel / Bilder“ als Rückweg erhalten bleibt; Fehler behalten den
    vollständigen Entwurf und die Sperre. Vom Editor gibt es einen getrennten
    direkten Rückweg zur Angebotsübersicht. Bei direktem Verlassen werden
-   Entwurfänderungen bestätigt.
+   Entwurfänderungen bestätigt. Beim Rückweg aus dem eingebetteten CMS oder Kiosk wird
+   der Capture-Dialog nötigenfalls erneut modal geöffnet, damit die
+   Bearbeitung nicht auf der bloßen Angebotsübersicht endet.
 3. Übersicht: Produkte und Preise nur im aufgeklappten Detailbereich zeigen.
    Die separate Produkt-/Preisvorschau aus Kartenmarkup und Mockup entfernen,
    zugehörige CSS-Regeln und Umschaltlogik entfernen. Artikeldetails im Mockup
@@ -1126,7 +1128,8 @@ Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
    zum Feature-Bestand aus der Übersicht entfernen, Artikeldetails zunächst
    geschlossen und aufklappbar darstellen, aber Daten und Backendkompatibilität
    unangetastet lassen.
-4. Verifikation: fokussierte Playwright-Fälle für Save-first, Rücknavigation,
+4. Verifikation: fokussierte Playwright-Fälle für Save-first, Rücknavigation
+   aus einer gespeicherten Aktion auf Angebotsseite, im CMS und Kiosk,
    erst nach Aufklappen sichtbare Produkte/Preise, kompaktes Raster und alle
    vier Viewports; Python-/API- und Workflow-YAML-Prüfung. Die Veröffentlichung ist ausdrücklich
    freigegeben; Produktion wird nach dem Deployment schreibfrei geprüft.

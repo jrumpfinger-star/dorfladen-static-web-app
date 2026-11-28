@@ -86,6 +86,9 @@ und Skalieren; kleine Symbole haben separate ausreichend große Trefferflächen.
 **Artikel / Bilder**, **Gestaltung** und **Ausgabe** verwenden denselben
 Entwurf samt ungespeicherten Bildern und Historie. Desktop zeigt Hauptschritte,
 das Handy eine kompakte Bereichsauswahl. Ein Bereichswechsel speichert nicht.
+Bei einer gespeicherten Aktion führt **Artikel / Bilder** aus der Gestaltung
+wieder in den geöffneten Artikel-Bearbeitungsdialog zurück, auch im
+eingebetteten CMS und im Kiosk.
 In **Gestaltung** wählt **Gestalten für** das Ausgabeziel; **Element**,
 **Artikel**, **Vorlage** und **Ansicht** zeigen nur ihre jeweiligen Werkzeuge.
 Neben der Artikelauswahl stehen Pfeile und **Artikel x von n**; am Anfang und

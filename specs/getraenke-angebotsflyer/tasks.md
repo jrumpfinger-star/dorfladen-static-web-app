@@ -345,3 +345,20 @@ Entwurf wurde entsprechend aktualisiert. JS-Syntax und Diff-Prüfung bestehen.
 
 Vier lokale Browserprüfungen bestätigen zusätzlich am Mockup Kachelbreite,
 Spaltenwechsel, Auf-/Zuklappen und fehlenden horizontalen Überlauf.
+
+## F76-Korrektur: Bearbeitungsdialog aus CMS-Gestaltung wiederherstellen
+
+| Aufgabe | Abhängigkeit | Testvertrag |
+| --- | --- | --- |
+| GF150 Beim Rückweg aus dem eingebetteten Gestaltungseditor den Artikel-Bearbeitungsdialog wieder modal öffnen und Eingaben erhalten | Aktualisierte F76-Spec/Plan | TC-F76-03, TC-F76-06 |
+| GF151 Gespeicherte Aktion auf Angebotsseite, im CMS und Kiosk über Gestaltung → Artikel/Bilder auf allen vier Pflichtansichten prüfen | GF150 | TC-F76-06 |
+
+Der Fehler war auf die eingebettete CMS-Ansicht begrenzt: Nach dem Schließen
+des Gestaltung-Editors war der Erfassungsdialog nicht mehr offen. Die
+Regression deckt deshalb ausdrücklich eine gespeicherte Aktion im CMS sowie
+denselben Rückweg auf der Angebotsseite und im Kiosk ab.
+Lokale Abnahme: TC-F76-06 und die verwandten Save-/Rücknavigationstests
+bestehen auf Mobile, iPad mini, Desktop und Ladentablet (28 Testläufe, ein
+Worker); JavaScript-Syntax und `git diff --check` bestehen.
+Erweiterte Abnahme: TC-F76-06 besteht zusätzlich für Angebotsseite, CMS und
+Kiosk auf allen vier Pflichtansichten (zwölf gezielte Testläufe, ein Worker).
