@@ -54,7 +54,7 @@ window.CMSAngeboteForm = (function () {
   function action(g, escape, formatPrice) {
     var esc = escape || window.AngeboteModel.esc;
     var card = document.createElement('div'); card.className = 'cms-card';
-    var id = esc(g.aktion_id), featuredItem = g.items[0];
+    var id = esc(g.aktion_id);
     function actionButton(entry) {
       return '<button type="button" class="' + entry[3] + '" data-action="' + entry[0] + '" data-id="' + id + '" aria-label="' + entry[2]
         + '" title="' + (entry[0] === 'waageAktion' ? 'Als Querformat-Bilder auf die Waage' : entry[2]) + '">' + icon(entry[1])
@@ -66,12 +66,6 @@ window.CMSAngeboteForm = (function () {
       + '<div class="cms-ang-meta"><span>' + esc(g.von) + ' bis ' + esc(g.bis) + '</span><span>' + esc(g.aktionstyp || 'Sonderaktion')
       + '</span><span>' + g.items.length + ' Artikel</span></div></div>'
       + '<div class="cms-ang-status" aria-label="Status"></div>'
-      + (featuredItem ? '<div class="cms-ang-featured"><div class="cms-ang-featured-copy"><span class="cms-ang-featured-label">Angebot</span>'
-        + '<strong>' + esc(featuredItem.produkt || 'Artikel') + '</strong>'
-        + (g.items.length > 1 ? '<small>+' + (g.items.length - 1) + ' weitere</small>' : '') + '</div>'
-        + '<div class="cms-ang-featured-price">' + (featuredItem.preis != null ? '<span class="cms-ang-price-label">Angebotspreis</span><strong>'
-          + esc(formatPrice(featuredItem.preis)) + '</strong>' : '')
-        + (featuredItem.statt_preis != null ? '<del>statt ' + esc(formatPrice(featuredItem.statt_preis)) + '</del>' : '') + '</div></div>' : '')
       + '<div class="cms-ang-disclosure"><span class="cms-ang-chevron collapsed">' + icon('chevron-down') + '</span><span>Artikel und Bilder anzeigen</span></div>'
         + '</div></div><div class="cms-ang-items collapsed">';
     g.items.forEach(function (item) {

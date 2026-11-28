@@ -325,3 +325,23 @@ Bestandsaktionen und Zurück-Navigation ab. Der Kartenfall TC-F76-04 prüft
 zusätzlich alle vier Größen mit echten Touchzielen. 85 Python-Angebotsfälle,
 JS-Syntax, Workflow-YAML, CMS-Funktionsabgleich und Diff-Prüfung bestanden.
 Die Produktionsabnahme folgt nach dem tatsächlichen Deployment.
+
+## F76-Korrektur: Artikel nur nach Aufklappen
+
+| Aufgabe | Abhängigkeit | Testvertrag |
+| --- | --- | --- |
+| GF148 Produkt-/Preisvorschau aus Angebotskarte und Mockup entfernen; CSS/Markup für kompakte, responsive Artikeldetails angleichen und Anwenderdokumentation aktualisieren | Aktualisierte F76-Spec/Plan | TC-F76-04..05 |
+| GF149 Verborgene Produkte/Preise, Anzeige nach Aufklappen, erneutes Verbergen und kompaktes Spaltenraster auf allen vier Pflichtansichten seriell prüfen | GF148 | TC-F76-04..05 |
+
+Diese Korrektur enthält keinen erneuten Deploymentauftrag. Vorhandene
+Angebotsdaten und die Aktionsfunktionen bleiben unverändert.
+
+Lokale Abnahme GF148/GF149: TC-F76-04..05 bestehen auf mobile, iPad mini,
+Desktop und Ladentablet (acht Testläufe, ein Worker). Produkt, Angebots- und
+Stattpreis sind anfangs verborgen, nach Aufklappen sichtbar und nach
+Zuklappen wieder verborgen. Artikelkacheln sind maximal 360 px breit und
+zweispaltig auf breiten Karten, einspaltig auf schmalen Karten. Der Mockup-
+Entwurf wurde entsprechend aktualisiert. JS-Syntax und Diff-Prüfung bestehen.
+
+Vier lokale Browserprüfungen bestätigen zusätzlich am Mockup Kachelbreite,
+Spaltenwechsel, Auf-/Zuklappen und fehlenden horizontalen Überlauf.

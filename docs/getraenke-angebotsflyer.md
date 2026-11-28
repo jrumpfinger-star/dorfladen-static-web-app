@@ -14,9 +14,12 @@ Die kompakte Übersicht bietet Wochenfilter und direkte Aktionen:
 und **Löschen** (mit Bestätigung) stehen im Mehrmenü der Aktionskarte.
 Eine Typkennzeichnung unterscheidet Sonder- und Getränkeaktionen.
 Auf dem Handy öffnet **Zeitraum** die Filter; am Desktop sind sie direkt sichtbar.
-Die Karte zeigt den ersten Artikel und Angebotspreis direkt. **Artikel und
-Bilder anzeigen** klappt die Angebotsdetails auf; dieser Bereich ist
-standardmäßig geschlossen. Die Übersicht wartet nicht auf Vorlagen oder Artikelbilder;
+Die Karte zeigt zunächst nur Titel, Zeitraum, Art, Status und Artikelanzahl.
+**Artikel und Bilder anzeigen** klappt die standardmäßig geschlossenen
+Angebotsdetails auf. Erst dann erscheinen Artikel, Preise und Bilder;
+**Artikel und Bilder ausblenden** verbirgt sie wieder. Eine separate
+Produkt-/Preisvorschau gibt es nicht. Auf breiten Karten stehen Artikel
+nebeneinander, auf schmalen untereinander. Die Übersicht wartet nicht auf Vorlagen oder Artikelbilder;
 Wochenvorlagen werden erst beim Öffnen einer einzelnen Aktion geladen.
 
 ### Angebote erfassen

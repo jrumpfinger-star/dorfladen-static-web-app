@@ -2257,8 +2257,12 @@ Von Gestaltung führt eine eigene Aktion direkt zur Angebotsübersicht;
 ungespeicherte Änderungen werden vor dem Verlassen bestätigt und bei Abbruch
 der Rückfrage erhalten.
 
-Die Angebotskarte zeigt neben Titel und Gültigkeit mindestens den ersten
-Produktnamen und Angebotspreis, bei mehreren Artikeln zusätzlich deren Anzahl.
+Die Angebotskarte zeigt zunächst nur Titel, Gültigkeit, Aktionsart, Status und
+Anzahl der Artikel. Produktnamen, Preise und Bilder erscheinen erst nach
+Aufklappen über „Artikel und Bilder anzeigen“ und werden beim Zuklappen
+wieder verborgen. Auf breiten Karten stehen Artikeldetails in kompakten
+Spalten mit maximal 360 px Breite; schmale Karten zeigen eine Spalte. Eine
+separate Produkt-/Preisvorschau außerhalb des Detailbereichs entfällt.
 Bearbeiten, Vorschau/Ausgabe, Teilen und Waage behalten Beschriftung und Funktion,
 wirken aber kompakter und optisch nachrangig; Touchziele bleiben mindestens
 44 px hoch. Der eingeklappte Einstieg „Bereits gespeicherte Feature-Aktionen“
@@ -2268,7 +2272,7 @@ unverändert und werden weder gelöscht noch migriert.
 Die klare Kartenhierarchie ist in
 `mockups/angebote-uebersicht-redesign-mockup.html` festgehalten: Titel,
 Zeitraum, Aktionsart und Status bilden einen ausgerichteten Kopf; Produktname
-und Angebotspreis stehen in einer eigenen Angebotsfläche; Bearbeiten und
+und Angebotspreis stehen ausschließlich im aufklappbaren Detailbereich; Bearbeiten und
 Vorschau/Ausgabe sind als Hauptaktionen von Teilen, Waage und Lösch-/Mehrmenü
 abgesetzt. Schmale Ansichten brechen die Gruppen geordnet um, ohne
 Touchzielgrößen oder Beschriftungen der Hauptaktionen zu reduzieren.
@@ -2285,9 +2289,12 @@ Touchzielgrößen oder Beschriftungen der Hauptaktionen zu reduzieren.
 - TC-F76-03: Aus Gestaltung führt „Zur Angebotsübersicht“ direkt zur Liste.
   „Artikel / Bilder“ bleibt ein eigener Rückweg. Ungespeicherte Änderungen
   können verworfen oder nach Abbruch der Rückfrage weiterbearbeitet werden.
-- TC-F76-04: Die Angebotsübersicht zeigt Produkt und Angebotspreis ohne
-  Aufklappen; der Einstieg zum Editor heißt „Vorschau/Ausgabe“. Die
-  Aktionsknöpfe sind kompakter, behalten ihre Funktion und Mindest-Touchgröße.
+- TC-F76-04: Die Angebotsübersicht zeigt Produkt und Preis erst nach
+  Aufklappen und verbirgt sie beim Zuklappen wieder; eine separate Vorschau
+  außerhalb der Details fehlt. Der Einstieg zum Editor heißt „Vorschau/Ausgabe“. Die
+  Artikeldetails bleiben kompakt ausgerichtet: auf breiten Karten zweispaltig,
+  auf schmalen einspaltig und ohne horizontalen Überlauf. Die Aktionsknöpfe
+  sind kompakter, behalten ihre Funktion und Mindest-Touchgröße.
   Der alte Feature-Aktionen-Einstieg ist nicht sichtbar; vorhandene
   Feature-Daten werden nicht verändert.
 - TC-F76-05: Die Artikeldetails der Angebotskarte sind standardmäßig

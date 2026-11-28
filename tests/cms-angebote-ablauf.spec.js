@@ -710,16 +710,27 @@ test('TC-F18-07/09/F76-05: Angebotsdetails sind standardmäßig geschlossen und 
   if (!(await week.isVisible())) await page.locator('[data-filter-toggle]').click();
   expect((await week.boundingBox()).width).toBeLessThan(200);
   const first = page.locator('.an-cms-overview .cms-card').first();
+  const product = first.getByText('Artikel 0', { exact: true });
+  const price = first.getByText('1,99 €', { exact: true });
+  const oldPrice = first.getByText('statt 2,49 €', { exact: true });
   await expect(first.locator('.cms-ang-items')).toBeHidden();
+  await expect(product).toBeHidden();
+  await expect(price).toBeHidden();
+  await expect(oldPrice).toBeHidden();
   await expect(first.locator('.cms-ang-summary')).toHaveAttribute('aria-expanded', 'false');
   await expect(first.locator('.cms-ang-disclosure')).toContainText('Artikel und Bilder anzeigen');
   await first.locator('[data-cms-toggle]').press('Enter');
   await expect(first.locator('.cms-ang-summary')).toHaveAttribute('aria-expanded', 'true');
   await expect(first.locator('.cms-ang-items')).toBeVisible();
-  await expect(first.locator('.cms-ang-name')).toHaveText('Artikel 0');
-  await first.locator('.cms-ang-summary').click();
+  await expect(product).toBeVisible();
+  await expect(price).toBeVisible();
+  await expect(oldPrice).toBeVisible();
+  await first.getByText('Artikel und Bilder ausblenden', { exact: true }).click();
   await expect(first.locator('.cms-ang-summary')).toHaveAttribute('aria-expanded', 'false');
   await expect(first.locator('.cms-ang-items')).toBeHidden();
+  await expect(product).toBeHidden();
+  await expect(price).toBeHidden();
+  await expect(oldPrice).toBeHidden();
   await expect(first.locator('.cms-btn-preview')).toBeVisible();
   await expect(first.locator('.cms-btn-wa')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('urspruengliche-cms-uebersicht.png') });
@@ -2907,11 +2918,19 @@ test('TC-F76-04: Angebotsaktionen sind gruppiert, kompakt und als Touchziele err
     try {
       const page = await context.newPage(), state = await setup(page);
       state.featureArchive = true;
-      state.actions.set('AKT-NAV', seededAction('AKT-NAV', 'Navigationsprobe', '2026-11-16', '2026-11-21'));
+      const seeded = seededAction('AKT-NAV', 'Navigationsprobe', '2026-11-16', '2026-11-21');
+      seeded.items.push({ ...seeded.items[0], id: 'AKT-NAV-item-2', name: 'Zweiter Testartikel', price_cents: 999, old_price_cents: 1299 });
+      state.actions.set('AKT-NAV', seeded);
       await page.goto(BASE + '/angebote.html');
       const card = page.locator('.an-overview-action');
-      await expect(card.locator('.cms-ang-featured')).toContainText('Seed Navigationsprobe');
-      await expect(card.locator('.cms-ang-featured-price')).toContainText('12,49');
+      const product = card.getByText('Seed Navigationsprobe', { exact: true });
+      const price = card.getByText('12,49 €', { exact: true });
+      const oldPrice = card.getByText('statt 14,99 €', { exact: true });
+      const secondProduct = card.getByText('Zweiter Testartikel', { exact: true });
+      const secondPrice = card.getByText('9,99 €', { exact: true });
+      await expect(product).toBeHidden();
+      await expect(price).toBeHidden();
+      await expect(oldPrice).toBeHidden();
       await expect(card.getByRole('button', { name: 'Vorschau/Ausgabe', exact: true })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Feature-Bestand öffnen', exact: true })).toHaveCount(0);
       await expect(card.locator('.cms-ang-items')).toBeHidden();
@@ -2933,6 +2952,30 @@ test('TC-F76-04: Angebotsaktionen sind gruppiert, kompakt und als Touchziele err
       const texts = await card.locator('.an-action-label').evaluateAll(nodes => nodes.filter(n => getComputedStyle(n).display !== 'none').length);
       expect(texts).toBe(4);
       await page.screenshot({ path: test.info().outputPath('navigation-overview-' + width + '.png') });
+      await card.getByText('Artikel und Bilder anzeigen', { exact: true }).click();
+      await expect(product).toBeVisible();
+      await expect(price).toBeVisible();
+      await expect(oldPrice).toBeVisible();
+      await expect(secondProduct).toBeVisible();
+      await expect(secondPrice).toBeVisible();
+      const itemBoxes = await card.locator('.cms-ang-item').evaluateAll(nodes => nodes.map(node => {
+        const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width };
+      }));
+      expect(itemBoxes).toHaveLength(2);
+      expect(itemBoxes.every(box => box.width <= 360)).toBe(true);
+      const cardWidth = await card.evaluate(node => node.getBoundingClientRect().width);
+      if (cardWidth > 760) {
+        expect(Math.abs(itemBoxes[0].y - itemBoxes[1].y)).toBeLessThan(1);
+        expect(itemBoxes[1].x).toBeGreaterThan(itemBoxes[0].x + itemBoxes[0].width);
+      } else {
+        expect(itemBoxes[1].y).toBeGreaterThan(itemBoxes[0].y);
+      }
+      await card.getByText('Artikel und Bilder ausblenden', { exact: true }).click();
+      await expect(product).toBeHidden();
+      await expect(price).toBeHidden();
+      await expect(oldPrice).toBeHidden();
+      await expect(secondProduct).toBeHidden();
+      await expect(secondPrice).toBeHidden();
       await card.locator('.an-action-more>summary').click();
       await expect(card.getByRole('button', { name: 'Duplizieren', exact: true })).toBeVisible();
       await card.locator('.an-action-more>summary').click();

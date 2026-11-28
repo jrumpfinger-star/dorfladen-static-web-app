@@ -1113,8 +1113,13 @@ Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
    vollständigen Entwurf und die Sperre. Vom Editor gibt es einen getrennten
    direkten Rückweg zur Angebotsübersicht. Bei direktem Verlassen werden
    Entwurfänderungen bestätigt.
-3. Übersicht: erste Produktbezeichnung und Angebotspreis als Vorschau in die
-   Aktionskarte aufnehmen. Die Aktionsknöpfe bei unveränderten Labels/Funktionen
+3. Übersicht: Produkte und Preise nur im aufgeklappten Detailbereich zeigen.
+   Die separate Produkt-/Preisvorschau aus Kartenmarkup und Mockup entfernen,
+   zugehörige CSS-Regeln und Umschaltlogik entfernen. Artikeldetails im Mockup
+   und in der Anwendung auf breiten Karten maximal 360 px breit zweispaltig
+   und auf schmalen Karten einspaltig anordnen. Der bestehende Detailbereich
+   bleibt standardmäßig geschlossen und übernimmt die Anzeige.
+   Die Aktionsknöpfe bei unveränderten Labels/Funktionen
    nach `mockups/angebote-uebersicht-redesign-mockup.html` kompakt gruppieren;
    „Bearbeiten“ und „Vorschau/Ausgabe“ als Hauptaktionen, Teilen/Waage und
    Löschen/Mehr als Nebenaktionen, 44-px-Touchziele erhalten. Den alten Einstieg
@@ -1122,8 +1127,8 @@ Nur die doppelte mobile Zielauswahl entfällt auf ausdrücklichen Nutzerwunsch.
    geschlossen und aufklappbar darstellen, aber Daten und Backendkompatibilität
    unangetastet lassen.
 4. Verifikation: fokussierte Playwright-Fälle für Save-first, Rücknavigation,
-   sichtbare Produktvorschau und alle vier Viewports; Python-/API- und
-   Workflow-YAML-Prüfung. Die anschließende Veröffentlichung ist ausdrücklich
+   erst nach Aufklappen sichtbare Produkte/Preise, kompaktes Raster und alle
+   vier Viewports; Python-/API- und Workflow-YAML-Prüfung. Die Veröffentlichung ist ausdrücklich
    freigegeben; Produktion wird nach dem Deployment schreibfrei geprüft.
 
 Betroffene Dateien: `.github/workflows/azure-static-web-apps-kind-pebble-072605b03.yml`,
@@ -1131,6 +1136,10 @@ Betroffene Dateien: `.github/workflows/azure-static-web-apps-kind-pebble-072605b
 `static-site/js/angebote-editor.js`, `static-site/css/angebote.css`,
 `mockups/angebote-uebersicht-redesign-mockup.html`,
 `tests/cms-angebote-ablauf.spec.js` sowie die zugehörigen F76-SDD-Dokumente.
+
+Die Korrektur der Artikelanzeige verändert Kartenmarkup, Umschaltlogik, CSS,
+Mockup, fokussierte Tests und Dokumentation. Die Abnahme läuft seriell mit
+einem Worker.
 
 ## F75: Einheitliche Live-Vorschau und Touch-Scrollen
 

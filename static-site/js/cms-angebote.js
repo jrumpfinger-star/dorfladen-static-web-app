@@ -83,7 +83,6 @@ window.CMSAngebote = (function () {
         if (!b && toggle) {
           var collapsed = toggle.closest('.cms-card').querySelector('.cms-ang-items').classList.toggle('collapsed');
           toggle.querySelector('.cms-ang-chevron').classList.toggle('collapsed', collapsed);
-          toggle.querySelector('.cms-ang-featured')?.toggleAttribute('hidden', !collapsed);
           toggle.querySelector('.cms-ang-disclosure span:last-child').textContent = collapsed ? 'Artikel und Bilder anzeigen' : 'Artikel und Bilder ausblenden';
           toggle.setAttribute('aria-expanded', String(!collapsed)); return;
         }
