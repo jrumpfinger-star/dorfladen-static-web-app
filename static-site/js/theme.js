@@ -274,6 +274,49 @@
     }, 0);
   });
 
+  /* --- Verankerung nach CMS-Ausstieg (Zurück stoppt an der Homepage) ---
+    Das CMS navigiert bei aufgebrauchtem Verlauf zur Homepage und merkt das
+    in der Sitzung an. Beim Laden wird der Verlauf verwurzelt: der Eintrag
+    wird ersetzt und ein gleicher darüber gelegt. Das nächste Zurück
+    verbraucht den oberen Zwillings-Eintrag und der Handler legt ihn
+    erneut an - die Taste läuft nie in den leeren Bildschirm. Der Anker
+    lebt, bis die Homepage verlassen wird (Sitzungsmerkmal entfernt). */
+  if (sessionStorage.getItem('cms_home_anker') === '1') {
+   var ankerIstHomepage = /^(\/|\/index\.html?)$/.test(location.pathname);
+   if (ankerIstHomepage) {
+    var ankerPfad = location.pathname + location.search;
+    try {
+      history.replaceState({ cmsHomeAnker: true }, '', ankerPfad);
+      history.pushState({ cmsHomeAnker: true }, '', ankerPfad);
+      history.pushState({ cmsHomeAnker: true }, '', ankerPfad);
+      window.addEventListener('popstate', function () {
+        if (history.state && history.state.cmsHomeAnker) {
+          // An der Verankerung halten: oberen Zwillings-Eintrag erneuern.
+          history.pushState({ cmsHomeAnker: true }, '', ankerPfad);
+        } else {
+          // Die Homepage wurde über den Anker hinaus verlassen: Anker aus.
+          sessionStorage.removeItem('cms_home_anker');
+        }
+      });
+      /* Volle Navigation (Link, location.href) feuert kein popstate: der
+         Anker gehoert dann nicht mehr zur Homepage und wird hier abgebaut. */
+      window.addEventListener('beforeunload', function () {
+        sessionStorage.removeItem('cms_home_anker');
+      });
+      /* Rueckkehr aus dem Back-Forward-Cache (z. B. Zurueck vom CMS): die
+         Seite wird ohne Neuladen wiederhergestellt, theme.js laeuft nicht
+         erneut. Der Anker-Zwilling muss hier erneut angelegt werden,
+         sonst verbraucht das naechste Zurueck den letzten Eintrag. */
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted && !history.state) {
+          history.replaceState({ cmsHomeAnker: true }, '', ankerPfad);
+          history.pushState({ cmsHomeAnker: true }, '', ankerPfad);
+        }
+      });
+    } catch (err) {}
+   }
+  }
+
   /* --- Die Sammelbauarten --- */
 
   // Lightbox (Startseite, Bilder, Sortiment)

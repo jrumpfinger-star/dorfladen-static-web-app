@@ -7,6 +7,77 @@
 
 **Last updated:** 2026-09-09
 
+## F8-Ergänzung: Freigegebener Wochenplan-Umbau (24.11.2026)
+
+Referenz: [freigegebenes Mockup](../../mockups/cms-wochenplan-mobil-mockup.html).
+Die zuvor geplanten allgemeinen CMS-Stufen bleiben unverändert; F8 betrifft
+nur den Wochenplan und die dazugehörige mobile Kopfzeile.
+
+| Datei | Änderung |
+| --- | --- |
+| `tools/build-cms-neu.js` | Benannte, bei fehlendem Anker abbrechende Wochenplan-Umformung: bestehende Knöpfe, Kennungen und Handler neu gruppieren. Mobile Kopfzeile zugänglich beschriften. |
+| `static-site/cms.html`, `static-site/cms-neu.html` | Mit vorhandenem Generator erzeugen, nicht manuell bearbeiten. |
+| `static-site/css/cms-neu.css` | Mockupgetreue Steuerung, interne Tagesliste, Tageskarten, mobile Kopfzeile und ausschließlich Wochenplan-Vorschauhülle. Shared Tokens; 32/44-px-Regeln. |
+| `static-site/cms.js` | Neue Kartenanordnung nur unter `.cmsneu-app`; unveränderte Daten und Handler. Bestehende Wochenplan-Vorschau bekommt eine gezielte Hüllklasse und Lucide-Aktionen. Wiederholt geöffnete Wochenplandialoge per Zurück schließen; Statusfarbe aus gemeinsamen Tokens. Motivrenderer und Ausgabefunktionen nicht verändern. |
+| `tests/cms-wochenplan.spec.js` | Isolierte API-Fixtures; Layout, Funktionserhalt, aktuelle Designwirkung, echte bestehende Ausgabewege und Zurück prüfen. |
+| `tests/cms-neu.spec.js` | Wochenplan bei präziser Maus gemäß neuem 32-px-Vertrag messen; andere Bereiche nicht ändern. |
+
+### Vorher-/Nachher-Zuordnung
+
+| Vorher | Nachher / unveränderter Aufruf |
+| --- | --- |
+| Wochenpfeile und Diese/Nächste Woche | Zentrierte Navigation, vier getrennte `weekPrev/weekNext/weekThis/weekNxt`-Aktionen. |
+| Vorschau/Druck/Waage/Teilen | Ruhige Ausgabezeile; `previewWP/printWP/waageWP/shareWP` unverändert. |
+| Gericht / Hilfe | Hauptaktion neben Titel / eigenes Hilfesymbol; bisherige Handler. |
+| Tageskopf | Heller Kopf mit Name und Datum derselben gewählten Woche. |
+| Bearbeiten-Schaltfläche und Bildklick | Vollständige Gerichtszeile mit Stift; `editMeal` mit derselben ID. |
+| Papierkorb / Bestätigung | Getrennte Aktion `deleteMeal`; vorhandene Bestätigung unverändert. |
+| Gerichtsname, Preis, Beschreibung, Allergene, Bild | Vollständig im Bearbeitungsbutton; keine Informationen entfernen. |
+| Erfassungsdialog einschließlich Autocomplete, Mehrfachzeilen und Zwischenablage | Bestehender Dialog ohne fachliche Änderungen. |
+| Wochenplan-Grafik | Bestehendes `generateMenuImage`, zur Laufzeit aus aktuellem CMS-Design und aktuellen Wochendaten. |
+| Download, Drucken, Waage, Schließen in Vorschau | Gleiche IDs und Handler in der mockupgetreuen Zweispalten-Aktionsleiste. |
+| Klassische Seite / andere Vorschauen | Bisherige Darstellung; Änderungen gezielt auf neue Wochenplanhüllen beschränken. |
+
+Abnahme: Generator und maschineller Funktionsabgleich, TC-F8-01–04 auf vier
+Zielgrößen, vorhandene Wochenplan-/HD-/Waagenregressionen sowie Sichtprüfung.
+Feature-Preview nur mit vollständig abgefangenen Testdaten prüfen; keine
+Produktionsdaten ändern. Mockup-Freigabe autorisiert keine Funktionsentfernung.
+
+F8-Stand: umgesetzt und in der PR-15-Feature-Preview veröffentlicht. 33 gezielte
+lokale Tests und 14 Wochenplan-Live-Tests bestanden. Ergebnisse, CI-Nachweise
+und gesonderter Altbefund stehen in [tasks.md](./tasks.md).
+
+### F8-Korrektur: Teilen nach langsamer Bilderzeugung
+
+Nachweis: Mit 5,5 Sekunden verzögerter PNG-Bereitstellung ist
+`navigator.userActivation.isActive` beim bisherigen `navigator.share` falsch.
+Ein aktivierungsprüfender Share-Ersatz lehnt mit `NotAllowedError` ab;
+der bisherige Ausweichweg startet einen Download statt des Teilen-Menüs.
+Der bisherige Erfolgstest prüfte keine Nutzeraktivierung.
+
+1. `static-site/cms.js`: `shareBlob` prüft das erzeugte Bild und die
+   Nutzeraktivierung. Direkt teilen, solange aktiv; sonst Bereitschaftshülle
+   öffnen. Synchrone und asynchrone Share-Fehler gezielt behandeln und
+   protokollieren; Abbruch ohne Ersatzaktion.
+2. `showSharePreview` für den Bereitschaftsmodus wiederverwenden: Bild,
+   Statusmeldung, Teilen, ausdrücklicher Download und Schließen. Teilen direkt
+   im Klick-Handler mit dem bestehenden Blob, ohne neues Rendern. Normale
+   Vorschau und ihre Aktionen unverändert lassen. Keine neuen UI-Tokens.
+   Die vorhandene Verlaufs-/Escape-Behandlung der Hülle weiterverwenden.
+3. Objekt-URL beim Schließen der Bereitschaftshülle freigeben. Bei fehlender
+   Browserunterstützung Download erklären, nicht automatisch auslösen.
+4. `tests/cms-wochenplan.spec.js`: tatsächliches Ablaufen der Aktivierung durch
+   verzögerte Canvas-Ausgabe nachstellen; Aktivierung im Share-Ersatz prüfen.
+   PNG/Design/Begleittext, direkter Schnellweg, Wiederholung, Abbruch,
+   fehlende API, synchroner Fehler und Renderfehler isoliert prüfen.
+
+Vorher/nachher: schnelles Teilen bleibt direkt; langsames Teilen bekommt
+den freigegebenen zusätzlichen Klick. Automatischer Download/WhatsApp bei
+Fehler wird durch expliziten Download mit verständlichem Hinweis ersetzt.
+Bestehende PNG-Erzeugung, Vorschau, Drucken, Waage und Datenhaltung bleiben.
+Abnahme: TC-F8-01–07 auf vier Zielgrößen, Syntax-/Diffprüfung; Feature-Deploy
+nur nach ausdrücklicher Commit-/Push-Freigabe, keine Produktionsänderung.
+
 ## 1. Das Designschema — festgehalten
 
 Damit „dasselbe Design" nicht Auslegungssache ist, hier das Schema, das im

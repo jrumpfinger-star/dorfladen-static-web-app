@@ -45,7 +45,6 @@ const REITER = [
   { id: 'metzger', icon: 'beef', text: 'Metzger', kurz: 'Metzger', badges: true },
   { id: 'baecker', icon: 'croissant', text: 'Bäcker', kurz: 'Bäcker', badges: true },
   { id: 'metzgerbest', icon: 'ham', text: 'Metzger Mair', kurz: 'Mair', badges: true },
-  { id: 'getraenke', icon: 'cup-soda', text: 'Getränke', kurz: 'Getränke', badges: true },
   // Drax stand lange nur in der erzeugten kiosk.html und fehlte hier - ein
   // Lauf des Werkzeugs loeschte den Reiter deshalb spurlos. (R3 schuetzt nur
   // Reiter, die in der Quelle stehen.)
@@ -53,7 +52,11 @@ const REITER = [
   { id: 'kontakt', icon: 'message-square', text: 'Kontakt', kurz: 'Kontakt', badges: true, aus: true },
   { id: 'social', icon: 'share-2', text: 'Social', kurz: 'Social', badges: false },
   { id: 'kalender', icon: 'calendar-days', text: 'Kalender', kurz: 'Termine', badges: true },
-  { id: 'werbebilder', icon: 'images', text: 'Werbebilder', kurz: 'Werbung', badges: false }
+  { id: 'werbebilder', icon: 'images', text: 'Werbebilder', kurz: 'Werbung', badges: false },
+  { id: 'angebote', icon: 'tags', text: 'Angebote', kurz: 'Angebote', badges: false },
+  { id: 'wochenplan', icon: 'calendar-range', text: 'Wochenplan', kurz: 'Woche', badges: false },
+  // Getraenke werden kaum noch gebraucht und stehen deshalb ganz am Ende.
+  { id: 'getraenke', icon: 'cup-soda', text: 'Getränke', kurz: 'Getränke', badges: true }
 ];
 
 /* ── Neue Kopfzeile (Rasterbereich "hd") ──────────────────────────────────
@@ -76,6 +79,7 @@ const KOPF = `<!-- ═══ Header ═══ -->
     <button class="k-hbtn k-head-extra" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden verwalten" aria-label="Stammkunden verwalten"><i data-lucide="users"></i></button>
     <a class="k-hbtn k-head-extra" href="/index.html" title="Zur Website" aria-label="Zur Website"><i data-lucide="house"></i></a>
     <a class="k-hbtn k-head-extra" href="/cms.html" title="Zum CMS" aria-label="Zum CMS"><i data-lucide="settings"></i></a>
+    <a class="k-hbtn k-head-extra" href="/inventur" title="Zur Inventur" aria-label="Zur Inventur"><i data-lucide="clipboard-list"></i></a>
     <button class="k-hbtn" id="k-mute-btn" onclick="K.toggleMute()" title="Ton ein/aus" aria-label="Ton ein oder aus"><i data-lucide="volume-2"></i></button>
     <button class="k-hbtn" onclick="K.openModal('modal-help')" title="Hilfe" aria-label="Hilfe"><i data-lucide="help-circle"></i></button>
     <button class="k-hbtn" onclick="K.refresh()" title="Aktualisieren" aria-label="Aktualisieren"><i data-lucide="refresh-cw"></i></button>

@@ -26,13 +26,15 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <!-- Das gemeinsame Designschema (Werte) vor dem Seitenblatt. -->
 <link rel="stylesheet" href="/css/dl-design.css">
 <link rel="stylesheet" href="/css/cms-neu.css">
+<link rel="stylesheet" href="/css/angebote.css">
 
 <div id="cms-login" class="cms-wrap" lang="de" style="display:none">
   <div class="cms-login-box">
     <h2>Dorfladen CMS</h2>
     <p>Bitte Passwort eingeben</p>
     <div class="cms-pw-wrap"><input type="password" id="cms-login-pw" placeholder="Passwort" autocomplete="current-password"><button type="button" class="cms-pw-toggle" id="cms-pw-eye" title="Passwort anzeigen">&#128065;</button></div>
-    <div class="cms-login-err" id="cms-login-err">Falsches Passwort</div>
+    <p id="cms-login-status" role="status" hidden></p>
+    <div class="cms-login-err" id="cms-login-err" role="alert">Falsches Passwort</div>
     <button class="cms-btn-login" id="cms-login-btn">Anmelden</button>
   </div>
 </div>
@@ -41,7 +43,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <div class="cms-wrap cmsneu-app" id="cms-app" lang="de" style="display:none">
   <!-- ═══ Kopfzeile (Rasterbereich "hd") ═══ -->
   <header class="cmsneu-kopf">
-    <button type="button" class="cmsneu-menue" id="cmsneu-menue-btn" aria-expanded="false" aria-controls="cms-tabs-scroll" title="Bereich wechseln">
+    <button type="button" class="cmsneu-menue" id="cmsneu-menue-btn" aria-expanded="false" aria-controls="cms-tabs-scroll" aria-label="CMS-Bereich wechseln" title="Bereich wechseln">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       <span class="cmsneu-menue-txt">Bereich</span>
     </button>
@@ -54,11 +56,11 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <span id="cms-version"></span>
     </div>
     <div class="cmsneu-kopf-acts">
-      <a href="/kiosk.html" class="cms-btn cms-btn-gray" id="cms-back-kiosk" title="Zum Kiosk">
+      <a href="/kiosk.html" class="cms-btn cms-btn-gray" id="cms-back-kiosk" aria-label="Zum Kiosk" title="Zum Kiosk">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
         <span class="cmsneu-lang">Kiosk</span>
       </a>
-      <a href="/index.html" class="cms-btn cms-btn-gray" id="cms-back-website" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}" title="Zur Website">
+      <a href="/index.html" class="cms-btn cms-btn-gray" id="cms-back-website" aria-label="Zur Website" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}" title="Zur Website">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         <span class="cmsneu-lang">Website</span>
       </a>
@@ -87,6 +89,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <button class="cms-tab" data-action="tab" data-id="orders" id="cms-tab-orders"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Bestellungen</button>
       <button class="cms-tab" data-action="tab" data-id="metzger" id="cms-tab-metzger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M15.5 2.5c-1 .3-1.8 1-2.3 1.9a4 4 0 0 0-.2 3.3c.4 1 1.3 1.7 2.3 2 1 .2 2.1 0 3-.6.9-.7 1.4-1.7 1.4-2.8 0-1.1-.5-2.2-1.4-2.9a4 4 0 0 0-2.8-.9Z"/><path d="M8 14.5c0-1.3.5-2.4 1.4-3.2C10.3 10.5 11.6 10 13 10s2.7.5 3.6 1.3c.9.8 1.4 2 1.4 3.2V22H8v-7.5Z"/></svg> Metzger</button>
       <button class="cms-tab" data-action="tab" data-id="stats" id="cms-tab-stats"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> Statistik</button>
+      <a class="cms-tab" href="/inventur" title="Zur Inventur"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Inventur</a>
     </div>
     <div class="cmsneu-gruppe" style="--gruppe:#7c3aed">
       <div class="cmsneu-gruppe-kopf">Kanäle</div>
@@ -103,19 +106,11 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   <main class="cmsneu-inhalt" id="cmsneu-inhalt">
   <!-- Wochenplan -->
   <div id="cms-panel-wp">
-    <div class="cms-flex cms-between cms-mb">
-      <div class="cms-week-nav">
-        <button class="cms-week-btn" data-action="weekPrev">&larr;</button>
-        <div>
-          <div id="cms-wp-title" style="font-weight:600;font-size:var(--schrift-gross);color:var(--ink)">KW --</div>
-          <div id="cms-wp-range" style="font-size:var(--schrift-klein);color:var(--mut)"></div>
-        </div>
-        <button class="cms-week-btn" data-action="weekNext">&rarr;</button>
-        <button class="cms-week-quick" data-action="weekThis">Diese Woche</button>
-        <button class="cms-week-quick" data-action="weekNxt">N&auml;chste Woche</button>
-      </div>
-      <div style="display:flex;gap:8px"><button class="cms-btn-preview" data-action="previewWP"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Vorschau</button><button class="cms-btn cms-btn-gray" data-action="printWP" style="padding:4px 10px;font-size:var(--schrift-klein)">&#x1F5A8;&#xFE0F; Drucken</button><button class="cms-btn cms-btn-gray" data-action="waageWP" style="padding:4px 10px;font-size:var(--schrift-klein)" title="Wochenplan auf die Waage übertragen">&#x2696;&#xFE0F; Auf die Waage</button><button class="cms-btn-wa" data-action="shareWP"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.654-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Teilen</button><button class="cms-btn cms-btn-primary" data-action="openAddMeal">+ Gericht</button><button class="cms-btn cms-btn-gray" onclick="cmsTab('help'); cmsSwitchHelpTopic('wp-help')" title="Wochenplan Hilfe" style="padding:4px 10px;font-size:var(--schrift-normal);background:var(--gr-l);color:var(--gr);border-color:var(--gr-l)"><i data-lucide="circle-help" style="width:14px;height:14px;vertical-align:-2px"></i></button></div>
-    </div>
+    <section class="cms-wp-controls" aria-label="Wochenplan steuern">
+      <div class="cms-wp-heading"><h2>Wochenplan</h2><button class="cms-btn cms-btn-primary" data-action="openAddMeal" aria-label="Gericht"><i data-lucide="plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></i><span>Gericht</span></button><button class="cms-btn cms-btn-gray" onclick="cmsTab('help'); cmsSwitchHelpTopic('wp-help')" title="Wochenplan Hilfe" aria-label="Hilfe zum Wochenplan"><i data-lucide="circle-help" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></i></button></div>
+      <nav class="cms-week-nav" aria-label="Woche wählen"><button class="cms-week-btn" data-action="weekPrev" aria-label="Vorherige Woche"><i data-lucide="chevron-left" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></i></button><div class="cms-wp-week-label" aria-live="polite"><div id="cms-wp-title">KW --</div><div id="cms-wp-range"></div></div><button class="cms-week-btn" data-action="weekNext" aria-label="Nächste Woche anzeigen"><i data-lucide="chevron-right" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></i></button><div class="cms-wp-presets"><button class="cms-week-quick" data-action="weekThis" aria-label="Diese Woche">Diese Woche</button><button class="cms-week-quick" data-action="weekNxt" aria-label="Nächste Woche">N&auml;chste Woche</button></div></nav>
+      <div class="cms-wp-exports" role="group" aria-label="Vorschau und Ausgabe"><button class="cms-btn-preview" data-action="previewWP" aria-label="Vorschau"><i data-lucide="eye" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></i><span>Vorschau</span></button><button class="cms-btn cms-btn-gray" data-action="printWP" aria-label="Drucken"><i data-lucide="printer" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/><path d="M18 12h.01"/></svg></i><span>Drucken</span></button><button class="cms-btn cms-btn-gray" data-action="waageWP" title="Wochenplan auf die Waage übertragen" aria-label="Auf die Waage"><i data-lucide="scale" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-1.6 1-4.4 1-6 0ZM2 16l3-8 3 8c-1.6 1-4.4 1-6 0ZM7 21h10M12 3v18M3 7l9-4 9 4"/></svg></i><span>Waage</span></button><button class="cms-btn-wa" data-action="shareWP" aria-label="Teilen"><i data-lucide="share-2" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></i><span>Teilen</span></button></div>
+    </section>
     <div id="cms-wp-loading" style="display:none;text-align:center;padding:40px 0">
       <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--gr-d);border-radius:50%;animation:cms-spin 0.8s linear infinite"></div>
       <div style="margin-top:10px;color:var(--mut);font-size:var(--schrift-normal)">Wochenplan wird geladen&hellip;</div>
@@ -134,6 +129,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
   </div>
   <!-- Angebote -->
   <div id="cms-panel-ang" style="display:none">
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung"></section>
+    <div hidden>
     <div class="cms-flex cms-between cms-mb">
       <h3 style="font-size:var(--schrift-gross);font-weight:600;color:var(--ink);margin:0;display:flex;align-items:center;gap:6px">Sonderangebote <span onclick="cmsTab('help'); cmsSwitchHelpTopic('ang-help')" title="Hilfe anzeigen" style="cursor:pointer;font-size:var(--schrift-klein);background:var(--gr-l);color:var(--gr);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600">?</span></h3>
       <button class="cms-btn cms-btn-primary" data-action="openNewAktion">+ Neue Aktion erstellen</button>
@@ -150,6 +147,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
     <div id="cms-akt-list"></div>
     <div class="cms-empty" id="cms-ang-empty" style="display:none">Noch keine Angebote. Erstellen Sie eine neue Aktion mit Sonderangeboten.</div>
   </div>
+    </div>
   <!-- Aktuelles / News -->
   <div id="cms-panel-news" style="display:none">
     <div class="cms-flex cms-between cms-mb">
@@ -950,7 +948,6 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
       </div>
     </div>
-
     <!-- Drax-Bestellung (Drax-Mühle) – specs/drax-bestellung/spec.md -->
     <div class="cms-card" style="margin-top:18px">
       <div class="cms-card-header" style="background:var(--gr)!important">&#127806; Drax-Bestellung</div>
@@ -1023,7 +1020,6 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div>
     </div>
   </div>
-
   <!-- Statistik / Analytics -->
   <div id="cms-panel-stats" style="display:none">
     <div class="cms-flex cms-between cms-mb">
@@ -1346,12 +1342,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
         </div>
       </div>
       <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Alles speichern</button>
+        <button class="cms-btn cms-btn-primary" data-action="saveHPCfg">&#128190; Als Standard speichern</button>
         <button class="cms-btn cms-btn-gray" data-action="resetHPCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-        <button class="cms-btn cms-btn-gray" onclick="hpSaveAsDefault()" title="Aktuelle HP-Werte als neuen Standard definieren" style="font-size:var(--schrift-klein)">&#9733; Als Standard speichern</button>
-        <button class="cms-btn cms-btn-gray" onclick="hpClearCustomDefault()" title="Eigene HP-Standards l&ouml;schen" style="font-size:var(--schrift-klein);color:var(--red)">&#10005; Werkseinstellungen</button>
       </div>
     </div>
     <!-- ============ SUB-TAB: Wochenplan (REDESIGNED) ============ -->
@@ -1369,7 +1361,12 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <div class="cfg-section-nav" style="display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap">
         <button class="cfg-section-btn active" data-action="wpCfgSection" data-id="wp-sec-home" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--c-m-pri);margin-bottom:-2px;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:.3px">&#127968; Homepage-Layout</button>
         <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-flyer" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">&#128196; Flyer / Druck</button>
+        <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-waage-large" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">Waage gro&szlig;</button>
+        <button class="cfg-section-btn" data-action="wpCfgSection" data-id="wp-sec-waage-small" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">Waage klein</button>
       </div>
+
+      <div id="wp-sec-waage-large" style="display:none"></div>
+      <div id="wp-sec-waage-small" style="display:none"></div>
 
       <div class="cfg-split">
       <div class="cfg-split-left">
@@ -1699,7 +1696,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div><!-- /cfg-split (WP) -->
     </div>
     <!-- ============ SUB-TAB: Plakate & Flyer (REDESIGNED) ============ -->
-    <div id="cms-cfg-plakat" style="display:none">
+    <div data-offer-workspaces id="cms-cfg-plakat" style="display:none">
       <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0 0 10px">&Auml;nderungen werden erst nach Klick auf &bdquo;Speichern&ldquo; &uuml;bernommen.</p>
       <!-- Hidden fields for backward compat -->
       <input type="hidden" id="cfg-bgColor" value="#f4f1ea">
@@ -1709,10 +1706,23 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       <div class="cfg-section-nav" style="display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap">
         <button class="cfg-section-btn active" data-action="cfgSection" data-id="sec-plakat" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--c-m-pri);margin-bottom:-2px;color:var(--c-m-pri);text-transform:uppercase;letter-spacing:.3px">&#128196; Plakat</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-flyer" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">&#128196; Einzelflyer</button>
+        <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-drinks" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">Getr&auml;nkeflyer</button>
+        <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-waage-large" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">Waage gro&szlig;</button>
+        <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-waage-small" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">Waage klein</button>
         <button class="cfg-section-btn" data-action="cfgSection" data-id="sec-shared" style="padding:8px 16px;font-size:var(--schrift-klein);font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px">&#9881; Gemeinsame Einstellungen</button>
       </div>
 
-      <div class="cfg-split">
+      <div id="cfg-sec-drinks" style="display:none">
+        <div id="an-design-root"></div>
+        <p><a class="cms-btn cms-btn-primary" href="/angebote.html">Aktionen individuell gestalten</a></p>
+      </div>
+      <div id="cfg-sec-waage-large" style="display:none">
+        <div id="an-design-root-waage-large"></div>
+      </div>
+      <div id="cfg-sec-waage-small" style="display:none">
+        <div id="an-design-root-waage-small"></div>
+      </div>
+      <div class="cfg-split" id="cfg-offer-legacy">
       <div class="cfg-split-left">
 
       <!-- ════════════════════════════════════════════════ -->
@@ -1730,7 +1740,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Template Selection -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header">&#127912; Template</div>
+            <div class="cms-card-header">Vorlage</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Plakat-Template
                 <select id="cfg-plakatTemplate" class="cms-input" style="margin-top:4px">
@@ -1791,7 +1801,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Plakat Colors -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header">&#127912; Plakat-Farben</div>
+            <div class="cms-card-header">Farben</div>
             <div class="cms-card-body">
               <div id="cfg-tpl-plakat-colors" style="padding:0">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -1819,7 +1829,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Plakat-specific settings -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header">&#128181; Plakat-Preisschild</div>
+            <div class="cms-card-header">Preisschild und Marker</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preis-Schriftgr&ouml;&szlig;e
                 <div style="display:flex;align-items:center;gap:8px">
@@ -1833,16 +1843,57 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <span id="cfg-savingsScalePlakat-val" style="font-size:var(--schrift-normal);min-width:42px;text-align:right">95%</span>
                 </div>
               </label>
+              <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ersparnis-Marker Typ
+                <select id="cfg-plakat-savingsMarkerType" class="cms-input" style="margin-top:6px">
+                  <option value="">Wie Vorgabe</option>
+                  <option value="starburst">Stern (Zacken)</option>
+                  <option value="badge">Badge (rund)</option>
+                  <option value="pill">Pill (oval)</option>
+                  <option value="flag">Flag (schr&auml;g)</option>
+                  <option value="hexburst">Hex-Burst (6-Zacken)</option>
+                  <option value="diamond">Diamant</option>
+                  <option value="shield">Schild / Shield</option>
+                  <option value="ribbon">Ribbon / Band</option>
+                  <option value="explosion">Explosion (viele Zacken)</option>
+                  <option value="heart">Herz</option>
+                </select>
+              </label>
+              <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ersparnis-Farbwelt
+                <select id="cfg-plakat-savingsPalette" class="cms-input" style="margin-top:6px">
+                  <option value="">Wie Vorgabe</option>
+                  <option value="harmonie">Harmonie Gr&uuml;n</option>
+                  <option value="classic-red">Classic SALE Rot</option>
+                  <option value="warm-copper">Warm Copper</option>
+                  <option value="berry-purple">Berry Purple</option>
+                  <option value="ocean-blue">Ocean Blue</option>
+                  <option value="sunset-orange">Sunset Orange</option>
+                  <option value="fresh-lime">Fresh Lime</option>
+                  <option value="deep-rose">Deep Rose</option>
+                  <option value="midnight-gold">Midnight Gold</option>
+                  <option value="arctic-teal">Arctic Teal</option>
+                </select>
+              </label>
             </div>
           </div>
 
+          <div class="cms-card">
+            <div class="cms-card-header">Bezeichnung und Zusatztext</div>
+            <div class="cms-card-body an-fields">
+              <label class="an-field"><span>Schriftart</span><select id="cfg-plakat-nameFont" class="cms-input cfg-persec-ctl" data-sec="plakat"><option>Arial</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option></select></label>
+              <label class="an-field"><span>Bezeichnung &middot; Schriftst&auml;rke</span><select id="cfg-plakat-nameWeight" class="cms-input cfg-persec-ctl" data-sec="plakat"><option value="400">Normal</option><option value="600">Halbfett</option><option value="700">Fett</option><option value="900" selected>Extrafett</option></select></label>
+              <label class="an-field"><span>Zusatztext &middot; Schriftst&auml;rke</span><select id="cfg-plakat-detailsWeight" class="cms-input cfg-persec-ctl" data-sec="plakat"><option value="400">Normal</option><option value="600" selected>Halbfett</option><option value="700">Fett</option><option value="900">Extrafett</option></select></label>
+              <label class="an-field"><span>Schriftgr&ouml;&szlig;e (0 = Vorlage)</span><input id="cfg-plakat-nameSize" type="number" min="0" max="100" value="0" class="cms-input cfg-persec-ctl" data-sec="plakat"></label>
+              <label class="an-field"><span>Farbe</span><input id="cfg-plakat-nameColor" type="color" value="#1a1a1a" class="cfg-persec-ctl" data-sec="plakat"></label>
+            </div>
+          </div>
           <!-- Plakat Preisschild-Form -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header">&#128181; Preisschild-Form</div>
+            <div class="cms-card-header">Preisschildform</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Vorlage
                 <select id="cfg-plakat-tagPreset" class="cms-input cfg-persec-ctl" data-sec="plakat" style="margin-top:4px">
                   <option value="">— Manuell —</option>
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="classic-red-rect">Classic Rot (Rechteck)</option>
                   <option value="green-rounded">Naturgr&uuml;n (Abgerundet)</option>
                   <option value="dark-pill">Dark Elegance (Pill)</option>
@@ -1857,6 +1908,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               </label>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Form
                 <select id="cfg-plakat-tagShape" class="cms-input cfg-persec-ctl" data-sec="plakat" style="margin-top:4px">
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="rect">Rechteck</option>
                   <option value="rounded">Abgerundet</option>
                   <option value="pill">Pill / Oval</option>
@@ -1870,6 +1922,16 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <option value="trapez">Trapez</option>
                 </select>
               </label>
+              <fieldset class="an-price-image-colors">
+                <legend>Preisbild &middot; Rot/Gelb</legend>
+                <div class="an-fields">
+                  <label class="an-field"><span>Preisbild &middot; Preisfarbe</span><input type="color" id="cfg-plakat-priceImageColor" class="cfg-persec-ctl" data-sec="plakat" value="#ed1c24"></label>
+                  <label class="an-field"><span>Preisbild &middot; Konturfarbe</span><input type="color" id="cfg-plakat-priceOutlineColor" class="cfg-persec-ctl" data-sec="plakat" value="#ffffff"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreis-Streifen</span><input type="color" id="cfg-plakat-priceStripColor" class="cfg-persec-ctl" data-sec="plakat" value="#fff000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreisfarbe</span><input type="color" id="cfg-plakat-priceOldColor" class="cfg-persec-ctl" data-sec="plakat" value="#000000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Durchstreichungsfarbe</span><input type="color" id="cfg-plakat-priceStrikeColor" class="cfg-persec-ctl" data-sec="plakat" value="#ed1c24"></label>
+                </div>
+              </fieldset>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ecken-Rundung
                 <div style="display:flex;align-items:center;gap:8px">
                   <input type="range" id="cfg-plakat-tagRadius" min="0" max="40" value="0" class="cfg-persec-ctl" data-sec="plakat" style="flex:1">
@@ -1899,7 +1961,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Plakat Dekoration -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header">&#127807; Dekoration</div>
+            <div class="cms-card-header">Dekoration</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <div style="padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
                 <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);margin-bottom:6px">&#127912; Deko-Farben</div>
@@ -1931,13 +1993,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Plakat Action Buttons -->
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
+            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Als Standard speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-            <button class="cms-btn cms-btn-gray" onclick="cmsSaveAsDefault()" title="Aktuelle Werte als neuen Standard definieren" style="font-size:var(--schrift-klein)">&#9733; Als Standard speichern</button>
-            <button class="cms-btn cms-btn-gray" onclick="cmsClearCustomDefault()" title="Eigene Standards l&ouml;schen" style="font-size:var(--schrift-klein);color:var(--red)">&#10005; Werkseinstellungen</button>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
@@ -1967,7 +2025,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Template Selection -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--gr)">&#127912; Template</div>
+            <div class="cms-card-header" style="background:var(--gr)">Vorlage</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Einzelflyer-Template
                 <select id="cfg-flyerTemplate" class="cms-input" style="margin-top:4px">
@@ -2028,7 +2086,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Colors -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--gr)">&#127912; Flyer-Farben</div>
+            <div class="cms-card-header" style="background:var(--gr)">Farben</div>
             <div class="cms-card-body">
               <div id="cfg-tpl-flyer-colors" style="padding:0">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -2056,7 +2114,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer-specific settings -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--gr)">&#128181; Flyer-Preisschild</div>
+            <div class="cms-card-header" style="background:var(--gr)">Preisschild und Marker</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:8px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preis-Schriftgr&ouml;&szlig;e
                 <div style="display:flex;align-items:center;gap:8px">
@@ -2070,16 +2128,57 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <span id="cfg-savingsScaleFlyer-val" style="font-size:var(--schrift-normal);min-width:42px;text-align:right">120%</span>
                 </div>
               </label>
+              <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ersparnis-Marker Typ
+                <select id="cfg-flyer-savingsMarkerType" class="cms-input" style="margin-top:6px">
+                  <option value="">Wie Vorgabe</option>
+                  <option value="starburst">Stern (Zacken)</option>
+                  <option value="badge">Badge (rund)</option>
+                  <option value="pill">Pill (oval)</option>
+                  <option value="flag">Flag (schr&auml;g)</option>
+                  <option value="hexburst">Hex-Burst (6-Zacken)</option>
+                  <option value="diamond">Diamant</option>
+                  <option value="shield">Schild / Shield</option>
+                  <option value="ribbon">Ribbon / Band</option>
+                  <option value="explosion">Explosion (viele Zacken)</option>
+                  <option value="heart">Herz</option>
+                </select>
+              </label>
+              <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ersparnis-Farbwelt
+                <select id="cfg-flyer-savingsPalette" class="cms-input" style="margin-top:6px">
+                  <option value="">Wie Vorgabe</option>
+                  <option value="harmonie">Harmonie Gr&uuml;n</option>
+                  <option value="classic-red">Classic SALE Rot</option>
+                  <option value="warm-copper">Warm Copper</option>
+                  <option value="berry-purple">Berry Purple</option>
+                  <option value="ocean-blue">Ocean Blue</option>
+                  <option value="sunset-orange">Sunset Orange</option>
+                  <option value="fresh-lime">Fresh Lime</option>
+                  <option value="deep-rose">Deep Rose</option>
+                  <option value="midnight-gold">Midnight Gold</option>
+                  <option value="arctic-teal">Arctic Teal</option>
+                </select>
+              </label>
             </div>
           </div>
 
+          <div class="cms-card">
+            <div class="cms-card-header">Bezeichnung und Zusatztext</div>
+            <div class="cms-card-body an-fields">
+              <label class="an-field"><span>Schriftart</span><select id="cfg-flyer-nameFont" class="cms-input cfg-persec-ctl" data-sec="flyer"><option>Arial</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option></select></label>
+              <label class="an-field"><span>Bezeichnung &middot; Schriftst&auml;rke</span><select id="cfg-flyer-nameWeight" class="cms-input cfg-persec-ctl" data-sec="flyer"><option value="400">Normal</option><option value="600">Halbfett</option><option value="700">Fett</option><option value="900" selected>Extrafett</option></select></label>
+              <label class="an-field"><span>Zusatztext &middot; Schriftst&auml;rke</span><select id="cfg-flyer-detailsWeight" class="cms-input cfg-persec-ctl" data-sec="flyer"><option value="400">Normal</option><option value="600" selected>Halbfett</option><option value="700">Fett</option><option value="900">Extrafett</option></select></label>
+              <label class="an-field"><span>Schriftgr&ouml;&szlig;e (0 = Vorlage)</span><input id="cfg-flyer-nameSize" type="number" min="0" max="100" value="0" class="cms-input cfg-persec-ctl" data-sec="flyer"></label>
+              <label class="an-field"><span>Farbe</span><input id="cfg-flyer-nameColor" type="color" value="#1a1a1a" class="cfg-persec-ctl" data-sec="flyer"></label>
+            </div>
+          </div>
           <!-- Flyer Preisschild-Form -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--gr)">&#128181; Preisschild-Form</div>
+            <div class="cms-card-header" style="background:var(--gr)">Preisschildform</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Vorlage
                 <select id="cfg-flyer-tagPreset" class="cms-input cfg-persec-ctl" data-sec="flyer" style="margin-top:4px">
                   <option value="">— Manuell —</option>
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="classic-red-rect">Classic Rot (Rechteck)</option>
                   <option value="green-rounded">Naturgr&uuml;n (Abgerundet)</option>
                   <option value="dark-pill">Dark Elegance (Pill)</option>
@@ -2094,6 +2193,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               </label>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Preisschild-Form
                 <select id="cfg-flyer-tagShape" class="cms-input cfg-persec-ctl" data-sec="flyer" style="margin-top:4px">
+                  <option value="price-image">Preisbild &middot; Rot/Gelb</option>
                   <option value="rect">Rechteck</option>
                   <option value="rounded">Abgerundet</option>
                   <option value="pill">Pill / Oval</option>
@@ -2107,6 +2207,16 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <option value="trapez">Trapez</option>
                 </select>
               </label>
+              <fieldset class="an-price-image-colors">
+                <legend>Preisbild &middot; Rot/Gelb</legend>
+                <div class="an-fields">
+                  <label class="an-field"><span>Preisbild &middot; Preisfarbe</span><input type="color" id="cfg-flyer-priceImageColor" class="cfg-persec-ctl" data-sec="flyer" value="#ed1c24"></label>
+                  <label class="an-field"><span>Preisbild &middot; Konturfarbe</span><input type="color" id="cfg-flyer-priceOutlineColor" class="cfg-persec-ctl" data-sec="flyer" value="#ffffff"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreis-Streifen</span><input type="color" id="cfg-flyer-priceStripColor" class="cfg-persec-ctl" data-sec="flyer" value="#fff000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Stattpreisfarbe</span><input type="color" id="cfg-flyer-priceOldColor" class="cfg-persec-ctl" data-sec="flyer" value="#000000"></label>
+                  <label class="an-field"><span>Preisbild &middot; Durchstreichungsfarbe</span><input type="color" id="cfg-flyer-priceStrikeColor" class="cfg-persec-ctl" data-sec="flyer" value="#ed1c24"></label>
+                </div>
+              </fieldset>
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ecken-Rundung
                 <div style="display:flex;align-items:center;gap:8px">
                   <input type="range" id="cfg-flyer-tagRadius" min="0" max="40" value="0" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
@@ -2136,8 +2246,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Bild- & Preis-Anker -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--gr)">&#128204; Bild- &amp; Preis-Position</div>
-            <div class="cms-card-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="cms-card-header" style="background:var(--gr)">Bild- &amp; Preis-Position</div>
+            <div class="cms-card-body cfg-anchor-grid">
               <!-- Image width -->
               <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Bildbreite
                 <div style="display:flex;align-items:center;gap:8px">
@@ -2145,8 +2255,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                   <span id="cfg-flyer-imgWidthPct-val" style="font-size:var(--schrift-normal);min-width:32px;text-align:right">50%</span>
                 </div>
               </label>
-              <hr style="border:none;border-top:1px solid var(--line);margin:2px 0">
               <!-- Image anchor (bottom-left) -->
+              <div class="cfg-anchor-group">
               <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);margin-bottom:2px">&#128444;&#65039; Bild-Position <span style="font-weight:400;font-size:var(--schrift-klein);color:var(--mut)">(Anker: unten links)</span></div>
               <div class="anchor-pad">
                 <div class="anchor-cross">
@@ -2167,8 +2277,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                 <input type="hidden" id="cfg-flyer-imgAnchorX" value="10" class="cfg-persec-ctl" data-sec="flyer">
                 <input type="hidden" id="cfg-flyer-imgAnchorY" value="10" class="cfg-persec-ctl" data-sec="flyer">
               </div>
-              <hr style="border:none;border-top:1px solid var(--line);margin:2px 0">
+              </div>
               <!-- Price block anchor (top-right) -->
+              <div class="cfg-anchor-group">
               <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink);margin-bottom:2px">&#128176; Preis-Position <span style="font-weight:400;font-size:var(--schrift-klein);color:var(--mut)">(Anker: oben rechts)</span></div>
               <div class="anchor-pad">
                 <div class="anchor-cross">
@@ -2189,12 +2300,13 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
                 <input type="hidden" id="cfg-flyer-priceAnchorX" value="10" class="cfg-persec-ctl" data-sec="flyer">
                 <input type="hidden" id="cfg-flyer-priceAnchorY" value="10" class="cfg-persec-ctl" data-sec="flyer">
               </div>
+              </div>
             </div>
           </div>
 
           <!-- Flyer Dekoration -->
           <div class="cms-card" style="margin-bottom:8px">
-            <div class="cms-card-header" style="background:var(--gr)">&#127807; Dekoration</div>
+            <div class="cms-card-header" style="background:var(--gr)">Dekoration</div>
             <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
               <div style="padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
                 <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);margin-bottom:6px">&#127912; Deko-Farben</div>
@@ -2223,7 +2335,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               </label>
               <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
                 <div style="font-size:var(--schrift-klein);font-weight:600;color:var(--mut);margin-bottom:6px">&#128444;&#65039; Rahmen</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end">
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:end">
                   <label style="font-size:var(--schrift-klein);color:var(--ink)">Rahmen-Breite
                     <div style="display:flex;align-items:center;gap:6px">
                       <input type="range" id="cfg-flyer-borderWidth" min="0" max="20" value="0" class="cfg-persec-ctl" data-sec="flyer" style="flex:1">
@@ -2238,13 +2350,9 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
           <!-- Flyer Action Buttons -->
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Speichern</button>
+            <button class="cms-btn cms-btn-primary" data-action="saveCfg">&#128190; Als Standard speichern</button>
             <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved" title="Ungespeicherte &Auml;nderungen verwerfen">&#8634; Verwerfen</button>
             <button class="cms-btn cms-btn-gray" data-action="resetCfg">&#8634; Auf Default zur&uuml;cksetzen</button>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-            <button class="cms-btn cms-btn-gray" onclick="cmsSaveAsDefault()" title="Aktuelle Werte als neuen Standard definieren" style="font-size:var(--schrift-klein)">&#9733; Als Standard speichern</button>
-            <button class="cms-btn cms-btn-gray" onclick="cmsClearCustomDefault()" title="Eigene Standards l&ouml;schen" style="font-size:var(--schrift-klein);color:var(--red)">&#10005; Werkseinstellungen</button>
           </div>
           <!-- Vorlagen -->
           <div style="margin-top:10px;padding:10px;background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s)">
@@ -2276,7 +2384,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <div>
               <!-- Globale Farben -->
               <div class="cms-card" style="margin-bottom:8px">
-                <div class="cms-card-header" style="background:var(--amb)">&#127912; Globale Farben</div>
+                <div class="cms-card-header" style="background:var(--amb)">Farben</div>
                 <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
                   <p style="font-size:var(--schrift-klein);color:var(--mut);margin:0">Diese Farben gelten als Basis f&uuml;r Plakat &amp; Flyer. Individuelle Farben k&ouml;nnen pro Template oben angepasst werden.</p>
                   <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Blatt/Icon-Gr&uuml;n
@@ -2293,7 +2401,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
               <!-- Bild-Effekte -->
               <div class="cms-card" style="margin-bottom:8px">
-                <div class="cms-card-header" style="background:var(--amb)">&#128444; Bild-Effekte</div>
+                <div class="cms-card-header" style="background:var(--amb)">Bild-Effekte</div>
                 <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
                   <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Bild-Drehung
                     <div style="display:flex;align-items:center;gap:8px">
@@ -2402,7 +2510,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 
               <!-- Ersparnis-Marker -->
               <div class="cms-card" style="margin-bottom:8px">
-                <div class="cms-card-header" style="background:var(--amb)">&#11088; Ersparnis-Marker</div>
+                <div class="cms-card-header" style="background:var(--amb)">Ersparnis-Marker</div>
                 <div class="cms-card-body" style="display:flex;flex-direction:column;gap:10px">
                   <label style="font-size:var(--schrift-klein);font-weight:600;color:var(--ink)">Ersparnis-Stern Stil
                     <select id="cfg-savingsStarStyle" class="cms-input" style="margin-top:6px">
@@ -2493,8 +2601,10 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
       </div><!-- /cfg-split-right -->
 
       </div><!-- /cfg-split -->
-      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <div id="cfg-offer-legacy-save" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="cms-btn cms-btn-primary" id="cfg-plakat-save" data-action="savePlakatCfg">&#128190; Speichern</button>
+        <button class="cms-btn cms-btn-gray" data-action="cfgRevertUnsaved">Verwerfen</button>
+        <button class="cms-btn cms-btn-gray" data-action="resetCfg">Auf Default zur&uuml;cksetzen</button>
         <span id="cfg-plakat-saved-hint" style="display:none;font-size:.82rem;color:var(--gr);font-weight:600;align-self:center">&#x2705; Gespeichert!</span>
       </div>
     </div>
@@ -2887,7 +2997,7 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
           <button onclick="socialShareWhatsApp()" title="Post-Bild per WhatsApp teilen" style="padding:6px 12px;font-size:var(--schrift-klein);font-weight:600;cursor:pointer;background:#25D366;border:none;border-radius:var(--r-s);color:var(--karte);display:inline-flex;align-items:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>
           <button onclick="socialDownloadPoster()" title="Post-Bild herunterladen" style="padding:6px 12px;font-size:var(--schrift-klein);font-weight:600;cursor:pointer;background:var(--line);border:1px solid var(--line);border-radius:var(--r-s);color:var(--ink);display:inline-flex;align-items:center;gap:4px"><i data-lucide="download" style="width:14px;height:14px"></i> Bild</button>
         </div>
-        <div id="soc-desk-status" style="display:none;padding:6px 10px;border-radius:var(--r-s);font-size:var(--schrift-klein);margin-top:6px;width:100%"></div>
+        <div id="soc-desk-status" style="display:none;padding:6px 10px;border-radius:var(--r-s);font-size:var(--schrift-klein);margin-top:6px"></div>
       </div>
 
       <!-- Desktop Tab Bar (hidden on mobile) -->
@@ -3377,10 +3487,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <table style="width:100%;border-collapse:collapse;font-size:var(--schrift-klein);margin-bottom:10px">
               <thead><tr style="background:var(--gr-t)"><th style="padding:6px 10px;text-align:left;border:1px solid var(--line)">Button</th><th style="padding:6px 10px;text-align:left;border:1px solid var(--line)">Funktion</th></tr></thead>
               <tbody>
-                <tr><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#128190; Alles speichern</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Alle Design&#228;nderungen dauerhaft speichern</td></tr>
-                <tr style="background:var(--gr-t)"><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#8630; Auf Default zur&#252;cksetzen</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Zu gespeichertem Standard-Design zur&#252;ckspringen</td></tr>
-                <tr><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#9733; Als Standard speichern</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Aktuelles Design als pers&#246;nlichen Standard hinterlegen</td></tr>
-                <tr style="background:var(--gr-t)"><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#10005; Werkseinstellungen</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Pers&#246;nlichen Standard l&#246;schen, Original-Werksvorgaben laden</td></tr>
+                <tr><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#128190; Als Standard speichern</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Speichert den Standard f&#252;r neue Angebote und aktualisiert eine geladene eigene Vorlage</td></tr>
+                <tr style="background:var(--gr-t)"><td style="padding:6px 10px;border:1px solid var(--line)"><code>&#8630; Auf Default zur&#252;cksetzen</code></td><td style="padding:6px 10px;border:1px solid var(--line)">Zu den Original-Werksvorgaben zur&#252;ckspringen</td></tr>
               </tbody>
             </table>
           </div>
@@ -3501,8 +3609,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
             <div style="background:var(--gr-t);border:1px solid var(--line);border-radius:var(--r-s);padding:12px;margin-bottom:10px">
               <strong style="color:var(--red)">&#128204; Design-Farben versehentlich ge&#228;ndert &#8211; Reset</strong>
               <ol style="margin:6px 0 0;padding-left:20px;font-size:var(--schrift-klein)">
-                <li>Tab <strong>Design</strong> &#8594; <strong>&#8222;&#10005; Werkseinstellungen&#8220;</strong> klicken &#8594; best&#228;tigen.</li>
-                <li><strong>&#8222;&#128190; Alles speichern&#8220;</strong> klicken um Reset dauerhaft zu &#252;bernehmen.</li>
+                <li>Tab <strong>Design</strong> &#8594; <strong>&#8222;&#8634; Auf Default zur&#252;cksetzen&#8220;</strong> klicken.</li>
+                <li><strong>&#8222;&#128190; Als Standard speichern&#8220;</strong> klicken um den Reset dauerhaft zu &#252;bernehmen.</li>
               </ol>
             </div>
 
@@ -3650,8 +3758,8 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
               <p style="margin:8px 0 0;font-size:var(--schrift-klein)">Ja &#8211; aber bei gleichzeitiger Bearbeitung gewinnt die zuletzt gespeicherte Version. Bitte Bearbeitung im Team koordinieren.</p>
             </details>
 
-            <details style="border-bottom:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600;color:var(--gr-d)">Was bedeutet &#8222;Als Standard speichern&#8220; vs. &#8222;Werkseinstellungen&#8220;?</summary>
-              <p style="margin:8px 0 0;font-size:var(--schrift-klein)"><strong>&#9733; Als Standard speichern</strong> hinterlegt Ihre aktuellen Einstellungen. <strong>&#10005; Werkseinstellungen</strong> l&#246;scht diesen Standard und kehrt zu Original-Werksvorgaben zur&#252;ck.</p>
+            <details style="border-bottom:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600;color:var(--gr-d)">Was macht &#8222;Als Standard speichern&#8220;? Und was eine eigene Vorlage?</summary>
+              <p style="margin:8px 0 0;font-size:var(--schrift-klein)"><strong>&#128190; Als Standard speichern</strong> sichert die aktuellen Einstellungen als Standard f&#252;r neue Angebote; bestehende Aktionen bleiben unver&#228;ndert. Ist eine eigene Vorlage geladen, wird sie dabei mit aktualisiert. <strong>+ Vorlage speichern</strong> legt eine benannte Vorlage an; bei gleichem Namen fragt das CMS, ob die Vorlage ersetzt werden soll.</p>
             </details>
 
             <details style="border-bottom:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600;color:var(--gr-d)">Wochenplan-Plakat wird beim Drucken abgeschnitten</summary>
@@ -3754,8 +3862,17 @@ window.addEventListener('DOMContentLoaded',function(){if(window.lucide)lucide.cr
 <script src="hilfe-popup.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="/js/admin-auth.js"></script>
+<script src="/js/angebote-modell.js"></script>
+<script src="/js/angebote-vorschau-editor.js"></script>
+<script src="/js/angebote-design.js"></script>
+<script src="/js/wochenangebote-renderer.js"></script>
+<script src="/js/cms-angebote-form.js"></script>
+<script src="/js/angebote-dataverse.js"></script>
+<script src="/js/cms-angebote.js"></script>
+<script src="/js/angebote-kunden.js"></script>
 <script src="cms.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
+<script src="/js/angebote-editor.js"></script>
 <script src="/js/dl-confirm.js"></script>
 <script src="/js/social.js?v=20260824b"></script>
 <script src="/js/social-poster.js?v=20260906b"></script>

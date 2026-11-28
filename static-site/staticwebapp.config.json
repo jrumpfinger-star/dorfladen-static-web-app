@@ -18,7 +18,8 @@
     { "route": "/shop-freigabe", "rewrite": "/shop-freigabe.html" },
     { "route": "/shop-admin", "rewrite": "/shop-admin.html" },
     { "route": "/posten", "rewrite": "/posten.html" },
-    { "route": "/tagesinfo", "rewrite": "/tagesinfo.html" }
+    { "route": "/tagesinfo", "rewrite": "/tagesinfo.html" },
+    { "route": "/inventur", "rewrite": "/inventur.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",

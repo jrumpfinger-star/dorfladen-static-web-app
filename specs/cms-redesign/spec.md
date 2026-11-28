@@ -70,6 +70,12 @@ Spezifikation trägt dem Rechnung.
 - Keine Umbenennung von DOM-Kennungen, Klassennamen, `data-action`-Werten oder
   globalen Funktionsnamen.
 
+**Freigegebene Erweiterung F8:** Der Wochenplan wird nach dem am 24.11.2026
+freigegebenen [Mockup](../../mockups/cms-wochenplan-mobil-mockup.html)
+angeordnet. Dafür sind ausschließlich darstellungsbezogene Ergänzungen an
+`renderWP()` und der Wochenplan-Vorschauhülle in `cms.js` zulässig.
+Erfassung, Datenzugriffe, Motivrenderer und Ausgabeabläufe bleiben erhalten.
+
 ## Decisions (aufgelöste Klärungen)
 
 1. **Umbauform.** Wie beim Kiosk entsteht die neue Seite **erzeugt** aus der
@@ -375,6 +381,75 @@ wird aus der Umformung ein einmaliger Schreibvorgang.
 - **Expected:** Nach dem Umschalten ist `cms-klassisch.html` erreichbar und
   vollständig bedienbar.
 
+### F8: Wochenplan nach freigegebenem mobilen Mockup
+
+#### F8 Behaviour / Acceptance
+
+- Maßgeblich sind Anordnung, Abstände und Optik des freigegebenen Mockups,
+  nicht nur dessen Funktionen. Bestehende CMS-Navigation bleibt erhalten.
+- Mobile Kopfzeile: Menü, Logo mit vollständig lesbarem Verbindungsstatus
+  darunter, kompakte Kiosk-/Website-Symbolaktionen.
+- Wochenplan: Titel, einzige grüne Hauptaktion „Gericht“, separate Hilfe;
+  darunter zentrierte Wochenwahl und zwei ruhige Direktwahlen.
+- Vorschau, Drucken, Waage und Teilen stehen beschriftet in einer ruhigen
+  Ausgabezeile, direkt erreichbar und ohne Mehr-Menü.
+- Tageskarten sind hell mit kompaktem Tagesnamen und Datum. Die Gerichtszeile
+  einschließlich Stiftsymbol öffnet die unveränderte Bearbeitung. Löschen
+  bleibt getrennt und bestätigt. Mehrere Gerichte, Hinweise, Allergene und
+  optionale Bilder bleiben vollständig sichtbar und bedienbar.
+- Steuerung bleibt stehen, nur die Tagesliste scrollt. Sichtbare nutzbare
+  Listenhöhe mindestens 50 % der Anwendungsfensterhöhe bei 375×667,
+  768×1024, 1280×800 und 686×1095. Keine abgeschnittenen Inhalte.
+- Touch/Telefon: mindestens 44 px Trefferhöhe; präzise Maus ab 600 px:
+  einzeilige Wochenplanaktionen 32 px. Mehrzeilige Gerichtszeilen wachsen.
+  Gemeinsame Tokens, zugängliche Namen, sichtbarer Fokus und Dunkelmodus.
+- Vorschau zeigt **das im CMS gestaltete Motiv**: bestehende Auswahl von
+  Vorlage, Farben, Schriftgrößen, Logo und aktuellen Wochendaten. Keine
+  alternative Textliste, kein Nachbau und kein eingefrorener Designstand.
+  Download, Drucken, Teilen und echte Waagenabläufe bleiben unverändert.
+- Die Wochenplan-Vorschauhülle entspricht dem Mockup: kompakter Kopf,
+  vollständiges Motiv, vier ruhige Aktionen in zwei Spalten. Andere
+  Angebotsvorschauen und die klassische CMS-Fassung behalten ihre Darstellung.
+- Keine fachliche Zusammenlegung, Entfernung oder neue Speicherung. Tests
+  isolieren sämtliche API-Zugriffe; Live-Prüfungen schreiben keine echten Daten.
+
+#### F8-Korrektur: Zuverlässiges Teilen (25.11.2026)
+
+Freigegeben: zusätzliches Antippen nur bei Bedarf. Solange die
+Browserfreigabe nach der Bilderzeugung aktiv ist, öffnet „Teilen“ weiterhin
+direkt das native Teilen-Menü mit dem aktuellen HD-PNG und Begleittext.
+Ist die Freigabe abgelaufen, zeigt die bestehende CMS-Vorschauhülle
+„Bild bereit“ mit einem Teilen-Knopf. Dieser übergibt das bereits erzeugte
+Bild unmittelbar beim Antippen, ohne erneutes Rendern oder Warten.
+
+Ein Fehler oder fehlende Browserunterstützung löst weder automatisch einen
+Download noch einen WhatsApp-Aufruf aus. Ein verständlicher Hinweis und
+ein ausdrücklich bedienbarer Download bleiben in derselben Hülle verfügbar;
+bei Fehlern kann erneut geteilt werden. Ein abgebrochenes natives Teilen
+startet keine Ersatzaktion. Schnelles direktes Teilen bleibt ohne zusätzlichen
+Dialog. Leere/fehlgeschlagene Bilderzeugung wird als Fehler gemeldet, nicht
+als leere PNG-Datei ausgegeben.
+
+Motivrenderer, aktuelle Daten/Designwerte, PNG-Auflösung und Begleittext
+bleiben erhalten. Die gemeinsame Teilen-Hilfe wird auch vom klassischen
+Aktions-Teilen verwendet; dessen Renderer bleibt unverändert.
+Bestehende Vorschau-, Druck- und Waagenaktionen werden nicht geändert.
+Zurück, Escape und Schließen schließen auch die Bereitschaftshülle.
+
+#### F8 Test Cases
+
+| Test Case | Nachweis |
+| --- | --- |
+| TC-F8-01 | Vier Zielgrößen: mockupkonforme Gruppen, direkte Ausgabeaktionen, Bedienmaße, keine Überlagerung, Liste mindestens 50 %, letztes Gericht intern erreichbar; Hell/Dunkel. |
+| TC-F8-02 | Alle vier Wochenwahlen, bestehende Erfassung einschließlich Mehrfachzeilen/Hinweis/Allergenen/Bildern, zeilenweises Bearbeiten und separate bestätigte Löschung bleiben erreichbar; klassischer Renderer bleibt unverändert. |
+| TC-F8-03 | Vorschau enthält fertige aktuelle CMS-Grafik in HD. Geänderte CMS-Designkonfiguration wirkt tatsächlich; PNG-Download, Druck und Waageneinstieg verwenden bestehende Abläufe. Alle Vorschauaktionen passen bei vier Zielgrößen. |
+| TC-F8-04 | Escape und Android-/Browser-Zurück schließen Vorschau/Bearbeitung ohne Verlassen des Wochenplans; kein versehentlicher Schreibzugriff bei Abbruch/Navigation/Vorschau. |
+| TC-F8-08 | Nach aufgebrauchtem CMS-Verlauf landet Zurück auf der Homepage und bleibt dort verankert: weitere Zurück-Tasten erzeugen keinen leeren Bildschirm. Verlässt der Nutzer die Homepage normal, wird die Verankerung abgebaut. |
+| TC-F8-05 | Android-Zurück schließt genau die oberste Ebene (zuerst Druckansicht, dann Dialog). Ein per Knopf geschlossener Dialog oder eine geschlossene Druckansicht hinterlässt keinen toten Verlaufseintrag; das nächste Zurück verlässt die Seite sofort. |
+| TC-F8-06 | Erzwungen langsame PNG-Erzeugung lässt die echte Browseraktivierung ablaufen. Kein Download/WhatsApp-Autostart; „Bild bereit“ auf vier Zielgrößen bedienbar. Antippen von Teilen übergibt dasselbe aktuelle HD-PNG mit frischer Aktivierung ohne erneute Bilderzeugung; Zurück/Escape/Schließen funktionieren. |
+| TC-F8-07 | Schnelles natives Teilen bleibt direkt. Native Fehler (auch synchrone), Abbruch, fehlende Unterstützung und fehlendes PNG führen nicht zu ungefragten Downloads/WhatsApp oder unbehandelten Fehlern. Fehler erlauben Wiederholung; expliziter Download ist bytegleich zum vorbereiteten Bild. |
+| TC-F8-08 | Nach aufgebrauchtem CMS-Verlauf landet Zurück auf der Homepage und bleibt dort verankert: weitere Zurück-Tasten erzeugen keinen leeren Bildschirm. Verlässt der Nutzer die Homepage normal, wird die Verankerung abgebaut. |
+
 ## Data & Contracts
 
 **Keine Änderung an Daten oder Schnittstellen.** Es werden keine Endpunkte
@@ -415,3 +490,4 @@ Keine offenen Punkte, die den Plan aufhalten. Zwei Punkte sind bewusst als
 | F5 Prototyp | TC-F5-01 … TC-F5-03 | Stufe 1 | — |
 | F6 Bedienbarkeit | TC-F6-01 … TC-F6-05 | Stufe 3 | — |
 | F7 Umkehrbarkeit | TC-F7-01, TC-F7-02 | Stufe 4 | — |
+| F8 Mobiler Wochenplan nach Mockup | TC-F8-01 … TC-F8-08 | F8-Ergänzung | WP1–WP7 |

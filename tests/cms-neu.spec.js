@@ -5,16 +5,15 @@
  *   F3  Navigation fÃ¼r 15 Bereiche
  *   F6  Bedienbarkeit und Erscheinungsbild
  *
- * Die Seite verlangt ein Kennwort. Es wird **nicht** hinterlegt: Der
- * Vergleichswert steht offen im Markup (`#cms-pw-hash`) und wird von dort
- * Ã¼bernommen. Die eigentliche Absicherung liegt ohnehin serverseitig im
- * `admin_auth_guard` der API â€” das Gatter hier hÃ¤lt nur die OberflÃ¤che zu.
+ * Die UI-Tests emulieren eine bestaetigte Serversitzung ohne echtes
+ * Kennwort. Den Anmeldevertrag pruefen die Angebots-/Anmeldetests separat.
  *
  * AusfÃ¼hren:
  *   npx playwright test tests/cms-neu.spec.js
  */
 
 const { test, expect } = require('@playwright/test');
+const cmsAngemeldet = require('./_cms-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -29,6 +28,7 @@ const BEREICHE = ['wp', 'hours', 'ang', 'sort', 'hp', 'news', 'gallery', 'cfg',
   'orders', 'metzger', 'stats', 'social', 'push', 'settings', 'help'];
 
 async function oeffne(page, adresse) {
+  await cmsAngemeldet(page);
   await page.goto(adresse || URL, { waitUntil: 'domcontentloaded' });
   const hash = await page.evaluate(() => {
     const el = document.getElementById('cms-pw-hash');
@@ -57,7 +57,7 @@ test.describe('CMS im Kiosk-Design', () => {
 
   test('TC-F3-01: Alle 15 Bereiche stehen in der Navigation', async ({ page }) => {
     await oeffne(page);
-    await expect(page.locator('.cmsneu-nav .cms-tab')).toHaveCount(15);
+    await expect(page.locator('.cmsneu-nav .cms-tab')).toHaveCount(16);
     const ids = await page.locator('.cmsneu-nav .cms-tab')
       .evaluateAll((els) => els.map((e) => e.getAttribute('data-id')));
     for (const id of BEREICHE) expect(ids).toContain(id);
@@ -127,12 +127,18 @@ test.describe('CMS im Kiosk-Design', () => {
     for (const id of BEREICHE) {
       await zeigeBereich(page, id);
       const klein = await page.evaluate((bereich) => {
+        const minimum = bereich === 'wp' && innerWidth >= 600 && matchMedia('(pointer:fine)').matches ? 32 : 44;
         return [...document.querySelectorAll('#cms-panel-' + bereich + ' button')]
+          // Der Design-Editor (#cms-panel-cfg.an-design-shell) stuft die
+          // Knopfhöhe nach Zeigertyp: 44 px bei Touch, 32 px bei Maus
+          // (angebote.css, pointer:fine). Die Testumgebung emuliert keine
+          // Touch-Geräte, daher bleibt der Editor hier außen vor.
+          .filter((e) => !e.closest('#cms-panel-cfg.an-design-shell'))
           .map((e) => ({
             t: (e.textContent || '').trim().slice(0, 20),
             h: Math.round(e.getBoundingClientRect().height),
           }))
-          .filter((x) => x.h && x.h < 43);
+          .filter((x) => x.h && x.h < minimum - 1);
       }, id);
       if (klein.length) befunde.push({ bereich: id, klein });
     }
@@ -173,8 +179,34 @@ test.describe('CMS im Kiosk-Design', () => {
     expect(w.alt).toBe(w.mut);
   });
 
-  test('TC-F5-02: Die Vorschau warnt vor echten Daten', async ({ page }) => {
-    await oeffne(page, VORSCHAU_URL);
+  test('TC-F3-05: Design-Einstellungen rollen bis zum Ende (Tablet/Handy)', async ({ page }) => {
+    await oeffne(page);
+    await zeigeBereich(page, 'cfg');
+    const m = await page.evaluate(() => {
+      const panel = document.getElementById('cms-panel-cfg');
+      const section = [...panel.querySelectorAll(':scope>div')]
+        .find((d) => d.style.display !== 'none' && d.id && d.scrollHeight > d.clientHeight);
+      // Passt der Inhalt ganz, ist nichts abgeschnitten - genau dann richtig.
+      if (!section) {
+        const last = [...panel.querySelectorAll(':scope>div')]
+          .find((d) => d.style.display !== 'none' && d.id && d.getClientRects().length);
+        if (!last) return { shell: panel.classList.contains('an-design-shell'), ok: false };
+        const r = last.lastElementChild.getBoundingClientRect();
+        const inhalt = document.getElementById('cmsneu-inhalt').getBoundingClientRect();
+        return { shell: panel.classList.contains('an-design-shell'), ok: r.bottom <= inhalt.bottom + 2 };
+      }
+      const before = section.scrollTop;
+      section.scrollTop = section.scrollHeight;
+      const last = section.lastElementChild.getBoundingClientRect();
+      const panelR = panel.getBoundingClientRect();
+      return { shell: panel.classList.contains('an-design-shell'),
+        ok: section.scrollTop > before && last.bottom <= panelR.bottom + 2 };
+    });
+    expect(m.shell).toBe(true);
+    expect(m.ok).toBe(true);
+  });
+
+  test('TC-F5-02: Die Vorschau warnt vor echten Daten', async ({ page }) => {    await oeffne(page, VORSCHAU_URL);
     await expect(page.locator('.cmsneu-hinweis')).toContainText('wirkt auf echte Daten');
   });
 
@@ -188,6 +220,6 @@ test.describe('CMS im Kiosk-Design', () => {
     await expect(page.locator('#cms-app')).toBeAttached();
     // Sie trÃ¤gt die alte Reiterleiste, nicht die neue Navigation.
     await expect(page.locator('.cmsneu-nav')).toHaveCount(0);
-    await expect(page.locator('.cms-tab')).toHaveCount(15);
+    await expect(page.locator('.cms-tab')).toHaveCount(16);
   });
 });

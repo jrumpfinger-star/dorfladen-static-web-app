@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOCKUP · Angebot Gestaltung ohne Reiter (Auswahl steuert das Blatt)</title>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<style>
+/* MOCKUP: Gestaltung mobil ohne Reiterleiste (Element · Artikel · Vorlage · Marker · Ansicht · Fertig).
+   Idee: Das Eigenschaften-Blatt folgt der Auswahl im Motiv. Kein Produktionscode, keine Schreibzugriffe. */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:15px/1.4 system-ui,"Segoe UI",-apple-system,sans-serif;color:var(--ink);background:var(--gr-l);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+.mockup-badge{position:fixed;top:8px;left:8px;z-index:99;background:var(--amb-l);color:var(--amb);border:1px solid var(--amb-b);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600}
+
+.buehne{min-height:100dvh;display:flex;gap:24px;align-items:flex-start;justify-content:center;padding:52px 16px 24px}
+.telefon{flex:none;width:375px;height:667px;background:var(--flaeche);border:1px solid var(--line);border-radius:26px;box-shadow:var(--schatten-2);overflow:hidden;position:relative;display:flex;flex-direction:column}
+@media (max-width:760px){
+  .buehne{padding:52px 0 0}
+  .telefon{width:100%;height:calc(100dvh - 52px);border-radius:0;border:0;box-shadow:none}
+  .notiz{display:none}
+}
+.notiz{flex:1;min-width:320px;max-width:520px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-m);padding:16px;box-shadow:var(--schatten-1)}
+.notiz h1{font-size:20px;font-weight:600}
+.notiz h2{font-size:15px;font-weight:600;margin:14px 0 6px}
+.notiz p,.notiz li{font-size:13.5px}
+.notiz ul{margin:4px 0 0 18px;padding:0}
+.notiz li{margin:3px 0}
+.notiz table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+.notiz th,.notiz td{text-align:left;border-bottom:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.notiz th{font-weight:600;color:var(--mut)}
+.zustaende{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.zustaende button,.chip{border:1px solid var(--line);background:var(--karte);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;min-height:36px}
+.zustaende button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--gr-l);border-color:var(--gr);color:var(--gr-d)}
+
+/* Kopfzeile: nur Zurück, Titel, Kontext-Chip */
+.oben{flex:none;display:flex;align-items:center;gap:6px;background:var(--gr-d);color:#fff;padding:6px 8px;min-height:52px}
+.icon-btn{min-width:44px;min-height:44px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--karte);color:var(--ink);font-weight:600;font-size:16px}
+.oben .icon-btn{background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff}
+.titel{flex:1;min-width:0}
+.titel strong{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titel small{display:block;font-size:12px;color:#d9eadf}
+.ziel-chip{min-height:44px;border:0;border-radius:999px;background:#fff;color:var(--gr-d);font-weight:600;font-size:14px;padding:6px 14px;white-space:nowrap}
+
+/* Menü am Kontext-Chip (Gestalten für, Standard laden, Eigene Vorlage) */
+.menue{position:absolute;right:8px;top:54px;z-index:40;width:290px;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--schatten-2);padding:6px}
+.menue h3{font-size:12px;font-weight:600;color:var(--mut);padding:6px 10px 2px;text-transform:uppercase;letter-spacing:.04em}
+.menue button{display:flex;width:100%;align-items:center;gap:10px;min-height:44px;border:0;background:transparent;border-radius:var(--r-s);padding:4px 10px;text-align:left;font-size:15px}
+.menue button[aria-checked="true"]{background:var(--gr-l);color:var(--gr-d);font-weight:600}
+.menue button[aria-checked="true"]::after{content:"✓";margin-left:auto}
+.menue hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+
+/* Motivfläche */
+.motiv-wrap{flex:1;min-height:0;position:relative;display:flex;flex-direction:column}
+.motiv{flex:1;min-height:0;position:relative;background:var(--gr-t);overflow:auto;padding:10px 0}
+.zoombar{position:sticky;top:0;z-index:6;height:0;display:flex;justify-content:flex-end;padding-right:8px;pointer-events:none}
+.zoom-chip{pointer-events:auto;display:flex;gap:2px;align-items:center;background:var(--karte);border:1px solid var(--line);border-radius:999px;padding:2px 6px;box-shadow:var(--schatten-1);height:38px}
+.zoom-chip button{border:0;background:transparent;min-width:34px;min-height:34px;font-size:17px}
+.zoom-chip output{font-size:13px;font-weight:600;min-width:44px;text-align:center}
+.paper{width:335px;height:474px;margin:0 auto;background:#fff;box-shadow:0 2px 10px rgba(16,40,28,.15);border-radius:2px;display:flex;flex-direction:column;transform-origin:top center}
+.p-kopf{height:40px;background:var(--red);color:#fff;font-weight:700;letter-spacing:.08em;font-size:13px;display:flex;align-items:center;padding:0 14px}
+.p-raster{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;padding:8px}
+.karte{position:relative;border:1px solid #eee;border-radius:4px;padding:6px;display:flex;flex-direction:column;overflow:hidden}
+.karte .name{font-size:11.5px;font-weight:700;color:#132a1e;line-height:1.2;min-height:28px}
+.karte .bild{flex:1;margin:2px 4px;background:#f3efe7;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.karte .bild i{display:block;width:56%;height:72%;border-radius:3px;background:linear-gradient(160deg,#c8323e 0 34%,#f7d449 34% 62%,#3f8a46 62%)}
+.preis{position:absolute;right:6px;bottom:8px;background:var(--preis-bg,#ffd400);border:2px solid #fff;border-radius:6px;padding:2px 8px;font-weight:800;color:#132a1e;font-size:var(--preis-gr,15px);box-shadow:0 1px 4px rgba(0,0,0,.25);transform:rotate(4deg)}
+.marker{position:absolute;left:4px;top:30px;background:var(--m-bg,#c8323e);color:var(--m-fg,#fff);border-radius:50%;width:calc(44px*var(--m-s,1));height:calc(44px*var(--m-s,1));display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:calc(10.5px*var(--m-s,1));line-height:1.05;padding:3px;transform:rotate(-8deg)}
+.el{cursor:pointer;touch-action:pan-y}
+.el[aria-selected="true"]{outline:2px solid var(--gr);outline-offset:2px;z-index:3}
+.karte.aktiv{border-color:var(--gr)}
+
+/* Schnellleiste (bestehend, F71): folgt der Auswahl */
+.dock{position:absolute;left:8px;right:8px;bottom:8px;z-index:8;display:flex;gap:6px;align-items:center;background:var(--karte);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--schatten-2);padding:4px}
+.dock b{flex:1;min-width:0;font-size:13px;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock button{min-width:44px;min-height:44px;border:1px solid var(--line);background:var(--gr-l);color:var(--gr-d);border-radius:var(--r-s);font-size:17px;font-weight:600}
+
+/* Eigenschaften-Blatt: überlagert nur die Vorschau – die Vorschau behält ihre Größe,
+   die Änderung bleibt hinter dem halbtransparenten Blatt sichtbar. Rastpunkte statt Reiter. */
+.blatt{position:absolute;left:0;right:0;bottom:60px;background:rgba(255,255,255,.9);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border-top:1px solid var(--line);border-radius:var(--r-m) var(--r-m) 0 0;box-shadow:var(--schatten-blatt);display:flex;flex-direction:column;height:84px;transition:height .25s ease;z-index:10}
+.blatt[data-rast="halb"]{height:290px}
+.blatt[data-rast="voll"]{height:420px}
+.blatt-kopf{flex:none;display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;min-height:56px}
+.grip{position:absolute;left:50%;top:5px;width:40px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
+.blatt-kopf .wo{flex:1;min-width:0;display:flex;flex-direction:column;border:0;background:transparent;text-align:left;padding:10px 0 0;min-height:48px}
+.wo strong{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wo small{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blatt-kopf .icon-btn{border:0;background:transparent}
+.blatt-inhalt{flex:1;min-height:0;overflow:auto;padding:0 12px 14px}
+.blatt[data-rast="peek"] .blatt-inhalt{display:none}
+.blatt[data-rast="peek"]{height:84px}
+.schnell{flex:none;display:flex;gap:6px;overflow-x:auto;padding:0 12px 8px;scrollbar-width:none}
+.blatt:not([data-rast="peek"]) .schnell{display:none}
+.schnell .chip{flex:none;min-height:34px;padding:4px 12px;font-size:13px}
+
+.gruppe{border:1px solid var(--line);border-radius:var(--r-s);margin:8px 0;background:rgba(255,255,255,.55)}
+.gruppe>summary{list-style:none;min-height:46px;display:flex;align-items:center;gap:8px;padding:6px 12px;font-weight:600;font-size:14.5px;cursor:pointer}
+.gruppe>summary::-webkit-details-marker{display:none}
+.gruppe>summary small{margin-left:auto;font-weight:400;color:var(--mut);font-size:12.5px}
+.gruppe>summary::after{content:"▾";color:var(--mut)}
+.gruppe[open]>summary::after{content:"▴"}
+.gruppe.passt{border-color:var(--gr);background:var(--gr-t)}
+.gruppe>div{padding:2px 12px 10px}
+.zeile{display:flex;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid var(--line)}
+.zeile:last-child{border-bottom:0}
+.zeile>label,.zeile>span.l{flex:none;width:38%;font-size:14px}
+.zeile>output{flex:none;width:52px;text-align:right;font-size:13px;color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0}
+.chips .chip{min-height:40px}
+.farben{display:flex;gap:8px;padding:6px 0}
+.farben button{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--c)}
+.farben button[aria-pressed="true"]{border-color:var(--gr-d);box-shadow:0 0 0 2px var(--gr)}
+input[type=range]{flex:1;accent-color:var(--gr);min-height:44px;min-width:0}
+input[type=text],input[type=number]{flex:1;min-width:0;min-height:44px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--karte);padding:4px 10px}
+.schritt{display:flex;align-items:center;gap:4px;flex:1}
+.schritt button{min-width:44px;min-height:44px;border:1px solid var(--line);background:var(--karte);border-radius:var(--r-s);font-size:18px}
+.schritt output{flex:1;text-align:center;font-size:14px}
+
+/* Hauptleiste: bleibt unverändert (Rückgängig, Wiederholen, Artikel n/N, Arbeitsansicht, Speichern) */
+.leiste{flex:none;background:var(--karte);border-top:1px solid var(--line);padding:6px 8px;display:flex;align-items:center;gap:4px;min-height:60px}
+.leiste .icon-btn{min-width:40px;padding:6px 4px}
+.leiste output{font-size:13px;font-weight:600;white-space:nowrap;min-width:34px;text-align:center}
+.leiste .speichern{margin-left:auto;min-height:44px;border:0;border-radius:var(--r-s);background:var(--gr-d);color:#fff;font-weight:600;padding:6px 12px}
+.toast{position:absolute;left:12px;right:12px;bottom:224px;z-index:50;background:var(--ink);color:var(--karte);border-radius:var(--r-s);padding:10px 12px;font-size:13.5px;box-shadow:var(--schatten-2)}
+</style>
+</head>
+<body>
+<div class="mockup-badge">MOCKUP · nicht produktiv · nur lokale Beispieldaten</div>
+
+<div class="buehne">
+  <div class="telefon" id="telefon">
+    <div class="oben">
+      <button class="icon-btn" id="zurueck" aria-label="Zurück zur Ausgabe">←</button>
+      <div class="titel"><strong>Sonderangebote KW 27</strong><small>Angebot Gestaltung</small></div>
+      <button class="ziel-chip" id="ziel" aria-haspopup="menu" aria-expanded="false">Sammelflyer ▾</button>
+    </div>
+
+    <div class="menue" id="menue" role="menu" hidden>
+      <h3>Gestalten für</h3>
+      <button role="menuitemradio" aria-checked="true" data-ziel="Sammelflyer">Sammelflyer</button>
+      <button role="menuitemradio" aria-checked="false" data-ziel="Plakat">Plakat</button>
+      <button role="menuitemradio" aria-checked="false" data-ziel="Einzelflyer">Einzelflyer</button>
+      <hr>
+      <h3>Vorlage</h3>
+      <button role="menuitem" data-aktion="standard">Standard-Gestaltung laden</button>
+      <button role="menuitem" data-aktion="eigene">Eigene Vorlage laden …</button>
+    </div>
+
+    <div class="motiv-wrap">
+    <div class="motiv" id="motiv">
+      <div class="zoombar"><div class="zoom-chip"><button id="zm-" aria-label="Verkleinern">−</button><output id="zm">100 %</output><button id="zm+" aria-label="Vergrößern">+</button></div></div>
+      <div class="paper" id="paper"></div>
+      <div id="platz" style="height:0"></div>
+    </div>
+      <div class="dock" id="dock" hidden>
+        <b id="dock-name"></b>
+        <button aria-label="Verschieben (Griff)">✥</button>
+        <button aria-label="Verkleinern">−</button>
+        <button aria-label="Vergrößern">+</button>
+        <button aria-label="Drehen">⟳</button>
+      </div>
+    </div>
+
+    <section class="blatt" id="blatt" data-rast="peek" aria-label="Eigenschaften">
+      <span class="grip" aria-hidden="true"></span>
+      <div class="blatt-kopf">
+        <button class="wo" id="wo" aria-label="Eigenschaften größer oder kleiner"><strong id="wo-t">Seite</strong><small id="wo-s"></small></button>
+        <button class="icon-btn" id="abwaehlen" aria-label="Auswahl aufheben" hidden>✕</button>
+        <button class="icon-btn" id="rast" aria-label="Blatt erweitern">▲</button>
+      </div>
+      <div class="schnell" id="schnell"></div>
+      <div class="blatt-inhalt" id="inhalt"></div>
+    </section>
+
+    <div class="leiste" role="toolbar" aria-label="Hauptleiste">
+      <button class="icon-btn" id="undo" aria-label="Rückgängig" disabled>↶</button>
+      <button class="icon-btn" id="redo" aria-label="Wiederholen" disabled>↷</button>
+      <button class="icon-btn" id="vor-" aria-label="Vorheriger Artikel">‹</button>
+      <output id="nr">1 / 4</output>
+      <button class="icon-btn" id="vor+" aria-label="Nächster Artikel">›</button>
+      <button class="icon-btn" id="arbeit" aria-label="Arbeitsansicht (geteilte Ansicht)">⛶</button>
+      <button class="speichern" id="speichern">Speichern</button>
+    </div>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </div>
+
+  <aside class="notiz">
+    <h1>Gestaltung ohne Reiter</h1>
+    <p>Die Reiterleiste <em>Element · Artikel · Vorlage · Marker · Ansicht · Fertig</em> entfällt. Das Blatt unten zeigt immer, was zur <strong>Auswahl</strong> passt. Rasten: Peek (Standard) · halb · voll.</p>
+    <div class="zustaende" role="group" aria-label="Zustände ansehen">
+      <button data-z="seite" aria-pressed="true">A · Nichts gewählt</button>
+      <button data-z="marker" aria-pressed="false">B · Marker</button>
+      <button data-z="preis" aria-pressed="false">C · Preisschild</button>
+      <button data-z="bild" aria-pressed="false">D · Bild</button>
+      <button data-z="text" aria-pressed="false">E · Artikeltext</button>
+      <button data-z="menue" aria-pressed="false">F · Ziel-Menü</button>
+      <button data-z="zurueck" aria-pressed="false">Android-Zurück</button>
+    </div>
+
+    <h2>Vorher → Nachher (jede Funktion bleibt)</h2>
+    <table>
+      <tr><th>Bisher</th><th>Neu</th></tr>
+      <tr><td>Reiter <b>Element</b> (Schnellformatierung, Position, Größe, Drehung)</td><td>Antippen im Motiv → Blatt „Position &amp; Größe“ des Elements; Schnellleiste bleibt</td></tr>
+      <tr><td>Reiter <b>Artikel</b> (Name, Angebot €, Statt €)</td><td>Entfällt ersatzlos: Artikeldaten werden an dieser Stelle nicht geändert (nur in „1 · Artikel und Bilder“)</td></tr>
+      <tr><td>Reiter <b>Vorlage</b>: Gestalten für, Standard laden, Eigene Vorlage</td><td>Ziel-Chip oben rechts → Menü (alle drei Punkte, je 1 Tipp). Stil/Designvorlagen: Gruppe „Stil“ im Blatt</td></tr>
+      <tr><td>Reiter <b>Marker</b> (Typ, Farbwelt, Größe)</td><td>Marker antippen <em>oder</em> Seitenebene: Gruppe „Ersparnis-Marker“ ist dort aufgeklappt</td></tr>
+      <tr><td>Gruppen Schrift / Preisschild / Bild</td><td>Gleiche Gruppen; die zur Auswahl passende ist geöffnet und markiert</td></tr>
+      <tr><td>Reiter <b>Ansicht</b> (Seite ←/→, Hilfetext, Zoom)</td><td>Zoomleiste im Motiv; Seitenwechsel über Hauptleiste/Arbeitsansicht; Hilfetext einmalig als Hinweis im Peek</td></tr>
+      <tr><td><b>Fertig</b> (schließt nur das Blatt)</td><td>Entfällt: Blatt per ▼, Ziehen, Auswahl ✕ oder Android-Zurück verkleinern</td></tr>
+      <tr><td>Blatt unter der Vorschau (Vorschau schrumpft)</td><td>Blatt <b>überlagert nur die Vorschau</b>: die Vorschau behält ihre Größe, die Änderung bleibt dahinter sichtbar</td></tr>
+      <tr><td>Rückgängig · Wiederholen · Speichern</td><td>Unverändert in Hauptleiste (keine zweite Zeile mehr)</td></tr>
+      <tr><td>Ausgabe (Druck, PDF, Teilen)</td><td>Unverändert: eigener Schritt „1 · Ausgabe / 2 · Gestaltung“, nicht Teil dieses Umbaus</td></tr>
+    </table>
+
+    <h2>Freigabe nötig (je Punkt)</h2>
+    <ul>
+      <li>Reiter <b>Element</b> entfällt (ersetzt durch Auswahl)</li>
+      <li>Reiter <b>Artikel</b> entfällt (Artikel-Felder in Auswahl)</li>
+      <li>Reiter <b>Ansicht</b> entfällt (Zoom/Seite in vorhandenen Leisten)</li>
+      <li>Reiter <b>Vorlage</b> + <b>Marker</b> werden Menü bzw. Blatt-Gruppen</li>
+      <li>Knopf <b>Fertig</b> entfällt ersatzlos</li>
+      <li><b>Artikel-Felder</b> (Name, Angebot, Statt) entfallen im Blatt ersatzlos</li>
+    </ul>
+    <p style="margin-top:8px;color:var(--mut)">Tippen wählt nur aus; verschoben wird nur über ✥ in der Schnellleiste. Trefferflächen ≥ 44 px.</p>
+  </aside>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var ARTIKEL = [
+    { n: 'Gouda jung 250 g', p: '1,99', alt: '2,49', m: '−20 %' },
+    { n: 'Bio-Äpfel 1 kg', p: '2,49', alt: '3,29', m: '−24 %' },
+    { n: 'Landbrot 750 g', p: '2,29', alt: '2,79', m: '−18 %' },
+    { n: 'Frische Eier 10 Stk.', p: '2,99', alt: '3,49', m: '−14 %' }
+  ];
+  var PALETTEN = { Rot: ['#c8323e', '#fff'], Gelb: ['#f7d449', '#132a1e'], Grün: ['#2e7d4f', '#fff'] };
+  var TYPEN = { Prozent: function (a) { return a.m; }, Betrag: function (a) { return 'Spare ' + (parseFloat(a.alt.replace(',', '.')) - parseFloat(a.p.replace(',', '.'))).toFixed(2).replace('.', ',') + ' €'; }, Sparpreis: function () { return 'SPAR'; } };
+  var st = { art: 0, sel: null, rast: 'peek', zoom: 100, typ: 'Prozent', farbe: 'Rot', gr: 100, preisFarbe: '#ffd400', preisGr: 15, stil: 'Klassisch', ziel: 'Sammelflyer' };
+  var hist = [], redo = [];
+  var NAMEN = { marker: 'Ersparnis-Marker', preis: 'Preisschild', bild: 'Produktbild', text: 'Artikeltext' };
+  var PASST = { marker: ['marker'], preis: ['preis'], bild: ['bild'], text: ['schrift'] };
+
+  function snap() { return JSON.stringify({ typ: st.typ, farbe: st.farbe, gr: st.gr, preisFarbe: st.preisFarbe, preisGr: st.preisGr, stil: st.stil }); }
+  function merk() { hist.push(snap()); redo = []; knoepfe(); }
+  function laden(s) { var o = JSON.parse(s); for (var k in o) st[k] = o[k]; }
+  function knoepfe() { $('undo').disabled = !hist.length; $('redo').disabled = !redo.length; }
+  function toast(t) { var el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 2400); }
+
+  function zeichne() {
+    var p = $('paper'); p.style.transform = 'scale(' + st.zoom / 100 + ')'; p.style.marginBottom = (st.zoom - 100) * 4.74 + 'px';
+    var pal = PALETTEN[st.farbe];
+    p.style.setProperty('--m-bg', pal[0]); p.style.setProperty('--m-fg', pal[1]); p.style.setProperty('--m-s', st.gr / 100);
+    p.style.setProperty('--preis-bg', st.preisFarbe); p.style.setProperty('--preis-gr', st.preisGr + 'px');
+    p.innerHTML = '<div class="p-kopf">WOCHENANGEBOTE</div><div class="p-raster">' + ARTIKEL.map(function (a, i) {
+      var s = function (w) { return i === st.art && st.sel === w ? ' aria-selected="true"' : ' aria-selected="false"'; };
+      return '<div class="karte' + (i === st.art ? ' aktiv' : '') + '" data-i="' + i + '">'
+        + '<div class="name el" data-el="text" data-i="' + i + '" tabindex="0"' + s('text') + '>' + a.n + '</div>'
+        + '<div class="bild el" data-el="bild" data-i="' + i + '" tabindex="0"' + s('bild') + '><i></i></div>'
+        + '<div class="marker el" data-el="marker" data-i="' + i + '" tabindex="0"' + s('marker') + '>' + TYPEN[st.typ](a) + '</div>'
+        + '<div class="preis el" data-el="preis" data-i="' + i + '" tabindex="0"' + s('preis') + '>' + a.p + ' €</div></div>';
+    }).join('') + '</div>';
+    $('zm').textContent = st.zoom + ' %';
+    $('nr').textContent = (st.art + 1) + ' / ' + ARTIKEL.length;
+    $('ziel').textContent = st.ziel + ' ▾';
+    var dock = $('dock'); dock.hidden = !st.sel;
+    $('dock-name').textContent = st.sel ? NAMEN[st.sel] + ' · ' + ARTIKEL[st.art].n : '';
+    $('platz').style.height = st.sel ? '220px' : '0';
+  }
+
+  function gruppe(id, titel, kurz, inhalt) {
+    var passt = st.sel ? (id === 'pos' || PASST[st.sel].indexOf(id) >= 0) : id === 'marker';
+    return '<details class="gruppe' + (passt && st.sel ? ' passt' : '') + '" data-g="' + id + '"' + (passt ? ' open' : '') + '><summary>' + titel + '<small>' + kurz + '</small></summary><div>' + inhalt + '</div></details>';
+  }
+  function chips(key, liste, wert) {
+    return '<div class="chips">' + liste.map(function (x) { return '<button class="chip" data-set="' + key + '" data-v="' + x + '" aria-pressed="' + (wert === x) + '">' + x + '</button>'; }).join('') + '</div>';
+  }
+  function regler(key, titel, min, max, wert, einheit) {
+    return '<div class="zeile"><label for="r-' + key + '">' + titel + '</label><input id="r-' + key + '" type="range" min="' + min + '" max="' + max + '" value="' + wert + '" data-range="' + key + '"><output>' + wert + einheit + '</output></div>';
+  }
+  function stepper(titel, wert) {
+    return '<div class="zeile"><span class="l">' + titel + '</span><div class="schritt"><button aria-label="' + titel + ' kleiner">−</button><output>' + wert + '</output><button aria-label="' + titel + ' größer">+</button></div></div>';
+  }
+  function farbenReihe(key, liste, wert) {
+    return '<div class="farben" role="group">' + liste.map(function (f) { return '<button style="--c:' + f[1] + '" data-set="' + key + '" data-v="' + f[0] + '" aria-pressed="' + (wert === f[0]) + '" aria-label="' + f[0] + '"></button>'; }).join('') + '</div>';
+  }
+
+  function inhalt() {
+    var a = ARTIKEL[st.art], h = '';
+    if (st.sel) {
+      if (st.sel !== 'text')
+        h += gruppe('pos', 'Position &amp; Größe', NAMEN[st.sel],
+          stepper('Position X', 0) + stepper('Position Y', 0) + stepper('Größe %', 100) + stepper('Drehung °', 0)
+          + (st.sel === 'bild' ? '<div class="chips"><button class="chip">Eigenes Bild wählen</button><button class="chip">Zurücksetzen</button></div>' : ''));
+    }
+    h += gruppe('marker', 'Ersparnis-Marker', st.typ + ' · ' + st.farbe + ' · ' + st.gr + ' %',
+      '<span class="l" style="font-size:13px;color:var(--mut)">Typ</span>' + chips('typ', ['Prozent', 'Betrag', 'Sparpreis'], st.typ)
+      + '<span class="l" style="font-size:13px;color:var(--mut)">Farbwelt</span>' + farbenReihe('farbe', [['Rot', '#c8323e'], ['Gelb', '#f7d449'], ['Grün', '#2e7d4f']], st.farbe)
+      + regler('gr', 'Markergröße', 80, 180, st.gr, ' %'));
+    h += gruppe('schrift', 'Schrift', 'Stärke · Größe', '<span style="font-size:13px;color:var(--mut)">Bezeichnung</span>' + chips('w1', ['Normal', 'Halbfett', 'Fett'], 'Fett') + '<span style="font-size:13px;color:var(--mut)">Zusatztext</span>' + chips('w2', ['Normal', 'Halbfett', 'Fett'], 'Halbfett'));
+    h += gruppe('preis', 'Preisschild', 'Farbe · Größe',
+      regler('preisGr', 'Preisgröße', 14, 40, st.preisGr, ' px')
+      + '<span style="font-size:13px;color:var(--mut)">Farbe</span>' + farbenReihe('preisFarbe', [['#ffd400', '#ffd400'], ['#ffffff', '#ffffff'], ['#f08a80', '#f08a80']], st.preisFarbe));
+    h += gruppe('bild', 'Bild', 'Größe · Drehung', regler('bg', 'Bildgröße', 20, 200, 100, ' %') + regler('bd', 'Bilddrehung', -180, 180, 0, '°'));
+    h += gruppe('stil', 'Stil', st.stil, chips('stil', ['Klassisch', 'Modern', 'Frisch', 'Kräftig'], st.stil));
+    return h;
+  }
+
+  function blatt() {
+    var b = $('blatt'); b.dataset.rast = st.rast;
+    $('rast').textContent = st.rast === 'peek' ? '▲' : '▼';
+    $('rast').setAttribute('aria-label', st.rast === 'peek' ? 'Blatt erweitern' : 'Blatt verkleinern');
+    $('abwaehlen').hidden = !st.sel;
+    var a = ARTIKEL[st.art];
+    $('wo-t').textContent = st.sel ? NAMEN[st.sel] + ' · ' + a.n : 'Seite · ' + st.ziel;
+    $('wo-s').textContent = st.sel ? 'Einstellungen · antippen zum Erweitern' : 'Marker: ' + st.typ + ' · ' + st.farbe + ' · ' + st.gr + ' %';
+    $('schnell').innerHTML = st.sel
+      ? '<button class="chip" data-auf="1">' + (st.sel === 'marker' ? 'Typ' : st.sel === 'preis' ? 'Preisfarbe' : st.sel === 'bild' ? 'Bildgröße' : 'Schriftstärke') + '</button><button class="chip" data-auf="1">Position</button><button class="chip" data-auf="1">Schrift</button>'
+      : '<button class="chip" data-auf="1">Marker</button><button class="chip" data-auf="1">Schrift</button><button class="chip" data-auf="1">Preisschild</button><button class="chip" data-auf="1">Bild</button><button class="chip" data-auf="1">Stil</button>';
+    $('inhalt').innerHTML = inhalt();
+    /* Das Blatt überlagert die Vorschau: im Peek schwebt die Schnellleiste über der Blattoberkante. */
+    var dock = $('dock');
+    dock.hidden = st.rast !== 'peek' || !st.sel;
+    dock.style.bottom = st.rast === 'peek' ? (60 + 84 + 8) + 'px' : '';
+  }
+
+  function alles() { zeichne(); blatt(); }
+  function waehle(el, i) {
+    st.sel = el; if (i != null) st.art = i;
+    alles();
+    if (el) mitte();
+  }
+  function mitte() {
+    var n = document.querySelector('#paper [aria-selected="true"]'), m = $('motiv');
+    if (!n) return;
+    var r = n.getBoundingClientRect(), mr = m.getBoundingClientRect();
+    m.scrollTo({ top: m.scrollTop + (r.top + r.height / 2) - (mr.top + (mr.height - 64) / 2), behavior: 'smooth' });
+  }
+  function rastSetzen(r) { st.rast = r; alles(); setTimeout(mitte, 300); }
+
+  $('paper').addEventListener('click', function (e) {
+    var el = e.target.closest('[data-el]');
+    waehle(el ? el.dataset.el : null, el ? +el.dataset.i : st.art);
+  });
+  $('paper').addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.el) { e.preventDefault(); e.target.click(); } });
+  $('motiv').addEventListener('click', function (e) { if (e.target === $('motiv')) waehle(null); });
+  $('abwaehlen').onclick = function () { waehle(null); };
+  $('wo').onclick = function () { rastSetzen(st.rast === 'peek' ? 'halb' : st.rast === 'halb' ? 'voll' : 'peek'); };
+  $('rast').onclick = function () { rastSetzen(st.rast === 'peek' ? 'halb' : 'peek'); };
+  $('schnell').addEventListener('click', function (e) { if (e.target.dataset.auf) rastSetzen('halb'); });
+  $('inhalt').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-set]'); if (!t) return;
+    merk(); st[t.dataset.set] = t.dataset.v; var o = {};
+    $('inhalt').querySelectorAll('details').forEach(function (d) { o[d.dataset.g] = d.open; });
+    alles(); $('inhalt').querySelectorAll('details').forEach(function (d) { d.open = o[d.dataset.g]; });
+  });
+  $('inhalt').addEventListener('input', function (e) {
+    var k = e.target.dataset.range; if (!k || !(k in st)) return;
+    st[k] = +e.target.value; e.target.nextElementSibling.textContent = e.target.value + (k === 'preisGr' ? ' px' : ' %');
+    zeichneNurMotiv();
+  });
+  $('inhalt').addEventListener('change', function (e) { if (e.target.dataset.range) merk(); });
+  function zeichneNurMotiv() { zeichne(); if (!st.sel) $('wo-s').textContent = 'Marker: ' + st.typ + ' · ' + st.farbe + ' · ' + st.gr + ' %'; }
+
+  $('zm-').onclick = function () { st.zoom = Math.max(50, st.zoom - 10); zeichne(); };
+  $('zm+').onclick = function () { st.zoom = Math.min(200, st.zoom + 10); zeichne(); };
+  $('vor-').onclick = function () { st.art = (st.art + ARTIKEL.length - 1) % ARTIKEL.length; alles(); };
+  $('vor+').onclick = function () { st.art = (st.art + 1) % ARTIKEL.length; alles(); };
+  $('arbeit').onclick = function () { toast('Mockup: Arbeitsansicht (geteilte Ansicht) wie bisher'); };
+  $('speichern').onclick = function () { toast('Mockup: nichts wird gespeichert'); };
+  $('zurueck').onclick = function () { toast('Mockup: zurück zur Ausgabe'); };
+  $('undo').onclick = function () { if (!hist.length) return; redo.push(snap()); laden(hist.pop()); knoepfe(); alles(); };
+  $('redo').onclick = function () { if (!redo.length) return; hist.push(snap()); laden(redo.pop()); knoepfe(); alles(); };
+
+  function menue(auf) { $('menue').hidden = !auf; $('ziel').setAttribute('aria-expanded', String(auf)); }
+  $('ziel').onclick = function () { menue($('menue').hidden); };
+  $('menue').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.ziel) { st.ziel = b.dataset.ziel; $('menue').querySelectorAll('[data-ziel]').forEach(function (x) { x.setAttribute('aria-checked', String(x === b)); }); alles(); }
+    else toast(b.dataset.aktion === 'standard' ? 'Mockup: Rückfrage „Standard-Gestaltung laden?“' : 'Mockup: Liste eigener Vorlagen');
+    menue(false);
+  });
+
+  function zurueck() {
+    if (!$('menue').hidden) menue(false);
+    else if (st.sel) waehle(null);
+    else if (st.rast !== 'peek') rastSetzen('peek');
+    else toast('Mockup: Android-Zurück verlässt die Gestaltung');
+  }
+  document.querySelectorAll('.zustaende [data-z]').forEach(function (b) {
+    b.onclick = function () {
+      var z = b.dataset.z; menue(false);
+      if (z === 'zurueck') { zurueck(); return; }
+      if (z === 'menue') menue(true);
+      else { st.rast = 'halb'; waehle(z === 'seite' ? null : z, z === 'text' ? 1 : 0); }
+      document.querySelectorAll('.zustaende [data-z]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    };
+  });
+  alles(); knoepfe();
+})();
+</script>
+</body>
+</html>

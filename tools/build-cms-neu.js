@@ -56,6 +56,19 @@ const GRUPPEN = [
   { name: 'System',  farbe: '#688073', ids: ['settings', 'help'] },
 ];
 
+/* Verweise auf eigene Seiten statt CMS-Bereiche: Sie stehen in der genannten
+   Gruppe, sind aber Links (kein data-id, kein Umschalten). In der Quelle
+   (cms-klassisch.html) stehen sie ebenfalls - dort als <a class="cms-tab">,
+   das von U3 nicht als Reiter gezaehlt wird. */
+const VERWEISE = [
+  { gruppe: 'Verkauf', html:
+    '      <a class="cms-tab" href="/inventur" title="Zur Inventur">'
+    + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;">'
+    + '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>'
+    + '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>'
+    + '<path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Inventur</a>' },
+];
+
 /* ── Werkzeug-Gerüst ─────────────────────────────────────────────────── */
 
 const regeln = [];
@@ -110,7 +123,7 @@ regel('U1', 'Gestaltungsblatt auslagern', function (t) {
 
 const KOPF = `  <!-- ═══ Kopfzeile (Rasterbereich "hd") ═══ -->
   <header class="cmsneu-kopf">
-    <button type="button" class="cmsneu-menue" id="cmsneu-menue-btn" aria-expanded="false" aria-controls="cms-tabs-scroll" title="Bereich wechseln">
+    <button type="button" class="cmsneu-menue" id="cmsneu-menue-btn" aria-expanded="false" aria-controls="cms-tabs-scroll" aria-label="CMS-Bereich wechseln" title="Bereich wechseln">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       <span class="cmsneu-menue-txt">Bereich</span>
     </button>
@@ -123,11 +136,11 @@ const KOPF = `  <!-- ═══ Kopfzeile (Rasterbereich "hd") ═══ -->
       <span id="cms-version"></span>
     </div>
     <div class="cmsneu-kopf-acts">
-      <a href="/kiosk.html" class="cms-btn cms-btn-gray" id="cms-back-kiosk" title="Zum Kiosk">
+      <a href="/kiosk.html" class="cms-btn cms-btn-gray" id="cms-back-kiosk" aria-label="Zum Kiosk" title="Zum Kiosk">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
         <span class="cmsneu-lang">Kiosk</span>
       </a>
-      <a href="/index.html" class="cms-btn cms-btn-gray" id="cms-back-website" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}" title="Zur Website">
+      <a href="/index.html" class="cms-btn cms-btn-gray" id="cms-back-website" aria-label="Zur Website" onclick="if(window!==window.parent){event.preventDefault();window.parent.postMessage('closeMittagPopup','*')}" title="Zur Website">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         <span class="cmsneu-lang">Website</span>
       </a>
@@ -190,6 +203,8 @@ function navigation(reiter) {
       zeilen.push('      <button class="cms-tab' + (aktiv ? ' active' : '') + '"'
         + attr + '>' + r.innen + '</button>');
     });
+    VERWEISE.filter(function (v) { return v.gruppe === g.name; })
+      .forEach(function (v) { zeilen.push(v.html); });
     zeilen.push('    </div>');
   });
 
@@ -403,6 +418,54 @@ regel('U5b', 'Kartenköpfe vereinheitlichen', function (t) {
    Sie ergaenzt die Oberflaeche von aussen (Navigationsblatt auf dem
    Telefon) und ruft nichts in cms.js auf.
    ══════════════════════════════════════════════════════════════════════ */
+
+regel('U5c', 'Angebotsgestaltung im gemeinsamen Designerstil', function (t) {
+  const start = t.indexOf('<div id="cms-cfg-plakat"');
+  const end = t.indexOf('<!-- ============ SUB-TAB: HP-Sonderangebote', start);
+  if (start < 0 || end < 0) throw new Error('U5c: Angebotsdesign nicht gefunden');
+  const section = t.slice(start, end).replace('<div id="cms-cfg-plakat"', '<div data-offer-workspaces id="cms-cfg-plakat"').replace(/(<div class="cms-card-header"[^>]*>)([^<]*)(<\/div>)/g, (_, before, title, after) => {
+    const label = /Template/.test(title) ? 'Vorlage' : /Farben/.test(title) ? 'Farben'
+      : /Preisschild-Form/.test(title) ? 'Preisschildform' : /Preisschild/.test(title) ? 'Preisschild und Marker'
+      : /Dekoration/.test(title) ? 'Dekoration' : title.replace(/&#\d+;\s*/g, '');
+    return before + label + after;
+  });
+  return { text: t.slice(0, start) + section + t.slice(end), info: 'Feldkennungen und Funktionen erhalten' };
+});
+
+regel('U5d', 'Wochenplan nach freigegebenem Mockup', function (t) {
+  const start = t.indexOf('  <div id="cms-panel-wp">');
+  const end = t.indexOf('    <div id="cms-wp-loading"', start);
+  if (start < 0 || end < 0) throw new Error('U5d: Wochenplan-Steuerung nicht gefunden');
+  const buttons = t.slice(start, end).match(/<button\b[^>]*>[\s\S]*?<\/button>/g) || [];
+  function button(action, name, content) {
+    const matches = buttons.filter(b => action === 'help'
+      ? b.includes("cmsSwitchHelpTopic('wp-help')") : b.includes('data-action="' + action + '"'));
+    if (matches.length !== 1) throw new Error('U5d: Wochenplan-Aktion nicht eindeutig: ' + action);
+    return matches[0].slice(0, matches[0].indexOf('>')).replace(/\sstyle="[^"]*"/g, '')
+      + ' aria-label="' + name + '">' + content + '</button>';
+  }
+  function icon(name, drawing) {
+    return '<i data-lucide="' + name + '" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + drawing + '</svg></i>';
+  }
+  const header = '  <div id="cms-panel-wp">\n'
+    + '    <section class="cms-wp-controls" aria-label="Wochenplan steuern">\n'
+    + '      <div class="cms-wp-heading"><h2>Wochenplan</h2>'
+    + button('openAddMeal', 'Gericht', icon('plus', '<path d="M12 5v14M5 12h14"/>') + '<span>Gericht</span>')
+    + button('help', 'Hilfe zum Wochenplan', icon('circle-help', '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>')) + '</div>\n'
+    + '      <nav class="cms-week-nav" aria-label="Woche wählen">'
+    + button('weekPrev', 'Vorherige Woche', icon('chevron-left', '<path d="m15 18-6-6 6-6"/>'))
+    + '<div class="cms-wp-week-label" aria-live="polite"><div id="cms-wp-title">KW --</div><div id="cms-wp-range"></div></div>'
+    + button('weekNext', 'Nächste Woche anzeigen', icon('chevron-right', '<path d="m9 18 6-6-6-6"/>'))
+    + '<div class="cms-wp-presets">' + button('weekThis', 'Diese Woche', 'Diese Woche')
+    + button('weekNxt', 'Nächste Woche', 'N&auml;chste Woche') + '</div></nav>\n'
+    + '      <div class="cms-wp-exports" role="group" aria-label="Vorschau und Ausgabe">'
+    + button('previewWP', 'Vorschau', icon('eye', '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>') + '<span>Vorschau</span>')
+    + button('printWP', 'Drucken', icon('printer', '<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/><path d="M18 12h.01"/>') + '<span>Drucken</span>')
+    + button('waageWP', 'Auf die Waage', icon('scale', '<path d="m16 16 3-8 3 8c-1.6 1-4.4 1-6 0ZM2 16l3-8 3 8c-1.6 1-4.4 1-6 0ZM7 21h10M12 3v18M3 7l9-4 9 4"/>') + '<span>Waage</span>')
+    + button('shareWP', 'Teilen', icon('share-2', '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>') + '<span>Teilen</span>')
+    + '</div>\n    </section>\n';
+  return { text: t.slice(0, start) + header + t.slice(end), info: 'alle zehn Wochenplan-Aktionen und Kennungen erhalten' };
+});
 
 regel('U6', 'Hilfeschicht einbinden', function (t) {
   const anker = '</body>';

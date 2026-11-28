@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventur — klickbarer Mockup</title>
+<script>
+if (innerWidth >= 850 && new URLSearchParams(location.search).get('ansicht') !== 'app') {
+  document.documentElement.dataset.preview = 'phone';
+}
+</script>
+<link rel="stylesheet" href="../static-site/css/dl-design.css">
+<script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*{box-sizing:border-box}
+:root{--field-line:#708b7b;--secondary:#4d6557;--view-height:100dvh}
+html[data-theme="dark"]{--field-line:#879d90;--secondary:#b0bfb5}
+html,body{margin:0;height:100%;color:var(--ink);background:var(--flaeche)}
+body{font:16px/1.35 system-ui,"Segoe UI",-apple-system,sans-serif}
+body.modal-open{position:fixed;width:100%;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button,input,select{border:1px solid var(--field-line);border-radius:var(--r-s)}
+button{min-height:48px;padding:8px 12px;background:var(--karte);font-weight:600}
+button:disabled{cursor:not-allowed}
+input,select{width:100%;min-height:48px;background:var(--karte);padding:8px 10px}
+input:disabled,button:disabled{color:var(--secondary);background:var(--flaeche)}
+input[aria-invalid="true"]{border:2px solid var(--red)}
+button:hover:not(:disabled){border-color:var(--gr);background:var(--gr-l)}
+:focus-visible{outline:3px solid var(--gr);outline-offset:2px}
+h1,h2,p{margin:0}
+h1{font-size:19px;font-weight:600}
+h2{font-size:18px;font-weight:600}
+label{display:block}
+[hidden]{display:none!important}
+.app{height:var(--view-height);display:flex;flex-direction:column;max-width:1440px;margin:auto}
+.header{flex:none;min-height:56px;padding:4px 12px;display:flex;align-items:center;gap:8px;background:var(--karte);border-bottom:1px solid var(--line)}
+.heading{flex:1;min-width:0}
+.heading small{display:block;color:var(--secondary);font-size:13px}
+.icon-button{min-width:48px;padding:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.icon-button svg{width:20px;height:20px}
+.icon-button i{display:inline-block;width:20px;height:20px}
+.theme-label{font-size:13px}
+.primary{background:var(--gr);border-color:var(--gr);color:#fff}
+html[data-theme="dark"] .primary{color:#132a1e}
+.primary:hover:not(:disabled){background:var(--gr-d);color:#fff}
+html[data-theme="dark"] .primary:hover:not(:disabled){color:#132a1e}
+.context{flex:none;padding:8px 12px;display:grid;grid-template-columns:1fr;gap:2px;background:var(--karte);border-bottom:1px solid var(--line)}
+.context label{font-size:13px;color:var(--secondary)}
+.context select{min-height:44px;padding-block:6px}
+.context small{color:var(--secondary);font-size:13px;line-height:18px}
+.work{flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:10px}
+.search-area{position:relative;flex:none;min-width:0}
+.field-label{margin-bottom:4px}
+.search-row{display:flex;gap:8px}
+.search-row input{min-width:0}
+.search-row button{flex:none}
+.search-results{position:absolute;left:0;right:0;top:100%;margin-top:4px;max-height:min(280px,45dvh);overflow:auto;overscroll-behavior:contain;z-index:5;background:var(--karte);border:1px solid var(--field-line);border-radius:var(--r-s);box-shadow:var(--schatten-2)}
+.result{display:block;width:100%;border:0;border-radius:0;border-bottom:1px solid var(--line);text-align:left;font-weight:400;min-height:60px}
+.result strong{display:block;font-weight:600}
+.result small{display:block;font-size:13px;color:var(--secondary)}
+.result[aria-selected="true"]{background:var(--gr-l);box-shadow:inset 4px 0 var(--gr)}
+.empty-results{padding:12px}
+.capture{flex:1;min-width:0;min-height:0;border:1px solid var(--line);border-radius:var(--r-m);background:var(--karte);padding:12px;display:flex;flex-direction:column;gap:8px}
+.article{flex:none}
+.article h2{overflow-wrap:anywhere}
+.article small{display:block;font-size:13px;color:var(--secondary);margin-top:4px}
+.prices{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:none}
+.price{padding:6px 10px;background:var(--gr-t);border:1px solid var(--field-line);border-radius:var(--r-s);display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:44px}
+.price span{font-size:14px;color:var(--secondary)}
+.price output{font-weight:600;white-space:nowrap}
+.amounts{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none}
+.amounts label{font-size:16px}
+.amounts input{font-size:20px;font-weight:600;margin-top:4px;height:52px}
+.unit{font-size:13px;color:var(--secondary);font-weight:400}
+.actions{display:flex;gap:10px;flex:none}
+.actions button{flex:1;min-width:0}
+.status{min-height:24px;font-size:14px;display:flex;gap:6px;align-items:center;flex:none;color:var(--secondary)}
+.status .check{color:var(--gr);font-weight:600}
+.status .check svg{width:18px;height:18px}
+.status .check:has(svg) .icon-fallback{display:none}
+.search-row svg{width:18px;height:18px;vertical-align:middle}
+.search-row i{display:inline-block;width:18px;height:18px;vertical-align:middle}
+.scan-mode{display:flex;gap:10px;align-items:center;margin-top:auto;min-height:48px;flex:none;border-top:1px solid var(--line)}
+.scan-mode input{appearance:none;width:44px;height:28px;min-height:28px;padding:0;border-radius:20px;background:var(--flaeche);flex:none;position:relative}
+.scan-mode input::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:var(--secondary);top:3px;left:3px}
+.scan-mode input:checked{background:var(--gr-l);border-color:var(--gr)}
+.scan-mode input:checked::after{left:19px;background:var(--gr)}
+.scan-mode:has(input:focus-visible){outline:3px solid var(--gr);outline-offset:2px}
+.scan-mode small{font-size:13px;color:var(--secondary);display:block}
+.settings{flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:10px}
+.settings-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}
+.settings-grid{display:grid;grid-template-columns:1fr;flex:1;min-height:0;gap:12px}
+.inventory-list{overflow:auto;overscroll-behavior:contain;border:1px solid var(--field-line);border-radius:var(--r-m);background:var(--karte)}
+.inventory-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;min-height:90px;font-weight:400}
+.inventory-row strong{display:block;font-weight:600;overflow-wrap:anywhere}
+.inventory-row small{display:block;font-size:14px;color:var(--secondary)}
+.inventory-row .state{font-size:13px;border:1px solid var(--field-line);padding:2px 6px;border-radius:var(--r-s);display:inline-block;margin-top:4px}
+.inventory-row.active{box-shadow:inset 4px 0 var(--gr);background:var(--gr-t)}
+dialog{color:var(--ink);background:var(--karte);border:1px solid var(--field-line);border-radius:var(--r-m);padding:16px;width:min(560px,calc(100% - 24px));max-height:calc(var(--view-height) - 24px);box-shadow:var(--schatten-2)}
+dialog::backdrop{background:rgba(16,32,24,.5)}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.dialog-head button{min-width:44px}
+.dialog-body{overflow:auto;min-height:0;overscroll-behavior:contain}
+dialog[open]{display:flex;flex-direction:column}
+.dialog-actions{display:flex;gap:8px;padding-top:12px;flex:none}
+.dialog-actions button{flex:1}
+.dialog-body p{margin-bottom:12px}
+.dialog-body label{margin-bottom:12px}
+.dialog-body input,.dialog-body select{margin-top:4px}
+.dialog-note{color:var(--secondary);font-size:14px}
+.menu{margin:60px auto 0 12px;width:min(320px,calc(100% - 24px))}
+.menu button{display:block;width:100%;text-align:left;margin-bottom:8px}
+.menu .dialog-head button{width:48px;margin:0}
+.menu p{font-size:14px;color:var(--secondary)}
+.keyboard .context,.keyboard .search-area,.keyboard .article,.keyboard .prices{display:none}
+.keyboard .capture{flex:none}
+.keyboard .scan-mode{display:none}
+.preview-shell{display:none}
+html[data-preview="phone"] .app{display:none}
+html[data-preview="phone"] .preview-shell{display:flex;flex-direction:column;min-height:100dvh}
+.preview-toolbar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;padding:12px 20px;background:var(--karte);border-bottom:1px solid var(--field-line)}
+.preview-toolbar h1{font-size:18px}
+.preview-toolbar label{font-size:14px}
+.preview-toolbar select{width:auto;margin-left:8px;min-height:44px}
+.preview-toolbar a{color:var(--gr-d);font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+.preview-stage{flex:1;padding:20px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.phone-frame{border:8px solid #20372a;border-radius:28px;overflow:hidden;background:var(--karte);box-shadow:var(--schatten-2);flex:none}
+.phone-frame iframe{display:block;width:375px;height:667px;border:0;background:var(--karte)}
+.preview-caption{font-size:14px;color:var(--secondary);text-align:center;max-width:560px}
+@media (min-width:850px) and (min-height:600px){
+  .context{grid-template-columns:120px minmax(240px,450px) 1fr;align-items:center;gap:12px}
+  .work{display:grid;grid-template-columns:minmax(280px,2fr) minmax(420px,3fr);gap:16px}
+  .search-area{display:flex;flex-direction:column;min-height:0}
+  .search-results{position:static;max-height:none;flex:1;margin-top:12px;box-shadow:none}
+  .capture{padding:20px;gap:16px}
+  .article h2{font-size:20px}
+  .prices{min-height:64px}
+  .amounts input{height:64px}
+  .settings-grid{grid-template-columns:minmax(280px,2fr) minmax(420px,3fr)}
+  .inventory-dialog:not(:modal){position:static;margin:0;width:100%;height:100%;max-height:100%;box-shadow:none}
+}
+@media (min-width:600px) and (max-width:849px) and (min-height:900px){
+  .work{display:grid;grid-template-rows:auto auto auto minmax(100px,1fr);gap:8px}
+  .search-area{display:contents}
+  .search-area .field-label{grid-row:1;margin:0}
+  .search-row{grid-row:2}
+  .capture{grid-row:3;gap:8px}
+  .search-results{grid-row:4;position:static;max-height:none;margin:0;box-shadow:none}
+  .scan-mode{margin-top:0}
+}
+@media (min-width:600px) and (pointer:fine){
+  body{font-size:15px}
+  button{min-height:32px;padding:4px 10px}
+  .icon-button{min-width:44px;min-height:44px}
+  .actions button,.settings-top button{height:32px}
+  .result{min-height:56px}
+  .scan-mode{min-height:44px}
+}
+@media (forced-colors:active){
+  button,input,select,.capture,.price,.inventory-list,dialog{border-color:ButtonText}
+  .primary,.result[aria-selected="true"],.inventory-row.active{background:Highlight;color:HighlightText}
+  .scan-mode input::after{background:ButtonText}
+  :focus-visible{outline-color:Highlight}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<section class="preview-shell" aria-label="Handy-Vorschau">
+  <header class="preview-toolbar">
+    <h1>Inventur · Handy-Vorschau</h1>
+    <label for="preview-size">Inhaltsfläche<select id="preview-size"><option value="375,667">375 × 667 · kompakt</option><option value="384,832">384 × 832 · hoch</option></select></label>
+    <a href="?ansicht=app">Responsive Vollansicht</a>
+  </header>
+  <div class="preview-stage">
+    <div class="phone-frame"><iframe id="phone-preview" title="Klickbare Inventur im Handyformat"></iframe></div>
+    <p class="preview-caption">Echte CSS-Pixel, keine Verkleinerung. Nur Beispieldaten; Neuladen setzt die Demo zurück.</p>
+  </div>
+</section>
+<div class="app" id="app">
+  <header class="header">
+    <button class="icon-button" id="menu-open" aria-label="Menü öffnen"><i data-lucide="menu" aria-hidden="true"></i><span>Menü</span></button>
+    <div class="heading"><h1>Inventur</h1><small>Mockup · nur lokal</small></div>
+    <button class="icon-button" id="theme" aria-label="Dunkelmodus einschalten"><i data-lucide="moon" aria-hidden="true"></i><span class="theme-label">Dunkel</span></button>
+  </header>
+  <section class="context" id="context" aria-label="Aktive Inventur">
+    <label for="inventory">Aktive Inventur</label>
+    <select id="inventory"></select>
+    <small id="inventory-meta"></small>
+  </section>
+  <main class="work" id="capture-screen" aria-label="Erfassung">
+    <section class="search-area" aria-label="Artikel suchen">
+      <label class="field-label" for="search">Artikel suchen</label>
+      <div class="search-row">
+        <input id="search" placeholder="Bezeichnung oder Barcode" autocomplete="off" role="combobox" aria-controls="results" aria-expanded="false" aria-autocomplete="list">
+        <button id="scan-open"><i data-lucide="scan-barcode" aria-hidden="true"></i> Barcode</button>
+      </div>
+      <div class="search-results" id="results" role="listbox" aria-label="Suchtreffer" hidden></div>
+    </section>
+    <section class="capture" id="capture-fields" aria-label="Artikelerfassung">
+      <div class="article"><h2 id="article-name">Welchen Artikel zählst du?</h2><small id="article-barcode">Artikel suchen oder Barcode simulieren.</small></div>
+      <div class="prices">
+        <div class="price"><span>EK</span><output id="ek" aria-label="Einkaufspreis">—</output></div>
+        <div class="price"><span>VK</span><output id="vk" aria-label="Verkaufspreis">—</output></div>
+      </div>
+      <div class="amounts">
+        <label for="quantity">Menge <span class="unit" id="unit"></span><input id="quantity" inputmode="numeric" autocomplete="off" disabled></label>
+        <label for="plus">Plus <span class="unit">(Hinzufügen)</span><input id="plus" inputmode="numeric" autocomplete="off" disabled></label>
+      </div>
+      <div class="actions">
+        <button id="save" class="primary" disabled>Speichern</button>
+        <button id="add" disabled>Hinzufügen</button>
+      </div>
+      <div class="status" id="status" role="status"><span id="saved-check" class="check" aria-label="Menge gespeichert" hidden><i data-lucide="check" aria-hidden="true"></i><span class="icon-fallback">OK</span></span><span id="status-text">Noch kein Artikel ausgewählt</span></div>
+      <label class="scan-mode" for="manual-scan">
+        <input type="checkbox" id="manual-scan" role="switch">
+        <span>Manuell Scan<small id="scan-mode-text">Automatisch · nur Demo-Barcodes</small></span>
+      </label>
+    </section>
+  </main>
+  <main class="settings" id="settings-screen" aria-label="Settings" hidden>
+    <div class="settings-top"><h2>Inventuren · Settings</h2><button id="new-inventory" class="primary">Neu</button></div>
+    <div class="settings-grid">
+      <div class="inventory-list" id="inventory-list" aria-label="Inventurenliste"></div>
+      <dialog class="inventory-dialog" id="inventory-editor" aria-labelledby="editor-title">
+        <div class="dialog-head"><h2 id="editor-title">Inventur bearbeiten</h2><button id="editor-close" aria-label="Inventurformular schließen">Schließen</button></div>
+        <div class="dialog-body">
+          <label for="inventory-name">Inventurname (Pflichtfeld)<input id="inventory-name" maxlength="850" required></label>
+          <label for="inventory-year">Jahr<input id="inventory-year" maxlength="4000"></label>
+          <label for="inventory-date">Startdatum<input id="inventory-date" type="date"></label>
+          <label for="inventory-status">Status<select id="inventory-status"><option value="">Nicht festgelegt</option><option value="geplant">geplant</option><option value="aktiv">aktiv</option><option value="abgeschlossen">abgeschlossen</option></select></label>
+          <p class="dialog-note" id="editor-status" role="status">Nur Beispieldaten · keine echte Inventur</p>
+        </div>
+        <div class="dialog-actions"><button id="inventory-save" class="primary" disabled>Speichern (lokal)</button></div>
+      </dialog>
+    </div>
+  </main>
+</div>
+<dialog class="menu" id="menu" aria-labelledby="menu-title">
+  <div class="dialog-head"><h2 id="menu-title">Bereich wählen</h2><button id="menu-close" aria-label="Menü schließen">Schließen</button></div>
+  <button id="go-capture">Erfassung</button><button id="go-settings">Settings</button>
+  <p>Nur lokale Beispieldaten. Neuladen setzt die Demo zurück.</p>
+</dialog>
+<dialog id="scanner" aria-labelledby="scanner-title">
+  <div class="dialog-head"><h2 id="scanner-title">Barcode · Simulation</h2><button id="scanner-close">Abbrechen</button></div>
+  <div class="dialog-body">
+    <p id="scanner-hint"></p>
+    <label for="scan-example">Barcode-Beispiel<select id="scan-example">
+      <option value="">Beispiel wählen</option>
+      <option value="milk">Bio-Vollmilch · 9000000000011</option>
+      <option value="bread">Bauernbrot · 9000000000028</option>
+      <option value="soap">Handseife · 9000000000035</option>
+      <option value="batch">Mehrere Barcodes · Milch zuerst, dann Brot</option>
+      <option value="unknown">Unbekannter Barcode · 9999999999999</option>
+    </select></label>
+    <p class="dialog-note">Keine Kamera. Kein Zugriff auf echte Artikel.</p>
+  </div>
+  <div class="dialog-actions"><button id="scan-confirm" class="primary" disabled>Scan bestätigen</button></div>
+</dialog>
+<dialog id="message" aria-labelledby="message-title">
+  <div class="dialog-head"><h2 id="message-title">Bitte prüfen</h2></div>
+  <div class="dialog-body"><p id="message-text"></p></div>
+  <div class="dialog-actions"><button id="message-close" class="primary">Schließen</button></div>
+</dialog>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  if (document.documentElement.dataset.preview === 'phone') {
+    const frame = $('phone-preview');
+    frame.src = '?ansicht=app';
+    $('preview-size').onchange = () => {
+      const [width,height] = $('preview-size').value.split(',').map(Number);
+      frame.style.width = width+'px';
+      frame.style.height = height+'px';
+    };
+    return;
+  }
+  const inventories = [
+    {id:'shop',name:'Ladeninventur',year:'2026',date:'2026-11-20T08:30',status:'aktiv'},
+    {id:'store',name:'Lagerinventur',year:'2026',date:'2026-11-20T09:15',status:'aktiv'},
+    {id:'planned',name:'Jahresinventur',year:'2026 / 2027',date:'2026-12-31T07:00',status:'geplant'},
+    {id:'closed',name:'Sommerinventur',year:'2026',date:'2026-07-01T08:00',status:'abgeschlossen'},
+    ...Array.from({length:24}, (_,i) => ({id:'example-'+i,name:'Beispielinventur '+String(i+1).padStart(2,'0'),year:'2025',date:'2025-12-31T10:20',status:'abgeschlossen'}))
+  ];
+  const articles = [
+    {id:'milk',name:'Bio-Vollmilch 3,8 % aus der Region · 1 Liter',code:'9000000000011',articleCode:'9000000000011',vk:1.79,lastEk:1.12,tax:9,unit:'0'},
+    {id:'bread',name:'Bauernbrot mit Natursauerteig aus der Dorfbäckerei',code:'9000000000028',articleCode:'9000000000028',vk:4.50,lastEk:0,tax:9,unit:'3'},
+    {id:'soap',name:'Handseife mit Bio-Olivenöl · Nachfüllflasche 500 ml',code:'9000000000035',articleCode:'9000000000035',vk:3.49,lastEk:0,tax:1,unit:'0'},
+    {id:'unsupported',name:'Demo-Artikel mit unbekannter Mengenerfassung',code:'9000000000042',articleCode:'9000000000042',vk:1,lastEk:.5,tax:9,unit:'8'},
+    ...Array.from({length:40},(_,i) => ({id:'long-'+i,name:'Regionaler Beispielartikel '+String(i+1).padStart(2,'0')+' mit ausführlicher Bezeichnung und Mehrwegverpackung',code:'9100000'+String(i).padStart(6,'0'),articleCode:'9100000'+String(i).padStart(6,'0'),vk:2.99,lastEk:1.8,tax:9,unit:'0'}))
+  ].map(a => ({...a,total:a.name+' · '+a.code,search:a.name+'-'+a.code}));
+  const positions = new Map();
+  const drafts = new Map();
+  let inventoryId = 'shop', article = null, section = 'capture', dirty = false;
+  let matches = [], activeResult = -1, editorKey = null, dialogReturn = new Map();
+  const wide = () => matchMedia('(min-width:850px) and (min-height:600px)').matches;
+  const permanentResults = () => wide() || matchMedia('(min-width:600px) and (min-height:900px)').matches;
+  const inventory = () => inventories.find(i => i.id === inventoryId);
+  const key = () => inventory().name+'-'+article.articleCode;
+  const money = v => v.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+  const dateLabel = v => v ? v.slice(0,10).split('-').reverse().join('.') : 'Kein Startdatum';
+  const ekFor = a => a.lastEk === 0 ? a.vk/(a.tax === 9 ? 1.07 : 1.19)*.67 : a.lastEk;
+  function seed(invId,articleId,quantity,ek) {
+    const inv = inventories.find(i => i.id === invId), a = articles.find(a => a.id === articleId);
+    positions.set(inv.name+'-'+a.articleCode,{inventurKey:inv.name+'-'+a.articleCode,inventoryId:inv.id,articleId:a.id,articleNumber:a.articleCode,unit:a.unit,quantity,ek});
+  }
+  seed('shop','milk',12,.98);
+  seed('store','milk',30,1.05);
+  function feedback(text) {
+    $('status-text').textContent = text;
+    $('saved-check').hidden = dirty || !article || Number($('quantity').value) <= 0;
+  }
+  function showDialog(id,trigger) {
+    const dlg = $(id);
+    dialogReturn.set(id,trigger || document.activeElement);
+    dlg.showModal();
+    document.body.classList.add('modal-open');
+  }
+  function closeDialog(id) {
+    const dlg = $(id);
+    dlg.close();
+    document.body.classList.toggle('modal-open',Boolean(document.querySelector('dialog:modal')));
+    const previous = dialogReturn.get(id);
+    if (previous && previous.isConnected && previous.getClientRects().length) previous.focus();
+    else if (id === 'inventory-editor') {
+      const row = [...$('inventory-list').children].find(el => el.dataset.inventoryId === editorKey);
+      (row || $('new-inventory')).focus();
+    }
+  }
+  for (const id of ['menu','scanner','message','inventory-editor']) {
+    $(id).addEventListener('cancel',e => {e.preventDefault();closeDialog(id);});
+    $(id).addEventListener('keydown',e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();closeDialog(id);
+      } else if (e.key === 'Tab' && $(id).matches(':modal')) {
+        const controls = [...$(id).querySelectorAll('button,input,select,[tabindex]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
+        const first = controls[0], last = controls[controls.length-1];
+        if (e.shiftKey && document.activeElement === first) {e.preventDefault();last.focus();}
+        else if (!e.shiftKey && document.activeElement === last) {e.preventDefault();first.focus();}
+      }
+    });
+  }
+  function problem(text,trigger) {
+    $('message-text').textContent = text;
+    if (!$('message').open) showDialog('message',trigger);
+  }
+  function renderInventory() {
+    const active = inventories.filter(i => i.status === 'aktiv');
+    if (!active.some(i => i.id === inventoryId)) inventoryId = active[0]?.id || null;
+    $('inventory').replaceChildren();
+    if (!active.length) {
+      $('inventory').append(new Option('Keine aktive Inventur',''));
+    } else {
+      active.forEach(i => $('inventory').append(new Option(i.name,i.id)));
+      $('inventory').value = inventoryId;
+    }
+    $('inventory').disabled = !active.length;
+    const inv = inventory();
+    $('inventory-meta').textContent = inv ? inv.year+' · '+dateLabel(inv.date) : 'In Settings eine Inventur aktivieren.';
+    $('search').disabled = !inv;
+    $('scan-open').disabled = !inv;
+  }
+  function renderArticle() {
+    const valid = Boolean(article && inventory() && ['0','3'].includes(article.unit));
+    const pos = article && inventory() ? positions.get(key()) : null;
+    $('article-name').textContent = article ? article.name : 'Welchen Artikel zählst du?';
+    $('article-barcode').textContent = article ? 'Barcode '+article.code : 'Artikel suchen oder Barcode simulieren.';
+    $('ek').textContent = article ? money(pos ? pos.ek : ekFor(article)) : '—';
+    $('vk').textContent = article ? money(article.vk) : '—';
+    $('unit').textContent = article ? ({'0':'Stück','3':'Gramm'}[article.unit] || 'nicht unterstützt') : '';
+    $('quantity').value = pos?.quantity ?? '';
+    $('plus').value = '';
+    dirty = false;
+    for (const id of ['quantity','plus','save','add']) {
+      $(id).disabled = !valid;
+      $(id).removeAttribute('aria-invalid');
+    }
+    feedback(!inventory() ? 'Keine aktive Inventur' : !article ? 'Noch kein Artikel ausgewählt' : !valid ? 'Mengenerfassung nicht unterstützt' : pos ? 'Gespeichert · nur lokal' : 'Neue Position · noch nicht gespeichert');
+  }
+  function closeResults() {
+    if (permanentResults()) return;
+    $('results').hidden = true;
+    $('search').setAttribute('aria-expanded','false');
+    $('search').removeAttribute('aria-activedescendant');
+  }
+  function selectArticle(code) {
+    article = articles.find(a => a.code === code) || null;
+    closeResults();
+    renderArticle();
+    if (!article) {
+      problem('Artikel nicht gefunden – bitte erneut scannen oder Barcode prüfen.',$('scan-open'));
+      return;
+    }
+    $('search').value = permanentResults() ? '' : article.total;
+    if (permanentResults()) searchResults();
+    if (!['0','3'].includes(article.unit)) {
+      problem('Für diesen Demo-Artikel ist die Mengenerfassung noch nicht unterstützt. Bitte einen anderen Artikel wählen.',$('search'));
+      return;
+    }
+    $('quantity').focus();
+  }
+  function searchResults() {
+    const term = $('search').value.trim().toLocaleLowerCase('de');
+    matches = articles.filter(a => a.search.toLocaleLowerCase('de').includes(term)).sort((a,b) => a.search.localeCompare(b.search,'de'));
+    activeResult = -1;
+    $('results').replaceChildren();
+    matches.forEach((a,i) => {
+      const button = document.createElement('button');
+      button.className = 'result'; button.id = 'result-'+i; button.type = 'button';
+      button.setAttribute('role','option'); button.setAttribute('aria-selected','false');
+      const name = document.createElement('strong'), code = document.createElement('small');
+      name.textContent = a.name; code.textContent = a.code;
+      button.append(name,code);
+      button.onclick = () => selectArticle(a.code);
+      $('results').append(button);
+    });
+    if (!matches.length) {
+      const p = document.createElement('p'); p.className = 'empty-results'; p.textContent = 'Keine Artikel gefunden. Bitte Suchbegriff oder Barcode prüfen.'; $('results').append(p);
+    }
+    $('results').hidden = false;
+    $('search').setAttribute('aria-expanded','true');
+  }
+  function integer(input,label) {
+    const value = input.value.trim();
+    if (value === '') return null;
+    if (!/^[+-]?\d+$/.test(value)) throw new Error(label+': Bitte eine ganze Zahl eingeben.');
+    const number = Number(value);
+    if (!Number.isSafeInteger(number) || number < -2147483648 || number > 2147483647) throw new Error(label+': Die Zahl liegt außerhalb des erlaubten Bereichs.');
+    return number;
+  }
+  function commit() {
+    if (!dirty || !article || !inventory() || $('quantity').disabled) return;
+    let base, extra;
+    try {
+      base = integer($('quantity'),'Menge');
+      extra = integer($('plus'),'Plus');
+    } catch (e) {
+      console.warn('[Inventur-Demo] Ungültige Eingabe',e.message);
+      const field = e.message.startsWith('Plus:') ? $('plus') : $('quantity');
+      field.setAttribute('aria-invalid','true');
+      problem(e.message,field);
+      return;
+    }
+    const total = extra === null ? base : (base ?? 0)+extra;
+    if (total !== null && (total < -2147483648 || total > 2147483647)) {
+      $('plus').setAttribute('aria-invalid','true');
+      problem('Die Gesamtmenge liegt außerhalb des erlaubten Bereichs. Bitte Menge oder Plus korrigieren.',$('plus'));
+      return;
+    }
+    const old = positions.get(key());
+    positions.set(key(),{inventurKey:key(),inventoryId:inventoryId,articleId:article.id,articleNumber:article.articleCode,unit:article.unit,quantity:total,ek:old ? old.ek : Number(ekFor(article).toFixed(2))});
+    renderArticle();
+    feedback('Gespeichert · nur lokal');
+    $('manual-scan').focus();
+  }
+  for (const id of ['quantity','plus']) {
+    $(id).addEventListener('input',() => {
+      dirty = true; $(id).removeAttribute('aria-invalid'); feedback('Änderung · beim Verlassen lokal speichern');
+    });
+    $(id).addEventListener('change',commit);
+  }
+  $('save').onclick = commit;
+  $('add').onclick = commit;
+  $('search').addEventListener('input',searchResults);
+  $('search').addEventListener('focus',searchResults);
+  $('search').addEventListener('keydown',e => {
+    if (e.key === 'Escape') {closeResults();return;}
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if ($('results').hidden) searchResults();
+      if (!matches.length) return;
+      const direction = e.key === 'ArrowDown' ? 1 : -1;
+      activeResult = activeResult < 0 ? (direction > 0 ? 0 : matches.length-1) : (activeResult+direction+matches.length)%matches.length;
+      for (let i=0;i<matches.length;i++) $('result-'+i).setAttribute('aria-selected',String(i === activeResult));
+      const chosen = $('result-'+activeResult);
+      $('search').setAttribute('aria-activedescendant',chosen.id);
+      chosen.scrollIntoView({block:'nearest'});
+    } else if (e.key === 'Enter' && activeResult >= 0 && !$('results').hidden) {
+      e.preventDefault();selectArticle(matches[activeResult].code);
+    }
+  });
+  document.addEventListener('click',e => {if (!e.target.closest('.search-area')) closeResults();});
+  $('inventory').onchange = () => {inventoryId = $('inventory').value;renderInventory();renderArticle();};
+  $('manual-scan').onchange = () => {$('scan-mode-text').textContent = $('manual-scan').checked ? 'Manuell · Beispiel bestätigen' : 'Automatisch · nur Demo-Barcodes';};
+  $('scan-open').onclick = () => {
+    closeResults();
+    $('scan-example').value = '';
+    $('scan-confirm').disabled = true;
+    $('scan-confirm').hidden = !$('manual-scan').checked;
+    $('scanner-hint').textContent = $('manual-scan').checked ? 'Beispiel wählen und Scan bestätigen.' : 'Ein Demo-Ergebnis wählen: Im automatischen Modus wird es direkt übernommen.';
+    showDialog('scanner',$('scan-open'));
+  };
+  function performScan() {
+    const codes = {milk:['9000000000011'],bread:['9000000000028'],soap:['9000000000035'],batch:['9000000000011','9000000000028'],unknown:['9999999999999']};
+    const values = codes[$('scan-example').value];
+    if (!values) return;
+    closeDialog('scanner');
+    selectArticle(values[0]);
+  }
+  $('scan-example').onchange = () => {
+    $('scan-confirm').disabled = !$('scan-example').value;
+    if (!$('manual-scan').checked && $('scan-example').value) performScan();
+  };
+  $('scan-confirm').onclick = performScan;
+  $('scanner-close').onclick = () => closeDialog('scanner');
+  $('message-close').onclick = () => closeDialog('message');
+  $('menu-open').onclick = () => {closeResults();showDialog('menu',$('menu-open'));};
+  $('menu-close').onclick = () => closeDialog('menu');
+  function go(next) {
+    closeDialog('menu');
+    section = next;
+    $('capture-screen').hidden = next !== 'capture';
+    $('context').hidden = next !== 'capture';
+    $('settings-screen').hidden = next !== 'settings';
+    if (next === 'settings') {
+      renderList();
+      if (editorKey && wide()) showEditor();
+      else $('new-inventory').focus();
+    } else {
+      if ($('inventory-editor').open) $('inventory-editor').close();
+      document.body.classList.toggle('modal-open',Boolean(document.querySelector('dialog:modal')));
+      $('inventory').focus();
+    }
+  }
+  $('go-capture').onclick = () => go('capture');
+  $('go-settings').onclick = () => go('settings');
+  $('theme').onclick = () => {
+    const dark = document.documentElement.dataset.theme !== 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    $('theme').setAttribute('aria-label',dark ? 'Hellmodus einschalten' : 'Dunkelmodus einschalten');
+    $('theme').querySelector('span').textContent = dark ? 'Hell' : 'Dunkel';
+  };
+  function renderList() {
+    $('inventory-list').replaceChildren();
+    inventories.forEach(inv => {
+      const button = document.createElement('button'), text = document.createElement('span'), title = document.createElement('strong'), meta = document.createElement('small'), state = document.createElement('span'), arrow = document.createElement('span');
+      button.className = 'inventory-row'+(inv.id === editorKey ? ' active' : '');
+      button.dataset.inventoryId = inv.id;
+      title.textContent = inv.name;
+      meta.textContent = (inv.year || 'Kein Jahr')+' · '+dateLabel(inv.date);
+      state.className = 'state';state.textContent = inv.status || 'Nicht festgelegt';
+      arrow.setAttribute('aria-hidden','true');arrow.innerHTML = '<i data-lucide="chevron-right"></i>';
+      text.append(title,meta,state);button.append(text,arrow);
+      button.setAttribute('aria-label',inv.name+' bearbeiten');
+      button.onclick = () => editInventory(inv.id,button);
+      $('inventory-list').append(button);
+    });
+    if (window.lucide) window.lucide.createIcons();
+  }
+  function editorDirty() {
+    const draft = drafts.get(editorKey);
+    return draft && JSON.stringify(draft.values) !== JSON.stringify(draft.original);
+  }
+  function renderEditor() {
+    const draft = drafts.get(editorKey);
+    $('editor-title').textContent = editorKey === 'new' ? 'Neue Inventur' : 'Inventur bearbeiten';
+    $('inventory-name').value = draft.values.name;
+    $('inventory-year').value = draft.values.year;
+    $('inventory-date').value = draft.values.date;
+    $('inventory-status').value = draft.values.status;
+    $('inventory-save').disabled = !editorDirty();
+    $('editor-status').textContent = editorDirty() ? 'Ungespeicherter Entwurf · nur lokal' : 'Nur Beispieldaten · keine echte Inventur';
+  }
+  function showEditor(trigger) {
+    if ($('inventory-editor').open) $('inventory-editor').close();
+    document.body.classList.toggle('modal-open',Boolean(document.querySelector('dialog:modal')));
+    renderEditor();
+    dialogReturn.set('inventory-editor',trigger || $('new-inventory'));
+    if (wide()) $('inventory-editor').show();
+    else showDialog('inventory-editor',trigger || $('new-inventory'));
+    $('inventory-name').focus();
+  }
+  function editInventory(id,trigger) {
+    editorKey = id;
+    if (!drafts.has(id)) {
+      const inv = inventories.find(i => i.id === id);
+      const values = inv ? {name:inv.name,year:inv.year,date:inv.date.slice(0,10),status:inv.status} : {name:'',year:'',date:'',status:''};
+      drafts.set(id,{values:{...values},original:{...values},time:inv?.date.slice(10) || ''});
+    }
+    renderList();showEditor(trigger);
+  }
+  $('new-inventory').onclick = () => editInventory('new',$('new-inventory'));
+  $('editor-close').onclick = () => closeDialog('inventory-editor');
+  for (const [id,property] of [['inventory-name','name'],['inventory-year','year'],['inventory-date','date'],['inventory-status','status']]) {
+    $(id).addEventListener('input',() => {
+      drafts.get(editorKey).values[property] = $(id).value;
+      $(id).removeAttribute('aria-invalid');
+      $('inventory-save').disabled = !editorDirty();
+      $('editor-status').textContent = editorDirty() ? 'Ungespeicherter Entwurf · nur lokal' : 'Nur Beispieldaten · keine echte Inventur';
+    });
+  }
+  $('inventory-save').onclick = () => {
+    if (!editorDirty()) return;
+    const draft = drafts.get(editorKey), value = draft.values;
+    if (!value.name.trim()) {
+      $('inventory-name').setAttribute('aria-invalid','true');
+      problem('Bitte einen Inventurnamen eingeben.',$('inventory-name'));
+      return;
+    }
+    if (value.name.length > 850 || value.year.length > 4000) {
+      const field = value.name.length > 850 ? $('inventory-name') : $('inventory-year');
+      field.setAttribute('aria-invalid','true');
+      problem(value.name.length > 850 ? 'Der Inventurname darf höchstens 850 Zeichen enthalten.' : 'Das Feld Jahr darf höchstens 4000 Zeichen enthalten.',field);
+      return;
+    }
+    let inv = inventories.find(i => i.id === editorKey);
+    if (!inv) {
+      inv = {id:'local-'+inventories.length};
+      inventories.push(inv);
+      drafts.delete(editorKey);
+      editorKey = inv.id;
+      drafts.set(editorKey,draft);
+    }
+    Object.assign(inv,{name:value.name,year:value.year,date:value.date ? value.date+(draft.time || 'T00:00') : '',status:value.status});
+    draft.original = {...value};
+    renderInventory();renderArticle();renderList();renderEditor();
+    $('editor-status').textContent = 'Gespeichert · nur lokal';
+    if (!wide()) closeDialog('inventory-editor');
+  };
+  function viewport() {
+    const vv = window.visualViewport;
+    const height = vv ? vv.height : innerHeight;
+    document.documentElement.style.setProperty('--view-height',height+'px');
+    $('app').classList.toggle('keyboard',height < 500 && ['quantity','plus'].includes(document.activeElement?.id));
+    if (section === 'capture') {
+      if (permanentResults() && $('results').hidden) searchResults();
+    }
+  }
+  window.addEventListener('resize',viewport);
+  window.visualViewport?.addEventListener('resize',viewport);
+  document.addEventListener('focusin',viewport);
+  document.addEventListener('focusout',() => setTimeout(viewport,0));
+  window.addEventListener('resize',() => {
+    if (section === 'settings' && $('inventory-editor').open) {
+      const modal = $('inventory-editor').matches(':modal');
+      if (modal === wide()) showEditor();
+    }
+  });
+  window.inventurDemo = Object.freeze({snapshot:() => structuredClone({inventories,articles,positions:[...positions.values()],section,inventoryId,articleId:article?.id,dirty})});
+  renderInventory();renderArticle();renderList();viewport();
+  window.addEventListener('load',() => {if (window.lucide) window.lucide.createIcons();});
+})();
+</script>
+</body>
+</html>

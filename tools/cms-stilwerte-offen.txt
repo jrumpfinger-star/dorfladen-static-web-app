@@ -1,22 +1,26 @@
-39	border:none
+42	border:none
+31	background:none
 29	font-size:10px
-26	background:none
 18	font-size:9px
 17	border-radius:2px
 16	font-size:.9rem
 16	font-size:.78rem
 16	border-radius:26px
+16	font-size:var(--schrift-klein)
 15	border-radius:50%
-11	font-size:.85rem
+14	font-size:.85rem
+12	border-bottom:2px solid transparent
+10	font-size:.82rem
 10	border-radius:3px
-9	font-size:.82rem
 9	font-size:28px
-7	border-bottom:2px solid transparent
+8	color:var(--mut)
+8	color:var(--ink)
 6	color:var(--c-m-muted)
 6	border-radius:3px 3px 0 0
 5	font-size:18px
 5	background:#334155
 4	color:var(--c-m-pri)
+3	border-radius:var(--r-s)
 3	background:rgba(255,255,255,0.2)
 2	background:rgba(255,255,255,.25)
 2	border-bottom:2px solid var(--c-m-pri)
@@ -29,6 +33,14 @@
 2	border:1px solid var(--c-border)
 2	background:#25D366
 1	background:var(--c-m-pri)
+1	background:var(--gr)!important
+1	background:var(--amb-l)
+1	color:var(--amb)
+1	border:1px solid var(--amb-b)
+1	background:var(--gr-l)
+1	color:var(--gr-d)
+1	border:1px solid var(--gr-l)
+1	color:var(--gr)
 1	background:transparent
 1	font-size:17px
 1	border-left-color:var(--c-green)

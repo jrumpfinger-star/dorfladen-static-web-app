@@ -17,6 +17,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
+const cmsAngemeldet = require('./_cms-angemeldet');
 const fs = require('fs');
 const path = require('path');
 
@@ -150,6 +151,7 @@ test.describe('CMS', () => {
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }) });
     });
 
+    await cmsAngemeldet(page);
     await page.goto(`${BASE}/cms.html`, { waitUntil: 'domcontentloaded' });
     const hash = await page.evaluate(() => {
       const el = document.getElementById('cms-pw-hash');

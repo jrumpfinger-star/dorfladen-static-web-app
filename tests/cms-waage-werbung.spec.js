@@ -13,6 +13,7 @@
  */
 const zlib = require('zlib');
 const { test, expect } = require('@playwright/test');
+const cmsAngemeldet = require('./_cms-angemeldet');
 
 test.use({ serviceWorkers: 'block' });
 test.describe.configure({ mode: 'serial' });
@@ -75,6 +76,8 @@ const ARTIKEL = [
  *   bruecke      Status der Bruecke
  */
 async function cmsMit(page, opts = {}) {
+  // The offer fixtures belong to week 44, independent of the test execution date.
+  await page.clock.setFixedTime(new Date('2026-10-28T12:00:00Z'));
   const o = Object.assign({
     alt: ['10_Wochenplan_KW43.jpg', '20_Angebot_2026-10-12_00_Uebersicht.jpg', 'Hauswerbung.jpg'],
     altDauer: [], artikel: 8, ablehnen: [], verzoegerung: 0,
@@ -141,6 +144,7 @@ async function cmsMit(page, opts = {}) {
     return json(405, { success: false });
   });
 
+  await cmsAngemeldet(page);
   await page.goto(BASE + '/cms.html', { waitUntil: 'domcontentloaded' });
   const hash = await page.evaluate(() => { const el = document.getElementById('cms-pw-hash'); return el ? JSON.parse(el.textContent) : null; });
   if (!hash) test.skip(true, 'Diese Seite ist hier nicht ausgeliefert');
@@ -571,7 +575,8 @@ test.describe('HD und Auf die Waage', () => {
     await cmsMit(page);
     await page.locator('[data-action="waageWP"]').click();
     await expect(neueBilder(page)).toHaveCount(1, { timeout: 20000 });
-    await expect(dlg(page).locator('[data-ueb="art"]')).toHaveText(['Vollbild', 'Dauerwerbung']);
+    await expect(dlg(page).getByRole('tab', { name: 'Dauerwerbung', exact: true })).toBeVisible();
+    await expect(dlg(page).getByRole('tab', { name: 'Vollbild', exact: true })).toBeVisible();
     await expect(neueBilder(page).locator('.wb-info b')).toHaveText(/^10_Wochenplan_KW\d+\.jpg$/);
     await expect(neueBilder(page).locator('img')).toBeVisible();
     await expect(neueBilder(page).locator('input[type=checkbox]')).toBeChecked();

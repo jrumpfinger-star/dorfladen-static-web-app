@@ -58,6 +58,7 @@
        Bedarf. (Spec bestellliste-schuetzen) -->
   <script src="/js/admin-auth.js"></script>
   <link rel="stylesheet" href="/css/admin-dark.css">
+  <link rel="stylesheet" href="/css/angebote.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -79,6 +80,7 @@
     <button class="k-hbtn k-head-extra" id="k-kunden-btn" onclick="K.switchTab('kunden')" title="Stammkunden verwalten" aria-label="Stammkunden verwalten"><i data-lucide="users"></i></button>
     <a class="k-hbtn k-head-extra" href="/index.html" title="Zur Website" aria-label="Zur Website"><i data-lucide="house"></i></a>
     <a class="k-hbtn k-head-extra" href="/cms.html" title="Zum CMS" aria-label="Zum CMS"><i data-lucide="settings"></i></a>
+    <a class="k-hbtn k-head-extra" href="/inventur" title="Zur Inventur" aria-label="Zur Inventur"><i data-lucide="clipboard-list"></i></a>
     <button class="k-hbtn" id="k-mute-btn" onclick="K.toggleMute()" title="Ton ein/aus" aria-label="Ton ein oder aus"><i data-lucide="volume-2"></i></button>
     <button class="k-hbtn" onclick="K.openModal('modal-help')" title="Hilfe" aria-label="Hilfe"><i data-lucide="help-circle"></i></button>
     <button class="k-hbtn" onclick="K.refresh()" title="Aktualisieren" aria-label="Aktualisieren"><i data-lucide="refresh-cw"></i></button>
@@ -122,11 +124,6 @@
     <span class="k-tab-lbl"><span class="lang">Metzger Mair</span><span class="kurz">Mair</span></span>
     <span class="k-tab-badges" id="badges-metzgerbest"></span>
   </div>
-  <div class="k-tab" data-tab="getraenke" onclick="K.switchTab('getraenke')">
-    <span class="k-tab-icon"><i data-lucide="cup-soda"></i></span>
-    <span class="k-tab-lbl"><span class="lang">Getränke</span><span class="kurz">Getränke</span></span>
-    <span class="k-tab-badges" id="badges-getraenke"></span>
-  </div>
   <div class="k-tab" data-tab="drax" onclick="K.switchTab('drax')">
     <span class="k-tab-icon"><i data-lucide="wheat"></i></span>
     <span class="k-tab-lbl"><span class="lang">Drax Mühle</span><span class="kurz">Drax</span></span>
@@ -149,6 +146,19 @@
   <div class="k-tab" data-tab="werbebilder" onclick="K.switchTab('werbebilder')">
     <span class="k-tab-icon"><i data-lucide="images"></i></span>
     <span class="k-tab-lbl"><span class="lang">Werbebilder</span><span class="kurz">Werbung</span></span>
+  </div>
+  <div class="k-tab" data-tab="angebote" onclick="K.switchTab('angebote')">
+    <span class="k-tab-icon"><i data-lucide="tags"></i></span>
+    <span class="k-tab-lbl"><span class="lang">Angebote</span><span class="kurz">Angebote</span></span>
+  </div>
+  <div class="k-tab" data-tab="wochenplan" onclick="K.switchTab('wochenplan')">
+    <span class="k-tab-icon"><i data-lucide="calendar-range"></i></span>
+    <span class="k-tab-lbl"><span class="lang">Wochenplan</span><span class="kurz">Woche</span></span>
+  </div>
+  <div class="k-tab" data-tab="getraenke" onclick="K.switchTab('getraenke')">
+    <span class="k-tab-icon"><i data-lucide="cup-soda"></i></span>
+    <span class="k-tab-lbl"><span class="lang">Getränke</span><span class="kurz">Getränke</span></span>
+    <span class="k-tab-badges" id="badges-getraenke"></span>
   </div>
   <span class="k-tab-pfeil k-tab-pfeil-r" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
 </nav>
@@ -279,6 +289,18 @@
   <!-- Werbebilder der PC-Waage (specs/kiosk-werbebilder-upload/spec.md). -->
   <div class="k-panel" id="panel-werbebilder">
     <div id="wb-root"><div class="k-empty">Laden…</div></div>
+  </div>
+
+  <div class="k-panel" id="panel-angebote">
+    <section id="an-root" class="an-app" aria-label="Angebotsverwaltung">
+      <p role="status">Die Angebotsverwaltung wird geladen …</p>
+    </section>
+  </div>
+
+  <!-- Wochenplan des CMS, eingebettet (specs/kiosk-wochenplan/spec.md). Der Rahmen
+       wird erst beim ersten Öffnen des Reiters geladen. -->
+  <div class="k-panel" id="panel-wochenplan">
+    <iframe id="wochenplan-frame" title="Wochenplan" data-src="/cms.html?embed=wochenplan"></iframe>
   </div>
 
   <!-- ── Kontakt (Kundennachrichten) ── -->
@@ -1187,6 +1209,11 @@ var K = (function(){
     if(id==='getraenke' && window.KGetraenke) window.KGetraenke.onShow();
     if(id==='drax' && window.KDrax) window.KDrax.onShow();
     if(id==='werbebilder' && window.KWerbebilder) window.KWerbebilder.onShow();
+    if(id==='angebote' && window.KAngebote) window.KAngebote.onShow();
+    if(id==='wochenplan'){
+      var wpFrame=document.getElementById('wochenplan-frame');
+      if(wpFrame && !wpFrame.getAttribute('src')) wpFrame.setAttribute('src', wpFrame.getAttribute('data-src'));
+    }
   }
 
   // ── Feature-Freischaltung: nur im CMS aktivierte Tabs anzeigen ──
@@ -6020,6 +6047,14 @@ var K = (function(){
 <script src="/js/kiosk-getraenke.js"></script>
 <script src="/js/kiosk-drax.js"></script>
 <script src="/js/kiosk-werbebilder.js"></script>
+<script src="/js/wochenangebote-renderer.js"></script>
+<script src="/js/angebote-vorschau-editor.js"></script>
+<script src="/js/angebote-modell.js"></script>
+<script src="/js/angebote-design.js"></script>
+<script src="/js/cms-angebote-form.js"></script>
+<script src="/js/angebote-dataverse.js"></script>
+<script src="/js/cms-angebote.js"></script>
+<script src="/js/angebote-editor.js"></script>
 <script src="/js/kiosk-kontakt.js?v=10"></script>
 <script src="/js/env-banner.js"></script>
 <script src="/js/kiosk-neu-shell.js"></script>
@@ -6094,7 +6129,8 @@ var K = (function(){
     // müsste von vorne anfangen. Solange einer dieser Tabs offen ist, wird nie
     // neu geladen – das Update zieht sich beim nächsten Tabwechsel von selbst.
     var aktiv = document.querySelector('.k-panel.active');
-    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
+    if(window.KAngebote && window.KAngebote.hasUnsavedChanges()) return true;
+    if(aktiv && (aktiv.id === 'panel-baecker' || aktiv.id === 'panel-metzgerbest' || aktiv.id === 'panel-getraenke' || aktiv.id === 'panel-angebote' || aktiv.id === 'panel-wochenplan' || aktiv.id === 'panel-drax' || aktiv.id === 'panel-werbebilder')) return true;
     if(document.querySelector('.k-modal-bg.open')) return true;
     if(document.querySelector('.bk-overlay')) return true;   // Bäcker-Dialog offen
     if(document.querySelector('#panel-baecker .bk-row.changed')) return true; // ungesicherte Mengen

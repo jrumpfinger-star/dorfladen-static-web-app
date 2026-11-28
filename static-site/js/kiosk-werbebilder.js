@@ -499,15 +499,24 @@ window.KWerbebilder = (function () {
     var an = u.neu.filter(function (n) { return n.an; });
     var neuNamen = {};
     an.forEach(function (n) { neuNamen[n.name] = 1; });
-    var loesch = u.alt.filter(function (b) { return b.an && !neuNamen[b.name]; });
+    var loesch = u.alt.filter(function (b) { return b.an && b.wahlbar !== false && !u.o.nurVorschau && !neuNamen[b.name]; });
     var ersetzt = u.alt.filter(function (b) { return neuNamen[b.name]; }).length;
     var danach = u.alt.length - loesch.length + an.length - ersetzt;
     return { an: an, loesch: loesch, ersetzt: ersetzt, danach: danach, zuviel: danach > MAX_BILDER, neuNamen: neuNamen };
   }
 
+  // Dateinamen verwalteter Angebote (21_<Bereich>_<Aktion>_<Fassung>_<von>_<bis>_NN.jpg) sind für die Waagenbrücke; angezeigt wird Klartext.
+  function bildTitel(b) {
+    if (b.titel) return b.titel;
+    if (!_ueb || !_ueb.o.verwaltetesAngebot) return b.name;
+    var m = /_(\d{4})(\d{2})(\d{2})_(\d{4})(\d{2})(\d{2})_(\d+)\.jpe?g$/i.exec(b.name || '');
+    return m ? 'Bild ' + parseInt(m[7], 10) + ' · gültig ' + m[3] + '.' + m[2] + '. – ' + m[6] + '.' + m[5] + '.' + m[4] : b.name;
+  }
+
   function uebZu() {
     if (!_ueb) return;
     _ueb.token++;
+    if (_ueb.poll) clearInterval(_ueb.poll);
     _ueb.neu.forEach(function (n) { if (n.url) URL.revokeObjectURL(n.url); });
     _ueb.alt.forEach(function (b) { if (b.url) URL.revokeObjectURL(b.url); });
     if (_ueb.el) _ueb.el.remove();
@@ -516,7 +525,7 @@ window.KWerbebilder = (function () {
   }
 
   function uebTaste(e) {
-    if (e.key === 'Escape' && _ueb && !_ueb.laufend && !_lb) { e.stopPropagation(); uebZu(); }
+    if (e.key === 'Escape' && _ueb && !_ueb.laufend && !_lb) { e.preventDefault(); e.stopPropagation(); uebZu(); }
   }
 
   function brueckeText(b) {
@@ -524,6 +533,15 @@ window.KWerbebilder = (function () {
     if (!b.bekannt) return '○ Brücke im Laden noch nie gemeldet – Änderungen werden übertragen, sobald sie läuft';
     if (b.online) return b.ok ? '● Brücke online' : '● Brücke online (mit Fehler: ' + (b.fehler || 'unbekannt') + ')';
     return '○ Brücke offline seit ' + dauer(b.vor_s) + ' – Änderungen werden nachgeholt, sobald sie wieder läuft';
+  }
+
+  function bildStatusText(status, offline) {
+    if (status === 'geplant') return 'Geplant · noch nicht aktiv';
+    if (status === 'geplant_auf_waage') return 'Geplant · wartet auf Entfernung von der Waage';
+    if (status === 'abgelaufen') return 'Abgelaufen · nicht mehr im Soll';
+    if (status === 'abgelaufen_auf_waage') return 'Abgelaufen · wartet auf Entfernung von der Waage';
+    if (status === 'auf_waage') return offline ? 'Zuletzt auf der Waage bestätigt · Brücke offline' : '✓ auf der Waage bestätigt';
+    return '⏳ wartet auf Übertragung';
   }
 
   function uebRender() {
@@ -553,6 +571,7 @@ window.KWerbebilder = (function () {
     var artInfo = ARTEN.filter(function (a) { return a.id === u.art; })[0];
     h += profilHtml('data-ueb="profil"', u.laufend);
     h += '<p class="wb-klein">' + esc(artInfo.hinweis) + '</p>';
+    if (u.o.nurVorschau) h += '<p class="wb-warn" role="status">Vorschau: Echter Versand und Löschen sind gesperrt. Die erzeugten Bilder können als JPEG gespeichert werden.</p>';
     if (u.art === 'dauer' && u.o.hinweisDauer !== '') {
       h += '<p class="wb-warn" role="status">' + esc(u.o.hinweisDauer || 'Dauerwerbung: 800 × ' + masse('dauer').h / 2 + ' Pixel. Die Gewichts-/Preisleiste bleibt sichtbar.') + '</p>';
     }
@@ -568,18 +587,20 @@ window.KWerbebilder = (function () {
       u.neu.forEach(function (n, i) {
         var st = n.status === 'ok' ? '✓ hochgeladen' : n.status === 'laeuft' ? 'wird gesendet …' : n.status === 'fehler' ? esc(n.fehler) : '';
         h += '<div class="wb-item wb-ueb-item' + (n.status === 'fehler' ? ' wb-fehler' : n.status === 'ok' ? ' wb-ok' : '') + '" data-ueb-neu="' + i + '">'
-          + '<label class="wb-haken"><input type="checkbox" data-ueb="an" data-i="' + i + '"' + (n.an ? ' checked' : '') + (u.laufend || u.ergebnis ? ' disabled' : '') + ' aria-label="' + esc(n.name) + ' übertragen"></label>'
+          + (u.o.verwaltetesAngebot ? '' : '<label class="wb-haken"><input type="checkbox" data-ueb="an" data-i="' + i + '"' + (n.an ? ' checked' : '') + (u.laufend || u.ergebnis ? ' disabled' : '') + ' aria-label="' + esc(n.name) + ' übertragen"></label>')
           + '<button class="wb-thumb" data-ueb="gross" data-i="' + i + '" aria-label="Vorschau ' + esc(n.name) + '"><img alt="" src="' + n.url + '"></button>'
-          + '<div class="wb-info"><b>' + esc(n.name) + '</b><span>' + groesse(n.blob.size) + '</span>'
+          + '<div class="wb-info"><b title="' + esc(n.name) + '">' + esc(bildTitel(n)) + '</b><span>' + groesse(n.blob.size) + '</span>'
           + (z.neuNamen[n.name] && u.alt.some(function (b) { return b.name === n.name; }) ? '<span class="wb-sync wartet">ersetzt das gleichnamige Bild</span>' : '')
-          + (st ? '<span class="wb-st">' + st + '</span>' : '') + '</div></div>';
+          + (st ? '<span class="wb-st">' + st + '</span>' : '')
+          + (u.o.verwaltetesAngebot ? '<a class="wb-btn" href="' + n.url + '" download="' + esc(n.name) + '">JPEG speichern</a>' : '') + '</div></div>';
       });
       h += '</div>';
     }
     h += '</div>';
 
     // Bereits auf der Waage
-    h += '<div class="wb-card"><h3>Bereits auf der Waage <span class="wb-zaehl">' + u.alt.length + ' / ' + MAX_BILDER + '</span></h3>';
+    h += '<div class="wb-card"><h3>' + (u.o.verwaltetesAngebot ? 'Im Cloudspeicher' : 'Bereits auf der Waage') + ' <span class="wb-zaehl">' + u.alt.length + ' / ' + MAX_BILDER + '</span></h3>';
+    if (u.o.nurAktion) h += '<p class="wb-klein">Nur frühere Ausgaben dieser Aktion können ersetzt werden. Andere Aktionen und Werbung bleiben unverändert.</p>';
     if (u.fehlerAlt) {
       h += '<p class="wb-fehler" role="alert">' + esc(u.fehlerAlt) + '</p>';
     } else if (!u.altGeladen) {
@@ -587,18 +608,19 @@ window.KWerbebilder = (function () {
     } else if (!u.alt.length) {
       h += '<p class="wb-klein">Noch keine Bilder in diesem Verzeichnis.</p>';
     } else {
-      h += '<div class="wb-aktionen wb-ueb-umschalter"><button class="wb-btn" data-ueb="alle"' + (u.laufend || u.ergebnis ? ' disabled' : '') + '>Alle zum Löschen wählen</button>'
-        + '<button class="wb-btn" data-ueb="keine"' + (u.laufend || u.ergebnis ? ' disabled' : '') + '>Keine</button></div>';
+      h += '<div class="wb-aktionen wb-ueb-umschalter"><button class="wb-btn" data-ueb="alle"' + (u.laufend || u.ergebnis || u.o.nurVorschau ? ' disabled' : '') + '>' + (u.o.nurAktion ? 'Alle dieser Aktion' : 'Alle zum Löschen wählen') + '</button>'
+        + '<button class="wb-btn" data-ueb="keine"' + (u.laufend || u.ergebnis || u.o.nurVorschau ? ' disabled' : '') + '>Keine</button></div>';
       h += '<div class="wb-raster">';
       u.alt.forEach(function (b, i) {
         var ersetzt = !!z.neuNamen[b.name];
         h += '<div class="wb-item wb-ueb-item" data-ueb-alt="' + esc(b.name) + '">'
           + '<label class="wb-haken" title="' + (ersetzt ? 'wird durch das neue Bild ersetzt' : 'löschen') + '"><input type="checkbox" data-ueb="loesch" data-i="' + i + '"'
-          + ((b.an && !ersetzt) ? ' checked' : '') + ((u.laufend || u.ergebnis || ersetzt) ? ' disabled' : '') + ' aria-label="' + esc(b.name) + ' löschen"></label>'
+          + ((b.an && !ersetzt) ? ' checked' : '') + ((u.laufend || u.ergebnis || ersetzt || b.wahlbar === false || u.o.nurVorschau) ? ' disabled' : '') + ' aria-label="' + esc(b.name) + ' löschen"></label>'
           + '<button class="wb-thumb" data-ueb-thumb="' + esc(b.name) + '" data-ueb="gross-alt" data-i="' + i + '" aria-label="Vorschau ' + esc(b.name) + '">'
           + (b.url ? '<img alt="" src="' + b.url + '">' : '') + '</button>'
-          + '<div class="wb-info"><b>' + esc(b.name) + '</b><span>' + groesse(b.groesse) + '</span>'
-          + '<span class="wb-sync ' + (ersetzt ? 'wartet' : (b.an ? 'wartet' : 'auf')) + '">' + (ersetzt ? 'wird ersetzt' : (b.an ? 'wird gelöscht' : 'bleibt')) + '</span></div></div>';
+          + '<div class="wb-info"><b title="' + esc(b.name) + '">' + esc(bildTitel(b)) + '</b><span>' + groesse(b.groesse) + '</span>'
+          + '<span class="wb-sync ' + (ersetzt ? 'wartet' : (b.an ? 'wartet' : 'auf')) + '">' + (ersetzt ? 'wird ersetzt' : (b.an ? 'wird gelöscht' : 'bleibt')) + '</span>'
+          + (u.o.verwaltetesAngebot ? '<span class="wb-klein">' + esc(bildStatusText(b.status, u.bruecke && !u.bruecke.online)) + '</span>' : '') + '</div></div>';
       });
       h += '</div>';
     }
@@ -606,6 +628,7 @@ window.KWerbebilder = (function () {
 
     // Zusammenfassung, Ergebnis, Knoepfe
     h += '<p class="wb-klein wb-ueb-status" role="status">' + esc(brueckeText(u.bruecke)) + '</p>';
+    if (u.statusFehler) h += '<p class="wb-fehler" role="alert">' + esc(u.statusFehler) + '</p>';
     if (u.ergebnis) {
       h += '<p class="' + (u.ergebnis.ok ? 'wb-klein wb-ok-text' : 'wb-fehler') + '" role="' + (u.ergebnis.ok ? 'status' : 'alert') + '">' + esc(u.ergebnis.text) + '</p>';
     } else {
@@ -619,8 +642,8 @@ window.KWerbebilder = (function () {
     } else {
       h += '<button class="wb-btn" data-ueb="zu"' + (u.laufend ? ' disabled' : '') + '>Abbrechen</button>'
         + '<button class="wb-btn wb-haupt" data-ueb="start" id="wb-ueb-start"'
-        + ((u.laufend || !u.erzeugt || z.zuviel || (!z.an.length && !z.loesch.length) || !u.altGeladen) ? ' disabled' : '') + '>'
-        + (u.laufend ? 'Wird übertragen …' : (u.ergebnis ? 'Erneut versuchen' : 'Übertragen'
+        + ((u.o.nurVorschau || u.laufend || !u.erzeugt || z.zuviel || (!z.an.length && !z.loesch.length) || !u.altGeladen) ? ' disabled' : '') + '>'
+        + (u.o.nurVorschau ? 'Versand in Vorschau gesperrt' : u.laufend ? 'Wird übertragen …' : (u.ergebnis ? 'Erneut versuchen' : 'Übertragen'
           + (z.an.length || z.loesch.length ? ' (' + z.an.length + ' neu' + (z.loesch.length ? ', ' + z.loesch.length + ' löschen' : '') + ')' : '')))
         + '</button>';
     }
@@ -639,6 +662,7 @@ window.KWerbebilder = (function () {
   function uebNeuLaden() {
     var u = _ueb;
     if (!u) return;
+    if (u.poll) { clearInterval(u.poll); u.poll = null; }
     var tok = ++u.token;
     u.erzeugt = false; u.fehlerNeu = ''; u.fort = 'Bilder werden erstellt …'; u.altGeladen = false; u.fehlerAlt = ''; u.ergebnis = null;
     u.neu.forEach(function (n) { if (n.url) URL.revokeObjectURL(n.url); });
@@ -657,21 +681,24 @@ window.KWerbebilder = (function () {
     }).then(function (liste) {
       if (ende()) return;
       u.neu = (liste || []).map(function (x) {
-        return { name: x.name, blob: x.blob, an: x.an !== false, url: URL.createObjectURL(x.blob), status: '' };
+        return { name: x.name, titel: x.titel, blob: x.blob, an: x.an !== false, url: URL.createObjectURL(x.blob), status: '' };
       });
       u.erzeugt = true;
       uebRender();
     }).catch(function (e) {
       if (ende()) return;
-      u.fehlerNeu = 'Die Bilder konnten nicht erstellt werden' + (e && e.message ? ' (' + e.message + ')' : '') + '.';
+      console.error('[Waagenvorschau] Bilder erzeugen', e);
+      u.fehlerNeu = u.o.verwaltetesAngebot ? ((e && e.userMessage) || 'Die Bilder konnten nicht erstellt werden. Bitte die Angaben prüfen und erneut versuchen.')
+        : 'Die Bilder konnten nicht erstellt werden' + (e && e.message ? ' (' + e.message + ')' : '') + '.';
       uebRender();
     });
 
     anfrage('GET', qs(u.art)).then(json).then(function (d) {
       if (ende()) return;
       u.alt = (d.bilder || []).map(function (b) {
+        var sameAction = !!(u.o.praefix && b.name.indexOf(u.o.praefix) === 0);
         return { name: b.name, groesse: b.groesse, etag: b.etag, status: b.status, url: '',
-                 an: !!(u.o.praefix && b.name.indexOf(u.o.praefix) === 0) };
+                 wahlbar: !u.o.nurAktion || sameAction, an: !u.o.nurVorschau && sameAction };
       });
       u.bruecke = d.bruecke || null;
       u.altGeladen = true;
@@ -710,6 +737,10 @@ window.KWerbebilder = (function () {
   function uebStart() {
     var u = _ueb;
     if (!u || u.laufend) return;
+    if (u.o.nurVorschau) {
+      u.ergebnis = { ok: false, text: 'Echter Versand ist in dieser Vorschau gesperrt.' }; uebRender(); return;
+    }
+    if (u.poll) { clearInterval(u.poll); u.poll = null; }
     var z = uebZahlen(u);
     if (z.zuviel || (!z.an.length && !z.loesch.length)) return;
     var art = u.art;
@@ -723,8 +754,8 @@ window.KWerbebilder = (function () {
       if (i >= z.an.length) return loeschen();
       var n = z.an[i++];
       n.status = 'laeuft'; uebRender();
-      anfrage('POST', qs(art, n.name), n.blob, 'image/jpeg', 60000).then(json)
-        .then(function () { n.status = 'ok'; })
+      anfrage('POST', qs(art, n.name) + (u.o.verwaltetesAngebot ? '&angebot=1' : ''), n.blob, 'image/jpeg', 60000).then(json)
+        .then(function (d) { n.status = 'ok'; n.etag = d.etag; })
         .catch(function (e) { n.status = 'fehler'; n.fehler = fehlerText(e); fehler++; })
         .then(weiterHoch);
     }
@@ -741,7 +772,7 @@ window.KWerbebilder = (function () {
       (function eins() {
         if (!_ueb || _ueb !== u) return;
         if (k >= z.loesch.length) return fertig(loeschFehler);
-        anfrage('DELETE', qs(art, z.loesch[k++].name)).then(json).catch(function () { loeschFehler++; }).then(eins);
+        anfrage('DELETE', qs(art, z.loesch[k++].name) + (u.o.verwaltetesAngebot ? '&angebot=1' : '')).then(json).catch(function () { loeschFehler++; }).then(eins);
       })();
     }
 
@@ -749,15 +780,39 @@ window.KWerbebilder = (function () {
       u.laufend = false;
       var text = z.an.length + (z.an.length === 1 ? ' Bild' : ' Bilder') + ' übertragen'
         + (z.loesch.length ? ', ' + (z.loesch.length - loeschFehler) + ' gelöscht' : '')
-        + '. Die Brücke im Laden gleicht die Waage in wenigen Sekunden ab.';
+        + (u.o.verwaltetesAngebot ? '. Im Cloudspeicher bereitgestellt; die Bestätigung der Waage steht noch aus.' : '. Die Brücke im Laden gleicht die Waage in wenigen Sekunden ab.');
       if (loeschFehler) text += ' ' + loeschFehler + ' Bild(er) ließen sich nicht löschen.';
       u.ergebnis = { ok: !loeschFehler, text: text };
-      toast(loeschFehler ? 'Übertragen, aber nicht alles gelöscht' : 'Auf die Waage übertragen');
+      toast(loeschFehler ? 'Übertragen, aber nicht alles gelöscht' : u.o.verwaltetesAngebot ? 'Für die Waage bereitgestellt' : 'Auf die Waage übertragen');
       uebRender();
       if (host()) laden(true);
-      anfrage('GET', qs(art)).then(json).then(function (d) {
-        if (_ueb === u) { u.bruecke = d.bruecke || u.bruecke; uebRender(); }
-      }).catch(function () { /* Anzeige bleibt */ });
+      var token = u.token;
+      function statusPruefen() {
+        anfrage('GET', qs(art)).then(json).then(function (d) {
+          if (_ueb !== u || u.token !== token || !u.ergebnis) return;
+          u.bruecke = d.bruecke || u.bruecke; u.statusFehler = '';
+          if (u.o.verwaltetesAngebot && !loeschFehler) {
+            var bilder = d.bilder || [];
+            var neu = z.an.map(function (n) { return bilder.find(function (b) { return b.name === n.name && b.etag === n.etag; }); });
+            var bestaetigt = neu.every(function (b) { return b && b.status === 'auf_waage'; });
+            var entfernt = u.bruecke && Array.isArray(u.bruecke.ist) && z.loesch.every(function (b) { return u.bruecke.ist.indexOf(b.name) < 0; });
+            if (bestaetigt && entfernt && u.bruecke.online && u.bruecke.ok) {
+              u.ergebnis.text = 'Aktueller Sollstand dieser Aktion durch die Brücke bestätigt: Übernahme und ausgewählte Entfernungen sind abgeschlossen.';
+            } else if (neu.length && neu.every(function (b) { return b && b.status.indexOf('geplant') === 0; })) {
+              u.ergebnis.text = 'Geplant im Cloudspeicher. Die Bilder gehören erst ab Gültigkeitsbeginn zum Waagen-Sollstand; noch keine aktive Übertragung bestätigt.';
+            } else if (neu.length && neu.every(function (b) { return b && b.status.indexOf('abgelaufen') === 0; })) {
+              u.ergebnis.text = 'Der Zeitraum ist abgelaufen. Diese Bilder werden nicht aktiviert; physische Entfernung erst nach Online-Abgleich bestätigt.';
+            } else {
+              u.ergebnis.text = 'Im Cloudspeicher bereitgestellt · wartet auf Bestätigung der Waage.' + (u.bruecke && !u.bruecke.online ? ' Brücke offline: Abgleich nach Wiederverbindung.' : '');
+            }
+          }
+          uebRender();
+        }).catch(function (e) {
+          if (_ueb === u && u.token === token) { u.statusFehler = 'Der Waagenstatus konnte nicht geprüft werden. ' + fehlerText(e); uebRender(); }
+        });
+      }
+      statusPruefen();
+      if (u.o.verwaltetesAngebot) u.poll = setInterval(statusPruefen, AKTUALISIERUNG_MS);
     }
 
     weiterHoch();
@@ -774,7 +829,7 @@ window.KWerbebilder = (function () {
     if (a === 'zu') { if (!u.laufend) uebZu(); }
     else if (a === 'art') { if (!u.laufend && t.getAttribute('data-art') !== u.art) { u.art = t.getAttribute('data-art'); uebNeuLaden(); } }
     else if (a === 'start') uebStart();
-    else if (a === 'alle') { u.alt.forEach(function (b) { b.an = true; }); uebRender(); }
+    else if (a === 'alle' && !u.o.nurVorschau) { u.alt.forEach(function (b) { b.an = b.wahlbar !== false; }); uebRender(); }
     else if (a === 'keine') { u.alt.forEach(function (b) { b.an = false; }); uebRender(); }
     else if (a === 'gross' || a === 'gross-alt') {
       var quelle = (a === 'gross' ? u.neu : u.alt).filter(function (x) { return x.url; });
@@ -791,13 +846,15 @@ window.KWerbebilder = (function () {
     var i = parseInt(t.getAttribute('data-i'), 10);
     if (a === 'profil' && !u.laufend) { profilSpeichern(t.value); alleAnpassen(); uebNeuLaden(); return; }
     if (a === 'an' && u.neu[i]) { u.neu[i].an = t.checked; uebRender(); }
-    else if (a === 'loesch' && u.alt[i]) { u.alt[i].an = t.checked; uebRender(); }
+    else if (a === 'loesch' && u.alt[i] && u.alt[i].wahlbar !== false && !u.o.nurVorschau) { u.alt[i].an = t.checked; uebRender(); }
   }
 
   /* opts: { titel, art ('vollbild'|'dauer'), artWaehlbar (Standard true), hinweisDauer ('' = keiner),
              praefix (alte Bilder mit diesem Namensanfang sind zum Loeschen vorausgewaehlt),
+             nurAktion (nur praefix loeschbar), nurVorschau (kein Versand), verwaltetesAngebot,
              erzeuge(art, fortschritt(i, n), abgebrochen(), masse) -> Promise<[{name, blob, an}]> } */
   function uebertragen(opts) {
+    if (opts.nurAktion && !opts.praefix) throw new Error('Eine Aktionszuordnung ist für das Ersetzen erforderlich.');
     stil();
     uebZu();
     var el = document.createElement('div');
@@ -807,7 +864,9 @@ window.KWerbebilder = (function () {
              laufend: false, erzeugt: false, altGeladen: false, ergebnis: null, bruecke: null };
     el.addEventListener('click', uebKlick);
     el.addEventListener('change', uebAenderung);
-    document.body.appendChild(el);
+    // Ein modaler Dialog (z. B. CMS-Aktionseditor) liegt in der Top-Layer; nur Kinder davon sind sichtbar und bedienbar.
+    var modale = document.querySelectorAll('dialog:modal');
+    (modale.length ? modale[modale.length - 1] : document.body).appendChild(el);
     document.addEventListener('keydown', uebTaste, true);
     uebNeuLaden();
   }
@@ -1065,7 +1124,7 @@ window.KWerbebilder = (function () {
         + (_blobs[k] ? '<img alt="" src="' + _blobs[k] + '">' : '') + '</button>'
         + '<div class="wb-info"><b>' + esc(b.name) + '</b><span>' + groesse(b.groesse) + '</span>'
         + '<span class="wb-sync ' + (auf ? 'auf' : 'wartet') + '" data-wb-status="' + esc(b.status) + '">'
-        + (auf ? '✓ auf der Waage' : '⏳ wartet auf Übertragung') + '</span></div>'
+        + esc(bildStatusText(b.status, _bruecke && !_bruecke.online)) + '</span></div>'
         + '<button class="wb-btn wb-del" data-wb="loeschen" data-name="' + esc(b.name) + '" aria-label="' + esc(b.name) + ' löschen">Löschen</button></div>';
     });
     return h + '</div></div>';

@@ -69,7 +69,7 @@
     });
 
     html+='<div style="text-align:center;margin-top:24px;font-size:.82rem;color:#aaa">';
-    html+='<p>Stand: '+data.generated.substring(0,10)+' &mdash; Live-Daten</p>';
+    html+='<p>Stand: '+((data.generated||'').substring?data.generated.substring(0,10):(data.generated||''))+' &mdash; Live-Daten</p>';
     html+='<p><a href="/">&larr; Zur&uuml;ck zur Startseite</a></p></div>';
 
     wrap.innerHTML=html;

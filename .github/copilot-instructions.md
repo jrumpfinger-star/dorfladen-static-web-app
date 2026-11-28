@@ -3,6 +3,20 @@
 Azure Static Web App: static frontend (`static-site/`), Azure Functions API
 (`api/`, Python), Playwright end-to-end tests, and content/seed scripts.
 
+## Binding UI Design Standard
+
+Before any UI design, mockup, implementation or review, read and apply
+[the UI design standard](../docs/ui-designstandard.md). It consolidates the
+existing shared design schema and the working-area requirements from the
+offer editors. Reuse shared components/tokens; do not introduce a separate
+visual style per page. Verify actual usable space, accessibility and behavior
+at all four target viewports. The standard defines the target, not a claim
+that existing pages already comply. Larger redesigns require mockup approval
+before implementation and continue to follow SDD.
+Preserve every existing property and function with a before/after mapping.
+Obtain explicit approval for each proposed functional consolidation,
+simplification or removal; mockup approval alone is not that approval.
+
 ## Spec-Driven Development (SDD)
 
 This repository uses a spec-driven workflow. **Any non-trivial feature or

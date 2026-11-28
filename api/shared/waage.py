@@ -12,12 +12,15 @@ import os
 import re
 import time
 import unicodedata
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 ARTEN = ("vollbild", "dauer")
 MAX_BILDER = 99
 MAX_BYTES = 8 * 1024 * 1024
 ONLINE_SEKUNDEN = 90
 NAME_OK = re.compile(r"^[A-Za-z0-9._-]{1,80}\.(jpg|gif)$")
+ANGEBOT_NAME = re.compile(r"^21_([a-f0-9]{6})_([a-f0-9]{12})_([a-f0-9]{12})_(\d{8})_(\d{8})_(\d{2})\.jpg$")
 
 SP_ORDNER = "Waage-Werbebilder"
 SP_DRIVE = "b!bwUha0ab4EeiA3xXHK-Oobhv5tJbeYJDiF9pTB-f1kC-Mp-AY0brRrr2WigdYK4A"
@@ -113,6 +116,36 @@ def bild_status(art, bild, bericht):
     return "wartet"
 
 
+def angebotsdatei(name):
+    match = ANGEBOT_NAME.fullmatch(name or "")
+    if not match:
+        return None
+    scope, action, revision, start, end, page = match.groups()
+    try:
+        dates = [datetime.strptime(value, "%Y%m%d").date().isoformat() for value in (start, end)]
+    except ValueError as exc:
+        raise WaageFehler(400, "Der Angebotsdateiname enthält keinen gültigen Zeitraum.") from exc
+    if dates[0] > dates[1] or page == "00":
+        raise WaageFehler(400, "Bitte Zeitraum und Seite des Angebotsbildes prüfen.")
+    return {"scope": scope, "action": action, "revision": revision, "start": dates[0], "end": dates[1]}
+
+
+def angebotsstatus(name, jetzt):
+    meta = angebotsdatei(name)
+    if meta is None:
+        return None
+    day = datetime.fromtimestamp(jetzt, timezone.utc).astimezone(ZoneInfo("Europe/Berlin")).date().isoformat()
+    return "geplant" if day < meta["start"] else "abgelaufen" if day > meta["end"] else "aktiv"
+
+
+def _anzeigestatus(art, bild, bericht, jetzt):
+    state = angebotsstatus(bild["name"], jetzt)
+    if state in ("geplant", "abgelaufen"):
+        on_scale = bild["name"] in ((bericht.get("ist") or {}).get(art) or [])
+        return state + ("_auf_waage" if on_scale else "")
+    return bild_status(art, bild, bericht)
+
+
 # ── Verarbeitung (ohne Azure-Typen, testbar) ────────────────────────────────
 
 def _json(status, daten):
@@ -129,7 +162,7 @@ def verarbeite(methode, params, body, speicher, tabelle, jetzt=None):
     try:
         br = params.get("bruecke")
         if br == "sync" and methode == "GET":
-            arten = dict((a, _bilder(speicher, a)) for a in ARTEN)
+            arten = {a: [b for b in _bilder(speicher, a) if angebotsstatus(b["name"], jetzt) in (None, "aktiv")] for a in ARTEN}
             bericht = tabelle.lies() or {}
             return _json(200, {
                 "success": True, "version": version_von(arten),
@@ -156,11 +189,12 @@ def verarbeite(methode, params, body, speicher, tabelle, jetzt=None):
             bilder = _bilder(speicher, art)
             info = bruecke_info(bericht, jetzt)
             info["direkt"] = int(((bericht.get("direkt") or {}).get(art)) or 0)
+            info["ist"] = (bericht.get("ist") or {}).get(art) or []
             return _json(200, {
                 "success": True, "art": art, "max": MAX_BILDER,
                 "bruecke": info,
                 "bilder": [{"name": b["name"], "groesse": b.get("groesse", 0), "etag": b.get("etag", ""),
-                            "status": bild_status(art, b, bericht)} for b in bilder]})
+                            "status": _anzeigestatus(art, b, bericht, jetzt)} for b in bilder]})
         if methode == "GET":
             if not NAME_OK.match(name or ""):
                 raise WaageFehler(400, "Ungueltiger Dateiname")
@@ -171,6 +205,7 @@ def verarbeite(methode, params, body, speicher, tabelle, jetzt=None):
         if methode == "POST":
             vorhanden = [b["name"] for b in _bilder(speicher, art)]
             sauber = pruefe_upload(art, name, body or b"", vorhanden)
+            angebotsdatei(sauber)
             item = speicher.schreibe(art, sauber, body)
             return _json(200, {"success": True, "name": sauber, "groesse": len(body),
                                "etag": (item or {}).get("etag", "")})
